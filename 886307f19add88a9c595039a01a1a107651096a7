@@ -1,0 +1,15 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-05-29T18:40:56Z
+
+> Note that there is no real benefit with pagination for our standard Collection implementation
+
+you mean because everything is still in the collection anyways?
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-05-29T18:47:46Z
+
+> you mean because everything is still in the collection anyways?
+
+Yes, But another implementation might have 1000 items and read them from disk or database. They could benefit.
