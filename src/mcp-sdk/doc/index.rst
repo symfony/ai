@@ -2,7 +2,7 @@ Model Context Protocol SDK
 ==========================
 
 Symfony AI MCP SDK is the low level library that enables communication between
- a PHP application and an LLM model.
+a PHP application and an LLM model.
 
 Installation
 ------------
