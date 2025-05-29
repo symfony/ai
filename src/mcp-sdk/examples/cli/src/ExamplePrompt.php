@@ -1,5 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App;
 
 use PhpLlm\McpSdk\Capability\Prompt\MetadataInterface;
@@ -18,7 +29,7 @@ class ExamplePrompt implements MetadataInterface, PromptGetterInterface
             $this->getDescription(),
             [new PromptGetResultMessages(
                 'user',
-                sprintf('Hello %s', $firstName ?? 'World')
+                \sprintf('Hello %s', $firstName ?? 'World')
             )]
         );
     }

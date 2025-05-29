@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpLlm\McpSdk\Server;
 
 use PhpLlm\McpSdk\Message\Error;
@@ -68,7 +77,7 @@ readonly class JsonRpcHandler
         } catch (\DomainException) {
             return null;
         } catch (\InvalidArgumentException $e) {
-            $this->logger->warning(sprintf('Failed to create response: %s', $e->getMessage()), ['exception' => $e]);
+            $this->logger->warning(\sprintf('Failed to create response: %s', $e->getMessage()), ['exception' => $e]);
 
             return $this->encodeResponse(Error::methodNotFound($message->id ?? 0, $e->getMessage()));
         }
@@ -85,10 +94,10 @@ readonly class JsonRpcHandler
         $this->logger->info('Encoding response', ['response' => $response]);
 
         if ($response instanceof Response && [] === $response->result) {
-            return json_encode($response, JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT);
+            return json_encode($response, \JSON_THROW_ON_ERROR | \JSON_FORCE_OBJECT);
         }
 
-        return json_encode($response, JSON_THROW_ON_ERROR);
+        return json_encode($response, \JSON_THROW_ON_ERROR);
     }
 
     private function handleNotification(Notification $notification): null
@@ -99,7 +108,7 @@ readonly class JsonRpcHandler
             }
         }
 
-        $this->logger->warning(sprintf('No handler found for "%s".', $notification->method), ['notification' => $notification]);
+        $this->logger->warning(\sprintf('No handler found for "%s".', $notification->method), ['notification' => $notification]);
 
         return null;
     }
@@ -112,6 +121,6 @@ readonly class JsonRpcHandler
             }
         }
 
-        throw new \InvalidArgumentException(sprintf('No handler found for method "%s".', $request->method));
+        throw new \InvalidArgumentException(\sprintf('No handler found for method "%s".', $request->method));
     }
 }
