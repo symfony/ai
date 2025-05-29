@@ -1,5 +1,5 @@
 {
-    "name": "php-llm/mcp-sdk",
+    "name": "symfony/mcp-sdk",
     "type": "library",
     "description": "Model Context Protocol SDK for Client and Server applications in PHP",
     "license": "MIT",

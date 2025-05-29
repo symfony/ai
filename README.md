@@ -14,7 +14,7 @@ Help Symfony by [sponsoring][2] its development!
 
 ## Contributing
 
-Thank you for considering contributing to Symfony UX! You can find the [contribution guide here](CONTRIBUTING.md).
+Thank you for considering contributing to Symfony AI! You can find the [contribution guide here](CONTRIBUTING.md).
 
 [1]: https://symfony.com/backers
 [2]: https://symfony.com/sponsor
