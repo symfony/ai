@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Tests\Message;
+namespace Symfony\AI\McpSdk\Tests\Message;
 
-use PhpLlm\McpSdk\Message\Factory;
-use PhpLlm\McpSdk\Message\Notification;
-use PhpLlm\McpSdk\Message\Request;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\McpSdk\Message\Factory;
+use Symfony\AI\McpSdk\Message\Notification;
+use Symfony\AI\McpSdk\Message\Request;
 
 final class FactoryTest extends TestCase
 {

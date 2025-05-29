@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk;
+namespace Symfony\AI\McpSdk;
 
-use PhpLlm\McpSdk\Server\JsonRpcHandler;
-use PhpLlm\McpSdk\Server\TransportInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\McpSdk\Server\JsonRpcHandler;
+use Symfony\AI\McpSdk\Server\TransportInterface;
 
 final readonly class Server
 {

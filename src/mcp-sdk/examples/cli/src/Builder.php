@@ -13,20 +13,20 @@ declare(strict_types=1);
 
 namespace App;
 
-use PhpLlm\McpSdk\Capability\PromptChain;
-use PhpLlm\McpSdk\Capability\ResourceChain;
-use PhpLlm\McpSdk\Capability\ToolChain;
-use PhpLlm\McpSdk\Server\NotificationHandler\InitializedHandler;
-use PhpLlm\McpSdk\Server\NotificationHandlerInterface;
-use PhpLlm\McpSdk\Server\RequestHandler\InitializeHandler;
-use PhpLlm\McpSdk\Server\RequestHandler\PingHandler;
-use PhpLlm\McpSdk\Server\RequestHandler\PromptGetHandler;
-use PhpLlm\McpSdk\Server\RequestHandler\PromptListHandler;
-use PhpLlm\McpSdk\Server\RequestHandler\ResourceListHandler;
-use PhpLlm\McpSdk\Server\RequestHandler\ResourceReadHandler;
-use PhpLlm\McpSdk\Server\RequestHandler\ToolCallHandler;
-use PhpLlm\McpSdk\Server\RequestHandler\ToolListHandler;
-use PhpLlm\McpSdk\Server\RequestHandlerInterface;
+use Symfony\AI\McpSdk\Capability\PromptChain;
+use Symfony\AI\McpSdk\Capability\ResourceChain;
+use Symfony\AI\McpSdk\Capability\ToolChain;
+use Symfony\AI\McpSdk\Server\NotificationHandler\InitializedHandler;
+use Symfony\AI\McpSdk\Server\NotificationHandlerInterface;
+use Symfony\AI\McpSdk\Server\RequestHandler\InitializeHandler;
+use Symfony\AI\McpSdk\Server\RequestHandler\PingHandler;
+use Symfony\AI\McpSdk\Server\RequestHandler\PromptGetHandler;
+use Symfony\AI\McpSdk\Server\RequestHandler\PromptListHandler;
+use Symfony\AI\McpSdk\Server\RequestHandler\ResourceListHandler;
+use Symfony\AI\McpSdk\Server\RequestHandler\ResourceReadHandler;
+use Symfony\AI\McpSdk\Server\RequestHandler\ToolCallHandler;
+use Symfony\AI\McpSdk\Server\RequestHandler\ToolListHandler;
+use Symfony\AI\McpSdk\Server\RequestHandlerInterface;
 
 class Builder
 {

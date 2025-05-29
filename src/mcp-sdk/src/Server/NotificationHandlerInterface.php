@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Server;
+namespace Symfony\AI\McpSdk\Server;
 
-use PhpLlm\McpSdk\Message\Notification;
+use Symfony\AI\McpSdk\Message\Notification;
 
 interface NotificationHandlerInterface
 {

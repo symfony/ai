@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Tests\Message;
+namespace Symfony\AI\McpSdk\Tests\Message;
 
-use PhpLlm\McpSdk\Message\Error;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\McpSdk\Message\Error;
 
 final class ErrorTest extends TestCase
 {

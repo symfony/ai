@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Server\NotificationHandler;
+namespace Symfony\AI\McpSdk\Server\NotificationHandler;
 
-use PhpLlm\McpSdk\Message\Notification;
-use PhpLlm\McpSdk\Server\NotificationHandlerInterface;
+use Symfony\AI\McpSdk\Message\Notification;
+use Symfony\AI\McpSdk\Server\NotificationHandlerInterface;
 
 abstract class BaseNotificationHandler implements NotificationHandlerInterface
 {

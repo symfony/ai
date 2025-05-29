@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Exception;
+namespace Symfony\AI\McpSdk\Exception;
 
-use PhpLlm\McpSdk\Capability\Resource\ResourceRead;
+use Symfony\AI\McpSdk\Capability\Resource\ResourceRead;
 
 final class ResourceNotFoundException extends \RuntimeException implements NotFoundExceptionInterface
 {

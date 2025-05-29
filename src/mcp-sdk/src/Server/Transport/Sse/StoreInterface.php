@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Server\Transport\Sse;
+namespace Symfony\AI\McpSdk\Server\Transport\Sse;
 
 use Symfony\Component\Uid\Uuid;
 

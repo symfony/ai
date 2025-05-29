@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Capability;
+namespace Symfony\AI\McpSdk\Capability;
 
-use PhpLlm\McpSdk\Capability\Resource\CollectionInterface;
-use PhpLlm\McpSdk\Capability\Resource\IdentifierInterface;
-use PhpLlm\McpSdk\Capability\Resource\MetadataInterface;
-use PhpLlm\McpSdk\Capability\Resource\ResourceRead;
-use PhpLlm\McpSdk\Capability\Resource\ResourceReaderInterface;
-use PhpLlm\McpSdk\Capability\Resource\ResourceReadResult;
-use PhpLlm\McpSdk\Exception\ResourceNotFoundException;
-use PhpLlm\McpSdk\Exception\ResourceReadException;
+use Symfony\AI\McpSdk\Capability\Resource\CollectionInterface;
+use Symfony\AI\McpSdk\Capability\Resource\IdentifierInterface;
+use Symfony\AI\McpSdk\Capability\Resource\MetadataInterface;
+use Symfony\AI\McpSdk\Capability\Resource\ResourceRead;
+use Symfony\AI\McpSdk\Capability\Resource\ResourceReaderInterface;
+use Symfony\AI\McpSdk\Capability\Resource\ResourceReadResult;
+use Symfony\AI\McpSdk\Exception\ResourceNotFoundException;
+use Symfony\AI\McpSdk\Exception\ResourceReadException;
 
 /**
  * A collection of resources. All resources need to implement IdentifierInterface.

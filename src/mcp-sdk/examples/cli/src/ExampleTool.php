@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace App;
 
-use PhpLlm\McpSdk\Capability\Tool\MetadataInterface;
-use PhpLlm\McpSdk\Capability\Tool\ToolCall;
-use PhpLlm\McpSdk\Capability\Tool\ToolCallResult;
-use PhpLlm\McpSdk\Capability\Tool\ToolExecutorInterface;
+use Symfony\AI\McpSdk\Capability\Tool\MetadataInterface;
+use Symfony\AI\McpSdk\Capability\Tool\ToolCall;
+use Symfony\AI\McpSdk\Capability\Tool\ToolCallResult;
+use Symfony\AI\McpSdk\Capability\Tool\ToolExecutorInterface;
 
 class ExampleTool implements MetadataInterface, ToolExecutorInterface
 {

@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace App;
 
-use PhpLlm\McpSdk\Capability\Prompt\MetadataInterface;
-use PhpLlm\McpSdk\Capability\Prompt\PromptGet;
-use PhpLlm\McpSdk\Capability\Prompt\PromptGetResult;
-use PhpLlm\McpSdk\Capability\Prompt\PromptGetResultMessages;
-use PhpLlm\McpSdk\Capability\Prompt\PromptGetterInterface;
+use Symfony\AI\McpSdk\Capability\Prompt\MetadataInterface;
+use Symfony\AI\McpSdk\Capability\Prompt\PromptGet;
+use Symfony\AI\McpSdk\Capability\Prompt\PromptGetResult;
+use Symfony\AI\McpSdk\Capability\Prompt\PromptGetResultMessages;
+use Symfony\AI\McpSdk\Capability\Prompt\PromptGetterInterface;
 
 class ExamplePrompt implements MetadataInterface, PromptGetterInterface
 {

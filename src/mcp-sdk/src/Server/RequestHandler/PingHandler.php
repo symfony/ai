@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Server\RequestHandler;
+namespace Symfony\AI\McpSdk\Server\RequestHandler;
 
-use PhpLlm\McpSdk\Message\Request;
-use PhpLlm\McpSdk\Message\Response;
+use Symfony\AI\McpSdk\Message\Request;
+use Symfony\AI\McpSdk\Message\Response;
 
 final class PingHandler extends BaseRequestHandler
 {

@@ -31,12 +31,12 @@
     },
     "autoload": {
         "psr-4": {
-            "PhpLlm\\McpSdk\\": "src/"
+            "Symfony\\AI\\McpSdk\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "PhpLlm\\McpSdk\\Tests\\": "tests/"
+            "Symfony\\AI\\McpSdk\\Tests\\": "tests/"
         }
     }
 }

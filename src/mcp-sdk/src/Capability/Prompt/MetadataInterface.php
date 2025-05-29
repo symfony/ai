@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Capability\Prompt;
+namespace Symfony\AI\McpSdk\Capability\Prompt;
 
 interface MetadataInterface extends IdentifierInterface
 {

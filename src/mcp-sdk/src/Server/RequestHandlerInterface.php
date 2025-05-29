@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Server;
+namespace Symfony\AI\McpSdk\Server;
 
-use PhpLlm\McpSdk\Message\Error;
-use PhpLlm\McpSdk\Message\Request;
-use PhpLlm\McpSdk\Message\Response;
+use Symfony\AI\McpSdk\Message\Error;
+use Symfony\AI\McpSdk\Message\Request;
+use Symfony\AI\McpSdk\Message\Response;
 
 interface RequestHandlerInterface
 {

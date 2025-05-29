@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Exception;
+namespace Symfony\AI\McpSdk\Exception;
 
-use PhpLlm\McpSdk\Capability\Prompt\PromptGet;
+use Symfony\AI\McpSdk\Capability\Prompt\PromptGet;
 
 final class PromptNotFoundException extends \RuntimeException implements NotFoundExceptionInterface
 {

@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Exception;
+namespace Symfony\AI\McpSdk\Exception;
 
-use PhpLlm\McpSdk\Capability\Tool\ToolCall;
+use Symfony\AI\McpSdk\Capability\Tool\ToolCall;
 
 final class ToolNotFoundException extends \RuntimeException implements NotFoundExceptionInterface
 {

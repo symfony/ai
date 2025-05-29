@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Capability;
+namespace Symfony\AI\McpSdk\Capability;
 
-use PhpLlm\McpSdk\Capability\Tool\CollectionInterface;
-use PhpLlm\McpSdk\Capability\Tool\IdentifierInterface;
-use PhpLlm\McpSdk\Capability\Tool\MetadataInterface;
-use PhpLlm\McpSdk\Capability\Tool\ToolCall;
-use PhpLlm\McpSdk\Capability\Tool\ToolCallResult;
-use PhpLlm\McpSdk\Capability\Tool\ToolExecutorInterface;
-use PhpLlm\McpSdk\Exception\ToolExecutionException;
-use PhpLlm\McpSdk\Exception\ToolNotFoundException;
+use Symfony\AI\McpSdk\Capability\Tool\CollectionInterface;
+use Symfony\AI\McpSdk\Capability\Tool\IdentifierInterface;
+use Symfony\AI\McpSdk\Capability\Tool\MetadataInterface;
+use Symfony\AI\McpSdk\Capability\Tool\ToolCall;
+use Symfony\AI\McpSdk\Capability\Tool\ToolCallResult;
+use Symfony\AI\McpSdk\Capability\Tool\ToolExecutorInterface;
+use Symfony\AI\McpSdk\Exception\ToolExecutionException;
+use Symfony\AI\McpSdk\Exception\ToolNotFoundException;
 
 /**
  * A collection of tools. All tools need to implement IdentifierInterface.

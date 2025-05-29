@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Server;
+namespace Symfony\AI\McpSdk\Server;
 
-use PhpLlm\McpSdk\Message\Error;
-use PhpLlm\McpSdk\Message\Factory;
-use PhpLlm\McpSdk\Message\Notification;
-use PhpLlm\McpSdk\Message\Request;
-use PhpLlm\McpSdk\Message\Response;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\McpSdk\Message\Error;
+use Symfony\AI\McpSdk\Message\Factory;
+use Symfony\AI\McpSdk\Message\Notification;
+use Symfony\AI\McpSdk\Message\Request;
+use Symfony\AI\McpSdk\Message\Response;
 
 /**
  * @final

@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Capability\Resource;
+namespace Symfony\AI\McpSdk\Capability\Resource;
 
-use PhpLlm\McpSdk\Exception\ResourceNotFoundException;
-use PhpLlm\McpSdk\Exception\ResourceReadException;
+use Symfony\AI\McpSdk\Exception\ResourceNotFoundException;
+use Symfony\AI\McpSdk\Exception\ResourceReadException;
 
 interface ResourceReaderInterface
 {

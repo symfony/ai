@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Server\Transport\Sse\Store;
+namespace Symfony\AI\McpSdk\Server\Transport\Sse\Store;
 
-use PhpLlm\McpSdk\Server\Transport\Sse\StoreInterface;
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\AI\McpSdk\Server\Transport\Sse\StoreInterface;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class CachePoolStore implements StoreInterface

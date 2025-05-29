@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Capability\Tool;
+namespace Symfony\AI\McpSdk\Capability\Tool;
 
-use PhpLlm\McpSdk\Exception\ToolExecutionException;
-use PhpLlm\McpSdk\Exception\ToolNotFoundException;
+use Symfony\AI\McpSdk\Exception\ToolExecutionException;
+use Symfony\AI\McpSdk\Exception\ToolNotFoundException;
 
 interface ToolExecutorInterface
 {

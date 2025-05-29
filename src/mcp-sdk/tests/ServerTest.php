@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Tests;
+namespace Symfony\AI\McpSdk\Tests;
 
-use PhpLlm\McpSdk\Server;
-use PhpLlm\McpSdk\Server\JsonRpcHandler;
-use PhpLlm\McpSdk\Tests\Fixtures\InMemoryTransport;
 use PHPUnit\Framework\MockObject\Stub\Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\AI\McpSdk\Server;
+use Symfony\AI\McpSdk\Server\JsonRpcHandler;
+use Symfony\AI\McpSdk\Tests\Fixtures\InMemoryTransport;
 
 class ServerTest extends TestCase
 {

@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Server\RequestHandler;
+namespace Symfony\AI\McpSdk\Server\RequestHandler;
 
-use PhpLlm\McpSdk\Capability\Tool\ToolCall;
-use PhpLlm\McpSdk\Capability\Tool\ToolExecutorInterface;
-use PhpLlm\McpSdk\Exception\ExceptionInterface;
-use PhpLlm\McpSdk\Message\Error;
-use PhpLlm\McpSdk\Message\Request;
-use PhpLlm\McpSdk\Message\Response;
+use Symfony\AI\McpSdk\Capability\Tool\ToolCall;
+use Symfony\AI\McpSdk\Capability\Tool\ToolExecutorInterface;
+use Symfony\AI\McpSdk\Exception\ExceptionInterface;
+use Symfony\AI\McpSdk\Message\Error;
+use Symfony\AI\McpSdk\Message\Request;
+use Symfony\AI\McpSdk\Message\Response;
 
 final class ToolCallHandler extends BaseRequestHandler
 {

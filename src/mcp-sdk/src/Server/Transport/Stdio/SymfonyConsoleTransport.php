@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Server\Transport\Stdio;
+namespace Symfony\AI\McpSdk\Server\Transport\Stdio;
 
-use PhpLlm\McpSdk\Server\TransportInterface;
+use Symfony\AI\McpSdk\Server\TransportInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\StreamableInputInterface;
 use Symfony\Component\Console\Output\OutputInterface;

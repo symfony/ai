@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Exception;
+namespace Symfony\AI\McpSdk\Exception;
 
 interface ExceptionInterface
 {

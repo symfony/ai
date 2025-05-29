@@ -1,8 +1,19 @@
 <?php
 
-namespace PhpLlm\McpSdk\Tests\Fixtures;
+declare(strict_types=1);
 
-use PhpLlm\McpSdk\Server\TransportInterface;
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\McpSdk\Tests\Fixtures;
+
+use Symfony\AI\McpSdk\Server\TransportInterface;
 
 class InMemoryTransport implements TransportInterface
 {

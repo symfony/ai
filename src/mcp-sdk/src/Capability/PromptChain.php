@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Capability;
+namespace Symfony\AI\McpSdk\Capability;
 
-use PhpLlm\McpSdk\Capability\Prompt\CollectionInterface;
-use PhpLlm\McpSdk\Capability\Prompt\IdentifierInterface;
-use PhpLlm\McpSdk\Capability\Prompt\MetadataInterface;
-use PhpLlm\McpSdk\Capability\Prompt\PromptGet;
-use PhpLlm\McpSdk\Capability\Prompt\PromptGetResult;
-use PhpLlm\McpSdk\Capability\Prompt\PromptGetterInterface;
-use PhpLlm\McpSdk\Exception\PromptGetException;
-use PhpLlm\McpSdk\Exception\PromptNotFoundException;
+use Symfony\AI\McpSdk\Capability\Prompt\CollectionInterface;
+use Symfony\AI\McpSdk\Capability\Prompt\IdentifierInterface;
+use Symfony\AI\McpSdk\Capability\Prompt\MetadataInterface;
+use Symfony\AI\McpSdk\Capability\Prompt\PromptGet;
+use Symfony\AI\McpSdk\Capability\Prompt\PromptGetResult;
+use Symfony\AI\McpSdk\Capability\Prompt\PromptGetterInterface;
+use Symfony\AI\McpSdk\Exception\PromptGetException;
+use Symfony\AI\McpSdk\Exception\PromptNotFoundException;
 
 /**
  * A collection of prompts. All prompts need to implement IdentifierInterface.

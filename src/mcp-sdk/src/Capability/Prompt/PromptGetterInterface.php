@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Capability\Prompt;
+namespace Symfony\AI\McpSdk\Capability\Prompt;
 
-use PhpLlm\McpSdk\Exception\PromptGetException;
-use PhpLlm\McpSdk\Exception\PromptNotFoundException;
+use Symfony\AI\McpSdk\Exception\PromptGetException;
+use Symfony\AI\McpSdk\Exception\PromptNotFoundException;
 
 interface PromptGetterInterface
 {

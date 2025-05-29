@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpLlm\McpSdk\Server\Transport\Sse;
+namespace Symfony\AI\McpSdk\Server\Transport\Sse;
 
-use PhpLlm\McpSdk\Server\TransportInterface;
+use Symfony\AI\McpSdk\Server\TransportInterface;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class StreamTransport implements TransportInterface
