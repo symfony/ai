@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-05-30T08:22:02Z
+
+usually I'd vote for not having the `@throws` tag - only on an interface with explicit description of what it should express.
+
+but that's rather opinionated and style - i just disable that phpstorm inspection because i don't see the value while reading the code and in CI we don't check for it
