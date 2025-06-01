@@ -1,0 +1,252 @@
+{% extends '@WebProfiler/Profiler/layout.html.twig' %}
+
+{% block toolbar %}
+    {% if collector.platformCalls|length > 0 %}
+        {% set icon %}
+            {{ include('@AI/icon.svg', { y: 18 }) }}
+            <span class="sf-toolbar-value">{{ collector.platformCalls|length }}</span>
+            <span class="sf-toolbar-info-piece-additional-detail">
+                <span class="sf-toolbar-label">calls</span>
+            </span>
+        {% endset %}
+
+        {% set text %}
+            <div class="sf-toolbar-info-piece">
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Configured Platforms</b>
+                    <span class="sf-toolbar-status">1</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Platform Calls</b>
+                    <span class="sf-toolbar-status">{{ collector.platformCalls|length }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Registered Tools</b>
+                    <span class="sf-toolbar-status">{{ collector.tools|length }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Tool Calls</b>
+                    <span class="sf-toolbar-status">{{ collector.toolCalls|length }}</span>
+                </div>
+            </div>
+        {% endset %}
+
+        {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', { 'link': true }) }}
+    {% endif %}
+{% endblock %}
+
+{% block menu %}
+    <span class="label">
+        <span class="icon">{{ include('@AI/icon.svg', { y: 16 }) }}</span>
+        <strong>AI</strong>
+        <span class="count">{{ collector.platformCalls|length }}</span>
+    </span>
+{% endblock %}
+
+{% macro tool_calls(toolCalls) %}
+    Tool call{{ toolCalls|length > 1 ? 's' }}:
+    <ol>
+        {% for toolCall in toolCalls %}
+            <li>
+                <strong>{{ toolCall.name }}({{ toolCall.arguments|map((value, key) => "#{key}: #{value}")|join(', ') }})</strong>
+                <i>(ID: {{ toolCall.id }})</i>
+            </li>
+        {% endfor %}
+    </ol>
+{% endmacro %}
+
+{% block panel %}
+    <h2>AI</h2>
+    <section class="metrics">
+        <div class="metric-group">
+            <div class="metric">
+                <span class="value">1</span>
+                <span class="label">Platforms</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.platformCalls|length }}</span>
+                <span class="label">Platform Calls</span>
+            </div>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-group">
+            <div class="metric">
+                <span class="value">{{ collector.tools|length }}</span>
+                <span class="label">Tools</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.toolCalls|length }}</span>
+                <span class="label">Tool Calls</span>
+            </div>
+        </div>
+    </section>
+    <h3>Platform Calls</h3>
+    {% if collector.platformCalls|length %}
+        <div class="sf-tabs">
+            <div class="tab {{ collector.platformCalls|length == 0 ? 'disabled' }}">
+                <h3 class="tab-title">Platform Calls <span class="badge">{{ collector.platformCalls|length }}</span></h3>
+                <div class="tab-content">
+                    {% for call in collector.platformCalls %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th colspan="2">Call {{ loop.index }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th>Model</th>
+                                    <td><strong>{{ constant('class', call.model) }}</strong> (Version: {{ call.model.name }})</td>
+                                </tr>
+                                <tr>
+                                    <th>Input</th>
+                                    <td>
+                                        {% if call.input.messages is defined %}{# expect MessageBag #}
+                                            <ol>
+                                                {% for message in call.input.messages %}
+                                                    <li>
+                                                        <strong>{{ message.role.value|title }}:</strong>
+                                                        {% if 'assistant' == message.role.value and message.hasToolCalls%}
+                                                            {{ _self.tool_calls(message.toolCalls) }}
+                                                        {% elseif 'tool' == message.role.value %}
+                                                            <i>Result of tool call with ID {{ message.toolCall.id }}</i><br />
+                                                            {{ message.content|nl2br }}
+                                                        {% elseif 'user' == message.role.value %}
+                                                            {% for item in message.content %}
+                                                                {% if item.text is defined %}
+                                                                    {{ item.text|nl2br }}
+                                                                {% else %}
+                                                                    <img src="{{ item.url }}" />
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            {{ message.content|nl2br }}
+                                                        {% endif %}
+                                                    </li>
+                                                {% endfor %}
+                                            </ol>
+                                        {% else %}
+                                            {{ dump(call.input) }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Options</th>
+                                    <td>
+                                        <ul>
+                                            {% for key, value in call.options %}
+                                                {% if key == 'tools' %}
+                                                    <li>{{ key }}:
+                                                        <ul>
+                                                            {% for tool in value %}
+                                                                <li>{{ tool.name }}</li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </li>
+                                                {% else %}
+                                                    <li>{{ key }}: {{ dump(value) }}</li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Response</th>
+                                    <td>
+                                        {% if call.input.messages is defined and call.response is iterable %}{# expect array of ToolCall #}
+                                            {{ _self.tool_calls(call.response) }}
+                                        {% elseif call.response is iterable %}{# expect array of Vectors #}
+                                            <ol>
+                                                {% for vector in call.response %}
+                                                    <li>Vector with <strong>{{ vector.dimensions }}</strong> dimensions</li>
+                                                {% endfor %}
+                                            </ol>
+                                        {% else %}
+                                            {{ call.response }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty">
+            <p>No platform calls were made.</p>
+        </div>
+    {% endif %}
+
+    <h3>Tools</h3>
+    {% if collector.tools|length %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Class & Method</th>
+                    <th>Parameters</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tool in collector.tools %}
+                    <tr>
+                        <th>{{ tool.name }}</th>
+                        <td>{{ tool.description }}</td>
+                        <td>{{ tool.reference.class }}::{{ tool.reference.method }}</td>
+                        <td>
+                            {% if tool.parameters %}
+                                <ul>
+                                    {% for name, parameter in tool.parameters.properties %}
+                                        <li>
+                                            <strong>{{ name }} ({{ parameter.type }})</strong><br />
+                                            <i>{{ parameter.description }}</i>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <i>none</i>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty">
+            <p>No tools were registered.</p>
+        </div>
+    {% endif %}
+
+    <h3>Tool Calls</h3>
+    {% if collector.toolCalls|length %}
+        {% for call in collector.toolCalls %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th colspan="2">{{ call.call.name }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>ID</th>
+                        <td>{{ call.call.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Arguments</th>
+                        <td>{{ dump(call.call.arguments) }}</td>
+                    </tr>
+                    <tr>
+                        <th>Response</th>
+                        <td>{{ call.result|nl2br }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% endfor %}
+    {% else %}
+        <div class="empty">
+            <p>No tool calls were made.</p>
+        </div>
+    {% endif %}
+{% endblock %}

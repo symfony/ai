@@ -1,0 +1,32 @@
+{
+  "batchcomplete": "",
+  "query": {
+    "redirects": [
+      {
+        "from": "United Nations secretary-general",
+        "to": "Secretary-General of the United Nations"
+      }
+    ],
+    "pages": {
+      "162415": {
+        "pageid": 162415,
+        "ns": 0,
+        "title": "Secretary-General of the United Nations",
+        "extract": "The secretary-general of the United Nations (UNSG or UNSECGEN) is the chief administrative officer of the United Nations and head of the United Nations Secretariat, one of the six principal organs of the United Nations. And so on.",
+        "contentmodel": "wikitext",
+        "pagelanguage": "en",
+        "pagelanguagehtmlcode": "en",
+        "pagelanguagedir": "ltr",
+        "touched": "2024-12-07T14:43:16Z",
+        "lastrevid": 1259468323,
+        "length": 35508,
+        "thumbnail": {
+          "source": "https:\/\/upload.wikimedia.org\/wikipedia\/commons\/thumb\/5\/52\/Emblem_of_the_United_Nations.svg\/50px-Emblem_of_the_United_Nations.svg.png",
+          "width": 50,
+          "height": 43
+        },
+        "pageimage": "Emblem_of_the_United_Nations.svg"
+      }
+    }
+  }
+}

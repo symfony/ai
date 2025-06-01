@@ -1,0 +1,69 @@
+{
+    "name": "symfony/ai-agent",
+    "type": "library",
+    "description": "PHP library for building agentic applications.",
+    "keywords": [
+        "ai",
+        "llm",
+        "agent"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Christopher Hertel",
+            "email": "mail@christopher-hertel.de"
+        },
+        {
+            "name": "Oskar Stark",
+            "email": "oskarstark@googlemail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-fileinfo": "*",
+        "oskarstark/enum-helper": "^1.5",
+        "phpdocumentor/reflection-docblock": "^5.4",
+        "phpstan/phpdoc-parser": "^2.1",
+        "psr/cache": "^3.0",
+        "psr/log": "^3.0",
+        "symfony/clock": "^6.4 || ^7.1",
+        "symfony/http-client": "^6.4 || ^7.1",
+        "symfony/property-access": "^6.4 || ^7.1",
+        "symfony/property-info": "^6.4 || ^7.1",
+        "symfony/serializer": "^6.4 || ^7.1",
+        "symfony/type-info": "^7.2.3",
+        "symfony/uid": "^6.4 || ^7.1",
+        "webmozart/assert": "^1.11"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpstan/phpstan-webmozart-assert": "^2.0",
+        "phpunit/phpunit": "^11.5",
+        "symfony/console": "^6.4 || ^7.1",
+        "symfony/css-selector": "^6.4 || ^7.1",
+        "symfony/dom-crawler": "^6.4 || ^7.1",
+        "symfony/dotenv": "^6.4 || ^7.1",
+        "symfony/event-dispatcher": "^6.4 || ^7.1",
+        "symfony/finder": "^6.4 || ^7.1",
+        "symfony/process": "^6.4 || ^7.1",
+        "symfony/var-dumper": "^6.4 || ^7.1"
+    },
+    "suggest": {
+        "symfony/css-selector": "For using the YouTube transcription tool.",
+        "symfony/dom-crawler": "For using the YouTube transcription tool."
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Agent\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\Agent\\Tests\\": "tests/"
+        }
+    }
+}

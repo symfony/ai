@@ -1,0 +1,110 @@
+#!/usr/bin/env php
+<?php
+
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\SingleCommandApplication;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\Process\Process;
+
+require_once __DIR__.'/vendor/autoload.php';
+
+$app = (new SingleCommandApplication('Symfony AI Example Runner'))
+    ->setDescription('Runs all Symfony AI examples in folder examples/')
+    ->addArgument('subdirectory', InputArgument::OPTIONAL, 'Subdirectory to run examples from, e.g. "anthropic" or "huggingface".')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $io = new SymfonyStyle($input, $output);
+        $io->title('Symfony AI Examples');
+
+        $directory = __DIR__.'/examples';
+
+        if ($subdirectory = $input->getArgument('subdirectory')) {
+            $directory .= '/'.$subdirectory;
+            if (!is_dir($directory)) {
+                $io->error(sprintf('Subdirectory "%s" does not exist.', $subdirectory));
+                return Command::FAILURE;
+            }
+        }
+
+        $examples = (new Finder())
+            ->in($directory)
+            ->name('*.php')
+            ->sortByName()
+            ->files();
+
+        /** @var array{example: SplFileInfo, process: Process} $exampleRuns */
+        $exampleRuns = [];
+        foreach ($examples as $example) {
+            $exampleRuns[] = [
+                'example' => $example,
+                'process' => $process = new Process(['php', $example->getRealPath()]),
+            ];
+            $process->start();
+        }
+
+        $section = $output->section();
+        $renderTable = function () use ($exampleRuns, $section) {
+            $section->clear();
+            $table = new Table($section);
+            $table->setHeaders(['Example', 'State', 'Output']);
+            foreach ($exampleRuns as $run) {
+                /** @var SplFileInfo $example */
+                /** @var Process $process */
+                ['example' => $example, 'process' => $process] = $run;
+
+                $output = str_replace(PHP_EOL, ' ', $process->getOutput());
+                $output = strlen($output) <= 100 ? $output : substr($output, 0, 100).'...';
+                $emptyOutput = 0 === strlen(trim($output));
+
+                $state = 'Running';
+                if ($process->isTerminated()) {
+                    $success = $process->isSuccessful() && !$emptyOutput;
+                    $state = $success ? '<info>Finished</info>'
+                        : (1 === $run['process']->getExitCode() || $emptyOutput ? '<error>Failed</error>' : '<comment>Skipped</comment>');
+                }
+
+                $table->addRow([$example->getRelativePathname(), $state, $output]);
+            }
+            $table->render();
+        };
+
+        $examplesRunning = fn () => array_reduce($exampleRuns, fn ($running, $example) => $running || $example['process']->isRunning(), false);
+        while ($examplesRunning()) {
+            $renderTable();
+            sleep(1);
+        }
+
+        $renderTable();
+        $io->newLine();
+
+        $successCount = array_reduce($exampleRuns, function ($count, $example) {
+            if ($example['process']->isSuccessful() && strlen(trim($example['process']->getOutput())) > 0) {
+                return $count + 1;
+            }
+            return $count;
+        }, 0);
+
+        $totalCount = count($exampleRuns);
+
+        if ($successCount < $totalCount) {
+            $io->warning(sprintf('%d out of %d examples ran successfully.', $successCount, $totalCount));
+        } else {
+            $io->success(sprintf('All %d examples ran successfully!', $totalCount));
+        }
+
+        foreach ($exampleRuns as $run) {
+            if (!$run['process']->isSuccessful()) {
+                $io->section('Error in ' . $run['example']->getRelativePathname());
+                $io->text($run['process']->getOutput());
+                $io->text($run['process']->getErrorOutput());
+            }
+        }
+
+        return Command::SUCCESS;
+    })
+    ->run();

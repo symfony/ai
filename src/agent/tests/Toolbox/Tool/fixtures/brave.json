@@ -1,0 +1,276 @@
+{
+  "query": {
+    "original": "latest Dallas Cowboys game result",
+    "show_strict_warning": false,
+    "is_navigational": false,
+    "is_news_breaking": false,
+    "spellcheck_off": true,
+    "country": "us",
+    "bad_results": false,
+    "should_fallback": false,
+    "postal_code": "",
+    "city": "",
+    "header_country": "",
+    "more_results_available": true,
+    "state": ""
+  },
+  "mixed": {
+    "type": "mixed",
+    "main": [
+      {
+        "type": "web",
+        "index": 0,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 1,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 2,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 3,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 4,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 5,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 6,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 7,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 8,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 9,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 10,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 11,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 12,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 13,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 14,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 15,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 16,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 17,
+        "all": false
+      },
+      {
+        "type": "web",
+        "index": 18,
+        "all": false
+      }
+    ],
+    "top": [],
+    "side": []
+  },
+  "type": "search",
+  "web": {
+    "type": "search",
+    "results": [
+      {
+        "title": "Dallas Cowboys Scores, Stats and Highlights - ESPN",
+        "url": "https://www.espn.com/nfl/team/_/name/dal/dallas-cowboys",
+        "is_source_local": false,
+        "is_source_both": false,
+        "description": "Visit ESPN for <strong>Dallas</strong> <strong>Cowboys</strong> live scores, video highlights, and <strong>latest</strong> news. Find standings and the full 2024 season schedule.",
+        "profile": {
+          "name": "ESPN",
+          "url": "https://www.espn.com/nfl/team/_/name/dal/dallas-cowboys",
+          "long_name": "Entertainment and Sports Programming Network",
+          "img": "https://imgs.search.brave.com/Kz1hWnjcBXLBXExGU0hCyCn2-pB94hTqPkqNv2qL9Ds/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvM2MzMjQzYzM4/MGZiMjZlNDJlY2Iy/ZjM1N2RjZjMxYzhk/YWNiNmVlMGViMDRl/ZGVhYzJjMzI4OTkz/NDY0MGI4MS93d3cu/ZXNwbi5jb20v"
+        },
+        "language": "en",
+        "family_friendly": true,
+        "type": "search_result",
+        "subtype": "generic",
+        "is_live": false,
+        "meta_url": {
+          "scheme": "https",
+          "netloc": "espn.com",
+          "hostname": "www.espn.com",
+          "favicon": "https://imgs.search.brave.com/Kz1hWnjcBXLBXExGU0hCyCn2-pB94hTqPkqNv2qL9Ds/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvM2MzMjQzYzM4/MGZiMjZlNDJlY2Iy/ZjM1N2RjZjMxYzhk/YWNiNmVlMGViMDRl/ZGVhYzJjMzI4OTkz/NDY0MGI4MS93d3cu/ZXNwbi5jb20v",
+          "path": "› nfl  › team  › _  › name  › dal  › dallas-cowboys"
+        },
+        "thumbnail": {
+          "src": "https://imgs.search.brave.com/yoylqmAf8Idap3k8AvVgIN8VAnBC3qYLTIPUhr-dngk/rs:fit:200:200:1:0/g:ce/aHR0cHM6Ly9hLmVz/cG5jZG4uY29tL2Nv/bWJpbmVyL2k_aW1n/PS9pL3RlYW1sb2dv/cy9uZmwvNTAwL2Rh/bC5wbmc",
+          "original": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/dal.png",
+          "logo": true
+        }
+      },
+      {
+        "title": "Dallas Cowboys | Official Site of the Dallas Cowboys",
+        "url": "https://www.dallascowboys.com/",
+        "is_source_local": false,
+        "is_source_both": false,
+        "description": "As Mickey Spagnola writes in his Friday column, the Cowboys have to be ready for anything in this upcoming draft as the best-laid plans can often go awry. In this week&#x27;s Mick Shots, Mickey Spagnola looks at how depth options could play a part on who to pick at <strong>No. 12.</strong> Plus, a closer look at ...",
+        "profile": {
+          "name": "Dallascowboys",
+          "url": "https://www.dallascowboys.com/",
+          "long_name": "dallascowboys.com",
+          "img": "https://imgs.search.brave.com/jlBcXKzEJ8ZVEM7kjduly5zdZdDd3ZKJa3KtSH06rxk/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvODk0YjBmYmE0/N2E2ZmM4NjgxYzI2/ZmZmMWMxODE3YTMz/MmM5YmQ4MDBkZmM3/NjFiOWNlYzczMGUz/OTg3NWRhZi93d3cu/ZGFsbGFzY293Ym95/cy5jb20v"
+        },
+        "language": "en",
+        "family_friendly": true,
+        "type": "search_result",
+        "subtype": "generic",
+        "is_live": false,
+        "meta_url": {
+          "scheme": "https",
+          "netloc": "dallascowboys.com",
+          "hostname": "www.dallascowboys.com",
+          "favicon": "https://imgs.search.brave.com/jlBcXKzEJ8ZVEM7kjduly5zdZdDd3ZKJa3KtSH06rxk/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvODk0YjBmYmE0/N2E2ZmM4NjgxYzI2/ZmZmMWMxODE3YTMz/MmM5YmQ4MDBkZmM3/NjFiOWNlYzczMGUz/OTg3NWRhZi93d3cu/ZGFsbGFzY293Ym95/cy5jb20v",
+          "path": ""
+        },
+        "thumbnail": {
+          "src": "https://imgs.search.brave.com/IfNsWGGP4OLU1pxkWNTYIeZtTxjykyoRTWTaYkKDPU0/rs:fit:200:200:1:0/g:ce/aHR0cHM6Ly93d3cu/ZGFsbGFzY293Ym95/cy5jb20v",
+          "original": "https://www.dallascowboys.com/",
+          "logo": false
+        }
+      },
+      {
+        "title": "Dallas Cowboys News, Scores, Status, Schedule - NFL - CBSSports.com",
+        "url": "https://www.cbssports.com/nfl/teams/DAL/dallas-cowboys/",
+        "is_source_local": false,
+        "is_source_both": false,
+        "description": "Get the <strong>latest</strong> news and information for the <strong>Dallas</strong> <strong>Cowboys</strong>. 2024 season schedule, scores, stats, and highlights. Find out the <strong>latest</strong> on your favorite NFL teams on CBSSports.com.",
+        "profile": {
+          "name": "Cbssports",
+          "url": "https://www.cbssports.com/nfl/teams/DAL/dallas-cowboys/",
+          "long_name": "cbssports.com",
+          "img": "https://imgs.search.brave.com/G8DEk0_A87RxEMyNA8Uhu5GaN1usv62iX_74SwwTHSk/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvM2FlZjEzYmM3/NzkwMzQ5ZWYwMWQ3/YjJiZGM5MGMxMWFl/ZDBlNmQxMTk2N2Fm/MjljMzU2OGIzMTUz/M2Q4ZjcxNS93d3cu/Y2Jzc3BvcnRzLmNv/bS8"
+        },
+        "language": "en",
+        "family_friendly": true,
+        "type": "search_result",
+        "subtype": "generic",
+        "is_live": false,
+        "meta_url": {
+          "scheme": "https",
+          "netloc": "cbssports.com",
+          "hostname": "www.cbssports.com",
+          "favicon": "https://imgs.search.brave.com/G8DEk0_A87RxEMyNA8Uhu5GaN1usv62iX_74SwwTHSk/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvM2FlZjEzYmM3/NzkwMzQ5ZWYwMWQ3/YjJiZGM5MGMxMWFl/ZDBlNmQxMTk2N2Fm/MjljMzU2OGIzMTUz/M2Q4ZjcxNS93d3cu/Y2Jzc3BvcnRzLmNv/bS8",
+          "path": "› nfl  › teams  › DAL  › dallas-cowboys"
+        },
+        "thumbnail": {
+          "src": "https://imgs.search.brave.com/9YB61Wfb-DCqHUR_XH_Tq7Iwy9KW9qCjCaO0bKpQ_bU/rs:fit:200:200:1:0/g:ce/aHR0cHM6Ly9zcG9y/dHNmbHkuY2JzaXN0/YXRpYy5jb20vZmx5/LTA5NDQvYnVuZGxl/cy9zcG9ydHNtZWRp/YWNzcy9pbWFnZXMv/ZmFudGFzeS9kZWZh/dWx0LWFydGljbGUt/aW1hZ2UtbGFyZ2Uu/cG5n",
+          "original": "https://sportsfly.cbsistatic.com/fly-0944/bundles/sportsmediacss/images/fantasy/default-article-image-large.png",
+          "logo": false
+        }
+      },
+      {
+        "title": "Dallas Cowboys News, Scores, Stats, Schedule | NFL.com",
+        "url": "https://www.nfl.com/teams/dallas-cowboys/",
+        "is_source_local": false,
+        "is_source_both": false,
+        "description": "Dallas Cowboys · 3rd NFC East · <strong>7 - 10 - 0</strong> Buy Gear · Official Website · @DallasCowboys · @DallasCowboys · @dallascowboys · @DallasCowboys · Info · Roster · Stats · Advertising · news · Apr 21, 2025 · news · Apr 18, 2025 · news · Apr 18, 2025 ·",
+        "profile": {
+          "name": "Nfl",
+          "url": "https://www.nfl.com/teams/dallas-cowboys/",
+          "long_name": "nfl.com",
+          "img": "https://imgs.search.brave.com/L4B2SCyb0Ao1-76nGZVpWlnyS8TkQBAEFnf4Lpb_KRY/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvZmQxNWFiOGQ3/Mjc0MWRjYjI0OTQx/N2E5NTNhODVkMGQ2/OTI3NzcyODQ4MzU2/Nzg3YTJmMjJiOGMz/OTM1NjVmYy93d3cu/bmZsLmNvbS8"
+        },
+        "language": "en",
+        "family_friendly": true,
+        "type": "search_result",
+        "subtype": "generic",
+        "is_live": false,
+        "meta_url": {
+          "scheme": "https",
+          "netloc": "nfl.com",
+          "hostname": "www.nfl.com",
+          "favicon": "https://imgs.search.brave.com/L4B2SCyb0Ao1-76nGZVpWlnyS8TkQBAEFnf4Lpb_KRY/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvZmQxNWFiOGQ3/Mjc0MWRjYjI0OTQx/N2E5NTNhODVkMGQ2/OTI3NzcyODQ4MzU2/Nzg3YTJmMjJiOGMz/OTM1NjVmYy93d3cu/bmZsLmNvbS8",
+          "path": "› teams  › dallas-cowboys"
+        },
+        "thumbnail": {
+          "src": "https://imgs.search.brave.com/0EETrH0-svPjjtTCtvV7kIQ5DuPcD03NtVFgNG8A2KM/rs:fit:200:200:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMud3d3Lm5mbC5j/b20vdF9oZWFkc2hv/dF9kZXNrdG9wL2xl/YWd1ZS9hcGkvY2x1/YnMvbG9nb3MvREFM",
+          "original": "https://static.www.nfl.com/t_headshot_desktop/league/api/clubs/logos/DAL",
+          "logo": true
+        }
+      },
+      {
+        "title": "Dallas Cowboys News, Videos, Schedule, Roster, Stats - Yahoo Sports",
+        "url": "https://sports.yahoo.com/nfl/teams/dallas/",
+        "is_source_local": false,
+        "is_source_both": false,
+        "description": "The team has 10 selections to get right in hopes of turning a 7-10 season in 2024 into an afterthought, and helping the <strong>Cowboys</strong> return to the playoffs. The good news is that <strong>Dallas</strong> has been one of the better drafting teams in the league, and they routinely find the right players to help win <strong>games</strong>.",
+        "profile": {
+          "name": "Yahoo!",
+          "url": "https://sports.yahoo.com/nfl/teams/dallas/",
+          "long_name": "sports.yahoo.com",
+          "img": "https://imgs.search.brave.com/pqn4FSmuomyVnDi_JumaeN-Milit-_D15P8bquK1CAc/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvOTUxYWU5NWYz/ZWIxOGI3M2Q5MzFh/MjlmZDczOWEyMzY5/M2FhZTZiOGIzOTQ0/YzlkMGI3YTI2MmM2/ZmJmMWE2Zi9zcG9y/dHMueWFob28uY29t/Lw"
+        },
+        "language": "en",
+        "family_friendly": true,
+        "type": "search_result",
+        "subtype": "generic",
+        "is_live": false,
+        "meta_url": {
+          "scheme": "https",
+          "netloc": "sports.yahoo.com",
+          "hostname": "sports.yahoo.com",
+          "favicon": "https://imgs.search.brave.com/pqn4FSmuomyVnDi_JumaeN-Milit-_D15P8bquK1CAc/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvOTUxYWU5NWYz/ZWIxOGI3M2Q5MzFh/MjlmZDczOWEyMzY5/M2FhZTZiOGIzOTQ0/YzlkMGI3YTI2MmM2/ZmJmMWE2Zi9zcG9y/dHMueWFob28uY29t/Lw",
+          "path": "› nfl  › teams  › dallas"
+        },
+        "thumbnail": {
+          "src": "https://imgs.search.brave.com/okMqy3l4NCCt72TSaYUZSdJcmgHc9Q1i63ttIe-rIQ0/rs:fit:200:200:1:0/g:ce/aHR0cHM6Ly9zLnlp/bWcuY29tL2l0L2Fw/aS9yZXMvMS4yL3ZX/bjVTVDlRQl95NmFi/dWl2cWdpQkEtLX5B/L1lYQndhV1E5ZVc1/bGQzTTdkejB4TWpB/d08yZzlOak13TzNF/OU1UQXcvaHR0cHM6/Ly9zLnlpbWcuY29t/L2N2L2FwaXYyL2Rl/ZmF1bHQvbmZsLzIw/MTkwNzI0LzUwMHg1/MDAvMjAxOV9EQUxf/d2JnLnBuZw",
+          "original": "https://s.yimg.com/it/api/res/1.2/vWn5ST9QB_y6abuivqgiBA--~A/YXBwaWQ9eW5ld3M7dz0xMjAwO2g9NjMwO3E9MTAw/https://s.yimg.com/cv/apiv2/default/nfl/20190724/500x500/2019_DAL_wbg.png",
+          "logo": false
+        }
+      }
+    ],
+    "family_friendly": true
+  }
+}
