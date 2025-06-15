@@ -1,0 +1,21 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-06-13T11:19:19Z
+
+> Should the fixtures also be in the example folder?
+
+They are currently also used in the component's test suites
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-06-14T22:46:54Z
+
+I am fine with merging this one
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-06-15T07:35:07Z
+
+> I am fine with merging this one
+
+Tbh, i would just merge all of those current PRs and one for the demo more or less directly into main - Not sure it's a pleasure to review over just doing smaller changes later to improve - will bring that together the next days
