@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\OpenAI\DallE;
 use Symfony\AI\Platform\Bridge\OpenAI\DallE\ImageResponse;
 use Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory;
+use Symfony\AI\Platform\Response\AsyncResponse;
 use Symfony\Component\Dotenv\Dotenv;
 
 require_once dirname(__DIR__).'/vendor/autoload.php';
@@ -32,9 +33,14 @@ $response = $platform->request(
     ],
 );
 
-assert($response instanceof ImageResponse);
+if ($response instanceof AsyncResponse) {
+    echo 'This is an async response. Please wait for the completion...'.\PHP_EOL;
 
-echo 'Revised Prompt: '.$response->revisedPrompt.\PHP_EOL.\PHP_EOL;
+    $innerResponse = $response->unwrap();
+    assert($innerResponse instanceof ImageResponse);
+}
+
+echo 'Revised Prompt: '.$innerResponse->revisedPrompt.\PHP_EOL.\PHP_EOL;
 
 foreach ($response->getContent() as $index => $image) {
     echo 'Image '.$index.': '.$image->url.\PHP_EOL;
