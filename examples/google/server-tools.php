@@ -22,7 +22,7 @@ use Symfony\Component\Dotenv\Dotenv;
 require_once dirname(__DIR__, 2).'/vendor/autoload.php';
 (new Dotenv())->loadEnv(dirname(__DIR__, 2).'/.env');
 
-if (empty($_ENV['GOOGLE_API_KEY'])) {
+if (!$_ENV['GOOGLE_API_KEY']) {
     echo 'Please set the GOOGLE_API_KEY environment variable.'.\PHP_EOL;
     exit(1);
 }

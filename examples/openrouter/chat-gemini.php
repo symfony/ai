@@ -19,7 +19,7 @@ use Symfony\Component\Dotenv\Dotenv;
 require_once dirname(__DIR__).'/vendor/autoload.php';
 (new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
 
-if (empty($_ENV['OPENROUTER_KEY'])) {
+if (!$_ENV['OPENROUTER_KEY']) {
     echo 'Please set the OPENROUTER_KEY environment variable.'.\PHP_EOL;
     exit(1);
 }

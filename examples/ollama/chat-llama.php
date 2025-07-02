@@ -19,7 +19,7 @@ use Symfony\Component\Dotenv\Dotenv;
 require_once dirname(__DIR__).'/vendor/autoload.php';
 (new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
 
-if (empty($_ENV['OLLAMA_HOST_URL'])) {
+if (!$_ENV['OLLAMA_HOST_URL']) {
     echo 'Please set the OLLAMA_HOST_URL environment variable.'.\PHP_EOL;
     exit(1);
 }

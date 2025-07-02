@@ -29,7 +29,7 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/vendor/autoload.php';
 (new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
 
-if (empty($_ENV['OPENAI_API_KEY']) || empty($_ENV['PINECONE_API_KEY']) || empty($_ENV['PINECONE_HOST'])) {
+if (!$_ENV['OPENAI_API_KEY'] || !$_ENV['PINECONE_API_KEY'] || !$_ENV['PINECONE_HOST']) {
     echo 'Please set OPENAI_API_KEY, PINECONE_API_KEY and PINECONE_HOST environment variables.'.\PHP_EOL;
     exit(1);
 }

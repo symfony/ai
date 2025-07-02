@@ -19,7 +19,7 @@ use Symfony\Component\Dotenv\Dotenv;
 require_once dirname(__DIR__).'/vendor/autoload.php';
 (new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
 
-if (empty($_ENV['AZURE_LLAMA_BASEURL']) || empty($_ENV['AZURE_LLAMA_KEY'])) {
+if (!$_ENV['AZURE_LLAMA_BASEURL'] || !$_ENV['AZURE_LLAMA_KEY']) {
     echo 'Please set the AZURE_LLAMA_BASEURL and AZURE_LLAMA_KEY environment variable.'.\PHP_EOL;
     exit(1);
 }

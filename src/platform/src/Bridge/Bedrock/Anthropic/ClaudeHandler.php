@@ -80,7 +80,7 @@ final readonly class ClaudeHandler implements BedrockModelClient
                 $toolCalls[] = new ToolCall($content['id'], $content['name'], $content['input']);
             }
         }
-        if (!empty($toolCalls)) {
+        if ($toolCalls) {
             return new ToolCallResponse(...$toolCalls);
         }
 

@@ -18,7 +18,7 @@ use Symfony\Component\Dotenv\Dotenv;
 require_once dirname(__DIR__).'/vendor/autoload.php';
 (new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
 
-if (empty($_ENV['HUGGINGFACE_KEY'])) {
+if (!$_ENV['HUGGINGFACE_KEY']) {
     echo 'Please set the HUGGINGFACE_KEY environment variable.'.\PHP_EOL;
     exit(1);
 }

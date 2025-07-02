@@ -23,7 +23,7 @@ use Symfony\Component\HttpClient\HttpClient;
 require_once dirname(__DIR__).'/vendor/autoload.php';
 (new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
 
-if (empty($_ENV['OPENAI_API_KEY']) || empty($_ENV['SERP_API_KEY'])) {
+if (!$_ENV['OPENAI_API_KEY'] || !$_ENV['SERP_API_KEY']) {
     echo 'Please set the OPENAI_API_KEY and SERP_API_KEY environment variable.'.\PHP_EOL;
     exit(1);
 }

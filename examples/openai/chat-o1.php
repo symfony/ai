@@ -19,12 +19,12 @@ use Symfony\Component\Dotenv\Dotenv;
 require_once dirname(__DIR__).'/vendor/autoload.php';
 (new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
 
-if (empty($_ENV['OPENAI_API_KEY'])) {
+if (!$_ENV['OPENAI_API_KEY']) {
     echo 'Please set the OPENAI_API_KEY environment variable.'.\PHP_EOL;
     exit(1);
 }
 
-if (empty($_ENV['RUN_EXPENSIVE_EXAMPLES']) || false === filter_var($_ENV['RUN_EXPENSIVE_EXAMPLES'], \FILTER_VALIDATE_BOOLEAN)) {
+if (!$_ENV['RUN_EXPENSIVE_EXAMPLES'] || false === filter_var($_ENV['RUN_EXPENSIVE_EXAMPLES'], \FILTER_VALIDATE_BOOLEAN)) {
     echo 'This example is marked as expensive and will not run unless RUN_EXPENSIVE_EXAMPLES is set to true.'.\PHP_EOL;
     exit(134);
 }
