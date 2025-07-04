@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-04T21:00:34Z
+
+I am against adding the `(#100)` in the in the PR title, as they will soon link to the wrong PR/issue, because it will take `symfony/ai` repo into account in the commit history.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-04T21:05:46Z
+
+> I am against adding the `(#100)` in the in the PR title, as they will soon link to the wrong PR/issue, because it will take `symfony/ai` repo into account in the commit history.
+
+yup, good catch, i usually try to remove them - it's an artifact of the cherry pick since it's in the commit message.
