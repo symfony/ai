@@ -1,0 +1,43 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-06-30T21:05:57Z
+
+Looks really good - thanks @smnandre! Needs a rebase and Oskar's comments - good to merge than
+
+---------------------------------------------------------------------------
+
+by smnandre at 2025-07-01T04:51:54Z
+
+Done :)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-01T19:17:28Z
+
+to keep the flow straight forward, I would love, if you could squash your commits and create a PR on the original llm-chain lib. We can cherry-pick then afterwards
+
+---------------------------------------------------------------------------
+
+by smnandre at 2025-07-02T00:31:28Z
+
+Wait, so .. i must have two separated forks, work on AI, rename paths but also concepts from one to the other, open the PR on LLM, and then it's done here ? :|
+
+Could we ease that process a bit?
+
+---------------------------------------------------------------------------
+
+by smnandre at 2025-07-02T00:31:52Z
+
+(rebased and squashed here)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-02T04:27:12Z
+
+A right, you must rename the namespaces and so on, didn't thought about this. Ok then nvm, let's merge it here
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-04T20:30:14Z
+
+This is great - thanks for adding that @smnandre :pray:
