@@ -1,0 +1,15 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-06T22:10:00Z
+
+switched to `!isset(...)` :+1:
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-07T21:16:37Z
+
+> Thank you.
+>
+> Instead of counting, we can compare arrays with an empty array.
+
+found some other places as well --- hope i found all `0 === \count(...)` and `0 !== \count(...)` places
