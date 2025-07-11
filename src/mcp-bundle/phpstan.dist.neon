@@ -2,6 +2,3 @@ parameters:
     level: 6
     paths:
         - src/
-    excludePaths:
-        analyse:
-            - src/DependencyInjection/Configuration.php
