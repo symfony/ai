@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\McpBundle;
 
-use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
-final class McpBundle extends Bundle
+final class McpBundle extends AbstractBundle
 {
 }
