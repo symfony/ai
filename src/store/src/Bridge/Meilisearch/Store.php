@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Store\Bridge\Meilisearch;
 
-use RuntimeException;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
@@ -48,7 +47,7 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
             return;
         }
 
-        throw new RuntimeException(\sprintf('An error occurred while adding documents to Meilisearch: %s', $response['error']));
+        throw new \RuntimeException(\sprintf('An error occurred while adding documents to Meilisearch: %s', $response['error']));
     }
 
     public function query(Vector $vector, array $options = [], ?float $minScore = null): array
@@ -61,7 +60,7 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
         ]);
 
         if (200 !== $response['status']) {
-            throw new RuntimeException(\sprintf('An error occurred while querying Meilisearch: %s', $response['error']));
+            throw new \RuntimeException(\sprintf('An error occurred while querying Meilisearch: %s', $response['error']));
         }
 
         return array_map($this->convertToVectorDocument(...), $response['hits']);
@@ -81,7 +80,7 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
         ]);
 
         if (202 !== $indexCreationResponse->getStatusCode()) {
-            throw new RuntimeException(\sprintf('An error occurred while creating Meilisearch index: %s', $indexCreationResponse->getContent(false)));
+            throw new \RuntimeException(\sprintf('An error occurred while creating Meilisearch index: %s', $indexCreationResponse->getContent(false)));
         }
     }
 
@@ -90,7 +89,7 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
         $url = \sprintf('%s/indexes/%s/%s', $this->endpointUrl, $this->indexName, $endpoint);
         $response = $this->httpClient->request($method, $url, [
             'headers' => [
-                'Authorization' => sprintf('Bearer %s', $this->apiKey),
+                'Authorization' => \sprintf('Bearer %s', $this->apiKey),
             ],
             'json' => $payload,
         ]);
@@ -106,7 +105,7 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
                 $this->embedder => [
                     'embeddings' => $document->vector->getData(),
                     'regenerate' => false,
-                ]
+                ],
             ],
         ], $document->metadata->getArrayCopy());
     }
