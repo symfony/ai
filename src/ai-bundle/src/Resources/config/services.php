@@ -17,8 +17,10 @@ use Symfony\AI\Agent\StructuredOutput\ResponseFormatFactoryInterface;
 use Symfony\AI\Agent\Toolbox\AgentProcessor as ToolProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactoryInterface;
+use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AIBundle\Profiler\DataCollector;
 use Symfony\AI\AIBundle\Profiler\TraceableToolbox;
 
@@ -51,6 +53,8 @@ return static function (ContainerConfigurator $container): void {
             ->alias(ToolboxInterface::class, Toolbox::class)
         ->set(ReflectionToolFactory::class)
             ->alias(ToolFactoryInterface::class, ReflectionToolFactory::class)
+        ->set(ToolResultConverter::class)
+        ->set(ToolCallArgumentResolver::class)
         ->set('symfony_ai.tool.agent_processor.abstract')
             ->class(ToolProcessor::class)
             ->abstract()
