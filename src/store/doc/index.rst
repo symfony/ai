@@ -49,6 +49,7 @@ Supported Stores
 * `MariaDB`_ (requires `ext-pdo`)
 * `MongoDB Atlas`_ (requires `mongodb/mongodb` as additional dependency)
 * `Pinecone`_ (requires `probots-io/pinecone-php` as additional dependency)
+* `Postgres`_ (requires `ext-pdo`)
 
 .. note::
 
@@ -90,4 +91,5 @@ This leads to a store implementing two methods::
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
 .. _`MongoDB Atlas`: https://www.mongodb.com/atlas
 .. _`Pinecone`: https://www.pinecone.io/
+.. _`Postgres`: https://www.postgresql.org/about/news/pgvector-070-released-2852/
 .. _`GitHub`: https://github.com/symfony/ai/issues/16
