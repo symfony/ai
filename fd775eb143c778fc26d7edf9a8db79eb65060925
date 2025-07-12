@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by yceruto at 2025-07-11T15:13:33Z
+
+Still work to do...
+
+---------------------------------------------------------------------------
+
+by yceruto at 2025-07-11T21:35:35Z
+
+This is ready for review!
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-12T06:44:07Z
+
+Did you by any chance try to use `git mv` for the config and extension stuff for keeping the git history there? just wondering if we have that option
+
+---------------------------------------------------------------------------
+
+by yceruto at 2025-07-12T19:54:43Z
+
+@chr-hertel I already did that, but GitHub still shows them as new files instead of recognizing them as moved
