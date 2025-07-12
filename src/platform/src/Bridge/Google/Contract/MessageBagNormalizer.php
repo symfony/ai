@@ -44,7 +44,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
      *          role: 'model'|'user',
      *          parts: array<int, mixed>
      *      }>,
-     *      system_instruction?: array{parts: array{text: string}}
+     *      system_instruction?: array{parts: array{text: string}[]}
      *  }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
@@ -53,7 +53,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
 
         if (null !== $systemMessage = $data->getSystemMessage()) {
             $array['system_instruction'] = [
-                'parts' => ['text' => $systemMessage->content],
+                'parts' => [['text' => $systemMessage->content]],
             ];
         }
 

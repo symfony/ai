@@ -149,7 +149,7 @@ final class MessageBagNormalizerTest extends TestCase
                     ['role' => 'user', 'parts' => [['text' => 'Hello there']]],
                 ],
                 'system_instruction' => [
-                    'parts' => ['text' => 'You are a cat. Your name is Neko.'],
+                    'parts' => [['text' => 'You are a cat. Your name is Neko.']],
                 ],
             ],
         ];
