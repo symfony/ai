@@ -35,11 +35,9 @@ use Symfony\AI\Platform\Bridge\Google\PlatformFactory as GooglePlatformFactory;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory as MistralPlatformFactory;
-use Symfony\AI\Platform\Bridge\OpenAI\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAI\GPT;
 use Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory as OpenAIPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
-use Symfony\AI\Platform\Bridge\Voyage\Voyage;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
@@ -468,20 +466,22 @@ final class AIExtension extends Extension
      */
     private function processIndexerConfig(int|string $name, array $config, ContainerBuilder $container): void
     {
-        ['name' => $modelName, 'version' => $version, 'options' => $options] = $config['model'];
+        ['className' => $modelClassName, 'version' => $version, 'options' => $options] = $config['model'];
 
-        $modelClass = match (strtolower((string) $modelName)) {
-            'embeddings' => Embeddings::class,
-            'voyage' => Voyage::class,
-            default => throw new \InvalidArgumentException(\sprintf('Model "%s" is not supported.', $modelName)),
-        };
-        $modelDefinition = (new Definition($modelClass));
+        if (!is_a($modelClassName, Model::class, true)) {
+            throw new \InvalidArgumentException(\sprintf('"%s" class is not extending Symfony\AI\Platform\Model.', $modelClassName));
+        }
+
+        $modelDefinition = (new Definition((string) $modelClassName));
+
         if (null !== $version) {
             $modelDefinition->setArgument('$name', $version);
         }
+
         if ([] !== $options) {
             $modelDefinition->setArgument('$options', $options);
         }
+
         $modelDefinition->addTag('symfony_ai.model.embeddings_model');
         $container->setDefinition('symfony_ai.indexer.'.$name.'.model', $modelDefinition);
 
