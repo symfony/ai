@@ -26,8 +26,7 @@
         "symfony/ai-platform": "@dev",
         "symfony/clock": "^6.4 || ^7.1",
         "symfony/http-client": "^6.4 || ^7.1",
-        "symfony/uid": "^6.4 || ^7.1",
-        "webmozart/assert": "^1.11"
+        "symfony/uid": "^6.4 || ^7.1"
     },
     "require-dev": {
         "ext-pdo": "*",

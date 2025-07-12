@@ -12,7 +12,6 @@
 namespace Symfony\AI\Store\Document;
 
 use Symfony\Component\Uid\Uuid;
-use Webmozart\Assert\Assert;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -24,6 +23,6 @@ final readonly class TextDocument
         public string $content,
         public Metadata $metadata = new Metadata(),
     ) {
-        Assert::stringNotEmpty(trim($this->content));
+        '' !== trim($this->content) || throw new \InvalidArgumentException('The content shall not be an empty string');
     }
 }

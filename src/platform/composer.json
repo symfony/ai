@@ -32,8 +32,7 @@
         "symfony/property-info": "^6.4 || ^7.1",
         "symfony/serializer": "^6.4 || ^7.1",
         "symfony/type-info": "^7.2.3",
-        "symfony/uid": "^6.4 || ^7.1",
-        "webmozart/assert": "^1.11"
+        "symfony/uid": "^6.4 || ^7.1"
     },
     "require-dev": {
         "async-aws/bedrock-runtime": "^0.1.0",
