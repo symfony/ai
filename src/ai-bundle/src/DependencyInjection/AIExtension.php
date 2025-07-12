@@ -16,14 +16,11 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\OutputProcessorInterface;
-use Symfony\AI\Agent\StructuredOutput\AgentProcessor as StructureOutputProcessor;
-use Symfony\AI\Agent\Toolbox\AgentProcessor as ToolProcessor;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
-use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\AIBundle\Profiler\DataCollector;
 use Symfony\AI\AIBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AIBundle\Profiler\TraceableToolbox;
@@ -293,7 +290,7 @@ final class AIExtension extends Extension
                 $memoryFactoryDefinition = new Definition(MemoryToolFactory::class);
                 $container->setDefinition('symfony_ai.toolbox.'.$name.'.memory_factory', $memoryFactoryDefinition);
                 $chainFactoryDefinition = new Definition(ChainFactory::class, [
-                    '$factories' => [new Reference('symfony_ai.toolbox.'.$name.'.memory_factory'), new Reference(ReflectionToolFactory::class)],
+                    '$factories' => [new Reference('symfony_ai.toolbox.'.$name.'.memory_factory'), new Reference('symfony_ai.tool.reflection_tool_factory')],
                 ]);
                 $container->setDefinition('symfony_ai.toolbox.'.$name.'.chain_factory', $chainFactoryDefinition);
 
@@ -341,15 +338,15 @@ final class AIExtension extends Extension
                 $inputProcessors[] = new Reference('symfony_ai.tool.agent_processor.'.$name);
                 $outputProcessors[] = new Reference('symfony_ai.tool.agent_processor.'.$name);
             } else {
-                $inputProcessors[] = new Reference(ToolProcessor::class);
-                $outputProcessors[] = new Reference(ToolProcessor::class);
+                $inputProcessors[] = new Reference('symfony_ai.toolbox.agent_processor');
+                $outputProcessors[] = new Reference('symfony_ai.toolbox.agent_processor');
             }
         }
 
         // STRUCTURED OUTPUT
         if ($config['structured_output']) {
-            $inputProcessors[] = new Reference(StructureOutputProcessor::class);
-            $outputProcessors[] = new Reference(StructureOutputProcessor::class);
+            $inputProcessors[] = new Reference('symfony_ai.structured_output.structured_output_processor');
+            $outputProcessors[] = new Reference('symfony_ai.structured_output.structured_output_processor');
         }
 
         // SYSTEM PROMPT
