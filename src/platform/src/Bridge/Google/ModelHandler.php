@@ -73,7 +73,7 @@ final readonly class ModelHandler implements ModelClientInterface, ResponseConve
         unset($generationConfig['generationConfig']['server_tools']);
 
         if (isset($options['tools'])) {
-            $generationConfig['tools'] = $options['tools'];
+            $generationConfig['tools'][] = ['functionDeclarations' => $options['tools']];
             unset($options['tools']);
         }
 

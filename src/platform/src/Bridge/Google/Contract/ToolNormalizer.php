@@ -38,23 +38,17 @@ final class ToolNormalizer extends ModelContractNormalizer
      * @param Tool $data
      *
      * @return array{
-     *     functionDeclarations: array{
-     *         name: string,
-     *         description: string,
-     *         parameters: JsonSchema|array{type: 'object'}
-     *     }[]
+     *     name: string,
+     *     description: string,
+     *     parameters: JsonSchema|array{type: 'object'}
      * }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         return [
-            'functionDeclarations' => [
-                [
-                    'description' => $data->description,
-                    'name' => $data->name,
-                    'parameters' => $data->parameters ? $this->removeAdditionalProperties($data->parameters) : null,
-                ],
-            ],
+            'description' => $data->description,
+            'name' => $data->name,
+            'parameters' => $data->parameters ? $this->removeAdditionalProperties($data->parameters) : null,
         ];
     }
 

@@ -99,29 +99,25 @@ final class ToolNormalizerTest extends TestCase
                 ],
             ),
             [
-                'functionDeclarations' => [
-                    [
-                        'description' => 'A tool with required parameters',
-                        'name' => 'tool_required_params',
-                        'parameters' => [
+                'description' => 'A tool with required parameters',
+                'name' => 'tool_required_params',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'text' => [
+                            'type' => 'string',
+                            'description' => 'Text parameter',
+                        ],
+                        'number' => [
+                            'type' => 'integer',
+                            'description' => 'Number parameter',
+                        ],
+                        'nestedObject' => [
                             'type' => 'object',
-                            'properties' => [
-                                'text' => [
-                                    'type' => 'string',
-                                    'description' => 'Text parameter',
-                                ],
-                                'number' => [
-                                    'type' => 'integer',
-                                    'description' => 'Number parameter',
-                                ],
-                                'nestedObject' => [
-                                    'type' => 'object',
-                                    'description' => 'bar',
-                                ],
-                            ],
-                            'required' => ['text', 'number'],
+                            'description' => 'bar',
                         ],
                     ],
+                    'required' => ['text', 'number'],
                 ],
             ],
         ];
@@ -134,13 +130,9 @@ final class ToolNormalizerTest extends TestCase
                 null,
             ),
             [
-                'functionDeclarations' => [
-                    [
-                        'description' => 'A tool without parameters',
-                        'name' => 'tool_no_params',
-                        'parameters' => null,
-                    ],
-                ],
+                'description' => 'A tool without parameters',
+                'name' => 'tool_no_params',
+                'parameters' => null,
             ],
         ];
     }
