@@ -40,14 +40,12 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
     public function add(VectorDocument ...$documents): void
     {
         $response = $this->request('PUT', 'documents', array_map(
-            static fn (VectorDocument $document): array => $this->convertToIndexableArray(...), $documents)
+            fn (VectorDocument $document): array => [$this, 'convertToIndexableArray'], $documents)
         );
 
-        if (200 === $response['status']) {
-            return;
+        if (202 !== $response['status']) {
+            throw new \RuntimeException(\sprintf('An error occurred while adding documents to Meilisearch: %s', $response['error']));
         }
-
-        throw new \RuntimeException(\sprintf('An error occurred while adding documents to Meilisearch: %s', $response['error']));
     }
 
     public function query(Vector $vector, array $options = [], ?float $minScore = null): array
@@ -63,7 +61,7 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
             throw new \RuntimeException(\sprintf('An error occurred while querying Meilisearch: %s', $response['error']));
         }
 
-        return array_map($this->convertToVectorDocument(...), $response['hits']);
+        return array_map([$this, 'convertToVectorDocument'], $response['hits']);
     }
 
     public function initialize(array $options = []): void
@@ -84,6 +82,11 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
         }
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
     private function request(string $method, string $endpoint, array $payload): array
     {
         $url = \sprintf('%s/indexes/%s/%s', $this->endpointUrl, $this->indexName, $endpoint);
@@ -97,6 +100,9 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
         return $response->toArray();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function convertToIndexableArray(VectorDocument $document): array
     {
         return array_merge([
