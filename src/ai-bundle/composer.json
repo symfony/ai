@@ -25,7 +25,9 @@
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^11.5"
+        "phpunit/phpunit": "^11.5",
+        "symfony/expression-language": "^6.4 || ^7.0",
+        "symfony/security-core": "^6.4 || ^7.0"
     },
     "config": {
         "sort-packages": true

@@ -21,6 +21,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactoryInterface;
 use Symfony\AI\AIBundle\Profiler\DataCollector;
 use Symfony\AI\AIBundle\Profiler\TraceableToolbox;
+use Symfony\AI\AIBundle\Security\EventListener\IsGrantedToolAttributeListener;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
@@ -65,6 +66,8 @@ return static function (ContainerConfigurator $container): void {
                 '$toolbox' => service(ToolboxInterface::class),
                 '$eventDispatcher' => service('event_dispatcher')->nullOnInvalid(),
             ])
+        ->set('symfony_ai.security.is_granted_attribute_listener', IsGrantedToolAttributeListener::class)
+            ->tag('kernel.event_listener')
 
         // profiler
         ->set(DataCollector::class)
