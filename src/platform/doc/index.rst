@@ -72,8 +72,16 @@ usually defined by the specific models and their documentation.
 * **Language Models**
     * `OpenAI's GPT`_ with `OpenAI`_ and `Azure`_ as Platform
     * `Anthropic's Claude`_ with `Anthropic`_ and `AWS Bedrock`_ as Platform
-    * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_ and `AWS Bedrock`_ as Platform
+    * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_, `AWS Bedrock`_ and `Groq`_ as Platform
+    * `Google's Gemma`_ with `Groq`_ as Platform
+    * `Mistral's Mixtral`_ with `Groq`_ as Platform
+    * `Alibaba's Qwen`_ with `Groq`_ as Platform
+
+.. note::
+
+    While Groq supports various models, specific API requirements or limitations might apply. Refer to Groq's official documentation for details.
     * `Google's Gemini`_ with `Google`_ and `OpenRouter`_ as Platform
+    * `Groq's Llama`_ with `Groq`_ as Platform
     * `DeepSeek's R1`_ with `OpenRouter`_ as Platform
     * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
     * `Mistral's Mistral`_ with `Mistral`_ as Platform
@@ -304,6 +312,11 @@ which can be useful to speed up the processing::
 .. _`Google's Gemini`: https://gemini.google.com/
 .. _`Google`: https://ai.google.dev/
 .. _`OpenRouter`: https://www.openrouter.com/
+.. _`Groq's Llama`: https://console.groq.com/docs/overview
+.. _`Groq`: https://groq.com/
+.. _`Google's Gemma`: https://ai.google.dev/models/gemma
+.. _`Mistral's Mixtral`: https://mistral.ai/news/mixtral-8x7b/
+.. _`Alibaba's Qwen`: https://qwen.ai
 .. _`DeepSeek's R1`: https://www.deepseek.com/
 .. _`Amazon's Nova`: https://nova.amazon.com
 .. _`Mistral's Mistral`: https://www.mistral.ai/
