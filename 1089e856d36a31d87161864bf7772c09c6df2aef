@@ -1,0 +1,21 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2025-07-13T16:24:08Z
+
+Rebased & added docs.
+
+About PHPStan error, not sure what to do with it, it's about this 3rd parameter: https://github.com/symfony/symfony/blob/7.4/src/Symfony/Component/Security/Core/Authorization/AuthorizationCheckerInterface.php#L27
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-13T23:51:52Z
+
+> About PHPStan error, not sure what to do with it, it's about this 3rd parameter
+
+my first thought here would be to ignore the error in the `phpstan.dist.neon` with some kind of comment that we can drop it one day - when dropping Symfony 7.4 support?
+
+---------------------------------------------------------------------------
+
+by valtzu at 2025-07-14T11:43:08Z
+
+Thanks, adjusted based on your feedback, pipe finally green :relieved:
