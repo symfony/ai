@@ -1,0 +1,134 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-13T09:49:26Z
+
+Hi @chr-hertel 👋🏻
+
+The PR is fixed, the CI fails due to a zip error (not on unit tests side), the store is improved and tested 🙂
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-13T10:27:50Z
+
+Thanks for the update and especially the docker changes - now I can easily run it, but I get this error while executing the example:
+```
+php store/meilisearch-similarity-search.php
+PHP Fatal error:  Uncaught Symfony\Component\HttpClient\Exception\InvalidArgumentException: Invalid URL: scheme is missing in "indexes". Did you forget to add "http(s)://"? in /home/christopher/Projects/SymfonyAI/repo/examples/vendor/symfony/http-client/HttpClientTrait.php:580
+Stack trace:
+#0 /home/christopher/Projects/SymfonyAI/repo/examples/vendor/symfony/http-client/HttpClientTrait.php(178): Symfony\Component\HttpClient\CurlHttpClient::resolveUrl()
+#1 /home/christopher/Projects/SymfonyAI/repo/examples/vendor/symfony/http-client/CurlHttpClient.php(100): Symfony\Component\HttpClient\CurlHttpClient::prepareRequest()
+#2 /home/christopher/Projects/SymfonyAI/repo/src/store/src/Bridge/Meilisearch/Store.php(72): Symfony\Component\HttpClient\CurlHttpClient->request()
+#3 /home/christopher/Projects/SymfonyAI/repo/examples/store/meilisearch-similarity-search.php(64): Symfony\AI\Store\Bridge\Meilisearch\Store->initialize()
+#4 {main}
+  thrown in /home/christopher/Projects/SymfonyAI/repo/examples/vendor/symfony/http-client/HttpClientTrait.php on line 580
+```
+
+i'm just using the default values you provided with the `.env` file
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-13T11:24:49Z
+
+Ah yes, forgot to call `request` method during the index initialization, the clients wasn't fully configured and the error occurred when you've called `initialize`, it should be better now 🙂
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-13T14:13:43Z
+
+Yes, that works better - now I'm getting this error:
+> Invalid value type at `.hybrid.semanticRatio`: expected a number, but found a string: `"1.0"`
+
+which refers to this: https://github.com/symfony/ai/pull/105/files#diff-969e7ab9dcae7946fdb6f82fcc866bb86e4389e23e3d40b752e3976de997dd09R58
+
+after fixing this, i get the next one:
+> Cannot find embedder with name `default`.
+
+Looks like I'm doing something wrong while running the example or is it also failing for you?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-13T15:05:14Z
+
+Ah yes, forgot about the initialization of an embedder in `initialize`, I added the dimensions as constructor argument (required as we don't know which model is used by the end user).
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-13T17:34:49Z
+
+@Guikingone so the provided example runs locally for you and is functional?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-13T17:37:36Z
+
+Yes, works locally (I failed to see the indexes embeddings as my local indexes were already configured) 🙂
+
+However, I can't run the script in `examples`, I need to create a new file 🤔
+
+> Thanks for the update and especially the docker changes - now I can easily run it, but I get this error while executing the example:
+>
+> ```
+> php store/meilisearch-similarity-search.php
+> PHP Fatal error:  Uncaught Symfony\Component\HttpClient\Exception\InvalidArgumentException: Invalid URL: scheme is missing in "indexes". Did you forget to add "http(s)://"? in /home/christopher/Projects/SymfonyAI/repo/examples/vendor/symfony/http-client/HttpClientTrait.php:580
+> Stack trace:
+> #0 /home/christopher/Projects/SymfonyAI/repo/examples/vendor/symfony/http-client/HttpClientTrait.php(178): Symfony\Component\HttpClient\CurlHttpClient::resolveUrl()
+> #1 /home/christopher/Projects/SymfonyAI/repo/examples/vendor/symfony/http-client/CurlHttpClient.php(100): Symfony\Component\HttpClient\CurlHttpClient::prepareRequest()
+> #2 /home/christopher/Projects/SymfonyAI/repo/src/store/src/Bridge/Meilisearch/Store.php(72): Symfony\Component\HttpClient\CurlHttpClient->request()
+> #3 /home/christopher/Projects/SymfonyAI/repo/examples/store/meilisearch-similarity-search.php(64): Symfony\AI\Store\Bridge\Meilisearch\Store->initialize()
+> #4 {main}
+>   thrown in /home/christopher/Projects/SymfonyAI/repo/examples/vendor/symfony/http-client/HttpClientTrait.php on line 580
+> ```
+>
+> i'm just using the default values you provided with the `.env` file
+
+How are you running this file? Any error on the autoload? 🤔
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-13T17:48:18Z
+
+like this:
+<img width="1922" height="707" alt="image" src="https://github.com/user-attachments/assets/a18d37a1-c38d-4cf3-a37d-5721d4afd5ee" />
+
+And the underlying issue that OpenAI returns is
+> This model's maximum context length is 128000 tokens. However, your messages resulted in 281690 tokens (281645 in the messages, 45 in the functions). Please reduce the length of the messages or functions.
+
+Due to the fact that the vectors are part of the payload. Might be rather a design flaw of the `SimiliaritySearch` feature than your implementation tho :thinking:
+
+Was just wondering if it's only me, or if the example works for you
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-13T17:52:51Z
+
+Strange, if I try to run the script from `examples`, here's my error:
+
+<img width="1654" height="224" alt="Capture d’écran 2025-07-13 à 19 52 01" src="https://github.com/user-attachments/assets/6d44d9dc-2b65-4253-83e7-6dadc6b1c56a" />
+
+Regarding the issue with OpenAI, that seems strange, I'll take a look, maybe I missed something 🤔
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-13T18:16:14Z
+
+Ah, I know that one, that should've been documented, sorry - see #112
+
+The issue is that Composer is installing the dependencies from main currently and therefore your new class is not available. Meaning, after `composer install` you can run `../link`  to bring in your locally changed code
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-13T18:19:39Z
+
+Oh, and that's blocked by #108 :see_no_evil: - a bit rough here still :D
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-14T08:37:20Z
+
+Hi @chr-hertel 👋🏻
+
+Regarding the issue you mentioned yesterday, here's my local output:
+
+<img width="1423" height="223" alt="Capture d’écran 2025-07-14 à 10 31 31" src="https://github.com/user-attachments/assets/46f57293-23bd-45af-9a93-43a9ec697e77" />
+
+It seems to work "as expected", I got some errors on the Meilisearch instance but this is due to the `initialize` call that it's called each time (if the index is already in place, MS trigger an error in the logs).
