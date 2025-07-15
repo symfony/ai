@@ -1,0 +1,51 @@
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-07-11T13:06:12Z
+
+Repost original comment from @chr-hertel (https://github.com/php-llm/llm-chain-bundle/pull/99#issuecomment-3037211345):
+
+> Yup, that first implementation was def too stupid, true. And I guess the className thing is something that should be supported - especially when you thin about user land model classes for example.
+>
+> However, looking at this config:
+>
+> ```yaml
+> llm_chain:
+>     embedder:
+>         default:
+>             platform: 'llm_chain.platform.mistral'
+>             model:
+>                 name: 'PhpLlm\LlmChain\Platform\Bridge\Mistral\Embeddings'
+>                 version: 'mistral-embed'
+> ```
+>
+> This is a bit redundant, right? the service `llm_chain.platform.mistral` would anyways only support one embeddings class - I think we could also solve that by the `Platform` exposing which models (and their names) it would support. so that we would basically only chose from a subset of those classes.
+>
+> WDYT?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-12T07:50:17Z
+
+Yes, let's do this to unblock the usage for now - we can work on a slimmer config as a next step.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-12T21:02:38Z
+
+Conflicts after merging #94, but rebase should do the trick hopefully
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-07-15T12:46:04Z
+
+@chr-hertel comment addressed, I made the same changes on Agent configuration.
+Docs and demo are also fixed.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-15T14:31:50Z
+
+Follow up ideas:
+- Generic model classes should be possible
+- Is the model a service? feels a bit odd since it looks like a DTO but also carries configuration
+- A Platform usually defines already a set of models - why bother to configure it explicitly!?
