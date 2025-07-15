@@ -1,0 +1,51 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-11T18:49:32Z
+
+yes, agree as well, but for the Platform component you'd need to replace more code - or keep it for now and only take action on store
+
+---------------------------------------------------------------------------
+
+by Spomky at 2025-07-11T20:42:27Z
+
+Yes indeed. I will continue this PR when I get back home on Thursday.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-15T08:33:19Z
+
+I will prepare a PR to add unit tests for the code parts using the lib. So we can merge my PR first, then rebase and check the CI 👍
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-15T09:45:58Z
+
+Here you go:
+* https://github.com/symfony/ai/pull/126
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-15T11:07:56Z
+
+Merged Oskar's tests, rebase please :)
+
+---------------------------------------------------------------------------
+
+by Spomky at 2025-07-15T11:59:04Z
+
+Thanks. Rebased, squashed and tests are ok.
+I noted there are `InvalidArgumentException` classes in `ai-platform`, `agent` and `store`.
+As `agent` and `store` depend `on ai-platform`, do you think interesting to remove redundant classes? (not here, but another PR)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-15T12:13:18Z
+
+From a design point of view my understanding was that we want exceptions clustered per package - rather a best practice than tho.
+how does `symfony/symfony` handle this? throwing exceptions of a dependency feels a bit odd to me - it's an extra dependency and not explicitly design for that :thinking:
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-15T12:15:31Z
+
+Yes per package, imagine you are just using one package, the exception will not be available.
