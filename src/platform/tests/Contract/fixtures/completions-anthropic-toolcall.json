@@ -1,0 +1,29 @@
+{
+    "id": "msg_01R3Xu5xrZ8rrRvriYNnN4i9",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-3-7-sonnet-20250219",
+    "content": [
+        {
+            "type": "text",
+            "text": "I'll search for information about the current Chancellor of Germany."
+        },
+        {
+            "type": "tool_use",
+            "id": "toolu_016TN1ECC5J3VL7iWqFoQ9g6",
+            "name": "wikipedia_search",
+            "input": {
+                "query": "current Chancellor of Germany"
+            }
+        }
+    ],
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "usage": {
+        "input_tokens": 480,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 69,
+        "service_tier": "standard"
+    }
+}
