@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform;
 
+use Symfony\AI\Platform\Contract\ResultConverter\VectorResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultPromise;
@@ -41,7 +42,10 @@ final class Platform implements PlatformInterface
     ) {
         $this->contract = $contract ?? Contract::create();
         $this->modelClients = $modelClients instanceof \Traversable ? iterator_to_array($modelClients) : $modelClients;
-        $this->resultConverters = $resultConverters instanceof \Traversable ? iterator_to_array($resultConverters) : $resultConverters;
+        $this->resultConverters = array_merge(
+            $resultConverters instanceof \Traversable ? iterator_to_array($resultConverters) : $resultConverters,
+            [new VectorResultConverter()],
+        );
     }
 
     public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise

@@ -31,6 +31,6 @@ class Voyage extends Model
      */
     public function __construct(string $name = self::V3, array $options = [])
     {
-        parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
+        parent::__construct($name, [Capability::INPUT_MULTIPLE, Capability::OUTPUT_VECTOR], $options);
     }
 }

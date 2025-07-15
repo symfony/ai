@@ -32,7 +32,7 @@ final class PlatformFactory
 
         return new Platform(
             [new Embeddings\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey)],
-            [new Embeddings\ResultConverter(), new Llm\ResultConverter()],
+            [new Llm\ResultConverter()],
             $contract ?? Contract::create(new ToolNormalizer()),
         );
     }

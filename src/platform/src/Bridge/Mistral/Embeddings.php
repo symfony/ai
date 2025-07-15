@@ -28,6 +28,6 @@ final class Embeddings extends Model
         string $name = self::MISTRAL_EMBED,
         array $options = [],
     ) {
-        parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
+        parent::__construct($name, [Capability::INPUT_MULTIPLE, Capability::OUTPUT_VECTOR], $options);
     }
 }

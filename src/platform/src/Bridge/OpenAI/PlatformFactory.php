@@ -41,7 +41,6 @@ final readonly class PlatformFactory
             ],
             [
                 new GPT\ResultConverter(),
-                new Embeddings\ResultConverter(),
                 new DallE\ResultConverter(),
                 new WhisperResponseConverter(),
             ],

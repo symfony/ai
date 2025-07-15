@@ -32,6 +32,6 @@ class Embeddings extends Model
      */
     public function __construct(string $name = self::GEMINI_EMBEDDING_EXP_03_07, array $options = [])
     {
-        parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
+        parent::__construct($name, [Capability::INPUT_MULTIPLE, Capability::OUTPUT_VECTOR], $options);
     }
 }

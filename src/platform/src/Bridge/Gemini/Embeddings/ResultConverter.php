@@ -11,37 +11,15 @@
 
 namespace Symfony\AI\Platform\Bridge\Gemini\Embeddings;
 
-use Symfony\AI\Platform\Bridge\Gemini\Embeddings;
-use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\RawResultInterface;
-use Symfony\AI\Platform\Result\VectorResult;
-use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Platform\Contract\ResultConverter\VectorResultConverter;
 
 /**
  * @author Valtteri R <valtzu@gmail.com>
  */
-final readonly class ResultConverter implements ResultConverterInterface
+final readonly class ResultConverter extends VectorResultConverter
 {
-    public function supports(Model $model): bool
+    public function __construct()
     {
-        return $model instanceof Embeddings;
-    }
-
-    public function convert(RawResultInterface $result, array $options = []): VectorResult
-    {
-        $data = $result->getData();
-
-        if (!isset($data['embeddings'])) {
-            throw new RuntimeException('Response does not contain data');
-        }
-
-        return new VectorResult(
-            ...array_map(
-                static fn (array $item): Vector => new Vector($item['values']),
-                $data['embeddings'],
-            ),
-        );
+        parent::__construct('$.embeddings[*].values');
     }
 }
