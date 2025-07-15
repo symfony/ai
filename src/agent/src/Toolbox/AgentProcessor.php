@@ -46,13 +46,8 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
 
     public function processInput(Input $input): void
     {
-        $options = $input->getOptions();
-        if (!isset($options['tools'])) {
-            return;
-        }
-
         if (!$input->model->supports(Capability::TOOL_CALLING)) {
-            throw MissingModelSupportException::forToolCalling($input->model::class);
+            return;
         }
 
         $toolMap = $this->toolbox->getTools();
