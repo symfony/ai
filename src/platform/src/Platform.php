@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform;
 
+use Symfony\AI\Platform\Contract\ResponseConverter\VectorResponseConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Response\RawHttpResponse;
 use Symfony\AI\Platform\Response\ResponsePromise;
@@ -42,7 +43,10 @@ final class Platform implements PlatformInterface
     ) {
         $this->contract = $contract ?? Contract::create();
         $this->modelClients = $modelClients instanceof \Traversable ? iterator_to_array($modelClients) : $modelClients;
-        $this->responseConverter = $responseConverter instanceof \Traversable ? iterator_to_array($responseConverter) : $responseConverter;
+        $this->responseConverter = array_merge(
+            $responseConverter instanceof \Traversable ? iterator_to_array($responseConverter) : $responseConverter,
+            [new VectorResponseConverter()],
+        );
     }
 
     public function request(Model $model, array|string|object $input, array $options = []): ResponsePromise

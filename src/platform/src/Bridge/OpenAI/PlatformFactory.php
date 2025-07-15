@@ -14,7 +14,6 @@ namespace Symfony\AI\Platform\Bridge\OpenAI;
 use Symfony\AI\Platform\Bridge\OpenAI\DallE\ModelClient as DallEModelClient;
 use Symfony\AI\Platform\Bridge\OpenAI\DallE\ResponseConverter as DallEResponseConverter;
 use Symfony\AI\Platform\Bridge\OpenAI\Embeddings\ModelClient as EmbeddingsModelClient;
-use Symfony\AI\Platform\Bridge\OpenAI\Embeddings\ResponseConverter as EmbeddingsResponseConverter;
 use Symfony\AI\Platform\Bridge\OpenAI\GPT\ModelClient as GPTModelClient;
 use Symfony\AI\Platform\Bridge\OpenAI\GPT\ResponseConverter as GPTResponseConverter;
 use Symfony\AI\Platform\Bridge\OpenAI\Whisper\AudioNormalizer;
@@ -47,7 +46,6 @@ final readonly class PlatformFactory
             ],
             [
                 new GPTResponseConverter(),
-                new EmbeddingsResponseConverter(),
                 new DallEResponseConverter(),
                 new WhisperResponseConverter(),
             ],

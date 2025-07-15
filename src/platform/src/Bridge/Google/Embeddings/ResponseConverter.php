@@ -11,37 +11,15 @@
 
 namespace Symfony\AI\Platform\Bridge\Google\Embeddings;
 
-use Symfony\AI\Platform\Bridge\Google\Embeddings;
-use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\VectorResponse;
-use Symfony\AI\Platform\ResponseConverterInterface;
-use Symfony\AI\Platform\Vector\Vector;
-use Symfony\Contracts\HttpClient\ResponseInterface;
+use Symfony\AI\Platform\Contract\ResponseConverter\VectorResponseConverter;
 
 /**
  * @author Valtteri R <valtzu@gmail.com>
  */
-final readonly class ResponseConverter implements ResponseConverterInterface
+final readonly class ResponseConverter extends VectorResponseConverter
 {
-    public function supports(Model $model): bool
+    public function __construct()
     {
-        return $model instanceof Embeddings;
-    }
-
-    public function convert(ResponseInterface $response, array $options = []): VectorResponse
-    {
-        $data = $response->toArray();
-
-        if (!isset($data['embeddings'])) {
-            throw new RuntimeException('Response does not contain data');
-        }
-
-        return new VectorResponse(
-            ...array_map(
-                static fn (array $item): Vector => new Vector($item['values']),
-                $data['embeddings'],
-            ),
-        );
+        parent::__construct('$.embeddings[*].values');
     }
 }
