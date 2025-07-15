@@ -13,6 +13,9 @@ namespace Symfony\AI\Platform\Bridge\Anthropic;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Contract\ResultExtractor\StreamResultExtractor;
+use Symfony\AI\Platform\Contract\ResultExtractor\TextResultExtractor;
+use Symfony\AI\Platform\Contract\ResultExtractor\ToolCallResultExtractor;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -31,7 +34,20 @@ final readonly class PlatformFactory
 
         return new Platform(
             [new ModelClient($httpClient, $apiKey)],
-            [new ResultConverter()],
+            [Contract\ResultConverter::create([
+                new TextResultExtractor('$.content[?@.type == "text"].text'),
+                new ToolCallResultExtractor(
+                    '$.content[?@.type == "tool_use"]',
+                    '$.content[?@.type == "tool_use"].id',
+                    '$.content[?@.type == "tool_use"].name',
+                    '$.content[?@.type == "tool_use"].input',
+                ),
+                new StreamResultExtractor(
+                    '$.delta.text',
+                    '$.delta[?@.type == "tool_use"]',
+                    '$.delta.stop_reason',
+                ),
+            ])],
             $contract ?? AnthropicContract::create(),
         );
     }

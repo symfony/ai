@@ -1,0 +1,305 @@
+[{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "Well"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 19,
+    "totalTokenCount": 19,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 19
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+,
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": ", hello"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 19,
+    "totalTokenCount": 19,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 19
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+,
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": " there, friend! *honk honk* Why did the ant cross the road? To"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 19,
+    "totalTokenCount": 19,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 19
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+,
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": " get to the other side! But seriously, folks, what's the purpose of an"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 19,
+    "totalTokenCount": 19,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 19
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+,
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": " ant?\n\n*Adjusts oversized glasses*\n\nIt's like asking, \"What's the purpose of a tiny, hardworking, picnic-crashing, sugar"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 19,
+    "totalTokenCount": 19,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 19
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+,
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "-loving, colony-minded little... uh... let's just say 'friend'?\"\n\n*Pulls a long, colorful scarf from sleeve*\n\nThe purpose of"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 19,
+    "totalTokenCount": 19,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 19
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+,
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": " an ant, my friend, is to be a *very busy* member of its community! They are:\n\n*   **Tiny Road Crews:** They tunnel and aerate the soil, making it better for plants!\n*   **Clean"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 19,
+    "totalTokenCount": 19,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 19
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+,
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "-Up Crew:** They recycle organic material. Ever see them carrying crumbs? They're basically tiny garbage collectors!\n*   **Army of Muscle:** They move stuff! Things way bigger than themselves. It's like watching a clown"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 19,
+    "totalTokenCount": 19,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 19
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+,
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": " car emptying out - so many helpers!\n*   **Food Supply:** They're a food source for other animals. Even clowns have to eat sometimes, *ahem*.\n*   **And above all:** They help keep the ecosystem balanced!\n\n*Trips over own feet and juggles rubber chickens*\n\nSo"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 19,
+    "totalTokenCount": 19,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 19
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+,
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": ", the purpose of an ant is to work, clean, build, and generally make sure everything is just ant-astic!\n\n*Bows deeply, nose falls off.*\n\nThank you, thank you, you've been a wonderful audience! Remember, always be like an ant - hardworking, dedicated, and never afraid"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 19,
+    "totalTokenCount": 19,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 19
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+,
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": " to carry something 50 times your weight! *Honk Honk!*\n"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 18,
+    "candidatesTokenCount": 353,
+    "totalTokenCount": 371,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 18
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 353
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "nZyOaJifE8aenvgPmbyUkAY"
+}
+]

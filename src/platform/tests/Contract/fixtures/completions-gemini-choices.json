@@ -1,0 +1,61 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "1 - Ahoy there, matey! So ye be askin about this here Symfony framework, aye?"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": -0.65787949335007445
+    },
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "2 - Ahoy there, matey! So ye be askin about this \"Symfony\" thing, eh?"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 1,
+      "avgLogprobs": -0.59134642060820042
+    },
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "3 - Ahoy there, matey! So ye be wantin to know bout this \"Symfony Framework,\" eh?"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 2,
+      "avgLogprobs": -0.61313952329772126
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 15,
+    "candidatesTokenCount": 1509,
+    "totalTokenCount": 1524,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 15
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 1509
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "rZKOaMDqHpinnvgPvP6kwQE"
+}

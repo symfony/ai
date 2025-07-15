@@ -43,10 +43,9 @@ final readonly class PlatformFactory
                 new WhisperModelClient($httpClient, $apiKey, $region),
             ],
             [
-                new Gpt\ResultConverter(),
-                new Embeddings\ResultConverter(),
                 new DallE\ResultConverter(),
                 new WhisperResponseConverter(),
+                Contract\ResultConverter::create(),
             ],
             $contract ?? OpenAiContract::create(),
         );

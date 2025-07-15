@@ -13,6 +13,10 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Contract\ResultExtractor\StreamResultExtractor;
+use Symfony\AI\Platform\Contract\ResultExtractor\TextResultExtractor;
+use Symfony\AI\Platform\Contract\ResultExtractor\ToolCallResultExtractor;
+use Symfony\AI\Platform\Contract\ResultExtractor\VectorResultExtractor;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -30,9 +34,23 @@ final class PlatformFactory
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [new OllamaClient($httpClient, $hostUrl)],
-            [new OllamaResultConverter()],
-            $contract ?? OllamaContract::create()
+            [new ModelClient($httpClient, $hostUrl)],
+            [Contract\ResultConverter::create([
+                new TextResultExtractor('$.message.content'),
+                new ToolCallResultExtractor(
+                    '$.message.tool_calls',
+                    '$.message.tool_calls[*].function.id',
+                    '$.message.tool_calls[*].function.name',
+                    '$.message.tool_calls[*].function.arguments',
+                ),
+                new StreamResultExtractor(
+                    '$.message.content',
+                    '$.message.tool_calls',
+                    '$.done_reason',
+                ),
+                new VectorResultExtractor('$.embeddings[*]'),
+            ])],
+            $contract ?? OllamaContract::create(),
         );
     }
 }

@@ -32,9 +32,8 @@ class PlatformFactory
                 new ModelClient($apiKey, $httpClient, $hostUrl),
                 new Completions\ModelClient($apiKey, $httpClient, $hostUrl),
             ],
-            [
-                new Embeddings\ResultConverter(),
-                new Completions\ResultConverter(),
-            ], $contract);
+            [Contract\ResultConverter::create()],
+            $contract,
+        );
     }
 }

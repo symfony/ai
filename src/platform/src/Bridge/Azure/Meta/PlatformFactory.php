@@ -30,6 +30,6 @@ final readonly class PlatformFactory
     ): Platform {
         $modelClient = new LlamaModelClient($httpClient ?? HttpClient::create(), $baseUrl, $apiKey);
 
-        return new Platform([$modelClient], [new LlamaResultConverter()], $contract);
+        return new Platform([$modelClient], [Contract\ResultConverter::create()], $contract);
     }
 }
