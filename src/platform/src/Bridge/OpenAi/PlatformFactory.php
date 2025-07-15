@@ -40,10 +40,9 @@ final readonly class PlatformFactory
                 new WhisperModelClient($httpClient, $apiKey),
             ],
             [
-                new Gpt\ResultConverter(),
-                new Embeddings\ResultConverter(),
                 new DallE\ResultConverter(),
                 new WhisperResponseConverter(),
+                Contract\ResultConverter::create(),
             ],
             $contract ?? Contract::create(new AudioNormalizer()),
         );
