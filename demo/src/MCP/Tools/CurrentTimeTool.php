@@ -11,8 +11,6 @@
 
 namespace App\MCP\Tools;
 
-use DateTime;
-use DateTimeZone;
 use Symfony\AI\McpSdk\Capability\Tool\MetadataInterface;
 use Symfony\AI\McpSdk\Capability\Tool\ToolCall;
 use Symfony\AI\McpSdk\Capability\Tool\ToolCallResult;
@@ -25,13 +23,13 @@ class CurrentTimeTool implements MetadataInterface, ToolExecutorInterface
         $format = $input->arguments['format'] ?? 'Y-m-d H:i:s';
 
         return new ToolCallResult(
-            (new DateTime('now', new DateTimeZone('UTC')))->format($format)
+            (new \DateTime('now', new \DateTimeZone('UTC')))->format($format)
         );
     }
 
     public function getName(): string
     {
-        return 'now-time';
+        return 'current-time';
     }
 
     public function getDescription(): string
