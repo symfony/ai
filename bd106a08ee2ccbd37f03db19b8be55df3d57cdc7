@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2025-07-15T12:29:45Z
+
+I wonder if it'd be possible to use cs fixer instead, to auto-replace `\LogicException` with `Symfony\AI\Agent\Exception\LogicException` under `src/agent` etc
+
+Regardless, definitely a good idea to add it to the pipe :100:
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-15T13:02:33Z
+
+It is possible with rector from what I know
