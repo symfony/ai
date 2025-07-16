@@ -1,0 +1,43 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-14T07:02:23Z
+
+Hi @chr-hertel
+
+This PR is fixed with your reviews, the `add` method has been improved with `array_push` (better than a loop, I agree) 🙂
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-15T08:14:30Z
+
+Rebase done 👍🏻
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-15T08:24:36Z
+
+The unit tests are failing due to zip archive, nothing to do with the code.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-15T11:03:29Z
+
+@OskarStark @chr-hertel Is it okay for you if we delay the approval/merge of this PR?
+
+I might have an idea to support more sorting algorithms without adding complexity to the API.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-15T11:52:36Z
+
+Ok, should be better (thanks to `match` 😄 ), ready to review when you have time @chr-hertel @OskarStark.
+
+PS: Sorry for the previous ping.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-15T12:16:09Z
+
+> PS: Sorry for the previous ping.
+
+No need to be sorry 😃 thanks for your dedication to this project 🙏
