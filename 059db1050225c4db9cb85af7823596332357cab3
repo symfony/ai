@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-15T08:13:11Z
+
+> please remove declare(strict_types=1); - then we're good to merge this :)
+
+Can we update the PHP-CS-Fixer config?
