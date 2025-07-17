@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\OpenAI\Embeddings\ModelClient as EmbeddingsModelC
 use Symfony\AI\Platform\Bridge\OpenAI\Embeddings\ResponseConverter as EmbeddingsResponseConverter;
 use Symfony\AI\Platform\Bridge\OpenAI\GPT\ModelClient as GPTModelClient;
 use Symfony\AI\Platform\Bridge\OpenAI\GPT\ResponseConverter as GPTResponseConverter;
+use Symfony\AI\Platform\Bridge\OpenAI\Responses\InputBagNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAI\Whisper\AudioNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAI\Whisper\ModelClient as WhisperModelClient;
 use Symfony\AI\Platform\Bridge\OpenAI\Whisper\ResponseConverter as WhisperResponseConverter;
@@ -23,6 +24,8 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\AI\Platform\Bridge\OpenAI\Responses\ModelClient as ResponseModelClient;
+use Symfony\AI\Platform\Bridge\OpenAI\Responses\ResponseConverter as ResponseResponseConverter;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -45,14 +48,19 @@ final readonly class PlatformFactory
                 new EmbeddingsModelClient($httpClient, $apiKey),
                 $dallEModelClient,
                 new WhisperModelClient($httpClient, $apiKey),
+                new ResponseModelClient($httpClient, $apiKey),
             ],
             [
                 new GPTResponseConverter(),
                 new EmbeddingsResponseConverter(),
                 $dallEModelClient,
                 new WhisperResponseConverter(),
+                new ResponseResponseConverter(),
             ],
-            $contract ?? Contract::create(new AudioNormalizer()),
+            $contract ?? Contract::create(
+                new AudioNormalizer(),
+                new InputBagNormalizer(),
+            ),
         );
     }
 }
