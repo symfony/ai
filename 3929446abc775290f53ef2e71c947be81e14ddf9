@@ -1,0 +1,22 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-16T08:13:33Z
+
+> Any changes to the bundle/demo needed?
+
+I hope that's encapsulated with the PlatformFactories, but will double check later :+1:
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-16T22:36:39Z
+
+Nope, not needed - still work :+1:
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-17T08:57:17Z
+
+We just created some `CHANGELOG.md` files.
+Please rebase your branch and add info to the appropriate `CHANGELOG.md` file.
+
+Thanks
