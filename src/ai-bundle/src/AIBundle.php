@@ -79,7 +79,7 @@ final class AIBundle extends AbstractBundle
         foreach ($config['platform'] ?? [] as $type => $platform) {
             $this->processPlatformConfig($type, $platform, $builder);
         }
-        $platforms = array_keys($builder->findTaggedServiceIds('symfony_ai.platform'));
+        $platforms = array_keys($builder->findTaggedServiceIds('ai.platform'));
         if (1 === \count($platforms)) {
             $builder->setAlias(PlatformInterface::class, reset($platforms));
         }
@@ -88,9 +88,9 @@ final class AIBundle extends AbstractBundle
                 $traceablePlatformDefinition = (new Definition(TraceablePlatform::class))
                     ->setDecoratedService($platform)
                     ->setAutowired(true)
-                    ->addTag('symfony_ai.traceable_platform');
+                    ->addTag('ai.traceable_platform');
                 $suffix = u($platform)->afterLast('.')->toString();
-                $builder->setDefinition('symfony_ai.traceable_platform.'.$suffix, $traceablePlatformDefinition);
+                $builder->setDefinition('ai.traceable_platform.'.$suffix, $traceablePlatformDefinition);
             }
         }
 
@@ -98,13 +98,13 @@ final class AIBundle extends AbstractBundle
             $this->processAgentConfig($agentName, $agent, $builder);
         }
         if (1 === \count($config['agent']) && isset($agentName)) {
-            $builder->setAlias(AgentInterface::class, 'symfony_ai.agent.'.$agentName);
+            $builder->setAlias(AgentInterface::class, 'ai.agent.'.$agentName);
         }
 
         foreach ($config['store'] ?? [] as $type => $store) {
             $this->processStoreConfig($type, $store, $builder);
         }
-        $stores = array_keys($builder->findTaggedServiceIds('symfony_ai.store'));
+        $stores = array_keys($builder->findTaggedServiceIds('ai.store'));
         if (1 === \count($stores)) {
             $builder->setAlias(VectorStoreInterface::class, reset($stores));
             $builder->setAlias(StoreInterface::class, reset($stores));
@@ -114,11 +114,11 @@ final class AIBundle extends AbstractBundle
             $this->processIndexerConfig($indexerName, $indexer, $builder);
         }
         if (1 === \count($config['indexer']) && isset($indexerName)) {
-            $builder->setAlias(Indexer::class, 'symfony_ai.indexer.'.$indexerName);
+            $builder->setAlias(Indexer::class, 'ai.indexer.'.$indexerName);
         }
 
         $builder->registerAttributeForAutoconfiguration(AsTool::class, static function (ChildDefinition $definition, AsTool $attribute): void {
-            $definition->addTag('symfony_ai.tool', [
+            $definition->addTag('ai.tool', [
                 'name' => $attribute->name,
                 'description' => $attribute->description,
                 'method' => $attribute->method,
@@ -126,16 +126,16 @@ final class AIBundle extends AbstractBundle
         });
 
         $builder->registerForAutoconfiguration(InputProcessorInterface::class)
-            ->addTag('symfony_ai.agent.input_processor');
+            ->addTag('ai.agent.input_processor');
         $builder->registerForAutoconfiguration(OutputProcessorInterface::class)
-            ->addTag('symfony_ai.agent.output_processor');
+            ->addTag('ai.agent.output_processor');
         $builder->registerForAutoconfiguration(ModelClientInterface::class)
-            ->addTag('symfony_ai.platform.model_client');
+            ->addTag('ai.platform.model_client');
         $builder->registerForAutoconfiguration(ResponseConverterInterface::class)
-            ->addTag('symfony_ai.platform.response_converter');
+            ->addTag('ai.platform.response_converter');
 
         if (!ContainerBuilder::willBeAvailable('symfony/security-core', AuthorizationCheckerInterface::class, ['symfony/ai-bundle'])) {
-            $builder->removeDefinition('symfony_ai.security.is_granted_attribute_listener');
+            $builder->removeDefinition('ai.security.is_granted_attribute_listener');
             $builder->registerAttributeForAutoconfiguration(
                 IsGrantedTool::class,
                 static fn () => throw new InvalidArgumentException('Using #[IsGrantedTool] attribute requires additional dependencies. Try running "composer install symfony/security-core".'),
@@ -154,7 +154,7 @@ final class AIBundle extends AbstractBundle
     private function processPlatformConfig(string $type, array $platform, ContainerBuilder $container): void
     {
         if ('anthropic' === $type) {
-            $platformId = 'symfony_ai.platform.anthropic';
+            $platformId = 'ai.platform.anthropic';
             $definition = (new Definition(Platform::class))
                 ->setFactory(AnthropicPlatformFactory::class.'::create')
                 ->setAutowired(true)
@@ -163,7 +163,7 @@ final class AIBundle extends AbstractBundle
                 ->setArguments([
                     '$apiKey' => $platform['api_key'],
                 ])
-                ->addTag('symfony_ai.platform');
+                ->addTag('ai.platform');
 
             if (isset($platform['version'])) {
                 $definition->replaceArgument('$version', $platform['version']);
@@ -176,7 +176,7 @@ final class AIBundle extends AbstractBundle
 
         if ('azure' === $type) {
             foreach ($platform as $name => $config) {
-                $platformId = 'symfony_ai.platform.azure.'.$name;
+                $platformId = 'ai.platform.azure.'.$name;
                 $definition = (new Definition(Platform::class))
                     ->setFactory(AzureOpenAIPlatformFactory::class.'::create')
                     ->setAutowired(true)
@@ -188,7 +188,7 @@ final class AIBundle extends AbstractBundle
                         '$apiVersion' => $config['api_version'],
                         '$apiKey' => $config['api_key'],
                     ])
-                    ->addTag('symfony_ai.platform');
+                    ->addTag('ai.platform');
 
                 $container->setDefinition($platformId, $definition);
             }
@@ -197,14 +197,14 @@ final class AIBundle extends AbstractBundle
         }
 
         if ('google' === $type) {
-            $platformId = 'symfony_ai.platform.google';
+            $platformId = 'ai.platform.google';
             $definition = (new Definition(Platform::class))
                 ->setFactory(GooglePlatformFactory::class.'::create')
                 ->setAutowired(true)
                 ->setLazy(true)
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments(['$apiKey' => $platform['api_key']])
-                ->addTag('symfony_ai.platform');
+                ->addTag('ai.platform');
 
             $container->setDefinition($platformId, $definition);
 
@@ -212,14 +212,14 @@ final class AIBundle extends AbstractBundle
         }
 
         if ('openai' === $type) {
-            $platformId = 'symfony_ai.platform.openai';
+            $platformId = 'ai.platform.openai';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OpenAIPlatformFactory::class.'::create')
                 ->setAutowired(true)
                 ->setLazy(true)
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments(['$apiKey' => $platform['api_key']])
-                ->addTag('symfony_ai.platform');
+                ->addTag('ai.platform');
 
             $container->setDefinition($platformId, $definition);
 
@@ -227,14 +227,14 @@ final class AIBundle extends AbstractBundle
         }
 
         if ('openrouter' === $type) {
-            $platformId = 'symfony_ai.platform.openrouter';
+            $platformId = 'ai.platform.openrouter';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OpenRouterPlatformFactory::class.'::create')
                 ->setAutowired(true)
                 ->setLazy(true)
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments(['$apiKey' => $platform['api_key']])
-                ->addTag('symfony_ai.platform');
+                ->addTag('ai.platform');
 
             $container->setDefinition($platformId, $definition);
 
@@ -242,14 +242,14 @@ final class AIBundle extends AbstractBundle
         }
 
         if ('mistral' === $type) {
-            $platformId = 'symfony_ai.platform.mistral';
+            $platformId = 'ai.platform.mistral';
             $definition = (new Definition(Platform::class))
                 ->setFactory(MistralPlatformFactory::class.'::create')
                 ->setAutowired(true)
                 ->setLazy(true)
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments(['$apiKey' => $platform['api_key']])
-                ->addTag('symfony_ai.platform');
+                ->addTag('ai.platform');
 
             $container->setDefinition($platformId, $definition);
 
@@ -278,14 +278,14 @@ final class AIBundle extends AbstractBundle
         if ([] !== $options) {
             $modelDefinition->setArgument('$options', $options);
         }
-        $modelDefinition->addTag('symfony_ai.model.language_model');
-        $container->setDefinition('symfony_ai.agent.'.$name.'.model', $modelDefinition);
+        $modelDefinition->addTag('ai.model.language_model');
+        $container->setDefinition('ai.agent.'.$name.'.model', $modelDefinition);
 
         // AGENT
         $agentDefinition = (new Definition(Agent::class))
             ->setAutowired(true)
             ->setArgument('$platform', new Reference($config['platform']))
-            ->setArgument('$model', new Reference('symfony_ai.agent.'.$name.'.model'));
+            ->setArgument('$model', new Reference('ai.agent.'.$name.'.model'));
 
         $inputProcessors = [];
         $outputProcessors = [];
@@ -295,11 +295,11 @@ final class AIBundle extends AbstractBundle
             // Create specific toolbox and process if tools are explicitly defined
             if ([] !== $config['tools']['services']) {
                 $memoryFactoryDefinition = new Definition(MemoryToolFactory::class);
-                $container->setDefinition('symfony_ai.toolbox.'.$name.'.memory_factory', $memoryFactoryDefinition);
+                $container->setDefinition('ai.toolbox.'.$name.'.memory_factory', $memoryFactoryDefinition);
                 $chainFactoryDefinition = new Definition(ChainFactory::class, [
-                    '$factories' => [new Reference('symfony_ai.toolbox.'.$name.'.memory_factory'), new Reference(ReflectionToolFactory::class)],
+                    '$factories' => [new Reference('ai.toolbox.'.$name.'.memory_factory'), new Reference(ReflectionToolFactory::class)],
                 ]);
-                $container->setDefinition('symfony_ai.toolbox.'.$name.'.chain_factory', $chainFactoryDefinition);
+                $container->setDefinition('ai.toolbox.'.$name.'.chain_factory', $chainFactoryDefinition);
 
                 $tools = [];
                 foreach ($config['tools']['services'] as $tool) {
@@ -308,42 +308,42 @@ final class AIBundle extends AbstractBundle
                     if (isset($tool['name'], $tool['description'])) {
                         if ($tool['is_agent']) {
                             $agentWrapperDefinition = new Definition(AgentTool::class, ['$agent' => $reference]);
-                            $container->setDefinition('symfony_ai.toolbox.'.$name.'.agent_wrapper.'.$tool['name'], $agentWrapperDefinition);
-                            $reference = new Reference('symfony_ai.toolbox.'.$name.'.agent_wrapper.'.$tool['name']);
+                            $container->setDefinition('ai.toolbox.'.$name.'.agent_wrapper.'.$tool['name'], $agentWrapperDefinition);
+                            $reference = new Reference('ai.toolbox.'.$name.'.agent_wrapper.'.$tool['name']);
                         }
                         $memoryFactoryDefinition->addMethodCall('addTool', [$reference, $tool['name'], $tool['description'], $tool['method'] ?? '__invoke']);
                     }
                     $tools[] = $reference;
                 }
 
-                $toolboxDefinition = (new ChildDefinition('symfony_ai.toolbox.abstract'))
-                    ->replaceArgument('$toolFactory', new Reference('symfony_ai.toolbox.'.$name.'.chain_factory'))
+                $toolboxDefinition = (new ChildDefinition('ai.toolbox.abstract'))
+                    ->replaceArgument('$toolFactory', new Reference('ai.toolbox.'.$name.'.chain_factory'))
                     ->replaceArgument('$tools', $tools);
-                $container->setDefinition('symfony_ai.toolbox.'.$name, $toolboxDefinition);
+                $container->setDefinition('ai.toolbox.'.$name, $toolboxDefinition);
 
                 if ($config['fault_tolerant_toolbox']) {
-                    $faultTolerantToolboxDefinition = (new Definition('symfony_ai.fault_tolerant_toolbox.'.$name))
+                    $faultTolerantToolboxDefinition = (new Definition('ai.fault_tolerant_toolbox.'.$name))
                         ->setClass(FaultTolerantToolbox::class)
                         ->setAutowired(true)
-                        ->setDecoratedService('symfony_ai.toolbox.'.$name);
-                    $container->setDefinition('symfony_ai.fault_tolerant_toolbox.'.$name, $faultTolerantToolboxDefinition);
+                        ->setDecoratedService('ai.toolbox.'.$name);
+                    $container->setDefinition('ai.fault_tolerant_toolbox.'.$name, $faultTolerantToolboxDefinition);
                 }
 
                 if ($container->getParameter('kernel.debug')) {
-                    $traceableToolboxDefinition = (new Definition('symfony_ai.traceable_toolbox.'.$name))
+                    $traceableToolboxDefinition = (new Definition('ai.traceable_toolbox.'.$name))
                         ->setClass(TraceableToolbox::class)
                         ->setAutowired(true)
-                        ->setDecoratedService('symfony_ai.toolbox.'.$name)
-                        ->addTag('symfony_ai.traceable_toolbox');
-                    $container->setDefinition('symfony_ai.traceable_toolbox.'.$name, $traceableToolboxDefinition);
+                        ->setDecoratedService('ai.toolbox.'.$name)
+                        ->addTag('ai.traceable_toolbox');
+                    $container->setDefinition('ai.traceable_toolbox.'.$name, $traceableToolboxDefinition);
                 }
 
-                $toolProcessorDefinition = (new ChildDefinition('symfony_ai.tool.agent_processor.abstract'))
-                    ->replaceArgument('$toolbox', new Reference('symfony_ai.toolbox.'.$name));
-                $container->setDefinition('symfony_ai.tool.agent_processor.'.$name, $toolProcessorDefinition);
+                $toolProcessorDefinition = (new ChildDefinition('ai.tool.agent_processor.abstract'))
+                    ->replaceArgument('$toolbox', new Reference('ai.toolbox.'.$name));
+                $container->setDefinition('ai.tool.agent_processor.'.$name, $toolProcessorDefinition);
 
-                $inputProcessors[] = new Reference('symfony_ai.tool.agent_processor.'.$name);
-                $outputProcessors[] = new Reference('symfony_ai.tool.agent_processor.'.$name);
+                $inputProcessors[] = new Reference('ai.tool.agent_processor.'.$name);
+                $outputProcessors[] = new Reference('ai.tool.agent_processor.'.$name);
             } else {
                 $inputProcessors[] = new Reference(ToolProcessor::class);
                 $outputProcessors[] = new Reference(ToolProcessor::class);
@@ -363,7 +363,7 @@ final class AIBundle extends AbstractBundle
                 ->setAutowired(true)
                 ->setArguments([
                     '$systemPrompt' => $config['system_prompt'],
-                    '$toolbox' => $config['include_tools'] ? new Reference('symfony_ai.toolbox.'.$name) : null,
+                    '$toolbox' => $config['include_tools'] ? new Reference('ai.toolbox.'.$name) : null,
                 ]);
 
             $inputProcessors[] = $systemPromptInputProcessorDefinition;
@@ -373,7 +373,7 @@ final class AIBundle extends AbstractBundle
             ->setArgument('$inputProcessors', $inputProcessors)
             ->setArgument('$outputProcessors', $outputProcessors);
 
-        $container->setDefinition('symfony_ai.agent.'.$name, $agentDefinition);
+        $container->setDefinition('ai.agent.'.$name, $agentDefinition);
     }
 
     /**
@@ -397,10 +397,10 @@ final class AIBundle extends AbstractBundle
                 $definition = new Definition(AzureSearchStore::class);
                 $definition
                     ->setAutowired(true)
-                    ->addTag('symfony_ai.store')
+                    ->addTag('ai.store')
                     ->setArguments($arguments);
 
-                $container->setDefinition('symfony_ai.store.'.$type.'.'.$name, $definition);
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
             }
         }
 
@@ -410,9 +410,9 @@ final class AIBundle extends AbstractBundle
                 $definition
                     ->setAutowired(true)
                     ->setArgument('$collectionName', $store['collection'])
-                    ->addTag('symfony_ai.store');
+                    ->addTag('ai.store');
 
-                $container->setDefinition('symfony_ai.store.'.$type.'.'.$name, $definition);
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
             }
         }
 
@@ -435,10 +435,10 @@ final class AIBundle extends AbstractBundle
                 $definition = new Definition(MongoDBStore::class);
                 $definition
                     ->setAutowired(true)
-                    ->addTag('symfony_ai.store')
+                    ->addTag('ai.store')
                     ->setArguments($arguments);
 
-                $container->setDefinition('symfony_ai.store.'.$type.'.'.$name, $definition);
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
             }
         }
 
@@ -459,10 +459,10 @@ final class AIBundle extends AbstractBundle
                 $definition = new Definition(PineconeStore::class);
                 $definition
                     ->setAutowired(true)
-                    ->addTag('symfony_ai.store')
+                    ->addTag('ai.store')
                     ->setArguments($arguments);
 
-                $container->setDefinition('symfony_ai.store.'.$type.'.'.$name, $definition);
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
             }
         }
     }
@@ -486,20 +486,20 @@ final class AIBundle extends AbstractBundle
             $modelDefinition->setArgument('$options', $options);
         }
 
-        $modelDefinition->addTag('symfony_ai.model.embeddings_model');
-        $container->setDefinition('symfony_ai.indexer.'.$name.'.model', $modelDefinition);
+        $modelDefinition->addTag('ai.model.embeddings_model');
+        $container->setDefinition('ai.indexer.'.$name.'.model', $modelDefinition);
 
         $vectorizerDefinition = new Definition(Vectorizer::class, [
             '$platform' => new Reference($config['platform']),
-            '$model' => new Reference('symfony_ai.indexer.'.$name.'.model'),
+            '$model' => new Reference('ai.indexer.'.$name.'.model'),
         ]);
-        $container->setDefinition('symfony_ai.indexer.'.$name.'.vectorizer', $vectorizerDefinition);
+        $container->setDefinition('ai.indexer.'.$name.'.vectorizer', $vectorizerDefinition);
 
         $definition = new Definition(Indexer::class, [
-            '$vectorizer' => new Reference('symfony_ai.indexer.'.$name.'.vectorizer'),
+            '$vectorizer' => new Reference('ai.indexer.'.$name.'.vectorizer'),
             '$store' => new Reference($config['store']),
         ]);
 
-        $container->setDefinition('symfony_ai.indexer.'.$name, $definition);
+        $container->setDefinition('ai.indexer.'.$name, $definition);
     }
 }
