@@ -12,7 +12,6 @@
 namespace Symfony\AI\McpSdk\Server\RequestHandler;
 
 use Symfony\AI\McpSdk\Capability\Tool\CollectionInterface;
-use Symfony\AI\McpSdk\Capability\Tool\MetadataInterface;
 use Symfony\AI\McpSdk\Message\Request;
 use Symfony\AI\McpSdk\Message\Response;
 
@@ -27,11 +26,17 @@ final class ToolListHandler extends BaseRequestHandler
     public function createResponse(Request $message): Response
     {
         $nextCursor = null;
-        $tools = array_map(function (MetadataInterface $tool) use (&$nextCursor) {
+        $tools = [];
+
+        $metadataList = $this->collection->getMetadata(
+            $this->pageSize,
+            $message->params['cursor'] ?? null
+        );
+
+        foreach ($metadataList as $tool) {
             $nextCursor = $tool->getName();
             $inputSchema = $tool->getInputSchema();
-
-            return [
+            $tools[] = [
                 'name' => $tool->getName(),
                 'description' => $tool->getDescription(),
                 'inputSchema' => [] === $inputSchema ? [
@@ -39,7 +44,7 @@ final class ToolListHandler extends BaseRequestHandler
                     '$schema' => 'http://json-schema.org/draft-07/schema#',
                 ] : $inputSchema,
             ];
-        }, $this->collection->getMetadata($this->pageSize, $message->params['cursor'] ?? null));
+        }
 
         $result = [
             'tools' => $tools,

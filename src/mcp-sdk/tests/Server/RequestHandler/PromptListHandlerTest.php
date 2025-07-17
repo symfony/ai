@@ -15,14 +15,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\McpSdk\Capability\Tool\CollectionInterface;
-use Symfony\AI\McpSdk\Capability\Tool\MetadataInterface;
+use Symfony\AI\McpSdk\Capability\Prompt\CollectionInterface;
+use Symfony\AI\McpSdk\Capability\Prompt\MetadataInterface;
 use Symfony\AI\McpSdk\Message\Request;
-use Symfony\AI\McpSdk\Server\RequestHandler\ToolListHandler;
+use Symfony\AI\McpSdk\Server\RequestHandler\PromptListHandler;
 
 #[Small]
-#[CoversClass(ToolListHandler::class)]
-class ToolListHandlerTest extends TestCase
+#[CoversClass(PromptListHandler::class)]
+class PromptListHandlerTest extends TestCase
 {
     public function testHandleEmpty(): void
     {
@@ -32,11 +32,11 @@ class ToolListHandlerTest extends TestCase
             ->getMock();
         $collection->expects($this->once())->method('getMetadata')->willReturn([]);
 
-        $handler = new ToolListHandler($collection);
-        $message = new Request(1, 'tools/list', []);
+        $handler = new PromptListHandler($collection);
+        $message = new Request(1, 'prompts/list', []);
         $response = $handler->createResponse($message);
         $this->assertEquals(1, $response->id);
-        $this->assertEquals(['tools' => []], $response->result);
+        $this->assertEquals(['prompts' => []], $response->result);
     }
 
     /**
@@ -50,10 +50,10 @@ class ToolListHandlerTest extends TestCase
             ->onlyMethods(['getMetadata'])
             ->getMock();
         $collection->expects($this->once())->method('getMetadata')->willReturn($metadataList);
-        $handler = new ToolListHandler($collection);
-        $message = new Request(1, 'tools/list', []);
+        $handler = new PromptListHandler($collection);
+        $message = new Request(1, 'prompts/list', []);
         $response = $handler->createResponse($message);
-        $this->assertCount(1, $response->result['tools']);
+        $this->assertCount(1, $response->result['prompts']);
         $this->assertArrayNotHasKey('nextCursor', $response->result);
     }
 
@@ -78,10 +78,10 @@ class ToolListHandlerTest extends TestCase
             ->onlyMethods(['getMetadata'])
             ->getMock();
         $collection->expects($this->once())->method('getMetadata')->willReturn([$item, $item]);
-        $handler = new ToolListHandler($collection, 2);
-        $message = new Request(1, 'tools/list', []);
+        $handler = new PromptListHandler($collection, 2);
+        $message = new Request(1, 'prompts/list', []);
         $response = $handler->createResponse($message);
-        $this->assertCount(2, $response->result['tools']);
+        $this->assertCount(2, $response->result['prompts']);
         $this->assertArrayHasKey('nextCursor', $response->result);
     }
 
@@ -90,17 +90,23 @@ class ToolListHandlerTest extends TestCase
         return new class implements MetadataInterface {
             public function getName(): string
             {
-                return 'test_tool';
+                return 'greet';
             }
 
             public function getDescription(): string
             {
-                return 'A test tool';
+                return 'Greet a person with a nice message';
             }
 
-            public function getInputSchema(): array
+            public function getArguments(): array
             {
-                return ['type' => 'object'];
+                return [
+                    [
+                        'name' => 'first name',
+                        'description' => 'The name of the person to greet',
+                        'required' => false,
+                    ],
+                ];
             }
         };
     }

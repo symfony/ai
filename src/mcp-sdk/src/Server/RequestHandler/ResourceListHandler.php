@@ -12,7 +12,6 @@
 namespace Symfony\AI\McpSdk\Server\RequestHandler;
 
 use Symfony\AI\McpSdk\Capability\Resource\CollectionInterface;
-use Symfony\AI\McpSdk\Capability\Resource\MetadataInterface;
 use Symfony\AI\McpSdk\Message\Request;
 use Symfony\AI\McpSdk\Message\Response;
 
@@ -27,7 +26,14 @@ final class ResourceListHandler extends BaseRequestHandler
     public function createResponse(Request $message): Response
     {
         $nextCursor = null;
-        $resources = array_map(function (MetadataInterface $metadata) use (&$nextCursor) {
+        $resources = [];
+
+        $metadataList = $this->collection->getMetadata(
+            $this->pageSize,
+            $message->params['cursor'] ?? null
+        );
+
+        foreach ($metadataList as $metadata) {
             $nextCursor = $metadata->getUri();
             $result = [
                 'uri' => $metadata->getUri(),
@@ -49,8 +55,8 @@ final class ResourceListHandler extends BaseRequestHandler
                 $result['size'] = $size;
             }
 
-            return $result;
-        }, $this->collection->getMetadata($this->pageSize, $message->params['cursor'] ?? null));
+            $resources[] = $result;
+        }
 
         $result = [
             'resources' => $resources,

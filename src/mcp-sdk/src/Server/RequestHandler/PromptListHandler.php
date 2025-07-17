@@ -12,7 +12,6 @@
 namespace Symfony\AI\McpSdk\Server\RequestHandler;
 
 use Symfony\AI\McpSdk\Capability\Prompt\CollectionInterface;
-use Symfony\AI\McpSdk\Capability\Prompt\MetadataInterface;
 use Symfony\AI\McpSdk\Message\Request;
 use Symfony\AI\McpSdk\Message\Response;
 
@@ -27,7 +26,14 @@ final class PromptListHandler extends BaseRequestHandler
     public function createResponse(Request $message): Response
     {
         $nextCursor = null;
-        $prompts = array_map(function (MetadataInterface $metadata) use (&$nextCursor) {
+        $prompts = [];
+
+        $metadataList = $this->collection->getMetadata(
+            $this->pageSize,
+            $message->params['cursor'] ?? null
+        );
+
+        foreach ($metadataList as $metadata) {
             $nextCursor = $metadata->getName();
             $result = [
                 'name' => $metadata->getName(),
@@ -55,8 +61,8 @@ final class PromptListHandler extends BaseRequestHandler
                 $result['arguments'] = $arguments;
             }
 
-            return $result;
-        }, $this->collection->getMetadata($this->pageSize, $message->params['cursor'] ?? null));
+            $prompts[] = $result;
+        }
 
         $result = [
             'prompts' => $prompts,
