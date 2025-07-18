@@ -8,6 +8,7 @@
     "require-dev": {
         "php": ">=8.2",
         "php-cs-fixer/shim": "^3.75",
+        "symfony/filesystem": "^7.3",
         "symfony/finder": "^6.4|^7.0",
         "symfony/process": "^6.4|^7.0"
     },
