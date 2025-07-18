@@ -12,21 +12,15 @@
 use Symfony\AI\Platform\Bridge\Azure\OpenAI\PlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAI\Whisper;
 use Symfony\AI\Platform\Message\Content\Audio;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
-
-if (!isset($_SERVER['AZURE_OPENAI_BASEURL'], $_SERVER['AZURE_OPENAI_WHISPER_DEPLOYMENT'], $_SERVER['AZURE_OPENAI_WHISPER_API_VERSION'], $_SERVER['AZURE_OPENAI_KEY'])) {
-    echo 'Please set the AZURE_OPENAI_BASEURL, AZURE_OPENAI_WHISPER_DEPLOYMENT, AZURE_OPENAI_WHISPER_API_VERSION, and AZURE_OPENAI_KEY environment variables.'.\PHP_EOL;
-    exit(1);
-}
+require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(
-    $_SERVER['AZURE_OPENAI_BASEURL'],
-    $_SERVER['AZURE_OPENAI_WHISPER_DEPLOYMENT'],
-    $_SERVER['AZURE_OPENAI_WHISPER_API_VERSION'],
-    $_SERVER['AZURE_OPENAI_KEY'],
+    env('AZURE_OPENAI_BASEURL'),
+    env('AZURE_OPENAI_WHISPER_DEPLOYMENT'),
+    env('AZURE_OPENAI_WHISPER_API_VERSION'),
+    env('AZURE_OPENAI_KEY'),
+    http_client(),
 );
 $model = new Whisper();
 $file = Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3');

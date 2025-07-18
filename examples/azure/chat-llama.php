@@ -14,20 +14,13 @@ use Symfony\AI\Platform\Bridge\Azure\Meta\PlatformFactory;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['AZURE_LLAMA_BASEURL'], $_SERVER['AZURE_LLAMA_KEY'])) {
-    echo 'Please set the AZURE_LLAMA_BASEURL and AZURE_LLAMA_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['AZURE_LLAMA_BASEURL'], $_SERVER['AZURE_LLAMA_KEY']);
+$platform = PlatformFactory::create(env('AZURE_LLAMA_BASEURL'), env('AZURE_LLAMA_KEY'), http_client());
 $model = new Llama(Llama::V3_3_70B_INSTRUCT);
 
-$agent = new Agent($platform, $model);
+$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(Message::ofUser('I am going to Paris, what should I see?'));
 $response = $agent->call($messages, [
     'max_tokens' => 2048,

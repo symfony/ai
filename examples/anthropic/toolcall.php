@@ -17,24 +17,16 @@ use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Dotenv\Dotenv;
-use Symfony\Component\HttpClient\HttpClient;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['ANTHROPIC_API_KEY'])) {
-    echo 'Please set the ANTHROPIC_API_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['ANTHROPIC_API_KEY']);
+$platform = PlatformFactory::create(env('ANTHROPIC_API_KEY'), httpClient: http_client());
 $model = new Claude();
 
-$wikipedia = new Wikipedia(HttpClient::create());
-$toolbox = new Toolbox([$wikipedia]);
+$wikipedia = new Wikipedia(http_client());
+$toolbox = new Toolbox([$wikipedia], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor]);
+$agent = new Agent($platform, $model, [$processor], [$processor], logger());
 
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
 $response = $agent->call($messages);

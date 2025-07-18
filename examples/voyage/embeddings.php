@@ -11,17 +11,10 @@
 
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\Voyage;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['VOYAGE_API_KEY'])) {
-    echo 'Please set the VOYAGE_API_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['VOYAGE_API_KEY']);
+$platform = PlatformFactory::create(env('VOYAGE_API_KEY'), http_client());
 $embeddings = new Voyage();
 
 $response = $platform->request($embeddings, <<<TEXT

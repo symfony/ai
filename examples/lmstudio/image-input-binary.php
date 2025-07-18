@@ -16,23 +16,16 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['LMSTUDIO_HOST_URL'])) {
-    echo 'Please set the LMSTUDIO_HOST_URL environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['LMSTUDIO_HOST_URL']);
+$platform = PlatformFactory::create(env('LMSTUDIO_HOST_URL'), http_client());
 $model = new Completions(
     name: 'gemma-3-4b-it-qat',
     capabilities: [...Completions::DEFAULT_CAPABILITIES, Capability::INPUT_IMAGE]
 );
 
-$agent = new Agent($platform, $model);
+$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
     Message::ofUser(

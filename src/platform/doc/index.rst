@@ -33,7 +33,7 @@ For example, to use the OpenAI provider, you would typically do something like t
     use Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory;
 
     // Platform
-    $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
+    $platform = PlatformFactory::create(env('OPENAI_API_KEY'));
 
     // Embeddings Model
     $embeddings = new Embeddings();

@@ -11,17 +11,10 @@
 
 use Symfony\AI\Platform\Bridge\Google\Embeddings;
 use Symfony\AI\Platform\Bridge\Google\PlatformFactory;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['GEMINI_API_KEY'])) {
-    echo 'Please set the GEMINI_API_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['GEMINI_API_KEY']);
+$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 $embeddings = new Embeddings();
 
 $response = $platform->request($embeddings, <<<TEXT

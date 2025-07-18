@@ -18,7 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\SingleCommandApplication;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
+require_once dirname(__DIR__).'/bootstrap.php';
 
 $app = (new SingleCommandApplication('HuggingFace Model Listing'))
     ->setDescription('Lists all available models on HuggingFace')

@@ -14,20 +14,13 @@ use Symfony\AI\Platform\Bridge\LMStudio\Completions;
 use Symfony\AI\Platform\Bridge\LMStudio\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['LMSTUDIO_HOST_URL'])) {
-    echo 'Please set the LMSTUDIO_HOST_URL environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['LMSTUDIO_HOST_URL']);
+$platform = PlatformFactory::create(env('LMSTUDIO_HOST_URL'), http_client());
 $model = new Completions('gemma-3-4b-it-qat');
 
-$agent = new Agent($platform, $model);
+$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),

@@ -11,17 +11,10 @@
 
 use Symfony\AI\Platform\Bridge\Mistral\Embeddings;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['MISTRAL_API_KEY'])) {
-    echo 'Please set the MISTRAL_API_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['MISTRAL_API_KEY']);
+$platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
 $model = new Embeddings();
 
 $response = $platform->request($model, <<<TEXT

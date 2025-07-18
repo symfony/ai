@@ -16,21 +16,14 @@ use Symfony\AI\Platform\Bridge\Google\Gemini;
 use Symfony\AI\Platform\Bridge\Google\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['GEMINI_API_KEY'])) {
-    echo 'Please set the GEMINI_API_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['GEMINI_API_KEY']);
+$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 $model = new Gemini(Gemini::GEMINI_1_5_FLASH);
 
 $processor = new AgentProcessor();
-$agent = new Agent($platform, $model, [$processor], [$processor]);
+$agent = new Agent($platform, $model, [$processor], [$processor], logger());
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),

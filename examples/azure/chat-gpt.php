@@ -14,25 +14,19 @@ use Symfony\AI\Platform\Bridge\Azure\OpenAI\PlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAI\GPT;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
-
-if (!isset($_SERVER['AZURE_OPENAI_BASEURL'], $_SERVER['AZURE_OPENAI_GPT_DEPLOYMENT'], $_SERVER['AZURE_OPENAI_GPT_API_VERSION'], $_SERVER['AZURE_OPENAI_KEY'])) {
-    echo 'Please set the AZURE_OPENAI_BASEURL, AZURE_OPENAI_GPT_DEPLOYMENT, AZURE_OPENAI_GPT_API_VERSION, and AZURE_OPENAI_KEY environment variables.'.\PHP_EOL;
-    exit(1);
-}
+require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(
-    $_SERVER['AZURE_OPENAI_BASEURL'],
-    $_SERVER['AZURE_OPENAI_GPT_DEPLOYMENT'],
-    $_SERVER['AZURE_OPENAI_GPT_API_VERSION'],
-    $_SERVER['AZURE_OPENAI_KEY'],
+    env('AZURE_OPENAI_BASEURL'),
+    env('AZURE_OPENAI_GPT_DEPLOYMENT'),
+    env('AZURE_OPENAI_GPT_API_VERSION'),
+    env('AZURE_OPENAI_KEY'),
+    http_client(),
 );
 $model = new GPT(GPT::GPT_4O_MINI);
 
-$agent = new Agent($platform, $model);
+$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),

@@ -14,19 +14,12 @@ use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['MISTRAL_API_KEY'])) {
-    echo 'Please set the REPLICATE_API_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['MISTRAL_API_KEY']);
+$platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
 $model = new Mistral();
-$agent = new Agent($platform, $model);
+$agent = new Agent($platform, $model, logger: logger());
 
 $messages = new MessageBag(Message::ofUser('What is the eighth prime number?'));
 $response = $agent->call($messages, [

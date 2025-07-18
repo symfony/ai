@@ -15,17 +15,12 @@ use Symfony\AI\Platform\Bridge\OpenAI\GPT;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
-require_once dirname(__DIR__).'/../vendor/autoload.php';
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['ALBERT_API_KEY'], $_SERVER['ALBERT_API_URL'])) {
-    echo 'Please set the ALBERT_API_KEY and ALBERT_API_URL environment variable (e.g., https://your-albert-instance.com/v1).'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['ALBERT_API_KEY'], $_SERVER['ALBERT_API_URL']);
+$platform = PlatformFactory::create(env('ALBERT_API_KEY'), env('ALBERT_API_URL'), http_client());
 
 $model = new GPT('gpt-4o');
-$agent = new Agent($platform, $model);
+$agent = new Agent($platform, $model, logger: logger());
 
 $documentContext = <<<'CONTEXT'
     Document: AI Strategy of France
