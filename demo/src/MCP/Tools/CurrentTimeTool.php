@@ -16,6 +16,9 @@ use Symfony\AI\McpSdk\Capability\Tool\ToolCall;
 use Symfony\AI\McpSdk\Capability\Tool\ToolCallResult;
 use Symfony\AI\McpSdk\Capability\Tool\ToolExecutorInterface;
 
+/**
+ * @author Tom Hart <tom.hart.221@gmail.com>
+ */
 class CurrentTimeTool implements MetadataInterface, ToolExecutorInterface
 {
     public function call(ToolCall $input): ToolCallResult

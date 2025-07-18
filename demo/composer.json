@@ -28,7 +28,6 @@
         "symfony/mcp-bundle": "@dev",
         "symfony/monolog-bundle": "^3.10",
         "symfony/runtime": "7.3.*",
-        "symfony/security-bundle": "7.3.*",
         "symfony/twig-bundle": "7.3.*",
         "symfony/uid": "7.3.*",
         "symfony/ux-icons": "^2.25",
