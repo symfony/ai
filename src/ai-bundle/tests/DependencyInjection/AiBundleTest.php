@@ -2273,6 +2273,15 @@ class AiBundleTest extends TestCase
                             'endpoint_url' => 'https://api.cloudflare.com/client/v5/accounts',
                         ],
                     ],
+                    'failover' => [
+                        'main' => [
+                            'stores' => [
+                                'ai.store.cloudflare.my_cloudflare_store',
+                                'ai.store.meilisearch.my_meilisearch_store',
+                                'ai.store.memory.my_memory_store',
+                            ],
+                        ],
+                    ],
                     'meilisearch' => [
                         'my_meilisearch_store' => [
                             'endpoint' => 'http://127.0.0.1:7700',

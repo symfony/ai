@@ -70,6 +70,7 @@ use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\FailoverStore;
 use Symfony\AI\Store\Indexer;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\AI\Store\StoreInterface;
@@ -784,6 +785,28 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('failover' === $type) {
+            foreach ($stores as $name => $store) {
+                $wrappedStores = array_map(
+                    static fn (string $storeName): Reference => new Reference($storeName),
+                    $store['stores'],
+                );
+
+                $definition = new Definition(FailoverStore::class);
+                $definition
+                    ->setArguments([
+                        $wrappedStores,
+                        new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    ])
+                    ->addTag('ai.store')
+                ;
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$name, StoreInterface::class, $type.'_'.$name);
             }
         }
 
