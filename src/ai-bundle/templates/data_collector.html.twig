@@ -151,18 +151,18 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th>Response</th>
+                                    <th>Result</th>
                                     <td>
-                                        {% if call.input.messages is defined and call.response is iterable %}{# expect array of ToolCall #}
-                                            {{ _self.tool_calls(call.response) }}
-                                        {% elseif call.response is iterable %}{# expect array of Vectors #}
+                                        {% if call.input.messages is defined and call.result is iterable %}{# expect array of ToolCall #}
+                                            {{ _self.tool_calls(call.result) }}
+                                        {% elseif call.result is iterable %}{# expect array of Vectors #}
                                             <ol>
-                                                {% for vector in call.response %}
+                                                {% for vector in call.result %}
                                                     <li>Vector with <strong>{{ vector.dimensions }}</strong> dimensions</li>
                                                 {% endfor %}
                                             </ol>
                                         {% else %}
-                                            {{ call.response }}
+                                            {{ call.result }}
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -238,7 +238,7 @@
                         <td>{{ dump(call.call.arguments) }}</td>
                     </tr>
                     <tr>
-                        <th>Response</th>
+                        <th>Result</th>
                         <td>{{ call.result|nl2br }}</td>
                     </tr>
                 </tbody>

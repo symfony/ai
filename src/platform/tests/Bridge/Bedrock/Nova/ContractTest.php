@@ -30,7 +30,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Response\ToolCall;
+use Symfony\AI\Platform\Result\ToolCall;
 
 #[Medium]
 #[CoversClass(AssistantMessageNormalizer::class)]

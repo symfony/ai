@@ -26,6 +26,6 @@ final readonly class PlatformFactory
             throw new RuntimeException('For using the TransformersPHP with FFI to run models in PHP, the codewithkyrian/transformers package is required. Try running "composer require codewithkyrian/transformers".');
         }
 
-        return new Platform([new ModelClient()], [new ResponseConverter()]);
+        return new Platform([new ModelClient()], [new ResultConverter()]);
     }
 }

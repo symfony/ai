@@ -16,27 +16,27 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\OpenAI\Embeddings\ResponseConverter;
-use Symfony\AI\Platform\Response\RawHttpResponse;
-use Symfony\AI\Platform\Response\VectorResponse;
+use Symfony\AI\Platform\Bridge\OpenAI\Embeddings\ResultConverter;
+use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-#[CoversClass(ResponseConverter::class)]
+#[CoversClass(ResultConverter::class)]
 #[Small]
 #[UsesClass(Vector::class)]
-#[UsesClass(VectorResponse::class)]
+#[UsesClass(VectorResult::class)]
 class ResponseConverterTest extends TestCase
 {
     #[Test]
     public function itConvertsAResponseToAVectorResponse(): void
     {
-        $response = $this->createStub(ResponseInterface::class);
-        $response
+        $result = $this->createStub(ResponseInterface::class);
+        $result
             ->method('toArray')
             ->willReturn(json_decode($this->getEmbeddingStub(), true));
 
-        $vectorResponse = (new ResponseConverter())->convert(new RawHttpResponse($response));
+        $vectorResponse = (new ResultConverter())->convert(new RawHttpResult($result));
         $convertedContent = $vectorResponse->getContent();
 
         self::assertCount(2, $convertedContent);

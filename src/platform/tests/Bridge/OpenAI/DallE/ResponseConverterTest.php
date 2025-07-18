@@ -17,16 +17,16 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAI\DallE\Base64Image;
-use Symfony\AI\Platform\Bridge\OpenAI\DallE\ImageResponse;
-use Symfony\AI\Platform\Bridge\OpenAI\DallE\ResponseConverter;
+use Symfony\AI\Platform\Bridge\OpenAI\DallE\ImageResult;
+use Symfony\AI\Platform\Bridge\OpenAI\DallE\ResultConverter;
 use Symfony\AI\Platform\Bridge\OpenAI\DallE\UrlImage;
-use Symfony\AI\Platform\Response\RawHttpResponse;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 
-#[CoversClass(ResponseConverter::class)]
+#[CoversClass(ResultConverter::class)]
 #[UsesClass(UrlImage::class)]
 #[UsesClass(Base64Image::class)]
-#[UsesClass(ImageResponse::class)]
+#[UsesClass(ImageResult::class)]
 #[Small]
 final class ResponseConverterTest extends TestCase
 {
@@ -40,12 +40,12 @@ final class ResponseConverterTest extends TestCase
             ],
         ]);
 
-        $responseConverter = new ResponseConverter();
-        $response = $responseConverter->convert(new RawHttpResponse($httpResponse), ['response_format' => 'url']);
+        $resultConverter = new ResultConverter();
+        $result = $resultConverter->convert(new RawHttpResult($httpResponse), ['response_format' => 'url']);
 
-        self::assertCount(1, $response->getContent());
-        self::assertInstanceOf(UrlImage::class, $response->getContent()[0]);
-        self::assertSame('https://example.com/image.jpg', $response->getContent()[0]->url);
+        self::assertCount(1, $result->getContent());
+        self::assertInstanceOf(UrlImage::class, $result->getContent()[0]);
+        self::assertSame('https://example.com/image.jpg', $result->getContent()[0]->url);
     }
 
     #[Test]
@@ -60,13 +60,13 @@ final class ResponseConverterTest extends TestCase
             ],
         ]);
 
-        $responseConverter = new ResponseConverter();
-        $response = $responseConverter->convert(new RawHttpResponse($httpResponse), ['response_format' => 'b64_json']);
+        $resultConverter = new ResultConverter();
+        $result = $resultConverter->convert(new RawHttpResult($httpResponse), ['response_format' => 'b64_json']);
 
-        self::assertInstanceOf(ImageResponse::class, $response);
-        self::assertCount(1, $response->getContent());
-        self::assertInstanceOf(Base64Image::class, $response->getContent()[0]);
-        self::assertSame($emptyPixel, $response->getContent()[0]->encodedImage);
-        self::assertSame('revised prompt', $response->revisedPrompt);
+        self::assertInstanceOf(ImageResult::class, $result);
+        self::assertCount(1, $result->getContent());
+        self::assertInstanceOf(Base64Image::class, $result->getContent()[0]);
+        self::assertSame($emptyPixel, $result->getContent()[0]->encodedImage);
+        self::assertSame('revised prompt', $result->revisedPrompt);
     }
 }

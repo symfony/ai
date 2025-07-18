@@ -25,8 +25,8 @@ if (!isset($_SERVER['HUGGINGFACE_KEY'])) {
 $platform = PlatformFactory::create($_SERVER['HUGGINGFACE_KEY']);
 $model = new Model('FacebookAI/xlm-roberta-base');
 
-$response = $platform->request($model, 'Hello I\'m a <mask> model.', [
+$result = $platform->invoke($model, 'Hello I\'m a <mask> model.', [
     'task' => Task::FILL_MASK,
 ]);
 
-dump($response->asObject());
+dump($result->asObject());

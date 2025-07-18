@@ -25,8 +25,8 @@ if (!isset($_SERVER['HUGGINGFACE_KEY'])) {
 $platform = PlatformFactory::create($_SERVER['HUGGINGFACE_KEY']);
 $model = new Model('dbmdz/bert-large-cased-finetuned-conll03-english');
 
-$response = $platform->request($model, 'John Smith works at Microsoft in London.', [
+$result = $platform->invoke($model, 'John Smith works at Microsoft in London.', [
     'task' => Task::TOKEN_CLASSIFICATION,
 ]);
 
-dump($response->asObject());
+dump($result->asObject());

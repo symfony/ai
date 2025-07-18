@@ -32,11 +32,11 @@ $messages = new MessageBag(
     Message::forSystem('You are a funny clown that entertains people.'),
     Message::ofUser('What is the purpose of an ant?'),
 );
-$response = $agent->call($messages, [
+$result = $agent->call($messages, [
     'stream' => true, // enable streaming of response text
 ]);
 
-foreach ($response->getContent() as $word) {
+foreach ($result->getContent() as $word) {
     echo $word;
 }
 echo \PHP_EOL;

@@ -33,13 +33,13 @@ $messages = new MessageBag(
 );
 
 echo 'Initiating parallel calls to GPT on platform ...'.\PHP_EOL;
-$responses = [];
+$results = [];
 foreach (range('A', 'D') as $letter) {
     echo ' - Request for the letter '.$letter.' initiated.'.\PHP_EOL;
-    $responses[] = $platform->request($model, $messages->with(Message::ofUser($letter)));
+    $results[] = $platform->invoke($model, $messages->with(Message::ofUser($letter)));
 }
 
 echo 'Waiting for the responses ...'.\PHP_EOL;
-foreach ($responses as $response) {
-    echo 'Next Letter: '.$response->asText().\PHP_EOL;
+foreach ($results as $result) {
+    echo 'Next Letter: '.$result->asText().\PHP_EOL;
 }

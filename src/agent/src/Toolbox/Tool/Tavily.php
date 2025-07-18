@@ -38,14 +38,14 @@ final readonly class Tavily
      */
     public function search(string $query): string
     {
-        $response = $this->httpClient->request('POST', 'https://api.tavily.com/search', [
+        $result = $this->httpClient->request('POST', 'https://api.tavily.com/search', [
             'json' => array_merge($this->options, [
                 'query' => $query,
                 'api_key' => $this->apiKey,
             ]),
         ]);
 
-        return $response->getContent();
+        return $result->getContent();
     }
 
     /**
@@ -53,13 +53,13 @@ final readonly class Tavily
      */
     public function extract(array $urls): string
     {
-        $response = $this->httpClient->request('POST', 'https://api.tavily.com/extract', [
+        $result = $this->httpClient->request('POST', 'https://api.tavily.com/extract', [
             'json' => [
                 'urls' => $urls,
                 'api_key' => $this->apiKey,
             ],
         ]);
 
-        return $response->getContent();
+        return $result->getContent();
     }
 }

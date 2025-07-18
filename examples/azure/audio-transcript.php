@@ -31,6 +31,6 @@ $platform = PlatformFactory::create(
 $model = new Whisper();
 $file = Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3');
 
-$response = $platform->request($model, $file);
+$result = $platform->invoke($model, $file);
 
-echo $response->asText().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

@@ -45,12 +45,12 @@ final readonly class Wikipedia
             return 'No articles were found on Wikipedia.';
         }
 
-        $response = 'Articles with the following titles were found on Wikipedia:'.\PHP_EOL;
+        $result = 'Articles with the following titles were found on Wikipedia:'.\PHP_EOL;
         foreach ($titles as $title) {
-            $response .= ' - '.$title.\PHP_EOL;
+            $result .= ' - '.$title.\PHP_EOL;
         }
 
-        return $response.\PHP_EOL.'Use the title of the article with tool "wikipedia_article" to load the content.';
+        return $result.\PHP_EOL.'Use the title of the article with tool "wikipedia_article" to load the content.';
     }
 
     /**
@@ -58,7 +58,7 @@ final readonly class Wikipedia
      */
     public function article(string $title): string
     {
-        $result = $this->execute([
+        $response = $this->execute([
             'action' => 'query',
             'format' => 'json',
             'prop' => 'extracts|info|pageimages',
@@ -67,21 +67,21 @@ final readonly class Wikipedia
             'redirects' => true,
         ], $this->locale);
 
-        $article = current($result['query']['pages']);
+        $article = current($response['query']['pages']);
 
         if (\array_key_exists('missing', $article)) {
             return \sprintf('No article with title "%s" was found on Wikipedia.', $title);
         }
 
-        $response = '';
-        if (\array_key_exists('redirects', $result['query'])) {
-            foreach ($result['query']['redirects'] as $redirect) {
-                $response .= \sprintf('The article "%s" redirects to article "%s".', $redirect['from'], $redirect['to']).\PHP_EOL;
+        $result = '';
+        if (\array_key_exists('redirects', $response['query'])) {
+            foreach ($response['query']['redirects'] as $redirect) {
+                $result .= \sprintf('The article "%s" redirects to article "%s".', $redirect['from'], $redirect['to']).\PHP_EOL;
             }
-            $response .= \PHP_EOL;
+            $result .= \PHP_EOL;
         }
 
-        return $response.'This is the content of article "'.$article['title'].'":'.\PHP_EOL.$article['extract'];
+        return $result.'This is the content of article "'.$article['title'].'":'.\PHP_EOL.$article['extract'];
     }
 
     /**

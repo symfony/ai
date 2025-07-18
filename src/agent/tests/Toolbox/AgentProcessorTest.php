@@ -26,8 +26,8 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\ToolCall;
-use Symfony\AI\Platform\Response\ToolCallResponse;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
@@ -36,7 +36,7 @@ use Symfony\AI\Platform\Tool\Tool;
 #[UsesClass(Output::class)]
 #[UsesClass(Tool::class)]
 #[UsesClass(ToolCall::class)]
-#[UsesClass(ToolCallResponse::class)]
+#[UsesClass(ToolCallResult::class)]
 #[UsesClass(ExecutionReference::class)]
 #[UsesClass(MessageBag::class)]
 #[UsesClass(MissingModelSupportException::class)]
@@ -114,14 +114,14 @@ class AgentProcessorTest extends TestCase
 
         $messageBag = new MessageBag();
 
-        $response = new ToolCallResponse(new ToolCall('id1', 'tool1', ['arg1' => 'value1']));
+        $result = new ToolCallResult(new ToolCall('id1', 'tool1', ['arg1' => 'value1']));
 
         $agent = $this->createStub(AgentInterface::class);
 
         $processor = new AgentProcessor($toolbox, keepToolMessages: true);
         $processor->setAgent($agent);
 
-        $output = new Output($model, $response, $messageBag, []);
+        $output = new Output($model, $result, $messageBag, []);
 
         $processor->processOutput($output);
 
@@ -140,14 +140,14 @@ class AgentProcessorTest extends TestCase
 
         $messageBag = new MessageBag();
 
-        $response = new ToolCallResponse(new ToolCall('id1', 'tool1', ['arg1' => 'value1']));
+        $result = new ToolCallResult(new ToolCall('id1', 'tool1', ['arg1' => 'value1']));
 
         $agent = $this->createStub(AgentInterface::class);
 
         $processor = new AgentProcessor($toolbox, keepToolMessages: false);
         $processor->setAgent($agent);
 
-        $output = new Output($model, $response, $messageBag, []);
+        $output = new Output($model, $result, $messageBag, []);
 
         $processor->processOutput($output);
 

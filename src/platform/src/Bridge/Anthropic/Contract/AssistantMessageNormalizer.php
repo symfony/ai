@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\ToolCall;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 

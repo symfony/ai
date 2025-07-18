@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\OpenAI;
 
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
-use Symfony\AI\Platform\Response\StreamResponse;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -23,17 +23,17 @@ final class TokenOutputProcessor implements OutputProcessorInterface
 {
     public function processOutput(Output $output): void
     {
-        if ($output->response instanceof StreamResponse) {
+        if ($output->result instanceof StreamResult) {
             // Streams have to be handled manually as the tokens are part of the streamed chunks
             return;
         }
 
-        $rawResponse = $output->response->getRawResponse()?->getRawObject();
+        $rawResponse = $output->result->getRawResult()?->getObject();
         if (!$rawResponse instanceof ResponseInterface) {
             return;
         }
 
-        $metadata = $output->response->getMetadata();
+        $metadata = $output->result->getMetadata();
 
         $metadata->add(
             'remaining_tokens',

@@ -13,7 +13,7 @@ namespace Symfony\AI\Agent\Toolbox;
 
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
-use Symfony\AI\Platform\Response\ToolCall;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
 
 /**

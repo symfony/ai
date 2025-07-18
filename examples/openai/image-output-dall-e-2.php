@@ -23,7 +23,7 @@ if (!isset($_SERVER['OPENAI_API_KEY'])) {
 
 $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
 
-$response = $platform->request(
+$result = $platform->invoke(
     model: new DallE(), // Utilize Dall-E 2 version in default
     input: 'A cartoon-style elephant with a long trunk and large ears.',
     options: [
@@ -32,6 +32,6 @@ $response = $platform->request(
     ],
 );
 
-foreach ($response->getResponse()->getContent() as $index => $image) {
+foreach ($result->getResult()->getContent() as $index => $image) {
     echo 'Image '.$index.': '.$image->url.\PHP_EOL;
 }

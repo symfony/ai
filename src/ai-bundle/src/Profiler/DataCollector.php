@@ -95,14 +95,14 @@ final class DataCollector extends AbstractDataCollector
      *     model: Model,
      *     input: array<mixed>|string|object,
      *     options: array<string, mixed>,
-     *     response: string|iterable<mixed>|object|null
+     *     result: string|iterable<mixed>|object|null
      * }[]
      */
     private function awaitCallResults(TraceablePlatform $platform): array
     {
         $calls = $platform->calls;
         foreach ($calls as $key => $call) {
-            $call['response'] = $call['response']->await()->getContent();
+            $call['result'] = $call['result']->await()->getContent();
             $calls[$key] = $call;
         }
 

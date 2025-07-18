@@ -33,8 +33,8 @@ $input = [
     ],
 ];
 
-$response = $platform->request($model, $input, [
+$result = $platform->invoke($model, $input, [
     'task' => Task::TABLE_QUESTION_ANSWERING,
 ]);
 
-dump($response->asObject());
+dump($result->asObject());

@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\Agent\Toolbox\Event;
 
-use Symfony\AI\Agent\Toolbox\ToolCallResult;
-use Symfony\AI\Platform\Response\ResponseInterface;
+use Symfony\AI\Agent\Toolbox\ToolResult;
+use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -20,18 +20,18 @@ use Symfony\AI\Platform\Response\ResponseInterface;
 final class ToolCallsExecuted
 {
     /**
-     * @var ToolCallResult[]
+     * @var ToolResult[]
      */
-    public readonly array $toolCallResults;
-    public ResponseInterface $response;
+    public readonly array $toolResults;
+    public ResultInterface $result;
 
-    public function __construct(ToolCallResult ...$toolCallResults)
+    public function __construct(ToolResult ...$toolResults)
     {
-        $this->toolCallResults = $toolCallResults;
+        $this->toolResults = $toolResults;
     }
 
     public function hasResponse(): bool
     {
-        return isset($this->response);
+        return isset($this->result);
     }
 }

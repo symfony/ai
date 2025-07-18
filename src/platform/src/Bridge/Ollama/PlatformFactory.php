@@ -28,6 +28,6 @@ final class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform([new LlamaModelClient($httpClient, $hostUrl)], [new LlamaResponseConverter()], $contract);
+        return new Platform([new LlamaModelClient($httpClient, $hostUrl)], [new LlamaResultConverter()], $contract);
     }
 }

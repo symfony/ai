@@ -42,9 +42,9 @@ array of options::
         Message::forSystem('You are a helpful chatbot answering questions about LLM agent.'),
         Message::ofUser('Hello, how are you?'),
     );
-    $response = $agent->call($messages);
+    $result = $agent->call($messages);
 
-    echo $response->getContent(); // "I'm fine, thank you. How can I help you today?"
+    echo $result->getContent(); // "I'm fine, thank you. How can I help you today?"
 
 
 The structure of the input message bag is flexible, see `Platform Component`_ for more details on how to use it.
@@ -90,7 +90,7 @@ Custom tools can basically be any class, but must configure by the ``#[AsTool]``
 
 **Tool Return Value**
 
-In the end, the tool's response needs to be a string, but Symfony AI converts arrays and objects, that implement the
+In the end, the tool's result needs to be a string, but Symfony AI converts arrays and objects, that implement the
 JsonSerializable interface, to JSON strings for you. So you can return arrays or objects directly from your tool.
 
 **Tool Methods**
@@ -234,12 +234,12 @@ tools option with a list of tool names::
 
 To react to the result of a tool, you can implement an EventListener or EventSubscriber, that listens to the
 ``ToolCallsExecuted`` event. This event is dispatched after the Toolbox executed all current tool calls and enables you
-to skip the next LLM call by setting a response yourself::
+to skip the next LLM call by setting a result yourself::
 
     $eventDispatcher->addListener(ToolCallsExecuted::class, function (ToolCallsExecuted $event): void {
         foreach ($event->toolCallResults as $toolCallResult) {
             if (str_starts_with($toolCallResult->toolCall->name, 'weather_')) {
-                $event->response = new StructuredResponse($toolCallResult->result);
+                $event->result = new ObjectResult($toolCallResult->result);
             }
         }
     });
@@ -247,7 +247,7 @@ to skip the next LLM call by setting a response yourself::
 **Keeping Tool Messages**
 
 Sometimes you might wish to keep the tool messages (AssistantMessage containing the toolCalls and ToolCallMessage
-containing the response) in the context. Enable the keepToolMessages flag of the toolbox' AgentProcessor to ensure those
+containing the result) in the context. Enable the keepToolMessages flag of the toolbox' AgentProcessor to ensure those
 messages will be added to your MessageBag::
 
     use Symfony\AI\Agent\Toolbox\AgentProcessor;
@@ -268,7 +268,7 @@ messages will be added to your MessageBag::
     $toolProcessor = new AgentProcessor($toolbox, keepToolMessages: true);
 
     $agent = new Agent($platform, $model, inputProcessor: [$toolProcessor], outputProcessor: [$toolProcessor]);
-    $response = $agent->call($messages);
+    $result = $agent->call($messages);
     // $messages will now include the tool messages
 
 **Code Examples (with built-in tools)**
@@ -287,7 +287,7 @@ Retrieval Augmented Generation (RAG)
 
 In combination with the `Store Component`_, the Agent component can be used to build agents that perform Retrieval
 Augmented Generation (RAG). This allows the agent to retrieve relevant documents from a store and use them to generate
-more accurate and context-aware responses. Therefore, the component provides a built-in tool called
+more accurate and context-aware results. Therefore, the component provides a built-in tool called
 ``Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch``::
 
     use Symfony\AI\Agent\Agent;
@@ -311,7 +311,7 @@ more accurate and context-aware responses. Therefore, the component provides a b
             PROMPT),
         Message::ofUser('...') // The user's question.
     );
-    $response = $agent->call($messages);
+    $result = $agent->call($messages);
 
 **Code Examples**
 
@@ -327,7 +327,7 @@ by features like **Structured Output** or providing a **Response Format**.
 **PHP Classes as Output**
 
 Symfony AI supports that use-case by abstracting the hustle of defining and providing schemas to the LLM and converting
-the response back to PHP objects.
+the result back to PHP objects.
 
 To achieve this, a specific agent processor needs to be registered::
 
@@ -351,9 +351,9 @@ To achieve this, a specific agent processor needs to be registered::
         Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
         Message::ofUser('how can I solve 8x + 7 = -23'),
     );
-    $response = $agent->call($messages, ['output_structure' => MathReasoning::class]);
+    $result = $agent->call($messages, ['output_structure' => MathReasoning::class]);
 
-    dump($response->getContent()); // returns an instance of `MathReasoning` class
+    dump($result->getContent()); // returns an instance of `MathReasoning` class
 
 **Array Structures as Output**
 
@@ -365,7 +365,7 @@ Also PHP array structures as response_format are supported, which also requires 
     // Initialize Platform, LLM and agent with processors and Clock tool
 
     $messages = new MessageBag(Message::ofUser('What date and time is it?'));
-    $response = $agent->call($messages, ['response_format' => [
+    $result = $agent->call($messages, ['response_format' => [
         'type' => 'json_schema',
         'json_schema' => [
             'name' => 'clock',
@@ -382,7 +382,7 @@ Also PHP array structures as response_format are supported, which also requires 
         ],
     ]]);
 
-    dump($response->getContent()); // returns an array
+    dump($result->getContent()); // returns an array
 
 **Code Examples**
 
@@ -426,19 +426,19 @@ and are able to mutate both on top of the Input instance provided::
 
 **OutputProcessor**
 
-OutputProcessor instances are called after the LLM provided a response and can - on top of options and messages - mutate
-or replace the given response::
+OutputProcessor instances are called after the model provided a result and can - on top of options and messages - mutate
+or replace the given result::
 
     use Symfony\AI\Agent\Output;
     use Symfony\AI\Agent\OutputProcessorInterface;
 
     final class MyProcessor implements OutputProcessorInterface
     {
-        public function processOutput(Output $out): void
+        public function processOutput(Output $output): void
         {
-            // mutate response
-            if (str_contains($output->response->getContent, self::STOP_WORD)) {
-                $output->reponse = new TextReponse('Sorry, we were unable to find relevant information.')
+            // mutate result
+            if (str_contains($output->result->getContent(), self::STOP_WORD)) {
+                $output->result = new TextResult('Sorry, we were unable to find relevant information.')
             }
         }
     }
@@ -461,7 +461,7 @@ AgentAwareTrait::
         public function processOutput(Output $out): void
         {
             // additional agent interaction
-            $response = $this->agent->call(...);
+            $result = $this->agent->call(...);
         }
     }
 
@@ -494,7 +494,7 @@ Memory integration is handled through the ``MemoryInputProcessor`` and one or mo
 
     $agent = new Agent($platform, $model, [$memoryProcessor]);
     $messages = new MessageBag(Message::ofUser('What do we do today?'));
-    $response = $agent->call($messages);
+    $result = $agent->call($messages);
 
 Memory Providers
 ~~~~~~~~~~~~~~~~
@@ -532,7 +532,7 @@ Dynamic Memory Control
 Memory is globally configured for the agent, but you can selectively disable it for specific calls when needed. This is
 useful when certain interactions shouldn't be influenced by the memory context::
 
-    $response = $agent->call($messages, [
+    $result = $agent->call($messages, [
         'use_memory' => false, // Disable memory for this specific call
     ]);
 

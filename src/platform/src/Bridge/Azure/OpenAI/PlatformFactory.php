@@ -12,7 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\Azure\OpenAI;
 
 use Symfony\AI\Platform\Bridge\OpenAI\Embeddings;
-use Symfony\AI\Platform\Bridge\OpenAI\GPT\ResponseConverter;
+use Symfony\AI\Platform\Bridge\OpenAI\GPT;
+use Symfony\AI\Platform\Bridge\OpenAI\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAI\Whisper\AudioNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
@@ -34,13 +35,13 @@ final readonly class PlatformFactory
         ?Contract $contract = null,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
-        $embeddingsResponseFactory = new EmbeddingsModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey);
-        $GPTResponseFactory = new GPTModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey);
-        $whisperResponseFactory = new WhisperModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey);
+        $embeddingsModelClient = new EmbeddingsModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey);
+        $GPTModelClient = new GPTModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey);
+        $whisperModelClient = new WhisperModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey);
 
         return new Platform(
-            [$GPTResponseFactory, $embeddingsResponseFactory, $whisperResponseFactory],
-            [new ResponseConverter(), new Embeddings\ResponseConverter(), new \Symfony\AI\Platform\Bridge\OpenAI\Whisper\ResponseConverter()],
+            [$GPTModelClient, $embeddingsModelClient, $whisperModelClient],
+            [new GPT\ResultConverter(), new Embeddings\ResultConverter(), new Whisper\ResultConverter()],
             $contract ?? Contract::create(new AudioNormalizer()),
         );
     }

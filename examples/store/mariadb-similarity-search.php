@@ -73,6 +73,6 @@ $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),
     Message::ofUser('Which movie fits the theme of the mafia?')
 );
-$response = $agent->call($messages);
+$result = $agent->call($messages);
 
-echo $response->getContent().\PHP_EOL;
+echo $result->getContent().\PHP_EOL;

@@ -40,6 +40,6 @@ $messages = new MessageBag(
         Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'),
     ),
 );
-$response = $agent->call($messages);
+$result = $agent->call($messages);
 
-echo $response->getContent().\PHP_EOL;
+echo $result->getContent().\PHP_EOL;

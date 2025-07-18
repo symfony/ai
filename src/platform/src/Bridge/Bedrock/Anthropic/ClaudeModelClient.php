@@ -15,13 +15,13 @@ use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
-use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResponse;
+use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
-use Symfony\AI\Platform\Response\TextResponse;
-use Symfony\AI\Platform\Response\ToolCall;
-use Symfony\AI\Platform\Response\ToolCallResponse;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 
 /**
  * @author Björn Altmann
@@ -39,7 +39,7 @@ final readonly class ClaudeModelClient implements ModelClientInterface
         return $model instanceof Claude;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult
     {
         unset($payload['model']);
 
@@ -57,10 +57,10 @@ final readonly class ClaudeModelClient implements ModelClientInterface
             'body' => json_encode(array_merge($options, $payload), \JSON_THROW_ON_ERROR),
         ];
 
-        return new RawBedrockResponse($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest($request)));
+        return new RawBedrockResult($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest($request)));
     }
 
-    public function convert(InvokeModelResponse $bedrockResponse): ToolCallResponse|TextResponse
+    public function convert(InvokeModelResponse $bedrockResponse): ToolCallResult|TextResult
     {
         $data = json_decode($bedrockResponse->getBody(), true, 512, \JSON_THROW_ON_ERROR);
 
@@ -79,10 +79,10 @@ final readonly class ClaudeModelClient implements ModelClientInterface
             }
         }
         if ([] !== $toolCalls) {
-            return new ToolCallResponse(...$toolCalls);
+            return new ToolCallResult(...$toolCalls);
         }
 
-        return new TextResponse($data['content'][0]['text']);
+        return new TextResult($data['content'][0]['text']);
     }
 
     private function getModelId(Model $model): string

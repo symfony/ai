@@ -14,7 +14,7 @@ namespace App\YouTube;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Response\TextResponse;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -61,11 +61,11 @@ final class Chat
         $messages = $this->loadMessages();
 
         $messages->add(Message::ofUser($message));
-        $response = $this->agent->call($messages);
+        $result = $this->agent->call($messages);
 
-        \assert($response instanceof TextResponse);
+        \assert($result instanceof TextResult);
 
-        $messages->add(Message::ofAssistant($response->getContent()));
+        $messages->add(Message::ofAssistant($result->getContent()));
 
         $this->saveMessages($messages);
     }

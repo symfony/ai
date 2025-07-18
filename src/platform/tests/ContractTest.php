@@ -30,7 +30,7 @@ use Symfony\AI\Platform\Contract\Normalizer\Message\MessageBagNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\SystemMessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\ToolCallMessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\UserMessageNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Response\ToolCallNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;

@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\Response\TextResponse;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -39,9 +39,9 @@ final class Chat
         $path = tempnam(sys_get_temp_dir(), 'audio-').'.wav';
         file_put_contents($path, base64_decode($base64audio));
 
-        $response = $this->platform->request(new Whisper(), Audio::fromFile($path));
+        $result = $this->platform->invoke(new Whisper(), Audio::fromFile($path));
 
-        $this->submitMessage($response->asText());
+        $this->submitMessage($result->asText());
     }
 
     public function loadMessages(): MessageBag
@@ -54,11 +54,11 @@ final class Chat
         $messages = $this->loadMessages();
 
         $messages->add(Message::ofUser($message));
-        $response = $this->agent->call($messages);
+        $result = $this->agent->call($messages);
 
-        \assert($response instanceof TextResponse);
+        \assert($result instanceof TextResult);
 
-        $messages->add(Message::ofAssistant($response->getContent()));
+        $messages->add(Message::ofAssistant($result->getContent()));
 
         $this->saveMessages($messages);
     }

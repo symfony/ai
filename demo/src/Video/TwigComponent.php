@@ -47,10 +47,10 @@ final class TwigComponent
             Message::ofUser($instruction, Image::fromDataUrl($image))
         );
 
-        $response = $this->platform->request(new GPT(GPT::GPT_4O_MINI), $messageBag, [
+        $result = $this->platform->invoke(new GPT(GPT::GPT_4O_MINI), $messageBag, [
             'max_tokens' => 100,
         ]);
 
-        $this->caption = $response->asText();
+        $this->caption = $result->asText();
     }
 }

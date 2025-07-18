@@ -29,8 +29,8 @@ $model = new Mistral();
 $agent = new Agent($platform, $model);
 
 $messages = new MessageBag(Message::ofUser('What is the best French cheese?'));
-$response = $agent->call($messages, [
+$result = $agent->call($messages, [
     'temperature' => 0.7,
 ]);
 
-echo $response->getContent().\PHP_EOL;
+echo $result->getContent().\PHP_EOL;

@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
-use Symfony\AI\Platform\Response\ToolCall;
+use Symfony\AI\Platform\Result\ToolCall;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>

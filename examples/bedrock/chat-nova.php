@@ -33,6 +33,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$response = $agent->call($messages);
+$result = $agent->call($messages);
 
-echo $response->getContent().\PHP_EOL;
+echo $result->getContent().\PHP_EOL;

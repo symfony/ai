@@ -44,11 +44,11 @@ For example, to use the OpenAI provider, you would typically do something like t
 And with a ``Symfony\AI\Platform\PlatformInterface`` instance, and a ``Symfony\AI\Platform\Model`` instance, you can now
 use the platform to interact with the AI model::
 
-    // Generate a vector embedding for a text, returns a Symfony\AI\Platform\Response\VectorResponse
-    $response = $platform->request($embeddings, 'What is the capital of France?');
+    // Generate a vector embedding for a text, returns a Symfony\AI\Platform\Result\VectorResult
+    $result = $platform->invoke($embeddings, 'What is the capital of France?');
 
-    // Generate a text completion with GPT, returns a Symfony\AI\Platform\Response\TextResponse
-    $embeddingsResult = $platform->request($model, new MessageBag(Message::ofUser('What is the capital of France?')));
+    // Generate a text completion with GPT, returns a Symfony\AI\Platform\Result\TextResult
+    $embeddingsResult = $platform->invoke($model, new MessageBag(Message::ofUser('What is the capital of France?')));
 
 Depending on the model and its capabilities, different types of inputs and outputs are supported, which results in a
 very flexible and powerful interface for working with AI models.
@@ -95,10 +95,10 @@ See `GitHub`_ for planned support of other models and platforms.
 Options
 -------
 
-The third parameter of the ``request`` method is an array of options, which basically wraps the options of the
+The third parameter of the ``invoke`` method is an array of options, which basically wraps the options of the
 corresponding model and platform, like ``temperature`` or ``stream``::
 
-    $response = $platform->request($model, $input, [
+    $result = $platform->invoke($model, $input, [
         'temperature' => 0.7,
         'max_tokens' => 100,
     ]);
@@ -152,11 +152,11 @@ This provides several benefits:
     // Get string representation
     echo $id->toRfc4122(); // e.g., "01928d1f-6f2e-7123-a456-123456789abc"
 
-Response Streaming
-------------------
+Result Streaming
+----------------
 
-Since LLMs usually generate a response word by word, most of them also support streaming the response using Server Side
-Events. Symfony AI supports that by abstracting the conversion and returning a ``Generator`` as content of the response::
+Since LLMs usually generate a result word by word, most of them also support streaming the result using Server Side
+Events. Symfony AI supports that by abstracting the conversion and returning a ``Generator`` as content of the result::
 
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Message\Message;
@@ -169,11 +169,11 @@ Events. Symfony AI supports that by abstracting the conversion and returning a `
         Message::forSystem('You are a thoughtful philosopher.'),
         Message::ofUser('What is the purpose of an ant?'),
     );
-    $response = $agent->call($messages, [
+    $result = $agent->call($messages, [
         'stream' => true, // enable streaming of response text
     ]);
 
-    foreach ($response->getContent() as $word) {
+    foreach ($result->getContent() as $word) {
         echo $word;
     }
 
@@ -205,7 +205,7 @@ Some LLMs also support images as input, which Symfony AI supports as content typ
             new ImageUrl('https://foo.com/bar.png'), // URL to an image
         ),
     );
-    $response = $agent->call($messages);
+    $result = $agent->call($messages);
 
 **Code Examples**
 * `Binary Image Input with GPT`_
@@ -229,7 +229,7 @@ Similar to images, some LLMs also support audio as input, which is just another 
             Audio::fromFile('/path/audio.mp3'), // Path to an audio file
         ),
     );
-    $response = $agent->call($messages);
+    $result = $agent->call($messages);
 
 **Code Examples**
 
@@ -248,7 +248,7 @@ The standalone usage results in an ``Vector`` instance::
 
     $embeddings = new Embeddings($platform, Embeddings::TEXT_3_SMALL);
 
-    $vectors = $platform->request($embeddings, $textInput)->asVectors();
+    $vectors = $platform->invoke($embeddings, $textInput)->asVectors();
 
     dump($vectors[0]->getData()); // returns something like: [0.123, -0.456, 0.789, ...]
 
@@ -274,11 +274,11 @@ which can be useful to speed up the processing::
     // Initialize Platform & Model
 
     foreach ($inputs as $input) {
-        $responses[] = $platform->request($model, $input);
+        $results[] = $platform->invoke($model, $input);
     }
 
-    foreach ($responses as $response) {
-        echo $response->asText().PHP_EOL;
+    foreach ($results as $result) {
+        echo $result->asText().PHP_EOL;
     }
 
 .. note::

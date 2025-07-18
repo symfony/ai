@@ -28,8 +28,8 @@ $platform = PlatformFactory::create($_SERVER['HUGGINGFACE_KEY']);
 $model = new Model('HuggingFaceH4/zephyr-7b-beta');
 
 $messages = new MessageBag(Message::ofUser('Hello, how are you doing today?'));
-$response = $platform->request($model, $messages, [
+$result = $platform->invoke($model, $messages, [
     'task' => Task::CHAT_COMPLETION,
 ]);
 
-echo $response->asText().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

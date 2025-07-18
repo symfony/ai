@@ -12,7 +12,7 @@
 namespace Symfony\AI\Agent;
 
 use Symfony\AI\Platform\Message\MessageBagInterface;
-use Symfony\AI\Platform\Response\ResponseInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
@@ -22,5 +22,5 @@ interface AgentInterface
     /**
      * @param array<string, mixed> $options
      */
-    public function call(MessageBagInterface $messages, array $options = []): ResponseInterface;
+    public function call(MessageBagInterface $messages, array $options = []): ResultInterface;
 }

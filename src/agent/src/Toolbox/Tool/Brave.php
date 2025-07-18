@@ -52,7 +52,7 @@ final readonly class Brave
         #[With(minimum: 0, maximum: 9)]
         int $offset = 0,
     ): array {
-        $response = $this->httpClient->request('GET', 'https://api.search.brave.com/res/v1/web/search', [
+        $result = $this->httpClient->request('GET', 'https://api.search.brave.com/res/v1/web/search', [
             'headers' => ['X-Subscription-Token' => $this->apiKey],
             'query' => array_merge($this->options, [
                 'q' => $query,
@@ -61,7 +61,7 @@ final readonly class Brave
             ]),
         ]);
 
-        $data = $response->toArray();
+        $data = $result->toArray();
 
         return array_map(static function (array $result) {
             return ['title' => $result['title'], 'description' => $result['description'], 'url' => $result['url']];

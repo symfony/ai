@@ -25,8 +25,8 @@ if (!isset($_SERVER['HUGGINGFACE_KEY'])) {
 $platform = PlatformFactory::create($_SERVER['HUGGINGFACE_KEY']);
 $model = new Model('black-forest-labs/FLUX.1-dev');
 
-$response = $platform->request($model, 'Astronaut riding a horse', [
+$result = $platform->invoke($model, 'Astronaut riding a horse', [
     'task' => Task::TEXT_TO_IMAGE,
 ]);
 
-echo $response->asBase64().\PHP_EOL;
+echo $result->asBase64().\PHP_EOL;

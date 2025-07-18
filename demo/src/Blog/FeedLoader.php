@@ -27,10 +27,10 @@ class FeedLoader
      */
     public function load(): array
     {
-        $response = $this->httpClient->request('GET', 'https://feeds.feedburner.com/symfony/blog');
+        $result = $this->httpClient->request('GET', 'https://feeds.feedburner.com/symfony/blog');
 
         $posts = [];
-        $crawler = new Crawler($response->getContent());
+        $crawler = new Crawler($result->getContent());
         $crawler->filter('item')->each(function (Crawler $node) use (&$posts) {
             $title = $node->filter('title')->text();
             $posts[] = new Post(

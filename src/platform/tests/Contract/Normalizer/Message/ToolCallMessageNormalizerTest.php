@@ -17,7 +17,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\Normalizer\Message\ToolCallMessageNormalizer;
 use Symfony\AI\Platform\Message\ToolCallMessage;
-use Symfony\AI\Platform\Response\ToolCall;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 #[CoversClass(ToolCallMessageNormalizer::class)]

@@ -35,12 +35,12 @@ The URL Context tool allows Gemini to fetch and analyze content from web pages. 
         Message::ofUser('What was the 12 month Euribor rate a week ago based on https://www.euribor-rates.eu/en/current-euribor-rates/4/euribor-rate-12-months/')
     );
 
-    $response = $platform->request($model, $messages);
+    $result = $platform->invoke($model, $messages);
 
 
 **Google Search**
 
-The Google Search tool enables the model to search the web and incorporate search results into its responses::
+The Google Search tool enables the model to search the web and incorporate search results into its results::
 
     $model = new Gemini('gemini-2.5-pro-preview-03-25', [
         'server_tools' => [
@@ -52,7 +52,7 @@ The Google Search tool enables the model to search the web and incorporate searc
         Message::ofUser('What are the latest developments in quantum computing?')
     );
 
-    $response = $platform->request($model, $messages);
+    $result = $platform->invoke($model, $messages);
 
 **Code Execution**
 
@@ -68,7 +68,7 @@ The Code Execution tool provides a sandboxed environment for running code::
         Message::ofUser('Calculate the factorial of 20 and show me the code')
     );
 
-    $response = $platform->request($model, $messages);
+    $result = $platform->invoke($model, $messages);
 
 
 ## Using Multiple Server Tools

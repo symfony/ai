@@ -25,8 +25,8 @@ final class BraveTest extends TestCase
     #[Test]
     public function returnsSearchResults(): void
     {
-        $response = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/brave.json');
-        $httpClient = new MockHttpClient($response);
+        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/brave.json');
+        $httpClient = new MockHttpClient($result);
         $brave = new Brave($httpClient, 'test-api-key');
 
         $results = $brave('latest Dallas Cowboys game result');
@@ -43,19 +43,19 @@ final class BraveTest extends TestCase
     #[Test]
     public function passesCorrectParametersToApi(): void
     {
-        $response = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/brave.json');
-        $httpClient = new MockHttpClient($response);
+        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/brave.json');
+        $httpClient = new MockHttpClient($result);
         $brave = new Brave($httpClient, 'test-api-key', ['extra' => 'option']);
 
         $brave('test query', 10, 5);
 
-        $request = $response->getRequestUrl();
+        $request = $result->getRequestUrl();
         self::assertStringContainsString('q=test%20query', $request);
         self::assertStringContainsString('count=10', $request);
         self::assertStringContainsString('offset=5', $request);
         self::assertStringContainsString('extra=option', $request);
 
-        $requestOptions = $response->getRequestOptions();
+        $requestOptions = $result->getRequestOptions();
         self::assertArrayHasKey('headers', $requestOptions);
         self::assertContains('X-Subscription-Token: test-api-key', $requestOptions['headers']);
     }
@@ -63,8 +63,8 @@ final class BraveTest extends TestCase
     #[Test]
     public function handlesEmptyResults(): void
     {
-        $response = new MockResponse(json_encode(['web' => ['results' => []]]));
-        $httpClient = new MockHttpClient($response);
+        $result = new MockResponse(json_encode(['web' => ['results' => []]]));
+        $httpClient = new MockHttpClient($result);
         $brave = new Brave($httpClient, 'test-api-key');
 
         $results = $brave('this should return nothing');

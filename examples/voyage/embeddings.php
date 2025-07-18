@@ -24,10 +24,10 @@ if (!isset($_SERVER['VOYAGE_API_KEY'])) {
 $platform = PlatformFactory::create($_SERVER['VOYAGE_API_KEY']);
 $embeddings = new Voyage();
 
-$response = $platform->request($embeddings, <<<TEXT
+$result = $platform->invoke($embeddings, <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.
     The people of Japan were very kind and hardworking. They loved their country very much and took care of it. The
     country was very peaceful and prosperous. The people lived happily ever after.
     TEXT);
 
-echo 'Dimensions: '.$response->asVectors()[0]->getDimensions().\PHP_EOL;
+echo 'Dimensions: '.$result->asVectors()[0]->getDimensions().\PHP_EOL;

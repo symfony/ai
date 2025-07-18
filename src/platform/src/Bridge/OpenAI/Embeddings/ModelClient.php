@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenAI\Embeddings;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface as PlatformResponseFactory;
-use Symfony\AI\Platform\Response\RawHttpResponse;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -37,9 +37,9 @@ final readonly class ModelClient implements PlatformResponseFactory
         return $model instanceof Embeddings;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        return new RawHttpResponse($this->httpClient->request('POST', 'https://api.openai.com/v1/embeddings', [
+        return new RawHttpResult($this->httpClient->request('POST', 'https://api.openai.com/v1/embeddings', [
             'auth_bearer' => $this->apiKey,
             'json' => array_merge($options, [
                 'model' => $model->getName(),

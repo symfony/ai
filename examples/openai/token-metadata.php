@@ -35,11 +35,11 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$response = $agent->call($messages, [
+$result = $agent->call($messages, [
     'max_tokens' => 500, // specific options just for this call
 ]);
 
-$metadata = $response->getMetadata();
+$metadata = $result->getMetadata();
 
 echo 'Utilized Tokens: '.$metadata['total_tokens'].\PHP_EOL;
 echo '-- Prompt Tokens: '.$metadata['prompt_tokens'].\PHP_EOL;

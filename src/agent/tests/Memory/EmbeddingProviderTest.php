@@ -24,9 +24,9 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\Response\RawResponseInterface;
-use Symfony\AI\Platform\Response\ResponsePromise;
-use Symfony\AI\Platform\Response\VectorResponse;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\ResultPromise;
+use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\VectorStoreInterface;
 
@@ -46,7 +46,7 @@ final class EmbeddingProviderTest extends TestCase
     public function itIsDoingNothingWithEmptyMessageBag(): void
     {
         $platform = $this->createMock(PlatformInterface::class);
-        $platform->expects($this->never())->method('request');
+        $platform->expects($this->never())->method('invoke');
 
         $vectorStore = $this->createMock(VectorStoreInterface::class);
         $vectorStore->expects($this->never())->method('query');
@@ -68,7 +68,7 @@ final class EmbeddingProviderTest extends TestCase
     public function itIsDoingNothingWithoutUserMessageInBag(): void
     {
         $platform = $this->createMock(PlatformInterface::class);
-        $platform->expects($this->never())->method('request');
+        $platform->expects($this->never())->method('invoke');
 
         $vectorStore = $this->createMock(VectorStoreInterface::class);
         $vectorStore->expects($this->never())->method('query');
@@ -90,7 +90,7 @@ final class EmbeddingProviderTest extends TestCase
     public function itIsDoingNothingWhenUserMessageHasNoTextContent(): void
     {
         $platform = $this->createMock(PlatformInterface::class);
-        $platform->expects($this->never())->method('request');
+        $platform->expects($this->never())->method('invoke');
 
         $vectorStore = $this->createMock(VectorStoreInterface::class);
         $vectorStore->expects($this->never())->method('query');
@@ -111,16 +111,16 @@ final class EmbeddingProviderTest extends TestCase
     #[Test]
     public function itIsNotCreatingMemoryWhenNoVectorsFound(): void
     {
-        $vectorResponse = new VectorResponse($vector = new Vector([0.1, 0.2], 2));
-        $responsePromise = new ResponsePromise(
-            static fn () => $vectorResponse,
-            self::createStub(RawResponseInterface::class),
+        $vectorResult = new VectorResult($vector = new Vector([0.1, 0.2], 2));
+        $resultPromise = new ResultPromise(
+            static fn () => $vectorResult,
+            self::createStub(RawResultInterface::class),
         );
 
         $platform = $this->createMock(PlatformInterface::class);
         $platform->expects($this->once())
-            ->method('request')
-            ->willReturn($responsePromise);
+            ->method('invoke')
+            ->willReturn($resultPromise);
 
         $vectorStore = $this->createMock(VectorStoreInterface::class);
         $vectorStore->expects($this->once())
@@ -146,16 +146,16 @@ final class EmbeddingProviderTest extends TestCase
     #[Test]
     public function itIsCreatingMemoryWithFoundVectors(): void
     {
-        $vectorResponse = new VectorResponse($vector = new Vector([0.1, 0.2], 2));
-        $responsePromise = new ResponsePromise(
-            static fn () => $vectorResponse,
-            self::createStub(RawResponseInterface::class),
+        $vectorResult = new VectorResult($vector = new Vector([0.1, 0.2], 2));
+        $resultPromise = new ResultPromise(
+            static fn () => $vectorResult,
+            self::createStub(RawResultInterface::class),
         );
 
         $platform = $this->createMock(PlatformInterface::class);
         $platform->expects($this->once())
-            ->method('request')
-            ->willReturn($responsePromise);
+            ->method('invoke')
+            ->willReturn($resultPromise);
 
         $vectorStore = $this->createMock(VectorStoreInterface::class);
         $vectorStore->expects($this->once())

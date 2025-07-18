@@ -12,8 +12,8 @@
 namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Response\RawResponseInterface;
-use Symfony\AI\Platform\Response\ResponsePromise;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\ResultPromise;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -26,25 +26,25 @@ final class Platform implements PlatformInterface
     private readonly array $modelClients;
 
     /**
-     * @var ResponseConverterInterface[]
+     * @var ResultConverterInterface[]
      */
-    private readonly array $responseConverter;
+    private readonly array $resultConverters;
 
     /**
-     * @param iterable<ModelClientInterface>       $modelClients
-     * @param iterable<ResponseConverterInterface> $responseConverter
+     * @param iterable<ModelClientInterface>     $modelClients
+     * @param iterable<ResultConverterInterface> $resultConverters
      */
     public function __construct(
         iterable $modelClients,
-        iterable $responseConverter,
+        iterable $resultConverters,
         private ?Contract $contract = null,
     ) {
         $this->contract = $contract ?? Contract::create();
         $this->modelClients = $modelClients instanceof \Traversable ? iterator_to_array($modelClients) : $modelClients;
-        $this->responseConverter = $responseConverter instanceof \Traversable ? iterator_to_array($responseConverter) : $responseConverter;
+        $this->resultConverters = $resultConverters instanceof \Traversable ? iterator_to_array($resultConverters) : $resultConverters;
     }
 
-    public function request(Model $model, array|string|object $input, array $options = []): ResponsePromise
+    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise
     {
         $payload = $this->contract->createRequestPayload($model, $input);
         $options = array_merge($model->getOptions(), $options);
@@ -53,16 +53,16 @@ final class Platform implements PlatformInterface
             $options['tools'] = $this->contract->createToolOption($options['tools'], $model);
         }
 
-        $response = $this->doRequest($model, $payload, $options);
+        $result = $this->doInvoke($model, $payload, $options);
 
-        return $this->convertResponse($model, $response, $options);
+        return $this->convertResult($model, $result, $options);
     }
 
     /**
      * @param array<string, mixed> $payload
      * @param array<string, mixed> $options
      */
-    private function doRequest(Model $model, array|string $payload, array $options = []): RawResponseInterface
+    private function doInvoke(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
         foreach ($this->modelClients as $modelClient) {
             if ($modelClient->supports($model)) {
@@ -70,20 +70,20 @@ final class Platform implements PlatformInterface
             }
         }
 
-        throw new RuntimeException('No response factory registered for model "'.$model::class.'" with given input.');
+        throw new RuntimeException(\sprintf('No ModelClient registered for model "%s" with given input.', $model::class));
     }
 
     /**
      * @param array<string, mixed> $options
      */
-    private function convertResponse(Model $model, RawResponseInterface $response, array $options): ResponsePromise
+    private function convertResult(Model $model, RawResultInterface $result, array $options): ResultPromise
     {
-        foreach ($this->responseConverter as $responseConverter) {
-            if ($responseConverter->supports($model)) {
-                return new ResponsePromise($responseConverter->convert(...), $response, $options);
+        foreach ($this->resultConverters as $resultConverter) {
+            if ($resultConverter->supports($model)) {
+                return new ResultPromise($resultConverter->convert(...), $result, $options);
             }
         }
 
-        throw new RuntimeException('No response converter registered for model "'.$model::class.'" with given input.');
+        throw new RuntimeException(\sprintf('No ResultConverter registered for model "%s" with given input.', $model::class));
     }
 }

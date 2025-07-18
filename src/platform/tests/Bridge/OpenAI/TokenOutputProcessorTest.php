@@ -20,17 +20,17 @@ use Symfony\AI\Agent\Output;
 use Symfony\AI\Platform\Bridge\OpenAI\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\Metadata\Metadata;
-use Symfony\AI\Platform\Response\RawHttpResponse;
-use Symfony\AI\Platform\Response\ResponseInterface;
-use Symfony\AI\Platform\Response\StreamResponse;
-use Symfony\AI\Platform\Response\TextResponse;
+use Symfony\AI\Platform\Result\Metadata\Metadata;
+use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Contracts\HttpClient\ResponseInterface as SymfonyHttpResponse;
 
 #[CoversClass(TokenOutputProcessor::class)]
 #[UsesClass(Output::class)]
-#[UsesClass(TextResponse::class)]
-#[UsesClass(StreamResponse::class)]
+#[UsesClass(TextResult::class)]
+#[UsesClass(StreamResult::class)]
 #[UsesClass(Metadata::class)]
 #[Small]
 final class TokenOutputProcessorTest extends TestCase
@@ -39,12 +39,12 @@ final class TokenOutputProcessorTest extends TestCase
     public function itHandlesStreamResponsesWithoutProcessing(): void
     {
         $processor = new TokenOutputProcessor();
-        $streamResponse = new StreamResponse((static function () { yield 'test'; })());
-        $output = $this->createOutput($streamResponse);
+        $streamResult = new StreamResult((static function () { yield 'test'; })());
+        $output = $this->createOutput($streamResult);
 
         $processor->processOutput($output);
 
-        $metadata = $output->response->getMetadata();
+        $metadata = $output->result->getMetadata();
         self::assertCount(0, $metadata);
     }
 
@@ -52,12 +52,12 @@ final class TokenOutputProcessorTest extends TestCase
     public function itDoesNothingWithoutRawResponse(): void
     {
         $processor = new TokenOutputProcessor();
-        $textResponse = new TextResponse('test');
-        $output = $this->createOutput($textResponse);
+        $textResult = new TextResult('test');
+        $output = $this->createOutput($textResult);
 
         $processor->processOutput($output);
 
-        $metadata = $output->response->getMetadata();
+        $metadata = $output->result->getMetadata();
         self::assertCount(0, $metadata);
     }
 
@@ -65,15 +65,15 @@ final class TokenOutputProcessorTest extends TestCase
     public function itAddsRemainingTokensToMetadata(): void
     {
         $processor = new TokenOutputProcessor();
-        $textResponse = new TextResponse('test');
+        $textResult = new TextResult('test');
 
-        $textResponse->setRawResponse($this->createRawResponse());
+        $textResult->setRawResult($this->createRawResult());
 
-        $output = $this->createOutput($textResponse);
+        $output = $this->createOutput($textResult);
 
         $processor->processOutput($output);
 
-        $metadata = $output->response->getMetadata();
+        $metadata = $output->result->getMetadata();
         self::assertCount(1, $metadata);
         self::assertSame(1000, $metadata->get('remaining_tokens'));
     }
@@ -82,9 +82,9 @@ final class TokenOutputProcessorTest extends TestCase
     public function itAddsUsageTokensToMetadata(): void
     {
         $processor = new TokenOutputProcessor();
-        $textResponse = new TextResponse('test');
+        $textResult = new TextResult('test');
 
-        $rawResponse = $this->createRawResponse([
+        $rawResponse = $this->createRawResult([
             'usage' => [
                 'prompt_tokens' => 10,
                 'completion_tokens' => 20,
@@ -92,13 +92,13 @@ final class TokenOutputProcessorTest extends TestCase
             ],
         ]);
 
-        $textResponse->setRawResponse($rawResponse);
+        $textResult->setRawResult($rawResponse);
 
-        $output = $this->createOutput($textResponse);
+        $output = $this->createOutput($textResult);
 
         $processor->processOutput($output);
 
-        $metadata = $output->response->getMetadata();
+        $metadata = $output->result->getMetadata();
         self::assertCount(4, $metadata);
         self::assertSame(1000, $metadata->get('remaining_tokens'));
         self::assertSame(10, $metadata->get('prompt_tokens'));
@@ -110,22 +110,22 @@ final class TokenOutputProcessorTest extends TestCase
     public function itHandlesMissingUsageFields(): void
     {
         $processor = new TokenOutputProcessor();
-        $textResponse = new TextResponse('test');
+        $textResult = new TextResult('test');
 
-        $rawResponse = $this->createRawResponse([
+        $rawResult = $this->createRawResult([
             'usage' => [
                 // Missing some fields
                 'prompt_tokens' => 10,
             ],
         ]);
 
-        $textResponse->setRawResponse($rawResponse);
+        $textResult->setRawResult($rawResult);
 
-        $output = $this->createOutput($textResponse);
+        $output = $this->createOutput($textResult);
 
         $processor->processOutput($output);
 
-        $metadata = $output->response->getMetadata();
+        $metadata = $output->result->getMetadata();
         self::assertCount(4, $metadata);
         self::assertSame(1000, $metadata->get('remaining_tokens'));
         self::assertSame(10, $metadata->get('prompt_tokens'));
@@ -133,7 +133,7 @@ final class TokenOutputProcessorTest extends TestCase
         self::assertNull($metadata->get('total_tokens'));
     }
 
-    private function createRawResponse(array $data = []): RawHttpResponse
+    private function createRawResult(array $data = []): RawHttpResult
     {
         $rawResponse = self::createStub(SymfonyHttpResponse::class);
         $rawResponse->method('getHeaders')->willReturn([
@@ -141,14 +141,14 @@ final class TokenOutputProcessorTest extends TestCase
         ]);
         $rawResponse->method('toArray')->willReturn($data);
 
-        return new RawHttpResponse($rawResponse);
+        return new RawHttpResult($rawResponse);
     }
 
-    private function createOutput(ResponseInterface $response): Output
+    private function createOutput(ResultInterface $result): Output
     {
         return new Output(
             self::createStub(Model::class),
-            $response,
+            $result,
             self::createStub(MessageBagInterface::class),
             [],
         );

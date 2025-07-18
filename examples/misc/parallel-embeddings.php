@@ -27,13 +27,13 @@ $small = new Embeddings(Embeddings::TEXT_3_SMALL);
 $large = new Embeddings(Embeddings::TEXT_3_LARGE);
 
 echo 'Initiating parallel embeddings calls to platform ...'.\PHP_EOL;
-$responses = [];
+$results = [];
 foreach (['ADA' => $ada, 'Small' => $small, 'Large' => $large] as $name => $model) {
     echo ' - Request for model '.$name.' initiated.'.\PHP_EOL;
-    $responses[] = $platform->request($model, 'Hello, world!');
+    $results[] = $platform->invoke($model, 'Hello, world!');
 }
 
 echo 'Waiting for the responses ...'.\PHP_EOL;
-foreach ($responses as $response) {
-    echo 'Dimensions: '.$response->asVectors()[0]->getDimensions().\PHP_EOL;
+foreach ($results as $result) {
+    echo 'Dimensions: '.$result->asVectors()[0]->getDimensions().\PHP_EOL;
 }

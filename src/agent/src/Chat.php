@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Response\TextResponse;
+use Symfony\AI\Platform\Result\TextResult;
 
 final readonly class Chat implements ChatInterface
 {
@@ -37,11 +37,11 @@ final readonly class Chat implements ChatInterface
         $messages = $this->store->load();
 
         $messages->add($message);
-        $response = $this->agent->call($messages);
+        $result = $this->agent->call($messages);
 
-        \assert($response instanceof TextResponse);
+        \assert($result instanceof TextResult);
 
-        $assistantMessage = Message::ofAssistant($response->getContent());
+        $assistantMessage = Message::ofAssistant($result->getContent());
         $messages->add($assistantMessage);
 
         $this->store->save($messages);

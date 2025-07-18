@@ -25,8 +25,8 @@ if (!isset($_SERVER['HUGGINGFACE_KEY'])) {
 $platform = PlatformFactory::create($_SERVER['HUGGINGFACE_KEY']);
 $model = new Model('gpt2');
 
-$response = $platform->request($model, 'The quick brown fox jumps over the lazy', [
+$result = $platform->invoke($model, 'The quick brown fox jumps over the lazy', [
     'task' => Task::TEXT_GENERATION,
 ]);
 
-echo $response->asText().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

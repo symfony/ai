@@ -15,8 +15,8 @@ use Symfony\AI\Platform\Bridge\OpenAI\Embeddings;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
-use Symfony\AI\Platform\Response\RawHttpResponse;
-use Symfony\AI\Platform\Response\RawResponseInterface;
+use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -38,9 +38,9 @@ final readonly class EmbeddingsModelClient implements ModelClientInterface
         return $model instanceof Embeddings;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawResponseInterface
+    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
-        return new RawHttpResponse($this->httpClient->request('POST', \sprintf('%s/embeddings', $this->baseUrl), [
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/embeddings', $this->baseUrl), [
             'auth_bearer' => $this->apiKey,
             'json' => \is_array($payload) ? array_merge($payload, $options) : $payload,
         ]));

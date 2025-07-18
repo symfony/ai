@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform;
 
-use Symfony\AI\Platform\Response\ResponsePromise;
+use Symfony\AI\Platform\Result\ResultPromise;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -22,5 +22,5 @@ interface PlatformInterface
      * @param array<mixed>|string|object $input
      * @param array<string, mixed>       $options
      */
-    public function request(Model $model, array|string|object $input, array $options = []): ResponsePromise;
+    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise;
 }

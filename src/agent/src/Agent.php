@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\Response\ResponseInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
 
@@ -57,7 +57,7 @@ final readonly class Agent implements AgentInterface
     /**
      * @param array<string, mixed> $options
      */
-    public function call(MessageBagInterface $messages, array $options = []): ResponseInterface
+    public function call(MessageBagInterface $messages, array $options = []): ResultInterface
     {
         $input = new Input($this->model, $messages, $options);
         array_map(fn (InputProcessorInterface $processor) => $processor->processInput($input), $this->inputProcessors);
@@ -75,7 +75,7 @@ final readonly class Agent implements AgentInterface
         }
 
         try {
-            $response = $this->platform->request($model, $messages, $options)->getResponse();
+            $result = $this->platform->invoke($model, $messages, $options)->getResult();
         } catch (ClientExceptionInterface $e) {
             $message = $e->getMessage();
             $content = $e->getResponse()->toArray(false);
@@ -87,10 +87,10 @@ final readonly class Agent implements AgentInterface
             throw new RuntimeException('Failed to request model', previous: $e);
         }
 
-        $output = new Output($model, $response, $messages, $options);
+        $output = new Output($model, $result, $messages, $options);
         array_map(fn (OutputProcessorInterface $processor) => $processor->processOutput($output), $this->outputProcessors);
 
-        return $output->response;
+        return $output->result;
     }
 
     /**

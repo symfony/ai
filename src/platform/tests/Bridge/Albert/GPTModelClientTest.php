@@ -142,7 +142,7 @@ final class GPTModelClientTest extends TestCase
         );
 
         $model = new GPT('gpt-3.5-turbo');
-        $response = $client->request($model, $payload, $options);
+        $result = $client->request($model, $payload, $options);
 
         self::assertNotNull($capturedRequest);
         self::assertSame('POST', $capturedRequest['method']);
