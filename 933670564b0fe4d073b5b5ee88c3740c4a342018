@@ -1,0 +1,58 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-13T17:25:03Z
+
+Oops, forgot about testing the extra options, more tests to come (works locally but not added in tests suite).
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-15T08:17:16Z
+
+Hum, strange, here's the output I get locally:
+
+<img width="1293" height="159" alt="Capture d’écran 2025-07-15 à 10 16 22" src="https://github.com/user-attachments/assets/7be143bd-24b9-4a0a-a349-3e117f8ae91a" />
+
+I'll take a look at the metadata 🤔
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-15T14:07:38Z
+
+Hi @chr-hertel 👋🏻
+
+I found the issue, I forgot to add the `with_vector` as a hard option in the query, the vectors weren't retrieved properly (my screenshot was on my stashed version 😄 ).
+
+I also added an additional check on the collection existence to prevent double HTTP call, here's my local output:
+
+<img width="1293" height="159" alt="Capture d’écran 2025-07-15 à 10 16 22" src="https://github.com/user-attachments/assets/ead9e372-38e4-47d4-8ec6-8c02b946584a" />
+
+The tests have been improved too.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-16T08:39:20Z
+
+Hi @chr-hertel
+
+Regarding https://github.com/symfony/ai/pull/111#discussion_r2208958011, I see the problem, I'll solve it (sorry, can't answer on your comment 🙁 ).
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-16T09:27:34Z
+
+Alright, here's the fix for the metadata, I'm facing an issue with them:
+
+<img width="1657" height="277" alt="Capture d’écran 2025-07-16 à 11 25 01" src="https://github.com/user-attachments/assets/d9c3360c-9d01-4309-97e3-f916aa92c0ad" />
+
+If I remove the `vectors` and the `id` from the metadata, the model cannot formulate an answer (the first screenshot is without the score, second without vectors and the score) 🤔
+
+@chr-hertel If you have an idea, I'm open to discuss about it, the behavior seems to be different from MS.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-17T08:57:40Z
+
+We just created some `CHANGELOG.md` files.
+Please rebase your branch and add info to the appropriate `CHANGELOG.md` file.
+
+Thanks
