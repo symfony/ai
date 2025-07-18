@@ -1,0 +1,48 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-14T08:12:51Z
+
+I would not add all these examples, I think one is enough
+
+---------------------------------------------------------------------------
+
+by lubiana at 2025-07-14T08:23:27Z
+
+> I would not add all these examples, I think one is enough
+
+I have removed all the examples except for chat and image input as the later shows how to add additional capabilites.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-16T05:18:48Z
+
+Can you please add some tests? Thanks
+
+---------------------------------------------------------------------------
+
+by lubiana at 2025-07-16T18:19:30Z
+
+> Can you please add some tests? Thanks
+
+I have added unit tests for the modelclients and responseconverters
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-17T08:57:30Z
+
+We just created some `CHANGELOG.md` files.
+Please rebase your branch and add info to the appropriate `CHANGELOG.md` file.
+
+Thanks
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-17T20:07:20Z
+
+Alright @lubiana, one last rebase + addition in changelog, than we merge it in :+1:
+
+---------------------------------------------------------------------------
+
+by lubiana at 2025-07-17T23:09:20Z
+
+i have added lmstudio to the platforms CHANGELOG.md. Thanks for the reviews and support so far
