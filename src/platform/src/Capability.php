@@ -30,6 +30,7 @@ class Capability
     public const OUTPUT_STREAMING = 'output-streaming';
     public const OUTPUT_STRUCTURED = 'output-structured';
     public const OUTPUT_TEXT = 'output-text';
+    public const OUTPUT_VECTOR = 'output-vector';
 
     // FUNCTIONALITY
     public const TOOL_CALLING = 'tool-calling';

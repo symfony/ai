@@ -34,8 +34,8 @@ final class ResponseConverterTest extends TestCase
     {
         $response = $this->createStub(ResponseInterface::class);
         $response
-            ->method('toArray')
-            ->willReturn(json_decode($this->getEmbeddingStub(), true));
+            ->method('getContent')
+            ->willReturn($this->getEmbeddingStub());
 
         $vectorResponse = (new ResponseConverter())->convert($response);
         $convertedContent = $vectorResponse->getContent();
