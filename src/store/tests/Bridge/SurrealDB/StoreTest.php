@@ -16,7 +16,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\SurrealDB\Store;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -113,26 +112,6 @@ final class StoreTest extends TestCase
         self::expectExceptionMessage('HTTP 400 returned for "http://localhost:8000/key/test".');
         self::expectExceptionCode(400);
         $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
-    }
-
-    public function testStoreCannotAddOnOversizedEmbeddings(): void
-    {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'code' => 200,
-                'details' => 'Authentication succeeded.',
-                'token' => 'bar',
-            ], [
-                'http_code' => 200,
-            ]),
-        ], 'http://localhost:8000');
-
-        $store = new Store($httpClient, 'http://localhost:8000', 'test', 'test', 'test', 'test');
-
-        self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage('The SurrealDB HTTP API does not support embeddings with more than 1275 dimensions, found 2000');
-        self::expectExceptionCode(0);
-        $store->add(new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 2000, 0.1))));
     }
 
     public function testStoreCannotAddOnInvalidAddResponse(): void
@@ -255,55 +234,6 @@ final class StoreTest extends TestCase
         self::expectExceptionMessage('HTTP 400 returned for "http://localhost:8000/sql".');
         self::expectExceptionCode(400);
         $store->query(new Vector(array_fill(0, 1275, 0.1)));
-    }
-
-    public function testStoreCannotQueryOnOversizedEmbeddings(): void
-    {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'code' => 200,
-                'details' => 'Authentication succeeded.',
-                'token' => 'bar',
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([
-                [
-                    'result' => [
-                        [
-                            'id' => Uuid::v4()->toRfc4122(),
-                            '_vectors' => [0.1, 0.1, 0.1],
-                            '_metadata' => [
-                                '_id' => Uuid::v4()->toRfc4122(),
-                            ],
-                        ],
-                        [
-                            'id' => Uuid::v4()->toRfc4122(),
-                            '_vectors' => [0.1, 0.1, 0.1],
-                            '_metadata' => [
-                                '_id' => Uuid::v4()->toRfc4122(),
-                            ],
-                        ],
-                    ],
-                    'status' => 'OK',
-                    'time' => '263.208µs',
-                ],
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([], [
-                'http_code' => 400,
-            ]),
-        ], 'http://localhost:8000');
-
-        $store = new Store($httpClient, 'http://localhost:8000', 'test', 'test', 'test', 'test', 'test');
-
-        $store->add(new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1))));
-
-        self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage('The dimensions of the vector must be less than or equal to 1275, found 2000');
-        self::expectExceptionCode(0);
-        $store->query(new Vector(array_fill(0, 2000, 0.1)));
     }
 
     public function testStoreCanQueryOnValidEmbeddings(): void

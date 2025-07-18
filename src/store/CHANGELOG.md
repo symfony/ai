@@ -43,6 +43,7 @@ CHANGELOG
    - ChromaDB
    - Pinecone
    - Qdrant
+   - SurrealDB
  * Add Retrieval Augmented Generation (RAG) support:
    - Document embedding storage
    - Similarity search for relevant documents

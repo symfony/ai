@@ -27,8 +27,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements InitializableStoreInterface, VectorStoreInterface
 {
-    private const MAXIMUM_EMBEDDINGS_DIMENSIONS = 1275;
-
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $endpointUrl,
@@ -43,7 +41,7 @@ final class Store implements InitializableStoreInterface, VectorStoreInterface
         private readonly string $table = 'vectors',
         private readonly string $vectorFieldName = '_vectors',
         private readonly string $strategy = 'cosine',
-        private readonly int $embeddingsDimension = self::MAXIMUM_EMBEDDINGS_DIMENSIONS,
+        private readonly int $embeddingsDimension = 1536,
     ) {
     }
 
@@ -52,10 +50,6 @@ final class Store implements InitializableStoreInterface, VectorStoreInterface
         $authenticationToken = $this->authenticate([]);
 
         foreach ($documents as $document) {
-            if (self::MAXIMUM_EMBEDDINGS_DIMENSIONS < $document->vector->getDimensions()) {
-                throw new InvalidArgumentException(\sprintf('The SurrealDB HTTP API does not support embeddings with more than %d dimensions, found %d', self::MAXIMUM_EMBEDDINGS_DIMENSIONS, $document->vector->getDimensions()));
-            }
-
             $this->request('POST', \sprintf('key/%s', $this->table), $this->convertToIndexableArray($document), [
                 'Surreal-NS' => $this->namespace,
                 'Surreal-DB' => $this->database,
@@ -66,10 +60,6 @@ final class Store implements InitializableStoreInterface, VectorStoreInterface
 
     public function query(Vector $vector, array $options = [], ?float $minScore = null): array
     {
-        if (self::MAXIMUM_EMBEDDINGS_DIMENSIONS < $vector->getDimensions()) {
-            throw new InvalidArgumentException(\sprintf('The dimensions of the vector must be less than or equal to %d, found %d', self::MAXIMUM_EMBEDDINGS_DIMENSIONS, $vector->getDimensions()));
-        }
-
         $authenticationToken = $this->authenticate($options);
 
         $vectors = json_encode($vector->getData());
@@ -160,9 +150,7 @@ final class Store implements InitializableStoreInterface, VectorStoreInterface
         return new VectorDocument(
             id: Uuid::fromString($id),
             vector: $vector,
-            metadata: new Metadata(array_merge($data['_metadata'], [
-                $this->vectorFieldName => $data[$this->vectorFieldName],
-            ])),
+            metadata: new Metadata($data['_metadata']),
         );
     }
 
