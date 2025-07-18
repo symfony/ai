@@ -108,3 +108,12 @@ To add the server, add the following configuration to your MCP Client's settings
     }
 }
 ```
+
+#### Testing the MCP Server
+You can test the MCP server by running the following command to start the MCP client:
+
+```shell
+php bin/console mcp:client
+```
+
+Then, paste `{"method":"tools/list","jsonrpc":"2.0","id":1}` to list the tools available on the MCP server.
