@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Platform\Result;
 
+use Symfony\AI\Platform\Exception\ResultException;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -25,7 +28,13 @@ final readonly class RawHttpResult implements RawResultInterface
 
     public function getData(): array
     {
-        return $this->response->toArray(false);
+        try {
+            return $this->response->toArray();
+        } catch (ClientExceptionInterface $e) {
+            throw new ResultException(message: \sprintf('API responded with an error: "%s"', $e->getMessage()), details: $this->response->toArray(false), previous: $e);
+        } catch (ExceptionInterface $e) {
+            throw new ResultException(\sprintf('Error while calling the API: "%s"', $e->getMessage()), previous: $e);
+        }
     }
 
     public function getObject(): ResponseInterface
