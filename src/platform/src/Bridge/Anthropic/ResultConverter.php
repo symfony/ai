@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Exception\ModelException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -43,6 +44,10 @@ class ResultConverter implements ResultConverterInterface
         }
 
         $data = $result->getData();
+
+        if (isset($data['error'])) {
+            throw new ModelException($data['error']['message'], $data['error']);
+        }
 
         if (!isset($data['content']) || [] === $data['content']) {
             throw new RuntimeException('Response does not contain any content');
