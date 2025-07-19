@@ -1,0 +1,41 @@
+---------------------------------------------------------------------------
+
+by tom-hart-sky-uk at 2025-07-15T17:06:42Z
+
+@OskarStark Thanks for your feedback, I've addressed the comments and also fixed the code standards failure
+
+---------------------------------------------------------------------------
+
+by TomHart at 2025-07-18T22:34:51Z
+
+> Thanks @TomHart for working on this - that was def missing 👍
+>
+> I left a few comments, mostly minor stuff - please make sure to remove the security bundle - didn't comment on every changed caused by that change
+
+Thanks @chr-hertel. I've addressed the comments you left
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-18T22:39:14Z
+
+Looks good on the first glance - how did you test this? which the inspector?
+
+let's add information about that so users can check it out themselves?
+
+---------------------------------------------------------------------------
+
+by TomHart at 2025-07-18T23:23:32Z
+
+I used the CLI to paste in some JSON to list the tools. I've added the steps in the README. Is that what you were thinking, or something else?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-19T22:19:52Z
+
+@TomHart please squash the commits to a single one
+
+---------------------------------------------------------------------------
+
+by TomHart at 2025-07-19T22:22:18Z
+
+Done! Do you have any thoughts on https://github.com/symfony/ai/pull/132#discussion_r2217159246? I'd be happy to take a stab at implementing
