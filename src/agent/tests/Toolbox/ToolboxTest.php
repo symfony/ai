@@ -56,13 +56,13 @@ final class ToolboxTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->toolbox = new Toolbox(new ReflectionToolFactory(), [
+        $this->toolbox = new Toolbox([
             new ToolRequiredParams(),
             new ToolOptionalParam(),
             new ToolNoParams(),
             new ToolException(),
             new ToolDate(),
-        ]);
+        ], new ReflectionToolFactory());
     }
 
     #[Test]
@@ -168,7 +168,7 @@ final class ToolboxTest extends TestCase
         self::expectException(ToolConfigurationException::class);
         self::expectExceptionMessage('Method "foo" not found in tool "Symfony\AI\Fixtures\Tool\ToolMisconfigured".');
 
-        $toolbox = new Toolbox(new ReflectionToolFactory(), [new ToolMisconfigured()]);
+        $toolbox = new Toolbox([new ToolMisconfigured()], new ReflectionToolFactory());
 
         $toolbox->execute(new ToolCall('call_1234', 'tool_misconfigured'));
     }
@@ -216,7 +216,7 @@ final class ToolboxTest extends TestCase
         $memoryFactory = (new MemoryToolFactory())
             ->addTool(ToolNoAttribute1::class, 'happy_birthday', 'Generates birthday message');
 
-        $toolbox = new Toolbox($memoryFactory, [new ToolNoAttribute1()]);
+        $toolbox = new Toolbox([new ToolNoAttribute1()], $memoryFactory);
         $expected = [
             new Tool(
                 new ExecutionReference(ToolNoAttribute1::class, '__invoke'),
@@ -249,7 +249,7 @@ final class ToolboxTest extends TestCase
         $memoryFactory = (new MemoryToolFactory())
             ->addTool(ToolNoAttribute1::class, 'happy_birthday', 'Generates birthday message');
 
-        $toolbox = new Toolbox($memoryFactory, [new ToolNoAttribute1()]);
+        $toolbox = new Toolbox([new ToolNoAttribute1()], $memoryFactory);
         $response = $toolbox->execute(new ToolCall('call_1234', 'happy_birthday', ['name' => 'John', 'years' => 30]));
 
         self::assertSame('Happy Birthday, John! You are 30 years old.', $response);
@@ -262,7 +262,7 @@ final class ToolboxTest extends TestCase
             ->addTool(ToolOptionalParam::class, 'optional_param', 'Tool with optional param', 'bar');
         $factory2 = new ReflectionToolFactory();
 
-        $toolbox = new Toolbox(new ChainFactory([$factory1, $factory2]), [new ToolOptionalParam()]);
+        $toolbox = new Toolbox([new ToolOptionalParam()], new ChainFactory([$factory1, $factory2]));
 
         $expected = [
             new Tool(

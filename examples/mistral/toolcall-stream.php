@@ -32,7 +32,7 @@ $platform = PlatformFactory::create($_SERVER['MISTRAL_API_KEY']);
 $model = new Mistral();
 
 $transcriber = new YouTubeTranscriber(HttpClient::create());
-$toolbox = Toolbox::create($transcriber);
+$toolbox = new Toolbox([$transcriber]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 

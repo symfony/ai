@@ -31,7 +31,7 @@ $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
 $model = new GPT(GPT::GPT_4O_MINI);
 
 $tavily = new Tavily(HttpClient::create(), $_SERVER['TAVILY_API_KEY']);
-$toolbox = Toolbox::create($tavily);
+$toolbox = new Toolbox([$tavily]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 

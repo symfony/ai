@@ -67,7 +67,7 @@ $indexer->index($documents);
 $model = new Gemini(Gemini::GEMINI_2_FLASH_LITE);
 
 $similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
-$toolbox = Toolbox::create($similaritySearch);
+$toolbox = new Toolbox([$similaritySearch]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 

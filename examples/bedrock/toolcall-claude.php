@@ -33,7 +33,7 @@ $platform = PlatformFactory::create();
 $model = new Claude('claude-3-7-sonnet-20250219');
 
 $wikipedia = new Wikipedia(HttpClient::create());
-$toolbox = Toolbox::create($wikipedia);
+$toolbox = new Toolbox([$wikipedia]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 

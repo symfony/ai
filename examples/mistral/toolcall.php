@@ -30,7 +30,7 @@ if (!isset($_SERVER['MISTRAL_API_KEY'])) {
 $platform = PlatformFactory::create($_SERVER['MISTRAL_API_KEY']);
 $model = new Mistral();
 
-$toolbox = Toolbox::create(new Clock());
+$toolbox = new Toolbox([new Clock()]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 

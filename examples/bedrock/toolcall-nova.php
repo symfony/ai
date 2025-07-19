@@ -33,7 +33,7 @@ $platform = PlatformFactory::create();
 $model = new Nova();
 
 $wikipedia = new Wikipedia(HttpClient::create());
-$toolbox = Toolbox::create($wikipedia);
+$toolbox = new Toolbox([$wikipedia]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 

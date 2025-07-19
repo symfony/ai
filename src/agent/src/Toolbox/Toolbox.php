@@ -44,18 +44,13 @@ final class Toolbox implements ToolboxInterface
      * @param iterable<mixed> $tools
      */
     public function __construct(
-        private readonly ToolFactoryInterface $toolFactory,
         iterable $tools,
+        private readonly ToolFactoryInterface $toolFactory = new ReflectionToolFactory(),
         private readonly ToolCallArgumentResolver $argumentResolver = new ToolCallArgumentResolver(),
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
         $this->tools = $tools instanceof \Traversable ? iterator_to_array($tools) : $tools;
-    }
-
-    public static function create(object ...$tools): self
-    {
-        return new self(new ReflectionToolFactory(), $tools);
     }
 
     public function getTools(): array

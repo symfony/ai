@@ -30,7 +30,7 @@ if (!isset($_SERVER['GEMINI_API_KEY'])) {
 $platform = PlatformFactory::create($_SERVER['GEMINI_API_KEY']);
 $llm = new Gemini(Gemini::GEMINI_2_FLASH);
 
-$toolbox = Toolbox::create(new Clock());
+$toolbox = new Toolbox([new Clock()]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $llm, [$processor], [$processor]);
 

@@ -35,7 +35,7 @@ $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
 $model = new GPT(GPT::GPT_4O_MINI);
 
 $openMeteo = new OpenMeteo(HttpClient::create());
-$toolbox = Toolbox::create($openMeteo);
+$toolbox = new Toolbox([$openMeteo]);
 $eventDispatcher = new EventDispatcher();
 $processor = new AgentProcessor($toolbox, eventDispatcher: $eventDispatcher);
 $agent = new Agent($platform, $model, [$processor], [$processor]);

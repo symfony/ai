@@ -32,7 +32,7 @@ $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
 $model = new GPT(GPT::GPT_4O_MINI);
 
 $wikipedia = new Wikipedia(HttpClient::create());
-$toolbox = Toolbox::create($wikipedia);
+$toolbox = new Toolbox([$wikipedia]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 $messages = new MessageBag(Message::ofUser(<<<TXT

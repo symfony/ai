@@ -34,7 +34,7 @@ $model = new GPT(GPT::GPT_4O_MINI);
 $httpClient = HttpClient::create();
 $brave = new Brave($httpClient, $_SERVER['BRAVE_API_KEY']);
 $crawler = new Crawler($httpClient);
-$toolbox = Toolbox::create($brave, $crawler);
+$toolbox = new Toolbox([$brave, $crawler]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 
