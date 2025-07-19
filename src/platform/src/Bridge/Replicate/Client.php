@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Replicate;
 
+use Symfony\AI\Platform\Exception\ResultException;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -40,7 +41,11 @@ final readonly class Client
             'auth_bearer' => $this->apiKey,
             'json' => ['input' => $body],
         ]);
-        $data = $response->toArray();
+        $data = $response->toArray(false);
+
+        if (isset($data['detail'])) {
+            throw new ResultException($data['detail'], $data);
+        }
 
         while (!\in_array($data['status'], ['succeeded', 'failed', 'canceled'], true)) {
             $this->clock->sleep(1); // we need to wait until the prediction is ready

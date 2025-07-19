@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Voyage;
 
+use Symfony\AI\Platform\Exception\ResultException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -32,6 +33,10 @@ final readonly class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
         $result = $result->getData();
+
+        if (isset($result['detail'])) {
+            throw new ResultException($result['detail']);
+        }
 
         if (!isset($result['data'])) {
             throw new RuntimeException('Response does not contain embedding data.');

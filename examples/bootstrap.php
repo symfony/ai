@@ -11,9 +11,14 @@
 
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
+use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
+use Symfony\AI\Platform\Exception\ResultException;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Metadata\TokenUsage;
 use Symfony\AI\Platform\Result\ResultPromise;
+use Symfony\AI\Store\Exception\ExceptionInterface as StoreException;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Dotenv\Dotenv;
@@ -26,7 +31,7 @@ require_once __DIR__.'/vendor/autoload.php';
 function env(string $var): string
 {
     if (!isset($_SERVER[$var]) || '' === $_SERVER[$var]) {
-        printf('Please set the "%s" environment variable to run this example.', $var);
+        output()->writeln(sprintf('<error>Please set the "%s" environment variable to run this example.</error>', $var));
         exit(1);
     }
 
@@ -46,6 +51,11 @@ function http_client(): HttpClientInterface
 
 function logger(): LoggerInterface
 {
+    return new ConsoleLogger(output());
+}
+
+function output(): ConsoleOutput
+{
     $verbosity = match ($_SERVER['argv'][1] ?? null) {
         '-v', '--verbose' => ConsoleOutput::VERBOSITY_VERBOSE,
         '-vv', '--very-verbose' => ConsoleOutput::VERBOSITY_VERY_VERBOSE,
@@ -53,7 +63,7 @@ function logger(): LoggerInterface
         default => ConsoleOutput::VERBOSITY_NORMAL,
     };
 
-    return new ConsoleLogger(new ConsoleOutput($verbosity));
+    return new ConsoleOutput($verbosity);
 }
 
 function print_token_usage(Metadata $metadata): void
@@ -62,15 +72,21 @@ function print_token_usage(Metadata $metadata): void
 
     assert($tokenUsage instanceof TokenUsage);
 
-    echo 'Prompt tokens: '.$tokenUsage->promptTokens.\PHP_EOL;
-    echo 'Completion tokens: '.$tokenUsage->completionTokens.\PHP_EOL;
-    echo 'Thinking tokens: '.$tokenUsage->thinkingTokens.\PHP_EOL;
-    echo 'Tool tokens: '.$tokenUsage->toolTokens.\PHP_EOL;
-    echo 'Cached tokens: '.$tokenUsage->cachedTokens.\PHP_EOL;
-    echo 'Remaining tokens minute: '.$tokenUsage->remainingTokensMinute.\PHP_EOL;
-    echo 'Remaining tokens month: '.$tokenUsage->remainingTokensMonth.\PHP_EOL;
-    echo 'Remaining tokens: '.$tokenUsage->remainingTokens.\PHP_EOL;
-    echo 'Utilized tokens: '.$tokenUsage->totalTokens.\PHP_EOL;
+    $na = '<comment>n/a</comment>';
+    $table = new Table(output());
+    $table->setHeaderTitle('Token Usage');
+    $table->setRows([
+        ['Prompt tokens', $tokenUsage->promptTokens ?? $na],
+        ['Completion tokens', $tokenUsage->completionTokens ?? $na],
+        ['Thinking tokens', $tokenUsage->thinkingTokens ?? $na],
+        ['Tool tokens', $tokenUsage->toolTokens ?? $na],
+        ['Cached tokens', $tokenUsage->cachedTokens ?? $na],
+        ['Remaining tokens minute', $tokenUsage->remainingTokensMinute ?? $na],
+        ['Remaining tokens month', $tokenUsage->remainingTokensMonth ?? $na],
+        ['Remaining tokens', $tokenUsage->remainingTokens ?? $na],
+        ['Utilized tokens', $tokenUsage->totalTokens ?? $na],
+    ]);
+    $table->render();
 }
 
 function print_vectors(ResultPromise $result): void
@@ -78,7 +94,7 @@ function print_vectors(ResultPromise $result): void
     assert([] !== $result->asVectors());
     assert(array_key_exists(0, $result->asVectors()));
 
-    echo 'Dimensions: '.$result->asVectors()[0]->getDimensions().\PHP_EOL;
+    output()->writeln(sprintf('Dimensions: %d', $result->asVectors()[0]->getDimensions()));
 }
 
 function perplexity_print_search_results(Metadata $metadata): void
@@ -138,3 +154,21 @@ function print_stream(ResultPromise $result): void
     }
     echo \PHP_EOL;
 }
+
+set_exception_handler(function ($exception) {
+    if ($exception instanceof AgentException || $exception instanceof PlatformException || $exception instanceof StoreException) {
+        output()->writeln(sprintf('<error>%s</error>', $exception->getMessage()));
+
+        if ($exception instanceof ResultException && output()->isVerbose()) {
+            dump($exception->getDetails());
+        }
+
+        if (output()->isVeryVerbose()) {
+            output()->writeln($exception->getTraceAsString());
+        }
+
+        exit(1);
+    }
+
+    throw $exception;
+});
