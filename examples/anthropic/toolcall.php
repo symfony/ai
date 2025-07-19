@@ -32,7 +32,7 @@ $platform = PlatformFactory::create($_SERVER['ANTHROPIC_API_KEY']);
 $model = new Claude();
 
 $wikipedia = new Wikipedia(HttpClient::create());
-$toolbox = Toolbox::create($wikipedia);
+$toolbox = new Toolbox([$wikipedia]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 

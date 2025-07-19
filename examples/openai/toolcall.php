@@ -32,7 +32,7 @@ $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
 $model = new GPT(GPT::GPT_4O_MINI);
 
 $transcriber = new YouTubeTranscriber(HttpClient::create());
-$toolbox = Toolbox::create($transcriber);
+$toolbox = new Toolbox([$transcriber]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 

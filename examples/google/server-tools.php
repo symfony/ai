@@ -32,7 +32,7 @@ $platform = PlatformFactory::create($_SERVER['GEMINI_API_KEY']);
 // Available server-side tools as of 2025-06-28: url_context, google_search, code_execution
 $llm = new Gemini('gemini-2.5-pro-preview-03-25', ['server_tools' => ['url_context' => true], 'temperature' => 1.0]);
 
-$toolbox = Toolbox::create(new Clock());
+$toolbox = new Toolbox([new Clock()]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $llm);
 

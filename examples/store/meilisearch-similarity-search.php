@@ -66,7 +66,7 @@ $indexer->index($documents);
 $model = new GPT(GPT::GPT_4O_MINI);
 
 $similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
-$toolbox = Toolbox::create($similaritySearch);
+$toolbox = new Toolbox([$similaritySearch]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 

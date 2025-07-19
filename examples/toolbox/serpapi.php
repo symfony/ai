@@ -31,7 +31,7 @@ $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
 $model = new GPT(GPT::GPT_4O_MINI);
 
 $serpApi = new SerpApi(HttpClient::create(), $_SERVER['SERP_API_KEY']);
-$toolbox = Toolbox::create($serpApi);
+$toolbox = new Toolbox([$serpApi]);
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 

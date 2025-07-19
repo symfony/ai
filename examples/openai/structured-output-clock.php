@@ -33,7 +33,7 @@ $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
 $model = new GPT(GPT::GPT_4O_MINI);
 
 $clock = new Clock(new SymfonyClock());
-$toolbox = Toolbox::create($clock);
+$toolbox = new Toolbox([$clock]);
 $toolProcessor = new ToolProcessor($toolbox);
 $structuredOutputProcessor = new StructuredOutputProcessor();
 $agent = new Agent($platform, $model, [$toolProcessor, $structuredOutputProcessor], [$toolProcessor, $structuredOutputProcessor]);
