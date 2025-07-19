@@ -29,3 +29,11 @@ services:
           QDRANT__SERVICE__API_KEY: '${QDRAT_SERVICE_API_KEY:-changeMe}'
       ports:
           - '6333:6333'
+
+  surrealdb:
+      image: surrealdb/surrealdb:v2
+      command: ['start', '--user', 'symfony', '--pass', 'symfony']
+      environment:
+          SURREAL_HTTP_MAX_KEY_BODY_SIZE: 49152
+      ports:
+          - '8000:8000'
