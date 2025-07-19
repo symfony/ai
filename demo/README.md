@@ -111,6 +111,7 @@ To add the server, add the following configuration to your MCP Client's settings
 ```
 
 #### Testing the MCP Server
+
 You can test the MCP server by running the following command to start the MCP client:
 
 ```shell
