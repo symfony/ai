@@ -92,6 +92,7 @@ docker compose exec app bin/console app:blog:query
 * You find three different usage scenarios in the upper navbar.
 
 ### MCP
+
 Demo MCP server added with a `current-time` tool to return the current time, with an optional format string.
 
 To add the server, add the following configuration to your MCP Client's settings, e.g. your IDE:
