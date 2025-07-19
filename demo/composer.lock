@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "17d4e2fa71b65e0f756a23c562c57efe",
+    "content-hash": "eefe0a663de7f7a09ba69d5d61e0fcd8",
     "packages": [
         {
             "name": "codewithkyrian/chromadb-php",
@@ -2107,12 +2107,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ai-bundle.git",
-                "reference": "2d4608b6498999703dabd590b207449b495a3e21"
+                "reference": "af1b20fb3aeb00e703ec9d353169e9439fd16165"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ai-bundle/zipball/2d4608b6498999703dabd590b207449b495a3e21",
-                "reference": "2d4608b6498999703dabd590b207449b495a3e21",
+                "url": "https://api.github.com/repos/symfony/ai-bundle/zipball/af1b20fb3aeb00e703ec9d353169e9439fd16165",
+                "reference": "af1b20fb3aeb00e703ec9d353169e9439fd16165",
                 "shasum": ""
             },
             "require": {
@@ -2170,7 +2170,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-07-17T21:01:40+00:00"
+            "time": "2025-07-18T07:54:12+00:00"
         },
         {
             "name": "symfony/ai-platform",
@@ -2178,12 +2178,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ai-platform.git",
-                "reference": "a551b071cf19705756d81a5cea2ef3ec8c86ee4a"
+                "reference": "78998929ac0fa66ebe8bb2b4c5f29e2697168e13"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ai-platform/zipball/a551b071cf19705756d81a5cea2ef3ec8c86ee4a",
-                "reference": "a551b071cf19705756d81a5cea2ef3ec8c86ee4a",
+                "url": "https://api.github.com/repos/symfony/ai-platform/zipball/78998929ac0fa66ebe8bb2b4c5f29e2697168e13",
+                "reference": "78998929ac0fa66ebe8bb2b4c5f29e2697168e13",
                 "shasum": ""
             },
             "require": {
@@ -2266,7 +2266,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-07-17T20:08:09+00:00"
+            "time": "2025-07-18T09:15:05+00:00"
         },
         {
             "name": "symfony/ai-store",
@@ -2274,12 +2274,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ai-store.git",
-                "reference": "74d4b5eca1aca4bda6e57d4b1eb774a9cd9ecf5e"
+                "reference": "474c26b135d48bd6d5112ad84eea4664afda9c9c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ai-store/zipball/74d4b5eca1aca4bda6e57d4b1eb774a9cd9ecf5e",
-                "reference": "74d4b5eca1aca4bda6e57d4b1eb774a9cd9ecf5e",
+                "url": "https://api.github.com/repos/symfony/ai-store/zipball/474c26b135d48bd6d5112ad84eea4664afda9c9c",
+                "reference": "474c26b135d48bd6d5112ad84eea4664afda9c9c",
                 "shasum": ""
             },
             "require": {
@@ -2297,7 +2297,6 @@
             "require-dev": {
                 "codewithkyrian/chromadb-php": "^0.2.1 || ^0.3 || ^0.4",
                 "doctrine/dbal": "^3.3 || ^4.0",
-                "ext-pdo": "*",
                 "mongodb/mongodb": "^1.21 || ^2.0",
                 "phpstan/phpstan": "^2.0",
                 "phpunit/phpunit": "^11.5",
@@ -2354,7 +2353,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-07-17T08:55:01+00:00"
+            "time": "2025-07-18T17:28:09+00:00"
         },
         {
             "name": "symfony/asset",
@@ -4225,6 +4224,142 @@
                 }
             ],
             "time": "2025-06-28T08:24:55+00:00"
+        },
+        {
+            "name": "symfony/mcp-bundle",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/mcp-bundle.git",
+                "reference": "4a9c196162aa43bfdbb0f891c7ccc90eabd000b0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/mcp-bundle/zipball/4a9c196162aa43bfdbb0f891c7ccc90eabd000b0",
+                "reference": "4a9c196162aa43bfdbb0f891c7ccc90eabd000b0",
+                "shasum": ""
+            },
+            "require": {
+                "symfony/config": "^6.4 || ^7.0",
+                "symfony/console": "^6.4 || ^7.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0",
+                "symfony/framework-bundle": "^6.4 || ^7.0",
+                "symfony/http-foundation": "^6.4 || ^7.0",
+                "symfony/http-kernel": "^6.4 || ^7.0",
+                "symfony/mcp-sdk": "@dev",
+                "symfony/routing": "^6.4 || ^7.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^11.5"
+            },
+            "default-branch": true,
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\AI\\McpBundle\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christopher Hertel",
+                    "email": "mail@christopher-hertel.de"
+                }
+            ],
+            "description": "Symfony integration bundle for Model Context Protocol (via symfony/mcp-sdk)",
+            "support": {
+                "source": "https://github.com/symfony/mcp-bundle/tree/main"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2025-07-17T08:55:01+00:00"
+        },
+        {
+            "name": "symfony/mcp-sdk",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/mcp-sdk.git",
+                "reference": "f57f3d98fa707a03c6e48e1e5ad3eb62ff86dc3f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/mcp-sdk/zipball/f57f3d98fa707a03c6e48e1e5ad3eb62ff86dc3f",
+                "reference": "f57f3d98fa707a03c6e48e1e5ad3eb62ff86dc3f",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.2",
+                "psr/log": "^1.0 || ^2.0 || ^3.0",
+                "symfony/uid": "^6.4 || ^7.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^11.5",
+                "psr/cache": "^3.0",
+                "rector/rector": "^2.0",
+                "symfony/console": "^6.4 || ^7.0"
+            },
+            "suggest": {
+                "psr/cache": "To use CachePoolStore with SSE Transport",
+                "symfony/console": "To use SymfonyConsoleTransport for STDIO"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\AI\\McpSdk\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christopher Hertel",
+                    "email": "mail@christopher-hertel.de"
+                },
+                {
+                    "name": "Tobias Nyholm",
+                    "email": "tobias.nyholm@gmail.com"
+                }
+            ],
+            "description": "Model Context Protocol SDK for Client and Server applications in PHP",
+            "support": {
+                "source": "https://github.com/symfony/mcp-sdk/tree/main"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2025-07-17T08:55:01+00:00"
         },
         {
             "name": "symfony/monolog-bridge",
@@ -8842,7 +8977,8 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "symfony/ai-bundle": 20
+        "symfony/ai-bundle": 20,
+        "symfony/mcp-bundle": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

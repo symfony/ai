@@ -90,3 +90,32 @@ docker compose exec app bin/console app:blog:query
 * The UI is coupled to a [Twig LiveComponent](https://symfony.com/bundles/ux-live-component/current/index.html), that integrates different `Chat` implementations on top of the user's session.
 * You can reset the chat context by hitting the `Reset` button in the top right corner.
 * You find three different usage scenarios in the upper navbar.
+
+### MCP
+
+Demo MCP server added with a `current-time` tool to return the current time, with an optional format string.
+
+To add the server, add the following configuration to your MCP Client's settings, e.g. your IDE:
+```json
+{
+    "servers": {
+        "symfony": {
+            "command": "php",
+            "args": [
+                "/your/full/path/to/bin/console",
+                "mcp:server"
+            ]
+        }
+    }
+}
+```
+
+#### Testing the MCP Server
+
+You can test the MCP server by running the following command to start the MCP client:
+
+```shell
+php bin/console mcp:client
+```
+
+Then, paste `{"method":"tools/list","jsonrpc":"2.0","id":1}` to list the tools available on the MCP server.

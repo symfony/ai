@@ -25,6 +25,7 @@
         "symfony/flex": "^2.5",
         "symfony/framework-bundle": "7.3.*",
         "symfony/http-client": "7.3.*",
+        "symfony/mcp-bundle": "@dev",
         "symfony/monolog-bundle": "^3.10",
         "symfony/runtime": "7.3.*",
         "symfony/twig-bundle": "7.3.*",

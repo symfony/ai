@@ -134,6 +134,9 @@
             "src/Kernel.php"
         ]
     },
+    "symfony/mcp-bundle": {
+        "version": "dev-main"
+    },
     "symfony/monolog-bundle": {
         "version": "3.10",
         "recipe": {
