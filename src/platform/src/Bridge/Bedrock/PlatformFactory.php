@@ -14,12 +14,12 @@ namespace Symfony\AI\Platform\Bridge\Bedrock;
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract as AnthropicContract;
 use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeModelClient;
-use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeResponseConverter;
+use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeResultConverter;
 use Symfony\AI\Platform\Bridge\Bedrock\Meta\LlamaModelClient;
-use Symfony\AI\Platform\Bridge\Bedrock\Meta\LlamaResponseConverter;
+use Symfony\AI\Platform\Bridge\Bedrock\Meta\LlamaResultConverter;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract as NovaContract;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\NovaModelClient;
-use Symfony\AI\Platform\Bridge\Bedrock\Nova\NovaResponseConverter;
+use Symfony\AI\Platform\Bridge\Bedrock\Nova\NovaResultConverter;
 use Symfony\AI\Platform\Bridge\Meta\Contract as LlamaContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -45,9 +45,9 @@ final readonly class PlatformFactory
                 new NovaModelClient($bedrockRuntimeClient),
             ],
             [
-                new ClaudeResponseConverter(),
-                new LlamaResponseConverter(),
-                new NovaResponseConverter(),
+                new ClaudeResultConverter(),
+                new LlamaResultConverter(),
+                new NovaResultConverter(),
             ],
             $contract ?? Contract::create(
                 new AnthropicContract\AssistantMessageNormalizer(),

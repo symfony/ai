@@ -34,8 +34,8 @@ $input = [
     ],
 ];
 
-$response = $platform->request($model, $input, [
+$result = $platform->invoke($model, $input, [
     'task' => Task::SENTENCE_SIMILARITY,
 ]);
 
-dump($response->asObject());
+dump($result->asObject());

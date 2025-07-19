@@ -24,8 +24,8 @@ final class OpenMeteoTest extends TestCase
     #[Test]
     public function current(): void
     {
-        $response = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/openmeteo-current.json');
-        $httpClient = new MockHttpClient($response);
+        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/openmeteo-current.json');
+        $httpClient = new MockHttpClient($result);
 
         $openMeteo = new OpenMeteo($httpClient);
 
@@ -43,8 +43,8 @@ final class OpenMeteoTest extends TestCase
     #[Test]
     public function forecast(): void
     {
-        $response = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/openmeteo-forecast.json');
-        $httpClient = new MockHttpClient($response);
+        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/openmeteo-forecast.json');
+        $httpClient = new MockHttpClient($result);
 
         $openMeteo = new OpenMeteo($httpClient);
 

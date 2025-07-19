@@ -27,8 +27,8 @@ $platform = PlatformFactory::create($_SERVER['HUGGINGFACE_KEY']);
 $model = new Model('openai/whisper-large-v3');
 $audio = Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3');
 
-$response = $platform->request($model, $audio, [
+$result = $platform->invoke($model, $audio, [
     'task' => Task::AUTOMATIC_SPEECH_RECOGNITION,
 ]);
 
-echo $response->asText().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

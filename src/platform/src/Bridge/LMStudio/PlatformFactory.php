@@ -35,8 +35,8 @@ class PlatformFactory
                 new Completions\ModelClient($httpClient, $hostUrl),
             ],
             [
-                new Embeddings\ResponseConverter(),
-                new Completions\ResponseConverter(),
+                new Embeddings\ResultConverter(),
+                new Completions\ResultConverter(),
             ], $contract);
     }
 }

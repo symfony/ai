@@ -35,8 +35,8 @@ final readonly class Crawler
      */
     public function __invoke(string $url): string
     {
-        $response = $this->httpClient->request('GET', $url);
+        $result = $this->httpClient->request('GET', $url);
 
-        return (new DomCrawler($response->getContent()))->filter('body')->text();
+        return (new DomCrawler($result->getContent()))->filter('body')->text();
     }
 }

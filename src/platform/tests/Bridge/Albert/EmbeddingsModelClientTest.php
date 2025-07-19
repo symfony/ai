@@ -97,7 +97,7 @@ final class EmbeddingsModelClientTest extends TestCase
         );
 
         $model = new Embeddings('text-embedding-ada-002');
-        $response = $client->request($model, $payload, $options);
+        $result = $client->request($model, $payload, $options);
 
         self::assertNotNull($capturedRequest);
         self::assertSame('POST', $capturedRequest['method']);

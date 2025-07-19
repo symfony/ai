@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Google\Gemini;
 use Symfony\AI\Platform\Bridge\Google\Gemini;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
-use Symfony\AI\Platform\Response\RawHttpResponse;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -41,7 +41,7 @@ final readonly class ModelClient implements ModelClientInterface
     /**
      * @throws TransportExceptionInterface
      */
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
         $url = \sprintf(
             'https://generativelanguage.googleapis.com/v1beta/models/%s:%s',
@@ -73,7 +73,7 @@ final readonly class ModelClient implements ModelClientInterface
             $generationConfig['tools'][] = [$tool => true === $params ? new \ArrayObject() : $params];
         }
 
-        return new RawHttpResponse($this->httpClient->request('POST', $url, [
+        return new RawHttpResult($this->httpClient->request('POST', $url, [
             'headers' => [
                 'x-goog-api-key' => $this->apiKey,
             ],

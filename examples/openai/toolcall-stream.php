@@ -40,11 +40,11 @@ $messages = new MessageBag(Message::ofUser(<<<TXT
         Then lookup at Wikipedia what the irish history looks like in 2 sentences.
         Please tell me before you call tools.
     TXT));
-$response = $agent->call($messages, [
+$result = $agent->call($messages, [
     'stream' => true, // enable streaming of response text
 ]);
 
-foreach ($response->getContent() as $word) {
+foreach ($result->getContent() as $word) {
     echo $word;
 }
 

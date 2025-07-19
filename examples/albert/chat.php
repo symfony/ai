@@ -49,6 +49,6 @@ $messages = new MessageBag(
     Message::ofUser('What are the main objectives of France\'s AI strategy?'),
 );
 
-$response = $agent->call($messages);
+$result = $agent->call($messages);
 
-echo $response->getContent().\PHP_EOL;
+echo $result->getContent().\PHP_EOL;

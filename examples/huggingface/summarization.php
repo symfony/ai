@@ -35,8 +35,8 @@ $longText = <<<TEXT
     free-standing structure in France after the Millau Viaduct.
     TEXT;
 
-$response = $platform->request($model, $longText, [
+$result = $platform->invoke($model, $longText, [
     'task' => Task::SUMMARIZATION,
 ]);
 
-echo $response->asText().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

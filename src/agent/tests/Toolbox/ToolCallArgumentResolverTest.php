@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Fixtures\Tool\ToolArray;
 use Symfony\AI\Fixtures\Tool\ToolDate;
-use Symfony\AI\Platform\Response\ToolCall;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 

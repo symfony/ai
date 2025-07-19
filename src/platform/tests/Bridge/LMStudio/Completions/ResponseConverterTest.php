@@ -17,10 +17,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\LMStudio\Completions;
-use Symfony\AI\Platform\Bridge\LMStudio\Completions\ResponseConverter;
-use Symfony\AI\Platform\Bridge\OpenAI\GPT\ResponseConverter as OpenAIResponseConverter;
+use Symfony\AI\Platform\Bridge\LMStudio\Completions\ResultConverter;
+use Symfony\AI\Platform\Bridge\OpenAI\GPT\ResultConverter as OpenAIResponseConverter;
 
-#[CoversClass(ResponseConverter::class)]
+#[CoversClass(ResultConverter::class)]
 #[UsesClass(Completions::class)]
 #[UsesClass(OpenAIResponseConverter::class)]
 #[Small]
@@ -29,7 +29,7 @@ class ResponseConverterTest extends TestCase
     #[Test]
     public function itSupportsCompletionsModel(): void
     {
-        $converter = new ResponseConverter();
+        $converter = new ResultConverter();
 
         self::assertTrue($converter->supports(new Completions('test-model')));
     }

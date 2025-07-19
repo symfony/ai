@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Albert;
 
-use Symfony\AI\Platform\Bridge\OpenAI\Embeddings\ResponseConverter as EmbeddingsResponseConverter;
-use Symfony\AI\Platform\Bridge\OpenAI\GPT\ResponseConverter as GPTResponseConverter;
+use Symfony\AI\Platform\Bridge\OpenAI\Embeddings;
+use Symfony\AI\Platform\Bridge\OpenAI\GPT;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Platform;
@@ -40,7 +40,7 @@ final class PlatformFactory
                 new GPTModelClient($httpClient, $apiKey, $baseUrl),
                 new EmbeddingsModelClient($httpClient, $apiKey, $baseUrl),
             ],
-            [new GPTResponseConverter(), new EmbeddingsResponseConverter()],
+            [new GPT\ResultConverter(), new Embeddings\ResultConverter()],
             Contract::create(),
         );
     }

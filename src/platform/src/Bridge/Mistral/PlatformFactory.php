@@ -12,10 +12,6 @@
 namespace Symfony\AI\Platform\Bridge\Mistral;
 
 use Symfony\AI\Platform\Bridge\Mistral\Contract\ToolNormalizer;
-use Symfony\AI\Platform\Bridge\Mistral\Embeddings\ModelClient as EmbeddingsModelClient;
-use Symfony\AI\Platform\Bridge\Mistral\Embeddings\ResponseConverter as EmbeddingsResponseConverter;
-use Symfony\AI\Platform\Bridge\Mistral\Llm\ModelClient as MistralModelClient;
-use Symfony\AI\Platform\Bridge\Mistral\Llm\ResponseConverter as MistralResponseConverter;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
@@ -35,8 +31,8 @@ final class PlatformFactory
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [new EmbeddingsModelClient($httpClient, $apiKey), new MistralModelClient($httpClient, $apiKey)],
-            [new EmbeddingsResponseConverter(), new MistralResponseConverter()],
+            [new Embeddings\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey)],
+            [new Embeddings\ResultConverter(), new Llm\ResultConverter()],
             $contract ?? Contract::create(new ToolNormalizer()),
         );
     }

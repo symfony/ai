@@ -39,7 +39,7 @@ class ModelClientTest extends TestCase
     #[Test]
     public function itIsExecutingTheCorrectRequest(): void
     {
-        $responseCallback = static function (string $method, string $url, array $options): MockResponse {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
             self::assertSame('POST', $method);
             self::assertSame('http://localhost:1234/v1/chat/completions', $url);
             self::assertSame(
@@ -50,7 +50,7 @@ class ModelClientTest extends TestCase
             return new MockResponse();
         };
 
-        $httpClient = new MockHttpClient([$responseCallback]);
+        $httpClient = new MockHttpClient([$resultCallback]);
         $client = new ModelClient($httpClient, 'http://localhost:1234');
 
         $payload = [
@@ -66,7 +66,7 @@ class ModelClientTest extends TestCase
     #[Test]
     public function itMergesOptionsWithPayload(): void
     {
-        $responseCallback = static function (string $method, string $url, array $options): MockResponse {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
             self::assertSame('POST', $method);
             self::assertSame('http://localhost:1234/v1/chat/completions', $url);
             self::assertSame(
@@ -77,7 +77,7 @@ class ModelClientTest extends TestCase
             return new MockResponse();
         };
 
-        $httpClient = new MockHttpClient([$responseCallback]);
+        $httpClient = new MockHttpClient([$resultCallback]);
         $client = new ModelClient($httpClient, 'http://localhost:1234');
 
         $payload = [

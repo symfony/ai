@@ -30,8 +30,8 @@ $input = [
     'context' => 'Paris is the capital and most populous city of France, with an estimated population of 2,175,601 residents as of 2018, in an area of more than 105 square kilometres.',
 ];
 
-$response = $platform->request($model, $input, [
+$result = $platform->invoke($model, $input, [
     'task' => Task::QUESTION_ANSWERING,
 ]);
 
-dump($response->asObject());
+dump($result->asObject());

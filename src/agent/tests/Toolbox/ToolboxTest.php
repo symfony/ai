@@ -33,7 +33,7 @@ use Symfony\AI\Fixtures\Tool\ToolOptionalParam;
 use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
-use Symfony\AI\Platform\Response\ToolCall;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
@@ -250,9 +250,9 @@ final class ToolboxTest extends TestCase
             ->addTool(ToolNoAttribute1::class, 'happy_birthday', 'Generates birthday message');
 
         $toolbox = new Toolbox($memoryFactory, [new ToolNoAttribute1()]);
-        $response = $toolbox->execute(new ToolCall('call_1234', 'happy_birthday', ['name' => 'John', 'years' => 30]));
+        $result = $toolbox->execute(new ToolCall('call_1234', 'happy_birthday', ['name' => 'John', 'years' => 30]));
 
-        self::assertSame('Happy Birthday, John! You are 30 years old.', $response);
+        self::assertSame('Happy Birthday, John! You are 30 years old.', $result);
     }
 
     #[Test]

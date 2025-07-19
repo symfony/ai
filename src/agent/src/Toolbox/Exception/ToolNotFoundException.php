@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Agent\Toolbox\Exception;
 
-use Symfony\AI\Platform\Response\ToolCall;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 
 /**

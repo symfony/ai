@@ -19,13 +19,13 @@ use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
-use Symfony\AI\Agent\Toolbox\StreamResponse as ToolboxStreamResponse;
+use Symfony\AI\Agent\Toolbox\StreamResult as ToolboxStreamResponse;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
-use Symfony\AI\Platform\Response\ResponseInterface;
-use Symfony\AI\Platform\Response\StreamResponse as GenericStreamResponse;
-use Symfony\AI\Platform\Response\ToolCallResponse;
+use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult as GenericStreamResponse;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -67,20 +67,20 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
 
     public function processOutput(Output $output): void
     {
-        if ($output->response instanceof GenericStreamResponse) {
-            $output->response = new ToolboxStreamResponse(
-                $output->response->getContent(),
+        if ($output->result instanceof GenericStreamResponse) {
+            $output->result = new ToolboxStreamResponse(
+                $output->result->getContent(),
                 $this->handleToolCallsCallback($output),
             );
 
             return;
         }
 
-        if (!$output->response instanceof ToolCallResponse) {
+        if (!$output->result instanceof ToolCallResult) {
             return;
         }
 
-        $output->response = $this->handleToolCallsCallback($output)($output->response);
+        $output->result = $this->handleToolCallsCallback($output)($output->result);
     }
 
     /**
@@ -93,7 +93,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
 
     private function handleToolCallsCallback(Output $output): \Closure
     {
-        return function (ToolCallResponse $response, ?AssistantMessage $streamedAssistantResponse = null) use ($output): ResponseInterface {
+        return function (ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null) use ($output): ResultInterface {
             $messages = $this->keepToolMessages ? $output->messages : clone $output->messages;
 
             if (null !== $streamedAssistantResponse && '' !== $streamedAssistantResponse->content) {
@@ -101,23 +101,23 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             }
 
             do {
-                $toolCalls = $response->getContent();
+                $toolCalls = $result->getContent();
                 $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
 
                 $results = [];
                 foreach ($toolCalls as $toolCall) {
                     $result = $this->toolbox->execute($toolCall);
-                    $results[] = new ToolCallResult($toolCall, $result);
+                    $results[] = new ToolResult($toolCall, $result);
                     $messages->add(Message::ofToolCall($toolCall, $this->resultConverter->convert($result)));
                 }
 
                 $event = new ToolCallsExecuted(...$results);
                 $this->eventDispatcher?->dispatch($event);
 
-                $response = $event->hasResponse() ? $event->response : $this->agent->call($messages, $output->options);
-            } while ($response instanceof ToolCallResponse);
+                $result = $event->hasResponse() ? $event->result : $this->agent->call($messages, $output->options);
+            } while ($result instanceof ToolCallResult);
 
-            return $response;
+            return $result;
         };
     }
 }

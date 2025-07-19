@@ -25,8 +25,8 @@ if (!isset($_SERVER['HUGGINGFACE_KEY'])) {
 $platform = PlatformFactory::create($_SERVER['HUGGINGFACE_KEY']);
 $model = new Model('thenlper/gte-large');
 
-$response = $platform->request($model, 'Today is a sunny day and I will get some ice cream.', [
+$result = $platform->invoke($model, 'Today is a sunny day and I will get some ice cream.', [
     'task' => Task::FEATURE_EXTRACTION,
 ]);
 
-echo 'Dimensions: '.$response->asVectors()[0]->getDimensions().\PHP_EOL;
+echo 'Dimensions: '.$result->asVectors()[0]->getDimensions().\PHP_EOL;

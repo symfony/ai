@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Bridge\OpenAI\GPT;
 use Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Response\ObjectResponse;
+use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpClient\HttpClient;
@@ -42,14 +42,14 @@ $agent = new Agent($platform, $model, [$processor], [$processor]);
 
 // Add tool call result listener to enforce chain exits direct with structured response for weather tools
 $eventDispatcher->addListener(ToolCallsExecuted::class, function (ToolCallsExecuted $event): void {
-    foreach ($event->toolCallResults as $toolCallResult) {
+    foreach ($event->toolResults as $toolCallResult) {
         if (str_starts_with($toolCallResult->toolCall->name, 'weather_')) {
-            $event->response = new ObjectResponse($toolCallResult->result);
+            $event->result = new ObjectResult($toolCallResult->result);
         }
     }
 });
 
 $messages = new MessageBag(Message::ofUser('How is the weather currently in Berlin?'));
-$response = $agent->call($messages);
+$result = $agent->call($messages);
 
-dump($response->getContent());
+dump($result->getContent());

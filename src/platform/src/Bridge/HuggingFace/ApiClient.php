@@ -31,13 +31,13 @@ final class ApiClient
      */
     public function models(?string $provider, ?string $task): array
     {
-        $response = $this->httpClient->request('GET', 'https://huggingface.co/api/models', [
+        $result = $this->httpClient->request('GET', 'https://huggingface.co/api/models', [
             'query' => [
                 'inference_provider' => $provider,
                 'pipeline_tag' => $task,
             ],
         ]);
 
-        return array_map(fn (array $model) => new Model($model['id']), $response->toArray());
+        return array_map(fn (array $model) => new Model($model['id']), $result->toArray());
     }
 }

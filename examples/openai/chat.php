@@ -34,8 +34,8 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$response = $agent->call($messages, [
+$result = $agent->call($messages, [
     'max_tokens' => 500, // specific options just for this call
 ]);
 
-echo $response->getContent().\PHP_EOL;
+echo $result->getContent().\PHP_EOL;

@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenRouter;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
-use Symfony\AI\Platform\Response\RawHttpResponse;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -39,9 +39,9 @@ final readonly class ModelClient implements ModelClientInterface
         return true;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        return new RawHttpResponse($this->httpClient->request('POST', 'https://openrouter.ai/api/v1/chat/completions', [
+        return new RawHttpResult($this->httpClient->request('POST', 'https://openrouter.ai/api/v1/chat/completions', [
             'auth_bearer' => $this->apiKey,
             'json' => array_merge($options, $payload),
         ]));

@@ -40,7 +40,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\ResponseConverterInterface;
+use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Store\Bridge\Azure\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\ChromaDB\Store as ChromaDBStore;
 use Symfony\AI\Store\Bridge\MongoDB\Store as MongoDBStore;
@@ -132,8 +132,8 @@ final class AIBundle extends AbstractBundle
             ->addTag('ai.agent.output_processor');
         $builder->registerForAutoconfiguration(ModelClientInterface::class)
             ->addTag('ai.platform.model_client');
-        $builder->registerForAutoconfiguration(ResponseConverterInterface::class)
-            ->addTag('ai.platform.response_converter');
+        $builder->registerForAutoconfiguration(ResultConverterInterface::class)
+            ->addTag('ai.platform.result_converter');
 
         if (!ContainerBuilder::willBeAvailable('symfony/security-core', AuthorizationCheckerInterface::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.security.is_granted_attribute_listener');

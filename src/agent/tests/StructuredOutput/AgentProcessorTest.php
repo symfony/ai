@@ -25,9 +25,9 @@ use Symfony\AI\Fixtures\StructuredOutput\Step;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\Choice;
-use Symfony\AI\Platform\Response\ObjectResponse;
-use Symfony\AI\Platform\Response\TextResponse;
+use Symfony\AI\Platform\Result\Choice;
+use Symfony\AI\Platform\Result\ObjectResult;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\Serializer\SerializerInterface;
 
 #[CoversClass(AgentProcessor::class)]
@@ -36,8 +36,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 #[UsesClass(MessageBag::class)]
 #[UsesClass(Choice::class)]
 #[UsesClass(MissingModelSupportException::class)]
-#[UsesClass(TextResponse::class)]
-#[UsesClass(ObjectResponse::class)]
+#[UsesClass(TextResult::class)]
+#[UsesClass(ObjectResult::class)]
 #[UsesClass(Model::class)]
 final class AgentProcessorTest extends TestCase
 {
@@ -90,15 +90,15 @@ final class AgentProcessorTest extends TestCase
         $input = new Input($model, new MessageBag(), $options);
         $processor->processInput($input);
 
-        $response = new TextResponse('{"some": "data"}');
+        $result = new TextResult('{"some": "data"}');
 
-        $output = new Output($model, $response, new MessageBag(), $input->getOptions());
+        $output = new Output($model, $result, new MessageBag(), $input->getOptions());
 
         $processor->processOutput($output);
 
-        self::assertInstanceOf(ObjectResponse::class, $output->response);
-        self::assertInstanceOf(SomeStructure::class, $output->response->getContent());
-        self::assertSame('data', $output->response->getContent()->some);
+        self::assertInstanceOf(ObjectResult::class, $output->result);
+        self::assertInstanceOf(SomeStructure::class, $output->result->getContent());
+        self::assertSame('data', $output->result->getContent()->some);
     }
 
     #[Test]
@@ -111,7 +111,7 @@ final class AgentProcessorTest extends TestCase
         $input = new Input($model, new MessageBag(), $options);
         $processor->processInput($input);
 
-        $response = new TextResponse(<<<JSON
+        $result = new TextResult(<<<JSON
             {
                 "steps": [
                     {
@@ -139,12 +139,12 @@ final class AgentProcessorTest extends TestCase
             }
             JSON);
 
-        $output = new Output($model, $response, new MessageBag(), $input->getOptions());
+        $output = new Output($model, $result, new MessageBag(), $input->getOptions());
 
         $processor->processOutput($output);
 
-        self::assertInstanceOf(ObjectResponse::class, $output->response);
-        self::assertInstanceOf(MathReasoning::class, $structure = $output->response->getContent());
+        self::assertInstanceOf(ObjectResult::class, $output->result);
+        self::assertInstanceOf(MathReasoning::class, $structure = $output->result->getContent());
         self::assertCount(5, $structure->steps);
         self::assertInstanceOf(Step::class, $structure->steps[0]);
         self::assertInstanceOf(Step::class, $structure->steps[1]);
@@ -157,17 +157,17 @@ final class AgentProcessorTest extends TestCase
     #[Test]
     public function processOutputWithoutResponseFormat(): void
     {
-        $responseFormatFactory = new ConfigurableResponseFormatFactory();
+        $resultFormatFactory = new ConfigurableResponseFormatFactory();
         $serializer = self::createMock(SerializerInterface::class);
-        $processor = new AgentProcessor($responseFormatFactory, $serializer);
+        $processor = new AgentProcessor($resultFormatFactory, $serializer);
 
         $model = self::createMock(Model::class);
-        $response = new TextResponse('');
+        $result = new TextResult('');
 
-        $output = new Output($model, $response, new MessageBag(), []);
+        $output = new Output($model, $result, new MessageBag(), []);
 
         $processor->processOutput($output);
 
-        self::assertSame($response, $output->response);
+        self::assertSame($result, $output->result);
     }
 }

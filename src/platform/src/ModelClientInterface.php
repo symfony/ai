@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform;
 
-use Symfony\AI\Platform\Response\RawResponseInterface;
+use Symfony\AI\Platform\Result\RawResultInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -24,5 +24,5 @@ interface ModelClientInterface
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
      */
-    public function request(Model $model, array|string $payload, array $options = []): RawResponseInterface;
+    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface;
 }

@@ -20,9 +20,9 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Platform\Bridge\OpenAI\Embeddings;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Platform;
-use Symfony\AI\Platform\Response\ResponsePromise;
-use Symfony\AI\Platform\Response\ToolCall;
-use Symfony\AI\Platform\Response\VectorResponse;
+use Symfony\AI\Platform\Result\ResultPromise;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
@@ -42,8 +42,8 @@ use Symfony\Component\Uid\Uuid;
 #[UsesClass(ToolCall::class)]
 #[UsesClass(Embeddings::class)]
 #[UsesClass(Platform::class)]
-#[UsesClass(ResponsePromise::class)]
-#[UsesClass(VectorResponse::class)]
+#[UsesClass(ResultPromise::class)]
+#[UsesClass(VectorResult::class)]
 final class IndexerTest extends TestCase
 {
     #[Test]
@@ -51,7 +51,7 @@ final class IndexerTest extends TestCase
     {
         $document = new TextDocument($id = Uuid::v4(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResponse($vector)), new Embeddings());
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings());
 
         $indexer = new Indexer($vectorizer, $store = new TestStore());
         $indexer->index($document);
@@ -81,7 +81,7 @@ final class IndexerTest extends TestCase
         $metadata = new Metadata(['key' => 'value']);
         $document = new TextDocument($id = Uuid::v4(), 'Test content', $metadata);
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResponse($vector)), new Embeddings());
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings());
 
         $indexer = new Indexer($vectorizer, $store = new TestStore());
         $indexer->index($document);

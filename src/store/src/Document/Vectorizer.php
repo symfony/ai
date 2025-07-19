@@ -35,18 +35,18 @@ final readonly class Vectorizer
     public function vectorizeDocuments(array $documents): array
     {
         if ($this->model->supports(Capability::INPUT_MULTIPLE)) {
-            $response = $this->platform->request($this->model, array_map(fn (TextDocument $document) => $document->content, $documents));
+            $result = $this->platform->invoke($this->model, array_map(fn (TextDocument $document) => $document->content, $documents));
 
-            $vectors = $response->asVectors();
+            $vectors = $result->asVectors();
         } else {
-            $responses = [];
+            $results = [];
             foreach ($documents as $document) {
-                $responses[] = $this->platform->request($this->model, $document->content);
+                $results[] = $this->platform->invoke($this->model, $document->content);
             }
 
             $vectors = [];
-            foreach ($responses as $response) {
-                $vectors = array_merge($vectors, $response->asVectors());
+            foreach ($results as $result) {
+                $vectors = array_merge($vectors, $result->asVectors());
             }
         }
 

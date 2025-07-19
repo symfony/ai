@@ -61,7 +61,7 @@ final readonly class SearchStore implements VectorStoreInterface
     private function request(string $endpoint, array $payload): array
     {
         $url = \sprintf('%s/indexes/%s/docs/%s', $this->endpointUrl, $this->indexName, $endpoint);
-        $response = $this->httpClient->request('POST', $url, [
+        $result = $this->httpClient->request('POST', $url, [
             'headers' => [
                 'api-key' => $this->apiKey,
             ],
@@ -69,7 +69,7 @@ final readonly class SearchStore implements VectorStoreInterface
             'json' => $payload,
         ]);
 
-        return $response->toArray();
+        return $result->toArray();
     }
 
     /**

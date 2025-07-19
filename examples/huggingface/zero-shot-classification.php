@@ -26,9 +26,9 @@ $platform = PlatformFactory::create($_SERVER['HUGGINGFACE_KEY']);
 $model = new Model('facebook/bart-large-mnli');
 
 $text = 'Hi, I recently bought a device from your company but it is not working as advertised and I would like to get reimbursed!';
-$response = $platform->request($model, $text, [
+$result = $platform->invoke($model, $text, [
     'task' => Task::ZERO_SHOT_CLASSIFICATION,
     'candidate_labels' => ['refund', 'legal', 'faq'],
 ]);
 
-dump($response->asObject());
+dump($result->asObject());

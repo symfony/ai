@@ -27,8 +27,8 @@ $platform = PlatformFactory::create($_SERVER['HUGGINGFACE_KEY']);
 $model = new Model('MIT/ast-finetuned-audioset-10-10-0.4593');
 $audio = Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3');
 
-$response = $platform->request($model, $audio, [
+$result = $platform->invoke($model, $audio, [
     'task' => Task::AUDIO_CLASSIFICATION,
 ]);
 
-dump($response->asObject());
+dump($result->asObject());

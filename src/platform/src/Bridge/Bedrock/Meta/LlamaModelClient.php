@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Meta;
 
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
-use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResponse;
+use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -33,9 +33,9 @@ class LlamaModelClient implements ModelClientInterface
         return $model instanceof Llama;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult
     {
-        return new RawBedrockResponse($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest([
+        return new RawBedrockResult($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest([
             'modelId' => $this->getModelId($model),
             'contentType' => 'application/json',
             'body' => json_encode($payload, \JSON_THROW_ON_ERROR),

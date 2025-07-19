@@ -40,7 +40,7 @@ final class SimilaritySearch
      */
     public function __invoke(string $searchTerm): string
     {
-        $vectors = $this->platform->request($this->model, $searchTerm)->asVectors();
+        $vectors = $this->platform->invoke($this->model, $searchTerm)->asVectors();
         $this->usedDocuments = $this->vectorStore->query($vectors[0]);
 
         if ([] === $this->usedDocuments) {

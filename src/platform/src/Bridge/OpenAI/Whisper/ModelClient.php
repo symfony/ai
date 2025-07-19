@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenAI\Whisper;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface as BaseModelClient;
-use Symfony\AI\Platform\Response\RawHttpResponse;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -36,13 +36,13 @@ final readonly class ModelClient implements BaseModelClient
         return $model instanceof Whisper;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
         $task = $options['task'] ?? Task::TRANSCRIPTION;
         $endpoint = Task::TRANSCRIPTION === $task ? 'transcriptions' : 'translations';
         unset($options['task']);
 
-        return new RawHttpResponse($this->httpClient->request('POST', \sprintf('https://api.openai.com/v1/audio/%s', $endpoint), [
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('https://api.openai.com/v1/audio/%s', $endpoint), [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'multipart/form-data'],
             'body' => array_merge($options, $payload, ['model' => $model->getName()]),

@@ -24,7 +24,7 @@ final readonly class ModelClient implements ModelClientInterface
         return true;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawPipelineResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawPipelineResult
     {
         if (null === $task = $options['task'] ?? null) {
             throw new InvalidArgumentException('The task option is required.');
@@ -40,6 +40,6 @@ final readonly class ModelClient implements ModelClientInterface
             $options['modelFilename'] ?? null,
         );
 
-        return new RawPipelineResponse(new PipelineExecution($pipeline, $payload));
+        return new RawPipelineResult(new PipelineExecution($pipeline, $payload));
     }
 }

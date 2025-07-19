@@ -37,11 +37,11 @@ $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);
 
 $messages = new MessageBag(Message::ofUser('Please summarize this video for me: https://www.youtube.com/watch?v=6uXW-ulpj0s'));
-$response = $agent->call($messages, [
+$result = $agent->call($messages, [
     'stream' => true,
 ]);
 
-foreach ($response->getContent() as $word) {
+foreach ($result->getContent() as $word) {
     echo $word;
 }
 echo \PHP_EOL;

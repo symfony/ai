@@ -72,7 +72,7 @@ final class ModelClientTest extends TestCase
     #[Test]
     public function itIsExecutingTheCorrectRequest(): void
     {
-        $responseCallback = static function (string $method, string $url, array $options): HttpResponse {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
             self::assertSame('POST', $method);
             self::assertSame('https://api.openai.com/v1/images/generations', $url);
             self::assertSame('Authorization: Bearer sk-api-key', $options['normalized_headers']['authorization'][0]);
@@ -80,7 +80,7 @@ final class ModelClientTest extends TestCase
 
             return new MockResponse();
         };
-        $httpClient = new MockHttpClient([$responseCallback]);
+        $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
         $modelClient->request(new DallE(), 'foo', ['n' => 1, 'response_format' => 'url']);
     }

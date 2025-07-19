@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Contract\Normalizer\Message\MessageBagNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\SystemMessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\ToolCallMessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\UserMessageNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Response\ToolCallNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\ToolNormalizer;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
@@ -58,7 +58,7 @@ readonly class Contract
         // Options
         $normalizer[] = new ToolNormalizer();
 
-        // Response
+        // Result
         $normalizer[] = new ToolCallNormalizer();
 
         // JsonSerializable objects as extension point to library interfaces

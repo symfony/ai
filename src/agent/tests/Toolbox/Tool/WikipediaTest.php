@@ -24,8 +24,8 @@ final class WikipediaTest extends TestCase
     #[Test]
     public function searchWithResults(): void
     {
-        $response = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/wikipedia-search-result.json');
-        $httpClient = new MockHttpClient($response);
+        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/wikipedia-search-result.json');
+        $httpClient = new MockHttpClient($result);
 
         $wikipedia = new Wikipedia($httpClient);
 
@@ -52,8 +52,8 @@ final class WikipediaTest extends TestCase
     #[Test]
     public function searchWithoutResults(): void
     {
-        $response = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/wikipedia-search-empty.json');
-        $httpClient = new MockHttpClient($response);
+        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/wikipedia-search-empty.json');
+        $httpClient = new MockHttpClient($result);
 
         $wikipedia = new Wikipedia($httpClient);
 
@@ -66,8 +66,8 @@ final class WikipediaTest extends TestCase
     #[Test]
     public function articleWithResult(): void
     {
-        $response = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/wikipedia-article.json');
-        $httpClient = new MockHttpClient($response);
+        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/wikipedia-article.json');
+        $httpClient = new MockHttpClient($result);
 
         $wikipedia = new Wikipedia($httpClient);
 
@@ -83,8 +83,8 @@ final class WikipediaTest extends TestCase
     #[Test]
     public function articleWithRedirect(): void
     {
-        $response = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/wikipedia-article-redirect.json');
-        $httpClient = new MockHttpClient($response);
+        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/wikipedia-article-redirect.json');
+        $httpClient = new MockHttpClient($result);
 
         $wikipedia = new Wikipedia($httpClient);
 
@@ -102,8 +102,8 @@ final class WikipediaTest extends TestCase
     #[Test]
     public function articleMissing(): void
     {
-        $response = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/wikipedia-article-missing.json');
-        $httpClient = new MockHttpClient($response);
+        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/wikipedia-article-missing.json');
+        $httpClient = new MockHttpClient($result);
 
         $wikipedia = new Wikipedia($httpClient);
 

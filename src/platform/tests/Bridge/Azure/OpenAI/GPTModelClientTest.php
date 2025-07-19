@@ -90,7 +90,7 @@ final class GPTModelClientTest extends TestCase
     #[Test]
     public function itIsExecutingTheCorrectRequest(): void
     {
-        $responseCallback = static function (string $method, string $url, array $options): MockResponse {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
             self::assertSame('POST', $method);
             self::assertSame('https://test.azure.com/openai/deployments/gpt-deployment/chat/completions?api-version=2023-12-01', $url);
             self::assertSame(['api-key: test-api-key'], $options['normalized_headers']['api-key']);
@@ -99,7 +99,7 @@ final class GPTModelClientTest extends TestCase
             return new MockResponse();
         };
 
-        $httpClient = new MockHttpClient([$responseCallback]);
+        $httpClient = new MockHttpClient([$resultCallback]);
         $client = new GPTModelClient($httpClient, 'test.azure.com', 'gpt-deployment', '2023-12-01', 'test-api-key');
         $client->request(new GPT(), ['messages' => [['role' => 'user', 'content' => 'Hello']]]);
     }

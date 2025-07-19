@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Nova;
 
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
-use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResponse;
+use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 
@@ -32,7 +32,7 @@ class NovaModelClient implements ModelClientInterface
         return $model instanceof Nova;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult
     {
         $modelOptions = [];
         if (isset($options['tools'])) {
@@ -53,7 +53,7 @@ class NovaModelClient implements ModelClientInterface
             'body' => json_encode(array_merge($payload, $modelOptions), \JSON_THROW_ON_ERROR),
         ];
 
-        return new RawBedrockResponse($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest($request)));
+        return new RawBedrockResult($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest($request)));
     }
 
     private function getModelId(Model $model): string

@@ -28,8 +28,8 @@ if (!is_dir(dirname(__DIR__).'/.transformers-cache/Xenova/LaMini-Flan-T5-783M'))
 $platform = PlatformFactory::create();
 $model = new Model('Xenova/LaMini-Flan-T5-783M');
 
-$response = $platform->request($model, 'How many continents are there in the world?', [
+$result = $platform->invoke($model, 'How many continents are there in the world?', [
     'task' => Task::Text2TextGeneration,
 ]);
 
-echo $response->asText().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

@@ -27,8 +27,8 @@ $platform = PlatformFactory::create($_SERVER['HUGGINGFACE_KEY']);
 $model = new Model('Salesforce/blip-image-captioning-base');
 
 $image = Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg');
-$response = $platform->request($model, $image, [
+$result = $platform->invoke($model, $image, [
     'task' => Task::IMAGE_TO_TEXT,
 ]);
 
-echo $response->asText().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

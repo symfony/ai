@@ -41,6 +41,6 @@ $memoryProcessor = new MemoryInputProcessor($personalFacts);
 
 $chain = new Agent($platform, $model, [$systemPromptProcessor, $memoryProcessor]);
 $messages = new MessageBag(Message::ofUser('What do we do today?'));
-$response = $chain->call($messages);
+$result = $chain->call($messages);
 
-echo $response->getContent().\PHP_EOL;
+echo $result->getContent().\PHP_EOL;

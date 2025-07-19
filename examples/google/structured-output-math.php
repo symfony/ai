@@ -35,6 +35,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),
 );
-$response = $agent->call($messages, ['output_structure' => MathReasoning::class]);
+$result = $agent->call($messages, ['output_structure' => MathReasoning::class]);
 
-dump($response->getContent());
+dump($result->getContent());

@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenAI\GPT;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface as PlatformResponseFactory;
-use Symfony\AI\Platform\Response\RawHttpResponse;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -41,9 +41,9 @@ final readonly class ModelClient implements PlatformResponseFactory
         return $model instanceof GPT;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        return new RawHttpResponse($this->httpClient->request('POST', 'https://api.openai.com/v1/chat/completions', [
+        return new RawHttpResult($this->httpClient->request('POST', 'https://api.openai.com/v1/chat/completions', [
             'auth_bearer' => $this->apiKey,
             'json' => array_merge($options, $payload),
         ]));

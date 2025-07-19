@@ -14,7 +14,7 @@ namespace Symfony\AI\AIBundle\Profiler;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\Response\ResponsePromise;
+use Symfony\AI\Platform\Result\ResultPromise;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -23,7 +23,7 @@ use Symfony\AI\Platform\Response\ResponsePromise;
  *     model: Model,
  *     input: array<mixed>|string|object,
  *     options: array<string, mixed>,
- *     response: ResponsePromise,
+ *     result: ResultPromise,
  * }
  */
 final class TraceablePlatform implements PlatformInterface
@@ -38,9 +38,9 @@ final class TraceablePlatform implements PlatformInterface
     ) {
     }
 
-    public function request(Model $model, array|string|object $input, array $options = []): ResponsePromise
+    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise
     {
-        $response = $this->platform->request($model, $input, $options);
+        $result = $this->platform->invoke($model, $input, $options);
 
         if ($input instanceof File) {
             $input = $input::class.': '.$input->getFormat();
@@ -50,9 +50,9 @@ final class TraceablePlatform implements PlatformInterface
             'model' => $model,
             'input' => \is_object($input) ? clone $input : $input,
             'options' => $options,
-            'response' => $response,
+            'result' => $result,
         ];
 
-        return $response;
+        return $result;
     }
 }

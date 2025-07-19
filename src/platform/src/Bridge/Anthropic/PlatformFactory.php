@@ -33,7 +33,7 @@ final readonly class PlatformFactory
 
         return new Platform(
             [new ModelClient($httpClient, $apiKey, $version)],
-            [new ResponseConverter()],
+            [new ResultConverter()],
             $contract ?? AnthropicContract::create(),
         );
     }

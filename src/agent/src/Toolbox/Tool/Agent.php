@@ -14,7 +14,7 @@ namespace Symfony\AI\Agent\Toolbox\Tool;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Response\TextResponse;
+use Symfony\AI\Platform\Result\TextResult;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -31,10 +31,10 @@ final readonly class Agent
      */
     public function __invoke(string $message): string
     {
-        $response = $this->agent->call(new MessageBag(Message::ofUser($message)));
+        $result = $this->agent->call(new MessageBag(Message::ofUser($message)));
 
-        \assert($response instanceof TextResponse);
+        \assert($result instanceof TextResult);
 
-        return $response->getContent();
+        return $result->getContent();
     }
 }

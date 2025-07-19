@@ -34,7 +34,7 @@ final class PlatformFactory
 
         return new Platform(
             [new ModelClient($httpClient, $apiKey)],
-            [new ResponseConverter()],
+            [new ResultConverter()],
             $contract ?? Contract::create(
                 new AssistantMessageNormalizer(),
                 new MessageBagNormalizer(),

@@ -41,6 +41,6 @@ $prompt = <<<PROMPT
     at the beginning and end, not throughout the code.
     PROMPT;
 
-$response = (new Agent($platform, $model))->call(new MessageBag(Message::ofUser($prompt)));
+$result = (new Agent($platform, $model))->call(new MessageBag(Message::ofUser($prompt)));
 
-echo $response->getContent().\PHP_EOL;
+echo $result->getContent().\PHP_EOL;

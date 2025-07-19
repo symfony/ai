@@ -10,7 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\OpenAI\DallE;
-use Symfony\AI\Platform\Bridge\OpenAI\DallE\ImageResponse;
+use Symfony\AI\Platform\Bridge\OpenAI\DallE\ImageResult;
 use Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory;
 use Symfony\Component\Dotenv\Dotenv;
 
@@ -24,18 +24,18 @@ if (!isset($_SERVER['OPENAI_API_KEY'])) {
 
 $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
 
-$response = $platform->request(
+$result = $platform->invoke(
     model: new DallE(name: DallE::DALL_E_3),
     input: 'A cartoon-style elephant with a long trunk and large ears.',
     options: [
         'response_format' => 'url', // Generate response as URL
     ],
-)->getResponse();
+)->getResult();
 
-assert($response instanceof ImageResponse);
+assert($result instanceof ImageResult);
 
-echo 'Revised Prompt: '.$response->revisedPrompt.\PHP_EOL.\PHP_EOL;
+echo 'Revised Prompt: '.$result->revisedPrompt.\PHP_EOL.\PHP_EOL;
 
-foreach ($response->getContent() as $index => $image) {
+foreach ($result->getContent() as $index => $image) {
     echo 'Image '.$index.': '.$image->url.\PHP_EOL;
 }

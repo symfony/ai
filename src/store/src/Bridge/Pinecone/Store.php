@@ -59,7 +59,7 @@ final readonly class Store implements VectorStoreInterface
 
     public function query(Vector $vector, array $options = [], ?float $minScore = null): array
     {
-        $response = $this->getVectors()->query(
+        $result = $this->getVectors()->query(
             vector: $vector->getData(),
             namespace: $options['namespace'] ?? $this->namespace,
             filter: $options['filter'] ?? $this->filter,
@@ -68,7 +68,7 @@ final readonly class Store implements VectorStoreInterface
         );
 
         $documents = [];
-        foreach ($response->json()['matches'] as $match) {
+        foreach ($result->json()['matches'] as $match) {
             $documents[] = new VectorDocument(
                 id: Uuid::fromString($match['id']),
                 vector: new Vector($match['values']),

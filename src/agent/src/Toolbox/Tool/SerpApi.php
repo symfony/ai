@@ -31,14 +31,14 @@ final readonly class SerpApi
      */
     public function __invoke(string $query): string
     {
-        $response = $this->httpClient->request('GET', 'https://serpapi.com/search', [
+        $result = $this->httpClient->request('GET', 'https://serpapi.com/search', [
             'query' => [
                 'q' => $query,
                 'api_key' => $this->apiKey,
             ],
         ]);
 
-        return \sprintf('Results for "%s" are "%s".', $query, $this->extractBestResponse($response->toArray()));
+        return \sprintf('Results for "%s" are "%s".', $query, $this->extractBestResponse($result->toArray()));
     }
 
     /**

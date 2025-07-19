@@ -50,7 +50,7 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
 
     public function query(Vector $vector, array $options = [], ?float $minScore = null): array
     {
-        $response = $this->request('POST', \sprintf('indexes/%s/search', $this->indexName), [
+        $result = $this->request('POST', \sprintf('indexes/%s/search', $this->indexName), [
             'vector' => $vector->getData(),
             'showRankingScore' => true,
             'retrieveVectors' => true,
@@ -60,7 +60,7 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
             ],
         ]);
 
-        return array_map($this->convertToVectorDocument(...), $response['hits']);
+        return array_map($this->convertToVectorDocument(...), $result['hits']);
     }
 
     public function initialize(array $options = []): void
@@ -92,14 +92,14 @@ final readonly class Store implements InitializableStoreInterface, VectorStoreIn
     private function request(string $method, string $endpoint, array $payload): array
     {
         $url = \sprintf('%s/%s', $this->endpointUrl, $endpoint);
-        $response = $this->httpClient->request($method, $url, [
+        $result = $this->httpClient->request($method, $url, [
             'headers' => [
                 'Authorization' => \sprintf('Bearer %s', $this->apiKey),
             ],
             'json' => $payload,
         ]);
 
-        return $response->toArray();
+        return $result->toArray();
     }
 
     /**

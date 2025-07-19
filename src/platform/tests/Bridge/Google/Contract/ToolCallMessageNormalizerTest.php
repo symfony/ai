@@ -22,7 +22,7 @@ use Symfony\AI\Platform\Bridge\Google\Gemini;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\ToolCall;
+use Symfony\AI\Platform\Result\ToolCall;
 
 #[Small]
 #[CoversClass(ToolCallMessageNormalizer::class)]

@@ -31,7 +31,7 @@ final class PlatformFactory
     ): Platform {
         return new Platform(
             [new LlamaModelClient(new Client($httpClient ?? HttpClient::create(), new Clock(), $apiKey))],
-            [new LlamaResponseConverter()],
+            [new LlamaResultConverter()],
             $contract ?? Contract::create(new LlamaMessageBagNormalizer()),
         );
     }

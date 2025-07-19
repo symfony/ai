@@ -39,7 +39,7 @@ $structuredOutputProcessor = new StructuredOutputProcessor();
 $agent = new Agent($platform, $model, [$toolProcessor, $structuredOutputProcessor], [$toolProcessor, $structuredOutputProcessor]);
 
 $messages = new MessageBag(Message::ofUser('What date and time is it?'));
-$response = $agent->call($messages, ['response_format' => [
+$result = $agent->call($messages, ['response_format' => [
     'type' => 'json_schema',
     'json_schema' => [
         'name' => 'clock',
@@ -56,4 +56,4 @@ $response = $agent->call($messages, ['response_format' => [
     ],
 ]]);
 
-dump($response->getContent());
+dump($result->getContent());

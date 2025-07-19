@@ -71,7 +71,7 @@ final readonly class OpenMeteo
      */
     public function current(float $latitude, float $longitude): array
     {
-        $response = $this->httpClient->request('GET', 'https://api.open-meteo.com/v1/forecast', [
+        $result = $this->httpClient->request('GET', 'https://api.open-meteo.com/v1/forecast', [
             'query' => [
                 'latitude' => $latitude,
                 'longitude' => $longitude,
@@ -79,7 +79,7 @@ final readonly class OpenMeteo
             ],
         ]);
 
-        $data = $response->toArray();
+        $data = $result->toArray();
 
         return [
             'weather' => self::WMO_CODES[$data['current']['weather_code']] ?? 'Unknown',
@@ -107,7 +107,7 @@ final readonly class OpenMeteo
         #[With(minimum: 1, maximum: 16)]
         int $days = 7,
     ): array {
-        $response = $this->httpClient->request('GET', 'https://api.open-meteo.com/v1/forecast', [
+        $result = $this->httpClient->request('GET', 'https://api.open-meteo.com/v1/forecast', [
             'query' => [
                 'latitude' => $latitude,
                 'longitude' => $longitude,
@@ -116,7 +116,7 @@ final readonly class OpenMeteo
             ],
         ]);
 
-        $data = $response->toArray();
+        $data = $result->toArray();
         $forecast = [];
         for ($i = 0; $i < $days; ++$i) {
             $forecast[] = [

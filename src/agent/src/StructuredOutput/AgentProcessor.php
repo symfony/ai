@@ -18,7 +18,7 @@ use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\Response\ObjectResponse;
+use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -73,7 +73,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
     {
         $options = $output->options;
 
-        if ($output->response instanceof ObjectResponse) {
+        if ($output->result instanceof ObjectResult) {
             return;
         }
 
@@ -82,13 +82,13 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         }
 
         if (!isset($this->outputStructure)) {
-            $output->response = new ObjectResponse(json_decode($output->response->getContent(), true));
+            $output->result = new ObjectResult(json_decode($output->result->getContent(), true));
 
             return;
         }
 
-        $output->response = new ObjectResponse(
-            $this->serializer->deserialize($output->response->getContent(), $this->outputStructure, 'json')
+        $output->result = new ObjectResult(
+            $this->serializer->deserialize($output->result->getContent(), $this->outputStructure, 'json')
         );
     }
 }
