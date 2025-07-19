@@ -1,0 +1,35 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-14T16:51:52Z
+
+INstead of an image, could you paste the mermaid code for the diagram to the PR header?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-16T22:48:18Z
+
+This looks great - even tho I'm not sure I get it all - but will give it a try :+1: Thanks already!
+
+---------------------------------------------------------------------------
+
+by valtzu at 2025-07-19T11:54:55Z
+
+> Was thinking if we'd just use that for all examples instead of typed.js and being an extra demo - what do you think?
+
+I did consider that, but not sure if it's a good idea since the LLM calls don't show up in the profiler when using streaming. Maybe you know if there's something to do about that?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-19T14:00:10Z
+
+> LLM calls don't show up in the profiler when using streaming
+
+oh, wasn't aware, but true, i think having that profiler insights is important for the demo - let's keep it as a separate one - good call :+1:
+
+---------------------------------------------------------------------------
+
+by valtzu at 2025-07-19T14:12:15Z
+
+Did the suggested changes
+
+Created an issue for the profiler bug and I have an idea for the fix too, if it'll work, then maybe we could use streaming for all demos instead of this separate one
