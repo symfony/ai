@@ -24,23 +24,16 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
-use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Uid\Uuid;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
-
-if (!isset($_SERVER['OPENAI_API_KEY'], $_SERVER['MEILISEARCH_HOST'], $_SERVER['MEILISEARCH_API_KEY'])) {
-    echo 'Please set OPENAI_API_KEY, MEILISEARCH_API_KEY and MEILISEARCH_HOST environment variables.'.\PHP_EOL;
-    exit(1);
-}
+require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
 $store = new Store(
     httpClient: HttpClient::create(),
-    endpointUrl: $_SERVER['MEILISEARCH_HOST'],
-    apiKey: $_SERVER['MEILISEARCH_API_KEY'],
+    endpointUrl: env('MEILISEARCH_HOST'),
+    apiKey: env('MEILISEARCH_API_KEY'),
     indexName: 'movies',
 );
 
@@ -58,17 +51,17 @@ foreach (Movies::all() as $i => $movie) {
 $store->initialize();
 
 // create embeddings for documents
-$platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
-$indexer = new Indexer($vectorizer, $store);
+$indexer = new Indexer($vectorizer, $store, logger());
 $indexer->index($documents);
 
 $model = new GPT(GPT::GPT_4O_MINI);
 
 $similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
-$toolbox = new Toolbox([$similaritySearch]);
+$toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor]);
+$agent = new Agent($platform, $model, [$processor], [$processor], logger());
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),

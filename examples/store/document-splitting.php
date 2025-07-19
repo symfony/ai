@@ -12,7 +12,7 @@
 use Symfony\AI\Store\Document\Loader\TextFileLoader;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
+require_once dirname(__DIR__).'/bootstrap.php';
 
 $loader = new TextFileLoader();
 $splitter = new TextSplitTransformer();

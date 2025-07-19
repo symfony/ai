@@ -18,25 +18,17 @@ use Symfony\AI\Platform\Bridge\OpenAI\GPT;
 use Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Dotenv\Dotenv;
-use Symfony\Component\HttpClient\HttpClient;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['OPENAI_API_KEY'], $_SERVER['BRAVE_API_KEY'])) {
-    echo 'Please set the OPENAI_API_KEY and BRAVE_API_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-$platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $model = new GPT(GPT::GPT_4O_MINI);
 
-$httpClient = HttpClient::create();
-$brave = new Brave($httpClient, $_SERVER['BRAVE_API_KEY']);
-$crawler = new Crawler($httpClient);
-$toolbox = new Toolbox([$brave, $crawler]);
+$brave = new Brave(http_client(), env('BRAVE_API_KEY'));
+$crawler = new Crawler(http_client());
+$toolbox = new Toolbox([$brave, $crawler], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor]);
+$agent = new Agent($platform, $model, [$processor], [$processor], logger());
 
 $messages = new MessageBag(Message::ofUser('What was the latest game result of Dallas Cowboys?'));
 $response = $agent->call($messages);

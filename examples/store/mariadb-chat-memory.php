@@ -24,16 +24,9 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
-use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Uid\Uuid;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
-
-if (!$_ENV['OPENAI_API_KEY'] || !$_ENV['MARIADB_URI']) {
-    echo 'Please set OPENAI_API_KEY and MARIADB_URI environment variables.'.\PHP_EOL;
-    exit(1);
-}
+require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
 $store = Store::fromDbal(
@@ -64,17 +57,17 @@ foreach ($pastConversationPieces as $i => $message) {
 $store->initialize();
 
 // create embeddings for documents as preparation of the chain memory
-$platform = PlatformFactory::create($_ENV['OPENAI_API_KEY']);
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
-$indexer = new Indexer($vectorizer, $store);
+$indexer = new Indexer($vectorizer, $store, logger());
 $indexer->index($documents);
 
 // Execute a chat call that is utilizing the memory
 $embeddingsMemory = new EmbeddingProvider($platform, $embeddings, $store);
 $memoryProcessor = new MemoryInputProcessor($embeddingsMemory);
 
-$chain = new Agent($platform, new GPT(GPT::GPT_4O_MINI), [$memoryProcessor]);
+$agent = new Agent($platform, new GPT(GPT::GPT_4O_MINI), [$memoryProcessor], logger: logger());
 $messages = new MessageBag(Message::ofUser('Have we discussed about my friend John in the past? If yes, what did we talk about?'));
-$response = $chain->call($messages);
+$response = $agent->call($messages);
 
 echo $response->getContent().\PHP_EOL;

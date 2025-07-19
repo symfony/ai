@@ -17,24 +17,17 @@ use Symfony\AI\Platform\Bridge\Google\Gemini;
 use Symfony\AI\Platform\Bridge\Google\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['GEMINI_API_KEY'])) {
-    echo 'Please set the GEMINI_API_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['GEMINI_API_KEY']);
+$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 
 // Available server-side tools as of 2025-06-28: url_context, google_search, code_execution
 $llm = new Gemini('gemini-2.5-pro-preview-03-25', ['server_tools' => ['url_context' => true], 'temperature' => 1.0]);
 
-$toolbox = new Toolbox([new Clock()]);
+$toolbox = new Toolbox([new Clock()], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $llm);
+$agent = new Agent($platform, $llm, logger: logger());
 
 $messages = new MessageBag(
     Message::ofUser(

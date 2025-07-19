@@ -27,20 +27,13 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
-use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Uid\Uuid;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
-
-if (!isset($_SERVER['GEMINI_API_KEY'], $_SERVER['MARIADB_URI'])) {
-    echo 'Please set GEMINI_API_KEY and MARIADB_URI environment variables.'.\PHP_EOL;
-    exit(1);
-}
+require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
 $store = Store::fromDbal(
-    connection: DriverManager::getConnection((new DsnParser())->parse($_SERVER['MARIADB_URI'])),
+    connection: DriverManager::getConnection((new DsnParser())->parse(env('MARIADB_URI'))),
     tableName: 'my_table',
     indexName: 'my_index',
 );
@@ -58,18 +51,18 @@ foreach (Movies::all() as $i => $movie) {
 $store->initialize(['dimensions' => 768]);
 
 // create embeddings for documents
-$platform = PlatformFactory::create($_SERVER['GEMINI_API_KEY']);
+$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 $embeddings = new Embeddings(options: ['dimensions' => 768, 'task_type' => TaskType::SemanticSimilarity]);
 $vectorizer = new Vectorizer($platform, $embeddings);
-$indexer = new Indexer($vectorizer, $store);
+$indexer = new Indexer($vectorizer, $store, logger());
 $indexer->index($documents);
 
 $model = new Gemini(Gemini::GEMINI_2_FLASH_LITE);
 
 $similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
-$toolbox = new Toolbox([$similaritySearch]);
+$toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor]);
+$agent = new Agent($platform, $model, [$processor], [$processor], logger());
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),

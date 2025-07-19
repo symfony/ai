@@ -12,17 +12,10 @@
 use Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAI\Whisper;
 use Symfony\AI\Platform\Message\Content\Audio;
-use Symfony\Component\Dotenv\Dotenv;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['OPENAI_API_KEY'])) {
-    echo 'Please set the OPENAI_API_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-
-$platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $model = new Whisper();
 $file = Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3');
 

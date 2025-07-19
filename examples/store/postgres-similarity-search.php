@@ -26,20 +26,13 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
-use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Uid\Uuid;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
-
-if (!isset($_SERVER['OPENAI_API_KEY'], $_SERVER['POSTGRES_URI'])) {
-    echo 'Please set OPENAI_API_KEY and POSTGRES_URI environment variables.'.\PHP_EOL;
-    exit(1);
-}
+require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
 $store = Store::fromDbal(
-    connection: DriverManager::getConnection((new DsnParser())->parse($_SERVER['POSTGRES_URI'])),
+    connection: DriverManager::getConnection((new DsnParser())->parse(env('POSTGRES_URI'))),
     tableName: 'my_table',
 );
 
@@ -57,17 +50,17 @@ foreach (Movies::all() as $i => $movie) {
 $store->initialize();
 
 // create embeddings for documents
-$platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
-$indexer = new Indexer($vectorizer, $store);
+$indexer = new Indexer($vectorizer, $store, logger());
 $indexer->index($documents);
 
 $model = new GPT(GPT::GPT_4O_MINI);
 
 $similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
-$toolbox = new Toolbox([$similaritySearch]);
+$toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor]);
+$agent = new Agent($platform, $model, [$processor], [$processor], logger());
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),

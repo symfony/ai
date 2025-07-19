@@ -55,7 +55,13 @@ Every example script is a standalone PHP script that can be run from the command
 You can run an example by executing the following command:
 
 ```bash
-php openai/openai/chat.php
+php openai/chat.php
+```
+
+To get more insights into what is happening at runtime, e.g. HTTP and tool calls, you can add `-vv` or `-vvv`:
+
+```bash
+php openai/toolcall-stream.php -vvv
 ```
 
 ### Running examples via the example runner
@@ -70,8 +76,14 @@ You can run the example runner by executing the following command:
 ./runner
 ```
 
-If you want to run only examples of a specific subdirectory, you can pass the subdirectory name as an argument:
+If you only want to run examples of one or multiple specific subdirectories, you can pass the name as an argument:
 
 ```bash
-./runner openai
+./runner openai mistral
+```
+
+If you only want to run a specific subset of examples, you can use a filter option:
+
+```bash
+./runner --filter=toolcall
 ```

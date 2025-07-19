@@ -25,20 +25,13 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
-use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Uid\Uuid;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
-
-if (!isset($_SERVER['OPENAI_API_KEY'], $_SERVER['MONGODB_URI'])) {
-    echo 'Please set OPENAI_API_KEY and MONGODB_URI environment variables.'.\PHP_EOL;
-    exit(1);
-}
+require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
 $store = new Store(
-    client: new MongoDBClient($_SERVER['MONGODB_URI']),
+    client: new MongoDBClient(env('MONGODB_URI')),
     databaseName: 'my-database',
     collectionName: 'my-collection',
     indexName: 'my-index',
@@ -55,9 +48,9 @@ foreach (Movies::all() as $movie) {
 }
 
 // create embeddings for documents
-$platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'));
 $vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
-$indexer = new Indexer($vectorizer, $store);
+$indexer = new Indexer($vectorizer, $store, logger());
 $indexer->index($documents);
 
 // initialize the index
@@ -66,9 +59,9 @@ $store->initialize();
 $model = new GPT(GPT::GPT_4O_MINI);
 
 $similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
-$toolbox = new Toolbox([$similaritySearch]);
+$toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor]);
+$agent = new Agent($platform, $model, [$processor], [$processor], logger());
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),

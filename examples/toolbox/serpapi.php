@@ -17,23 +17,16 @@ use Symfony\AI\Platform\Bridge\OpenAI\GPT;
 use Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Dotenv\Dotenv;
-use Symfony\Component\HttpClient\HttpClient;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+require_once dirname(__DIR__).'/bootstrap.php';
 
-if (!isset($_SERVER['OPENAI_API_KEY'], $_SERVER['SERP_API_KEY'])) {
-    echo 'Please set the OPENAI_API_KEY and SERP_API_KEY environment variable.'.\PHP_EOL;
-    exit(1);
-}
-$platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $model = new GPT(GPT::GPT_4O_MINI);
 
-$serpApi = new SerpApi(HttpClient::create(), $_SERVER['SERP_API_KEY']);
-$toolbox = new Toolbox([$serpApi]);
+$serpApi = new SerpApi(http_client(), env('SERP_API_KEY'));
+$toolbox = new Toolbox([$serpApi], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor]);
+$agent = new Agent($platform, $model, [$processor], [$processor], logger());
 
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
 $response = $agent->call($messages);

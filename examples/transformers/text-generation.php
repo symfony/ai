@@ -13,7 +13,7 @@ use Codewithkyrian\Transformers\Pipelines\Task;
 use Symfony\AI\Platform\Bridge\TransformersPHP\PlatformFactory;
 use Symfony\AI\Platform\Model;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
+require_once dirname(__DIR__).'/bootstrap.php';
 
 if (!extension_loaded('ffi') || '1' !== ini_get('ffi.enable')) {
     echo 'FFI extension is not loaded or enabled. Please enable it in your php.ini file.'.\PHP_EOL;
