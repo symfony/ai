@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Response\TextResponse;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -56,7 +56,7 @@ final class Chat
         $messages->add(Message::ofUser($message));
         $result = $this->agent->call($messages);
 
-        \assert($result instanceof TextResult);
+        \assert($result instanceof TextResponse);
 
         $messages->add(Message::ofAssistant($result->getContent()));
 
