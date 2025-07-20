@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2025-07-20T17:24:19Z
+
+Converted from name-based to index-based args to address #77 too
+
+Included in the same PR not to need 2 rounds of testing
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-20T21:40:42Z
+
+Wait, does the "Audio Bot" still work for you?
+
+getting this right now:
+<img width="1281" height="766" alt="image" src="https://github.com/user-attachments/assets/6ed65720-be29-46cd-9a2c-53897ea10487" />
