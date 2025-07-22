@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Bridge\Neo4j;
+namespace Symfony\AI\Store\Tests\Bridge\Neo4j;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Store\Bridge\Neo4J\Store;
+use Symfony\AI\Store\Bridge\Neo4j\Store;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;

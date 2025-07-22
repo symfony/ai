@@ -6,7 +6,13 @@
         "ai",
         "mongodb",
         "pinecone",
-        "chromadb"
+        "chromadb",
+        "mariadb",
+        "postgres",
+        "meilisearch",
+        "surrealdb",
+        "qdrant",
+        "neo4j"
     ],
     "license": "MIT",
     "authors": [

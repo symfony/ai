@@ -19,7 +19,7 @@ use Symfony\AI\Platform\Bridge\OpenAI\GPT;
 use Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Bridge\Neo4J\Store;
+use Symfony\AI\Store\Bridge\Neo4j\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
