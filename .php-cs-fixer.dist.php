@@ -38,6 +38,10 @@ return (new PhpCsFixer\Config())
         'header_comment' => [
             'header' => implode('', $fileHeaderParts),
         ],
+        'php_unit_test_annotation' => [
+            'style' => 'annotation',
+        ],
+        'php_unit_attributes' => true,
     ])
     ->setRiskyAllowed(true)
     ->setFinder(

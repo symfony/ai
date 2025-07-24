@@ -47,7 +47,7 @@ final class ContractTest extends TestCase
 {
     #[Test]
     #[DataProvider('provideMessageBag')]
-    public function testConvert(MessageBag $bag, array $expected): void
+    public function convert(MessageBag $bag, array $expected): void
     {
         $contract = Contract::create(
             new AssistantMessageNormalizer(),

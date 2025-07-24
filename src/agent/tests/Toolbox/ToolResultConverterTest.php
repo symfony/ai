@@ -23,7 +23,7 @@ final class ToolResultConverterTest extends TestCase
 {
     #[Test]
     #[DataProvider('provideResults')]
-    public function testConvert(mixed $result, ?string $expected): void
+    public function convert(mixed $result, ?string $expected): void
     {
         $converter = new ToolResultConverter();
 
