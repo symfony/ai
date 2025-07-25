@@ -1,0 +1,69 @@
+---------------------------------------------------------------------------
+
+by TomHart at 2025-07-21T22:18:57Z
+
+You're welcome @chr-hertel. I believe I've address everything you mentioned if you'd like to take another look whenever you have time.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-21T23:23:00Z
+
+Could be a follow up PR, but I would like to have an attribute for this like in the agent
+
+---------------------------------------------------------------------------
+
+by TomHart at 2025-07-22T09:59:34Z
+
+@chr-hertel my bad on missing the strict types, updated now and rebased into 1 commit
+
+---------------------------------------------------------------------------
+
+by TomHart at 2025-07-25T10:47:02Z
+
+Sorry for the slow response, I've had tonsillitis so took some time to recover. So if I've understood correct (as some of these things are new to me), I'd create a definition of
+
+```yaml
+    mcp.tool_chain:
+        arguments:
+            $executors: !tagged_iterator mcp.tool
+
+    Symfony\AI\McpSdk\Capability\Tool\ToolExecutorInterface: mcp.tool_chain
+```
+
+And then apply the `AutoconfigureTag` attribute to the `IdentifierInterface` class, providing @Nyholm confirms that's the correct one to target.
+
+is that correct @chr-hertel @stof?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-25T12:44:49Z
+
+@TomHart no worries at all, hope you're well again :crossed_fingers:
+
+You are correct here, two things are needed a) registering based on the `IndentifierInterface` and b) injecting the collection into the chain implementation
+
+For a) we can't simply add the `AutoconfigureTag` attribute tho, since that class lives in a different lib than the bundle - the trick here could be, to use the `registerForAutoconfiguration()` method for than in `McpBundle`, see https://symfony.com/doc/current/service_container/tags.html#autoconfiguring-tags
+
+For b) i think you could just move the service definition from the compiler pass into the bundle class as well and use `tagged_iterator('mcp.tool')` for injecting the tools
+
+---------------------------------------------------------------------------
+
+by TomHart at 2025-07-25T13:42:35Z
+
+I've changed it around now. I couldn't get it working with the `instanceof` autoconfigure, it just never picked anything up for some reason. Could you take another look now and see what you think?
+
+Not sure why PHPUnit is failing, could it be re-tried to just see if it's a blip?
+
+Finally, had to change from `array` to `iterable` for `tagged_iterator` to work, if that's a problem to change I can see if there's any other solutions
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-25T15:06:01Z
+
+Looks good to me now, can you please rebase - I just merged #165
+
+---------------------------------------------------------------------------
+
+by TomHart at 2025-07-25T15:11:35Z
+
+Amazing! Done!
