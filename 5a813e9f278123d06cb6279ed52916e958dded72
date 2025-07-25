@@ -1,0 +1,61 @@
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2025-07-23T11:57:02Z
+
+The annotation should be used when the exceptions are part of the API. And then, it should document when they should be expected. Is that the case everywhere?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-23T12:36:57Z
+
+> The annotation should be used when the exceptions are part of the API. And then, it should document when they should be expected. Is that the case everywhere?
+
+Thanks, updated
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-07-23T12:37:48Z
+
+Most people will inject `AgentInterface` into their service rather than `Agent`.
+So it's important to keep a `@throws` annotation on interface indeed.
+
+(But obviously it's ok to improve the documentation and be more specific about which exception is thrown and why)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-23T13:00:47Z
+
+I just want to avoid to only add those because PhpStorm inspections are complaining - when we add them, with value please and people should consider them actually 🙏
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-07-23T13:27:29Z
+
+> I just want to avoid to only add those because PhpStorm inspections are complaining
+
+More than PhpStorm, there is StaticAnalysis tools like PHPStan and Psalm.
+https://phpstan.org/blog/bring-your-exceptions-under-control
+
+A wrong documented interface leads to
+- missing try/catch
+- false-positif dead catch
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-24T19:00:53Z
+
+> LGTM from afar, a domain expert might review to see if that makes sense as part of the public API of course
+
+meaning we only add them on interfaces/classes designed for user land code to call, right?
+
+So for example the `AgentProcessorInterface` or the `NotificationHandlerInterface` is only to be called by the components themselves and basically internal - so would we add those `throws`  tags there as well?
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-07-24T19:05:17Z
+
+> So for example the `AgentProcessorInterface` or the `NotificationHandlerInterface` is only to be called by the components themselves and basically internal - so would we add those `throws` tags there as well?
+
+If a non-internal class use an AgentProcessorInterface, it might help to know the exceptions thrown by `AgentProcessorInterface` in order to document the phpdoc of the non-internal class.
+
+Also, if the `AgentProcessorInterface` or the `NotificationHandlerInterface` are supposed to be internal ; shouldn't you add `@internal` on it (?)
