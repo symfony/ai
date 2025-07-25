@@ -11,6 +11,7 @@
 
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\Platform\Exception\ModelException;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Dotenv\Dotenv;
@@ -52,3 +53,12 @@ function logger(): LoggerInterface
 
     return new ConsoleLogger(new ConsoleOutput($verbosity));
 }
+
+set_exception_handler(function ($exception) {
+    if ($exception instanceof ModelException) {
+        echo $exception->getMessage().\PHP_EOL;
+        exit(1);
+    }
+
+    throw $exception;
+});

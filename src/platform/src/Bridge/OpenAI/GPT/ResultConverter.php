@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenAI\GPT;
 
 use Symfony\AI\Platform\Bridge\OpenAI\GPT;
-use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ModelException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\Choice;
@@ -49,8 +49,8 @@ final class ResultConverter implements PlatformResponseConverter
 
         $data = $result->getData();
 
-        if (isset($data['error']['code']) && 'content_filter' === $data['error']['code']) {
-            throw new ContentFilterException($data['error']['message']);
+        if (isset($data['error'])) {
+            throw new ModelException($data['error']['message'], $data['error']);
         }
 
         if (!isset($data['choices'])) {
