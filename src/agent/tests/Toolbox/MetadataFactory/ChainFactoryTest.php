@@ -47,7 +47,7 @@ final class ChainFactoryTest extends TestCase
     }
 
     #[Test]
-    public function testGetMetadataNotExistingClass(): void
+    public function getMetadataNotExistingClass(): void
     {
         self::expectException(ToolException::class);
         self::expectExceptionMessage('The reference "NoClass" is not a valid tool.');
@@ -56,7 +56,7 @@ final class ChainFactoryTest extends TestCase
     }
 
     #[Test]
-    public function testGetMetadataNotConfiguredClass(): void
+    public function getMetadataNotConfiguredClass(): void
     {
         self::expectException(ToolConfigurationException::class);
         self::expectExceptionMessage(\sprintf('Method "foo" not found in tool "%s".', ToolMisconfigured::class));
@@ -65,7 +65,7 @@ final class ChainFactoryTest extends TestCase
     }
 
     #[Test]
-    public function testGetMetadataWithAttributeSingleHit(): void
+    public function getMetadataWithAttributeSingleHit(): void
     {
         $metadata = iterator_to_array($this->factory->getTool(ToolRequiredParams::class));
 
@@ -73,7 +73,7 @@ final class ChainFactoryTest extends TestCase
     }
 
     #[Test]
-    public function testGetMetadataOverwrite(): void
+    public function getMetadataOverwrite(): void
     {
         $metadata = iterator_to_array($this->factory->getTool(ToolOptionalParam::class));
 
@@ -84,7 +84,7 @@ final class ChainFactoryTest extends TestCase
     }
 
     #[Test]
-    public function testGetMetadataWithAttributeDoubleHit(): void
+    public function getMetadataWithAttributeDoubleHit(): void
     {
         $metadata = iterator_to_array($this->factory->getTool(ToolMultiple::class));
 
@@ -92,7 +92,7 @@ final class ChainFactoryTest extends TestCase
     }
 
     #[Test]
-    public function testGetMetadataWithMemorySingleHit(): void
+    public function getMetadataWithMemorySingleHit(): void
     {
         $metadata = iterator_to_array($this->factory->getTool(ToolNoAttribute1::class));
 
