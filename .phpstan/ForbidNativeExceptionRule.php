@@ -28,6 +28,7 @@ use PHPStan\Rules\RuleErrorBuilder;
  * for better error handling and consistency across the Symfony AI monorepo.
  *
  * @implements Rule<Node>
+ * @author Claude <noreply@anthropic.com>
  */
 final class ForbidNativeExceptionRule implements Rule
 {
