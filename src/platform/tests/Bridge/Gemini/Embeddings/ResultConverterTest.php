@@ -28,15 +28,15 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 #[UsesClass(Vector::class)]
 #[UsesClass(VectorResult::class)]
 #[UsesClass(Embeddings::class)]
-final class ResponseConverterTest extends TestCase
+final class ResultConverterTest extends TestCase
 {
     #[Test]
     public function itConvertsAResponseToAVectorResponse(): void
     {
         $result = $this->createStub(ResponseInterface::class);
         $result
-            ->method('toArray')
-            ->willReturn(json_decode($this->getEmbeddingStub(), true));
+            ->method('getContent')
+            ->willReturn($this->getEmbeddingStub());
 
         $vectorResponse = (new ResultConverter())->convert(new RawHttpResult($result));
         $convertedContent = $vectorResponse->getContent();
