@@ -37,3 +37,11 @@ services:
           SURREAL_HTTP_MAX_KEY_BODY_SIZE: 49152
       ports:
           - '8000:8000'
+
+  neo4j:
+      image: neo4j
+      environment:
+          NEO4J_AUTH: 'neo4j/${NEO4J_PASSWORD:-symfonyai}'
+      ports:
+          - '7474:7474'
+          - '7687:7687'

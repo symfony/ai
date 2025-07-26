@@ -44,6 +44,7 @@ CHANGELOG
    - Pinecone
    - Qdrant
    - SurrealDB
+   - Neo4j
  * Add Retrieval Augmented Generation (RAG) support:
    - Document embedding storage
    - Similarity search for relevant documents

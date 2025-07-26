@@ -44,6 +44,7 @@ You can find more advanced usage in combination with an Agent using the store fo
 * `Similarity Search with SurrealDB (RAG)`_
 * `Similarity Search with memory storage (RAG)`_
 * `Similarity Search with Qdrant (RAG)`_
+* `Similarity Search with Neo4j (RAG)`_
 
 Supported Stores
 ----------------
@@ -58,6 +59,7 @@ Supported Stores
 * `SurrealDB`_
 * `InMemory`_
 * `Qdrant`_
+* `Neo4j`_
 
 .. note::
 
@@ -98,6 +100,7 @@ This leads to a store implementing two methods::
 .. _`Similarity Search with SurrealDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/store/surrealdb-similarity-search.php
 .. _`Similarity Search with memory storage (RAG)`: https://github.com/symfony/ai/blob/main/examples/store/memory-similarity-search.php
 .. _`Similarity Search with Qdrant (RAG)`: https://github.com/symfony/ai/blob/main/examples/store/qdrant-similarity-search.php
+.. _`Similarity Search with Neo4j (RAG)`: https://github.com/symfony/ai/blob/main/examples/store/neo4j-similarity-search.php
 .. _`Azure AI Search`: https://azure.microsoft.com/products/ai-services/ai-search
 .. _`Chroma`: https://www.trychroma.com/
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
@@ -108,4 +111,5 @@ This leads to a store implementing two methods::
 .. _`SurrealDB`: https://surrealdb.com/
 .. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
 .. _`Qdrant`: https://qdrant.tech/
+.. _`Neo4j`: https://neo4j.com/
 .. _`GitHub`: https://github.com/symfony/ai/issues/16
