@@ -1,0 +1,141 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Platform\Tests\Bridge\Ollama\Contract;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Meta\Llama;
+use Symfony\AI\Platform\Bridge\Ollama\Contract\AssistantMessageNormalizer;
+use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Role;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\ToolCall;
+
+#[Small]
+#[CoversClass(AssistantMessageNormalizer::class)]
+#[UsesClass(Llama::class)]
+#[UsesClass(AssistantMessage::class)]
+#[UsesClass(Model::class)]
+#[UsesClass(ToolCall::class)]
+final class AssistantMessageNormalizerTest extends TestCase
+{
+    private AssistantMessageNormalizer $normalizer;
+
+    protected function setUp(): void
+    {
+        $this->normalizer = new AssistantMessageNormalizer();
+    }
+
+    #[Test]
+    public function supportsNormalization(): void
+    {
+        $this->assertTrue($this->normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
+            Contract::CONTEXT_MODEL => new Llama(),
+        ]));
+        $this->assertFalse($this->normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
+            Contract::CONTEXT_MODEL => new Model('any-model'),
+        ]));
+        $this->assertFalse($this->normalizer->supportsNormalization('not an assistant message'));
+    }
+
+    #[Test]
+    public function getSupportedTypes(): void
+    {
+        $this->assertSame([AssistantMessage::class => true], $this->normalizer->getSupportedTypes(null));
+    }
+
+    #[Test]
+    #[DataProvider('normalizeDataProvider')]
+    public function normalize(AssistantMessage $message, array $expectedOutput): void
+    {
+        $normalized = $this->normalizer->normalize($message);
+
+        $this->assertEquals($expectedOutput, $normalized);
+    }
+
+    /**
+     * @return iterable<string, array{AssistantMessage, array{role: Role::Assistant, tool_calls: list<array{type: string, function: array{name: string, arguments: mixed}}>}}>
+     */
+    public static function normalizeDataProvider(): iterable
+    {
+        yield 'assistant message without tool calls' => [
+            new AssistantMessage('Hello'),
+            [
+                'role' => Role::Assistant,
+                'tool_calls' => [],
+            ],
+        ];
+
+        yield 'assistant message with tool calls' => [
+            new AssistantMessage(toolCalls: [new ToolCall('id1', 'function1', ['param' => 'value'])]),
+            [
+                'role' => Role::Assistant,
+                'tool_calls' => [
+                    [
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'function1',
+                            'arguments' => ['param' => 'value'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'assistant message with empty arguments' => [
+            new AssistantMessage(toolCalls: [new ToolCall('id1', 'function1', [])]),
+            [
+                'role' => Role::Assistant,
+                'tool_calls' => [
+                    [
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'function1',
+                            'arguments' => new \stdClass(),
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'assistant message with multiple tool calls' => [
+            new AssistantMessage(toolCalls: [
+                new ToolCall('id1', 'function1', ['param1' => 'value1']),
+                new ToolCall('id2', 'function2', ['param2' => 'value2']),
+            ]),
+            [
+                'role' => Role::Assistant,
+                'tool_calls' => [
+                    [
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'function1',
+                            'arguments' => ['param1' => 'value1'],
+                        ],
+                    ],
+                    [
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'function2',
+                            'arguments' => ['param2' => 'value2'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+}
