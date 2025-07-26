@@ -19,7 +19,7 @@ use Symfony\AI\Platform\Model;
 class InMemoryPlatformTest extends TestCase
 {
     #[Test]
-    public function platformInvokeWithFixedResponse(): void
+    public function platformInvokeWithFixedResult(): void
     {
         $platform = new InMemoryPlatform('Mocked result');
         $result = $platform->invoke(new Model('test'), 'input');
@@ -30,7 +30,7 @@ class InMemoryPlatformTest extends TestCase
     }
 
     #[Test]
-    public function platformInvokeWithCallableResponse(): void
+    public function platformInvokeWithCallableResult(): void
     {
         $platform = new InMemoryPlatform(function (Model $model, $input) {
             return strtoupper((string) $input);

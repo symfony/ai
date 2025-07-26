@@ -25,7 +25,7 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\Contracts\HttpClient\ResponseInterface as SymfonyHttpResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 #[CoversClass(TokenOutputProcessor::class)]
 #[UsesClass(Output::class)]
@@ -138,7 +138,7 @@ final class TokenOutputProcessorTest extends TestCase
 
     private function createRawResponse(array $data = []): RawHttpResult
     {
-        $rawResponse = $this->createStub(SymfonyHttpResponse::class);
+        $rawResponse = $this->createStub(ResponseInterface::class);
         $rawResponse->method('getHeaders')->willReturn([
             'x-ratelimit-limit-tokens-minute' => ['1000'],
             'x-ratelimit-limit-tokens-month' => ['1000000'],

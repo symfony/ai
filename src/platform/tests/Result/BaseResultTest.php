@@ -35,7 +35,7 @@ final class BaseResultTest extends TestCase
     #[Test]
     public function itCanHandleMetadata(): void
     {
-        $result = $this->createResponse();
+        $result = $this->createResult();
         $metadata = $result->getMetadata();
 
         $this->assertCount(0, $metadata);
@@ -49,11 +49,11 @@ final class BaseResultTest extends TestCase
     #[Test]
     public function itCanBeEnrichedWithARawResponse(): void
     {
-        $result = $this->createResponse();
-        $rawResponse = $this->createRawResponse();
+        $result = $this->createResult();
+        $rawResult = $this->createRawResult();
 
-        $result->setRawResult($rawResponse);
-        $this->assertSame($rawResponse, $result->getRawResult());
+        $result->setRawResult($rawResult);
+        $this->assertSame($rawResult, $result->getRawResult());
     }
 
     #[Test]
@@ -61,14 +61,14 @@ final class BaseResultTest extends TestCase
     {
         self::expectException(RawResultAlreadySetException::class);
 
-        $result = $this->createResponse();
-        $rawResponse = $this->createRawResponse();
+        $result = $this->createResult();
+        $rawResult = $this->createRawResult();
 
-        $result->setRawResult($rawResponse);
-        $result->setRawResult($rawResponse);
+        $result->setRawResult($rawResult);
+        $result->setRawResult($rawResult);
     }
 
-    private function createResponse(): BaseResult
+    private function createResult(): BaseResult
     {
         return new class extends BaseResult {
             public function getContent(): string
@@ -78,7 +78,7 @@ final class BaseResultTest extends TestCase
         };
     }
 
-    public function createRawResponse(): RawResultInterface
+    public function createRawResult(): RawResultInterface
     {
         return new class implements RawResultInterface {
             public function getData(): array

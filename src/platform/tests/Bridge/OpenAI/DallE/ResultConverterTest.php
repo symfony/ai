@@ -28,7 +28,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 #[UsesClass(Base64Image::class)]
 #[UsesClass(ImageResult::class)]
 #[Small]
-final class ResponseConverterTest extends TestCase
+final class ResultConverterTest extends TestCase
 {
     #[Test]
     public function itIsConvertingTheResponse(): void

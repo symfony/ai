@@ -38,7 +38,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 class ResultConverterTest extends TestCase
 {
     #[Test]
-    public function convertTextResponse(): void
+    public function convertTextResult(): void
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
@@ -61,7 +61,7 @@ class ResultConverterTest extends TestCase
     }
 
     #[Test]
-    public function convertToolCallResponse(): void
+    public function convertToolCallResult(): void
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);

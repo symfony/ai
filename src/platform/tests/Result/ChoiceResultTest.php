@@ -26,7 +26,7 @@ use Symfony\AI\Platform\Result\ChoiceResult;
 final class ChoiceResultTest extends TestCase
 {
     #[Test]
-    public function choiceResponseCreation(): void
+    public function choiceResultCreation(): void
     {
         $choice1 = new Choice('choice1');
         $choice2 = new Choice(null);
@@ -40,7 +40,7 @@ final class ChoiceResultTest extends TestCase
     }
 
     #[Test]
-    public function choiceResponseWithNoChoices(): void
+    public function choiceResultWithNoChoices(): void
     {
         self::expectException(InvalidArgumentException::class);
         self::expectExceptionMessage('Result must have at least one choice.');

@@ -25,7 +25,7 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\Contracts\HttpClient\ResponseInterface as SymfonyHttpResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 #[CoversClass(TokenOutputProcessor::class)]
 #[UsesClass(Output::class)]
@@ -84,7 +84,7 @@ final class TokenOutputProcessorTest extends TestCase
         $processor = new TokenOutputProcessor();
         $textResult = new TextResult('test');
 
-        $rawResponse = $this->createRawResult([
+        $rawResult = $this->createRawResult([
             'usage' => [
                 'prompt_tokens' => 10,
                 'completion_tokens' => 20,
@@ -92,7 +92,7 @@ final class TokenOutputProcessorTest extends TestCase
             ],
         ]);
 
-        $textResult->setRawResult($rawResponse);
+        $textResult->setRawResult($rawResult);
 
         $output = $this->createOutput($textResult);
 
@@ -135,7 +135,7 @@ final class TokenOutputProcessorTest extends TestCase
 
     private function createRawResult(array $data = []): RawHttpResult
     {
-        $rawResponse = $this->createStub(SymfonyHttpResponse::class);
+        $rawResponse = $this->createStub(ResponseInterface::class);
         $rawResponse->method('getHeaders')->willReturn([
             'x-ratelimit-remaining-tokens' => ['1000'],
         ]);

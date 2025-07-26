@@ -27,7 +27,7 @@ use Symfony\AI\Platform\Bridge\OpenAI\DallE\UrlImage;
 final class ImageResultTest extends TestCase
 {
     #[Test]
-    public function itCreatesImagesResponse(): void
+    public function itCreatesImagesResult(): void
     {
         $base64Image = new Base64Image('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
         $generatedImagesResult = new ImageResult(null, $base64Image);
@@ -38,7 +38,7 @@ final class ImageResultTest extends TestCase
     }
 
     #[Test]
-    public function itCreatesImagesResponseWithRevisedPrompt(): void
+    public function itCreatesImagesResultWithRevisedPrompt(): void
     {
         $base64Image = new Base64Image('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
         $generatedImagesResult = new ImageResult('revised prompt', $base64Image);

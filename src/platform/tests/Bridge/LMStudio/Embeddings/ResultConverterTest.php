@@ -32,7 +32,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 class ResultConverterTest extends TestCase
 {
     #[Test]
-    public function itConvertsAResponseToAVectorResponse(): void
+    public function itConvertsAResponseToAVectorResult(): void
     {
         $result = $this->createStub(ResponseInterface::class);
         $result

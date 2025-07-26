@@ -18,13 +18,13 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\LMStudio\Completions;
 use Symfony\AI\Platform\Bridge\LMStudio\Completions\ResultConverter;
-use Symfony\AI\Platform\Bridge\OpenAI\GPT\ResultConverter as OpenAIResponseConverter;
+use Symfony\AI\Platform\Bridge\OpenAI\GPT\ResultConverter as OpenAIResultConverter;
 
 #[CoversClass(ResultConverter::class)]
 #[UsesClass(Completions::class)]
-#[UsesClass(OpenAIResponseConverter::class)]
+#[UsesClass(OpenAIResultConverter::class)]
 #[Small]
-class ResponseConverterTest extends TestCase
+class ResultConverterTest extends TestCase
 {
     #[Test]
     public function itSupportsCompletionsModel(): void

@@ -28,18 +28,18 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 #[UsesClass(Vector::class)]
 #[UsesClass(VectorResult::class)]
 #[UsesClass(Embeddings::class)]
-final class ResponseConverterTest extends TestCase
+final class ResultConverterTest extends TestCase
 {
     #[Test]
-    public function itConvertsAResponseToAVectorResponse(): void
+    public function itConvertsAResponseToAVectorResult(): void
     {
         $result = $this->createStub(ResponseInterface::class);
         $result
             ->method('toArray')
             ->willReturn(json_decode($this->getEmbeddingStub(), true));
 
-        $vectorResponse = (new ResultConverter())->convert(new RawHttpResult($result));
-        $convertedContent = $vectorResponse->getContent();
+        $vectorResult = (new ResultConverter())->convert(new RawHttpResult($result));
+        $convertedContent = $vectorResult->getContent();
 
         $this->assertCount(2, $convertedContent);
 
