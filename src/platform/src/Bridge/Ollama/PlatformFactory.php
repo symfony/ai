@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
+use Symfony\AI\Platform\Bridge\Ollama\Contract\LlamaContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
@@ -28,6 +29,6 @@ final class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform([new LlamaModelClient($httpClient, $hostUrl)], [new LlamaResultConverter()], $contract);
+        return new Platform([new LlamaModelClient($httpClient, $hostUrl)], [new LlamaResultConverter()], $contract ?? LlamaContract::create());
     }
 }
