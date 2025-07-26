@@ -34,23 +34,32 @@ final readonly class Store implements VectorStoreInterface, InitializableStoreIn
         private \PDO $connection,
         private string $tableName,
         private string $vectorFieldName = 'embedding',
+        private Distance $distance = Distance::L2,
     ) {
     }
 
-    public static function fromPdo(\PDO $connection, string $tableName, string $vectorFieldName = 'embedding'): self
-    {
-        return new self($connection, $tableName, $vectorFieldName);
+    public static function fromPdo(
+        \PDO $connection,
+        string $tableName,
+        string $vectorFieldName = 'embedding',
+        Distance $distance = Distance::L2,
+    ): self {
+        return new self($connection, $tableName, $vectorFieldName, $distance);
     }
 
-    public static function fromDbal(Connection $connection, string $tableName, string $vectorFieldName = 'embedding'): self
-    {
+    public static function fromDbal(
+        Connection $connection,
+        string $tableName,
+        string $vectorFieldName = 'embedding',
+        Distance $distance = Distance::L2,
+    ): self {
         $pdo = $connection->getNativeConnection();
 
         if (!$pdo instanceof \PDO) {
             throw new InvalidArgumentException('Only DBAL connections using PDO driver are supported.');
         }
 
-        return self::fromPdo($pdo, $tableName, $vectorFieldName);
+        return self::fromPdo($pdo, $tableName, $vectorFieldName, $distance);
     }
 
     public function add(VectorDocument ...$documents): void
@@ -84,16 +93,18 @@ final readonly class Store implements VectorStoreInterface, InitializableStoreIn
      */
     public function query(Vector $vector, array $options = [], ?float $minScore = null): array
     {
-        $sql = \sprintf(
-            'SELECT id, %s AS embedding, metadata, (%s <-> :embedding) AS score
-             FROM %s
-             %s
-             ORDER BY score ASC
-             LIMIT %d',
+        $sql = \sprintf(<<<SQL
+            SELECT id, %s AS embedding, metadata, (%s %s :embedding) AS score
+            FROM %s
+            %s
+            ORDER BY score ASC
+            LIMIT %d
+            SQL,
             $this->vectorFieldName,
             $this->vectorFieldName,
+            $this->distance->getComparisonSign(),
             $this->tableName,
-            null !== $minScore ? "WHERE ({$this->vectorFieldName} <-> :embedding) >= :minScore" : '',
+            null !== $minScore ? "WHERE ({$this->vectorFieldName} {$this->distance->getComparisonSign()} :embedding) >= :minScore" : '',
             $options['limit'] ?? 5,
         );
         $statement = $this->connection->prepare($sql);
