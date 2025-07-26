@@ -1,2 +1,4 @@
 rules:
     - Symfony\AI\PHPStan\ForbidNativeExceptionRule
+    - Symfony\AI\PHPStan\ForbiddenMethodCallsRule
+    - Symfony\AI\PHPStan\ForbidUnnecessaryNamedArgumentsRule
