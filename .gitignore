@@ -4,3 +4,38 @@
 
 composer.lock
 vendor
+
+# Security - Never commit API keys or secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*_key
+*_secret
+config/secrets/
+
+# SSH Keys - NEVER COMMIT
+ARiaGL
+ARiaGL.pub
+id_rsa
+id_ed25519
+*.ssh
+.ssh/
+
+# API Keys and tokens
+**/OPENAI_API_KEY*
+**/ANTHROPIC_API_KEY*
+**/GOOGLE_API_KEY*
+**/AZURE_OPENAI_API_KEY*
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+/logs/
+/tmp/
