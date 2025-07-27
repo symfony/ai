@@ -24,7 +24,6 @@ use Symfony\AI\Fixtures\StructuredOutput\Step;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\Choice;
 use Symfony\AI\Platform\Result\Metadata\Metadata;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -34,7 +33,6 @@ use Symfony\Component\Serializer\SerializerInterface;
 #[UsesClass(Input::class)]
 #[UsesClass(Output::class)]
 #[UsesClass(MessageBag::class)]
-#[UsesClass(Choice::class)]
 #[UsesClass(MissingModelSupportException::class)]
 #[UsesClass(TextResult::class)]
 #[UsesClass(ObjectResult::class)]

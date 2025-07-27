@@ -14,7 +14,6 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\Choice;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -49,18 +48,9 @@ final readonly class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain any content.');
         }
 
-        /** @var Choice[] $choices */
         $choices = array_map($this->convertChoice(...), $data['candidates']);
 
-        if (1 !== \count($choices)) {
-            return new ChoiceResult(...$choices);
-        }
-
-        if ($choices[0]->hasToolCall()) {
-            return new ToolCallResult(...$choices[0]->getToolCalls());
-        }
-
-        return new TextResult($choices[0]->getContent());
+        return 1 === \count($choices) ? $choices[0] : new ChoiceResult(...$choices);
     }
 
     private function convertStream(HttpResponse $result): \Generator
@@ -94,7 +84,6 @@ final readonly class ResultConverter implements ResultConverterInterface
                     throw new RuntimeException('Failed to decode JSON response.', 0, $e);
                 }
 
-                /** @var Choice[] $choices */
                 $choices = array_map($this->convertChoice(...), $data['candidates'] ?? []);
 
                 if (!$choices) {
@@ -106,13 +95,7 @@ final readonly class ResultConverter implements ResultConverterInterface
                     continue;
                 }
 
-                if ($choices[0]->hasToolCall()) {
-                    yield new ToolCallResult(...$choices[0]->getToolCalls());
-                }
-
-                if ($choices[0]->hasContent()) {
-                    yield $choices[0]->getContent();
-                }
+                yield $choices[0]->getContent();
             }
         }
     }
@@ -132,16 +115,16 @@ final readonly class ResultConverter implements ResultConverterInterface
      *     }
      * } $choice
      */
-    private function convertChoice(array $choice): Choice
+    private function convertChoice(array $choice): ToolCallResult|TextResult
     {
         $contentPart = $choice['content']['parts'][0] ?? [];
 
         if (isset($contentPart['functionCall'])) {
-            return new Choice(toolCalls: [$this->convertToolCall($contentPart['functionCall'])]);
+            return new ToolCallResult($this->convertToolCall($contentPart['functionCall']));
         }
 
         if (isset($contentPart['text'])) {
-            return new Choice($contentPart['text']);
+            return new TextResult($contentPart['text']);
         }
 
         throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finishReason']));

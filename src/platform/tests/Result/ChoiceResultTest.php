@@ -13,34 +13,30 @@ namespace Symfony\AI\Platform\Tests\Result;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Result\Choice;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\TextResult;
 
 #[CoversClass(ChoiceResult::class)]
-#[UsesClass(Choice::class)]
 #[Small]
 final class ChoiceResultTest extends TestCase
 {
     public function testChoiceResultCreation()
     {
-        $choice1 = new Choice('choice1');
-        $choice2 = new Choice(null);
-        $choice3 = new Choice('choice3');
-        $result = new ChoiceResult($choice1, $choice2, $choice3);
+        $choice1 = new TextResult('choice1');
+        $choice3 = new TextResult('choice2');
+        $result = new ChoiceResult($choice1, $choice3);
 
-        $this->assertCount(3, $result->getContent());
+        $this->assertCount(2, $result->getContent());
         $this->assertSame('choice1', $result->getContent()[0]->getContent());
-        $this->assertNull($result->getContent()[1]->getContent());
-        $this->assertSame('choice3', $result->getContent()[2]->getContent());
+        $this->assertSame('choice2', $result->getContent()[1]->getContent());
     }
 
     public function testChoiceResultWithNoChoices()
     {
         self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage('Result must have at least one choice.');
+        self::expectExceptionMessage('A choice result must contain at least two results.');
 
         new ChoiceResult();
     }

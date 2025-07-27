@@ -14,7 +14,6 @@ namespace Symfony\AI\Platform\Bridge\Mistral\Llm;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\Choice;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -60,18 +59,9 @@ final readonly class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain choices.');
         }
 
-        /** @var Choice[] $choices */
         $choices = array_map($this->convertChoice(...), $data['choices']);
 
-        if (1 !== \count($choices)) {
-            return new ChoiceResult(...$choices);
-        }
-
-        if ($choices[0]->hasToolCall()) {
-            return new ToolCallResult(...$choices[0]->getToolCalls());
-        }
-
-        return new TextResult($choices[0]->getContent());
+        return 1 === \count($choices) ? $choices[0] : new ChoiceResult(...$choices);
     }
 
     private function convertStream(HttpResponse $result): \Generator
@@ -170,14 +160,14 @@ final readonly class ResultConverter implements ResultConverterInterface
      *     finish_reason: 'stop'|'length'|'tool_calls'|'content_filter',
      * } $choice
      */
-    private function convertChoice(array $choice): Choice
+    private function convertChoice(array $choice): ToolCallResult|TextResult
     {
         if ('tool_calls' === $choice['finish_reason']) {
-            return new Choice(toolCalls: array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
+            return new ToolCallResult(...array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
         }
 
         if ('stop' === $choice['finish_reason']) {
-            return new Choice($choice['message']['content']);
+            return new TextResult($choice['message']['content']);
         }
 
         throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finish_reason']));

@@ -19,24 +19,24 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 final class ChoiceResult extends BaseResult
 {
     /**
-     * @var Choice[]
+     * @var ResultInterface[]
      */
-    private readonly array $choices;
+    private readonly array $results;
 
-    public function __construct(Choice ...$choices)
+    public function __construct(ResultInterface ...$results)
     {
-        if ([] === $choices) {
-            throw new InvalidArgumentException('Result must have at least one choice.');
+        if (1 >= \count($results)) {
+            throw new InvalidArgumentException('A choice result must contain at least two results.');
         }
 
-        $this->choices = $choices;
+        $this->results = $results;
     }
 
     /**
-     * @return Choice[]
+     * @return ResultInterface[]
      */
     public function getContent(): array
     {
-        return $this->choices;
+        return $this->results;
     }
 }
