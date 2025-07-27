@@ -70,6 +70,6 @@ enum Severity: string
 
     public function requiresImmediateAction(): bool
     {
-        return $this === self::CRITICAL || $this === self::HIGH;
+        return self::CRITICAL === $this || self::HIGH === $this;
     }
 }

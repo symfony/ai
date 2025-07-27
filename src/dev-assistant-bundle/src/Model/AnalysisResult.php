@@ -43,7 +43,7 @@ final readonly class AnalysisResult
     public function hasCriticalIssues(): bool
     {
         foreach ($this->issues as $issue) {
-            if ($issue->severity === Severity::CRITICAL) {
+            if (Severity::CRITICAL === $issue->severity) {
                 return true;
             }
         }

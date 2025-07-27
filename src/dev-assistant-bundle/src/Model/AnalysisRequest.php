@@ -62,11 +62,11 @@ final readonly class AnalysisRequest
     public function getUniqueKey(): string
     {
         return md5(
-            $this->code . 
-            $this->type->value . 
-            $this->depth . 
-            ($this->filePath ?? '') . 
-            serialize($this->rules) . 
+            $this->code.
+            $this->type->value.
+            $this->depth.
+            ($this->filePath ?? '').
+            serialize($this->rules).
             serialize($this->options)
         );
     }
@@ -91,9 +91,9 @@ final readonly class AnalysisRequest
 
     public function requiresHighPerformanceModel(): bool
     {
-        return $this->depth === 'expert' || 
-               $this->getCodeLength() > 10000 || 
-               $this->getCodeComplexityEstimate() > 7;
+        return 'expert' === $this->depth
+               || $this->getCodeLength() > 10000
+               || $this->getCodeComplexityEstimate() > 7;
     }
 
     /**
