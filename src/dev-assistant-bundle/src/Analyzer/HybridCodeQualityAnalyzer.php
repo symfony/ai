@@ -42,7 +42,7 @@ final readonly class HybridCodeQualityAnalyzer implements AnalyzerInterface
 
     public function supports(AnalysisType $type): bool
     {
-        return $type === AnalysisType::CODE_QUALITY;
+        return AnalysisType::CODE_QUALITY === $type;
     }
 
     public function getName(): string
@@ -64,13 +64,15 @@ final readonly class HybridCodeQualityAnalyzer implements AnalyzerInterface
 
         // Try AI analysis first
         $aiResult = $this->tryAIAnalysis($request);
-        if ($aiResult !== null) {
+        if (null !== $aiResult) {
             $this->logger->info('AI analysis successful', ['request_id' => $request->id]);
+
             return $aiResult;
         }
 
         // Fall back to static analysis
         $this->logger->info('Falling back to static analysis', ['request_id' => $request->id]);
+
         return $this->performStaticAnalysis($request);
     }
 
@@ -280,7 +282,7 @@ PROMPT;
         // SQL injection detection
         if (preg_match('/query\(["\'].*\.\s*\$/', $content)) {
             $issues[] = new Issue(
-                id: 'sec_001_' . hash('crc32', $filePath),
+                id: 'sec_001_'.hash('crc32', $filePath),
                 title: 'SQL Injection Vulnerability',
                 description: 'Direct SQL string concatenation detected',
                 severity: Severity::CRITICAL,
@@ -297,7 +299,7 @@ PROMPT;
         // Missing type declarations
         if (preg_match('/public function \w+\([^)]*\)\s*{/', $content)) {
             $issues[] = new Issue(
-                id: 'cq_001_' . hash('crc32', $filePath),
+                id: 'cq_001_'.hash('crc32', $filePath),
                 title: 'Missing Type Declarations',
                 description: 'Method parameters and return types should be explicitly declared',
                 severity: Severity::MEDIUM,
@@ -314,7 +316,7 @@ PROMPT;
         // Deep nesting detection
         if (preg_match_all('/if\s*\([^{]*\{[^}]*if\s*\([^{]*\{[^}]*if/', $content) > 0) {
             $issues[] = new Issue(
-                id: 'comp_001_' . hash('crc32', $filePath),
+                id: 'comp_001_'.hash('crc32', $filePath),
                 title: 'High Cyclomatic Complexity',
                 description: 'Deep nested conditions detected',
                 severity: Severity::MEDIUM,
@@ -329,11 +331,12 @@ PROMPT;
     private function findLineNumber(string $content, string $pattern): int
     {
         $lines = explode("\n", $content);
-        foreach ($lines as $lineNumber => $line) {
-            if (strpos($line, $pattern) !== false) {
+        foreach ($lines as $line) {
+            if (str_contains($line, $pattern)) {
                 return $lineNumber + 1;
             }
         }
+
         return 1;
     }
 
