@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by fabpot at 2025-07-27T08:38:03Z
+
+I'm not even sure this `pipeline` entry in `composer.json` is useful. AFAICS, it's not used anywhere and the `php-cs-fixer` line doesn't work either as there is no directory and no PHPCSFixer configuration file. As it's not used in the Github action workflows, maybe we can just remove it? @chr-hertel
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-27T08:47:00Z
+
+That's mostly a left over from the demo being a standalone repository - missed to remove it, true
+
+---------------------------------------------------------------------------
+
+by fabpot at 2025-07-27T08:54:45Z
+
+ok, removed.
