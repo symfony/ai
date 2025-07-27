@@ -47,9 +47,9 @@ final readonly class Issue
 
         $location = $this->file;
         if (null !== $this->line) {
-            $location .= ':' . $this->line;
+            $location .= ':'.$this->line;
             if (null !== $this->column) {
-                $location .= ':' . $this->column;
+                $location .= ':'.$this->column;
             }
         }
 

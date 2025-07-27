@@ -54,12 +54,12 @@ final readonly class AIProviderTester
      */
     public function testProvider(string $provider): array
     {
-        $this->logger->info("Testing AI provider connectivity", ['provider' => $provider]);
+        $this->logger->info('Testing AI provider connectivity', ['provider' => $provider]);
 
         try {
             // Test with a simple prompt
             $testPrompt = "Say 'Hello' if you can read this message.";
-            
+
             $response = $this->toolboxRunner->run($provider, null, [
                 'messages' => [
                     ['role' => 'user', 'content' => $testPrompt],
@@ -80,14 +80,13 @@ final readonly class AIProviderTester
             return [
                 'status' => 'success',
                 'provider' => $provider,
-                'response_length' => strlen($response),
+                'response_length' => \strlen($response),
                 'test_successful' => true,
                 'message' => 'Provider is working correctly',
             ];
-
         } catch (\Throwable $e) {
             $errorMessage = $e->getMessage();
-            
+
             return [
                 'status' => 'error',
                 'provider' => $provider,
@@ -106,9 +105,9 @@ final readonly class AIProviderTester
      */
     public function testProviderModel(string $provider, string $model): array
     {
-        $this->logger->info("Testing specific model", [
+        $this->logger->info('Testing specific model', [
             'provider' => $provider,
-            'model' => $model
+            'model' => $model,
         ]);
 
         try {
@@ -125,7 +124,6 @@ final readonly class AIProviderTester
                 'model' => $model,
                 'test_successful' => true,
             ];
-
         } catch (\Throwable $e) {
             return [
                 'status' => 'error',
@@ -188,11 +186,11 @@ final readonly class AIProviderTester
     public function generateDiagnosticReport(): array
     {
         $results = $this->testAllProviders();
-        
+
         $report = [
             'timestamp' => date('Y-m-d H:i:s'),
             'overall_status' => 'unknown',
-            'providers_tested' => count($results),
+            'providers_tested' => \count($results),
             'providers_working' => 0,
             'providers_failed' => 0,
             'recommendations' => [],
@@ -200,11 +198,11 @@ final readonly class AIProviderTester
         ];
 
         foreach ($results as $provider => $result) {
-            if ($result['status'] === 'success') {
-                $report['providers_working']++;
+            if ('success' === $result['status']) {
+                ++$report['providers_working'];
             } else {
-                $report['providers_failed']++;
-                $report['recommendations'][] = "Fix {$provider}: " . $result['suggestion'];
+                ++$report['providers_failed'];
+                $report['recommendations'][] = "Fix {$provider}: ".$result['suggestion'];
             }
         }
 

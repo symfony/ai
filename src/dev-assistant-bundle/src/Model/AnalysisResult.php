@@ -19,8 +19,8 @@ namespace Symfony\AI\DevAssistantBundle\Model;
 final readonly class AnalysisResult
 {
     /**
-     * @param array<Issue> $issues
-     * @param array<Suggestion> $suggestions
+     * @param array<Issue>         $issues
+     * @param array<Suggestion>    $suggestions
      * @param array<string, mixed> $metrics
      */
     public function __construct(

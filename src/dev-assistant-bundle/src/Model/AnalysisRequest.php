@@ -22,7 +22,7 @@ namespace Symfony\AI\DevAssistantBundle\Model;
 final readonly class AnalysisRequest
 {
     /**
-     * @param array<string> $rules
+     * @param array<string>        $rules
      * @param array<string, mixed> $options
      * @param array<string, mixed> $context
      */
@@ -80,12 +80,12 @@ final readonly class AnalysisRequest
     {
         $lines = explode("\n", $this->code);
         $complexityKeywords = ['if', 'else', 'while', 'for', 'foreach', 'switch', 'try', 'catch'];
-        
+
         $complexity = 1; // Base complexity
         foreach ($complexityKeywords as $keyword) {
             $complexity += substr_count(strtolower($this->code), $keyword);
         }
-        
+
         return min($complexity / \count($lines), 10); // Normalize to 0-10 scale
     }
 

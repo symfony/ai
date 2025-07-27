@@ -53,7 +53,7 @@ final readonly class CodeQualityAnalyzer
         ?string $filePath = null,
         array $rules = [],
         string $depth = 'standard',
-        bool $includeSuggestions = true
+        bool $includeSuggestions = true,
     ): AnalysisResult {
         $this->logger->info('Starting AI code quality analysis', [
             'file_path' => $filePath,
@@ -65,7 +65,7 @@ final readonly class CodeQualityAnalyzer
 
         // Build sophisticated AI prompt for code analysis
         $prompt = $this->buildAnalysisPrompt($code, $filePath, $rules, $depth, $includeSuggestions);
-        
+
         // Execute AI analysis using Claude/GPT for deep code understanding
         $messages = new MessageBag(
             Message::forSystem($this->getSystemPrompt($depth)),
@@ -87,7 +87,7 @@ final readonly class CodeQualityAnalyzer
 
         // Parse AI response and extract structured insights
         $analysisData = $this->parseAIResponse($result->getContent());
-        
+
         $analysisTime = microtime(true) - $startTime;
 
         $this->logger->info('AI code quality analysis completed', [
@@ -111,7 +111,7 @@ final readonly class CodeQualityAnalyzer
     private function getSystemPrompt(string $depth): string
     {
         $basePrompt = <<<'PROMPT'
-You are a senior PHP developer and architect with 15+ years of experience in enterprise software development. 
+You are a senior PHP developer and architect with 15+ years of experience in enterprise software development.
 You specialize in code quality analysis, design patterns, and Symfony framework best practices.
 
 Your task is to perform comprehensive code quality analysis with the following expertise:
@@ -166,10 +166,10 @@ Analyze the provided PHP code and return your findings in the following JSON for
 PROMPT;
 
         return match ($depth) {
-            'expert' => $basePrompt . "\n\nPerform EXPERT-level analysis with deep architectural insights and advanced pattern recognition.",
-            'comprehensive' => $basePrompt . "\n\nPerform COMPREHENSIVE analysis covering all aspects thoroughly.",
-            'basic' => $basePrompt . "\n\nPerform BASIC analysis focusing on critical issues and obvious improvements.",
-            default => $basePrompt . "\n\nPerform STANDARD analysis with balanced depth and practical insights.",
+            'expert' => $basePrompt."\n\nPerform EXPERT-level analysis with deep architectural insights and advanced pattern recognition.",
+            'comprehensive' => $basePrompt."\n\nPerform COMPREHENSIVE analysis covering all aspects thoroughly.",
+            'basic' => $basePrompt."\n\nPerform BASIC analysis focusing on critical issues and obvious improvements.",
+            default => $basePrompt."\n\nPerform STANDARD analysis with balanced depth and practical insights.",
         };
     }
 
@@ -181,10 +181,10 @@ PROMPT;
         ?string $filePath,
         array $rules,
         string $depth,
-        bool $includeSuggestions
+        bool $includeSuggestions,
     ): string {
         $prompt = "Please analyze the following PHP code:\n\n";
-        
+
         if ($filePath) {
             $prompt .= "File: {$filePath}\n\n";
         }
@@ -193,11 +193,11 @@ PROMPT;
 
         $prompt .= "Focus areas:\n";
         foreach ($rules as $rule) {
-            $prompt .= "- " . $this->getRuleDescription($rule) . "\n";
+            $prompt .= '- '.$this->getRuleDescription($rule)."\n";
         }
 
         $prompt .= "\nAnalysis depth: {$depth}\n";
-        
+
         if (!$includeSuggestions) {
             $prompt .= "\nNote: Focus on identifying issues. Minimize suggestions.\n";
         }
@@ -256,7 +256,7 @@ PROMPT;
         }
 
         try {
-            $data = json_decode($jsonContent, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($jsonContent, true, 512, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             $this->logger->error('Failed to parse AI response as JSON', [
                 'response' => $response,
@@ -284,12 +284,13 @@ PROMPT;
 
     /**
      * @param array<array<string, mixed>> $issuesData
+     *
      * @return array<Issue>
      */
     private function parseIssues(array $issuesData): array
     {
         $issues = [];
-        
+
         foreach ($issuesData as $issueData) {
             try {
                 $issues[] = new Issue(
@@ -322,12 +323,13 @@ PROMPT;
 
     /**
      * @param array<array<string, mixed>> $suggestionsData
+     *
      * @return array<Suggestion>
      */
     private function parseSuggestions(array $suggestionsData): array
     {
         $suggestions = [];
-        
+
         foreach ($suggestionsData as $suggestionData) {
             try {
                 $suggestions[] = new Suggestion(

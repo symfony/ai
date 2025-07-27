@@ -134,11 +134,11 @@ class HybridAnalyzerIntegrationTest extends TestCase
         // Should detect SQL injection even in static mode
         $securityIssues = array_filter(
             $result->issues,
-            fn($issue) => $issue->category->name === 'security'
+            fn ($issue) => 'security' === $issue->category->name
         );
 
         $this->assertNotEmpty($securityIssues, 'Should detect security issues statically');
-        
+
         $sqlInjectionIssue = current($securityIssues);
         $this->assertEquals(Severity::CRITICAL, $sqlInjectionIssue->severity);
         $this->assertStringContains('SQL Injection', $sqlInjectionIssue->title);
@@ -162,7 +162,7 @@ class HybridAnalyzerIntegrationTest extends TestCase
         // Should suggest enabling AI analysis
         $configSuggestions = array_filter(
             $result->suggestions,
-            fn($suggestion) => str_contains($suggestion->title, 'Enable AI Analysis')
+            fn ($suggestion) => str_contains($suggestion->title, 'Enable AI Analysis')
         );
 
         $this->assertNotEmpty($configSuggestions, 'Should suggest AI configuration');

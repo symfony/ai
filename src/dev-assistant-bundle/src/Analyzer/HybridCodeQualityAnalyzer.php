@@ -59,7 +59,7 @@ final readonly class HybridCodeQualityAnalyzer implements AnalyzerInterface
     {
         $this->logger->info('Starting hybrid code quality analysis', [
             'request_id' => $request->id,
-            'files_count' => count($request->files),
+            'files_count' => \count($request->files),
         ]);
 
         // Try AI analysis first
@@ -80,10 +80,10 @@ final readonly class HybridCodeQualityAnalyzer implements AnalyzerInterface
     {
         try {
             $prompt = $this->generateCodeQualityPrompt($request);
-            
+
             // Try different providers in order of preference
             $providers = ['openai', 'anthropic', 'gemini'];
-            
+
             foreach ($providers as $provider) {
                 try {
                     $response = $this->toolboxRunner->run($provider, null, [
@@ -97,7 +97,6 @@ final readonly class HybridCodeQualityAnalyzer implements AnalyzerInterface
                     if (!empty($response)) {
                         return $this->parseAIResponse($response, $request);
                     }
-                    
                 } catch (\Throwable $e) {
                     $this->logger->warning("AI provider {$provider} failed", [
                         'error' => $e->getMessage(),
@@ -106,7 +105,6 @@ final readonly class HybridCodeQualityAnalyzer implements AnalyzerInterface
                     continue; // Try next provider
                 }
             }
-            
         } catch (\Throwable $e) {
             $this->logger->error('AI analysis completely failed', [
                 'error' => $e->getMessage(),
@@ -128,7 +126,7 @@ You are a senior PHP developer and code quality expert. Analyze the following PH
 
 Focus on:
 - Security vulnerabilities (SQL injection, XSS, etc.)
-- PSR compliance and coding standards  
+- PSR compliance and coding standards
 - Performance issues
 - Maintainability problems
 - Best practices violations
@@ -153,7 +151,7 @@ Respond in JSON format:
   ],
   "suggestions": [
     {
-      "id": "suggestion_id", 
+      "id": "suggestion_id",
       "title": "Improvement suggestion",
       "description": "Detailed description",
       "type": "code_cleanup|refactoring|performance_optimization",
@@ -169,7 +167,7 @@ PROMPT;
         try {
             // Extract JSON from response (handle cases where AI adds extra text)
             if (preg_match('/\{.*\}/s', $response, $matches)) {
-                $jsonData = json_decode($matches[0], true, 512, JSON_THROW_ON_ERROR);
+                $jsonData = json_decode($matches[0], true, 512, \JSON_THROW_ON_ERROR);
             } else {
                 throw new \JsonException('No valid JSON found in response');
             }
@@ -206,21 +204,20 @@ PROMPT;
                 suggestions: $suggestions,
                 metrics: [
                     'analysis_type' => 'ai_powered',
-                    'files_analyzed' => count($request->files),
-                    'ai_issues_found' => count($issues),
-                    'ai_suggestions' => count($suggestions),
+                    'files_analyzed' => \count($request->files),
+                    'ai_issues_found' => \count($issues),
+                    'ai_suggestions' => \count($suggestions),
                 ],
                 overallSeverity: $this->calculateOverallSeverity($issues),
                 confidence: 0.9, // High confidence for AI analysis
                 analyzedAt: new \DateTimeImmutable(),
             );
-
         } catch (\Throwable $e) {
             $this->logger->error('Failed to parse AI response', [
                 'error' => $e->getMessage(),
                 'response_sample' => substr($response, 0, 200),
             ]);
-            
+
             // Return a basic result indicating AI parsing failed
             return new AnalysisResult(
                 type: AnalysisType::CODE_QUALITY,
@@ -259,16 +256,16 @@ PROMPT;
 
         return new AnalysisResult(
             type: AnalysisType::CODE_QUALITY,
-            summary: sprintf(
+            summary: \sprintf(
                 'Static analysis found %d issues (AI analysis unavailable - check provider configuration)',
-                count($issues)
+                \count($issues)
             ),
             issues: $issues,
             suggestions: $suggestions,
             metrics: [
                 'analysis_type' => 'static_fallback',
-                'files_analyzed' => count($request->files),
-                'static_issues_found' => count($issues),
+                'files_analyzed' => \count($request->files),
+                'static_issues_found' => \count($issues),
                 'ai_available' => false,
             ],
             overallSeverity: $this->calculateOverallSeverity($issues),

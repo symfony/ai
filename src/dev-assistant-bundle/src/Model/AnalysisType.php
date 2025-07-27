@@ -48,7 +48,7 @@ enum AnalysisType: string
 
     /**
      * Get the expected complexity of this analysis type.
-     * 
+     *
      * Higher complexity may require more sophisticated AI models.
      */
     public function getComplexity(): int

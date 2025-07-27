@@ -16,10 +16,10 @@ use Symfony\AI\DevAssistantBundle\Model\AnalysisResult;
 use Symfony\AI\DevAssistantBundle\Model\AnalysisType;
 use Symfony\AI\DevAssistantBundle\Model\Issue;
 use Symfony\AI\DevAssistantBundle\Model\IssueCategory;
+use Symfony\AI\DevAssistantBundle\Model\Priority;
 use Symfony\AI\DevAssistantBundle\Model\Severity;
 use Symfony\AI\DevAssistantBundle\Model\Suggestion;
 use Symfony\AI\DevAssistantBundle\Model\SuggestionType;
-use Symfony\AI\DevAssistantBundle\Model\Priority;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
@@ -47,7 +47,7 @@ final readonly class ArchitectureAnalyzer
     public function analyzeArchitecture(
         array $filePaths,
         string $projectRoot,
-        string $depth = 'standard'
+        string $depth = 'standard',
     ): AnalysisResult {
         $this->logger->info('Starting AI architecture analysis', [
             'files_count' => \count($filePaths),
@@ -83,7 +83,7 @@ final readonly class ArchitectureAnalyzer
         }
 
         $analysisData = $this->parseArchitecturalResponse($result->getContent());
-        
+
         $analysisTime = microtime(true) - $startTime;
 
         $this->logger->info('AI architecture analysis completed', [
@@ -168,6 +168,7 @@ PROMPT;
 
     /**
      * @param array<string> $filePaths
+     *
      * @return array<string, mixed>
      */
     private function buildProjectStructure(array $filePaths, string $projectRoot): array
@@ -180,9 +181,9 @@ PROMPT;
         ];
 
         foreach ($filePaths as $filePath) {
-            $relativePath = str_replace($projectRoot . DIRECTORY_SEPARATOR, '', $filePath);
-            $pathParts = explode(DIRECTORY_SEPARATOR, $relativePath);
-            
+            $relativePath = str_replace($projectRoot.\DIRECTORY_SEPARATOR, '', $filePath);
+            $pathParts = explode(\DIRECTORY_SEPARATOR, $relativePath);
+
             // Build directory hierarchy
             $currentLevel = &$structure['directories'];
             foreach ($pathParts as $part) {
@@ -195,7 +196,7 @@ PROMPT;
             // Analyze namespace structure if PHP file
             if (str_ends_with($filePath, '.php') && is_readable($filePath)) {
                 $content = file_get_contents($filePath);
-                if ($content !== false) {
+                if (false !== $content) {
                     $namespace = $this->extractNamespace($content);
                     if ($namespace) {
                         $structure['namespace_analysis'][] = [
@@ -214,6 +215,7 @@ PROMPT;
 
     /**
      * @param array<string> $filePaths
+     *
      * @return array<string, mixed>
      */
     private function extractCodebaseContext(array $filePaths): array
@@ -233,15 +235,15 @@ PROMPT;
                 continue;
             }
 
-            $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+            $extension = pathinfo($filePath, \PATHINFO_EXTENSION);
             $context['file_types'][$extension] = ($context['file_types'][$extension] ?? 0) + 1;
 
             $fileSize = filesize($filePath);
             $totalSize += $fileSize;
 
-            if ($extension === 'php') {
-                $phpFiles++;
-                
+            if ('php' === $extension) {
+                ++$phpFiles;
+
                 // Identify key architectural files
                 $filename = basename($filePath);
                 if (preg_match('/(Controller|Service|Repository|Entity|Bundle|Kernel)\.php$/', $filename)) {
@@ -274,36 +276,36 @@ PROMPT;
         $prompt .= "\n\n";
 
         $prompt .= "## Codebase Overview\n";
-        $prompt .= sprintf("- Total files: %d\n", $codebase['total_files']);
-        $prompt .= sprintf("- PHP files: %d (%.1f%%)\n", 
+        $prompt .= \sprintf("- Total files: %d\n", $codebase['total_files']);
+        $prompt .= \sprintf("- PHP files: %d (%.1f%%)\n",
             $codebase['size_analysis']['php_files_count'],
             $codebase['size_analysis']['php_ratio'] * 100
         );
-        $prompt .= sprintf("- Total size: %.1f KB\n", $codebase['size_analysis']['total_size_bytes'] / 1024);
+        $prompt .= \sprintf("- Total size: %.1f KB\n", $codebase['size_analysis']['total_size_bytes'] / 1024);
 
         if (!empty($codebase['key_files'])) {
             $prompt .= "\n## Key Architectural Files\n";
-            foreach (array_slice($codebase['key_files'], 0, 10) as $file) {
-                $prompt .= "- " . basename($file) . "\n";
+            foreach (\array_slice($codebase['key_files'], 0, 10) as $file) {
+                $prompt .= '- '.basename($file)."\n";
             }
         }
 
         if (!empty($projectStructure['namespace_analysis'])) {
             $prompt .= "\n## Namespace Analysis\n";
-            foreach (array_slice($projectStructure['namespace_analysis'], 0, 15) as $ns) {
-                $prompt .= sprintf("- %s: %s\n", $ns['file'], $ns['namespace']);
+            foreach (\array_slice($projectStructure['namespace_analysis'], 0, 15) as $ns) {
+                $prompt .= \sprintf("- %s: %s\n", $ns['file'], $ns['namespace']);
                 if (!empty($ns['classes'])) {
-                    $prompt .= "  Classes: " . implode(', ', $ns['classes']) . "\n";
+                    $prompt .= '  Classes: '.implode(', ', $ns['classes'])."\n";
                 }
             }
         }
 
         $prompt .= "\n## Analysis Focus\n";
         $prompt .= match ($depth) {
-            'expert' => "Perform EXPERT architectural analysis with deep system design insights, scalability assessment, and strategic modernization recommendations.",
-            'comprehensive' => "Perform COMPREHENSIVE architectural review covering system design, patterns, dependencies, and improvement opportunities.",
-            'basic' => "Perform BASIC architectural assessment focusing on critical structural issues and immediate improvements.",
-            default => "Perform STANDARD architectural analysis with practical insights on design quality and maintainability.",
+            'expert' => 'Perform EXPERT architectural analysis with deep system design insights, scalability assessment, and strategic modernization recommendations.',
+            'comprehensive' => 'Perform COMPREHENSIVE architectural review covering system design, patterns, dependencies, and improvement opportunities.',
+            'basic' => 'Perform BASIC architectural assessment focusing on critical structural issues and immediate improvements.',
+            default => 'Perform STANDARD architectural analysis with practical insights on design quality and maintainability.',
         };
 
         $prompt .= "\n\nEvaluate: system boundaries, dependency management, design patterns usage, scalability concerns, and architectural technical debt.";
@@ -318,14 +320,14 @@ PROMPT;
     {
         $tree = '';
         $indent = str_repeat('  ', $level);
-        
+
         foreach ($directories as $name => $children) {
-            $tree .= $indent . $name . "/\n";
+            $tree .= $indent.$name."/\n";
             if (\is_array($children) && !empty($children) && $level < 3) {
                 $tree .= $this->formatDirectoryTree($children, $level + 1);
             }
         }
-        
+
         return $tree;
     }
 
@@ -334,6 +336,7 @@ PROMPT;
         if (preg_match('/namespace\s+([^;]+);/', $content, $matches)) {
             return $matches[1];
         }
+
         return null;
     }
 
@@ -346,6 +349,7 @@ PROMPT;
         if (preg_match_all('/(?:class|interface|trait)\s+(\w+)/', $content, $matches)) {
             $classes = $matches[1];
         }
+
         return $classes;
     }
 
@@ -358,6 +362,7 @@ PROMPT;
         if (preg_match_all('/use\s+([^;]+);/', $content, $matches)) {
             $dependencies = $matches[1];
         }
+
         return $dependencies;
     }
 
@@ -374,7 +379,7 @@ PROMPT;
         }
 
         try {
-            $data = json_decode($jsonContent, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($jsonContent, true, 512, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             $this->logger->error('Failed to parse architectural AI response', [
                 'response' => $response,
@@ -401,12 +406,13 @@ PROMPT;
 
     /**
      * @param array<array<string, mixed>> $issuesData
+     *
      * @return array<Issue>
      */
     private function parseArchitecturalIssues(array $issuesData): array
     {
         $issues = [];
-        
+
         foreach ($issuesData as $issueData) {
             try {
                 $issues[] = new Issue(
@@ -441,12 +447,13 @@ PROMPT;
 
     /**
      * @param array<array<string, mixed>> $suggestionsData
+     *
      * @return array<Suggestion>
      */
     private function parseArchitecturalSuggestions(array $suggestionsData): array
     {
         $suggestions = [];
-        
+
         foreach ($suggestionsData as $suggestionData) {
             try {
                 $suggestions[] = new Suggestion(

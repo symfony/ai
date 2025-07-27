@@ -40,37 +40,37 @@ final readonly class PerformanceAnalyzerTool
     /**
      * Analyzes code for performance issues, algorithmic complexity, and optimization opportunities.
      *
-     * @param string $code The PHP code to analyze for performance issues
-     * @param string|null $filePath Optional file path for better context and error reporting
-     * @param string $depth Analysis depth level ('basic', 'standard', 'comprehensive', 'expert')
-     * @param bool $includeMemoryAnalysis Whether to include memory usage analysis
-     * @param bool $includeDatabaseOptimization Whether to analyze database query performance
-     * @param bool $includeAlgorithmicAnalysis Whether to perform Big O complexity analysis
-     * @param bool $includeCachingRecommendations Whether to suggest caching opportunities
+     * @param string      $code                          The PHP code to analyze for performance issues
+     * @param string|null $filePath                      Optional file path for better context and error reporting
+     * @param string      $depth                         Analysis depth level ('basic', 'standard', 'comprehensive', 'expert')
+     * @param bool        $includeMemoryAnalysis         Whether to include memory usage analysis
+     * @param bool        $includeDatabaseOptimization   Whether to analyze database query performance
+     * @param bool        $includeAlgorithmicAnalysis    Whether to perform Big O complexity analysis
+     * @param bool        $includeCachingRecommendations Whether to suggest caching opportunities
      *
      * @return array<string, mixed> Comprehensive performance analysis results with optimization recommendations
      */
     public function __invoke(
         #[Description('The PHP code to analyze for performance optimization opportunities')]
         string $code,
-        
+
         #[Description('Optional file path for better context and performance profiling')]
         #[With(nullable: true)]
         ?string $filePath = null,
-        
+
         #[Description('Depth of performance analysis to perform')]
         #[With(enum: ['basic', 'standard', 'comprehensive', 'expert'])]
         string $depth = 'standard',
-        
+
         #[Description('Include memory usage patterns and garbage collection analysis')]
         bool $includeMemoryAnalysis = true,
-        
+
         #[Description('Include database query optimization and N+1 query detection')]
         bool $includeDatabaseOptimization = true,
-        
+
         #[Description('Include algorithmic complexity (Big O) analysis and optimization suggestions')]
         bool $includeAlgorithmicAnalysis = true,
-        
+
         #[Description('Include caching strategy recommendations and CDN optimization')]
         bool $includeCachingRecommendations = true,
     ): array {
@@ -155,7 +155,6 @@ final readonly class PerformanceAnalyzerTool
             ]);
 
             return $response;
-
         } catch (\Throwable $e) {
             $this->logger->error('Performance analysis failed', [
                 'error' => $e->getMessage(),
@@ -165,7 +164,7 @@ final readonly class PerformanceAnalyzerTool
 
             return [
                 'success' => false,
-                'error' => 'Performance analysis failed: ' . $e->getMessage(),
+                'error' => 'Performance analysis failed: '.$e->getMessage(),
                 'type' => 'performance',
                 'issues' => [],
                 'suggestions' => [],
@@ -186,7 +185,7 @@ final readonly class PerformanceAnalyzerTool
     {
         $lines = explode("\n", $code);
         $nonEmptyLines = array_filter($lines, fn ($line) => !empty(trim($line)));
-        
+
         return [
             'pre_analysis' => [
                 'total_lines' => \count($lines),
@@ -214,14 +213,15 @@ final readonly class PerformanceAnalyzerTool
 
     /**
      * @param \Symfony\AI\DevAssistantBundle\Model\Issue $issue
+     *
      * @return array<string, mixed>
      */
     private function enhanceIssueWithPerformanceData($issue): array
     {
         $issueArray = $issue->toArray();
-        
+
         // Add performance-specific enhancements
-        if ($issue->category->value === 'performance') {
+        if ('performance' === $issue->category->value) {
             $issueArray['performance_impact'] = $this->estimatePerformanceImpact($issue);
             $issueArray['optimization_priority'] = $this->calculateOptimizationPriority($issue);
         }
@@ -231,14 +231,15 @@ final readonly class PerformanceAnalyzerTool
 
     /**
      * @param \Symfony\AI\DevAssistantBundle\Model\Suggestion $suggestion
+     *
      * @return array<string, mixed>
      */
     private function enhanceSuggestionWithBenchmarks($suggestion): array
     {
         $suggestionArray = $suggestion->toArray();
-        
+
         // Add benchmarking guidance for performance suggestions
-        if ($suggestion->type->value === 'optimization') {
+        if ('optimization' === $suggestion->type->value) {
             $suggestionArray['benchmark_strategy'] = $this->generateBenchmarkStrategy($suggestion);
             $suggestionArray['expected_improvement'] = $this->estimateExpectedImprovement($suggestion);
         }
@@ -247,8 +248,9 @@ final readonly class PerformanceAnalyzerTool
     }
 
     /**
-     * @param array<\Symfony\AI\DevAssistantBundle\Model\Issue> $issues
+     * @param array<\Symfony\AI\DevAssistantBundle\Model\Issue>      $issues
      * @param array<\Symfony\AI\DevAssistantBundle\Model\Suggestion> $suggestions
+     *
      * @return array<string, mixed>
      */
     private function identifyOptimizationOpportunities(array $issues, array $suggestions): array
@@ -262,7 +264,7 @@ final readonly class PerformanceAnalyzerTool
         foreach ($suggestions as $suggestion) {
             $impact = $suggestion->estimatedImpact ?? 0.5;
             $implementation = $suggestion->implementation ?? '';
-            
+
             if ($impact > 0.8 && str_contains(strtolower($implementation), 'simple')) {
                 $opportunities['quick_wins'][] = $suggestion->title;
             } elseif ($impact > 0.7) {
@@ -277,6 +279,7 @@ final readonly class PerformanceAnalyzerTool
 
     /**
      * @param \Symfony\AI\DevAssistantBundle\Model\AnalysisResult $result
+     *
      * @return array<string, mixed>
      */
     private function calculateAdvancedPerformanceMetrics(string $code, $result): array
@@ -307,6 +310,7 @@ final readonly class PerformanceAnalyzerTool
 
     /**
      * @param \Symfony\AI\DevAssistantBundle\Model\AnalysisResult $result
+     *
      * @return array<string, mixed>
      */
     private function generateCachingRecommendations(string $code, $result): array
@@ -321,8 +325,8 @@ final readonly class PerformanceAnalyzerTool
 
     private function calculatePerformanceGrade(float $score, array $issues): string
     {
-        $criticalIssues = array_filter($issues, fn ($issue) => $issue->severity->value === 'critical');
-        $highIssues = array_filter($issues, fn ($issue) => $issue->severity->value === 'high');
+        $criticalIssues = array_filter($issues, fn ($issue) => 'critical' === $issue->severity->value);
+        $highIssues = array_filter($issues, fn ($issue) => 'high' === $issue->severity->value);
 
         if (!empty($criticalIssues) || $score < 20) {
             return 'F';
@@ -360,20 +364,20 @@ final readonly class PerformanceAnalyzerTool
 
     private function generateBenchmarkStrategy($suggestion): string
     {
-        return "Use performance profiling tools like Blackfire or XDebug to measure before/after metrics. " .
-               "Focus on response time, memory usage, and CPU utilization.";
+        return 'Use performance profiling tools like Blackfire or XDebug to measure before/after metrics. '.
+               'Focus on response time, memory usage, and CPU utilization.';
     }
 
     private function estimateExpectedImprovement($suggestion): string
     {
         $impact = $suggestion->estimatedImpact ?? 0.5;
-        
+
         if ($impact > 0.8) {
-            return "Significant improvement expected (20-50% performance gain)";
+            return 'Significant improvement expected (20-50% performance gain)';
         } elseif ($impact > 0.6) {
-            return "Moderate improvement expected (10-20% performance gain)";
+            return 'Moderate improvement expected (10-20% performance gain)';
         } else {
-            return "Minor improvement expected (5-10% performance gain)";
+            return 'Minor improvement expected (5-10% performance gain)';
         }
     }
 
@@ -381,11 +385,11 @@ final readonly class PerformanceAnalyzerTool
     {
         $weights = ['critical' => 3, 'high' => 2, 'medium' => 1, 'low' => 0.5];
         $score = 0;
-        
+
         foreach ($issues as $issue) {
             $score += $weights[$issue->severity->value] ?? 0;
         }
-        
+
         return min($score / 10, 10); // Normalize to 0-10
     }
 
@@ -396,25 +400,25 @@ final readonly class PerformanceAnalyzerTool
             'n_plus_one' => preg_match_all('/foreach[^{]*{[^}]*->find\(/', $code),
             'memory_operations' => substr_count($code, 'array_merge') + substr_count($code, 'array_map'),
         ];
-        
+
         return max(0, 10 - array_sum($factors)); // Higher is better
     }
 
     private function calculateMemoryEfficiency(string $code): float
     {
-        $inefficiencies = substr_count($code, 'array_merge') + 
-                         substr_count($code, 'str_repeat') + 
+        $inefficiencies = substr_count($code, 'array_merge') +
+                         substr_count($code, 'str_repeat') +
                          substr_count($code, 'range(');
-        
+
         return max(0, 10 - $inefficiencies * 0.5);
     }
 
     private function calculateCachePotential(string $code): float
     {
-        $cacheable = substr_count($code, '->find') + 
-                    substr_count($code, 'file_get_contents') + 
+        $cacheable = substr_count($code, '->find') +
+                    substr_count($code, 'file_get_contents') +
                     substr_count($code, 'curl_exec');
-        
+
         return min($cacheable * 2, 10);
     }
 
@@ -423,8 +427,9 @@ final readonly class PerformanceAnalyzerTool
         if (empty($suggestions)) {
             return 0;
         }
-        
+
         $totalImpact = array_reduce($suggestions, fn ($sum, $s) => $sum + ($s->estimatedImpact ?? 0), 0);
+
         return ($totalImpact / \count($suggestions)) * 10;
     }
 
@@ -432,7 +437,7 @@ final readonly class PerformanceAnalyzerTool
     {
         $nestedLoops = preg_match_all('/for[^{]*{[^{}]*for[^{]*{/', $code);
         $singleLoops = substr_count($code, 'foreach') + substr_count($code, 'for') - $nestedLoops * 2;
-        
+
         if ($nestedLoops > 0) {
             return 'O(n²) - Quadratic complexity detected';
         } elseif ($singleLoops > 0) {
@@ -445,54 +450,54 @@ final readonly class PerformanceAnalyzerTool
     private function identifyComplexityHotspots(string $code): array
     {
         $hotspots = [];
-        
+
         if (preg_match_all('/for[^{]*{[^{}]*for[^{]*{/', $code)) {
             $hotspots[] = 'Nested loops detected - consider optimization';
         }
-        
+
         if (preg_match_all('/while[^{]*{[^{}]*while[^{]*{/', $code)) {
             $hotspots[] = 'Nested while loops - potential infinite loop risk';
         }
-        
+
         return $hotspots;
     }
 
     private function calculateOptimizationPotential(string $code): float
     {
-        $optimizable = substr_count($code, 'array_search') + 
-                      substr_count($code, 'in_array') + 
+        $optimizable = substr_count($code, 'array_search') +
+                      substr_count($code, 'in_array') +
                       preg_match_all('/for.*count\(/', $code);
-        
+
         return min($optimizable * 1.5, 10);
     }
 
     private function recommendAlgorithms(string $code): array
     {
         $recommendations = [];
-        
+
         if (str_contains($code, 'array_search')) {
             $recommendations[] = 'Consider using hash tables (array with keys) for O(1) lookups';
         }
-        
+
         if (str_contains($code, 'usort') || str_contains($code, 'sort')) {
             $recommendations[] = 'Consider pre-sorting data or using SplPriorityQueue for better performance';
         }
-        
+
         return $recommendations;
     }
 
     private function identifyCacheOpportunities(string $code): array
     {
         $opportunities = [];
-        
+
         if (str_contains($code, '->find') || str_contains($code, '->findBy')) {
             $opportunities[] = 'Database query results';
         }
-        
+
         if (str_contains($code, 'file_get_contents') || str_contains($code, 'curl_exec')) {
             $opportunities[] = 'External API calls and file operations';
         }
-        
+
         return $opportunities;
     }
 
@@ -518,13 +523,13 @@ final readonly class PerformanceAnalyzerTool
     private function estimateCachingGains(string $code): string
     {
         $cacheableOperations = substr_count($code, '->find') + substr_count($code, 'file_get_contents');
-        
+
         if ($cacheableOperations > 5) {
-            return "High potential - 30-70% performance improvement";
+            return 'High potential - 30-70% performance improvement';
         } elseif ($cacheableOperations > 2) {
-            return "Moderate potential - 15-30% performance improvement";
+            return 'Moderate potential - 15-30% performance improvement';
         } else {
-            return "Low potential - 5-15% performance improvement";
+            return 'Low potential - 5-15% performance improvement';
         }
     }
 }

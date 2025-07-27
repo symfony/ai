@@ -41,28 +41,28 @@ final readonly class ArchitectureAnalyzerTool
     /**
      * Analyzes project architecture, design patterns, and system structure.
      *
-     * @param string $projectPath The root path of the project to analyze
-     * @param array<string> $includePaths Specific paths to include in analysis (optional)
-     * @param array<string> $excludePaths Paths to exclude from analysis
-     * @param string $depth Analysis depth level ('basic', 'standard', 'comprehensive', 'expert')
-     * @param bool $includeMetrics Whether to include detailed architectural metrics
+     * @param string        $projectPath    The root path of the project to analyze
+     * @param array<string> $includePaths   Specific paths to include in analysis (optional)
+     * @param array<string> $excludePaths   Paths to exclude from analysis
+     * @param string        $depth          Analysis depth level ('basic', 'standard', 'comprehensive', 'expert')
+     * @param bool          $includeMetrics Whether to include detailed architectural metrics
      *
      * @return array<string, mixed> Comprehensive architectural analysis results
      */
     public function __invoke(
         #[Description('Root path of the project to analyze')]
         string $projectPath,
-        
+
         #[Description('Specific paths to include in analysis (relative to project root)')]
         array $includePaths = [],
-        
+
         #[Description('Paths to exclude from analysis (relative to project root)')]
         array $excludePaths = ['vendor', 'node_modules', 'var', 'public/build'],
-        
+
         #[Description('Depth of architectural analysis')]
         #[With(enum: ['basic', 'standard', 'comprehensive', 'expert'])]
         string $depth = 'standard',
-        
+
         #[Description('Include detailed architectural metrics and complexity analysis')]
         bool $includeMetrics = true,
     ): array {
@@ -81,7 +81,7 @@ final readonly class ArchitectureAnalyzerTool
 
             // Discover PHP files for analysis
             $filePaths = $this->discoverProjectFiles($projectPath, $includePaths, $excludePaths);
-            
+
             if (empty($filePaths)) {
                 return [
                     'success' => false,
@@ -134,7 +134,6 @@ final readonly class ArchitectureAnalyzerTool
             ]);
 
             return $response;
-
         } catch (\Throwable $e) {
             $this->logger->error('Architecture analysis failed', [
                 'error' => $e->getMessage(),
@@ -144,7 +143,7 @@ final readonly class ArchitectureAnalyzerTool
 
             return [
                 'success' => false,
-                'error' => 'Architecture analysis failed: ' . $e->getMessage(),
+                'error' => 'Architecture analysis failed: '.$e->getMessage(),
                 'project_path' => $projectPath,
                 'metadata' => [
                     'error_occurred' => true,
@@ -157,6 +156,7 @@ final readonly class ArchitectureAnalyzerTool
     /**
      * @param array<string> $includePaths
      * @param array<string> $excludePaths
+     *
      * @return array<string>
      */
     private function discoverProjectFiles(string $projectPath, array $includePaths, array $excludePaths): array
@@ -170,7 +170,7 @@ final readonly class ArchitectureAnalyzerTool
         // Configure paths to search
         if (!empty($includePaths)) {
             foreach ($includePaths as $includePath) {
-                $fullPath = $projectPath . DIRECTORY_SEPARATOR . $includePath;
+                $fullPath = $projectPath.\DIRECTORY_SEPARATOR.$includePath;
                 if (is_dir($fullPath)) {
                     $finder->in($fullPath);
                 } elseif (is_file($fullPath)) {
@@ -201,6 +201,7 @@ final readonly class ArchitectureAnalyzerTool
 
     /**
      * @param array<string> $filePaths
+     *
      * @return array<string, mixed>
      */
     private function calculateProjectMetrics(array $filePaths, string $projectRoot): array
@@ -230,14 +231,14 @@ final readonly class ArchitectureAnalyzerTool
             }
 
             $content = file_get_contents($filePath);
-            if ($content === false) {
+            if (false === $content) {
                 continue;
             }
 
             // Calculate file metrics
             $lines = substr_count($content, "\n") + 1;
             $bytes = \strlen($content);
-            
+
             $metrics['project_size']['total_lines'] += $lines;
             $metrics['project_size']['total_size_bytes'] += $bytes;
 
@@ -254,18 +255,18 @@ final readonly class ArchitectureAnalyzerTool
             $metrics['class_types']['enums'] += preg_match_all('/\benum\s+\w+/', $content);
 
             // Directory distribution
-            $relativePath = str_replace($projectRoot . DIRECTORY_SEPARATOR, '', $filePath);
+            $relativePath = str_replace($projectRoot.\DIRECTORY_SEPARATOR, '', $filePath);
             $directory = \dirname($relativePath);
             $directoryFiles[$directory] = ($directoryFiles[$directory] ?? 0) + 1;
         }
 
         // Sort namespaces by frequency
         arsort($namespaces);
-        $metrics['namespace_distribution'] = array_slice($namespaces, 0, 10, true);
+        $metrics['namespace_distribution'] = \array_slice($namespaces, 0, 10, true);
 
         // Sort directories by file count
         arsort($directoryFiles);
-        $metrics['directory_structure'] = array_slice($directoryFiles, 0, 15, true);
+        $metrics['directory_structure'] = \array_slice($directoryFiles, 0, 15, true);
 
         // Calculate averages
         if ($metrics['project_size']['total_files'] > 0) {
@@ -273,7 +274,7 @@ final readonly class ArchitectureAnalyzerTool
                 $metrics['project_size']['total_lines'] / $metrics['project_size']['total_files']
             );
             $metrics['project_size']['average_size_per_file_kb'] = round(
-                $metrics['project_size']['total_size_bytes'] / $metrics['project_size']['total_files'] / 1024, 
+                $metrics['project_size']['total_size_bytes'] / $metrics['project_size']['total_files'] / 1024,
                 2
             );
         }

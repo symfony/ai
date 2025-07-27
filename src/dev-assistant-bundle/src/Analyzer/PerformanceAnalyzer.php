@@ -16,10 +16,10 @@ use Symfony\AI\DevAssistantBundle\Model\AnalysisResult;
 use Symfony\AI\DevAssistantBundle\Model\AnalysisType;
 use Symfony\AI\DevAssistantBundle\Model\Issue;
 use Symfony\AI\DevAssistantBundle\Model\IssueCategory;
+use Symfony\AI\DevAssistantBundle\Model\Priority;
 use Symfony\AI\DevAssistantBundle\Model\Severity;
 use Symfony\AI\DevAssistantBundle\Model\Suggestion;
 use Symfony\AI\DevAssistantBundle\Model\SuggestionType;
-use Symfony\AI\DevAssistantBundle\Model\Priority;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
@@ -46,7 +46,7 @@ final readonly class PerformanceAnalyzer
         ?string $filePath = null,
         string $depth = 'standard',
         bool $includeMemoryAnalysis = true,
-        bool $includeDatabaseOptimization = true
+        bool $includeDatabaseOptimization = true,
     ): AnalysisResult {
         $this->logger->info('Starting AI performance analysis', [
             'file_path' => $filePath,
@@ -89,10 +89,10 @@ final readonly class PerformanceAnalyzer
         }
 
         $analysisData = $this->parsePerformanceResponse($result->getContent());
-        
+
         // Enhance with static metrics
         $analysisData['metrics'] = array_merge($staticMetrics, $analysisData['metrics']);
-        
+
         $analysisTime = microtime(true) - $startTime;
 
         $this->logger->info('AI performance analysis completed', [
@@ -215,19 +215,19 @@ PROMPT;
 
         foreach ($lines as $line) {
             $trimmed = trim($line);
-            
+
             // Detect loop starts
             if (preg_match('/\b(for|foreach|while)\s*\(/', $trimmed)) {
-                $loopDepth++;
+                ++$loopDepth;
                 if ($loopDepth > 1) {
-                    $nestedCount++;
+                    ++$nestedCount;
                 }
                 $maxDepth = max($maxDepth, $loopDepth);
             }
-            
+
             // Detect loop ends (simple heuristic)
             if (preg_match('/^\s*}\s*$/', $trimmed) && $loopDepth > 0) {
-                $loopDepth--;
+                --$loopDepth;
             }
         }
 
@@ -323,10 +323,10 @@ PROMPT;
         string $depth,
         array $staticMetrics,
         bool $includeMemoryAnalysis,
-        bool $includeDatabaseOptimization
+        bool $includeDatabaseOptimization,
     ): string {
         $prompt = "Please analyze this PHP code for performance optimization opportunities:\n\n";
-        
+
         if ($filePath) {
             $prompt .= "File: {$filePath}\n\n";
         }
@@ -334,37 +334,37 @@ PROMPT;
         $prompt .= "```php\n{$code}\n```\n\n";
 
         $prompt .= "## Static Analysis Results\n";
-        $prompt .= sprintf("- Cyclomatic Complexity: %d\n", $staticMetrics['code_complexity']);
-        $prompt .= sprintf("- Nested Loops: %d\n", $staticMetrics['nested_loops_count']);
-        $prompt .= sprintf("- Database Query Operations: %d\n", $staticMetrics['database_queries_count']);
-        $prompt .= sprintf("- File Operations: %d\n", $staticMetrics['file_operations_count']);
-        $prompt .= sprintf("- Regex Operations: %d\n", $staticMetrics['regex_operations_count']);
-        $prompt .= sprintf("- Potential N+1 Queries: %s\n", $staticMetrics['potential_n_plus_one'] ? 'Yes' : 'No');
-        $prompt .= sprintf("- Memory Intensive Operations: %d\n", $staticMetrics['memory_intensive_operations']);
+        $prompt .= \sprintf("- Cyclomatic Complexity: %d\n", $staticMetrics['code_complexity']);
+        $prompt .= \sprintf("- Nested Loops: %d\n", $staticMetrics['nested_loops_count']);
+        $prompt .= \sprintf("- Database Query Operations: %d\n", $staticMetrics['database_queries_count']);
+        $prompt .= \sprintf("- File Operations: %d\n", $staticMetrics['file_operations_count']);
+        $prompt .= \sprintf("- Regex Operations: %d\n", $staticMetrics['regex_operations_count']);
+        $prompt .= \sprintf("- Potential N+1 Queries: %s\n", $staticMetrics['potential_n_plus_one'] ? 'Yes' : 'No');
+        $prompt .= \sprintf("- Memory Intensive Operations: %d\n", $staticMetrics['memory_intensive_operations']);
 
         $prompt .= "\n## Analysis Focus Areas\n";
         $prompt .= "- Algorithmic complexity and Big O optimization\n";
         $prompt .= "- Loop optimization and iteration efficiency\n";
-        
+
         if ($includeDatabaseOptimization) {
             $prompt .= "- Database query optimization and N+1 prevention\n";
             $prompt .= "- ORM performance patterns\n";
         }
-        
+
         if ($includeMemoryAnalysis) {
             $prompt .= "- Memory usage optimization\n";
             $prompt .= "- Garbage collection efficiency\n";
         }
-        
+
         $prompt .= "- Caching opportunities\n";
         $prompt .= "- Symfony-specific performance optimizations\n";
 
         $prompt .= "\n## Analysis Depth\n";
         $prompt .= match ($depth) {
-            'expert' => "Perform EXPERT performance analysis with advanced optimization techniques, profiling guidance, and enterprise-scale considerations.",
-            'comprehensive' => "Perform COMPREHENSIVE performance review covering all optimization aspects with detailed benchmarking strategies.",
-            'basic' => "Perform BASIC performance assessment focusing on obvious bottlenecks and quick wins.",
-            default => "Perform STANDARD performance analysis with practical optimization recommendations.",
+            'expert' => 'Perform EXPERT performance analysis with advanced optimization techniques, profiling guidance, and enterprise-scale considerations.',
+            'comprehensive' => 'Perform COMPREHENSIVE performance review covering all optimization aspects with detailed benchmarking strategies.',
+            'basic' => 'Perform BASIC performance assessment focusing on obvious bottlenecks and quick wins.',
+            default => 'Perform STANDARD performance analysis with practical optimization recommendations.',
         };
 
         return $prompt;
@@ -383,7 +383,7 @@ PROMPT;
         }
 
         try {
-            $data = json_decode($jsonContent, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($jsonContent, true, 512, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             $this->logger->error('Failed to parse performance AI response', [
                 'response' => $response,
@@ -410,12 +410,13 @@ PROMPT;
 
     /**
      * @param array<array<string, mixed>> $issuesData
+     *
      * @return array<Issue>
      */
     private function parsePerformanceIssues(array $issuesData): array
     {
         $issues = [];
-        
+
         foreach ($issuesData as $issueData) {
             try {
                 $issues[] = new Issue(
@@ -451,12 +452,13 @@ PROMPT;
 
     /**
      * @param array<array<string, mixed>> $suggestionsData
+     *
      * @return array<Suggestion>
      */
     private function parsePerformanceSuggestions(array $suggestionsData): array
     {
         $suggestions = [];
-        
+
         foreach ($suggestionsData as $suggestionData) {
             try {
                 $suggestions[] = new Suggestion(

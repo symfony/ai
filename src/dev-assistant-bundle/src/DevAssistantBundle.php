@@ -57,7 +57,7 @@ final class DevAssistantBundle extends AbstractBundle
         $builder->setParameter('dev_assistant.enabled', $config['enabled'] ?? true);
         $builder->setParameter('dev_assistant.cache_enabled', $config['cache']['enabled'] ?? true);
         $builder->setParameter('dev_assistant.cache_ttl', $config['cache']['ttl'] ?? 3600);
-        
+
         if (isset($config['ai']['providers'])) {
             $builder->setParameter('dev_assistant.ai_providers', $config['ai']['providers']);
         }

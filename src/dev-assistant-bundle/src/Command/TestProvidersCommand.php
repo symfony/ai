@@ -71,7 +71,7 @@ HELP
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        
+
         $provider = $input->getOption('provider');
         $model = $input->getOption('model');
         $detailed = $input->getOption('detailed');
@@ -82,23 +82,23 @@ HELP
             if ($provider && $model) {
                 // Test specific provider and model
                 $result = $this->testSpecificModel($provider, $model, $io);
+
                 return $result ? Command::SUCCESS : Command::FAILURE;
-                
             } elseif ($provider) {
                 // Test specific provider
                 $result = $this->testSpecificProvider($provider, $io);
+
                 return $result ? Command::SUCCESS : Command::FAILURE;
-                
             } else {
                 // Test all providers
                 return $this->testAllProviders($detailed, $io);
             }
-
         } catch (\Throwable $e) {
-            $io->error('Test failed: ' . $e->getMessage());
+            $io->error('Test failed: '.$e->getMessage());
             if ($output->isVerbose()) {
                 $io->text($e->getTraceAsString());
             }
+
             return Command::FAILURE;
         }
     }
@@ -106,15 +106,17 @@ HELP
     private function testSpecificModel(string $provider, string $model, SymfonyStyle $io): bool
     {
         $io->section("Testing {$provider} with model {$model}");
-        
+
         $result = $this->providerTester->testProviderModel($provider, $model);
-        
-        if ($result['status'] === 'success') {
+
+        if ('success' === $result['status']) {
             $io->success("✅ {$provider} with {$model} is working correctly!");
+
             return true;
         } else {
             $io->error("❌ {$provider} with {$model} failed");
             $this->displayError($result, $io);
+
             return false;
         }
     }
@@ -122,20 +124,22 @@ HELP
     private function testSpecificProvider(string $provider, SymfonyStyle $io): bool
     {
         $io->section("Testing {$provider}");
-        
+
         $result = $this->providerTester->testProvider($provider);
-        
-        if ($result['status'] === 'success') {
+
+        if ('success' === $result['status']) {
             $io->success("✅ {$provider} is working correctly!");
             $io->definitionList(
                 ['Provider' => $provider],
                 ['Status' => 'Connected'],
-                ['Response Length' => $result['response_length'] . ' characters'],
+                ['Response Length' => $result['response_length'].' characters'],
             );
+
             return true;
         } else {
             $io->error("❌ {$provider} connection failed");
             $this->displayError($result, $io);
+
             return false;
         }
     }
@@ -143,9 +147,9 @@ HELP
     private function testAllProviders(bool $detailed, SymfonyStyle $io): int
     {
         $io->section('Testing All AI Providers');
-        
+
         $report = $this->providerTester->generateDiagnosticReport();
-        
+
         // Display overall status
         $statusColor = match ($report['overall_status']) {
             'success' => 'green',
@@ -153,10 +157,10 @@ HELP
             'failed' => 'red',
             default => 'gray',
         };
-        
+
         $io->writeln([
             '',
-            "📊 <fg={$statusColor}>Overall Status: " . strtoupper($report['overall_status']) . "</>",
+            "📊 <fg={$statusColor}>Overall Status: ".strtoupper($report['overall_status']).'</>',
             "🔌 Providers Working: {$report['providers_working']}/{$report['providers_tested']}",
             "❌ Providers Failed: {$report['providers_failed']}",
             '',
@@ -164,12 +168,12 @@ HELP
 
         // Display provider results
         foreach ($report['provider_results'] as $provider => $result) {
-            if ($result['status'] === 'success') {
+            if ('success' === $result['status']) {
                 $io->writeln("✅ <fg=green>{$provider}</> - Connected successfully");
             } else {
-                $io->writeln("❌ <fg=red>{$provider}</> - " . $result['error_type']);
+                $io->writeln("❌ <fg=red>{$provider}</> - ".$result['error_type']);
                 if ($detailed) {
-                    $io->text("   💡 " . $result['suggestion']);
+                    $io->text('   💡 '.$result['suggestion']);
                 }
             }
         }
@@ -178,7 +182,7 @@ HELP
         if (!empty($report['recommendations'])) {
             $io->section('🚀 Recommendations');
             foreach ($report['recommendations'] as $recommendation) {
-                $io->text("• " . $recommendation);
+                $io->text('• '.$recommendation);
             }
         }
 
@@ -187,7 +191,7 @@ HELP
             $this->showDetailedDiagnostics($report, $io);
         }
 
-        return $report['overall_status'] === 'failed' ? Command::FAILURE : Command::SUCCESS;
+        return 'failed' === $report['overall_status'] ? Command::FAILURE : Command::SUCCESS;
     }
 
     private function displayError(array $result, SymfonyStyle $io): void
@@ -258,15 +262,15 @@ HELP
     private function showDetailedDiagnostics(array $report, SymfonyStyle $io): void
     {
         $io->section('🔍 Detailed Diagnostics');
-        
+
         foreach ($report['provider_results'] as $provider => $result) {
             $io->text("<comment>Provider: {$provider}</comment>");
-            
-            if ($result['status'] === 'success') {
-                $io->text("  ✅ Status: Working");
+
+            if ('success' === $result['status']) {
+                $io->text('  ✅ Status: Working');
                 $io->text("  📏 Response length: {$result['response_length']} chars");
             } else {
-                $io->text("  ❌ Status: Failed");
+                $io->text('  ❌ Status: Failed');
                 $io->text("  🏷️  Error type: {$result['error_type']}");
                 $io->text("  📝 Error: {$result['error']}");
                 $io->text("  💡 Fix: {$result['suggestion']}");
@@ -276,9 +280,9 @@ HELP
 
         $io->text([
             '<comment>Environment Check:</comment>',
-            '• PHP Version: ' . PHP_VERSION,
-            '• Current Time: ' . $report['timestamp'],
-            '• Working Directory: ' . getcwd(),
+            '• PHP Version: '.\PHP_VERSION,
+            '• Current Time: '.$report['timestamp'],
+            '• Working Directory: '.getcwd(),
         ]);
     }
 }

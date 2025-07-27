@@ -44,34 +44,34 @@ final readonly class CodeReviewTool
     /**
      * Analyzes PHP code for quality, style, maintainability, and adherence to best practices.
      *
-     * @param string $code The PHP code to analyze (can be a single file or multiple files)
-     * @param string|null $filePath Optional file path for context and better error reporting
-     * @param array<string> $rules Specific rules to apply ('psr12', 'solid', 'symfony_standards', 'phpstan_level_8')
-     * @param string $depth Analysis depth level ('basic', 'standard', 'comprehensive', 'expert')
-     * @param bool $includeStaticAnalysis Whether to include results from static analysis tools
-     * @param bool $includeSuggestions Whether to include improvement suggestions
+     * @param string        $code                  The PHP code to analyze (can be a single file or multiple files)
+     * @param string|null   $filePath              Optional file path for context and better error reporting
+     * @param array<string> $rules                 Specific rules to apply ('psr12', 'solid', 'symfony_standards', 'phpstan_level_8')
+     * @param string        $depth                 Analysis depth level ('basic', 'standard', 'comprehensive', 'expert')
+     * @param bool          $includeStaticAnalysis Whether to include results from static analysis tools
+     * @param bool          $includeSuggestions    Whether to include improvement suggestions
      *
      * @return array<string, mixed> Comprehensive analysis results with issues, suggestions, and metrics
      */
     public function __invoke(
         #[Description('The PHP code to analyze for quality and best practices')]
         string $code,
-        
+
         #[Description('Optional file path for better context and error reporting')]
         #[With(nullable: true)]
         ?string $filePath = null,
-        
+
         #[Description('Specific quality rules to apply during analysis')]
         #[With(items: ['type' => 'string', 'enum' => ['psr12', 'solid', 'symfony_standards', 'phpstan_level_8', 'design_patterns']])]
         array $rules = ['psr12', 'solid', 'symfony_standards'],
-        
+
         #[Description('Depth of analysis to perform')]
         #[With(enum: ['basic', 'standard', 'comprehensive', 'expert'])]
         string $depth = 'standard',
-        
+
         #[Description('Include static analysis tools results (PHPStan, Psalm, PHP-CS-Fixer)')]
         bool $includeStaticAnalysis = true,
-        
+
         #[Description('Include AI-generated improvement suggestions')]
         bool $includeSuggestions = true,
     ): array {
@@ -115,7 +115,6 @@ final readonly class CodeReviewTool
             ]);
 
             return $result;
-
         } catch (\Throwable $e) {
             $this->logger->error('Code review analysis failed', [
                 'error' => $e->getMessage(),
@@ -125,7 +124,7 @@ final readonly class CodeReviewTool
 
             return [
                 'success' => false,
-                'error' => 'Analysis failed: ' . $e->getMessage(),
+                'error' => 'Analysis failed: '.$e->getMessage(),
                 'type' => AnalysisType::CODE_QUALITY->value,
                 'issues' => [],
                 'suggestions' => [],
@@ -145,7 +144,7 @@ final readonly class CodeReviewTool
         AnalysisResult $aiAnalysis,
         array $staticAnalysisResults,
         string $code,
-        ?string $filePath
+        ?string $filePath,
     ): array {
         $startTime = microtime(true);
 
@@ -185,16 +184,17 @@ final readonly class CodeReviewTool
 
     /**
      * @param array<string, mixed> $staticResults
+     *
      * @return array<array<string, mixed>>
      */
     private function convertStaticAnalysisIssues(array $staticResults): array
     {
         $issues = [];
-        
+
         foreach ($staticResults as $tool => $results) {
             foreach ($results['issues'] ?? [] as $issue) {
                 $issues[] = [
-                    'id' => 'static_' . uniqid(),
+                    'id' => 'static_'.uniqid(),
                     'title' => $issue['message'] ?? 'Static analysis issue',
                     'description' => $issue['description'] ?? $issue['message'] ?? '',
                     'severity' => $this->mapStaticAnalysisSeverity($issue['severity'] ?? 'medium'),
@@ -229,19 +229,20 @@ final readonly class CodeReviewTool
     /**
      * @param array<array<string, mixed>> $issues
      * @param array<array<string, mixed>> $suggestions
+     *
      * @return array<string, mixed>
      */
     private function calculateMetrics(string $code, array $issues, array $suggestions): array
     {
         $lines = explode("\n", $code);
         $nonEmptyLines = array_filter($lines, fn ($line) => !empty(trim($line)));
-        
+
         return [
             'total_issues' => \count($issues),
-            'critical_issues' => \count(array_filter($issues, fn ($i) => $i['severity'] === 'critical')),
-            'high_issues' => \count(array_filter($issues, fn ($i) => $i['severity'] === 'high')),
-            'medium_issues' => \count(array_filter($issues, fn ($i) => $i['severity'] === 'medium')),
-            'low_issues' => \count(array_filter($issues, fn ($i) => $i['severity'] === 'low')),
+            'critical_issues' => \count(array_filter($issues, fn ($i) => 'critical' === $i['severity'])),
+            'high_issues' => \count(array_filter($issues, fn ($i) => 'high' === $i['severity'])),
+            'medium_issues' => \count(array_filter($issues, fn ($i) => 'medium' === $i['severity'])),
+            'low_issues' => \count(array_filter($issues, fn ($i) => 'low' === $i['severity'])),
             'suggestions_count' => \count($suggestions),
             'fixable_issues' => \count(array_filter($issues, fn ($i) => $i['fixable'])),
             'issues_per_line' => \count($nonEmptyLines) > 0 ? round(\count($issues) / \count($nonEmptyLines), 4) : 0,
