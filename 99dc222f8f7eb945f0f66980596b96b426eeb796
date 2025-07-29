@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-24T19:54:08Z
+
+@chr-hertel Totally, I'm almost done with the tests, one still tricky, need a few hours on it and this PR should be good, sorry for the delay.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-28T07:29:03Z
+
+Just to add context, the tests are not built around "failure / success" as the neo4j API handle things differently, if an index / document already exist, the operation is not performed but `202` is returned, that prevent failures at runtime and the need to test them.
