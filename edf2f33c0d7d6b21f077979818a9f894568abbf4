@@ -1,0 +1,48 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-27T17:42:56Z
+
+Please rebase on main and adopt the changed test style, switching from `#[Test]` attribute to `test` method prefix, see #214.
+
+---------------------------------------------------------------------------
+
+by JoshuaBehrens at 2025-07-27T19:41:16Z
+
+I rebased, changed the test and renamed the class. Anything more :) ?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-29T19:16:03Z
+
+Tested with mistral, deepseek and llama - works :+1:
+
+---------------------------------------------------------------------------
+
+by JoshuaBehrens at 2025-07-29T21:19:50Z
+
+Great I will fix phpstan, rebase and we can get this merged. The new pull request for the model usage can follow after that :)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-29T21:23:10Z
+
+And that unit test for `Symfony\AI\Platform\Bridge\Ollama\Ollama` please :)
+
+---------------------------------------------------------------------------
+
+by JoshuaBehrens at 2025-07-30T11:35:54Z
+
+Sorry for the repetetive pushes. fabpot had some remarks I was not aware of. Especially this is confusing in the config:
+<img width="406" height="46" alt="grafik" src="https://github.com/user-attachments/assets/a429a4d2-96cb-4854-84e8-28cf4b505d6a" />
+<img width="651" height="41" alt="grafik" src="https://github.com/user-attachments/assets/a73435ec-6d7e-4f5a-ba4e-dd629a565d01" />
+At one part the suggestion is to have a FQCN on global functions and in another place they don't.
+
+Apart from that I should not have any open tasks on this pull request
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-30T11:52:05Z
+
+> At one part the suggestion is to have a FQCN on global functions and in another place they don't.
+
+We only use the one which have an optimized usage afterwards, but yes, sometimes its hard to guess :-)
