@@ -1,0 +1,43 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-28T06:06:55Z
+
+recipe, would need an update as well
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-28T08:44:34Z
+
+Does that also apply to namespaces like `OpenAI` or `GPT`, which are a more based on the actual product or brand name?
+
+---------------------------------------------------------------------------
+
+by fabpot at 2025-07-28T09:05:20Z
+
+> Does that also apply to namespaces like `OpenAI` or `GPT`, which are a more based on the actual product or brand name?
+
+Indeed, that should be `OpenAI` or `Gpt`, like we're using `Postgresql` and not `PostgreSQL`.
+
+---------------------------------------------------------------------------
+
+by fabpot at 2025-07-28T09:17:28Z
+
+Renamed OpenAI and GPT.
+
+---------------------------------------------------------------------------
+
+by fabpot at 2025-07-28T09:23:33Z
+
+Back to draft as there is more :)
+
+---------------------------------------------------------------------------
+
+by fabpot at 2025-07-30T09:09:55Z
+
+This one should be ready now @chr-hertel
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-30T09:15:21Z
+
+Love the `etc.` suffix in the PR title 😄
