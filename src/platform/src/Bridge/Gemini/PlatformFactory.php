@@ -13,10 +13,10 @@ namespace Symfony\AI\Platform\Bridge\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings\ModelClient as EmbeddingsModelClient;
-use Symfony\AI\Platform\Bridge\Gemini\Embeddings\ResultConverter as EmbeddingsResultConverter;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini\ModelClient as GeminiModelClient;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini\ResultConverter as GeminiResultConverter;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Contract\ResultConverter;
+use Symfony\AI\Platform\Contract\ResultExtractor\VectorResultExtractor;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -36,7 +36,9 @@ final readonly class PlatformFactory
 
         return new Platform(
             [new EmbeddingsModelClient($httpClient, $apiKey), new GeminiModelClient($httpClient, $apiKey)],
-            [new EmbeddingsResultConverter(), new GeminiResultConverter()],
+            [new Gemini\ResultConverter(), ResultConverter::create([
+                new VectorResultExtractor('$.embeddings[*].values'),
+            ])],
             $contract ?? GeminiContract::create(),
         );
     }
