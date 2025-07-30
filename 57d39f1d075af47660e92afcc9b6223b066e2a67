@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by xavierleune at 2025-07-30T08:12:21Z
+
+code quality fixed in #228
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-30T08:21:28Z
+
+> code quality fixed in https://github.com/symfony/ai/pull/228
+
+merged, you can rebase your PR
+
+---------------------------------------------------------------------------
+
+by xavierleune at 2025-07-30T08:22:53Z
+
+Thanks @OskarStark it's rebased
