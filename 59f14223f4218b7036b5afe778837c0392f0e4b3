@@ -1,0 +1,157 @@
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-07-24T13:17:27Z
+
+Thanks for this PR.
+
+I'm using `Store::FromDbal()`, so the comparaison should be added there too. And also in `fromPdo()`
+
+So in order to test, I changed in the constructor, and double check it's well configurated (current operator : `<=>`).
+```diff
+diff --git a/src/store/src/Bridge/Postgres/Store.php b/src/store/src/Bridge/Postgres/Store.php
+index 07bff22..28d4ba5 100644
+--- a/src/store/src/Bridge/Postgres/Store.php
++++ b/src/store/src/Bridge/Postgres/Store.php
+@@ -34,7 +34,7 @@ final readonly class Store implements VectorStoreInterface, InitializableStoreIn
+         private \PDO $connection,
+         private string $tableName,
+         private string $vectorFieldName = 'embedding',
+-        private Distance $distance = Distance::L2,
++        private Distance $distance = Distance::Cosine,
+     ) {
+     }
+```
+
+I have crawled https://jolicode.com and https://www.premieroctet.com, indexed all their content, and run the following code:
+
+```php
+$rows = $connection->executeQuery("select * from {$_SERVER['PLATFORM']}")->fetchAllAssociative();
+foreach ($rows as $row) {
+    $metadata = json_decode($row['metadata'], true, 512, \JSON_THROW_ON_ERROR);
+    $vector = new Vector(json_decode($row['embedding'], true));
+    $documents = $store->query($vector, [], 0.000001); //Hack to not get "current row"
+
+    if (!$documents) {
+        continue;
+    }
+
+    echo "Current document: {$metadata['url']}\n";
+    echo "Found " . count($documents) . " similar documents:\n";
+    foreach ($documents as $i => $document) {
+        echo "- {$document->metadata['url']} (score: {$document->score})\n";
+        // break;
+    }
+    die;
+    echo "\n";
+}
+```
+
+So:
+
+1. We still sort by score ASC
+2. But lowest seems to be best again
+```
+Current document: https://jolicode.com/blog/tag/zellij
+Found 5 similar documents:
+- https://jolicode.com/blog/tag/zellij (score: 0)
+- https://jolicode.com/blog/tag/tmux (score: 0.068143753338624)
+- https://jolicode.com/blog/tag/agence (score: 0.12764826831817)
+- https://jolicode.com/blog/tag/js (score: 0.13115907744191)
+- https://jolicode.com/blog/tag/sysadmin (score: 0.13248805321064)
+
+Current document: https://jolicode.com/blog/tag/encodage
+Found 5 similar documents:
+- https://jolicode.com/blog/tag/encodage (score: 0)
+- https://jolicode.com/blog/tag/utf8 (score: 0.045148642848127)
+- https://jolicode.com/qui-sommes-nous/equipe/marion-hurteau (score: 0.07487888379814)
+- https://jolicode.com/blog/ce-que-vous-devez-savoir-sur-les-chaa-r-nes-de-caracta-res (score: 0.07784386727315)
+- https://jolicode.com/blog/tag/qualite (score: 0.083560306575813)
+```
+
+---------------------------------------------------------------------------
+
+by DZunke at 2025-07-25T11:00:30Z
+
+> Thanks for this PR.
+>
+> I'm using `Store::FromDbal()`, so the comparaison should be added there too. And also in `fromPdo()`
+>
+> So in order to test, I changed in the constructor, and double check it's well configurated (current operator : `<=>`).
+> ...
+
+Thanks, @lyrixx ! I've already added it to the named constructors.
+
+Your results generally is looking totally fine to me. The cosine distance, which is being used, returns a value between `0` and `2`, where `0` indicates that the elements are identical, and `2` means they are very different. So, sorting by `ASC` means that the most similar document comes first. Sorting by `DESC` would result in the most dissimilar document appearing first.
+
+In the query, the filtering could be problematic. The term `minScore` is not the best wording here, especially in combination with the `>=` comparator. What’s currently labeled as `minScore` should actually be a `maxScore`, at least for cosine search 🙈
+
+The score problem in filtering seems also be valid for the L2 distance as this is a value from 0 to infinite, where 0 is the most fitting match. It seems the `minScore` wording is coming from the MongoDB implementation - at least this seems to be where it started and where it is correct.
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-07-25T13:32:42Z
+
+Thanks you very much for the explanation. Very clear.
+
+And I agree with you for the minScore.  May be the name could be "treashhold". It kinda generic haha
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-26T09:02:51Z
+
+I think if there's something, that is explicitly part of the method signature, we should streamline the mechanism/behavior across the different implementations as part of the store abstraction. And if it's part of the `$options` array we would expect it too be leaky and fair to be vendor or option specific.
+
+Meaning, if we want to keep the `minScore` as explicit argument, we should streamline the behavior no matter which store and option, e.g. score is always between 0.0 and 1.0 and the higher the number the more similar.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-27T17:43:28Z
+
+Please rebase on main and adopt the changed test style, switching from `#[Test]` attribute to `test` method prefix, see #214.
+
+---------------------------------------------------------------------------
+
+by DZunke at 2025-07-29T10:22:08Z
+
+> I think if there's something, that is explicitly part of the method signature, we should streamline the mechanism/behavior across the different implementations as part of the store abstraction. And if it's part of the `$options` array we would expect it too be leaky and fair to be vendor or option specific.
+>
+> Meaning, if we want to keep the `minScore` as explicit argument, we should streamline the behavior no matter which store and option, e.g. score is always between 0.0 and 1.0 and the higher the number the more similar.
+
+From my perspective the argument should then be removed. But this is surely another issue. Instead of changing the score results just for the purpose to have them changed this is surely the better solution, so that the filtering in all storages must be given by the options. I have not checked the code in the other stores but i would assume that no storage really changed the number when distance calculations are utilized. And, as mentioned, at least Cosine and L2 are build with lower = better.
+
+But surely this can be discussed in an independent issue and not within this PR 😄
+
+---------------------------------------------------------------------------
+
+by DZunke at 2025-07-29T10:28:43Z
+
+> Please rebase on main and adopt the changed test style, switching from `#[Test]` attribute to `test` method prefix, see #214.
+
+@chr-hertel  Do you have any idea why the pipeline still fails? PHPStan fails with setting up the ai-bundle and the bot thingy has problems with void return types that are everywhere but fails with the class i have changed 🤔
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-29T10:34:56Z
+
+Can you please remove `void`, like I did?
+
+https://github.com/symfony/ai/pull/223
+
+---------------------------------------------------------------------------
+
+by DZunke at 2025-07-29T10:36:23Z
+
+Haha. Ok. 1 Minute ago. Nothing i could have known 😀 Sure ... i'll do it ... style changes over and over again. Hard to follow, sorry 🙈
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-29T10:39:09Z
+
+Yes sorry, lets wait the discussion in
+* #223
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-30T14:00:07Z
+
+I think rebasing should be safe again - most CS part is done :)
