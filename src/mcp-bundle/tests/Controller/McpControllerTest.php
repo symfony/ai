@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\McpBundle\Tests\Controller;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpSdk\Server;
@@ -23,9 +24,9 @@ use Symfony\Component\Uid\Uuid;
 
 final class McpControllerTest extends TestCase
 {
-    private Server $server;
-    private CachePoolStore $store;
-    private UrlGeneratorInterface $urlGenerator;
+    private Server&MockObject $server;
+    private CachePoolStore&MockObject $store;
+    private UrlGeneratorInterface&MockObject $urlGenerator;
     private McpController $controller;
 
     protected function setUp(): void

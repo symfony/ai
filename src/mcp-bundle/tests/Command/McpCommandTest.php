@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\McpBundle\Tests\Command;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpSdk\Server;
@@ -22,6 +23,7 @@ final class McpCommandTest extends TestCase
 {
     public function testExecuteStartsMcpServer()
     {
+        /** @var Server&MockObject $server */
         $server = $this->createMock(Server::class);
         $server->expects($this->once())
             ->method('connect')
@@ -39,7 +41,9 @@ final class McpCommandTest extends TestCase
 
     public function testCommandIsNamedCorrectly()
     {
-        $command = new McpCommand($this->createMock(Server::class));
+        /** @var Server&MockObject $server */
+        $server = $this->createMock(Server::class);
+        $command = new McpCommand($server);
 
         $this->assertSame('mcp:server', $command->getName());
         $this->assertSame('Starts an MCP server', $command->getDescription());
