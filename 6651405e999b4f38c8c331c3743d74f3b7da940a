@@ -1,0 +1,128 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-29T10:35:59Z
+
+I really feel like this is only a symfony/symfony concern 😞
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-29T10:38:25Z
+
+But the used Fabbot action is now shared across all repos, or shall we make this configurable @nicolas-grekas ?
+
+See
+* #221
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-29T10:43:47Z
+
+@nicolas-grekas any clue regarding?
+<img width="2228" height="620" alt="CleanShot 2025-07-29 at 12 43 31@2x" src="https://github.com/user-attachments/assets/e7108f86-3e72-4629-aba9-462c4a220da0" />
+
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2025-07-29T11:28:55Z
+
+This is a general Symfony policy. Adding return types to test cases is just visual debt (TM)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-29T12:09:51Z
+
+ah okay, i thought it's more about avoiding git conflict between different versions - which does not apply here.
+
+is it that you opt in whenever there is a more meaningful return type for tests depending on each other or just avoid that in general? not that i see depending test scenarios a lot, but that's the difference to `void` tests i guess
+
+anyhow no hard feelings - just curious :D
+
+---------------------------------------------------------------------------
+
+by derrabus at 2025-07-29T13:15:09Z
+
+I would not enforce this rule in a brand new code repository, tbh. I understand that this rule has historic reasons in symfony/symfony, but those don't apply here. Let's use types everywhere. The less exceptions to the rule, the better.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-29T13:27:19Z
+
+I agree ☝🏻
+
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2025-07-29T15:07:41Z
+
+>   The "/home/runner/work/ai/ai/b/examples" directory does not exist.
+
+That's because the `.php-cs-fixer.dist.php` needs to account for missing directories, since we check only patched files and the others are not checked-out. Using glob does the job:
+
+```diff
+--- a/.php-cs-fixer.dist.php
++++ b/.php-cs-fixer.dist.php
+@@ -43,7 +43,7 @@ return (new PhpCsFixer\Config())
+     ->setRiskyAllowed(true)
+     ->setFinder(
+         (new PhpCsFixer\Finder())
+-            ->in([__DIR__.'/demo', __DIR__.'/examples', __DIR__.'/fixtures', __DIR__.'/src'])
++            ->in(__DIR__.'/{demo,examples,fixtures,src}')
+             ->append([__FILE__])
+```
+
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2025-07-29T15:23:46Z
+
+For phpstan to be happy, I'd suggest going with this, which matches what fabbot does (we could further restrict to `**/tests/**.php` files):
+
+```diff
+ 	ignoreErrors:
++		-
++			message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
++
+```
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-29T15:27:45Z
+
+Will tackle that topic tomorrow
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-29T15:46:22Z
+
+Yea, i guess it's rather subjective how you read these methods, but I get your point - and I also don't want to be bothered to define a complex array shape for a `normalize(...): array` method by phpstan if only framework code consumes it - fair.
+I guess my hard limit is when it comes to `#[Depends]` scenarios, but i feel like those are rare. not sure why it is different for `setUp()` tho. anyhow, i for sure can live with that - especially if there's automation to remind me about it
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-30T06:22:45Z
+
+@nicolas-grekas if I get it right, we don't have a convenient link to fix CS for the contributors anymore, this is a step back IMHO
+
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2025-07-30T06:28:32Z
+
+You're right, that's not something supported by GHA.
+Instead, I made generated patch copy/pasteable.
+
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2025-07-30T06:55:37Z
+
+See #226 for exception messages
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-30T07:13:50Z
+
+> See https://github.com/symfony/ai/pull/226 for exception messages
+
+Lets go with yours first, and then rebase mine on top
+
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2025-07-30T08:57:10Z
+
+Thank you @OskarStark.
