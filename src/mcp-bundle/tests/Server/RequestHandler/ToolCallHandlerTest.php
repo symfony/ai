@@ -24,7 +24,7 @@ use Symfony\AI\McpSdk\Message\Response;
 use Symfony\AI\McpSdk\Server\RequestHandler\ToolCallHandler;
 
 /**
- * @covers \Symfony\AI\McpSdk\Server\RequestHandler\ToolCallHandler
+ * @coversDefaultClass \Symfony\AI\McpSdk\Server\RequestHandler\ToolCallHandler
  */
 final class ToolCallHandlerTest extends TestCase
 {

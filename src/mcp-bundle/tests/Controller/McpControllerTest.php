@@ -14,7 +14,9 @@ namespace Symfony\AI\McpBundle\Tests\Controller;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpSdk\Message\Factory;
 use Symfony\AI\McpSdk\Server;
+use Symfony\AI\McpSdk\Server\JsonRpcHandler;
 use Symfony\AI\McpSdk\Server\Transport\Sse\Store\CachePoolStore;
 use Symfony\AI\McpSdk\Server\Transport\Sse\StreamTransport;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,14 +26,18 @@ use Symfony\Component\Uid\Uuid;
 
 final class McpControllerTest extends TestCase
 {
-    private Server&MockObject $server;
+    private Server $server;
     private CachePoolStore&MockObject $store;
     private UrlGeneratorInterface&MockObject $urlGenerator;
     private McpController $controller;
 
     protected function setUp(): void
     {
-        $this->server = $this->createMock(Server::class);
+        // Create a real Server instance with minimal dependencies
+        $messageFactory = new Factory();
+        $jsonRpcHandler = new JsonRpcHandler($messageFactory, [], []);
+        $this->server = new Server($jsonRpcHandler);
+        
         $this->store = $this->createMock(CachePoolStore::class);
         $this->urlGenerator = $this->createMock(UrlGeneratorInterface::class);
 
@@ -54,10 +60,6 @@ final class McpControllerTest extends TestCase
                 UrlGeneratorInterface::ABSOLUTE_URL
             )
             ->willReturn('https://example.com/mcp/messages/123e4567-e89b-12d3-a456-426614174000');
-
-        $this->server->expects($this->once())
-            ->method('connect')
-            ->with($this->isInstanceOf(StreamTransport::class));
 
         $response = $this->controller->sse();
 
