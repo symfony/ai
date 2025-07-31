@@ -50,10 +50,7 @@ final readonly class MessageBag implements InitializableMessageBagInterface, Mes
     {
         $messages = $this->request('POST', \sprintf('indexes/%s/documents/fetch', $this->indexName));
 
-        return array_map(
-            fn (array $message): MessageInterface => $this->convertToMessage($message),
-            $messages['results'],
-        );
+        return array_map($this->convertToMessage(...), $messages['results']);
     }
 
     public function getSystemMessage(): ?SystemMessage
@@ -157,7 +154,7 @@ final readonly class MessageBag implements InitializableMessageBagInterface, Mes
             'headers' => [
                 'Authorization' => \sprintf('Bearer %s', $this->apiKey),
             ],
-            'json' => $payload,
+            'json' => [] !== $payload ? $payload : new \stdClass(),
         ]);
 
         return $result->toArray();
@@ -193,13 +190,14 @@ final readonly class MessageBag implements InitializableMessageBagInterface, Mes
         $type = $payload['type'];
         $content = $payload['content'] ?? '';
         $contentAsBase64 = $payload['contentAsBase64'] ?? [];
-        $toolsCalls = $payload['toolsCalls'] ?? [];
 
         return match ($type) {
             SystemMessage::class => new SystemMessage($content),
-            AssistantMessage::class => new AssistantMessage($content, $toolsCalls),
+            AssistantMessage::class => new AssistantMessage($content, $payload['toolsCalls'] ?? []),
             UserMessage::class => new UserMessage(...array_map(
-                static fn (array $contentAsBase64) => $contentAsBase64['type']::fromDataUrl($contentAsBase64['content']),
+                static fn (array $contentAsBase64) => \in_array($contentAsBase64['type'], [File::class, Image::class, Audio::class], true)
+                    ? $contentAsBase64['type']::fromDataUrl($contentAsBase64['content'])
+                    : new $contentAsBase64['type']($contentAsBase64['content']),
                 $contentAsBase64,
             )),
             default => throw new \LogicException(\sprintf('Unknown message type "%s".', $type)),
