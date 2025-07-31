@@ -56,39 +56,33 @@ readonly class JsonRpcHandler
     }
 
     /**
-     * @return iterable<string|null>
+     * @return null|Error|Response|StreamableResponse|iterable<Response>
      *
      * @throws ExceptionInterface When a handler throws an exception during message processing
      * @throws \JsonException     When JSON encoding of the response fails
      */
-    public function process(string $input): iterable
+    public function process(string $input): null|Error|Response|StreamableResponse|iterable
     {
         $this->logger->info('Received message to process', ['message' => $input]);
 
         try {
-            $messages = $this->messageFactory->create($input);
+            $message = $this->messageFactory->create($input);
         } catch (\JsonException $e) {
             $this->logger->warning('Failed to decode json message', ['exception' => $e]);
 
-            yield $this->encodeResponse(Error::parseError($e->getMessage()));
-
-            return;
+            return Error::parseError($e->getMessage());
         }
 
-        foreach ($messages as $message) {
-            $response = $this->handleMessage($message);
-            if (null === $response) {
-                continue;
+        $response = $this->handleMessage($message);
+        if (null === $response) {
+            return null;
+        }
+        if ($response instanceof StreamableResponse) {
+            foreach($response->responses as $response) {
+                yield $response;
             }
-            if ($response instanceof StreamableResponse) {
-                foreach($response->responses as $response) {
-                    yield $this->encodeResponse($response);
-                }
-            } elseif ($response instanceof NotificationHandled) {
-                yield null;
-            } else {
-                yield $this->encodeResponse($response);
-            }
+        } else {
+            return $response;
         }
     }
 
@@ -118,45 +112,10 @@ readonly class JsonRpcHandler
     }
 
     /**
-     * @throws \JsonException
+     * @param Notification|Request|InvalidInputMessageException $message
+     * @return Error|Response|StreamableResponse|NotificationHandled|null
      */
-    public function processSingleMessage(string $message): null|string|\iterable
-    {
-        $this->logger->info('Received message to process', ['message' => $message]);
-
-        try {
-            $messages = $this->messageFactory->create($message);
-        } catch (\JsonException $e) {
-            $this->logger->warning('Failed to decode json message', ['exception' => $e]);
-            return $this->encodeResponse(Error::parseError($e->getMessage()));
-        }
-
-        if (!isset($messages[0]) || !$messages[0] instanceof Request || count($messages) > 1) {
-            $this->logger->warning('Bad input received. Should be a single message. Received: ' . $message);
-            return $this->encodeResponse(Error::parseError('Bad input received. Should be a single message. Received: ' . $message));
-        }
-        $message = $messages[0];
-        $response = $this->handleMessage($message);
-        if (null === $response) {
-            return null;
-        }
-        if ($response instanceof StreamableResponse) {
-            foreach($response->responses as $response) {
-                yield $this->encodeResponse($response);
-            }
-        } elseif ($response instanceof NotificationHandled) {
-            return $response;
-        } else {
-            return $this->encodeResponse($response);
-        }
-    }
-
-    /**
-     * @param $message
-     * @return Error|Response|null
-     * @throws \JsonException
-     */
-    private function handleMessage($message): Error|Response|StreamableResponse|NotificationHandled|null
+    public function handleMessage(Notification|Request|InvalidInputMessageException $message): Error|Response|StreamableResponse|NotificationHandled|null
     {
         if ($message instanceof InvalidInputMessageException) {
             $this->logger->warning('Failed to create message', ['exception' => $message]);
@@ -230,7 +189,7 @@ readonly class JsonRpcHandler
      * @throws NotFoundExceptionInterface When no handler is found for the request method
      * @throws ExceptionInterface         When a request handler throws an exception
      */
-    private function handleRequest(Request $request): Response|Error
+    private function handleRequest(Request $request): StreamableResponse|Response|Error
     {
         foreach ($this->requestHandlers as $handler) {
             if ($handler->supports($request)) {

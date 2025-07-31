@@ -13,6 +13,7 @@ namespace Symfony\AI\McpSdk;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\McpSdk\Message\StreamableResponse;
 use Symfony\AI\McpSdk\Server\JsonRpcHandler;
 use Symfony\AI\McpSdk\Server\TransportInterface;
 
@@ -36,11 +37,15 @@ final readonly class Server
                 }
 
                 try {
-                    foreach ($this->jsonRpcHandler->process($message) as $response) {
-                        if (null === $response) {
-                            continue;
+                    $response = $this->jsonRpcHandler->process($message);
+                    if (null === $response) {
+                        continue;
+                    }
+                    if ($response instanceof StreamableResponse) {
+                        foreach ($response->responses as $response) {
+                            $transport->send($this->jsonRpcHandler->encodeResponse($response));
                         }
-
+                    } else {
                         $transport->send($response);
                     }
                 } catch (\JsonException $e) {

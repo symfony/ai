@@ -15,6 +15,7 @@ use Symfony\AI\McpSdk\Exception\ExceptionInterface;
 use Symfony\AI\McpSdk\Message\Error;
 use Symfony\AI\McpSdk\Message\Request;
 use Symfony\AI\McpSdk\Message\Response;
+use Symfony\AI\McpSdk\Message\StreamableResponse;
 
 interface RequestHandlerInterface
 {

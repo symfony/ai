@@ -76,7 +76,7 @@ final class McpBundle extends AbstractBundle
         }
 
         if ($transports['sse']) {
-            $container->register('mcp.server.controller', McpSseController::class)
+            $container->register('mcp.server.sse.controller', McpSseController::class)
                 ->setArguments([
                     new Reference('mcp.server'),
                     new Reference('mcp.server.sse.store.cache_pool'),
@@ -87,15 +87,16 @@ final class McpBundle extends AbstractBundle
         }
 
         if ($transports['http_stream']) {
-            $container->register('mcp.server.controller', McpHttpStreamController::class)
+            $container->register('mcp.server.http_stream.controller', McpHttpStreamController::class)
                 ->setArguments([
-                    new Reference('mcp.server'),
                     new Reference('mcp.server.json_rpc'),
-                    new Reference('mcp.server.http_stream.session.pool'),
-                    new Reference('mcp.server.http_stream.session.identifier_factory')
+                    new Reference('mcp.message_factory'),
+                    new Reference('mcp.server.http_stream.session.factory'),
                 ])
                 ->setPublic(true)
-                ->addTag('controller.service_arguments');
+                ->addTag('controller.service_arguments')
+            ;
+            $container->setAlias(McpHttpStreamController::class, 'mcp.server.http_stream.controller');
         }
 
         $container->register('mcp.server.route_loader', RouteLoader::class)

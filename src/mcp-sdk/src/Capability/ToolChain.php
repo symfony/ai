@@ -58,7 +58,7 @@ class ToolChain implements ToolExecutorInterface, CollectionInterface
         }
     }
 
-    public function call(ToolCall $input): ToolCallResult
+    public function call(ToolCall $input): ToolCallResult|\Traversable
     {
         foreach ($this->items as $item) {
             if ($item instanceof ToolExecutorInterface && $input->name === $item->getName()) {

@@ -14,15 +14,18 @@ class Session
     /**
      * @var array<int, array{id: Uuid, clientInitiated: bool, events: <int, array{id: string, event: string}>}>
      */
-    private array $streams = [];
+    private array $streams;
 
     private bool $clientNotificationInitializedReceived = false;
 
     /**
      * @var array{string, int}
      */
-    private array $eventsIdToStreamId = [];
-    public function __construct(public readonly SessionIdentifier $sessionIdentifier, private readonly SessionStorageInterface $sessionStorage) { }
+    private array $eventsIdToStreamId;
+    public function __construct(public readonly SessionIdentifier $sessionIdentifier, private readonly SessionStorageInterface $sessionStorage, array $data = []) {
+        $this->streams = $data['streams'] ?? [];
+        $this->eventsIdToStreamId = $data['eventsIdToStreamId'] ?? [];
+    }
 
     public function exists(): bool
     {
@@ -77,13 +80,18 @@ class Session
         $this->save();
     }
 
-    public function getEventsAfterId(string $eventId): array
+    public function getStreamIdForEvent(string $eventId): int
     {
         $this->refreshData();
         if (!isset($this->eventsIdToStreamId[$eventId])) {
-            return [];
+            throw new \InvalidArgumentException(sprintf('Event with id "%s" does not exist', $eventId));
         }
-        $streamId = $this->eventsIdToStreamId[$eventId];
+        return $this->eventsIdToStreamId[$eventId];
+    }
+
+    public function getEventsAfterId(string $eventId): array
+    {
+        $streamId = $this->getStreamIdForEvent($eventId);
         $events = $this->streams[$streamId]['events'];
         $eventOffset = array_search($eventId, array_column($events, 'id'));
         if ($eventOffset === false) {

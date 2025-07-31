@@ -4,7 +4,6 @@ namespace Symfony\AI\McpBundle\Session;
 
 use Symfony\AI\McpSdk\Exception\InvalidSessionIdException;
 use Symfony\AI\McpSdk\Server\Transport\StreamableHttp\Session\Session;
-use Symfony\AI\McpSdk\Server\Transport\StreamableHttp\SessionIdentifier;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
@@ -20,7 +19,7 @@ readonly class SessionResolver implements ValueResolverInterface
         if (!$request->attributes->has('_mcp_session')) {
             return match($argument->isNullable()) {
                 true => [null],
-                false => []
+                false => throw new InvalidSessionIdException('Session not found.')
             };
         }
 

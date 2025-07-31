@@ -11,13 +11,13 @@
 
 namespace Symfony\AI\McpSdk\Message;
 
-final readonly class StreamableResponse
+final class StreamableResponse
 {
     /**
-     * @param iterable<Response> $responses
+     * @param callable $responses
      */
     public function __construct(
-        public \iterable $responses,
+        public $responses,
     ) {
     }
 }

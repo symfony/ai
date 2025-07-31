@@ -16,26 +16,20 @@ use Symfony\AI\McpSdk\Exception\InvalidInputMessageException;
 final class Factory
 {
     /**
-     * @return iterable<Notification|Request|InvalidInputMessageException>
+     * @param string $input
+     * @return Notification|Request|InvalidInputMessageException
      *
      * @throws \JsonException When the input string is not valid JSON
      */
-    public function create(string $input): iterable
+    public function create(string $input): Notification|Request|InvalidInputMessageException
     {
-        $data = json_decode($input, true, flags: \JSON_THROW_ON_ERROR);
-
-        if ('{' === $input[0]) {
-            $data = [$data];
-        }
-
-        foreach ($data as $message) {
-            if (!isset($message['method'])) {
-                yield new InvalidInputMessageException('Invalid JSON-RPC request, missing "method".');
-            } elseif (str_starts_with((string) $message['method'], 'notifications/')) {
-                yield Notification::from($message);
-            } else {
-                yield Request::from($message);
-            }
+        $message = json_decode($input, true, flags: \JSON_THROW_ON_ERROR);
+        if (!isset($message['method'])) {
+            return new InvalidInputMessageException('Invalid JSON-RPC request, missing "method".');
+        } elseif (str_starts_with((string) $message['method'], 'notifications/')) {
+            return Notification::from($message);
+        } else {
+            return Request::from($message);
         }
     }
 }

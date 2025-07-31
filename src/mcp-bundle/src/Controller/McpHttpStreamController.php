@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Symfony\AI\McpBundle\Controller;
 
-use iterable;
-use Symfony\AI\McpSdk\Message\NotificationHandled;
+use Symfony\AI\McpSdk\Message\Factory;
+use Symfony\AI\McpSdk\Message\Notification;
+use Symfony\AI\McpSdk\Message\StreamableResponse;
 use Symfony\AI\McpSdk\Server;
 use Symfony\AI\McpSdk\Server\Transport\StreamableHttp\Session\Session;
 use Symfony\AI\McpSdk\Server\Transport\StreamableHttp\Session\SessionFactory;
@@ -13,20 +14,26 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Uid\Uuid;
 
 final readonly class McpHttpStreamController
 {
     public function __construct(
-        private Server                   $server,
+        //private Server                   $server,
         private Server\JsonRpcHandler    $handler,
+        private Factory $messageFactory,
+        //private Server\Transport\Sse\StoreInterface $store,
         private SessionFactory $sessionFactory,
     ) {
     }
     public function endpoint(Request $request, ?Session $session = null): Response
     {
+        $message = $this->messageFactory->create($request->getContent());
         if ($session === null) {
             // Must be an "initialize" request. If not ==> 404.
-            if (!$this->handler->isInitializeRequest($request->getContent())) {
+            dump($message);
+            if ($message->method !== 'initialize') { // @todo do better
                 return new Response(null, Response::HTTP_NOT_FOUND);
             }
             $session = $this->sessionFactory->get();
@@ -37,25 +44,48 @@ final readonly class McpHttpStreamController
         // If response is streamable ==> open an SSE Stream and store all responses in session for later replay
         // If response is not ==> JSON
 
-        $response = $this->handler->processSingleMessage($request->getContent());
+        $response = $this->handler->handleMessage($message);
+        dump($response);
 
-        if ($response instanceof iterable) {
-            $transport = new Server\Transport\StreamableHttp\StreamTransport($request, $session, []);
-            return new StreamedResponse(fn () => $this->server->connect($transport), headers: [
-                'Content-Type' => 'application/json',
+        if ($message instanceof Notification) {
+            return new Response(null, Response::HTTP_ACCEPTED);
+        }
+        if ($response instanceof StreamableResponse) {
+            dump('streamable');
+            //$transport = new Server\Transport\StreamableHttp\StreamTransport($session->addNewStream(), $session, $response->responses);
+            return new StreamedResponse(function () use ($session, $response) {
+                dump('in stream');
+                $streamId = $session->addNewStream();
+                foreach (($response->responses)() as $response) {
+                    dump($response);
+                    $eventId = Uuid::v4()->toString();
+                    if (is_array($response)) {
+                        $rawResponse = json_encode($response, \JSON_THROW_ON_ERROR);
+                    } else {
+                        $rawResponse = $this->handler->encodeResponse($response);
+                    }
+                    $session->addEventOnStream($streamId, $eventId, $rawResponse);
+                    echo "id: $eventId\n";
+                    echo "type: notification\n";
+                    echo "data: " . $rawResponse . "\n\n";
+                    if (false !== ob_get_length()) {
+                        ob_flush();
+                    }
+                    flush();
+                }
+            }, headers: [
+                'Content-Type' => 'text/event-stream',
                 'Cache-Control' => 'no-cache',
                 'X-Accel-Buffering' => 'no',
                 'Mcp-Session-Id' => $session->sessionIdentifier->sessionId->toString(),
             ]);
         }
-        if ($response instanceof NotificationHandled) {
-            return new Response(null, Response::HTTP_ACCEPTED);
-        }
+        dump('before json response');
         return new JsonResponse($this->handler->encodeResponse($response), Response::HTTP_OK, [
             'Content-Type' => 'application/json',
             'Cache-Control' => 'no-cache',
             'Mcp-Session-Id' => $session->sessionIdentifier->sessionId->toString(),
-        ]);
+        ], true);
         //$content = $request->g
 
         /*$transport = new Server\Transport\StreamableHttp\StreamTransport($request, $mcpSessionId->sessionId);
@@ -89,7 +119,38 @@ final readonly class McpHttpStreamController
     public function initiateSseFromStream(Request $request, Session $session): Response
     {
         if ($request->headers->has('Last-Event-ID')) {
-            $events = $session->getEventsAfterId($request->headers->get('Last-Event-ID'));
+            try {
+                $session->getStreamIdForEvent($request->headers->get('Last-Event-ID'));
+            } catch (\InvalidArgumentException $e) {
+                throw new BadRequestHttpException($e->getMessage());
+            }
+            $lastEventId = $request->headers->get('Last-Event-ID');
+            return new StreamedResponse(function () use ($session, $lastEventId) {
+                $i = 0;
+                do {
+                    $events = $session->getEventsAfterId($lastEventId);
+                    $lastEvent = null;
+                    foreach ($events as $event) {
+                        $lastEventId = $event['id'];
+                        $lastEvent = $event['event'];
+                        echo 'id: ' . $lastEventId . \PHP_EOL;
+                        echo 'data: ' . $lastEvent . \PHP_EOL . \PHP_EOL;
+                        if (false !== ob_get_length()) {
+                            ob_flush();
+                        }
+                        flush();
+                    }
+                    if ($events === []) {
+                        usleep(1000);
+                    }
+                } while (! ($lastEvent instanceof \Symfony\AI\McpSdk\Message\Response) && $i++ < 50);
+            }, headers: [
+                'Content-Type' => 'text/event-stream',
+                'Cache-Control' => 'no-cache',
+                'X-Accel-Buffering' => 'no',
+            ]);
+
+
         } else {
             // At this point server cannot attach to this stream to send request / notifications, so act like we don't support
             return new Response(null, Response::HTTP_METHOD_NOT_ALLOWED);

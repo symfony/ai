@@ -26,7 +26,7 @@ return function (RoutingConfigurator $routes): void {
         ->controller([McpHttpStreamController::class, 'endpoint'])
         ->methods(['POST'])
     ;
-    $routes->add('_mcp_initiate_sse', '/http/')
+    $routes->add('_mcp_http_initiate_sse', '/http/')
         ->controller([McpHttpStreamController::class, 'initiateSseFromStream'])
         ->methods(['GET'])
     ;

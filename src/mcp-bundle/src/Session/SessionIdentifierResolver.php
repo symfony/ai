@@ -12,9 +12,7 @@ readonly class SessionIdentifierResolver implements ValueResolverInterface
 {
     public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {
-        dump('called');
         if ($argument->getType() !== SessionIdentifier::class) {
-            dump('early return', $argument->getType());
             return [];
         }
 

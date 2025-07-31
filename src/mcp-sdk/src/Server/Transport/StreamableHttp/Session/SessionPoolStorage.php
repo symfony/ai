@@ -30,8 +30,6 @@ readonly class SessionPoolStorage implements SessionStorageInterface
         } catch(InvalidArgumentException) {
             throw new InvalidSessionIdException(sprintf('Session identifier (id: "%s", user: "%s" is invalid)', $sessionIdentifier->sessionId, $sessionIdentifier->userIdentifier ?? ''));
         }
-        $item->set(true);
-        $item->expiresAfter($this->ttlInSeconds);
         $this->cachePool->save($item);
     }
 
@@ -57,7 +55,7 @@ readonly class SessionPoolStorage implements SessionStorageInterface
                 throw new InvalidSessionIdException(sprintf('Session identifier (id: "%s", user: "%s" is invalid)', $sessionIdentifier->sessionId, $sessionIdentifier->userIdentifier ?? ''));
             }
             $item->expiresAfter($this->ttlInSeconds);
-            return new Session($sessionIdentifier, $this);
+            return new Session($sessionIdentifier, $this, $item->get());
         } catch(InvalidArgumentException) {
             throw new InvalidSessionIdException(sprintf('Session identifier (id: "%s", user: "%s" is invalid)', $sessionIdentifier->sessionId, $sessionIdentifier->userIdentifier ?? ''));
         }

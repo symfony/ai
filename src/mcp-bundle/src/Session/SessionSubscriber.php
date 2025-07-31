@@ -14,7 +14,7 @@ use Symfony\Component\Uid\UuidV4;
 
 readonly class SessionSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private SessionStorageInterface $storage, private SessionIdentifierFactory $identifierFactory, private SessionFactory $sessionFactory) {
+    public function __construct(private SessionIdentifierFactory $identifierFactory, private SessionFactory $sessionFactory) {
 
     }
 

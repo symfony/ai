@@ -19,6 +19,7 @@ final readonly class Response implements \JsonSerializable
     public function __construct(
         public string|int $id,
         public array $result = [],
+        public ?string $method = null,
     ) {
     }
 
@@ -27,10 +28,14 @@ final readonly class Response implements \JsonSerializable
      */
     public function jsonSerialize(): array
     {
-        return [
+        $result = [
             'jsonrpc' => '2.0',
             'id' => $this->id,
             'result' => $this->result,
         ];
+        if (null !== $this->method) {
+            $result['method'] = $this->method;
+        }
+        return $result;
     }
 }
