@@ -23,5 +23,5 @@ interface RequestHandlerInterface
     /**
      * @throws ExceptionInterface When the handler encounters an error processing the request
      */
-    public function createResponse(Request $message): Response|Error;
+    public function createResponse(Request $message): StreamableResponse|Response|Error;
 }

@@ -21,7 +21,8 @@
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^11.5"
+        "phpunit/phpunit": "^11.5",
+        "symfony/security-bundle": "^7.3"
     },
     "config": {
         "sort-packages": true

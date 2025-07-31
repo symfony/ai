@@ -59,6 +59,7 @@ return static function (DefinitionConfigurator $configurator): void {
                 ->children()
                     ->booleanNode('stdio')->defaultFalse()->end()
                     ->booleanNode('sse')->defaultFalse()->end()
+                    ->booleanNode('http_stream')->defaultTrue()->end() // @todo change to default false
                 ->end()
             ->end()
         ->end()

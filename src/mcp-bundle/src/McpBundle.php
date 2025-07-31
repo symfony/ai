@@ -12,7 +12,8 @@
 namespace Symfony\AI\McpBundle;
 
 use Symfony\AI\McpBundle\Command\McpCommand;
-use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpBundle\Controller\McpHttpStreamController;
+use Symfony\AI\McpBundle\Controller\McpSseController;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
 use Symfony\AI\McpSdk\Capability\Tool\IdentifierInterface;
 use Symfony\AI\McpSdk\Server\NotificationHandlerInterface;
@@ -40,6 +41,7 @@ final class McpBundle extends AbstractBundle
         $builder->setParameter('mcp.app', $config['app']);
         $builder->setParameter('mcp.version', $config['version']);
         $builder->setParameter('mcp.page_size', $config['page_size']);
+        $builder->setParameter('mcp.http_stream.session.ttl', 3600);
 
         if (isset($config['client_transports'])) {
             $this->configureClient($config['client_transports'], $builder);
@@ -52,11 +54,11 @@ final class McpBundle extends AbstractBundle
     }
 
     /**
-     * @param array{stdio: bool, sse: bool} $transports
+     * @param array{stdio: bool, sse: bool, http_stream: bool} $transports
      */
     private function configureClient(array $transports, ContainerBuilder $container): void
     {
-        if (!$transports['stdio'] && !$transports['sse']) {
+        if (!$transports['stdio'] && !$transports['sse'] && !$transports['http_stream']) {
             return;
         }
 
@@ -74,11 +76,23 @@ final class McpBundle extends AbstractBundle
         }
 
         if ($transports['sse']) {
-            $container->register('mcp.server.controller', McpController::class)
+            $container->register('mcp.server.controller', McpSseController::class)
                 ->setArguments([
                     new Reference('mcp.server'),
                     new Reference('mcp.server.sse.store.cache_pool'),
                     new Reference('router'),
+                ])
+                ->setPublic(true)
+                ->addTag('controller.service_arguments');
+        }
+
+        if ($transports['http_stream']) {
+            $container->register('mcp.server.controller', McpHttpStreamController::class)
+                ->setArguments([
+                    new Reference('mcp.server'),
+                    new Reference('mcp.server.json_rpc'),
+                    new Reference('mcp.server.http_stream.session.pool'),
+                    new Reference('mcp.server.http_stream.session.identifier_factory')
                 ])
                 ->setPublic(true)
                 ->addTag('controller.service_arguments');

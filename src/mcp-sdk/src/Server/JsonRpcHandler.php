@@ -20,8 +20,11 @@ use Symfony\AI\McpSdk\Exception\NotFoundExceptionInterface;
 use Symfony\AI\McpSdk\Message\Error;
 use Symfony\AI\McpSdk\Message\Factory;
 use Symfony\AI\McpSdk\Message\Notification;
+use Symfony\AI\McpSdk\Message\NotificationHandled;
 use Symfony\AI\McpSdk\Message\Request;
 use Symfony\AI\McpSdk\Message\Response;
+use Symfony\AI\McpSdk\Message\StreamableResponse;
+use Symfony\AI\McpSdk\Server\RequestHandler\InitializeHandler;
 
 /**
  * @final
@@ -73,40 +76,120 @@ readonly class JsonRpcHandler
         }
 
         foreach ($messages as $message) {
-            if ($message instanceof InvalidInputMessageException) {
-                $this->logger->warning('Failed to create message', ['exception' => $message]);
-                yield $this->encodeResponse(Error::invalidRequest(0, $message->getMessage()));
+            $response = $this->handleMessage($message);
+            if (null === $response) {
                 continue;
             }
-
-            $this->logger->info('Decoded incoming message', ['message' => $message]);
-
-            try {
-                yield $message instanceof Notification
-                    ? $this->handleNotification($message)
-                    : $this->encodeResponse($this->handleRequest($message));
-            } catch (\DomainException) {
+            if ($response instanceof StreamableResponse) {
+                foreach($response->responses as $response) {
+                    yield $this->encodeResponse($response);
+                }
+            } elseif ($response instanceof NotificationHandled) {
                 yield null;
-            } catch (NotFoundExceptionInterface $e) {
-                $this->logger->warning(\sprintf('Failed to create response: %s', $e->getMessage()), ['exception' => $e]);
-
-                yield $this->encodeResponse(Error::methodNotFound($message->id, $e->getMessage()));
-            } catch (\InvalidArgumentException $e) {
-                $this->logger->warning(\sprintf('Invalid argument: %s', $e->getMessage()), ['exception' => $e]);
-
-                yield $this->encodeResponse(Error::invalidParams($message->id, $e->getMessage()));
-            } catch (\Throwable $e) {
-                $this->logger->critical(\sprintf('Uncaught exception: %s', $e->getMessage()), ['exception' => $e]);
-
-                yield $this->encodeResponse(Error::internalError($message->id, $e->getMessage()));
+            } else {
+                yield $this->encodeResponse($response);
             }
+        }
+    }
+
+    public function isInitializeRequest(string $input): bool
+    {
+        // @todo we should prevent multiple calls to messageFactory for the same message
+        $this->logger->info('Received message to process', ['message' => $input]);
+        try {
+            $messages = $this->messageFactory->create($input);
+        } catch (\JsonException $e) {
+            $this->logger->warning('Failed to decode json message', ['exception' => $e]);
+
+            return false;
+        }
+        if (!isset($messages[0]) || !$messages[0] instanceof Request) {
+            return false;
+        }
+        $request = $messages[0];
+
+        foreach ($this->requestHandlers as $handler) {
+            if ($handler->supports($request)) {
+                return $handler instanceof InitializeHandler;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function processSingleMessage(string $message): null|string|\iterable
+    {
+        $this->logger->info('Received message to process', ['message' => $message]);
+
+        try {
+            $messages = $this->messageFactory->create($message);
+        } catch (\JsonException $e) {
+            $this->logger->warning('Failed to decode json message', ['exception' => $e]);
+            return $this->encodeResponse(Error::parseError($e->getMessage()));
+        }
+
+        if (!isset($messages[0]) || !$messages[0] instanceof Request || count($messages) > 1) {
+            $this->logger->warning('Bad input received. Should be a single message. Received: ' . $message);
+            return $this->encodeResponse(Error::parseError('Bad input received. Should be a single message. Received: ' . $message));
+        }
+        $message = $messages[0];
+        $response = $this->handleMessage($message);
+        if (null === $response) {
+            return null;
+        }
+        if ($response instanceof StreamableResponse) {
+            foreach($response->responses as $response) {
+                yield $this->encodeResponse($response);
+            }
+        } elseif ($response instanceof NotificationHandled) {
+            return $response;
+        } else {
+            return $this->encodeResponse($response);
+        }
+    }
+
+    /**
+     * @param $message
+     * @return Error|Response|null
+     * @throws \JsonException
+     */
+    private function handleMessage($message): Error|Response|StreamableResponse|NotificationHandled|null
+    {
+        if ($message instanceof InvalidInputMessageException) {
+            $this->logger->warning('Failed to create message', ['exception' => $message]);
+            return Error::invalidRequest(0, $message->getMessage());
+        }
+
+        $this->logger->info('Decoded incoming message', ['message' => $message]);
+
+        try {
+            return $message instanceof Notification
+                ? $this->handleNotification($message)
+                : $this->handleRequest($message);
+        } catch (\DomainException) {
+            return null;
+        } catch (NotFoundExceptionInterface $e) {
+            $this->logger->warning(\sprintf('Failed to create response: %s', $e->getMessage()), ['exception' => $e]);
+
+            return Error::methodNotFound($message->id, $e->getMessage());
+        } catch (\InvalidArgumentException $e) {
+            $this->logger->warning(\sprintf('Invalid argument: %s', $e->getMessage()), ['exception' => $e]);
+
+            return Error::invalidParams($message->id, $e->getMessage());
+        } catch (\Throwable $e) {
+            $this->logger->critical(\sprintf('Uncaught exception: %s', $e->getMessage()), ['exception' => $e]);
+
+            return Error::internalError($message->id, $e->getMessage());
         }
     }
 
     /**
      * @throws \JsonException When JSON encoding fails
      */
-    private function encodeResponse(Response|Error|null $response): ?string
+    public function encodeResponse(Response|Error|null $response): ?string
     {
         if (null === $response) {
             $this->logger->warning('Response is null');
@@ -126,7 +209,7 @@ readonly class JsonRpcHandler
     /**
      * @throws ExceptionInterface When a notification handler throws an exception
      */
-    private function handleNotification(Notification $notification): null
+    private function handleNotification(Notification $notification): NotificationHandled
     {
         $handled = false;
         foreach ($this->notificationHandlers as $handler) {
@@ -140,7 +223,7 @@ readonly class JsonRpcHandler
             $this->logger->warning(\sprintf('No handler found for "%s".', $notification->method), ['notification' => $notification]);
         }
 
-        return null;
+        return new NotificationHandled();
     }
 
     /**
