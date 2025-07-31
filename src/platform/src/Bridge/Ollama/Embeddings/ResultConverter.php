@@ -35,7 +35,7 @@ final class ResultConverter implements ResultConverterInterface
         $data = $result->getData();
 
         if ([] === $data) {
-            throw new RuntimeException('Response does not contain data');
+            throw new RuntimeException('Response does not contain data.');
         }
 
         return new VectorResult(

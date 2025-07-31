@@ -27,7 +27,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 #[UsesClass(VectorResult::class)]
 class ResultConverterTest extends TestCase
 {
-    public function testItConvertsAResponseToAVectorResult(): void
+    public function testItConvertsAResponseToAVectorResult()
     {
         $result = $this->createStub(ResponseInterface::class);
         $result
