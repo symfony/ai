@@ -18,7 +18,6 @@ use Symfony\AI\McpSdk\Message\Factory;
 use Symfony\AI\McpSdk\Server;
 use Symfony\AI\McpSdk\Server\JsonRpcHandler;
 use Symfony\AI\McpSdk\Server\Transport\Sse\Store\CachePoolStore;
-use Symfony\AI\McpSdk\Server\Transport\Sse\StreamTransport;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -33,11 +32,10 @@ final class McpControllerTest extends TestCase
 
     protected function setUp(): void
     {
-        // Create a real Server instance with minimal dependencies
         $messageFactory = new Factory();
         $jsonRpcHandler = new JsonRpcHandler($messageFactory, [], []);
         $this->server = new Server($jsonRpcHandler);
-        
+
         $this->store = $this->createMock(CachePoolStore::class);
         $this->urlGenerator = $this->createMock(UrlGeneratorInterface::class);
 

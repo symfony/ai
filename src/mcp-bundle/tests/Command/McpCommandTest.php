@@ -23,7 +23,6 @@ final class McpCommandTest extends TestCase
 {
     public function testExecuteStartsMcpServer()
     {
-        // Create a real Server instance with minimal dependencies
         $messageFactory = new Factory();
         $jsonRpcHandler = new JsonRpcHandler($messageFactory, [], []);
         $server = new Server($jsonRpcHandler);
@@ -33,9 +32,6 @@ final class McpCommandTest extends TestCase
         $input = new ArrayInput([]);
         $output = new BufferedOutput();
 
-        // The command will connect to the transport
-        // Since SymfonyConsoleTransport reads from input in a loop,
-        // we test that the command starts successfully
         $exitCode = $command->run($input, $output);
 
         $this->assertSame(0, $exitCode);
@@ -43,11 +39,10 @@ final class McpCommandTest extends TestCase
 
     public function testCommandIsNamedCorrectly()
     {
-        // Create a real Server instance with minimal dependencies
         $messageFactory = new Factory();
         $jsonRpcHandler = new JsonRpcHandler($messageFactory, [], []);
         $server = new Server($jsonRpcHandler);
-        
+
         $command = new McpCommand($server);
 
         $this->assertSame('mcp:server', $command->getName());

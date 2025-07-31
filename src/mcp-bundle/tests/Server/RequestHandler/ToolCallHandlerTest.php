@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\McpBundle\Tests\Server\RequestHandler;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpSdk\Capability\Tool\ToolCall;
@@ -23,9 +24,7 @@ use Symfony\AI\McpSdk\Message\Request;
 use Symfony\AI\McpSdk\Message\Response;
 use Symfony\AI\McpSdk\Server\RequestHandler\ToolCallHandler;
 
-/**
- * @coversDefaultClass \Symfony\AI\McpSdk\Server\RequestHandler\ToolCallHandler
- */
+#[CoversClass(ToolCallHandler::class)]
 final class ToolCallHandlerTest extends TestCase
 {
     private ToolExecutorInterface&MockObject $toolExecutor;
@@ -37,27 +36,18 @@ final class ToolCallHandlerTest extends TestCase
         $this->handler = new ToolCallHandler($this->toolExecutor);
     }
 
-    /**
-     * @covers ::supports
-     */
     public function testSupportsToolCallMethod()
     {
         $request = new Request(id: 'test-id', method: 'tools/call', params: ['name' => 'test-tool']);
         $this->assertTrue($this->handler->supports($request));
     }
 
-    /**
-     * @covers ::supports
-     */
     public function testDoesNotSupportOtherMethods()
     {
         $request = new Request(id: 'test-id', method: 'some/other', params: []);
         $this->assertFalse($this->handler->supports($request));
     }
 
-    /**
-     * @covers ::createResponse
-     */
     public function testCreateResponseWithTextResult()
     {
         $request = new Request(
@@ -92,9 +82,6 @@ final class ToolCallHandlerTest extends TestCase
         ], $response->result);
     }
 
-    /**
-     * @covers ::createResponse
-     */
     public function testCreateResponseWithImageResult()
     {
         $request = new Request(id: 'test-id', method: 'tools/call', params: ['name' => 'image-tool']);
@@ -118,9 +105,6 @@ final class ToolCallHandlerTest extends TestCase
         ], $response->result);
     }
 
-    /**
-     * @covers ::createResponse
-     */
     public function testCreateResponseWithResourceResult()
     {
         $request = new Request(id: 'test-id', method: 'tools/call', params: ['name' => 'resource-tool']);
@@ -153,9 +137,6 @@ final class ToolCallHandlerTest extends TestCase
         ], $response->result);
     }
 
-    /**
-     * @covers ::createResponse
-     */
     public function testCreateResponseWithError()
     {
         $request = new Request(id: 'test-id', method: 'tools/call', params: ['name' => 'error-tool']);
@@ -172,9 +153,6 @@ final class ToolCallHandlerTest extends TestCase
         $this->assertTrue($response->result['isError']);
     }
 
-    /**
-     * @covers ::createResponse
-     */
     public function testCreateResponseHandlesExecutionException()
     {
         $request = new Request(id: 'test-id', method: 'tools/call', params: ['name' => 'failing-tool']);
@@ -191,9 +169,6 @@ final class ToolCallHandlerTest extends TestCase
         $this->assertSame('Error while executing tool', $response->message);
     }
 
-    /**
-     * @covers ::createResponse
-     */
     public function testCreateResponseHandlesToolNotFoundException()
     {
         $request = new Request(id: 'test-id', method: 'tools/call', params: ['name' => 'unknown-tool']);
@@ -208,9 +183,6 @@ final class ToolCallHandlerTest extends TestCase
         $this->assertSame('Error while executing tool', $response->message);
     }
 
-    /**
-     * @covers ::createResponse
-     */
     public function testCreateResponseWithoutArguments()
     {
         $request = new Request(id: 'test-id', method: 'tools/call', params: ['name' => 'no-args-tool']);
