@@ -32,7 +32,16 @@ class ResultConverterTest extends TestCase
         $result = $this->createStub(ResponseInterface::class);
         $result
             ->method('toArray')
-            ->willReturn(json_decode($this->getEmbeddingStub(), true));
+            ->willReturn([
+                'model' => 'all-minilm',
+                'embeddings' => [
+                    [0.3, 0.4, 0.4],
+                    [0.0, 0.0, 0.2],
+                ],
+                'total_duration' => 14143917,
+                'load_duration' => 1019500,
+                'prompt_eval_count' => 8,
+            ]);
 
         $vectorResult = (new ResultConverter())->convert(new RawHttpResult($result));
         $convertedContent = $vectorResult->getContent();
@@ -41,21 +50,5 @@ class ResultConverterTest extends TestCase
 
         $this->assertSame([0.3, 0.4, 0.4], $convertedContent[0]->getData());
         $this->assertSame([0.0, 0.0, 0.2], $convertedContent[1]->getData());
-    }
-
-    private function getEmbeddingStub(): string
-    {
-        return <<<'JSON'
-            {
-              "model": "all-minilm",
-              "embeddings": [
-                [0.3, 0.4, 0.4],
-                [0.0, 0.0, 0.2]
-              ],
-              "total_duration": 14143917,
-              "load_duration": 1019500,
-              "prompt_eval_count": 8
-            }
-            JSON;
     }
 }

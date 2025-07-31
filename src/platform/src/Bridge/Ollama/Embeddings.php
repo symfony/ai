@@ -17,9 +17,7 @@ use Symfony\AI\Platform\Model;
 final class Embeddings extends Model
 {
     public const NOMIC_EMBED_TEXT = 'nomic-embed-text';
-
     public const BGE_M3 = 'bge-m3';
-
     public const ALL_MINILM = 'all-minilm';
 
     public function __construct(
