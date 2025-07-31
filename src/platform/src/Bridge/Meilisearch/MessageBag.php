@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Meilisearch;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
@@ -25,7 +26,6 @@ use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
