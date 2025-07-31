@@ -37,7 +37,6 @@ final class ToolCallHandler extends BaseRequestHandler
         try {
             $result = $this->toolExecutor->call(new ToolCall(uniqid('', true), $name, $arguments));
         } catch (ExceptionInterface $e) {
-            dump($e);
             return Error::internalError($message->id, 'Error while executing tool');
         }
 
@@ -48,7 +47,6 @@ final class ToolCallHandler extends BaseRequestHandler
                         if ($resultDetail instanceof Notification) {
                             yield [
                                 'jsonrpc' => '2.0',
-                                //'id' => $message->id,
                                 'method' => 'notifications/progress',
                                 'params' => [
                                     'progress' => 10,

@@ -32,7 +32,6 @@ final readonly class McpHttpStreamController
         $message = $this->messageFactory->create($request->getContent());
         if ($session === null) {
             // Must be an "initialize" request. If not ==> 404.
-            dump($message);
             if ($message->method !== 'initialize') { // @todo do better
                 return new Response(null, Response::HTTP_NOT_FOUND);
             }
@@ -45,19 +44,15 @@ final readonly class McpHttpStreamController
         // If response is not ==> JSON
 
         $response = $this->handler->handleMessage($message);
-        dump($response);
 
         if ($message instanceof Notification) {
             return new Response(null, Response::HTTP_ACCEPTED);
         }
         if ($response instanceof StreamableResponse) {
-            dump('streamable');
             //$transport = new Server\Transport\StreamableHttp\StreamTransport($session->addNewStream(), $session, $response->responses);
             return new StreamedResponse(function () use ($session, $response) {
-                dump('in stream');
                 $streamId = $session->addNewStream();
                 foreach (($response->responses)() as $response) {
-                    dump($response);
                     $eventId = Uuid::v4()->toString();
                     if (is_array($response)) {
                         $rawResponse = json_encode($response, \JSON_THROW_ON_ERROR);
@@ -80,22 +75,11 @@ final readonly class McpHttpStreamController
                 'Mcp-Session-Id' => $session->sessionIdentifier->sessionId->toString(),
             ]);
         }
-        dump('before json response');
         return new JsonResponse($this->handler->encodeResponse($response), Response::HTTP_OK, [
             'Content-Type' => 'application/json',
             'Cache-Control' => 'no-cache',
             'Mcp-Session-Id' => $session->sessionIdentifier->sessionId->toString(),
         ], true);
-        //$content = $request->g
-
-        /*$transport = new Server\Transport\StreamableHttp\StreamTransport($request, $mcpSessionId->sessionId);
-
-        return new StreamedResponse(fn () => $this->server->connect($transport), headers: [
-            'Content-Type' => 'application/json',
-            'Cache-Control' => 'no-cache',
-            'X-Accel-Buffering' => 'no',
-            'Mcp-Session-Id' => $mcpSessionId->sessionId->toString(),
-        ]);*/
     }
 
     /**
