@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Message;
+namespace Symfony\AI\Agent\Chat;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-interface InitializableMessageBagInterface
+interface InitializableMessageStoreInterface
 {
     /**
      * @param array<mixed> $options

@@ -9,9 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Meilisearch;
+namespace Symfony\AI\Agent\Bridge\Meilisearch;
 
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Agent\Chat\InitializableMessageStoreInterface;
+use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
@@ -20,8 +22,7 @@ use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
-use Symfony\AI\Platform\Message\InitializableMessageBagInterface;
-use Symfony\AI\Platform\Message\MessageBag as InMemoryMessageBag;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\SystemMessage;
@@ -31,7 +32,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final readonly class MessageBag implements InitializableMessageBagInterface, MessageBagInterface
+final readonly class MessageStore implements InitializableMessageStoreInterface, MessageStoreInterface
 {
     public function __construct(
         private HttpClientInterface $httpClient,
@@ -41,88 +42,26 @@ final readonly class MessageBag implements InitializableMessageBagInterface, Mes
     ) {
     }
 
-    public function add(MessageInterface $message): void
+    public function save(MessageBagInterface $messages): void
     {
-        $this->request('PUT', \sprintf('indexes/%s/documents', $this->indexName), $this->convertToIndexableArray($message));
+        $messages = $messages->getMessages();
+
+        $this->request('PUT', \sprintf('indexes/%s/documents', $this->indexName), array_map(
+            $this->convertToIndexableArray(...),
+            $messages,
+        ));
     }
 
-    public function getMessages(): array
+    public function load(): MessageBagInterface
     {
         $messages = $this->request('POST', \sprintf('indexes/%s/documents/fetch', $this->indexName));
 
-        return array_map($this->convertToMessage(...), $messages['results']);
+        return new MessageBag(...array_map($this->convertToMessage(...), $messages['results']));
     }
 
-    public function getSystemMessage(): ?SystemMessage
+    public function clear(): void
     {
-        $messages = $this->getMessages();
-
-        foreach ($messages as $message) {
-            if ($message instanceof SystemMessage) {
-                return $message;
-            }
-        }
-
-        return null;
-    }
-
-    public function with(MessageInterface $message): MessageBagInterface
-    {
-        $this->add($message);
-
-        return $this;
-    }
-
-    public function merge(MessageBagInterface $messageBag): MessageBagInterface
-    {
-        $messages = $messageBag->getMessages();
-
-        foreach ($messages as $message) {
-            $this->add($message);
-        }
-
-        return $this;
-    }
-
-    public function withoutSystemMessage(): MessageBagInterface
-    {
-        $messages = $this->request('POST', \sprintf('indexes/%s/documents', $this->indexName), [
-            'filter' => \sprintf('type != "%s"', SystemMessage::class),
-        ]);
-
-        return new InMemoryMessageBag(...array_map(
-            fn (array $message): MessageInterface => $this->convertToMessage($message),
-            $messages['results']),
-        );
-    }
-
-    public function prepend(MessageInterface $message): MessageBagInterface
-    {
-        $this->add($message);
-
-        return $this;
-    }
-
-    public function containsAudio(): bool
-    {
-        foreach ($this->getMessages() as $message) {
-            if ($message instanceof UserMessage && $message->hasAudioContent()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function containsImage(): bool
-    {
-        foreach ($this->getMessages() as $message) {
-            if ($message instanceof UserMessage && $message->hasImageContent()) {
-                return true;
-            }
-        }
-
-        return false;
+        $this->request('DELETE', \sprintf('indexes/%s/documents', $this->indexName));
     }
 
     public function initialize(array $options = []): void
@@ -135,11 +74,6 @@ final readonly class MessageBag implements InitializableMessageBagInterface, Mes
             'uid' => $this->indexName,
             'primaryKey' => 'id',
         ]);
-    }
-
-    public function count(): int
-    {
-        return \count($this->getMessages());
     }
 
     /**

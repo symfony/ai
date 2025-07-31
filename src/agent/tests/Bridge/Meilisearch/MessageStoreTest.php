@@ -9,18 +9,19 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\Meilisearch;
+namespace Symfony\AI\Agent\Tests\Bridge\Meilisearch;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Meilisearch\MessageBag;
+use Symfony\AI\Agent\Bridge\Meilisearch\MessageStore;
 use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
-#[CoversClass(MessageBag::class)]
-final class MessageBagTest extends TestCase
+#[CoversClass(MessageStore::class)]
+final class MessageStoreTest extends TestCase
 {
     public function testStoreCannotInitializeOnInvalidResponse()
     {
@@ -35,7 +36,7 @@ final class MessageBagTest extends TestCase
             ]),
         ], 'http://localhost:7700');
 
-        $store = new MessageBag(
+        $store = new MessageStore(
             $httpClient,
             'http://localhost:7700',
             'test',
@@ -71,7 +72,7 @@ final class MessageBagTest extends TestCase
             ]),
         ], 'http://localhost:7700');
 
-        $store = new MessageBag(
+        $store = new MessageStore(
             $httpClient,
             'http://localhost:7700',
             'test',
@@ -96,7 +97,7 @@ final class MessageBagTest extends TestCase
             ]),
         ], 'http://localhost:7700');
 
-        $store = new MessageBag(
+        $store = new MessageStore(
             $httpClient,
             'http://localhost:7700',
             'test',
@@ -106,7 +107,7 @@ final class MessageBagTest extends TestCase
         self::expectException(ClientException::class);
         self::expectExceptionMessage('HTTP 400 returned for "http://localhost:7700/indexes/test/documents".');
         self::expectExceptionCode(400);
-        $store->add(Message::ofUser('Hello there'));
+        $store->save(new MessageBag(Message::ofUser('Hello there')));
     }
 
     public function testStoreCanAdd()
@@ -123,14 +124,14 @@ final class MessageBagTest extends TestCase
             ]),
         ], 'http://localhost:7700');
 
-        $store = new MessageBag(
+        $store = new MessageStore(
             $httpClient,
             'http://localhost:7700',
             'test',
             'test',
         );
 
-        $store->add(Message::ofUser('Hello there'));
+        $store->save(new MessageBag(Message::ofUser('Hello there')));
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -148,7 +149,7 @@ final class MessageBagTest extends TestCase
             ]),
         ], 'http://localhost:7700');
 
-        $store = new MessageBag(
+        $store = new MessageStore(
             $httpClient,
             'http://localhost:7700',
             'test',
@@ -158,6 +159,6 @@ final class MessageBagTest extends TestCase
         self::expectException(ClientException::class);
         self::expectExceptionMessage('HTTP 400 returned for "http://localhost:7700/indexes/test/documents/fetch".');
         self::expectExceptionCode(400);
-        $store->getMessages();
+        $store->load();
     }
 }
