@@ -20,10 +20,8 @@ use Symfony\Component\Uid\Uuid;
 final readonly class McpHttpStreamController
 {
     public function __construct(
-        //private Server                   $server,
         private Server\JsonRpcHandler    $handler,
         private Factory $messageFactory,
-        //private Server\Transport\Sse\StoreInterface $store,
         private SessionFactory $sessionFactory,
     ) {
     }
@@ -127,6 +125,7 @@ final readonly class McpHttpStreamController
                     if ($events === []) {
                         usleep(1000);
                     }
+                    // @todo we should detect here that the "real" response has been sent and close the stream
                 } while (! ($lastEvent instanceof \Symfony\AI\McpSdk\Message\Response) && $i++ < 50);
             }, headers: [
                 'Content-Type' => 'text/event-stream',
