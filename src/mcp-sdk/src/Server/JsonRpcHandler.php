@@ -86,31 +86,6 @@ readonly class JsonRpcHandler
         }
     }
 
-    public function isInitializeRequest(string $input): bool
-    {
-        // @todo we should prevent multiple calls to messageFactory for the same message
-        $this->logger->info('Received message to process', ['message' => $input]);
-        try {
-            $messages = $this->messageFactory->create($input);
-        } catch (\JsonException $e) {
-            $this->logger->warning('Failed to decode json message', ['exception' => $e]);
-
-            return false;
-        }
-        if (!isset($messages[0]) || !$messages[0] instanceof Request) {
-            return false;
-        }
-        $request = $messages[0];
-
-        foreach ($this->requestHandlers as $handler) {
-            if ($handler->supports($request)) {
-                return $handler instanceof InitializeHandler;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * @param Notification|Request|InvalidInputMessageException $message
      * @return Error|Response|StreamableResponse|NotificationHandled|null
