@@ -26,7 +26,9 @@ use Symfony\Component\Uid\Uuid;
 final class McpControllerTest extends TestCase
 {
     private Server $server;
+    /** @var CachePoolStore&MockObject */
     private CachePoolStore&MockObject $store;
+    /** @var UrlGeneratorInterface&MockObject */
     private UrlGeneratorInterface&MockObject $urlGenerator;
     private McpController $controller;
 
@@ -36,8 +38,13 @@ final class McpControllerTest extends TestCase
         $jsonRpcHandler = new JsonRpcHandler($messageFactory, [], []);
         $this->server = new Server($jsonRpcHandler);
 
-        $this->store = $this->createMock(CachePoolStore::class);
-        $this->urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+        /** @var CachePoolStore&MockObject $store */
+        $store = $this->createMock(CachePoolStore::class);
+        $this->store = $store;
+        
+        /** @var UrlGeneratorInterface&MockObject $urlGenerator */
+        $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+        $this->urlGenerator = $urlGenerator;
 
         $this->controller = new McpController(
             $this->server,

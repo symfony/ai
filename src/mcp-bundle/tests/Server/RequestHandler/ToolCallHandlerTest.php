@@ -14,6 +14,7 @@ namespace Symfony\AI\McpBundle\Tests\Server\RequestHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\McpBundle\Exception\RuntimeException;
 use Symfony\AI\McpSdk\Capability\Tool\ToolCall;
 use Symfony\AI\McpSdk\Capability\Tool\ToolCallResult;
 use Symfony\AI\McpSdk\Capability\Tool\ToolExecutorInterface;
@@ -159,7 +160,7 @@ final class ToolCallHandlerTest extends TestCase
 
         $this->toolExecutor->expects($this->once())
             ->method('call')
-            ->willThrowException(new ToolExecutionException(new ToolCall('test-id', 'failing-tool'), new \RuntimeException('Tool failed')));
+            ->willThrowException(new ToolExecutionException(new ToolCall('test-id', 'failing-tool'), new RuntimeException('Tool failed')));
 
         $response = $this->handler->createResponse($request);
 
