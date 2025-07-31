@@ -45,6 +45,7 @@ CHANGELOG
    - Qdrant
    - SurrealDB
    - Neo4j
+   - ClickHouse
  * Add Retrieval Augmented Generation (RAG) support:
    - Document embedding storage
    - Similarity search for relevant documents
