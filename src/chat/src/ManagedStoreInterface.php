@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Chat;
 
+/**
+ * @author Guillaume Loulier <personal@guillaumeloulier.fr>
+ */
 interface ManagedStoreInterface
 {
     /**
