@@ -15,6 +15,7 @@ use Symfony\AI\McpSdk\Exception\ExceptionInterface;
 use Symfony\AI\McpSdk\Message\Error;
 use Symfony\AI\McpSdk\Message\Request;
 use Symfony\AI\McpSdk\Message\Response;
+use Symfony\AI\McpSdk\Message\StreamableResponse;
 
 interface RequestHandlerInterface
 {
@@ -23,5 +24,5 @@ interface RequestHandlerInterface
     /**
      * @throws ExceptionInterface When the handler encounters an error processing the request
      */
-    public function createResponse(Request $message): Response|Error;
+    public function createResponse(Request $message): StreamableResponse|Response|Error;
 }

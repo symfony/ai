@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Uid\Uuid;
 
-final readonly class McpController
+final readonly class McpSseController
 {
     public function __construct(
         private Server $server,

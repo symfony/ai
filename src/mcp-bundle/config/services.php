@@ -11,6 +11,9 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Symfony\AI\McpBundle\Session\SessionIdentifierResolver;
+use Symfony\AI\McpBundle\Session\SessionResolver;
+use Symfony\AI\McpBundle\Session\SessionSubscriber;
 use Symfony\AI\McpSdk\Capability\ToolChain;
 use Symfony\AI\McpSdk\Message\Factory;
 use Symfony\AI\McpSdk\Server;
@@ -21,6 +24,8 @@ use Symfony\AI\McpSdk\Server\RequestHandler\PingHandler;
 use Symfony\AI\McpSdk\Server\RequestHandler\ToolCallHandler;
 use Symfony\AI\McpSdk\Server\RequestHandler\ToolListHandler;
 use Symfony\AI\McpSdk\Server\Transport\Sse\Store\CachePoolStore;
+use Symfony\AI\McpSdk\Server\Transport\StreamableHttp\Session\SessionIdentifierFactory;
+use Symfony\AI\McpSdk\Server\Transport\StreamableHttp\Session\SessionPoolStorage;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
@@ -50,6 +55,7 @@ return static function (ContainerConfigurator $container): void {
 
         ->set('mcp.message_factory', Factory::class)
             ->args([])
+            ->alias(Factory::class, 'mcp.message_factory')
         ->set('mcp.server.json_rpc', JsonRpcHandler::class)
             ->args([
                 service('mcp.message_factory'),
@@ -57,6 +63,7 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('mcp.server.notification_handler'),
                 service('logger')->ignoreOnInvalid(),
             ])
+            ->alias(JsonRpcHandler::class, 'mcp.server.json_rpc')
         ->set('mcp.server', Server::class)
             ->args([
                 service('mcp.server.json_rpc'),
@@ -67,6 +74,34 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('cache.app'),
             ])
+        ->set('mcp.server.http_stream.session.identifier_factory', SessionIdentifierFactory::class)
+            ->args([
+                service('security')->nullOnInvalid(),
+            ])
+            ->alias(SessionIdentifierFactory::class, 'mcp.server.http_stream.session.identifier_factory')
+        ->set('mcp.server.http_stream.session.identifier_resolver', SessionIdentifierResolver::class)
+            ->tag('controller.argument_value_resolver')
+        ->set('mcp.server.http_stream.session.resolver', SessionResolver::class)
+            ->tag('controller.argument_value_resolver')
+        ->set('mcp.server.http_stream.session.pool', SessionPoolStorage::class)
+            ->args([
+                service('cache.app'),
+                param('mcp.http_stream.session.ttl'),
+            ])
+            ->alias(Server\Transport\StreamableHttp\SessionStorageInterface::class, 'mcp.server.http_stream.session.pool')
+        ->set('mcp.server.http_stream.session.subscriber', SessionSubscriber::class)
+            ->args([
+                service('mcp.server.http_stream.session.identifier_factory'),
+                service('mcp.server.http_stream.session.factory'),
+            ])
+            ->tag('kernel.event_subscriber')
+            ->alias(SessionSubscriber::class, 'mcp.server.http_stream.session.subscriber')
+        ->set('mcp.server.http_stream.session.factory', Server\Transport\StreamableHttp\Session\SessionFactory::class)
+            ->args([
+                service('mcp.server.http_stream.session.identifier_factory'),
+                service('mcp.server.http_stream.session.pool'),
+            ])
+            ->alias(Server\Transport\StreamableHttp\Session\SessionFactory::class, 'mcp.server.http_stream.session.factory')
         ->set('mcp.tool_chain', ToolChain::class)
             ->args([
                 tagged_iterator('mcp.tool'),
