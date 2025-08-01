@@ -15,6 +15,7 @@ use Codewithkyrian\ChromaDB\Client as ChromaDbClient;
 use MongoDB\Client as MongoDbClient;
 use Probots\Pinecone\Client as PineconeClient;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Store\Bridge\Redis\Distance;
 use Symfony\AI\Store\StoreInterface;
 
 return static function (DefinitionConfigurator $configurator): void {
@@ -252,10 +253,30 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->end()
                         ->end()
                     ->end()
+                    ->arrayNode('redis')
+                        ->normalizeKeys(false)
+                        ->useAttributeAsKey('name')
+                        ->arrayPrototype()
+                            ->children()
+                                ->variableNode('connection_parameters')
+                                    ->info('see https://github.com/phpredis/phpredis?tab=readme-ov-file#example-1')
+                                    ->isRequired()
+                                    ->cannotBeEmpty()
+                                ->end()
+                                ->scalarNode('index_name')->isRequired()->cannotBeEmpty()->end()
+                                ->scalarNode('key_prefix')->defaultValue('vector:')->end()
+                                ->enumNode('distance')
+                                    ->info('Distance metric to use for vector similarity search')
+                                    ->values(Distance::cases())
+                                    ->defaultValue(Distance::Cosine)
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
                     ->arrayNode('surreal_db')
                         ->normalizeKeys(false)
                         ->useAttributeAsKey('name')
-                            ->arrayPrototype()
+                        ->arrayPrototype()
                             ->children()
                                 ->scalarNode('endpoint')->cannotBeEmpty()->end()
                                 ->scalarNode('username')->cannotBeEmpty()->end()
