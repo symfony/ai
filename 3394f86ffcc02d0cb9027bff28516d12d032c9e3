@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-31T13:13:39Z
+
+We should merge https://github.com/symfony/ai/pull/233 first and rebase this PR then
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-01T08:14:40Z
+
+Rebase unlocked :-)
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-08-01T08:38:18Z
+
+Here we go! I have rebased, and added (true) support for param bindings
