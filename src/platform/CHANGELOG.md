@@ -14,7 +14,7 @@ CHANGELOG
    - AWS Bedrock (Anthropic Claude, Meta Llama, Amazon Nova)
    - Mistral AI (language models and embeddings)
    - Meta Llama (via Azure, Ollama, Replicate, AWS Bedrock)
-   - Ollama (local model hosting)
+   - Ollama (local model hosting and embeddings)
    - Replicate (cloud-based model hosting)
    - OpenRouter (Google Gemini, DeepSeek R1)
    - Voyage AI (specialized embeddings)
