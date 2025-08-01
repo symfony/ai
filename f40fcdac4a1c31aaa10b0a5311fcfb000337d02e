@@ -1,0 +1,128 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-24T19:12:29Z
+
+Yea, the error handling is not great across the entire layer - what do you think about #167?
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-07-25T10:25:17Z
+
+> what do you think about #167?
+
+I think it's better. But, IMHO, it's not enough. Some important information from the raw response (see this PR description) are hidden. They must be shown to the end user to be able to debug easily.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-07-25T10:33:12Z
+
+True, we should have as much helpful information as possible.
+The challenge here is that - at least ideally - a `ResultConverter` should not rely on specifics of the used transport (e.g. HTTP) - but maybe that's too far off for now and it's alright to have that dependency for now
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-07-31T09:34:47Z
+
+I have rebased my PR in ordre to fix conflict.
+
+Allow me to dump everything I have in mind...
+
+I think another solution would be to check the status code of the response, directly after making the request: https://github.com/symfony/ai/blob/59f14223f4218b7036b5afe778837c0392f0e4b3/src/platform/src/Bridge/OpenAi/Embeddings/ModelClient.php#L42-L48
+
+But I guess this would break the laziness. This is why you didn't do it. So it's a nogo, right?
+
+So my patch should be applied everywhere results are consumed? It's a bit boring, but doable.
+
+Since I dislike boring tasks (who doesn't 😅), another solution could be do add a wrapper (decorator) around the result to do the check for us automatically.
+
+---
+
+Side Note: I didn't know the project quite well yet, And I'm not aware of all the choices you made. But ATM I fail to see the benefits of some decoupling. There are some indirection that are a bit hard to "decode". If you agree, I would like to question a bit your architecture decisions. (I could open a new issue if you prefer, and copy/paste everything there)
+
+### `ModelClient` and `ResultConverter`
+
+1. The `Platform` has many model clients
+2. And it has many converters
+3. But the clients are the converters are strongly bound.
+   Example, with the firsts PlatformFactory I found:
+   * https://github.com/symfony/ai/blob/main/src/platform/src/Bridge/Albert/PlatformFactory.php
+   * https://github.com/symfony/ai/blob/main/src/platform/src/Bridge/Gemini/PlatformFactory.php
+   * https://github.com/symfony/ai/blob/main/src/platform/src/Bridge/Ollama/PlatformFactory.php
+   * https://github.com/symfony/ai/blob/main/src/platform/src/Bridge/OpenAi/PlatformFactory.php
+   * https://github.com/symfony/ai/blob/main/src/platform/src/Bridge/Voyage/PlatformFactory.php
+   Every single time, there is a 1-1 match between the model and the client
+If we refactor this layer, to remove this decoupling, the `Platform` class could be simpler. The `convertResult()` method could be removed as well as `ResultConverterInterface::support()`.
+
+I guess you don't want to bloat an interface with `support()` + `request()` + `convert()` and you want to keep some flexibility between the client and the converter. A solution would be to add kind of proxy object, that embed the client and the converter. We keep 2 small interfaces, some decoupling, composition is still doable, but overall management is simpler.
+
+And if we push this further, we would know that in ` Symfony\AI\Platform\Bridge\OpenAi\Embeddings\ResultConverter`, `$result` is an instance of `RawHttpResult`.
+
+### `ResultPromise`
+
+This is the bit that trigger me the most 🤔 I guess it exist to add laziness the the component. The code is a bit hard to handle (Yes, I'm nitpicking a little 🤓)
+
+https://github.com/symfony/ai/blob/main/src/platform/src/Result/ResultPromise.php#L48
+
+The closure is not typed :
+* We don't know what arguments it accepts
+* We don't know what it returns
+
+Adding some PHPDoc could help.
+
+But, Instead of passing a closure, let's pass an instance of `ResultConverterInterface`:
+
+```diff
+diff --git a/src/platform/src/Result/ResultPromise.php b/src/platform/src/Result/ResultPromise.php
+index acb49de..1eaf460 100644
+--- a/src/platform/src/Result/ResultPromise.php
++++ b/src/platform/src/Result/ResultPromise.php
+@@ -12,6 +12,7 @@
+ namespace Symfony\AI\Platform\Result;
+
+ use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
++use Symfony\AI\Platform\ResultConverterInterface;
+ use Symfony\AI\Platform\Vector\Vector;
+
+ /**
+@@ -26,7 +27,7 @@ final class ResultPromise
+      * @param array<string, mixed> $options
+      */
+     public function __construct(
+-        private readonly \Closure $resultConverter,
++        private readonly ResultConverterInterface $resultConverter,
+         private readonly RawResultInterface $rawResult,
+         private readonly array $options = [],
+     ) {
+@@ -45,7 +46,7 @@ final class ResultPromise
+     public function await(): ResultInterface
+     {
+         if (!$this->isConverted) {
+-            $this->convertedResult = ($this->resultConverter)($this->rawResult, $this->options);
++            $this->convertedResult = $this->resultConverter->convert($this->rawResult, $this->options);
+
+             if (null === $this->convertedResult->getRawResult()) {
+                 // Fallback to set the raw result when it was not handled by the ResultConverter itself
+```
+
+Passing a closure might seems to be less flexible, but signature must be respected, it's the same, right?!
+
+I don't know yet if it's a good idea, but we could go further with the Proxy. Instead of injecting the Converter, we could inject the proxy. Now the promise would get everything it need : the client to perform the request (with an option to do it at instantiation) and things to decode the request lazily
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-01T06:44:35Z
+
+Hey @lyrixx - thanks for that, got little feedback on architecture yet and I'm really happy to discuss more of the architecture and challenge what we have here :)
+I'm also still not happy and have a lot of things in mind - so this really might help and i think you have very valid points here.
+
+Let me share a bit of reasoning and challenge that I faced - at least two things:
+
+1
+We want to support not only HTTP, but also some PHP-based runtimes like [TransformersPHP](https://github.com/CodeWithKyrian/transformers-php) and [ORT](https://github.com/krakjoe/ort). (and what else comes up). and also the AWS Bedrock bridge currently doesn't use the "standard" http approach. but you're totally right, the closure handling was rather a poor shot when removing the http dep in the main Platform, see #142  - totally open for a better defined contract there.
+
+2
+Models can run on different platforms and with different. I went with separating the `ModelClient` and `ResultConverter` initially because of GPT and Whisper running on Azure and OpenAI - and Azure not only running OpenAI models, but way more. On top models like Llama and Mistral run on varies platforms, that for example need different authentication strategies. Then to understand more, I added bridge after bridge to see challenge - that also explains why some of the bridges are quite slim and lack support for features/models. With https://github.com/php-llm/llm-chain/pull/326 I introduced a mechanism to have more synergies while handling the input payload and with #136 I'm trying an approach to centralize some of the `ResultConverter` duplication - not sure if that's going to far with that json path idea.
+
+I somewhere have one refactoring branch that tried a `Connector` layer in-between to get more structure in the tight coupling here and there, but didn't really continue since the need wasn't that high - but that's maybe similar to your proxy idea?
+
+but yeah, feels like we should move that to an issue :D
