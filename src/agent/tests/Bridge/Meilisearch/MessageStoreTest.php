@@ -12,13 +12,20 @@
 namespace Symfony\AI\Agent\Tests\Bridge\Meilisearch;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Bridge\Meilisearch\MessageStore;
+use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\SystemMessage;
+use Symfony\AI\Platform\Message\ToolCallMessage;
+use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\Uid\Uuid;
 
 #[CoversClass(MessageStore::class)]
 final class MessageStoreTest extends TestCase
@@ -160,5 +167,144 @@ final class MessageStoreTest extends TestCase
         self::expectExceptionMessage('HTTP 400 returned for "http://localhost:7700/indexes/test/documents/fetch".');
         self::expectExceptionCode(400);
         $store->load();
+    }
+
+    #[DataProvider('provideMessages')]
+    public function testStoreCanRetrieveMessages(array $payload)
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'results' => [
+                    $payload,
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://localhost:7700');
+
+        $store = new MessageStore(
+            $httpClient,
+            'http://localhost:7700',
+            'test',
+            'test',
+        );
+
+        $messageBag = $store->load();
+
+        $this->assertCount(1, $messageBag);
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCannotDeleteMessagesOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'message' => 'error',
+                'code' => 'index_not_found',
+                'type' => 'invalid_request',
+                'link' => 'https://docs.meilisearch.com/errors#index_not_found',
+            ], [
+                'http_code' => 400,
+            ]),
+        ], 'http://localhost:7700');
+
+        $store = new MessageStore(
+            $httpClient,
+            'http://localhost:7700',
+            'test',
+            'test',
+        );
+
+        self::expectException(ClientException::class);
+        self::expectExceptionMessage('HTTP 400 returned for "http://localhost:7700/indexes/test/documents".');
+        self::expectExceptionCode(400);
+        $store->clear();
+    }
+
+    public function testStoreCanDelete()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'taskUid' => 1,
+                'indexUid' => 'test',
+                'status' => 'enqueued',
+                'type' => 'indexDeletion',
+                'enqueuedAt' => '2025-01-01T00:00:00Z',
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://localhost:7700');
+
+        $store = new MessageStore(
+            $httpClient,
+            'http://localhost:7700',
+            'test',
+            'test',
+        );
+
+        $store->clear();
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public static function provideMessages(): \Generator
+    {
+        yield UserMessage::class => [
+            [
+                'id' => Uuid::v7()->toRfc4122(),
+                'type' => UserMessage::class,
+                'content' => '',
+                'contentAsBase64' => [
+                    [
+                        'type' => Text::class,
+                        'content' => 'What is the Symfony framework?',
+                    ],
+                ],
+                'toolsCalls' => [],
+            ],
+        ];
+        yield SystemMessage::class => [
+            [
+                'id' => Uuid::v7()->toRfc4122(),
+                'type' => SystemMessage::class,
+                'content' => 'Hello there',
+                'contentAsBase64' => [],
+                'toolsCalls' => [],
+            ],
+        ];
+        yield AssistantMessage::class => [
+            [
+                'id' => Uuid::v7()->toRfc4122(),
+                'type' => AssistantMessage::class,
+                'content' => 'Hello there',
+                'contentAsBase64' => [],
+                'toolsCalls' => [
+                    [
+                        'id' => '1',
+                        'name' => 'foo',
+                        'function' => [
+                            'name' => 'foo',
+                            'arguments' => '{}',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        yield ToolCallMessage::class => [
+            [
+                'id' => Uuid::v7()->toRfc4122(),
+                'type' => ToolCallMessage::class,
+                'content' => 'Hello there',
+                'contentAsBase64' => [],
+                'toolsCalls' => [
+                    'id' => '1',
+                    'name' => 'foo',
+                    'function' => [
+                        'name' => 'foo',
+                        'arguments' => '{}',
+                    ],
+                ],
+            ],
+        ];
     }
 }

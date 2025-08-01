@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Bridge\Meilisearch;
 use Symfony\AI\Agent\Chat\InitializableMessageStoreInterface;
 use Symfony\AI\Agent\Chat\MessageStoreInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
+use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
@@ -26,7 +27,9 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\SystemMessage;
+use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -77,7 +80,7 @@ final readonly class MessageStore implements InitializableMessageStoreInterface,
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param array<string, mixed>|list<array<string, mixed>> $payload
      *
      * @return array<string, mixed>
      */
@@ -94,12 +97,28 @@ final readonly class MessageStore implements InitializableMessageStoreInterface,
         return $result->toArray();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function convertToIndexableArray(MessageInterface $message): array
     {
+        $toolsCalls = [];
+
+        if ($message instanceof AssistantMessage && $message->hasToolCalls()) {
+            $toolsCalls = array_map(
+                static fn (ToolCall $toolCall): array => $toolCall->jsonSerialize(),
+                $message->toolCalls,
+            );
+        }
+
+        if ($message instanceof ToolCallMessage) {
+            $toolsCalls = $message->toolCall->jsonSerialize();
+        }
+
         return [
             'id' => $message->getId()->toRfc4122(),
             'type' => $message::class,
-            'content' => ($message instanceof SystemMessage || $message instanceof AssistantMessage) ? $message->content : '',
+            'content' => ($message instanceof SystemMessage || $message instanceof AssistantMessage || $message instanceof ToolCallMessage) ? $message->content : '',
             'contentAsBase64' => ($message instanceof UserMessage && [] !== $message->content) ? array_map(
                 static fn (ContentInterface $content) => [
                     'type' => $content::class,
@@ -110,15 +129,18 @@ final readonly class MessageStore implements InitializableMessageStoreInterface,
                         Audio::class => $content->asBase64(),
                         ImageUrl::class,
                         DocumentUrl::class => $content->url,
-                        default => throw new \LogicException(\sprintf('Unknown content type "%s".', $content::class)),
+                        default => throw new LogicException(\sprintf('Unknown content type "%s".', $content::class)),
                     },
                 ],
                 $message->content,
             ) : [],
-            'toolsCalls' => ($message instanceof AssistantMessage && $message->hasToolCalls()) ? $message->toolCalls : [],
+            'toolsCalls' => $toolsCalls,
         ];
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     private function convertToMessage(array $payload): MessageInterface
     {
         $type = $payload['type'];
@@ -127,14 +149,29 @@ final readonly class MessageStore implements InitializableMessageStoreInterface,
 
         return match ($type) {
             SystemMessage::class => new SystemMessage($content),
-            AssistantMessage::class => new AssistantMessage($content, $payload['toolsCalls'] ?? []),
+            AssistantMessage::class => new AssistantMessage($content, array_map(
+                static fn (array $toolsCall): ToolCall => new ToolCall(
+                    $toolsCall['id'],
+                    $toolsCall['function']['name'],
+                    json_decode($toolsCall['function']['arguments'], true)
+                ),
+                $payload['toolsCalls'],
+            )),
             UserMessage::class => new UserMessage(...array_map(
                 static fn (array $contentAsBase64) => \in_array($contentAsBase64['type'], [File::class, Image::class, Audio::class], true)
                     ? $contentAsBase64['type']::fromDataUrl($contentAsBase64['content'])
                     : new $contentAsBase64['type']($contentAsBase64['content']),
                 $contentAsBase64,
             )),
-            default => throw new \LogicException(\sprintf('Unknown message type "%s".', $type)),
+            ToolCallMessage::class => new ToolCallMessage(
+                new ToolCall(
+                    $payload['toolsCalls']['id'],
+                    $payload['toolsCalls']['function']['name'],
+                    json_decode($payload['toolsCalls']['function']['arguments'], true)
+                ),
+                $content
+            ),
+            default => throw new LogicException(\sprintf('Unknown message type "%s".', $type)),
         };
     }
 }
