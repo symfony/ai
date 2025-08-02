@@ -34,7 +34,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 // initialize the store
 $store = Store::fromDbal(
     connection: DriverManager::getConnection((new DsnParser())->parse(env('MARIADB_URI'))),
-    tableName: 'my_table',
+    tableName: 'my_table_gemini',
     indexName: 'my_index',
 );
 
