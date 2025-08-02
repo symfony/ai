@@ -1,9 +1,5 @@
-{% block start %}
-    <twig:Turbo:Stream:Update target="#bot-message-streamed"/>
-{% endblock %}
-
-{% block partial %}
-    <twig:Turbo:Stream:Append target="#bot-message-streamed">{{ part }}</twig:Turbo:Stream:Append>
+{% block update %}
+    <twig:Turbo:Stream:Update target="#bot-message-streamed">{{ message|markdown_to_html }}</twig:Turbo:Stream:Update>
 {% endblock %}
 
 {% block end %}

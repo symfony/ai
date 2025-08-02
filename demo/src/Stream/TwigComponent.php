@@ -77,15 +77,8 @@ final class TwigComponent extends AbstractController
             $request->setSession($actualSession);
             $response = $this->chat->getAssistantResponse($messages);
 
-            $thinking = true;
-            foreach ($response as $chunk) {
-                // Remove "Thinking..." when we receive something
-                if ($thinking && trim($chunk)) {
-                    $thinking = false;
-                    yield new ServerEvent(explode("\n", $this->renderBlockView('_stream.html.twig', 'start')));
-                }
-
-                yield new ServerEvent(explode("\n", $this->renderBlockView('_stream.html.twig', 'partial', ['part' => $chunk])));
+            foreach ($response as $partialMessage) {
+                yield new ServerEvent(explode("\n", $this->renderBlockView('_stream.html.twig', 'update', ['message' => $partialMessage])));
             }
 
             yield new ServerEvent(explode("\n", $this->renderBlockView('_stream.html.twig', 'end', ['message' => $response->getReturn()])));

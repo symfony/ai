@@ -57,8 +57,7 @@ final class Chat
 
         $response = '';
         foreach ($stream as $chunk) {
-            yield $chunk;
-            $response .= $chunk;
+            yield $response .= $chunk;
         }
 
         $assistantMessage = Message::ofAssistant($response);
