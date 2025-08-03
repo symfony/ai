@@ -18,23 +18,31 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\TextResult;
 
-final readonly class Chat implements ChatInterface
+/**
+ * @author Christopher Hertel <mail@christopher-hertel.de>
+ */
+final class Chat implements ChatInterface
 {
+    private string $id;
+
     public function __construct(
-        private AgentInterface $agent,
-        private MessageStoreInterface $store,
+        private readonly AgentInterface $agent,
+        private readonly MessageStoreInterface $store,
     ) {
+        $this->id = $this->store->getId();
     }
 
-    public function initiate(MessageBag $messages): void
+    public function initiate(MessageBag $messages, ?string $id = null): void
     {
+        $this->id = $id ?? $this->id;
+
         $this->store->clear();
-        $this->store->save($messages);
+        $this->store->save($messages, $this->id);
     }
 
-    public function submit(UserMessage $message): AssistantMessage
+    public function submit(UserMessage $message, ?string $id = null): AssistantMessage
     {
-        $messages = $this->store->load();
+        $messages = $this->store->load($id ?? $this->id);
 
         $messages->add($message);
         $result = $this->agent->call($messages);
@@ -44,8 +52,18 @@ final readonly class Chat implements ChatInterface
         $assistantMessage = Message::ofAssistant($result->getContent());
         $messages->add($assistantMessage);
 
-        $this->store->save($messages);
+        $this->store->save($messages, $this->id);
 
         return $assistantMessage;
+    }
+
+    public function getCurrentMessageBag(): MessageBag
+    {
+        return $this->store->load($this->id);
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
     }
 }

@@ -79,6 +79,17 @@
                 <span class="label">Tool Calls</span>
             </div>
         </div>
+        <div class="metric-divider"></div>
+        <div class="metric-group">
+            <div class="metric">
+                <span class="value">{{- collector.chatsIds|length -}}</span>
+                <span class="label">Chats</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{- collector.messageStores|length -}}</span>
+                <span class="label">Chats calls</span>
+            </div>
+        </div>
     </section>
     <h3>Platform Calls</h3>
     {% if collector.platformCalls|length %}
@@ -175,6 +186,63 @@
     {% else %}
         <div class="empty">
             <p>No platform calls were made.</p>
+        </div>
+    {% endif %}
+
+    <h3>Chats</h3>
+    {% if collector.messageStores|length %}
+        <div class="sf-tabs">
+            <div class="tab {{ collector.messageStores|length == 0 ? 'disabled' }}">
+                <h3 class="tab-title">Chats Calls <span class="badge">{{ collector.messageStores|length }}</span></h3>
+                <div class="tab-content">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Date</th>
+                                <th>Messages</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for id, messageBag in collector.messageStores %}
+                            <tr>
+                                <th>{{ id }}</th>
+                                <td>
+                                    {% if messageBag %}
+                                        <ul>
+                                            {% for bag in messageBag %}
+                                                <ul>
+                                                    <li>{{ bag['time']|date }}</li>
+                                                </ul>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <i>none</i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if messageBag %}
+                                        <ul>
+                                            {% for bag in messageBag %}
+                                                <ul>
+                                                    <li>{{ bag['time']|date }}</li>
+                                                </ul>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <i>none</i>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty">
+            <p>No messages were stored.</p>
         </div>
     {% endif %}
 
