@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\AiBundle\Profiler;
 
+use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Agent\ChatInterface;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Tool\Tool;
@@ -24,6 +26,7 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  *
  * @phpstan-import-type PlatformCallData from TraceablePlatform
  * @phpstan-import-type ToolCallData from TraceableToolbox
+ * @phpstan-import-type MessageStoreData from TraceableMessageStore
  */
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
 {
@@ -38,16 +41,32 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     private readonly array $toolboxes;
 
     /**
-     * @param TraceablePlatform[] $platforms
-     * @param TraceableToolbox[]  $toolboxes
+     * @var MessageStoreInterface[]
+     */
+    private readonly array $messageStores;
+
+    /**
+     * @var ChatInterface[]
+     */
+    private readonly array $chats;
+
+    /**
+     * @param TraceablePlatform[]     $platforms
+     * @param TraceableToolbox[]      $toolboxes
+     * @param TraceableMessageStore[] $messageStores
+     * @param TraceableChat[]         $chats
      */
     public function __construct(
         iterable $platforms,
         private readonly ToolboxInterface $defaultToolBox,
         iterable $toolboxes,
+        iterable $messageStores,
+        iterable $chats,
     ) {
         $this->platforms = $platforms instanceof \Traversable ? iterator_to_array($platforms) : $platforms;
         $this->toolboxes = $toolboxes instanceof \Traversable ? iterator_to_array($toolboxes) : $toolboxes;
+        $this->messageStores = $messageStores instanceof \Traversable ? iterator_to_array($messageStores) : $messageStores;
+        $this->chats = $chats instanceof \Traversable ? iterator_to_array($chats) : $chats;
     }
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
@@ -60,7 +79,9 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         $this->data = [
             'tools' => $this->defaultToolBox->getTools(),
             'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
-            'tool_calls' => array_merge(...array_map(fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
+            'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox): array => $toolbox->calls, $this->toolboxes)),
+            'message_stores' => array_merge(...array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->messages, $this->messageStores)),
+            'chats_ids' => array_map(static fn (TraceableChat $chat): string => $chat->getId(), $this->chats),
         ];
     }
 
@@ -91,6 +112,22 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function getToolCalls(): array
     {
         return $this->data['tool_calls'] ?? [];
+    }
+
+    /**
+     * @return MessageStoreData[]
+     */
+    public function getMessageStores(): array
+    {
+        return $this->data['message_stores'] ?? [];
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getChatsIds(): array
+    {
+        return $this->data['chats_ids'] ?? [];
     }
 
     /**

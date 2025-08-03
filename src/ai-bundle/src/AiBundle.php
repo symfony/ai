@@ -17,6 +17,12 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Chat;
+use Symfony\AI\Agent\Chat\MessageStore\CacheStore as CacheMessageStore;
+use Symfony\AI\Agent\Chat\MessageStore\InMemoryStore as InMemoryMessageStore;
+use Symfony\AI\Agent\Chat\MessageStore\SessionStore as SessionMessageStore;
+use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Agent\ChatInterface;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -29,6 +35,8 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
+use Symfony\AI\AiBundle\Profiler\TraceableChat;
+use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
@@ -161,6 +169,46 @@ final class AiBundle extends AbstractBundle
         }
         if (1 === \count($config['indexer']) && isset($indexerName)) {
             $builder->setAlias(IndexerInterface::class, 'ai.indexer.'.$indexerName);
+        }
+
+        foreach ($config['message_store'] ?? [] as $messageStoreName => $store) {
+            $this->processMessageStoreConfig($messageStoreName, $store, $builder);
+        }
+
+        $messageStores = array_keys($builder->findTaggedServiceIds('ai.message_store'));
+        if (1 === \count($messageStores)) {
+            $builder->setAlias(MessageStoreInterface::class, reset($messageStores));
+        }
+
+        if ($builder->getParameter('kernel.debug')) {
+            foreach ($messageStores as $messageStore) {
+                $traceableMessageStoreDefinition = (new Definition(TraceableMessageStore::class))
+                    ->setDecoratedService($messageStore)
+                    ->setArguments([new Reference('.inner')])
+                    ->addTag('ai.traceable_message_store');
+                $suffix = u($messageStore)->afterLast('.')->toString();
+                $builder->setDefinition('ai.traceable_message_store.'.$suffix, $traceableMessageStoreDefinition);
+            }
+        }
+
+        foreach ($config['chat'] as $chatName => $chat) {
+            $this->processChatConfig($chatName, $chat, $builder);
+        }
+
+        $chats = array_keys($builder->findTaggedServiceIds('ai.chat'));
+        if (1 === \count($chats)) {
+            $builder->setAlias(ChatInterface::class, reset($chats));
+        }
+
+        if ($builder->getParameter('kernel.debug')) {
+            foreach ($chats as $chat) {
+                $traceableChatDefinition = (new Definition(TraceableChat::class))
+                    ->setDecoratedService($chat)
+                    ->setArguments([new Reference('.inner')])
+                    ->addTag('ai.traceable_chat');
+                $suffix = u($chat)->afterLast('.')->toString();
+                $builder->setDefinition('ai.traceable_chat.'.$suffix, $traceableChatDefinition);
+            }
         }
 
         $builder->registerAttributeForAutoconfiguration(AsTool::class, static function (ChildDefinition $definition, AsTool $attribute): void {
@@ -1184,5 +1232,81 @@ final class AiBundle extends AbstractBundle
         $definition->addTag('ai.indexer', ['name' => $name]);
 
         $container->setDefinition('ai.indexer.'.$name, $definition);
+    }
+
+    /**
+     * @param array<string, mixed> $stores
+     */
+    private function processMessageStoreConfig(string $type, array $stores, ContainerBuilder $container): void
+    {
+        if ('cache' === $type) {
+            foreach ($stores as $name => $store) {
+                $arguments = [
+                    new Reference($store['service']),
+                    $store['identifier'] ?? $name,
+                ];
+
+                if (\array_key_exists('ttl', $store)) {
+                    $arguments[] = $store['ttl'];
+                }
+
+                $definition = new Definition(CacheMessageStore::class);
+                $definition
+                    ->addTag('ai.message_store')
+                    ->setArguments([
+                        new Reference($store['service']),
+                        $store['identifier'] ?? $name,
+                    ]);
+
+                $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, (new Target($name.'MessageStore'))->getParsedName());
+            }
+        }
+
+        if ('memory' === $type) {
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(InMemoryMessageStore::class);
+                $definition
+                    ->addTag('ai.message_store')
+                    ->setArguments([
+                        $store['identifier'] ?? $name,
+                    ]);
+
+                $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, (new Target($name.'MessageStore'))->getParsedName());
+            }
+        }
+
+        if ('session' === $type) {
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(SessionMessageStore::class);
+                $definition
+                    ->addTag('ai.message_store')
+                    ->setArguments([
+                        new Reference('request_stack'),
+                        $store['identifier'] ?? $name,
+                    ]);
+
+                $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, (new Target($name.'MessageStore'))->getParsedName());
+            }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function processChatConfig(int|string $name, array $config, ContainerBuilder $container): void
+    {
+        $definition = new Definition(Chat::class);
+        $definition
+            ->setArguments([
+                new Reference('ai.agent.'.$config['agent']),
+                new Reference('ai.message_store.'.$config['message_store']),
+            ])
+            ->addTag('ai.chat');
+
+        $container->setDefinition('ai.chat.'.$name, $definition);
+        $container->registerAliasForArgument('ai.chat.'.$name, ChatInterface::class, (new Target($name.'Chat'))->getParsedName());
     }
 }

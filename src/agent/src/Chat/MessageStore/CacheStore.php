@@ -23,7 +23,7 @@ final readonly class CacheStore implements MessageStoreInterface
 {
     public function __construct(
         private CacheItemPoolInterface $cache,
-        private string $cacheKey,
+        private string $id = '_message_store_cache',
         private int $ttl = 86400,
     ) {
         if (!interface_exists(CacheItemPoolInterface::class)) {
@@ -31,9 +31,9 @@ final readonly class CacheStore implements MessageStoreInterface
         }
     }
 
-    public function save(MessageBag $messages): void
+    public function save(MessageBag $messages, ?string $id = null): void
     {
-        $item = $this->cache->getItem($this->cacheKey);
+        $item = $this->cache->getItem($id ?? $this->id);
 
         $item->set($messages);
         $item->expiresAfter($this->ttl);
@@ -41,15 +41,20 @@ final readonly class CacheStore implements MessageStoreInterface
         $this->cache->save($item);
     }
 
-    public function load(): MessageBag
+    public function load(?string $id = null): MessageBag
     {
-        $item = $this->cache->getItem($this->cacheKey);
+        $item = $this->cache->getItem($id ?? $this->id);
 
         return $item->isHit() ? $item->get() : new MessageBag();
     }
 
-    public function clear(): void
+    public function clear(?string $id = null): void
     {
-        $this->cache->deleteItem($this->cacheKey);
+        $this->cache->deleteItem($id ?? $this->id);
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
     }
 }

@@ -79,6 +79,17 @@
                 <span class="label">Tool Calls</span>
             </div>
         </div>
+        <div class="metric-divider"></div>
+        <div class="metric-group">
+            <div class="metric">
+                <span class="value">{{- collector.chatsIds|length -}}</span>
+                <span class="label">Chats</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{- collector.messageStores|length -}}</span>
+                <span class="label">Chats calls</span>
+            </div>
+        </div>
     </section>
     <h3>Platform Calls</h3>
     {% if collector.platformCalls|length %}

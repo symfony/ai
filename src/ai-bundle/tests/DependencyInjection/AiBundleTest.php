@@ -2117,6 +2117,41 @@ class AiBundleTest extends TestCase
         $this->assertSame('logger', (string) $arguments[6]);
     }
 
+    public function testAgentsWithChatCanBeDefined()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'another_agent' => [
+                        'model' => [
+                            'class' => 'Symfony\AI\Platform\Bridge\Anthropic\Claude',
+                            'name' => 'claude-3-opus-20240229',
+                        ],
+                        'system_prompt' => 'Be concise.',
+                    ],
+                ],
+                'message_store' => [
+                    'cache' => [
+                        'main_cache' => [
+                            'service' => 'cache.app',
+                        ],
+                    ],
+                ],
+                'chat' => [
+                    'main' => [
+                        'agent' => 'another_agent',
+                        'message_store' => 'cache',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\ChatInterface'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\Chat\MessageStoreInterface'));
+        $this->assertTrue($container->hasDefinition('ai.message_store.cache.main_cache'));
+        $this->assertTrue($container->hasDefinition('ai.chat.main'));
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();
@@ -2384,6 +2419,37 @@ class AiBundleTest extends TestCase
                         'loader' => InMemoryLoader::class,
                         'vectorizer' => 'ai.vectorizer.test_vectorizer',
                         'store' => 'my_azure_search_store_service_id',
+                    ],
+                ],
+                'message_store' => [
+                    'cache' => [
+                        'my_cache_message_store' => [
+                            'service' => 'cache.system',
+                            'identifier' => 'foo',
+                        ],
+                        'my_cache_message_store_with_ttl' => [
+                            'service' => 'cache.system',
+                            'identifier' => 'foo',
+                            'ttl' => 3600,
+                        ],
+                        'my_memory_message_store' => [],
+                        'my_session_message_store' => [
+                            'identifier' => 'bar',
+                        ],
+                    ],
+                ],
+                'chat' => [
+                    'my_main_chat_with_cache_store' => [
+                        'agent' => 'my_chat_agent',
+                        'message_store' => 'my_cache_message_store',
+                    ],
+                    'my_second_chat_with_memory_store' => [
+                        'agent' => 'my_chat_agent',
+                        'message_store' => 'my_memory_message_store',
+                    ],
+                    'my_chat_with_session_store' => [
+                        'agent' => 'my_chat_agent',
+                        'message_store' => 'my_session_message_store',
                     ],
                 ],
             ],

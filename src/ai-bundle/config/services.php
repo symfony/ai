@@ -133,6 +133,8 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('ai.traceable_platform'),
                 service('ai.toolbox'),
                 tagged_iterator('ai.traceable_toolbox'),
+                tagged_iterator('ai.traceable_message_store'),
+                tagged_iterator('ai.traceable_chat'),
             ])
             ->tag('data_collector')
         ->set('ai.traceable_toolbox', TraceableToolbox::class)

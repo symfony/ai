@@ -44,7 +44,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke($this->createStub(Model::class), $messageBag, ['stream' => false]);
         $this->assertSame('Assistant response', $result->asText());
 
-        $dataCollector = new DataCollector([$traceablePlatform], $this->createStub(ToolboxInterface::class), []);
+        $dataCollector = new DataCollector([$traceablePlatform], $this->createStub(ToolboxInterface::class), [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -68,7 +68,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke($this->createStub(Model::class), $messageBag, ['stream' => true]);
         $this->assertSame('Assistant response', implode('', iterator_to_array($result->asStream())));
 
-        $dataCollector = new DataCollector([$traceablePlatform], $this->createStub(ToolboxInterface::class), []);
+        $dataCollector = new DataCollector([$traceablePlatform], $this->createStub(ToolboxInterface::class), [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
