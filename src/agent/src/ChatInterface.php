@@ -16,12 +16,20 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 
+/**
+ * @author Christopher Hertel <mail@christopher-hertel.de>
+ * @author Oskar Stark <oskarstark@googlemail.com>
+ */
 interface ChatInterface
 {
-    public function initiate(MessageBag $messages): void;
+    public function initiate(MessageBag $messages, ?string $id = null): void;
 
     /**
      * @throws ExceptionInterface When the chat submission fails due to agent errors
      */
     public function submit(UserMessage $message): AssistantMessage;
+
+    public function getCurrentMessageBag(): MessageBagInterface;
+
+    public function getId(): string;
 }
