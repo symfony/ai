@@ -19,20 +19,33 @@ use Symfony\AI\Platform\Message\MessageBag;
  */
 final class InMemoryStore implements MessageStoreInterface
 {
-    private MessageBag $messages;
+    /**
+     * @var MessageBag[]
+     */
+    private array $messageBags;
 
-    public function save(MessageBag $messages): void
-    {
-        $this->messages = $messages;
+    public function __construct(
+        private readonly string $id = '_message_store_memory',
+    ) {
     }
 
-    public function load(): MessageBag
+    public function save(MessageBag $messages, ?string $id = null): void
     {
-        return $this->messages ?? new MessageBag();
+        $this->messageBags[$id ?? $this->id] = $messages;
     }
 
-    public function clear(): void
+    public function load(?string $id = null): MessageBag
     {
-        $this->messages = new MessageBag();
+        return $this->messageBags[$id ?? $this->id] ?? new MessageBag();
+    }
+
+    public function clear(?string $id = null): void
+    {
+        $this->messageBags[$id ?? $this->id] = new MessageBag();
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
     }
 }
