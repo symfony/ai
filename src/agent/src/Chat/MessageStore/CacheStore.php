@@ -56,6 +56,6 @@ final readonly class CacheStore implements MessageStoreInterface, SessionAwareMe
 
     public function withSession(AbstractUid&TimeBasedUidInterface $session): MessageStoreInterface&SessionAwareMessageStoreInterface
     {
-        return new $this($this->cache, $session->toRfc4122(), $this->ttl);
+        return new self($this->cache, $session->toRfc4122(), $this->ttl);
     }
 }
