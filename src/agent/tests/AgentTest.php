@@ -19,6 +19,8 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentAwareInterface;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Chat;
+use Symfony\AI\Agent\Chat\MessageStore\InMemoryStore;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MissingModelSupportException;
 use Symfony\AI\Agent\Exception\RuntimeException;
@@ -30,6 +32,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Model;
@@ -49,6 +52,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponseInterface;
 #[UsesClass(Text::class)]
 #[UsesClass(Audio::class)]
 #[UsesClass(Image::class)]
+#[UsesClass(InMemoryStore::class)]
+#[UsesClass(Chat::class)]
 #[Small]
 final class AgentTest extends TestCase
 {
@@ -394,5 +399,33 @@ final class AgentTest extends TestCase
         $agent = new Agent($platform, $model, $inputProcessors, $outputProcessors);
 
         $this->assertInstanceOf(AgentInterface::class, $agent);
+    }
+
+    public function testDoubleAgentCanUseSameMessageStore()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $model = $this->createMock(Model::class);
+
+        $firstAgent = new Agent($platform, $model);
+        $secondAgent = new Agent($platform, $model);
+
+        $store = new InMemoryStore();
+        $firstStore = $store->withSession($firstAgent->getId());
+        $secondStore = $store->withSession($secondAgent->getId());
+
+        $firstChat = new Chat($firstAgent, $firstStore);
+        $secondChat = new Chat($secondAgent, $secondStore);
+
+        $messages = new MessageBag(
+            Message::forSystem('You are a helpful assistant. You only answer with short sentences.'),
+        );
+
+        $firstChat->initiate($messages);
+        $firstChat->submit(new UserMessage(new Text('Hello')));
+        $secondChat->submit(new UserMessage(new Text('Hello')));
+        $secondChat->submit(new UserMessage(new Text('Hello there')));
+
+        $this->assertCount(1, $firstStore->load());
+        $this->assertCount(2, $secondStore->load());
     }
 }

@@ -12,25 +12,56 @@
 namespace Symfony\AI\Agent\Chat\MessageStore;
 
 use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Agent\Chat\SessionAwareMessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
 
-final class InMemoryStore implements MessageStoreInterface
+final class InMemoryStore implements MessageStoreInterface, SessionAwareMessageStoreInterface
 {
-    private MessageBagInterface $messages;
+    /**
+     * @var MessageBagInterface[]
+     */
+    private array $messages;
+    private (AbstractUid&TimeBasedUidInterface)|null $session = null;
 
     public function save(MessageBagInterface $messages): void
     {
-        $this->messages = $messages;
+        if (null === $this->session) {
+            $this->messages = $messages->getMessages();
+
+            return;
+        }
+
+        $this->messages[$this->session->toRfc4122()] = $messages;
     }
 
     public function load(): MessageBagInterface
     {
-        return $this->messages ?? new MessageBag();
+        if (null === $this->session) {
+            return new MessageBag(...$this->messages);
+        }
+
+        return $this->messages[$this->session->toRfc4122()] ?? new MessageBag();
     }
 
     public function clear(): void
     {
-        $this->messages = new MessageBag();
+        if (null === $this->session) {
+            $this->messages = [];
+
+            return;
+        }
+
+        $this->messages[$this->session->toRfc4122()] = new MessageBag();
+    }
+
+    public function withSession(AbstractUid&TimeBasedUidInterface $session): MessageStoreInterface&SessionAwareMessageStoreInterface
+    {
+        $store = clone $this;
+        $store->session = $session;
+
+        return $store;
     }
 }

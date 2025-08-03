@@ -13,11 +13,14 @@ namespace Symfony\AI\Agent\Chat\MessageStore;
 
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Agent\Chat\SessionAwareMessageStoreInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
 
-final readonly class CacheStore implements MessageStoreInterface
+final readonly class CacheStore implements MessageStoreInterface, SessionAwareMessageStoreInterface
 {
     public function __construct(
         private CacheItemPoolInterface $cache,
@@ -49,5 +52,10 @@ final readonly class CacheStore implements MessageStoreInterface
     public function clear(): void
     {
         $this->cache->deleteItem($this->cacheKey);
+    }
+
+    public function withSession(AbstractUid&TimeBasedUidInterface $session): MessageStoreInterface&SessionAwareMessageStoreInterface
+    {
+        return new $this($this->cache, $session->toRfc4122(), $this->ttl);
     }
 }

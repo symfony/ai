@@ -12,13 +12,16 @@
 namespace Symfony\AI\Agent\Chat\MessageStore;
 
 use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Agent\Chat\SessionAwareMessageStoreInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
 
-final readonly class SessionStore implements MessageStoreInterface
+final readonly class SessionStore implements MessageStoreInterface, SessionAwareMessageStoreInterface
 {
     private SessionInterface $session;
 
@@ -45,5 +48,13 @@ final readonly class SessionStore implements MessageStoreInterface
     public function clear(): void
     {
         $this->session->remove($this->sessionKey);
+    }
+
+    public function withSession(AbstractUid&TimeBasedUidInterface $session): MessageStoreInterface&SessionAwareMessageStoreInterface
+    {
+        $store = clone $this;
+        $store->session->setId($session->toRfc4122());
+
+        return $store;
     }
 }
