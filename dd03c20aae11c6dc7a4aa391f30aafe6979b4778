@@ -1,0 +1,133 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-31T12:01:45Z
+
+Ok, should be better 😅
+
+---------------------------------------------------------------------------
+
+by JoshuaBehrens at 2025-07-31T12:16:23Z
+
+Looks like I need to be faster with proposing my changes :D glad that you already have tests at hand
+
+This is my example to proof, that Ollama can solve the same movie selection task
+
+```php
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\Toolbox\AgentProcessor;
+use Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch;
+use Symfony\AI\Agent\Toolbox\Toolbox;
+use Symfony\AI\Fixtures\Movies;
+use Symfony\AI\Platform\Bridge\Meta\Llama;
+use Symfony\AI\Platform\Bridge\Ollama\Embeddings;
+use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Store\Document\Metadata;
+use Symfony\AI\Store\Document\TextDocument;
+use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\InMemoryStore;
+use Symfony\Component\Uid\Uuid;
+
+require_once dirname(__DIR__).'/bootstrap.php';
+
+// initialize the store
+$store = new InMemoryStore();
+
+// create embeddings and documents
+foreach (Movies::all() as $i => $movie) {
+    $documents[] = new TextDocument(
+        id: Uuid::v4(),
+        content: 'Title: '.$movie['title'].\PHP_EOL.'Director: '.$movie['director'].\PHP_EOL.'Description: '.$movie['description'],
+        metadata: new Metadata($movie),
+    );
+}
+
+// create embeddings for documents
+$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
+$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings(Embeddings::MXBAI_EMBED_LARGE));
+$indexer = new Indexer($vectorizer, $store, logger());
+$indexer->index($documents);
+
+$model = new Llama(Llama::V3_2_1B);
+
+$similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
+$toolbox = new Toolbox([$similaritySearch], logger: logger());
+$processor = new AgentProcessor($toolbox);
+$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+
+$messages = new MessageBag(
+    Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),
+    Message::ofUser('Which movie fits the theme of the mafia?')
+);
+$result = $agent->call($messages);
+
+echo $result->getContent().\PHP_EOL;
+```
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-31T12:21:31Z
+
+Hi @JoshuaBehrens 👋🏻
+
+Ah, didn't know that you were working on it, sorry 😅
+
+Regarding your example, I just listed the model that are commonly used, if you have any other model in mind, feel free to list them, we can add them in the class 🙂
+
+BTW, I agree (if the suggestion is to add an example via Ollama), we should add one with the Ollama stack
+
+---------------------------------------------------------------------------
+
+by JoshuaBehrens at 2025-07-31T12:42:32Z
+
+No worries @Guikingone I did not have any real dips on that ^^'
+
+Implementation looks similar:
+
+```php
+class Embeddings extends Model
+{
+    public const MXBAI_EMBED_LARGE = 'mxbai-embed-large';
+    public const NOMIC_EMBED_TEXT = 'nomic-embed-text';
+    public const ALL_MINILM = 'all-minilm';
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function __construct(string $name = self::ALL_MINILM, array $options = [])
+    {
+        parent::__construct($name, [], $options);
+    }
+}
+```
+
+<img width="502" height="135" alt="grafik" src="https://github.com/user-attachments/assets/78aafc65-0e37-4ef4-a849-baec49dd55f0" />
+
+---
+
+Right now I am refactoring the use of the modal class so I wanted to wait for my refactoring but I will just amend yours later :)
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-02T19:56:47Z
+
+Agree on the refactoring, the `show` endpoint could be a solution, I'll take a look on it.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-04T19:31:20Z
+
+Should be better, nice catch around the `support` method @chr-hertel 👍🏻
