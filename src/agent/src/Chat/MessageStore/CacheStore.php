@@ -13,18 +13,16 @@ namespace Symfony\AI\Agent\Chat\MessageStore;
 
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\AI\Agent\Chat\MessageStoreInterface;
-use Symfony\AI\Agent\Chat\SessionAwareMessageStoreInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
 
-final readonly class CacheStore implements MessageStoreInterface, SessionAwareMessageStoreInterface
+final readonly class CacheStore implements MessageStoreInterface
 {
     public function __construct(
         private CacheItemPoolInterface $cache,
-        private string $cacheKey,
         private int $ttl = 86400,
     ) {
         if (!interface_exists(CacheItemPoolInterface::class)) {
@@ -34,7 +32,7 @@ final readonly class CacheStore implements MessageStoreInterface, SessionAwareMe
 
     public function save(MessageBagInterface $messages): void
     {
-        $item = $this->cache->getItem($this->cacheKey);
+        $item = $this->cache->getItem($messages->getSession()->toRfc4122());
 
         $item->set($messages);
         $item->expiresAfter($this->ttl);
@@ -42,20 +40,15 @@ final readonly class CacheStore implements MessageStoreInterface, SessionAwareMe
         $this->cache->save($item);
     }
 
-    public function load(): MessageBag
+    public function load(AbstractUid&TimeBasedUidInterface $session): MessageBagInterface
     {
-        $item = $this->cache->getItem($this->cacheKey);
+        $item = $this->cache->getItem($session->toRfc4122());
 
         return $item->isHit() ? $item->get() : new MessageBag();
     }
 
-    public function clear(): void
+    public function clear(AbstractUid&TimeBasedUidInterface $session): void
     {
-        $this->cache->deleteItem($this->cacheKey);
-    }
-
-    public function withSession(AbstractUid&TimeBasedUidInterface $session): MessageStoreInterface&SessionAwareMessageStoreInterface
-    {
-        return new self($this->cache, $session->toRfc4122(), $this->ttl);
+        $this->cache->deleteItem($session->toRfc4122());
     }
 }

@@ -12,57 +12,30 @@
 namespace Symfony\AI\Agent\Chat\MessageStore;
 
 use Symfony\AI\Agent\Chat\MessageStoreInterface;
-use Symfony\AI\Agent\Chat\SessionAwareMessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
-use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
 
-final class InMemoryStore implements MessageStoreInterface, SessionAwareMessageStoreInterface
+final class InMemoryStore implements MessageStoreInterface
 {
     /**
-     * @var MessageInterface[]
+     * @var MessageBagInterface[]
      */
-    private array $messages;
-    private (AbstractUid&TimeBasedUidInterface)|null $session = null;
+    private array $messageBags;
 
     public function save(MessageBagInterface $messages): void
     {
-        if (null === $this->session) {
-            $this->messages = $messages->getMessages();
-
-            return;
-        }
-
-        $this->messages[$this->session->toRfc4122()] = $messages;
+        $this->messageBags[$messages->getSession()->toRfc4122()] = $messages;
     }
 
-    public function load(): MessageBagInterface
+    public function load(AbstractUid&TimeBasedUidInterface $session): MessageBagInterface
     {
-        if (null === $this->session) {
-            return new MessageBag(...$this->messages);
-        }
-
-        return new MessageBag($this->messages[$this->session->toRfc4122()]);
+        return $this->messageBags[$session->toRfc4122()] ?? new MessageBag();
     }
 
-    public function clear(): void
+    public function clear(AbstractUid&TimeBasedUidInterface $session): void
     {
-        if (null === $this->session) {
-            $this->messages = [];
-
-            return;
-        }
-
-        $this->messages[$this->session->toRfc4122()] = new MessageBag();
-    }
-
-    public function withSession(AbstractUid&TimeBasedUidInterface $session): MessageStoreInterface&SessionAwareMessageStoreInterface
-    {
-        $store = clone $this;
-        $store->session = $session;
-
-        return $store;
+        $this->messageBags[$session->toRfc4122()] = new MessageBag();
     }
 }

@@ -11,8 +11,12 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
+
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
+ * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 interface MessageBagInterface extends \Countable
 {
@@ -36,4 +40,8 @@ interface MessageBagInterface extends \Countable
     public function containsAudio(): bool;
 
     public function containsImage(): bool;
+
+    public function setSession(AbstractUid&TimeBasedUidInterface $session): void;
+
+    public function getSession(): AbstractUid&TimeBasedUidInterface;
 }
