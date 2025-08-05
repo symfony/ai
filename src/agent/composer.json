@@ -42,7 +42,8 @@
         "symfony/dom-crawler": "^6.4 || ^7.1",
         "symfony/event-dispatcher": "^6.4 || ^7.1",
         "symfony/filesystem": "^7.3",
-        "symfony/http-foundation": "^6.4 || ^7.1"
+        "symfony/http-foundation": "^6.4 || ^7.1",
+        "symfony/uid": "^6.4 || ^7.1"
     },
     "config": {
         "sort-packages": true

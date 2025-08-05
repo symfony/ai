@@ -14,12 +14,13 @@ namespace Symfony\AI\Agent\Toolbox\Tool;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-#[AsTool('eleven_labs', description: 'Convert text to speech / voice')]
+#[AsTool('text_to_speech', description: 'Convert text to speech / voice')]
 final readonly class ElevenLabs
 {
     public function __construct(
@@ -29,6 +30,13 @@ final readonly class ElevenLabs
         private string $model,
         private string $voice,
     ) {
+        if (!class_exists(Filesystem::class)) {
+            throw new RuntimeException('For using the ElevenLabs TTS tool, the symfony/filesystem package is required. Try running "composer require symfony/filesystem".');
+        }
+
+        if (!class_exists(Uuid::class)) {
+            throw new RuntimeException('For using the ElevenLabs TTS tool, the symfony/uid package is required. Try running "composer require symfony/uid".');
+        }
     }
 
     /**
@@ -39,10 +47,6 @@ final readonly class ElevenLabs
      */
     public function __invoke(string $text): array
     {
-        if (!class_exists(Filesystem::class)) {
-            throw new RuntimeException('For using the ElevenLabs TTS tool, the symfony/filesystem package is required. Try running "composer require symfony/filesystem".');
-        }
-
         $response = $this->httpClient->request('POST', \sprintf('https://api.elevenlabs.io/v1/text-to-speech/%s?output_format=mp3_44100_128', $this->voice), [
             'headers' => [
                 'xi-api-key' => $this->apiKey,
@@ -53,7 +57,7 @@ final readonly class ElevenLabs
             ],
         ]);
 
-        $file = \sprintf('%s/%s.mp3', $this->path, uniqid());
+        $file = \sprintf('%s/%s.mp3', $this->path, Uuid::v4()->toRfc4122());
 
         $filesystem = new Filesystem();
         $filesystem->dumpFile($file, $response->getContent());
