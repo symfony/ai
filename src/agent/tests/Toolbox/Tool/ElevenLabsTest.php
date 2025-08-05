@@ -37,7 +37,7 @@ final class ElevenLabsTest extends TestCase
 
         $this->assertCount(2, $result);
         $this->assertSame('Hello World', $result['input']);
-        $this->assertNull($result['file']);
+        $this->assertNotEmpty($result['path']);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 }

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\Toolbox\Tool;
 
+use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -18,7 +19,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-#[AsTool('eleven_labs', description: 'convert text to speech / voice')]
+#[AsTool('eleven_labs', description: 'Convert text to speech / voice')]
 final readonly class ElevenLabs
 {
     public function __construct(
@@ -30,8 +31,18 @@ final readonly class ElevenLabs
     ) {
     }
 
+    /**
+     * @return array{
+     *     input: string,
+     *     path: string,
+     * }
+     */
     public function __invoke(string $text): array
     {
+        if (!class_exists(Filesystem::class)) {
+            throw new RuntimeException('For using the ElevenLabs TTS tool, the symfony/filesystem package is required. Try running "composer require symfony/filesystem".');
+        }
+
         $response = $this->httpClient->request('POST', \sprintf('https://api.elevenlabs.io/v1/text-to-speech/%s?output_format=mp3_44100_128', $this->voice), [
             'headers' => [
                 'xi-api-key' => $this->apiKey,
