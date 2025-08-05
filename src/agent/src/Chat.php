@@ -18,6 +18,9 @@ use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\TextResult;
 
+/**
+ * @author Christopher Hertel <mail@christopher-hertel.de>
+ */
 final readonly class Chat implements ChatInterface
 {
     public function __construct(
@@ -28,23 +31,25 @@ final readonly class Chat implements ChatInterface
 
     public function initiate(MessageBagInterface $messages): void
     {
-        $this->store->clear();
+        $messages->setSession($this->agent->getId());
+
+        $this->store->clear($messages->getSession());
         $this->store->save($messages);
     }
 
     public function submit(UserMessage $message): AssistantMessage
     {
-        $messages = $this->store->load();
+        $messagesBag = $this->store->load($this->agent->getId());
 
-        $messages->add($message);
-        $result = $this->agent->call($messages);
+        $messagesBag->add($message);
+        $result = $this->agent->call($messagesBag);
 
         \assert($result instanceof TextResult);
 
         $assistantMessage = Message::ofAssistant($result->getContent());
-        $messages->add($assistantMessage);
+        $messagesBag->add($assistantMessage);
 
-        $this->store->save($messages);
+        $this->store->save($messagesBag);
 
         return $assistantMessage;
     }

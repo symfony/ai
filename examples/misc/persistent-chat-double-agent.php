@@ -27,18 +27,16 @@ $secondAgent = new Agent($platform, $llm, logger: logger());
 
 $store = new InMemoryStore();
 
-$firstChatStore = $store->withSession($firstAgent->getId());
-$secondChatStore = $store->withSession($secondAgent->getId());
+$firstChat = new Chat($firstAgent, $store);
+$secondChat = new Chat($secondAgent, $store);
 
-$firstChat = new Chat($firstAgent, $firstChatStore);
-$secondChat = new Chat($secondAgent, $secondChatStore);
-
-$messages = new MessageBag(
+$firstChat->initiate(new MessageBag(
     Message::forSystem('You are a helpful assistant. You only answer with short sentences.'),
-);
+));
+$secondChat->initiate(new MessageBag(
+    Message::forSystem('You are a helpful assistant. You only answer with short sentences.'),
+));
 
-$firstChat->initiate($messages);
-$secondChat->initiate($messages);
 $firstChat->submit(Message::ofUser('My name is Christopher.'));
 $firstChatMessage = $firstChat->submit(Message::ofUser('What is my name?'));
 $secondChatMessage = $secondChat->submit(Message::ofUser('What is my name?'));

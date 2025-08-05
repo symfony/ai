@@ -12,7 +12,6 @@
 namespace Symfony\AI\Agent\Chat\MessageStore;
 
 use Symfony\AI\Agent\Chat\MessageStoreInterface;
-use Symfony\AI\Agent\Chat\SessionAwareMessageStoreInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
@@ -21,13 +20,12 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
 
-final readonly class SessionStore implements MessageStoreInterface, SessionAwareMessageStoreInterface
+final readonly class SessionStore implements MessageStoreInterface
 {
     private SessionInterface $session;
 
     public function __construct(
         RequestStack $requestStack,
-        private string $sessionKey = 'messages',
     ) {
         if (!class_exists(RequestStack::class)) {
             throw new RuntimeException('For using the SessionStore as message store, the symfony/http-foundation package is required. Try running "composer require symfony/http-foundation".');
@@ -37,24 +35,16 @@ final readonly class SessionStore implements MessageStoreInterface, SessionAware
 
     public function save(MessageBagInterface $messages): void
     {
-        $this->session->set($this->sessionKey, $messages);
+        $this->session->set($messages->getSession()->toRfc4122(), $messages);
     }
 
-    public function load(): MessageBagInterface
+    public function load(AbstractUid&TimeBasedUidInterface $session): MessageBagInterface
     {
-        return $this->session->get($this->sessionKey, new MessageBag());
+        return $this->session->get($session->toRfc4122(), new MessageBag());
     }
 
-    public function clear(): void
+    public function clear(AbstractUid&TimeBasedUidInterface $session): void
     {
-        $this->session->remove($this->sessionKey);
-    }
-
-    public function withSession(AbstractUid&TimeBasedUidInterface $session): MessageStoreInterface&SessionAwareMessageStoreInterface
-    {
-        $store = clone $this;
-        $store->session->setId($session->toRfc4122());
-
-        return $store;
+        $this->session->remove($session->toRfc4122());
     }
 }

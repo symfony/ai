@@ -410,11 +410,9 @@ final class AgentTest extends TestCase
         $secondAgent = new Agent($platform, $model);
 
         $store = new InMemoryStore();
-        $firstStore = $store->withSession($firstAgent->getId());
-        $secondStore = $store->withSession($secondAgent->getId());
 
-        $firstChat = new Chat($firstAgent, $firstStore);
-        $secondChat = new Chat($secondAgent, $secondStore);
+        $firstChat = new Chat($firstAgent, $store);
+        $secondChat = new Chat($secondAgent, $store);
 
         $messages = new MessageBag(
             Message::forSystem('You are a helpful assistant. You only answer with short sentences.'),
@@ -422,10 +420,12 @@ final class AgentTest extends TestCase
 
         $firstChat->initiate($messages);
         $firstChat->submit(new UserMessage(new Text('Hello')));
+
+        $secondChat->initiate($messages);
         $secondChat->submit(new UserMessage(new Text('Hello')));
         $secondChat->submit(new UserMessage(new Text('Hello there')));
 
-        $this->assertCount(1, $firstStore->load());
-        $this->assertCount(2, $secondStore->load());
+        $this->assertCount(1, $store->load($firstAgent->getId()));
+        $this->assertCount(2, $store->load($secondAgent->getId()));
     }
 }
