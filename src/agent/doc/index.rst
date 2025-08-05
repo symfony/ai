@@ -281,6 +281,7 @@ messages will be added to your MessageBag::
 * `Weather Tool with Event Listener`_
 * `Wikipedia Tool`_
 * `YouTube Transcriber Tool`_
+* `ElevenLabs Text to Speech`_
 
 Retrieval Augmented Generation (RAG)
 ------------------------------------
@@ -552,6 +553,7 @@ useful when certain interactions shouldn't be influenced by the memory context::
 .. _`Weather Tool with Event Listener`: https://github.com/symfony/ai/blob/main/examples/toolbox/weather-event.php
 .. _`Wikipedia Tool`: https://github.com/symfony/ai/blob/main/examples/openai/toolcall-stream.php
 .. _`YouTube Transcriber Tool`: https://github.com/symfony/ai/blob/main/examples/openai/toolcall.php
+.. _`ElevenLabs Text to Speech`: https://github.com/symfony/ai/blob/main/examples/misc/text-to-speech.php
 .. _`Store Component`: https://github.com/symfony/ai-store
 .. _`RAG with MongoDB`: https://github.com/symfony/ai/blob/main/examples/store/mongodb-similarity-search.php
 .. _`RAG with Pinecone`: https://github.com/symfony/ai/blob/main/examples/store/pinecone-similarity-search.php
