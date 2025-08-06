@@ -260,6 +260,15 @@ class AiBundleTest extends TestCase
                             'distance' => 'Cosine',
                         ],
                     ],
+                    'redis' => [
+                        'my_redis_store' => [
+                            'connection_parameters' => [
+                                'host' => '1.2.3.4',
+                                'port' => 6379,
+                            ],
+                            'index_name' => 'my_vector_index',
+                        ],
+                    ],
                     'surreal_db' => [
                         'my_surreal_db_store' => [
                             'endpoint' => 'http://127.0.0.1:8000',

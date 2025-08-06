@@ -32,6 +32,7 @@
         "symfony/ai-platform": "@dev",
         "symfony/clock": "^6.4 || ^7.1",
         "symfony/http-client": "^6.4 || ^7.1",
+        "symfony/polyfill-php83": "^1.32",
         "symfony/uid": "^6.4 || ^7.1"
     },
     "require-dev": {

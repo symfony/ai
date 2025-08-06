@@ -45,6 +45,7 @@ use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
+use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
@@ -634,6 +635,28 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->addTag('ai.store')
                     ->setArguments($arguments);
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+            }
+        }
+
+        if ('redis' === $type) {
+            foreach ($stores as $name => $store) {
+                $connectionDefinition = new Definition(\Redis::class);
+                $connectionDefinition->setArguments([$store['connection_parameters']]);
+
+                $arguments = [
+                    $connectionDefinition,
+                    $store['index_name'],
+                    $store['key_prefix'],
+                    $store['distance'],
+                ];
+
+                $definition = new Definition(RedisStore::class);
+                $definition
+                    ->addTag('ai.store')
+                    ->setArguments($arguments)
+                ;
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
             }
