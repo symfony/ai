@@ -1,0 +1,15 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-06T12:07:47Z
+
+Can you please provide a link to the official documentation? Thanks
+
+---------------------------------------------------------------------------
+
+by rado-h at 2025-08-06T17:45:55Z
+
+These are the examples form the docs:
+
+[Chat request (With History)](https://github.com/ollama/ollama/blob/main/docs/api.md#chat-request-with-history)
+
+[Chat request (With history, with tools)](https://github.com/ollama/ollama/blob/main/docs/api.md#chat-request-with-history-with-tools)
