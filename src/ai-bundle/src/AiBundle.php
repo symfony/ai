@@ -507,6 +507,7 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->addTag('ai.store')
                     ->setArguments($arguments);
+                $definition->addMethodCall('initialize');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
             }
@@ -548,6 +549,7 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->addTag('ai.store')
                     ->setArguments($arguments);
+                $definition->addMethodCall('initialize');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
             }
@@ -585,6 +587,7 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->addTag('ai.store')
                     ->setArguments($arguments);
+                $definition->addMethodCall('initialize');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
             }
@@ -635,6 +638,7 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->addTag('ai.store')
                     ->setArguments($arguments);
+                $definition->addMethodCall('initialize');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
             }
@@ -675,6 +679,7 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->addTag('ai.store')
                     ->setArguments($arguments);
+                $definition->addMethodCall('initialize');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
             }
