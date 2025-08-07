@@ -59,9 +59,7 @@ class ModelClientTest extends TestCase
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
         $options = ['beta_features' => ['feature-1']];
-        $result = $this->modelClient->request($this->model, ['message' => 'test'], $options);
-
-        $this->assertNotNull($result);
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
     public function testAnthropicBetaHeaderIsSetWithMultipleBetaFeatures(): void
@@ -78,9 +76,7 @@ class ModelClientTest extends TestCase
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key', '2023-06-01');
 
         $options = ['beta_features' => ['feature-1', 'feature-2', 'feature-3']];
-        $result = $this->modelClient->request($this->model, ['message' => 'test'], $options);
-
-        $this->assertNotNull($result);
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
     public function testAnthropicBetaHeaderIsNotSetWhenBetaFeaturesIsEmpty(): void
@@ -96,9 +92,7 @@ class ModelClientTest extends TestCase
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key', '2023-06-01');
 
         $options = ['beta_features' => []];
-        $result = $this->modelClient->request($this->model, ['message' => 'test'], $options);
-
-        $this->assertNotNull($result);
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
     public function testAnthropicBetaHeaderIsNotSetWhenBetaFeaturesIsNotProvided(): void
@@ -114,8 +108,6 @@ class ModelClientTest extends TestCase
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key', '2023-06-01');
 
         $options = ['some_other_option' => 'value'];
-        $result = $this->modelClient->request($this->model, ['message' => 'test'], $options);
-
-        $this->assertNotNull($result);
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 }
