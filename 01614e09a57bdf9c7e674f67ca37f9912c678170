@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-04T19:07:24Z
+
+That is really an interesting idea, since the PSR 6 cache has quite some implementations. I wonder tho if we would still recommend to use that only in testing or development. I would assume that it doesn't scale well with a lot of documents since the search needs to happen in PHP runtime with all documents loaded, right?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-04T19:11:39Z
+
+Not sure about the performances side, IMO, that's not a big problem (we already use the Cache layer from Sf for heavy operations, that's not a big deal), If you fear that it can impact applications, we can recommend to use it only in dev/test envs, it's just a documentation concern 🤔
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-05T15:13:51Z
+
+The configuration in the bundle package has been added (better to do it now than in another PR 😄 )
