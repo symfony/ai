@@ -19,6 +19,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
+ *
+ * @see https://elevenlabs.io/
  */
 #[AsTool('text_to_speech', description: 'Convert text to speech / voice')]
 final readonly class ElevenLabs
