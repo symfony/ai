@@ -9,39 +9,113 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\Anthropic;
+namespace Symfony\AI\Platform\Bridge\Anthropic\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelClient;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Contracts\HttpClient\ResponseInterface;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
+#[CoversClass(ModelClient::class)]
 class ModelClientTest extends TestCase
 {
-    public function testBetaFeaturesOption()
+    private MockHttpClient $httpClient;
+    private ModelClient $modelClient;
+    private Claude $model;
+
+    protected function setUp(): void
     {
-        $httpClient = $this->createMock(HttpClientInterface::class);
-        $response = $this->createMock(ResponseInterface::class);
+        $this->model = new Claude();
+    }
 
-        $httpClient->expects($this->once())
-            ->method('request')
-            ->with('POST', 'https://api.anthropic.com/v1/messages', [
-                'headers' => [
-                    'x-api-key' => 'test-api-key',
-                    'anthropic-version' => '2023-06-01',
-                    'anthropic-beta' => 'tool-use',
-                ],
-                'json' => [],
-            ])
-            ->willReturn($response);
+    private function parseHeaders(array $headers): array
+    {
+        $parsed = [];
+        foreach ($headers as $header) {
+            if (strpos($header, ':') !== false) {
+                [$key, $value] = explode(':', $header, 2);
+                $parsed[trim($key)] = trim($value);
+            }
+        }
+        return $parsed;
+    }
 
-        // Use the mock HttpClient directly instead of wrapping it
-        $client = new ModelClient($httpClient, 'test-api-key');
-        $model = new Claude();
-        $payload = [];
-        $options = ['beta_features' => ['tool-use']];
+    public function testAnthropicBetaHeaderIsSetWithSingleBetaFeature(): void
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $this->assertEquals('POST', $method);
+            $this->assertEquals('https://api.anthropic.com/v1/messages', $url);
 
-        $client->request($model, $payload, $options);
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertArrayHasKey('anthropic-beta', $headers);
+            $this->assertEquals('feature-1', $headers['anthropic-beta']);
+
+            return new MockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = ['beta_features' => ['feature-1']];
+        $result = $this->modelClient->request($this->model, ['message' => 'test'], $options);
+
+        $this->assertNotNull($result);
+    }
+
+    public function testAnthropicBetaHeaderIsSetWithMultipleBetaFeatures(): void
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertArrayHasKey('anthropic-beta', $headers);
+            $this->assertEquals('feature-1,feature-2,feature-3', $headers['anthropic-beta']);
+
+            return new MockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key', '2023-06-01');
+
+        $options = ['beta_features' => ['feature-1', 'feature-2', 'feature-3']];
+        $result = $this->modelClient->request($this->model, ['message' => 'test'], $options);
+
+        $this->assertNotNull($result);
+    }
+
+    public function testAnthropicBetaHeaderIsNotSetWhenBetaFeaturesIsEmpty(): void
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertArrayNotHasKey('anthropic-beta', $headers);
+
+            return new MockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key', '2023-06-01');
+
+        $options = ['beta_features' => []];
+        $result = $this->modelClient->request($this->model, ['message' => 'test'], $options);
+
+        $this->assertNotNull($result);
+    }
+
+    public function testAnthropicBetaHeaderIsNotSetWhenBetaFeaturesIsNotProvided(): void
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertArrayNotHasKey('anthropic-beta', $headers);
+
+            return new MockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key', '2023-06-01');
+
+        $options = ['some_other_option' => 'value'];
+        $result = $this->modelClient->request($this->model, ['message' => 'test'], $options);
+
+        $this->assertNotNull($result);
     }
 }
