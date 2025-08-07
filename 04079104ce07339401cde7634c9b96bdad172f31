@@ -1,0 +1,41 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-01T13:23:00Z
+
+the need for extension is not really ClickHouse specific, is it?
+I think we need an extension point somewhere here anyways. a low level mapping/hydration thingy.
+with #18 we have a similar topic i'd say - and with #158 we also have an issue of making too many assumption. totally open for ideas. :)
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-08-01T13:25:50Z
+
+> the need for extension is not really ClickHouse specific, is it?
+
+Indeed 👍🏼 The current StoreInterface is a bit limited, but I eventually managed to do what I need to POC something.
+
+> I think we need an extension point somewhere here anyways. a low level mapping/hydration thingy.
+
+Yes!
+
+---
+
+~~Should I work on tests?~~ **edit**: done ✅
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-05T14:49:45Z
+
+Please dd the bundle configuration for this new store, thanks
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-08-06T13:12:12Z
+
+@OskarStark Thanks for the review. I addressed your comments
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-06T20:31:23Z
+
+Lets merge after a rebase, thanks!
