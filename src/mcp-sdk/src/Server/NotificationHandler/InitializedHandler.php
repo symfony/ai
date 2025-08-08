@@ -12,9 +12,12 @@
 namespace Symfony\AI\McpSdk\Server\NotificationHandler;
 
 use Symfony\AI\McpSdk\Message\Notification;
+use Symfony\AI\McpSdk\Server\Transport\StreamableHttp\Session\Session;
 
 final class InitializedHandler extends BaseNotificationHandler
 {
+    public function __construct(private readonly ?Session $session = null) { }
+
     protected function supportedNotification(): string
     {
         return 'initialized';
@@ -22,5 +25,6 @@ final class InitializedHandler extends BaseNotificationHandler
 
     public function handle(Notification $notification): void
     {
+        $this->session?->setClientNotificationInitializedReceived();
     }
 }
