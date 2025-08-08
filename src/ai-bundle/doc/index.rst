@@ -91,6 +91,14 @@ Configuration
                 # multiple collections possible per type
                 default:
                     collection: 'my_collection'
+            cache:
+                ollama:
+                    cache:
+                        service: 'cache.app'
+                        cache_key: 'ollama'
+                        strategy: 'chebyshev'
+                    memory:
+                        strategy: 'chebyshev'
         indexer:
             default:
                 # platform: 'ai.platform.mistral'
