@@ -143,6 +143,11 @@ class AiBundleTest extends TestCase
                             'api_version' => '2024-02-15-preview',
                         ],
                     ],
+                    'eleven_labs' => [
+                        'host' => 'https://api.elevenlabs.io/v1',
+                        'api_key' => 'eleven_labs_key_full',
+                        'output_path' => 'path/to/output',
+                    ],
                     'gemini' => [
                         'api_key' => 'gemini_key_full',
                     ],

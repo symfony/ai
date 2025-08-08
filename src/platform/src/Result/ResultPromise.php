@@ -73,6 +73,15 @@ final class ResultPromise
         return $this->as(BinaryResult::class)->getContent();
     }
 
+    public function asAudio(): string
+    {
+        $result = $this->as(AudioResult::class);
+
+        \assert($result instanceof AudioResult);
+
+        return $result->getPath();
+    }
+
     public function asBase64(): string
     {
         $result = $this->as(BinaryResult::class);

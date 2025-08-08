@@ -113,6 +113,7 @@ final class ContractTest extends TestCase
                                 'type' => 'input_audio',
                                 'input_audio' => [
                                     'data' => $audio->asBase64(),
+                                    'path' => pathinfo(\dirname(__DIR__, 3).'/fixtures/audio.mp3', \PATHINFO_DIRNAME).'/audio.mp3',
                                     'format' => 'mp3',
                                 ],
                             ],

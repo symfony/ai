@@ -34,7 +34,7 @@ Configuration
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
 
-**Advanced Example with Anthropic, Azure, Gemini and multiple agents**
+**Advanced Example with Anthropic, Azure, ElevenLabs, Gemini, Ollama multiple agents**
 
 .. code-block:: yaml
 
@@ -50,6 +50,10 @@ Configuration
                     deployment: '%env(AZURE_OPENAI_GPT)%'
                     api_key: '%env(AZURE_OPENAI_KEY)%'
                     api_version: '%env(AZURE_GPT_VERSION)%'
+            eleven_labs:
+                host: '%env(ELEVEN_LABS_HOST)%'
+                api_key: '%env(ELEVEN_LABS_API_KEY)%'
+                output_path: '%env(ELEVEN_LABS_OUTPUT_PATH)%'
             gemini:
                 api_key: '%env(GEMINI_API_KEY)%'
             ollama:
@@ -85,6 +89,12 @@ Configuration
                 tools: # If undefined, all tools are injected into the agent, use "tools: false" to disable tools.
                     - 'Symfony\AI\Agent\Toolbox\Tool\Wikipedia'
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
+            audio:
+                platform: 'ai.platform.eleven_labs'
+                model:
+                    class: 'Symfony\AI\Platform\Bridge\ElevenLabs'
+                    name: !php/const Symfony\AI\Platform\Bridge\ElevenLabs\TEXT_TO_SPEECH
+                tools: false
         store:
             # also azure_search, meilisearch, memory, mongodb, pinecone, qdrant and surrealdb are supported as store type
             chroma_db:
