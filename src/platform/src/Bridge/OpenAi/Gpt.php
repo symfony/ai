@@ -35,6 +35,10 @@ class Gpt extends Model
     public const GPT_41 = 'gpt-4.1';
     public const GPT_41_MINI = 'gpt-4.1-mini';
     public const GPT_41_NANO = 'gpt-4.1-nano';
+    public const GPT_5 = 'gpt-5';
+    public const GPT_5_CHAT = 'gpt-5-chat-latest';
+    public const GPT_5_MINI = 'gpt-5-mini';
+    public const GPT_5_NANO = 'gpt-5-nano';
 
     private const IMAGE_SUPPORTING = [
         self::GPT_4_TURBO,
@@ -47,6 +51,10 @@ class Gpt extends Model
         self::GPT_41,
         self::GPT_41_MINI,
         self::GPT_41_NANO,
+        self::GPT_5,
+        self::GPT_5_MINI,
+        self::GPT_5_NANO,
+        self::GPT_5_CHAT,
     ];
 
     private const STRUCTURED_OUTPUT_SUPPORTING = [
@@ -57,6 +65,9 @@ class Gpt extends Model
         self::GPT_41,
         self::GPT_41_MINI,
         self::GPT_41_NANO,
+        self::GPT_5,
+        self::GPT_5_MINI,
+        self::GPT_5_NANO,
     ];
 
     /**
