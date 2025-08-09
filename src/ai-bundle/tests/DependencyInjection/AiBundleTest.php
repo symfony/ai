@@ -19,9 +19,13 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Reference;
 
 #[CoversClass(AiBundle::class)]
 #[UsesClass(ContainerBuilder::class)]
+#[UsesClass(Definition::class)]
+#[UsesClass(Reference::class)]
 class AiBundleTest extends TestCase
 {
     #[DoesNotPerformAssertions]
@@ -103,6 +107,130 @@ class AiBundleTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    public function testCacheStoreWithCustomKeyCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cache' => [
+                        'my_cache_store_with_custom_strategy' => [
+                            'service' => 'cache.system',
+                            'cache_key' => 'random',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.cache.my_cache_store_with_custom_strategy'));
+        $this->assertFalse($container->hasDefinition('ai.store.distance_calculator.my_cache_store_with_custom_strategy'));
+
+        $definition = $container->getDefinition('ai.store.cache.my_cache_store_with_custom_strategy');
+
+        $this->assertCount(3, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('cache.system', (string) $definition->getArgument(0));
+        $this->assertSame('random', $definition->getArgument(2));
+    }
+
+    public function testCacheStoreWithCustomStrategyCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cache' => [
+                        'my_cache_store_with_custom_strategy' => [
+                            'service' => 'cache.system',
+                            'strategy' => 'chebyshev',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.cache.my_cache_store_with_custom_strategy'));
+        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_cache_store_with_custom_strategy'));
+
+        $definition = $container->getDefinition('ai.store.cache.my_cache_store_with_custom_strategy');
+
+        $this->assertCount(2, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('cache.system', (string) $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('ai.store.distance_calculator.my_cache_store_with_custom_strategy', (string) $definition->getArgument(1));
+    }
+
+    public function testCacheStoreWithCustomStrategyAndKeyCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cache' => [
+                        'my_cache_store_with_custom_strategy' => [
+                            'service' => 'cache.system',
+                            'cache_key' => 'random',
+                            'strategy' => 'chebyshev',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.cache.my_cache_store_with_custom_strategy'));
+        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_cache_store_with_custom_strategy'));
+
+        $definition = $container->getDefinition('ai.store.cache.my_cache_store_with_custom_strategy');
+
+        $this->assertCount(3, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('cache.system', (string) $definition->getArgument(0));
+        $this->assertSame('random', $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('ai.store.distance_calculator.my_cache_store_with_custom_strategy', (string) $definition->getArgument(1));
+    }
+
+    public function testInMemoryStoreWithoutCustomStrategyCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'memory' => [
+                        'my_memory_store_with_custom_strategy' => [],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.memory.my_memory_store_with_custom_strategy'));
+
+        $definition = $container->getDefinition('ai.store.memory.my_memory_store_with_custom_strategy');
+        $this->assertCount(0, $definition->getArguments());
+    }
+
+    public function testInMemoryStoreWithCustomStrategyCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'memory' => [
+                        'my_memory_store_with_custom_strategy' => [
+                            'strategy' => 'chebyshev',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.memory.my_memory_store_with_custom_strategy'));
+        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_memory_store_with_custom_strategy'));
+
+        $definition = $container->getDefinition('ai.store.memory.my_memory_store_with_custom_strategy');
+
+        $this->assertCount(1, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('ai.store.distance_calculator.my_memory_store_with_custom_strategy', (string) $definition->getArgument(0));
     }
 
     private function buildContainer(array $configuration): ContainerBuilder
@@ -205,6 +333,19 @@ class AiBundleTest extends TestCase
                         'my_cache_store' => [
                             'service' => 'cache.system',
                         ],
+                        'my_cache_store_with_custom_key' => [
+                            'service' => 'cache.system',
+                            'cache_key' => 'bar',
+                        ],
+                        'my_cache_store_with_custom_strategy' => [
+                            'service' => 'cache.system',
+                            'strategy' => 'chebyshev',
+                        ],
+                        'my_cache_store_with_custom_strategy_and_custom_key' => [
+                            'service' => 'cache.system',
+                            'cache_key' => 'bar',
+                            'strategy' => 'chebyshev',
+                        ],
                     ],
                     'chroma_db' => [
                         'my_chroma_store' => [
@@ -230,7 +371,7 @@ class AiBundleTest extends TestCase
                     ],
                     'memory' => [
                         'my_memory_store' => [
-                            'distance' => 'cosine',
+                            'strategy' => 'cosine',
                         ],
                     ],
                     'mongodb' => [

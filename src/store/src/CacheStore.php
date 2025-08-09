@@ -32,6 +32,10 @@ final readonly class CacheStore implements VectorStoreInterface
         if (!interface_exists(CacheItemPoolInterface::class)) {
             throw new RuntimeException('For using the CacheStore as vector store, a PSR-6 cache implementation is required. Try running "composer require symfony/cache" or another PSR-6 compatible cache.');
         }
+
+        if (!interface_exists(CacheInterface::class)) {
+            throw new RuntimeException('For using the CacheStore as vector store, a symfony/contracts cache implementation is required. Try running "composer require symfony/cache" or another symfony/contracts compatible cache.');
+        }
     }
 
     public function add(VectorDocument ...$documents): void

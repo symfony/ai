@@ -27,13 +27,13 @@ use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAiPlatformFactory;
+use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFactory;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory as LmStudioPlatformFactory;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory as MistralPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
-use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFactory;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
@@ -50,6 +50,8 @@ use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\CacheStore;
+use Symfony\AI\Store\DistanceCalculator;
+use Symfony\AI\Store\DistanceStrategy;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
 use Symfony\AI\Store\InMemoryStore;
@@ -494,7 +496,23 @@ final class AiBundle extends AbstractBundle
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference($store['service']),
+                    new Definition(DistanceCalculator::class),
                 ];
+
+                if (\array_key_exists('cache_key', $store) && null !== $store['cache_key']) {
+                    $arguments[2] = $store['cache_key'];
+                }
+
+                if (\array_key_exists('strategy', $store) && null !== $store['strategy']) {
+                    if (!$container->hasDefinition('ai.store.distance_calculator.'.$name)) {
+                        $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
+                        $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
+
+                        $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
+                    }
+
+                    $arguments[1] = new Reference('ai.store.distance_calculator.'.$name);
+                }
 
                 $definition = new Definition(CacheStore::class);
                 $definition
@@ -577,9 +595,18 @@ final class AiBundle extends AbstractBundle
 
         if ('memory' === $type) {
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    $store['distance'],
-                ];
+                $arguments = [];
+
+                if (\array_key_exists('strategy', $store) && null !== $store['strategy']) {
+                    if (!$container->hasDefinition('ai.store.distance_calculator.'.$name)) {
+                        $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
+                        $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
+
+                        $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
+                    }
+
+                    $arguments[0] = new Reference('ai.store.distance_calculator.'.$name);
+                }
 
                 $definition = new Definition(InMemoryStore::class);
                 $definition
