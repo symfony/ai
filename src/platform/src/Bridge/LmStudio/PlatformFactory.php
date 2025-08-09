@@ -30,13 +30,9 @@ class PlatformFactory
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [
-                new ModelClient($httpClient, $hostUrl),
-                new Completions\ModelClient($httpClient, $hostUrl),
-            ],
-            [
-                new Embeddings\ResultConverter(),
-                new Completions\ResultConverter(),
-            ], $contract);
+            [new ModelClient($httpClient, $hostUrl), new Completions\ModelClient($httpClient, $hostUrl)],
+            [Contract\ResultConverter::create()],
+            $contract,
+        );
     }
 }

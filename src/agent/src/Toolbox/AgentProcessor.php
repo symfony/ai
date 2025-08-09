@@ -23,6 +23,7 @@ use Symfony\AI\Agent\Toolbox\StreamResult as ToolboxStreamResponse;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult as GenericStreamResponse;
 use Symfony\AI\Platform\Result\ToolCallResult;
@@ -74,6 +75,15 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             );
 
             return;
+        }
+
+        // Promote ToolCallResult from collection of choices
+        if ($output->result instanceof ChoiceResult) {
+            foreach ($output->result->getContent() as $result) {
+                if ($result instanceof ToolCallResult) {
+                    $output->result = $result;
+                }
+            }
         }
 
         if (!$output->result instanceof ToolCallResult) {
