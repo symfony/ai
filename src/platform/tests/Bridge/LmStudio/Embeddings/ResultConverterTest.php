@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\LmStudio\Embeddings;
 use Symfony\AI\Platform\Bridge\LmStudio\Embeddings\ResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -84,6 +85,6 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
 
-        $this->assertTrue($converter->supports(new Embeddings('test-model')));
+        $this->assertTrue($converter->supports(new Embeddings('test-model'), Action::CALCULATE_EMBEDDINGS));
     }
 }

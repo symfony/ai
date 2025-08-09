@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Replicate;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -24,8 +25,12 @@ use Symfony\AI\Platform\ResultConverterInterface;
  */
 final readonly class LlamaResultConverter implements ResultConverterInterface
 {
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Llama;
     }
 

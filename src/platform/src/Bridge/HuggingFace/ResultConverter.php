@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\HuggingFace;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\HuggingFace\Output\ClassificationResult;
 use Symfony\AI\Platform\Bridge\HuggingFace\Output\FillMaskResult;
 use Symfony\AI\Platform\Bridge\HuggingFace\Output\ImageSegmentationResult;
@@ -38,7 +39,7 @@ use Symfony\AI\Platform\Vector\Vector;
  */
 final readonly class ResultConverter implements PlatformResponseConverter
 {
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
         return true;
     }

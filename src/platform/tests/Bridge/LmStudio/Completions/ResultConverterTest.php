@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions\ResultConverter;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter as OpenAiResultConverter;
@@ -29,6 +30,6 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
 
-        $this->assertTrue($converter->supports(new Completions('test-model')));
+        $this->assertTrue($converter->supports(new Completions('test-model'), Action::COMPLETE_CHAT));
     }
 }
