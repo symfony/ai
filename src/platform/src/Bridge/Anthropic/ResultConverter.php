@@ -23,7 +23,6 @@ use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\Component\HttpClient\Chunk\ServerSentEvent;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
-use Symfony\Component\HttpClient\Exception\JsonException;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 
 /**
@@ -73,12 +72,7 @@ class ResultConverter implements ResultConverterInterface
                 continue;
             }
 
-            try {
-                $data = $chunk->getArrayData();
-            } catch (JsonException) {
-                // try catch only needed for Symfony 6.4
-                continue;
-            }
+            $data = $chunk->getArrayData();
 
             if ('content_block_delta' != $data['type'] || !isset($data['delta']['text'])) {
                 continue;
