@@ -92,12 +92,13 @@ Configuration
                 default:
                     collection: 'my_collection'
             cache:
-                ollama:
-                    cache:
+                cache:
+                    research:
                         service: 'cache.app'
-                        cache_key: 'ollama'
+                        cache_key: 'research'
                         strategy: 'chebyshev'
-                    memory:
+                memory:
+                    ollama:
                         strategy: 'chebyshev'
         indexer:
             default:
