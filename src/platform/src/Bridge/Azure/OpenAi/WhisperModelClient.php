@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Azure\OpenAi;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Task;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -42,8 +43,12 @@ final readonly class WhisperModelClient implements ModelClientInterface
         '' !== $apiKey || throw new InvalidArgumentException('The API key must not be empty.');
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Whisper;
     }
 

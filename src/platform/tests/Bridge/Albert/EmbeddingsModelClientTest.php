@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Albert\EmbeddingsModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
@@ -59,7 +60,7 @@ final class EmbeddingsModelClientTest extends TestCase
         );
 
         $embeddingsModel = new Embeddings('text-embedding-ada-002');
-        $this->assertTrue($client->supports($embeddingsModel));
+        $this->assertTrue($client->supports($embeddingsModel, Action::CALCULATE_EMBEDDINGS));
     }
 
     public function testDoesNotSupportNonEmbeddingsModel()
@@ -71,7 +72,7 @@ final class EmbeddingsModelClientTest extends TestCase
         );
 
         $gptModel = new Gpt('gpt-3.5-turbo');
-        $this->assertFalse($client->supports($gptModel));
+        $this->assertFalse($client->supports($gptModel, Action::CALCULATE_EMBEDDINGS));
     }
 
     #[DataProvider('providePayloadToJson')]

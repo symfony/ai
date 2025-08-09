@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Tests\Double;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
@@ -38,7 +39,7 @@ final class PlatformTestHandler implements ModelClientInterface, ResultConverter
         return new Platform([$handler], [$handler]);
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
         return true;
     }

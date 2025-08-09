@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
@@ -36,8 +37,12 @@ final readonly class ModelClient implements PlatformResponseFactory
         str_starts_with($apiKey, 'sk-') || throw new InvalidArgumentException('The API key must start with "sk-".');
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Gpt;
     }
 

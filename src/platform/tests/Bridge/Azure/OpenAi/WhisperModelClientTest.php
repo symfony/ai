@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\WhisperModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Task;
@@ -80,7 +81,7 @@ final class WhisperModelClientTest extends TestCase
         );
         $model = new Whisper();
 
-        $this->assertTrue($client->supports($model));
+        $this->assertTrue($client->supports($model, Action::CHAT));
     }
 
     public function testItUsesTranscriptionEndpointByDefault()

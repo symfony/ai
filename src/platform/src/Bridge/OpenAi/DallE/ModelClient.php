@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi\DallE;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\OpenAi\DallE;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
@@ -34,7 +35,7 @@ final readonly class ModelClient implements ModelClientInterface
         str_starts_with($apiKey, 'sk-') || throw new InvalidArgumentException('The API key must start with "sk-".');
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
         return $model instanceof DallE;
     }

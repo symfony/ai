@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\HuggingFace;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface as PlatformModelClient;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -33,7 +34,7 @@ final readonly class ModelClient implements PlatformModelClient
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
         return true;
     }

@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Cerebras\Model;
 use Symfony\AI\Platform\Bridge\Cerebras\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -56,7 +57,7 @@ class ModelClientTest extends TestCase
     {
         $client = new ModelClient(new MockHttpClient(), 'csk-1234567890abcdef');
 
-        self::assertTrue($client->supports(new Model(Model::GPT_OSS_120B)));
+        self::assertTrue($client->supports(new Model(Model::GPT_OSS_120B), Action::CHAT));
     }
 
     public function testItSuccessfullyInvokesTheModel()

@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Result\RawResultInterface;
  */
 interface ModelClientInterface
 {
-    public function supports(Model $model): bool;
+    public function supports(Model $model, Action $action): bool;
 
     /**
      * @param array<string|int, mixed> $payload

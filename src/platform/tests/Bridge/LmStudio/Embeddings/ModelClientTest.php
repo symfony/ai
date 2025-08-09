@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\LmStudio\Embeddings;
 use Symfony\AI\Platform\Bridge\LmStudio\Embeddings\ModelClient;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -29,7 +30,7 @@ class ModelClientTest extends TestCase
     {
         $client = new ModelClient(new MockHttpClient(), 'http://localhost:1234');
 
-        $this->assertTrue($client->supports(new Embeddings('test-model')));
+        $this->assertTrue($client->supports(new Embeddings('test-model'), Action::CALCULATE_EMBEDDINGS));
     }
 
     public function testItIsExecutingTheCorrectRequest()

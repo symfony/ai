@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\TransformersPhp;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -19,7 +20,7 @@ use function Codewithkyrian\Transformers\Pipelines\pipeline;
 
 final readonly class ModelClient implements ModelClientInterface
 {
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
         return true;
     }

@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions\ModelClient;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
@@ -31,7 +32,7 @@ class ModelClientTest extends TestCase
     {
         $client = new ModelClient(new MockHttpClient(), 'http://localhost:1234');
 
-        $this->assertTrue($client->supports(new Completions('test-model')));
+        $this->assertTrue($client->supports(new Completions('test-model'), Action::CHAT));
     }
 
     public function testItIsExecutingTheCorrectRequest()

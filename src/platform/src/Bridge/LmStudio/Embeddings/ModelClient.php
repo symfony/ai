@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\LmStudio\Embeddings;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\LmStudio\Embeddings;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface as PlatformResponseFactory;
@@ -29,8 +30,12 @@ final readonly class ModelClient implements PlatformResponseFactory
     ) {
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::CALCULATE_EMBEDDINGS !== $action) {
+            return false;
+        }
+
         return $model instanceof Embeddings;
     }
 

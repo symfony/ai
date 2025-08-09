@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Mistral\Embeddings;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Mistral\Embeddings;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -33,8 +34,12 @@ final readonly class ModelClient implements ModelClientInterface
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::CALCULATE_EMBEDDINGS !== $action) {
+            return false;
+        }
+
         return $model instanceof Embeddings;
     }
 

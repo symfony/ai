@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\LmStudio\Completions;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface as PlatformResponseFactory;
@@ -32,8 +33,12 @@ final readonly class ModelClient implements PlatformResponseFactory
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Completions;
     }
 

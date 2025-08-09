@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Anthropic;
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -34,8 +35,12 @@ final readonly class ClaudeModelClient implements ModelClientInterface
     ) {
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Claude;
     }
 

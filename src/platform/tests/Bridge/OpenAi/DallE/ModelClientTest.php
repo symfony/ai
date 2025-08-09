@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\OpenAi\DallE;
 use Symfony\AI\Platform\Bridge\OpenAi\DallE\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -61,7 +62,7 @@ final class ModelClientTest extends TestCase
     {
         $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
 
-        $this->assertTrue($modelClient->supports(new DallE()));
+        $this->assertTrue($modelClient->supports(new DallE(), Action::CHAT));
     }
 
     public function testItIsExecutingTheCorrectRequest()
