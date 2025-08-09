@@ -39,15 +39,22 @@ final readonly class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        $headers = [
+            'x-api-key' => $this->apiKey,
+            'anthropic-version' => $this->version,
+        ];
+
         if (isset($options['tools'])) {
             $options['tool_choice'] = ['type' => 'auto'];
         }
 
+        if (isset($options['beta_features']) && !empty($options['beta_features'])) {
+            $headers['anthropic-beta'] = implode(',', $options['beta_features']);
+            unset($options['beta_features']);
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.anthropic.com/v1/messages', [
-            'headers' => [
-                'x-api-key' => $this->apiKey,
-                'anthropic-version' => $this->version,
-            ],
+            'headers' => $headers,
             'json' => array_merge($options, $payload),
         ]));
     }

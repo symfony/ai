@@ -65,7 +65,7 @@ start for vendor-specific models and their capabilities, see ``Symfony\AI\Platfo
 supports a specific feature, like ``Capability::INPUT_AUDIO`` or ``Capability::OUTPUT_IMAGE``.
 
 **Options** are additional parameters that can be passed to the model, like ``temperature`` or ``max_tokens``, and are
-usually defined by the specific models and their documentation.
+usually defined by the specific models and their documentation. Flags for beta features are also passed in here, handled, and then removed before being sent to the provider (beta feature flags are currently only supported for the `Anthropic` platform). A more robust approach for handling provider feature flags may be implemented in the future.
 
 **Supported Models & Platforms**
 
