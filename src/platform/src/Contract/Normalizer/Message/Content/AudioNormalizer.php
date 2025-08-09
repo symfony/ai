@@ -45,6 +45,7 @@ final class AudioNormalizer implements NormalizerInterface
             'type' => 'input_audio',
             'input_audio' => [
                 'data' => $data->asBase64(),
+                'path' => $data->asPath(),
                 'format' => match ($data->getFormat()) {
                     'audio/mpeg' => 'mp3',
                     'audio/wav' => 'wav',

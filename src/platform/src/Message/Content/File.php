@@ -47,7 +47,7 @@ readonly class File implements ContentInterface
         }
 
         return new static(
-            fn () => file_get_contents($path),
+            static fn () => file_get_contents($path),
             mime_content_type($path),
             $path,
         );
@@ -71,6 +71,11 @@ readonly class File implements ContentInterface
     public function asDataUrl(): string
     {
         return \sprintf('data:%s;base64,%s', $this->format, $this->asBase64());
+    }
+
+    public function asPath(): string
+    {
+        return $this->path;
     }
 
     /**

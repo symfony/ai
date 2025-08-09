@@ -45,7 +45,7 @@ final class AudioNormalizerTest extends TestCase
     #[DataProvider('provideAudioData')]
     public function testNormalize(string $data, string $format, array $expected)
     {
-        $audio = new Audio(base64_decode($data), $format);
+        $audio = new Audio(base64_decode($data), $format, \dirname(__DIR__, 7).'/fixtures/audio.mp3');
 
         $this->assertSame($expected, $this->normalizer->normalize($audio));
     }
@@ -59,6 +59,7 @@ final class AudioNormalizerTest extends TestCase
                 'type' => 'input_audio',
                 'input_audio' => [
                     'data' => 'SUQzBAAAAAAAfVREUkMAAAAMAAADMg==',
+                    'path' => pathinfo(\dirname(__DIR__, 7).'/fixtures/audio.mp3', \PATHINFO_DIRNAME).'/audio.mp3',
                     'format' => 'mp3',
                 ],
             ],
@@ -71,6 +72,7 @@ final class AudioNormalizerTest extends TestCase
                 'type' => 'input_audio',
                 'input_audio' => [
                     'data' => 'UklGRiQAAABXQVZFZm10IBA=',
+                    'path' => pathinfo(\dirname(__DIR__, 7).'/fixtures/audio.mp3', \PATHINFO_DIRNAME).'/audio.mp3',
                     'format' => 'wav',
                 ],
             ],
