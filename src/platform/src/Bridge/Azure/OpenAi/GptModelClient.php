@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Azure\OpenAi;
 
 use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -51,8 +52,12 @@ final readonly class GptModelClient implements ModelClientInterface
         return $model instanceof Gpt;
     }
 
-    public function request(Model $model, object|array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, Action $action, object|array|string $payload, array $options = []): RawHttpResult
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CHAT, Action::COMPLETE_CHAT]);
+        }
+
         $url = \sprintf('https://%s/openai/deployments/%s/chat/completions', $this->baseUrl, $this->deployment);
 
         return new RawHttpResult($this->httpClient->request('POST', $url, [

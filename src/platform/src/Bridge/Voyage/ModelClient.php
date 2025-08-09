@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Voyage;
 
 use Symfony\AI\Platform\Action;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -37,8 +38,12 @@ final readonly class ModelClient implements ModelClientInterface
         return $model instanceof Voyage;
     }
 
-    public function request(Model $model, object|string|array $payload, array $options = []): RawHttpResult
+    public function request(Model $model, Action $action, object|string|array $payload, array $options = []): RawHttpResult
     {
+        if (Action::CALCULATE_EMBEDDINGS !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CALCULATE_EMBEDDINGS]);
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.voyageai.com/v1/embeddings', [
             'auth_bearer' => $this->apiKey,
             'json' => [

@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Cerebras;
 
 use Symfony\AI\Platform\Action;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -50,8 +51,12 @@ final readonly class ModelClient implements ModelClientInterface
         return $model instanceof Model;
     }
 
-    public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(BaseModel $model, Action $action, array|string $payload, array $options = []): RawHttpResult
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CHAT, Action::COMPLETE_CHAT]);
+        }
+
         return new RawHttpResult(
             $this->httpClient->request(
                 'POST', 'https://api.cerebras.ai/v1/chat/completions',

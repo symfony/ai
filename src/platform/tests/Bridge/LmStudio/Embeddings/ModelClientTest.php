@@ -48,7 +48,7 @@ class ModelClientTest extends TestCase
 
         $model = new Embeddings('test-model');
 
-        $client->request($model, 'Hello, world!');
+        $client->request($model, Action::CALCULATE_EMBEDDINGS, 'Hello, world!');
     }
 
     public function testItMergesOptionsWithPayload()
@@ -69,7 +69,7 @@ class ModelClientTest extends TestCase
 
         $model = new Embeddings('test-model');
 
-        $client->request($model, 'Hello, world!', ['custom_option' => 'value']);
+        $client->request($model, Action::CALCULATE_EMBEDDINGS, 'Hello, world!', ['custom_option' => 'value']);
     }
 
     public function testItHandlesArrayInput()
@@ -87,6 +87,6 @@ class ModelClientTest extends TestCase
 
         $model = new Embeddings('test-model');
 
-        $client->request($model, ['Hello', 'world']);
+        $client->request($model, Action::CALCULATE_EMBEDDINGS, ['Hello', 'world']);
     }
 }

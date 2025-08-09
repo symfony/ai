@@ -92,7 +92,7 @@ final class EmbeddingsModelClientTest extends TestCase
         );
 
         $model = new Embeddings('text-embedding-ada-002');
-        $result = $client->request($model, $payload, $options);
+        $result = $client->request($model, Action::CALCULATE_EMBEDDINGS, $payload, $options);
 
         $this->assertNotNull($capturedRequest);
         $this->assertSame('POST', $capturedRequest['method']);
@@ -153,7 +153,7 @@ final class EmbeddingsModelClientTest extends TestCase
         );
 
         $model = new Embeddings('text-embedding-ada-002');
-        $client->request($model, ['input' => 'test']);
+        $client->request($model, Action::CALCULATE_EMBEDDINGS, ['input' => 'test']);
 
         $this->assertSame('https://albert.example.com/v1/embeddings', $capturedUrl);
     }
@@ -174,7 +174,7 @@ final class EmbeddingsModelClientTest extends TestCase
         );
 
         $model = new Embeddings('text-embedding-ada-002');
-        $client->request($model, ['input' => 'test']);
+        $client->request($model, Action::CALCULATE_EMBEDDINGS, ['input' => 'test']);
 
         $this->assertSame('https://albert.example.com/v1/embeddings', $capturedUrl);
     }

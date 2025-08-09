@@ -94,6 +94,6 @@ final class GptModelClientTest extends TestCase
 
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new GptModelClient($httpClient, 'test.azure.com', 'gpt-deployment', '2023-12-01', 'test-api-key');
-        $client->request(new Gpt(), ['messages' => [['role' => 'user', 'content' => 'Hello']]]);
+        $client->request(new Gpt(), Action::COMPLETE_CHAT, ['messages' => [['role' => 'user', 'content' => 'Hello']]]);
     }
 }

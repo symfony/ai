@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Albert;
 
 use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -43,8 +44,12 @@ final readonly class EmbeddingsModelClient implements ModelClientInterface
         return $model instanceof Embeddings;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawResultInterface
     {
+        if (Action::CALCULATE_EMBEDDINGS !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CALCULATE_EMBEDDINGS]);
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/embeddings', $this->baseUrl), [
             'auth_bearer' => $this->apiKey,
             'json' => \is_array($payload) ? array_merge($payload, $options) : $payload,

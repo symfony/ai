@@ -48,7 +48,7 @@ final class ModelClientTest extends TestCase
         $model = new Whisper();
         $payload = ['file' => 'audio-data'];
 
-        $client->request($model, $payload);
+        $client->request($model, Action::CHAT, $payload);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -69,7 +69,7 @@ final class ModelClientTest extends TestCase
         $payload = ['file' => 'audio-data'];
         $options = ['task' => Task::TRANSCRIPTION];
 
-        $client->request($model, $payload, $options);
+        $client->request($model, Action::CHAT, $payload, $options);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -90,7 +90,7 @@ final class ModelClientTest extends TestCase
         $payload = ['file' => 'audio-data'];
         $options = ['task' => Task::TRANSLATION];
 
-        $client->request($model, $payload, $options);
+        $client->request($model, Action::CHAT, $payload, $options);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

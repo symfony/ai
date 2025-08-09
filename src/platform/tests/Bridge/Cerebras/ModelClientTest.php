@@ -83,7 +83,7 @@ class ModelClientTest extends TestCase
             ],
         ];
 
-        $result = $client->request(new Model(Model::LLAMA_3_3_70B), $payload);
+        $result = $client->request(new Model(Model::LLAMA_3_3_70B), Action::COMPLETE_CHAT, $payload);
         $data = $result->getData();
         $info = $result->getObject()->getInfo();
 

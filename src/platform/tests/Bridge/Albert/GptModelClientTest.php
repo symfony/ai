@@ -70,7 +70,7 @@ final class GptModelClientTest extends TestCase
         $mockHttpClient->setResponseFactory([$mockResponse]);
 
         $model = new Gpt('gpt-3.5-turbo');
-        $client->request($model, ['messages' => []]);
+        $client->request($model, Action::CHAT, ['messages' => []]);
     }
 
     public function testConstructorAcceptsEventSourceHttpClient()
@@ -91,7 +91,7 @@ final class GptModelClientTest extends TestCase
         $mockHttpClient->setResponseFactory([$mockResponse]);
 
         $model = new Gpt('gpt-3.5-turbo');
-        $client->request($model, ['messages' => []]);
+        $client->request($model, Action::CHAT, ['messages' => []]);
     }
 
     public function testSupportsGptModel()
@@ -135,7 +135,7 @@ final class GptModelClientTest extends TestCase
         );
 
         $model = new Gpt('gpt-3.5-turbo');
-        $result = $client->request($model, $payload, $options);
+        $result = $client->request($model, Action::COMPLETE_CHAT, $payload, $options);
 
         $this->assertNotNull($capturedRequest);
         $this->assertSame('POST', $capturedRequest['method']);
@@ -202,7 +202,7 @@ final class GptModelClientTest extends TestCase
         );
 
         $model = new Gpt('gpt-3.5-turbo');
-        $client->request($model, ['messages' => []]);
+        $client->request($model, Action::COMPLETE_CHAT, ['messages' => []]);
 
         $this->assertSame('https://albert.example.com/v1/chat/completions', $capturedUrl);
     }
@@ -223,7 +223,7 @@ final class GptModelClientTest extends TestCase
         );
 
         $model = new Gpt('gpt-3.5-turbo');
-        $client->request($model, ['messages' => []]);
+        $client->request($model, Action::COMPLETE_CHAT, ['messages' => []]);
 
         $this->assertSame('https://albert.example.com/v1/chat/completions', $capturedUrl);
     }

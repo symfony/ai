@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Embeddings;
 
 use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -39,8 +40,12 @@ final readonly class ModelClient implements ModelClientInterface
         return $model instanceof Embeddings;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawHttpResult
     {
+        if (Action::CALCULATE_EMBEDDINGS !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CALCULATE_EMBEDDINGS]);
+        }
+
         $url = \sprintf('https://generativelanguage.googleapis.com/v1beta/models/%s:%s', $model->getName(), 'batchEmbedContents');
         $modelOptions = $model->getOptions();
 

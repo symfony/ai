@@ -94,6 +94,6 @@ final class EmbeddingsModelClientTest extends TestCase
 
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new EmbeddingsModelClient($httpClient, 'test.azure.com', 'embeddings-deployment', '2023-12-01', 'test-api-key');
-        $client->request(new Embeddings(), 'Hello, world!');
+        $client->request(new Embeddings(), Action::CALCULATE_EMBEDDINGS, 'Hello, world!');
     }
 }

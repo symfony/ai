@@ -77,6 +77,6 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new DallE(), 'foo', ['n' => 1, 'response_format' => 'url']);
+        $modelClient->request(new DallE(), Action::CHAT, 'foo', ['n' => 1, 'response_format' => 'url']);
     }
 }

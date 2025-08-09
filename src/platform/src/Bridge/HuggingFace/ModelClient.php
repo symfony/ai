@@ -41,8 +41,9 @@ final readonly class ModelClient implements PlatformModelClient
 
     /**
      * The difference in HuggingFace here is that we treat the payload as the options for the request not only the body.
+     * @param Action $action
      */
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawHttpResult
     {
         // Extract task from options if provided
         $task = $options['task'] ?? null;

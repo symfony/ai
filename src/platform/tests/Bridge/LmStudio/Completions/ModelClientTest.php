@@ -58,7 +58,7 @@ class ModelClientTest extends TestCase
             ],
         ];
 
-        $client->request(new Completions('test-model'), $payload);
+        $client->request(new Completions('test-model'), Action::COMPLETE_CHAT, $payload);
     }
 
     public function testItMergesOptionsWithPayload()
@@ -84,7 +84,7 @@ class ModelClientTest extends TestCase
             ],
         ];
 
-        $client->request(new Completions('test-model'), $payload, ['temperature' => 0.7]);
+        $client->request(new Completions('test-model'), Action::COMPLETE_CHAT, $payload, ['temperature' => 0.7]);
     }
 
     public function testItUsesEventSourceHttpClient()

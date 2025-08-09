@@ -44,7 +44,7 @@ final class Platform implements PlatformInterface
         $this->resultConverters = $resultConverters instanceof \Traversable ? iterator_to_array($resultConverters) : $resultConverters;
     }
 
-    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise
+    public function invoke(Model $model, array|string|object $input, array $options = [], Action $action = Action::CHAT): ResultPromise
     {
         $payload = $this->contract->createRequestPayload($model, $input);
         $options = array_merge($model->getOptions(), $options);
@@ -66,7 +66,7 @@ final class Platform implements PlatformInterface
     {
         foreach ($this->modelClients as $modelClient) {
             if ($modelClient->supports($model, $action)) {
-                return $modelClient->request($model, $payload, $options);
+                return $modelClient->request($model, $action, $payload, $options);
             }
         }
 

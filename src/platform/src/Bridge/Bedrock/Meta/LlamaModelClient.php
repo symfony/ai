@@ -16,6 +16,7 @@ use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 
@@ -38,8 +39,12 @@ class LlamaModelClient implements ModelClientInterface
         return $model instanceof Llama;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawBedrockResult
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CHAT, Action::COMPLETE_CHAT]);
+        }
+
         return new RawBedrockResult($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest([
             'modelId' => $this->getModelId($model),
             'contentType' => 'application/json',
