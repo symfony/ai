@@ -14,6 +14,8 @@ namespace Symfony\AI\Agent;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
 
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
@@ -26,4 +28,6 @@ interface AgentInterface
      * @throws ExceptionInterface When the agent encounters an error (e.g., unsupported model capabilities, invalid arguments, network failures, or processor errors)
      */
     public function call(MessageBagInterface $messages, array $options = []): ResultInterface;
+
+    public function getId(): AbstractUid&TimeBasedUidInterface;
 }
