@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract;
 
-use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Model;
@@ -31,7 +31,7 @@ class ToolNormalizer extends ModelContractNormalizer
 
     protected function supportsModel(Model $model): bool
     {
-        return $model instanceof Nova;
+        return $model->supports(Capability::TOOL_CALLING);
     }
 
     /**

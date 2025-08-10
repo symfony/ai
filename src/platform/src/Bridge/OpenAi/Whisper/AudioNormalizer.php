@@ -11,26 +11,25 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 
-use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\Content\Audio;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Symfony\AI\Platform\Model;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class AudioNormalizer implements NormalizerInterface
+final class AudioNormalizer extends ModelContractNormalizer
 {
-    public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
+    protected function supportedDataClass(): string
     {
-        return $data instanceof Audio && $context[Contract::CONTEXT_MODEL] instanceof Whisper;
+        return Audio::class;
     }
 
-    public function getSupportedTypes(?string $format): array
+    protected function supportsModel(Model $model): bool
     {
-        return [
-            Audio::class => true,
-        ];
+        return $model->supports(Capability::INPUT_AUDIO);
     }
 
     /**

@@ -11,27 +11,26 @@
 
 namespace Symfony\AI\Platform\Contract\Normalizer;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Tool\Tool;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
  * @phpstan-import-type JsonSchema from Factory
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class ToolNormalizer implements NormalizerInterface
+class ToolNormalizer extends ModelContractNormalizer
 {
-    public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
+    protected function supportedDataClass(): string
     {
-        return $data instanceof Tool;
+        return Tool::class;
     }
 
-    public function getSupportedTypes(?string $format): array
+    protected function supportsModel(Model $model): bool
     {
-        return [
-            Tool::class => true,
-        ];
+        return $model->supports(Capability::TOOL_CALLING);
     }
 
     /**
