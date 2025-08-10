@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Gemini\Embeddings;
 
-use Symfony\AI\Platform\Bridge\Gemini\Embeddings;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -31,7 +31,7 @@ final readonly class ModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Embeddings;
+        return $model->supports(Capability::INPUT_MULTIPLE);
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult

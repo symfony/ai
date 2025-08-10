@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\LmStudio\Embeddings;
 
 use Symfony\AI\Platform\Bridge\LmStudio\Embeddings;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface as PlatformResponseFactory;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -31,7 +32,7 @@ final readonly class ModelClient implements PlatformResponseFactory
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Embeddings;
+        return $model->supports(Capability::INPUT_MULTIPLE);
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult

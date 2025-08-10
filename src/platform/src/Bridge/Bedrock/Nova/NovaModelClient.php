@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Nova;
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 
@@ -29,7 +30,7 @@ class NovaModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Nova;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult

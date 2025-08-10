@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Replicate;
 
 use Symfony\AI\Platform\Bridge\Meta\Llama;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -29,13 +30,11 @@ final readonly class LlamaModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Llama;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        $model instanceof Llama || throw new InvalidArgumentException(\sprintf('The model must be an instance of "%s".', Llama::class));
-
         return new RawHttpResult(
             $this->client->request(\sprintf('meta/meta-%s', $model->getName()), 'predictions', $payload)
         );
