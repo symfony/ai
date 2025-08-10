@@ -19,12 +19,21 @@ final readonly class Error implements \JsonSerializable
     public const INTERNAL_ERROR = -32603;
     public const PARSE_ERROR = -32700;
     public const RESOURCE_NOT_FOUND = -32002;
+    public const REQUEST_TIMEOUT = -32001;
 
     public function __construct(
         public string|int $id,
         public int $code,
         public string $message,
     ) {
+    }
+
+    /**
+     * @param array{jsonrpc: string, id: string|int, error: array{code: int, message: string}} $data
+     */
+    public static function from(array $data): self
+    {
+        return new self($data['id'], $data['error']['code'], $data['error']['message']);
     }
 
     public static function invalidRequest(string|int $id, string $message = 'Invalid Request'): self
@@ -50,6 +59,11 @@ final readonly class Error implements \JsonSerializable
     public static function parseError(string|int $id, string $message = 'Parse error'): self
     {
         return new self($id, self::PARSE_ERROR, $message);
+    }
+
+    public static function requestTimeout(string|int $id, string $message = 'Request timeout'): self
+    {
+        return new self($id, self::REQUEST_TIMEOUT, $message);
     }
 
     /**
