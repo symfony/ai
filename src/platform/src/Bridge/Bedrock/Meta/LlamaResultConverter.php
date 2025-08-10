@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Meta;
 
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -26,7 +27,7 @@ class LlamaResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
-        return $model instanceof Llama;
+        return $model->supports(Capability::OUTPUT_TEXT);
     }
 
     public function convert(RawResultInterface|RawBedrockResult $result, array $options = []): TextResult

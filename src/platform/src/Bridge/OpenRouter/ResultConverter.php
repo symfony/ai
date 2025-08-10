@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenRouter;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -25,7 +26,7 @@ final readonly class ResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
-        return true;
+        return $model->supports(Capability::OUTPUT_TEXT);
     }
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface

@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Anthropic;
 
-use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -28,7 +28,7 @@ final readonly class ClaudeResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
-        return $model instanceof Claude;
+        return $model->supports(Capability::OUTPUT_TEXT) || $model->supports(Capability::TOOL_CALLING);
     }
 
     public function convert(RawResultInterface|RawBedrockResult $result, array $options = []): ToolCallResult|TextResult

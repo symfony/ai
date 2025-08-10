@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\LmStudio\Completions;
 
-use Symfony\AI\Platform\Bridge\LmStudio\Completions;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter as OpenAiResponseConverter;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -30,7 +29,7 @@ final class ResultConverter implements ResultConverterInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Completions;
+        return $this->gptResponseConverter->supports($model);
     }
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
