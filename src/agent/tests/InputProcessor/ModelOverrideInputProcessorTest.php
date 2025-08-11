@@ -34,8 +34,8 @@ final class ModelOverrideInputProcessorTest extends TestCase
 {
     public function testProcessInputWithValidModelOption()
     {
-        $gpt = new Gpt();
-        $claude = new Claude();
+        $gpt = Gpt::create();
+        $claude = Claude::create();
         $input = new Input($gpt, new MessageBag(), ['model' => $claude]);
 
         $processor = new ModelOverrideInputProcessor();
@@ -46,7 +46,7 @@ final class ModelOverrideInputProcessorTest extends TestCase
 
     public function testProcessInputWithoutModelOption()
     {
-        $gpt = new Gpt();
+        $gpt = Gpt::create();
         $input = new Input($gpt, new MessageBag(), []);
 
         $processor = new ModelOverrideInputProcessor();
@@ -60,7 +60,7 @@ final class ModelOverrideInputProcessorTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Option "model" must be an instance of "Symfony\AI\Platform\Model".');
 
-        $gpt = new Gpt();
+        $gpt = Gpt::create();
         $model = new MessageBag();
         $input = new Input($gpt, new MessageBag(), ['model' => $model]);
 

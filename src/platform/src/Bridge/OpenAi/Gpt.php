@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Model;
  * @author Christopher Hertel <mail@christopher-hertel.de>
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-class Gpt extends Model
+final class Gpt
 {
     public const GPT_35_TURBO = 'gpt-3.5-turbo';
     public const GPT_35_TURBO_INSTRUCT = 'gpt-3.5-turbo-instruct';
@@ -62,10 +62,10 @@ class Gpt extends Model
     /**
      * @param array<mixed> $options The default options for the model usage
      */
-    public function __construct(
+    public static function create(
         string $name = self::GPT_4O,
         array $options = ['temperature' => 1.0],
-    ) {
+    ): Model {
         $capabilities = [
             Capability::INPUT_MESSAGES,
             Capability::OUTPUT_TEXT,
@@ -85,6 +85,6 @@ class Gpt extends Model
             $capabilities[] = Capability::OUTPUT_STRUCTURED;
         }
 
-        parent::__construct($name, $capabilities, $options);
+        return new Model($name, $capabilities, $options);
     }
 }

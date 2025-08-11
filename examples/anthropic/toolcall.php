@@ -21,7 +21,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('ANTHROPIC_API_KEY'), httpClient: http_client());
-$model = new Claude();
+$model = Claude::create();
 
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia], logger: logger());

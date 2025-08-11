@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
-$agent = new Agent($platform, new Mistral(), logger: logger());
+$agent = new Agent($platform, Mistral::create(), logger: logger());
 
 $messages = new MessageBag(
     Message::forSystem('Just give short answers.'),

@@ -47,7 +47,7 @@ final class SystemPromptInputProcessorTest extends TestCase
     {
         $processor = new SystemPromptInputProcessor('This is a system prompt');
 
-        $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')), []);
+        $input = new Input(Gpt::create(), new MessageBag(Message::ofUser('This is a user message')), []);
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();
@@ -65,7 +65,7 @@ final class SystemPromptInputProcessorTest extends TestCase
             Message::forSystem('This is already a system prompt'),
             Message::ofUser('This is a user message'),
         );
-        $input = new Input(new Gpt(), $messages, []);
+        $input = new Input(Gpt::create(), $messages, []);
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();
@@ -92,7 +92,7 @@ final class SystemPromptInputProcessorTest extends TestCase
             }
         );
 
-        $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')), []);
+        $input = new Input(Gpt::create(), new MessageBag(Message::ofUser('This is a user message')), []);
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();
@@ -130,7 +130,7 @@ final class SystemPromptInputProcessorTest extends TestCase
             }
         );
 
-        $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')), []);
+        $input = new Input(Gpt::create(), new MessageBag(Message::ofUser('This is a user message')), []);
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();
@@ -170,7 +170,7 @@ final class SystemPromptInputProcessorTest extends TestCase
             }
         );
 
-        $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')), []);
+        $input = new Input(Gpt::create(), new MessageBag(Message::ofUser('This is a user message')), []);
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();

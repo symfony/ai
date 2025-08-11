@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('LMSTUDIO_HOST_URL'), http_client());
-$model = new Completions(
+$model = Completions::create(
     name: 'gemma-3-4b-it-qat',
     capabilities: [...Completions::DEFAULT_CAPABILITIES, Capability::INPUT_IMAGE]
 );

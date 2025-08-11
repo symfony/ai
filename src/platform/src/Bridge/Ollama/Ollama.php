@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Joshua Behrens <code@joshua-behrens.de>
  */
-class Ollama extends Model
+final class Ollama
 {
     public const DEEPSEEK_R_1 = 'deepseek-r1';
     public const GEMMA_3_N = 'gemma3n';
@@ -63,7 +63,7 @@ class Ollama extends Model
     /**
      * @param array<string, mixed> $options
      */
-    public function __construct(string $name = self::LLAMA_3_2, array $options = [])
+    public static function create(string $name = self::LLAMA_3_2, array $options = []): Model
     {
         $capabilities = [];
 
@@ -75,6 +75,6 @@ class Ollama extends Model
             }
         }
 
-        parent::__construct($name, $capabilities, $options);
+        return new Model($name, $capabilities, $options);
     }
 }

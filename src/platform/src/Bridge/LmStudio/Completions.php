@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author André Lubian <lubiana123@gmail.com>
  */
-class Completions extends Model
+final class Completions
 {
     public const DEFAULT_CAPABILITIES = [
         Capability::INPUT_MESSAGES,
@@ -25,11 +25,11 @@ class Completions extends Model
         Capability::OUTPUT_STREAMING,
     ];
 
-    public function __construct(
+    public static function create(
         string $name,
         array $options = ['temperature' => 0.7],
         array $capabilities = self::DEFAULT_CAPABILITIES,
-    ) {
-        parent::__construct($name, $capabilities, $options);
+    ): Model {
+        return new Model($name, $capabilities, $options);
     }
 }

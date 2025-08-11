@@ -19,7 +19,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('ALBERT_API_KEY'), env('ALBERT_API_URL'), http_client());
 
-$model = new Gpt('gpt-4o');
+$model = Gpt::create('gpt-4o');
 $agent = new Agent($platform, $model, logger: logger());
 
 $documentContext = <<<'CONTEXT'

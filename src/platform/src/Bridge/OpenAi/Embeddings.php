@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class Embeddings extends Model
+final class Embeddings
 {
     public const TEXT_ADA_002 = 'text-embedding-ada-002';
     public const TEXT_3_LARGE = 'text-embedding-3-large';
@@ -25,8 +25,8 @@ class Embeddings extends Model
     /**
      * @param array<string, mixed> $options
      */
-    public function __construct(string $name = self::TEXT_3_SMALL, array $options = [])
+    public static function create(string $name = self::TEXT_3_SMALL, array $options = []): Model
     {
-        parent::__construct($name, [], $options);
+        return new Model($name, [], $options);
     }
 }

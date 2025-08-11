@@ -31,7 +31,7 @@ class ModelClientTest extends TestCase
     {
         $client = new ModelClient(new MockHttpClient(), 'http://localhost:1234');
 
-        $this->assertTrue($client->supports(new Completions('test-model')));
+        $this->assertTrue($client->supports(Completions::create('test-model')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -57,7 +57,7 @@ class ModelClientTest extends TestCase
             ],
         ];
 
-        $client->request(new Completions('test-model'), $payload);
+        $client->request(Completions::create('test-model'), $payload);
     }
 
     public function testItMergesOptionsWithPayload()
@@ -83,7 +83,7 @@ class ModelClientTest extends TestCase
             ],
         ];
 
-        $client->request(new Completions('test-model'), $payload, ['temperature' => 0.7]);
+        $client->request(Completions::create('test-model'), $payload, ['temperature' => 0.7]);
     }
 
     public function testItUsesEventSourceHttpClient()

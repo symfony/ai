@@ -8,7 +8,7 @@ use \Symfony\AI\Platform\Model as BaseModel;
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
  */
-final class Model extends BaseModel
+final class Model
 {
     public const LLAMA_4_SCOUT_17B_16E_INSTRUCT = 'llama-4-scout-17b-16e-instruct';
     public const LLAMA3_1_8B = 'llama3.1-8b';
@@ -29,11 +29,11 @@ final class Model extends BaseModel
     /**
      * @see https://inference-docs.cerebras.ai/api-reference/chat-completions for details like options
      */
-    public function __construct(
+    public static function create(
         string $name = self::LLAMA3_1_8B,
         array $capabilities = self::CAPABILITIES,
         array $options = [],
-    ) {
-        parent::__construct($name, $capabilities, $options);
+    ): BaseModel {
+        return new BaseModel($name, $capabilities, $options);
     }
 }

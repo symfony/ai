@@ -301,7 +301,7 @@ class AiBundleTest extends TestCase
                         'store' => 'my_azure_search_store_service_id',
                         'platform' => 'mistral_platform_service_id',
                         'model' => [
-                            'class' => 'Symfony\AI\Platform\Bridge\Mistral\Embeddings',
+                            'class' => 'Symfony\AI\Platform\Model',
                             'name' => 'mistral-embed',
                             'options' => ['dimension' => 768],
                         ],

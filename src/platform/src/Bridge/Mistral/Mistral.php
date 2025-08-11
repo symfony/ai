@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class Mistral extends Model
+final class Mistral
 {
     public const CODESTRAL = 'codestral-latest';
     public const CODESTRAL_MAMBA = 'open-codestral-mamba';
@@ -33,10 +33,10 @@ final class Mistral extends Model
     /**
      * @param array<string, mixed> $options
      */
-    public function __construct(
+    public static function create(
         string $name = self::MISTRAL_LARGE,
         array $options = [],
-    ) {
+    ): Model {
         $capabilities = [
             Capability::INPUT_MESSAGES,
             Capability::OUTPUT_TEXT,
@@ -61,6 +61,6 @@ final class Mistral extends Model
             $capabilities[] = Capability::TOOL_CALLING;
         }
 
-        parent::__construct($name, $capabilities, $options);
+        return new Model($name, $capabilities, $options);
     }
 }

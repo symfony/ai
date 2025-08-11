@@ -29,6 +29,6 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
 
-        $this->assertTrue($converter->supports(new Completions('test-model')));
+        $this->assertTrue($converter->supports(Completions::create('test-model')));
     }
 }

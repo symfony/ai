@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class Model
+final class Model
 {
     /**
      * @param Capability[]         $capabilities

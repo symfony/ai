@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
-$model = new Ollama();
+$model = Ollama::create();
 
 $agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(

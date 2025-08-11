@@ -51,11 +51,11 @@ $store->initialize();
 
 // create embeddings for documents
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
+$vectorizer = new Vectorizer($platform, $embeddings = Embeddings::create());
 $indexer = new Indexer($vectorizer, $store, logger());
 $indexer->index($documents);
 
-$model = new Gpt(Gpt::GPT_4O_MINI);
+$model = Gpt::create(Gpt::GPT_4O_MINI);
 
 $similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());

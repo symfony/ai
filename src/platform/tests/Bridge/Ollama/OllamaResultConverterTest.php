@@ -42,7 +42,7 @@ final class OllamaResultConverterTest extends TestCase
     {
         $converter = new OllamaResultConverter();
 
-        $this->assertTrue($converter->supports(new Ollama()));
+        $this->assertTrue($converter->supports(Ollama::create()));
         $this->assertFalse($converter->supports(new Model('any-model')));
     }
 

@@ -21,7 +21,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
-$llm = new Gemini(Gemini::GEMINI_2_FLASH);
+$llm = Gemini::create(Gemini::GEMINI_2_FLASH);
 
 $toolbox = new Toolbox([new Clock()], logger: logger());
 $processor = new AgentProcessor($toolbox);

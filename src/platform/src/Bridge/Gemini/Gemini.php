@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Roy Garrido
  */
-class Gemini extends Model
+final class Gemini
 {
     public const GEMINI_2_FLASH = 'gemini-2.0-flash';
     public const GEMINI_2_PRO = 'gemini-2.0-pro-exp-02-05';
@@ -28,7 +28,7 @@ class Gemini extends Model
     /**
      * @param array<string, mixed> $options The default options for the model usage
      */
-    public function __construct(string $name = self::GEMINI_2_PRO, array $options = ['temperature' => 1.0])
+    public static function create(string $name = self::GEMINI_2_PRO, array $options = ['temperature' => 1.0]): Model
     {
         $capabilities = [
             Capability::INPUT_MESSAGES,
@@ -40,6 +40,6 @@ class Gemini extends Model
             Capability::TOOL_CALLING,
         ];
 
-        parent::__construct($name, $capabilities, $options);
+        return new Model($name, $capabilities, $options);
     }
 }

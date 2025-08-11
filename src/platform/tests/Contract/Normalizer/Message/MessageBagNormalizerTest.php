@@ -96,7 +96,7 @@ final class MessageBagNormalizerTest extends TestCase
         $innerNormalizer = $this->createMock(NormalizerInterface::class);
         $innerNormalizer->expects($this->once())
             ->method('normalize')
-            ->with($messages, null, [Contract::CONTEXT_MODEL => new Gpt()])
+            ->with($messages, null, [Contract::CONTEXT_MODEL => Gpt::create()])
             ->willReturn([
                 ['role' => 'system', 'content' => 'You are a helpful assistant'],
                 ['role' => 'user', 'content' => 'Hello'],
@@ -113,7 +113,7 @@ final class MessageBagNormalizerTest extends TestCase
         ];
 
         $this->assertSame($expected, $this->normalizer->normalize($messageBag, context: [
-            Contract::CONTEXT_MODEL => new Gpt(),
+            Contract::CONTEXT_MODEL => Gpt::create(),
         ]));
     }
 }

@@ -49,7 +49,7 @@ final class IndexerTest extends TestCase
     {
         $document = new TextDocument($id = Uuid::v4(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings());
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), Embeddings::create());
 
         $indexer = new Indexer($vectorizer, $store = new TestStore());
         $indexer->index($document);
@@ -64,7 +64,7 @@ final class IndexerTest extends TestCase
     {
         $logger = self::createMock(LoggerInterface::class);
         $logger->expects($this->once())->method('debug')->with('No documents to index');
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(), new Embeddings());
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(), Embeddings::create());
 
         $indexer = new Indexer($vectorizer, $store = new TestStore(), $logger);
         $indexer->index([]);
@@ -77,7 +77,7 @@ final class IndexerTest extends TestCase
         $metadata = new Metadata(['key' => 'value']);
         $document = new TextDocument($id = Uuid::v4(), 'Test content', $metadata);
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings());
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), Embeddings::create());
 
         $indexer = new Indexer($vectorizer, $store = new TestStore());
         $indexer->index($document);

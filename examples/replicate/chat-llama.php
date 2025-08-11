@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('REPLICATE_API_KEY'), http_client());
-$model = new Llama();
+$model = Llama::create();
 
 $agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(

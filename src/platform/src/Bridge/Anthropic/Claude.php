@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class Claude extends Model
+final class Claude
 {
     public const HAIKU_3 = 'claude-3-haiku-20240307';
     public const HAIKU_35 = 'claude-3-5-haiku-latest';
@@ -34,10 +34,10 @@ class Claude extends Model
     /**
      * @param array<string, mixed> $options The default options for the model usage
      */
-    public function __construct(
+    public static function create(
         string $name = self::SONNET_37,
         array $options = ['temperature' => 1.0, 'max_tokens' => 1000],
-    ) {
+    ): Model {
         $capabilities = [
             Capability::INPUT_MESSAGES,
             Capability::INPUT_IMAGE,
@@ -46,6 +46,6 @@ class Claude extends Model
             Capability::TOOL_CALLING,
         ];
 
-        parent::__construct($name, $capabilities, $options);
+        return new Model($name, $capabilities, $options);
     }
 }

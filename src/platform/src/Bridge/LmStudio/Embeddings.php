@@ -16,6 +16,10 @@ use Symfony\AI\Platform\Model;
 /**
  * @author André Lubian <lubiana123@gmail.com>
  */
-class Embeddings extends Model
+final class Embeddings
 {
+    public static function create(string $name, array $capabilities = [], array $options = []): Model
+    {
+        return new Model($name, $capabilities, $options);
+    }
 }

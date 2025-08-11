@@ -36,10 +36,10 @@ For example, to use the OpenAI provider, you would typically do something like t
     $platform = PlatformFactory::create(env('OPENAI_API_KEY'));
 
     // Embeddings Model
-    $embeddings = new Embeddings();
+    $embeddings = Embeddings::create();
 
     // Language Model in version gpt-4o-mini
-    $model = new Gpt(Gpt::GPT_4O_MINI);
+    $model = Gpt::create(Gpt::GPT_4O_MINI);
 
 And with a ``Symfony\AI\Platform\PlatformInterface`` instance, and a ``Symfony\AI\Platform\Model`` instance, you can now
 use the platform to interact with the AI model::
@@ -246,7 +246,7 @@ The standalone usage results in an ``Vector`` instance::
 
     // Initialize Platform
 
-    $embeddings = new Embeddings($platform, Embeddings::TEXT_3_SMALL);
+    $embeddings = Embeddings::create(Embeddings::TEXT_3_SMALL);
 
     $vectors = $platform->invoke($embeddings, $textInput)->asVectors();
 

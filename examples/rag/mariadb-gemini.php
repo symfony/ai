@@ -52,12 +52,12 @@ $store->initialize(['dimensions' => 768]);
 
 // create embeddings for documents
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
-$embeddings = new Embeddings(options: ['dimensions' => 768, 'task_type' => TaskType::SemanticSimilarity]);
+$embeddings = Embeddings::create(options: ['dimensions' => 768, 'task_type' => TaskType::SemanticSimilarity]);
 $vectorizer = new Vectorizer($platform, $embeddings);
 $indexer = new Indexer($vectorizer, $store, logger());
 $indexer->index($documents);
 
-$model = new Gemini(Gemini::GEMINI_2_FLASH_LITE);
+$model = Gemini::create(Gemini::GEMINI_2_FLASH_LITE);
 
 $similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
