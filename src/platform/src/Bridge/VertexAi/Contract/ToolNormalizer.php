@@ -41,7 +41,6 @@ final class ToolNormalizer extends ModelContractNormalizer
             'name' => $data->name,
             'description' => $data->description,
             'parameters' => $parameters,
-            'response' => $parameters,
         ];
     }
 

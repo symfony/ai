@@ -27,6 +27,7 @@ final class Model extends BaseModel
 
     /**
      * @param array<string, mixed> $options The default options for the model usage
+     *
      * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference for more details
      */
     public function __construct(string $name = self::GEMINI_2_5_PRO, array $options = [])

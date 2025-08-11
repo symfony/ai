@@ -27,7 +27,6 @@ class Model extends BaseModel
     public const TEXT_MULTILINGUAL_EMBEDDING_002 = 'text-multilingual-embedding-002';
 
     /**
-     * @param array{task_type?: TaskType} $options
      * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/text-embeddings-api for various options
      */
     public function __construct(string $name = self::GEMINI_EMBEDDING_001, array $options = [])

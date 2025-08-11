@@ -50,16 +50,12 @@ final readonly class ModelClient implements ModelClientInterface
 
         $modelOptions = $model->getOptions();
 
-        if (isset($modelOptions['task_type']) && $modelOptions['task_type'] instanceof TaskType) {
-            $modelOptions['task_type'] = $modelOptions['task_type']->value;
-        }
-
         $payload = [
             'instances' => array_map(
                 static fn (string $text) => [
                     'content' => ['parts' => [['text' => $text]]],
                     'title' => $options['title'] ?? null,
-                    'task_type' => isset($modelOptions['task_type']) ? $modelOptions['task_type']->value : null,
+                    'task_type' => $modelOptions['task_type'] ?? null,
                 ],
                 \is_array($payload) ? $payload : [$payload],
             ),
