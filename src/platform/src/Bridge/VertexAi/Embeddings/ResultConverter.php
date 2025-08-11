@@ -32,6 +32,10 @@ final readonly class ResultConverter implements ResultConverterInterface
     {
         $data = $result->getData();
 
+        if (isset($data['error'])) {
+            throw new RuntimeException(\sprintf('Error from Embeddings API: "%s"', $data['error']['message'] ?? 'Unknown error'), $data['error']['code']);
+        }
+
         if (!isset($data['predictions'])) {
             throw new RuntimeException('Response does not contain data.');
         }

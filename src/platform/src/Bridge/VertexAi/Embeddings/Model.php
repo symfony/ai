@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Model as BaseModel;
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
  */
-class Model extends BaseModel
+final class Model extends BaseModel
 {
     /** Upto 3072 dimensions */
     public const GEMINI_EMBEDDING_001 = 'gemini-embedding-001';
@@ -31,6 +31,6 @@ class Model extends BaseModel
      */
     public function __construct(string $name = self::GEMINI_EMBEDDING_001, array $options = [])
     {
-        parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
+        parent::__construct($name, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE], $options);
     }
 }
