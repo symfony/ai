@@ -39,7 +39,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
         $normalized = [];
 
         if (isset($data->content)) {
-            $normalized['text'] = $data->content;
+            $normalized[] = ['text' => $data->content];
         }
 
         if (isset($data->toolCalls[0])) {
@@ -52,7 +52,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
             }
         }
 
-        return [$normalized];
+        return $normalized;
     }
 
     protected function supportedDataClass(): string

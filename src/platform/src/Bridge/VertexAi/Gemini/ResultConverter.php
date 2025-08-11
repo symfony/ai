@@ -115,21 +115,21 @@ final readonly class ResultConverter implements ResultConverterInterface
      *             text?: string
      *         }[]
      *     }
-     * }[] $choices
+     * } $choices
      */
     private function convertChoice(array $choices): ToolCallResult|TextResult
     {
-        $contentPart = $choices[0]['content']['parts'][0] ?? [];
+        $content = $choices['content']['parts'][0] ?? [];
 
-        if (isset($contentPart['functionCall'])) {
-            return new ToolCallResult($this->convertToolCall($contentPart['functionCall']));
+        if (isset($content['functionCall'])) {
+            return new ToolCallResult($this->convertToolCall($content['functionCall']));
         }
 
-        if (isset($contentPart['text'])) {
-            return new TextResult($contentPart['text']);
+        if (isset($content['text'])) {
+            return new TextResult($content['text']);
         }
 
-        throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choices[0]['finishReason']));
+        throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choices['finishReason']));
     }
 
     /**

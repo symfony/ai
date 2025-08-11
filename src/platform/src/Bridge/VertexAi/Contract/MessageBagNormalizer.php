@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\VertexAi\Contract;
 
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Model as BaseModel;
@@ -53,7 +54,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
         foreach ($data->withoutSystemMessage()->getMessages() as $message) {
             $requestData['contents'][] = [
                 'role' => $message->getRole()->equals(Role::Assistant) ? 'model' : 'user',
-                'parts' => [['text' => $this->normalizer->normalize($message, $format, $context)]],
+                'parts' => $this->normalizer->normalize($message, $format, $context),
             ];
         }
 
@@ -62,7 +63,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
 
     protected function supportedDataClass(): string
     {
-        return MessageBagInterface::class;
+        return MessageBag::class;
     }
 
     protected function supportsModel(BaseModel $model): bool
