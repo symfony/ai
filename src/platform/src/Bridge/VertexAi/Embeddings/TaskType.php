@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\VertexAi\Embeddings;
 
+/**
+ * @author Junaid Farooq <ulislam.junaid125@gmail.com>
+ */
 enum TaskType: string
 {
     /** Used to generate embeddings that are optimized to classify texts according to preset labels. */

@@ -53,23 +53,41 @@ final readonly class ModelClient implements ModelClientInterface
         );
 
         if (isset($options['response_format']['json_schema']['schema'])) {
-            $options['responseMimeType'] = 'application/json';
-            $options['responseSchema'] = $options['response_format']['json_schema']['schema'];
+            $options['generationConfig']['responseMimeType'] = 'application/json';
+            $options['generationConfig']['responseSchema'] = $options['response_format']['json_schema']['schema'];
+
             unset($options['response_format']);
         }
 
-        $generationConfig = ['generationConfig' => $options];
+        if (isset($options['generationConfig'])) {
+            $options['generationConfig'] = (object) $options['generationConfig'];
+        }
 
-        unset(
-            $generationConfig['generationConfig']['stream'],
-            $generationConfig['generationConfig']['tools'],
-            $generationConfig['generationConfig']['server_tools'],
-        );
+        if (isset($options['stream'])) {
+            $options['generation_config'] = (object) ($options['generationConfig'] ?? []);
+
+            unset($options['generationConfig'], $options['stream']);
+        }
 
         if (isset($options['tools'])) {
-            $generationConfig['tools'][] = ['functionDeclarations' => $options['tools']];
+            $tools = $options['tools'];
 
             unset($options['tools']);
+
+            $options['tools'][] = ['functionDeclarations' => $tools];
+        }
+
+        if (\is_string($payload)) {
+            $payload = [
+                'contents' => [
+                    [
+                        'role' => 'user',
+                        'parts' => [
+                            ['text' => $payload],
+                        ],
+                    ],
+                ],
+            ];
         }
 
         return new RawHttpResult(
@@ -77,7 +95,7 @@ final readonly class ModelClient implements ModelClientInterface
                 'POST',
                 $url,
                 [
-                    'json' => array_merge($generationConfig, $payload),
+                    'json' => array_merge($options, $payload),
                 ]
             )
         );

@@ -44,6 +44,10 @@ final readonly class ResultConverter implements ResultConverterInterface
 
         $data = $result->getData();
 
+        if (isset($data['error'])) {
+            throw new RuntimeException(\sprintf('Error from Gemini API: "%s"', $data['error']['message'] ?? 'Unknown error'), $data['error']['code']);
+        }
+
         if (!isset($data['candidates'][0]['content']['parts'][0])) {
             throw new RuntimeException('Response does not contain any content.');
         }

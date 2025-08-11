@@ -53,9 +53,9 @@ final readonly class ModelClient implements ModelClientInterface
         $payload = [
             'instances' => array_map(
                 static fn (string $text) => [
-                    'content' => ['parts' => [['text' => $text]]],
+                    'content' => $text,
                     'title' => $options['title'] ?? null,
-                    'task_type' => $modelOptions['task_type'] ?? null,
+                    'task_type' => $modelOptions['task_type'] ?? TaskType::RETRIEVAL_QUERY,
                 ],
                 \is_array($payload) ? $payload : [$payload],
             ),
