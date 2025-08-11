@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Meta\Contract;
 
-use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Bridge\Meta\LlamaPromptConverter;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Model;
@@ -34,7 +34,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer
 
     protected function supportsModel(Model $model): bool
     {
-        return $model instanceof Llama;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     /**

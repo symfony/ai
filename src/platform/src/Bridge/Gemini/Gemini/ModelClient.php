@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -35,7 +36,7 @@ final readonly class ModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Gemini;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     /**

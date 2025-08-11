@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Cerebras;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -31,7 +32,7 @@ final readonly class ResultConverter implements ResultConverterInterface
 {
     public function supports(BaseModel $model): bool
     {
-        return $model instanceof Model;
+        return $model->supports(Capability::OUTPUT_TEXT);
     }
 
     public function convert(RawHttpResult|RawResultInterface $result, array $options = []): ResultInterface

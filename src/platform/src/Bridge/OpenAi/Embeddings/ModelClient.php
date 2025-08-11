@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface as PlatformResponseFactory;
@@ -34,7 +35,7 @@ final readonly class ModelClient implements PlatformResponseFactory
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Embeddings;
+        return $model->supports(Capability::INPUT_MULTIPLE);
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult

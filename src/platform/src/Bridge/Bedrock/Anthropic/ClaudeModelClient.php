@@ -16,6 +16,7 @@ use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -36,7 +37,7 @@ final readonly class ClaudeModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Claude;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult

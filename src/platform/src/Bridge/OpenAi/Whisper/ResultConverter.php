@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -25,7 +26,7 @@ final class ResultConverter implements BaseResponseConverter
 {
     public function supports(Model $model): bool
     {
-        return $model instanceof Whisper;
+        return $model->supports(Capability::OUTPUT_TEXT);
     }
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -27,6 +28,6 @@ class Embeddings extends Model
      */
     public function __construct(string $name = self::TEXT_3_SMALL, array $options = [])
     {
-        parent::__construct($name, [], $options);
+        parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
     }
 }

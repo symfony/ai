@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Azure\Meta;
 
 use Symfony\AI\Platform\Bridge\Meta\Llama;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -31,7 +32,7 @@ final readonly class LlamaModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Llama;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult

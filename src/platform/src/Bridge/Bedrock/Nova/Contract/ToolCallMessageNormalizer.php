@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract;
 
-use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Model;
@@ -32,7 +32,7 @@ final class ToolCallMessageNormalizer extends ModelContractNormalizer implements
 
     protected function supportsModel(Model $model): bool
     {
-        return $model instanceof Nova;
+        return $model->supports(Capability::TOOL_CALLING);
     }
 
     /**

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -34,7 +35,7 @@ final readonly class ModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Claude;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult

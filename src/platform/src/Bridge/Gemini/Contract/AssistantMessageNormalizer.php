@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Gemini\Contract;
 
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model;
@@ -28,7 +28,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
 
     protected function supportsModel(Model $model): bool
     {
-        return $model instanceof Gemini;
+        return $model->supports(Capability::TOOL_CALLING);
     }
 
     /**

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -29,7 +30,9 @@ final readonly class OllamaResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
-        return $model instanceof Ollama;
+        return $model->supports(Capability::INPUT_MULTIPLE)
+            || $model->supports(Capability::OUTPUT_TEXT)
+            || $model->supports(Capability::TOOL_CALLING);
     }
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface

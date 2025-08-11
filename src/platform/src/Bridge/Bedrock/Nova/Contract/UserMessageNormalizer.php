@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract;
 
-use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Image;
@@ -33,7 +33,7 @@ final class UserMessageNormalizer extends ModelContractNormalizer
 
     protected function supportsModel(Model $model): bool
     {
-        return $model instanceof Nova;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     /**

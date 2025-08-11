@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Mistral\Llm;
 
-use Symfony\AI\Platform\Bridge\Mistral\Mistral;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -35,7 +35,7 @@ final readonly class ResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
-        return $model instanceof Mistral;
+        return $model->supports(Capability::OUTPUT_TEXT) || $model->supports(Capability::TOOL_CALLING);
     }
 
     /**

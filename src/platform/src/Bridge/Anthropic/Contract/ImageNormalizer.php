@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic\Contract;
 
-use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Model;
@@ -30,7 +30,7 @@ final class ImageNormalizer extends ModelContractNormalizer
 
     protected function supportsModel(Model $model): bool
     {
-        return $model instanceof Claude;
+        return $model->supports(Capability::INPUT_IMAGE);
     }
 
     /**

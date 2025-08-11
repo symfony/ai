@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Cerebras;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -42,7 +43,7 @@ final readonly class ModelClient implements ModelClientInterface
 
     public function supports(BaseModel $model): bool
     {
-        return $model instanceof Model;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult

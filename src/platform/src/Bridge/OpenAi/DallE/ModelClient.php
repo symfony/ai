@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi\DallE;
 
 use Symfony\AI\Platform\Bridge\OpenAi\DallE;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -36,7 +37,7 @@ final readonly class ModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof DallE;
+        return $model->supports(Capability::OUTPUT_IMAGE);
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult

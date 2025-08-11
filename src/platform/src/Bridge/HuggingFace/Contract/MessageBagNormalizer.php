@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\HuggingFace\Contract;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Model;
@@ -31,7 +32,7 @@ class MessageBagNormalizer extends ModelContractNormalizer implements Normalizer
 
     protected function supportsModel(Model $model): bool
     {
-        return true;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     /**

@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface as BaseModelClient;
@@ -33,7 +34,7 @@ final readonly class ModelClient implements BaseModelClient
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Whisper;
+        return $model->supports(Capability::INPUT_AUDIO);
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Voyage;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -26,7 +27,7 @@ final readonly class ResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
-        return $model instanceof Voyage;
+        return $model->supports(Capability::INPUT_MULTIPLE);
     }
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface

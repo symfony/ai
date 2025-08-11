@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Azure\OpenAi;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -43,7 +44,7 @@ final readonly class GptModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Gpt;
+        return $model->supports(Capability::INPUT_MESSAGES);
     }
 
     public function request(Model $model, object|array|string $payload, array $options = []): RawHttpResult
