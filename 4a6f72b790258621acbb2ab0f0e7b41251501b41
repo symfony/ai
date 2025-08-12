@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by Muneer-Shafi at 2025-08-12T06:43:49Z
+
+> Hi @Muneer-Shafi and welcome to the repository! :) Thanks for working on that fix - can you please bring in a test case to prove error and fix?
+
+@chr-hertel  i have updated test for Claude AssistantMessageNormalizerTest
