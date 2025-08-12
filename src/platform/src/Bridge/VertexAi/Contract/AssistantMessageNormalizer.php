@@ -31,8 +31,8 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
      *             name: string,
      *             args?: array<int|string, mixed>
      *         }
-     *      }
      *     }
+     * }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {

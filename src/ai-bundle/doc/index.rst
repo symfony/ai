@@ -56,7 +56,7 @@ Configuration
                 output_path: '%env(ELEVEN_LABS_OUTPUT_PATH)%'
             gemini:
                 api_key: '%env(GEMINI_API_KEY)%'
-            vertexAi:
+            vertexai:
                 location: '%env(GOOGLE_CLOUD_LOCATION)%'
                 project_id: '%env(GOOGLE_CLOUD_PROJECT)%'
             ollama:
