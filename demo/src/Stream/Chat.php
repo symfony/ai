@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 final class Chat
@@ -25,8 +24,7 @@ final class Chat
 
     public function __construct(
         private readonly RequestStack $requestStack,
-        #[Autowire(service: 'ai.agent.stream')]
-        private readonly AgentInterface $agent,
+        private readonly AgentInterface $streamAgent,
     ) {
     }
 
@@ -52,7 +50,7 @@ final class Chat
      */
     public function getAssistantResponse(MessageBag $messages): \Generator
     {
-        $stream = $this->agent->call($messages, ['stream' => true])->getContent();
+        $stream = $this->streamAgent->call($messages, ['stream' => true])->getContent();
         \assert(is_iterable($stream));
 
         $response = '';

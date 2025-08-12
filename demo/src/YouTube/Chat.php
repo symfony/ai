@@ -15,7 +15,6 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 final class Chat
@@ -24,8 +23,7 @@ final class Chat
 
     public function __construct(
         private readonly RequestStack $requestStack,
-        #[Autowire(service: 'ai.agent.youtube')]
-        private readonly AgentInterface $agent,
+        private readonly AgentInterface $youtubeAgent,
         private readonly TranscriptFetcher $transcriptFetcher,
     ) {
     }
@@ -61,7 +59,7 @@ final class Chat
         $messages = $this->loadMessages();
 
         $messages->add(Message::ofUser($message));
-        $result = $this->agent->call($messages);
+        $result = $this->youtubeAgent->call($messages);
 
         \assert($result instanceof TextResult);
 
