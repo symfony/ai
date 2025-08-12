@@ -26,7 +26,7 @@ class InitializeHandlerTest extends TestCase
         $implementation = new Implementation('TestServer', '1.0.0');
         $serverCapabilities = new ServerCapabilities(
             logging: null,
-            tools: new ToolCapability(listChanged: true) // Explicitly set to null to test filtering
+            tools: new ToolCapability(listChanged: true),
         );
 
         $handler = new InitializeHandler(
@@ -34,7 +34,7 @@ class InitializeHandlerTest extends TestCase
             $serverCapabilities,
             ProtocolVersionEnum::V2024_11_05,
             'Test instructions',
-            null // Explicitly set to null to test filtering
+            null,
         );
 
         $request = new Request(1, 'initialize', []);
