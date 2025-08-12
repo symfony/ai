@@ -73,13 +73,15 @@ usually defined by the specific models and their documentation.
     * `OpenAI's GPT`_ with `OpenAI`_ and `Azure`_ as Platform
     * `Anthropic's Claude`_ with `Anthropic`_ and `AWS Bedrock`_ as Platform
     * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_ and `AWS Bedrock`_ as Platform
-    * `Gemini`_ with `Google`_ and `OpenRouter`_ as Platform
+    * `Gemini`_ with `Google`_, `VertexAi`_ and `OpenRouter`_ as Platform
+    * `VertexAi Gen AI`_ with `VertexAi`_ as Platform
     * `DeepSeek's R1`_ with `OpenRouter`_ as Platform
     * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
     * `Mistral's Mistral`_ with `Mistral`_ as Platform
     * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
 * **Embeddings Models**
     * `Gemini Text Embeddings`_ with `Google`_
+    * `VertexAi Text Embeddings`_ with `VertexAi`_
     * `OpenAI's Text Embeddings`_ with `OpenAI`_ and `Azure`_ as Platform
     * `Voyage's Embeddings`_ with `Voyage`_ as Platform
     * `Mistral Embed`_ with `Mistral`_ as Platform
@@ -263,7 +265,8 @@ Server Tools
 
 Some platforms provide built-in server-side tools for enhanced capabilities without custom implementations:
 
-1. **[Gemini](gemini-server-tools.md)** - URL Context, Google Search, Code Execution
+1. **[Gemini](gemini-server-tools.rst)** - URL Context, Google Search, Code Execution
+2. **[VertexAi](vertexai-server-tools.rst)** - URL Context, Google Search, Code Execution
 
 Parallel Platform Calls
 -----------------------
@@ -363,6 +366,7 @@ This allows fast and isolated testing of AI-powered features without relying on 
 .. _`Ollama`: https://ollama.com/
 .. _`Replicate`: https://replicate.com/
 .. _`Gemini`: https://gemini.google.com/
+.. _`VertexAi`: https://cloud.google.com/vertex-ai/generative-ai/docs
 .. _`Google`: https://ai.google.dev/
 .. _`OpenRouter`: https://www.openrouter.ai/
 .. _`DeepSeek's R1`: https://www.deepseek.com/
@@ -372,6 +376,8 @@ This allows fast and isolated testing of AI-powered features without relying on 
 .. _`Albert`: https://alliance.numerique.gouv.fr/produit/albert/
 .. _`Mistral`: https://www.mistral.ai/
 .. _`Gemini Text Embeddings`: https://ai.google.dev/gemini-api/docs/embeddings
+.. _`VertexAi Gen AI`: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference
+.. _`VertexAi Text Embeddings`: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/text-embeddings-api
 .. _`OpenAI's Text Embeddings`: https://platform.openai.com/docs/guides/embeddings/embedding-models
 .. _`Voyage's Embeddings`: https://docs.voyageai.com/docs/embeddings
 .. _`Voyage`: https://www.voyageai.com/

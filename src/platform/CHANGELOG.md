@@ -9,7 +9,7 @@ CHANGELOG
  * Add support for 13+ AI providers:
    - OpenAI (GPT-4, GPT-3.5, DALL·E, Whisper)
    - Anthropic (Claude models via native API and AWS Bedrock)
-   - Google (Gemini models with server-side tools support)
+   - Google (VertexAi and Gemini models with server-side tools support)
    - Azure (OpenAI and Meta Llama models)
    - AWS Bedrock (Anthropic Claude, Meta Llama, Amazon Nova)
    - Mistral AI (language models and embeddings)
