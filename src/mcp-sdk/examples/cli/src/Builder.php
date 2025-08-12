@@ -11,8 +11,14 @@
 
 namespace App;
 
+use Symfony\AI\McpSdk\Capability\Prompt\PromptCapability;
 use Symfony\AI\McpSdk\Capability\PromptChain;
+use Symfony\AI\McpSdk\Capability\Resource\ResourceCapability;
 use Symfony\AI\McpSdk\Capability\ResourceChain;
+use Symfony\AI\McpSdk\Capability\Server\Implementation;
+use Symfony\AI\McpSdk\Capability\Server\ProtocolVersionEnum;
+use Symfony\AI\McpSdk\Capability\Server\ServerCapabilities;
+use Symfony\AI\McpSdk\Capability\Tool\ToolCapability;
 use Symfony\AI\McpSdk\Capability\ToolChain;
 use Symfony\AI\McpSdk\Server\NotificationHandler\InitializedHandler;
 use Symfony\AI\McpSdk\Server\NotificationHandlerInterface;
@@ -45,8 +51,23 @@ class Builder
             new ExampleTool(),
         ]);
 
+        $implementation = new Implementation(
+            name: 'MCP-SDK-CLI-Example',
+            version: '0.1.0'
+        );
+        $serverCapabilities = new ServerCapabilities(
+            prompts: new PromptCapability(listChanged: false),
+            resources: new ResourceCapability(subscribe: false, listChanged: false),
+            tools: new ToolCapability(listChanged: false),
+        );
+
         return [
-            new InitializeHandler(),
+            new InitializeHandler(
+                implementation: $implementation,
+                serverCapabilities: $serverCapabilities,
+                protocolVersion: ProtocolVersionEnum::V2025_03_26,
+                instructions: 'Optional LLM instructions/hints',
+            ),
             new PingHandler(),
             new PromptListHandler($promptManager),
             new PromptGetHandler($promptManager),
