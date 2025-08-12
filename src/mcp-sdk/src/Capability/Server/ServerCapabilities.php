@@ -59,10 +59,23 @@ final readonly class ServerCapabilities implements \JsonSerializable
          * @see https://modelcontextprotocol.io/specification/2025-06-18/schema#servercapabilities-completions
          */
         public ?CompletionCapability $completions = null,
+        /**
+         * @var array<string, array<string, mixed>>|null
+         */
         public ?array $experimental = null,
     ) {
     }
 
+    /**
+     * @return array{
+     *     logging?: LoggingCapability,
+     *     prompts?: PromptCapability,
+     *     resources?: ResourceCapability,
+     *     tools?: ToolCapability,
+     *     completions?: CompletionCapability,
+     *     experimental?: array<string, array<string, mixed>>
+     * }
+     */
     public function jsonSerialize(): array
     {
         return array_filter((array) $this, fn ($value) => null !== $value);
