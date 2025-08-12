@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Albert\GptModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
@@ -69,7 +70,7 @@ final class GptModelClientTest extends TestCase
         $mockHttpClient->setResponseFactory([$mockResponse]);
 
         $model = new Gpt('gpt-3.5-turbo');
-        $client->request($model, ['messages' => []]);
+        $client->request($model, Action::CHAT, ['messages' => []]);
     }
 
     public function testConstructorAcceptsEventSourceHttpClient()
@@ -90,7 +91,7 @@ final class GptModelClientTest extends TestCase
         $mockHttpClient->setResponseFactory([$mockResponse]);
 
         $model = new Gpt('gpt-3.5-turbo');
-        $client->request($model, ['messages' => []]);
+        $client->request($model, Action::CHAT, ['messages' => []]);
     }
 
     public function testSupportsGptModel()
@@ -102,7 +103,7 @@ final class GptModelClientTest extends TestCase
         );
 
         $gptModel = new Gpt('gpt-3.5-turbo');
-        $this->assertTrue($client->supports($gptModel));
+        $this->assertTrue($client->supports($gptModel, Action::CHAT));
     }
 
     public function testDoesNotSupportNonGptModel()
@@ -114,7 +115,7 @@ final class GptModelClientTest extends TestCase
         );
 
         $embeddingsModel = new Embeddings('text-embedding-ada-002');
-        $this->assertFalse($client->supports($embeddingsModel));
+        $this->assertFalse($client->supports($embeddingsModel, Action::CALCULATE_EMBEDDINGS));
     }
 
     #[DataProvider('providePayloadToJson')]
@@ -134,7 +135,7 @@ final class GptModelClientTest extends TestCase
         );
 
         $model = new Gpt('gpt-3.5-turbo');
-        $result = $client->request($model, $payload, $options);
+        $result = $client->request($model, Action::COMPLETE_CHAT, $payload, $options);
 
         $this->assertNotNull($capturedRequest);
         $this->assertSame('POST', $capturedRequest['method']);
@@ -201,7 +202,7 @@ final class GptModelClientTest extends TestCase
         );
 
         $model = new Gpt('gpt-3.5-turbo');
-        $client->request($model, ['messages' => []]);
+        $client->request($model, Action::COMPLETE_CHAT, ['messages' => []]);
 
         $this->assertSame('https://albert.example.com/v1/chat/completions', $capturedUrl);
     }
@@ -222,7 +223,7 @@ final class GptModelClientTest extends TestCase
         );
 
         $model = new Gpt('gpt-3.5-turbo');
-        $client->request($model, ['messages' => []]);
+        $client->request($model, Action::COMPLETE_CHAT, ['messages' => []]);
 
         $this->assertSame('https://albert.example.com/v1/chat/completions', $capturedUrl);
     }

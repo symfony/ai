@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenRouter;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -23,8 +24,12 @@ use Symfony\AI\Platform\ResultConverterInterface;
  */
 final readonly class ResultConverter implements ResultConverterInterface
 {
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return true;
     }
 

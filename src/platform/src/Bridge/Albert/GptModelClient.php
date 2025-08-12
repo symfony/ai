@@ -11,7 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\Albert;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -38,13 +40,21 @@ final readonly class GptModelClient implements ModelClientInterface
         '' !== $baseUrl || throw new InvalidArgumentException('The base URL must not be empty.');
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Gpt;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawResultInterface
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CHAT, Action::COMPLETE_CHAT]);
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/chat/completions', $this->baseUrl), [
             'auth_bearer' => $this->apiKey,
             'json' => \is_array($payload) ? array_merge($payload, $options) : $payload,

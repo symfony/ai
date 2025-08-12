@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -31,8 +32,12 @@ use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
  */
 final readonly class ResultConverter implements ResultConverterInterface
 {
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Gemini;
     }
 

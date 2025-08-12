@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Cerebras\Model;
 use Symfony\AI\Platform\Bridge\Cerebras\ModelClient;
 use Symfony\AI\Platform\Bridge\Cerebras\ResultConverter;
@@ -32,6 +33,6 @@ class ResultConverterTest extends TestCase
     {
         $client = new ModelClient(new MockHttpClient(), 'csk-1234567890abcdef');
 
-        $this->assertTrue($client->supports(new Model(Model::GPT_OSS_120B)));
+        $this->assertTrue($client->supports(new Model(Model::GPT_OSS_120B), Action::CHAT));
     }
 }

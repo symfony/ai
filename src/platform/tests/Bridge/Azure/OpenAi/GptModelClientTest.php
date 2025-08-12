@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\GptModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -77,7 +78,7 @@ final class GptModelClientTest extends TestCase
     {
         $client = new GptModelClient(new MockHttpClient(), 'test.azure.com', 'deployment', '2023-12-01', 'api-key');
 
-        $this->assertTrue($client->supports(new Gpt()));
+        $this->assertTrue($client->supports(new Gpt(), Action::CHAT));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -93,6 +94,6 @@ final class GptModelClientTest extends TestCase
 
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new GptModelClient($httpClient, 'test.azure.com', 'gpt-deployment', '2023-12-01', 'test-api-key');
-        $client->request(new Gpt(), ['messages' => [['role' => 'user', 'content' => 'Hello']]]);
+        $client->request(new Gpt(), Action::COMPLETE_CHAT, ['messages' => [['role' => 'user', 'content' => 'Hello']]]);
     }
 }

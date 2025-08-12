@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\TransformersPhp;
 
 use Codewithkyrian\Transformers\Pipelines\Task;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -20,8 +21,12 @@ use Symfony\AI\Platform\ResultConverterInterface;
 
 final readonly class ResultConverter implements ResultConverterInterface
 {
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return true;
     }
 

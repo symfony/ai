@@ -18,11 +18,11 @@ use Symfony\AI\Platform\Result\RawResultInterface;
  */
 interface ModelClientInterface
 {
-    public function supports(Model $model): bool;
+    public function supports(Model $model, Action $action): bool;
 
     /**
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
      */
-    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface;
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawResultInterface;
 }

@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -42,8 +43,8 @@ final class OllamaResultConverterTest extends TestCase
     {
         $converter = new OllamaResultConverter();
 
-        $this->assertTrue($converter->supports(new Ollama()));
-        $this->assertFalse($converter->supports(new Model('any-model')));
+        $this->assertTrue($converter->supports(new Ollama(), Action::CHAT));
+        $this->assertFalse($converter->supports(new Model('any-model'), Action::CHAT));
     }
 
     public function testConvertTextResponse()

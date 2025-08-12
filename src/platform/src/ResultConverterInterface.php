@@ -19,7 +19,7 @@ use Symfony\AI\Platform\Result\ResultInterface;
  */
 interface ResultConverterInterface
 {
-    public function supports(Model $model): bool;
+    public function supports(Model $model, Action $action): bool;
 
     /**
      * @param array<string, mixed> $options

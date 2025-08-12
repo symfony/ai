@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Voyage;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -24,8 +25,12 @@ use Symfony\AI\Platform\Vector\Vector;
  */
 final readonly class ResultConverter implements ResultConverterInterface
 {
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::CALCULATE_EMBEDDINGS !== $action) {
+            return false;
+        }
+
         return $model instanceof Voyage;
     }
 

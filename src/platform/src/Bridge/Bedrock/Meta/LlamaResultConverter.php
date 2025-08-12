@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Meta;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -24,8 +25,12 @@ use Symfony\AI\Platform\ResultConverterInterface;
  */
 class LlamaResultConverter implements ResultConverterInterface
 {
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Llama;
     }
 

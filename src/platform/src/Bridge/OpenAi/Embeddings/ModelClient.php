@@ -11,7 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface as PlatformResponseFactory;
@@ -32,13 +34,21 @@ final readonly class ModelClient implements PlatformResponseFactory
         str_starts_with($apiKey, 'sk-') || throw new InvalidArgumentException('The API key must start with "sk-".');
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::CALCULATE_EMBEDDINGS !== $action) {
+            return false;
+        }
+
         return $model instanceof Embeddings;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawHttpResult
     {
+        if (Action::CALCULATE_EMBEDDINGS !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CALCULATE_EMBEDDINGS]);
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.openai.com/v1/embeddings', [
             'auth_bearer' => $this->apiKey,
             'json' => array_merge($options, [

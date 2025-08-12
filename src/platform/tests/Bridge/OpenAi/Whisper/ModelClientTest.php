@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Tests\Bridge\OpenAi\Whisper;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\ModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Task;
@@ -29,7 +30,7 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient(new MockHttpClient(), 'test-key');
         $model = new Whisper();
 
-        $this->assertTrue($client->supports($model));
+        $this->assertTrue($client->supports($model, Action::CHAT));
     }
 
     public function testItUsesTranscriptionEndpointByDefault()
@@ -47,7 +48,7 @@ final class ModelClientTest extends TestCase
         $model = new Whisper();
         $payload = ['file' => 'audio-data'];
 
-        $client->request($model, $payload);
+        $client->request($model, Action::CHAT, $payload);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -68,7 +69,7 @@ final class ModelClientTest extends TestCase
         $payload = ['file' => 'audio-data'];
         $options = ['task' => Task::TRANSCRIPTION];
 
-        $client->request($model, $payload, $options);
+        $client->request($model, Action::CHAT, $payload, $options);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -89,7 +90,7 @@ final class ModelClientTest extends TestCase
         $payload = ['file' => 'audio-data'];
         $options = ['task' => Task::TRANSLATION];
 
-        $client->request($model, $payload, $options);
+        $client->request($model, Action::CHAT, $payload, $options);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

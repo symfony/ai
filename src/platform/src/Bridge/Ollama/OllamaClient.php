@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
+use Symfony\AI\Platform\Action;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -28,12 +30,28 @@ final readonly class OllamaClient implements ModelClientInterface
     ) {
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
-        return $model instanceof Ollama;
+        $response = $this->httpClient->request('POST', \sprintf('%s/api/show', $this->hostUrl), [
+            'json' => [
+                'model' => $model->getName(),
+            ],
+        ]);
+
+        $capabilities = $response->toArray()['capabilities'] ?? null;
+
+        if (null === $capabilities) {
+            return false;
+        }
+
+        return match (true) {
+            \in_array('completion', $capabilities, true) => Action::CHAT === $action,
+            \in_array('embedding', $capabilities, true) => Action::CALCULATE_EMBEDDINGS === $action,
+            default => false,
+        };
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawHttpResult
     {
         $response = $this->httpClient->request('POST', \sprintf('%s/api/show', $this->hostUrl), [
             'json' => [
@@ -50,7 +68,7 @@ final readonly class OllamaClient implements ModelClientInterface
         return match (true) {
             \in_array('completion', $capabilities, true) => $this->doCompletionRequest($payload, $options),
             \in_array('embedding', $capabilities, true) => $this->doEmbeddingsRequest($model, $payload, $options),
-            default => throw new InvalidArgumentException(\sprintf('Unsupported model "%s": "%s".', $model::class, $model->getName())),
+            default => throw new InvalidActionArgumentException($model, $action, [Action::CHAT, Action::COMPLETE_CHAT, Action::CALCULATE_EMBEDDINGS], new InvalidArgumentException(\sprintf('Unsupported model "%s": "%s".', $model::class, $model->getName()))),
         };
     }
 

@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Action;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -32,13 +34,21 @@ final readonly class ModelClient implements ModelClientInterface
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Claude;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawHttpResult
     {
+        if (Action::CHAT !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CHAT]);
+        }
+
         if (isset($options['tools'])) {
             $options['tool_choice'] = ['type' => 'auto'];
         }

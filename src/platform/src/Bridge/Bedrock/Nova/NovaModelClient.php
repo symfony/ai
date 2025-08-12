@@ -13,7 +13,9 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Nova;
 
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 
@@ -27,13 +29,21 @@ class NovaModelClient implements ModelClientInterface
     ) {
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Nova;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawBedrockResult
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CHAT, Action::COMPLETE_CHAT]);
+        }
+
         $modelOptions = [];
         if (isset($options['tools'])) {
             $modelOptions['toolConfig']['tools'] = $options['tools'];

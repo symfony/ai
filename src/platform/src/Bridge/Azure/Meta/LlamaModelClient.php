@@ -11,7 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\Azure\Meta;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -29,13 +31,21 @@ final readonly class LlamaModelClient implements ModelClientInterface
     ) {
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Llama;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawHttpResult
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CHAT, Action::COMPLETE_CHAT]);
+        }
+
         $url = \sprintf('https://%s/chat/completions', $this->baseUrl);
 
         return new RawHttpResult($this->httpClient->request('POST', $url, [

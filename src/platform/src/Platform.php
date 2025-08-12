@@ -44,7 +44,7 @@ final class Platform implements PlatformInterface
         $this->resultConverters = $resultConverters instanceof \Traversable ? iterator_to_array($resultConverters) : $resultConverters;
     }
 
-    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise
+    public function invoke(Model $model, array|string|object $input, array $options = [], Action $action = Action::CHAT): ResultPromise
     {
         $payload = $this->contract->createRequestPayload($model, $input);
         $options = array_merge($model->getOptions(), $options);
@@ -53,20 +53,20 @@ final class Platform implements PlatformInterface
             $options['tools'] = $this->contract->createToolOption($options['tools'], $model);
         }
 
-        $result = $this->doInvoke($model, $payload, $options);
+        $result = $this->doInvoke($model, $action, $payload, $options);
 
-        return $this->convertResult($model, $result, $options);
+        return $this->convertResult($model, $action, $result, $options);
     }
 
     /**
      * @param array<string, mixed> $payload
      * @param array<string, mixed> $options
      */
-    private function doInvoke(Model $model, array|string $payload, array $options = []): RawResultInterface
+    private function doInvoke(Model $model, Action $action, array|string $payload, array $options = []): RawResultInterface
     {
         foreach ($this->modelClients as $modelClient) {
-            if ($modelClient->supports($model)) {
-                return $modelClient->request($model, $payload, $options);
+            if ($modelClient->supports($model, $action)) {
+                return $modelClient->request($model, $action, $payload, $options);
             }
         }
 
@@ -76,10 +76,10 @@ final class Platform implements PlatformInterface
     /**
      * @param array<string, mixed> $options
      */
-    private function convertResult(Model $model, RawResultInterface $result, array $options): ResultPromise
+    private function convertResult(Model $model, Action $action, RawResultInterface $result, array $options): ResultPromise
     {
         foreach ($this->resultConverters as $resultConverter) {
-            if ($resultConverter->supports($model)) {
+            if ($resultConverter->supports($model, $action)) {
                 return new ResultPromise($resultConverter->convert(...), $result, $options);
             }
         }

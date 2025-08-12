@@ -11,7 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\Mistral\Llm;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
+use Symfony\AI\Platform\Exception\InvalidActionArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -33,13 +35,21 @@ final readonly class ModelClient implements ModelClientInterface
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
 
-    public function supports(Model $model): bool
+    public function supports(Model $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Mistral;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, Action $action, array|string $payload, array $options = []): RawHttpResult
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return throw new InvalidActionArgumentException($model, $action, [Action::CHAT, Action::COMPLETE_CHAT]);
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.mistral.ai/v1/chat/completions', [
             'auth_bearer' => $this->apiKey,
             'headers' => [

@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\EmbeddingsModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -77,7 +78,7 @@ final class EmbeddingsModelClientTest extends TestCase
     {
         $client = new EmbeddingsModelClient(new MockHttpClient(), 'test.azure.com', 'deployment', '2023-12-01', 'api-key');
 
-        $this->assertTrue($client->supports(new Embeddings()));
+        $this->assertTrue($client->supports(new Embeddings(), Action::CALCULATE_EMBEDDINGS));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -93,6 +94,6 @@ final class EmbeddingsModelClientTest extends TestCase
 
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new EmbeddingsModelClient($httpClient, 'test.azure.com', 'embeddings-deployment', '2023-12-01', 'test-api-key');
-        $client->request(new Embeddings(), 'Hello, world!');
+        $client->request(new Embeddings(), Action::CALCULATE_EMBEDDINGS, 'Hello, world!');
     }
 }

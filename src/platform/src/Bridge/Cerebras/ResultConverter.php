@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Cerebras;
 
+use Symfony\AI\Platform\Action;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -29,8 +30,12 @@ use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
  */
 final readonly class ResultConverter implements ResultConverterInterface
 {
-    public function supports(BaseModel $model): bool
+    public function supports(BaseModel $model, Action $action): bool
     {
+        if (Action::COMPLETE_CHAT !== $action && Action::CHAT !== $action) {
+            return false;
+        }
+
         return $model instanceof Model;
     }
 
