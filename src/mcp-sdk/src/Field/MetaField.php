@@ -34,6 +34,5 @@ final readonly class MetaField
     public function __construct(
         public array $meta,
     ) {
-
     }
 }

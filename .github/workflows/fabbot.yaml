@@ -1,6 +1,7 @@
 name: Fabbot
 
 on:
+    push:
     pull_request:
 
 permissions:
