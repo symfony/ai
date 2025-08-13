@@ -10,33 +10,33 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Platform\Bridge\OpenAi\TokenUsageExtractor;
+use Symfony\AI\Platform\Bridge\Mistral\Mistral;
+use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Mistral\TokenUsageExtractor;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\TokenUsage\TokenUsageOutputProcessor;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI, [
+$platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
+$model = new Mistral(Mistral::MISTRAL_SMALL, [
     'temperature' => 0.5, // default options for the model
 ]);
-
 $agent = new Agent(
     $platform,
     $model,
     outputProcessors: [new TokenUsageOutputProcessor(new TokenUsageExtractor())],
     logger: logger()
 );
+
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
 
 $result = $agent->call($messages, [
-    'max_tokens' => 500, // specific options just for this call
+    'max_tokens' => 500,
 ]);
 
 if (null === $tokenUsage = $result->getTokenUsage()) {
@@ -46,4 +46,3 @@ if (null === $tokenUsage = $result->getTokenUsage()) {
 echo 'Utilized Tokens: '.$tokenUsage->total.\PHP_EOL;
 echo '-- Prompt Tokens: '.$tokenUsage->prompt.\PHP_EOL;
 echo '-- Completion Tokens: '.$tokenUsage->completion.\PHP_EOL;
-echo 'Remaining Tokens: '.$tokenUsage->remaining.\PHP_EOL;

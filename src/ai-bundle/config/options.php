@@ -109,6 +109,7 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Include tool definitions at the end of the system prompt')
                             ->defaultFalse()
                         ->end()
+                        ->booleanNode('token_usage')->defaultFalse()->end()
                         ->arrayNode('tools')
                             ->addDefaultsIfNotSet()
                             ->treatFalseLike(['enabled' => false])

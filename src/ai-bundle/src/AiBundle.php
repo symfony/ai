@@ -21,6 +21,7 @@ use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
+use Symfony\AI\AiBundle\DependencyInjection\Compiler\RegisterTokenUsageExtractorPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
@@ -39,6 +40,8 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\TokenUsage\TokenUsageExtractorInterface;
+use Symfony\AI\Platform\Result\TokenUsage\TokenUsageOutputProcessor;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Store\Bridge\Azure\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
@@ -142,6 +145,8 @@ final class AiBundle extends AbstractBundle
             ->addTag('ai.platform.model_client');
         $builder->registerForAutoconfiguration(ResultConverterInterface::class)
             ->addTag('ai.platform.result_converter');
+        $builder->registerForAutoconfiguration(TokenUsageExtractorInterface::class)
+            ->addTag('ai.platform.token_usage_extractor');
 
         if (!ContainerBuilder::willBeAvailable('symfony/security-core', AuthorizationCheckerInterface::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.security.is_granted_attribute_listener');
@@ -155,6 +160,13 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.data_collector');
             $builder->removeDefinition('ai.traceable_toolbox');
         }
+    }
+
+    public function build(ContainerBuilder $container): void
+    {
+        parent::build($container);
+
+        $container->addCompilerPass(new RegisterTokenUsageExtractorPass());
     }
 
     /**
@@ -404,7 +416,7 @@ final class AiBundle extends AbstractBundle
                         $tool['service'] = \sprintf('ai.agent.%s', $tool['agent']);
                     }
                     $reference = new Reference($tool['service']);
-                    // We use the memory factory in case method, description and name are set
+                    // We use the memory factory in case, method, description and name are set
                     if (isset($tool['name'], $tool['description'])) {
                         if (isset($tool['agent'])) {
                             $agentWrapperDefinition = new Definition(AgentTool::class, [$reference]);
@@ -452,6 +464,24 @@ final class AiBundle extends AbstractBundle
                 $inputProcessors[] = new Reference('ai.tool.agent_processor');
                 $outputProcessors[] = new Reference('ai.tool.agent_processor');
             }
+        }
+
+        // TOKEN USAGE
+        if ($config['token_usage'] ?? false) {
+            $platformServiceId = $config['platform'];
+            $platformName = str_replace('ai.platform.', '', $platformServiceId);
+            $extractorAlias = \sprintf('ai.platform.token_usage_extractor.%s', $platformName);
+
+            if (!$container->hasAlias($extractorAlias)) {
+                throw new InvalidArgumentException(\sprintf('Token usage is enabled for agent "%s", but no token usage extractor is registered for platform "%s".', $name, $platformName));
+            }
+
+            $processorId = \sprintf('ai.token_usage_output_processor.%s', $name);
+            $processorDefinition = (new Definition(TokenUsageOutputProcessor::class))
+                ->addArgument(new Reference($extractorAlias));
+
+            $container->setDefinition($processorId, $processorDefinition);
+            $outputProcessors[] = new Reference($processorId);
         }
 
         // STRUCTURED OUTPUT

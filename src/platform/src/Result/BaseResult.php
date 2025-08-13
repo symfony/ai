@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Result;
 
 use Symfony\AI\Platform\Result\Metadata\MetadataAwareTrait;
+use Symfony\AI\Platform\Result\TokenUsage\TokenUsageAwareTrait;
 
 /**
  * Base result of converted result classes.
@@ -22,4 +23,5 @@ abstract class BaseResult implements ResultInterface
 {
     use MetadataAwareTrait;
     use RawResultAwareTrait;
+    use TokenUsageAwareTrait;
 }

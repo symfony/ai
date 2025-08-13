@@ -9,14 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\OpenAi;
+namespace Symfony\AI\Platform\Tests\Bridge\Mistral;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Output;
-use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor;
+use Symfony\AI\Platform\Bridge\Mistral\TokenUsageExtractor;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\Metadata\Metadata;
@@ -24,62 +24,60 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\TokenUsage\TokenUsage;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-#[CoversClass(TokenOutputProcessor::class)]
+#[CoversClass(TokenUsageExtractor::class)]
 #[UsesClass(Output::class)]
 #[UsesClass(TextResult::class)]
 #[UsesClass(StreamResult::class)]
 #[UsesClass(Metadata::class)]
 #[Small]
-final class TokenOutputProcessorTest extends TestCase
+final class TokenUsageExtractorTest extends TestCase
 {
     public function testItHandlesStreamResponsesWithoutProcessing()
     {
-        $processor = new TokenOutputProcessor();
+        $extractor = new TokenUsageExtractor();
         $streamResult = new StreamResult((static function () { yield 'test'; })());
         $output = $this->createOutput($streamResult);
 
-        $processor->processOutput($output);
+        $tokenUsage = $extractor->extractTokenUsage($output);
 
-        $metadata = $output->result->getMetadata();
-        $this->assertCount(0, $metadata);
+        $this->assertNull($tokenUsage);
     }
 
     public function testItDoesNothingWithoutRawResponse()
     {
-        $processor = new TokenOutputProcessor();
+        $extractor = new TokenUsageExtractor();
         $textResult = new TextResult('test');
         $output = $this->createOutput($textResult);
 
-        $processor->processOutput($output);
+        $tokenUsage = $extractor->extractTokenUsage($output);
 
-        $metadata = $output->result->getMetadata();
-        $this->assertCount(0, $metadata);
+        $this->assertNull($tokenUsage);
     }
 
     public function testItAddsRemainingTokensToMetadata()
     {
-        $processor = new TokenOutputProcessor();
+        $extractor = new TokenUsageExtractor();
         $textResult = new TextResult('test');
-
-        $textResult->setRawResult($this->createRawResult());
-
+        $textResult->setRawResult($this->createRawResponse());
         $output = $this->createOutput($textResult);
 
-        $processor->processOutput($output);
+        $tokenUsage = $extractor->extractTokenUsage($output);
 
-        $metadata = $output->result->getMetadata();
-        $this->assertCount(1, $metadata);
-        $this->assertSame(1000, $metadata->get('remaining_tokens'));
+        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
+        $this->assertSame(1000, $tokenUsage->remainingTokensMinute);
+        $this->assertSame(1000000, $tokenUsage->remainingTokensMonth);
     }
 
     public function testItAddsUsageTokensToMetadata()
     {
-        $processor = new TokenOutputProcessor();
+        // Arrange
+        $extractor = new TokenUsageExtractor();
         $textResult = new TextResult('test');
 
-        $rawResult = $this->createRawResult([
+        $rawResponse = $this->createRawResponse([
             'usage' => [
                 'prompt_tokens' => 10,
                 'completion_tokens' => 20,
@@ -87,52 +85,56 @@ final class TokenOutputProcessorTest extends TestCase
             ],
         ]);
 
-        $textResult->setRawResult($rawResult);
-
+        $textResult->setRawResult($rawResponse);
         $output = $this->createOutput($textResult);
 
-        $processor->processOutput($output);
+        // Act
+        $tokenUsage = $extractor->extractTokenUsage($output);
 
-        $metadata = $output->result->getMetadata();
-        $this->assertCount(4, $metadata);
-        $this->assertSame(1000, $metadata->get('remaining_tokens'));
-        $this->assertSame(10, $metadata->get('prompt_tokens'));
-        $this->assertSame(20, $metadata->get('completion_tokens'));
-        $this->assertSame(30, $metadata->get('total_tokens'));
+        // Assert
+        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
+        $this->assertSame(1000, $tokenUsage->remainingTokensMinute);
+        $this->assertSame(1000000, $tokenUsage->remainingTokensMonth);
+        $this->assertSame(10, $tokenUsage->prompt);
+        $this->assertSame(20, $tokenUsage->completion);
+        $this->assertSame(30, $tokenUsage->total);
     }
 
     public function testItHandlesMissingUsageFields()
     {
-        $processor = new TokenOutputProcessor();
+        // Arrange
+        $extractor = new TokenUsageExtractor();
         $textResult = new TextResult('test');
 
-        $rawResult = $this->createRawResult([
+        $rawResponse = $this->createRawResponse([
             'usage' => [
-                // Missing some fields
                 'prompt_tokens' => 10,
             ],
         ]);
 
-        $textResult->setRawResult($rawResult);
-
+        $textResult->setRawResult($rawResponse);
         $output = $this->createOutput($textResult);
 
-        $processor->processOutput($output);
+        // Act
+        $tokenUsage = $extractor->extractTokenUsage($output);
 
-        $metadata = $output->result->getMetadata();
-        $this->assertCount(4, $metadata);
-        $this->assertSame(1000, $metadata->get('remaining_tokens'));
-        $this->assertSame(10, $metadata->get('prompt_tokens'));
-        $this->assertNull($metadata->get('completion_tokens'));
-        $this->assertNull($metadata->get('total_tokens'));
+        // Assert
+        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
+        $this->assertSame(1000, $tokenUsage->remainingTokensMinute);
+        $this->assertSame(1000000, $tokenUsage->remainingTokensMonth);
+        $this->assertSame(10, $tokenUsage->prompt);
+        $this->assertNull($tokenUsage->completion);
+        $this->assertNull($tokenUsage->total);
     }
 
-    private function createRawResult(array $data = []): RawHttpResult
+    private function createRawResponse(array $data = []): RawHttpResult
     {
         $rawResponse = $this->createStub(ResponseInterface::class);
         $rawResponse->method('getHeaders')->willReturn([
-            'x-ratelimit-remaining-tokens' => ['1000'],
+            'x-ratelimit-limit-tokens-minute' => ['1000'],
+            'x-ratelimit-limit-tokens-month' => ['1000000'],
         ]);
+
         $rawResponse->method('toArray')->willReturn($data);
 
         return new RawHttpResult($rawResponse);
