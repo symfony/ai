@@ -22,6 +22,11 @@ final readonly class Notification implements \JsonSerializable, \Stringable
     ) {
     }
 
+    public function __toString(): string
+    {
+        return \sprintf('%s', $this->method);
+    }
+
     /**
      * @param array{method: string, params?: array<string, mixed>} $data
      */
@@ -43,10 +48,5 @@ final readonly class Notification implements \JsonSerializable, \Stringable
             'method' => $this->method,
             'params' => $this->params,
         ];
-    }
-
-    public function __toString(): string
-    {
-        return \sprintf('%s', $this->method);
     }
 }

@@ -23,6 +23,11 @@ final readonly class Request implements \JsonSerializable, \Stringable
     ) {
     }
 
+    public function __toString(): string
+    {
+        return \sprintf('%s: %s', $this->id, $this->method);
+    }
+
     /**
      * @param array{id: string|int, method: string, params?: array<string, mixed>} $data
      */
@@ -46,10 +51,5 @@ final readonly class Request implements \JsonSerializable, \Stringable
             'method' => $this->method,
             'params' => $this->params,
         ];
-    }
-
-    public function __toString(): string
-    {
-        return \sprintf('%s: %s', $this->id, $this->method);
     }
 }

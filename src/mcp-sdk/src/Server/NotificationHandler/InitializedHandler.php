@@ -15,12 +15,12 @@ use Symfony\AI\McpSdk\Message\Notification;
 
 final class InitializedHandler extends BaseNotificationHandler
 {
+    public function handle(Notification $notification): void
+    {
+    }
+
     protected function supportedNotification(): string
     {
         return 'initialized';
-    }
-
-    public function handle(Notification $notification): void
-    {
     }
 }
