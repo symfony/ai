@@ -1,7 +1,8 @@
 AI Bundle
 =========
 
-Symfony integration bundle for Symfony AI components.
+The AI Bundle provides seamless Symfony integration for all AI components, including dependency injection, 
+configuration management, developer tools, and profiler integration.
 
 Integrating:
 
