@@ -16,7 +16,7 @@ use Symfony\AI\McpSdk\Capability\PromptChain;
 use Symfony\AI\McpSdk\Capability\Resource\ResourceCapability;
 use Symfony\AI\McpSdk\Capability\ResourceChain;
 use Symfony\AI\McpSdk\Capability\Server\Implementation;
-use Symfony\AI\McpSdk\Capability\Server\ProtocolVersionEnum;
+use Symfony\AI\McpSdk\Capability\Server\ProtocolVersion;
 use Symfony\AI\McpSdk\Capability\Server\ServerCapabilities;
 use Symfony\AI\McpSdk\Capability\Tool\ToolCapability;
 use Symfony\AI\McpSdk\Capability\ToolChain;
@@ -65,7 +65,7 @@ class Builder
             new InitializeHandler(
                 implementation: $implementation,
                 serverCapabilities: $serverCapabilities,
-                protocolVersion: ProtocolVersionEnum::V2025_03_26,
+                protocolVersion: ProtocolVersion::V2025_03_26,
                 instructions: 'Optional LLM instructions/hints',
             ),
             new PingHandler(),

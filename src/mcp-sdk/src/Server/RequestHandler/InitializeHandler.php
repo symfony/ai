@@ -12,7 +12,7 @@
 namespace Symfony\AI\McpSdk\Server\RequestHandler;
 
 use Symfony\AI\McpSdk\Capability\Server\Implementation;
-use Symfony\AI\McpSdk\Capability\Server\ProtocolVersionEnum;
+use Symfony\AI\McpSdk\Capability\Server\ProtocolVersion;
 use Symfony\AI\McpSdk\Capability\Server\ServerCapabilities;
 use Symfony\AI\McpSdk\Field\MetaField;
 use Symfony\AI\McpSdk\Message\Request;
@@ -41,7 +41,7 @@ final class InitializeHandler extends BaseRequestHandler
          *
          * @see https://modelcontextprotocol.io/specification/2025-06-18/schema#initializeresult-protocolversion
          */
-        private readonly ProtocolVersionEnum $protocolVersion = ProtocolVersionEnum::V2025_03_26,
+        private readonly ProtocolVersion    $protocolVersion = ProtocolVersion::V2025_03_26,
         /**
          * Instructions describing how to use the server and its features.
          *
@@ -51,7 +51,7 @@ final class InitializeHandler extends BaseRequestHandler
          *
          * @see https://modelcontextprotocol.io/specification/2025-06-18/schema#initializeresult-instructions
          */
-        private readonly ?string $instructions = null,
+        private readonly ?string            $instructions = null,
         /**
          * The _meta property/parameter is reserved by MCP to allow clients and servers to attach additional metadata to their interactions.
          *

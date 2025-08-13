@@ -13,7 +13,7 @@ namespace Symfony\AI\McpSdk\Tests\Server\RequestHandler;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpSdk\Capability\Server\Implementation;
-use Symfony\AI\McpSdk\Capability\Server\ProtocolVersionEnum;
+use Symfony\AI\McpSdk\Capability\Server\ProtocolVersion;
 use Symfony\AI\McpSdk\Capability\Server\ServerCapabilities;
 use Symfony\AI\McpSdk\Capability\Tool\ToolCapability;
 use Symfony\AI\McpSdk\Message\Request;
@@ -32,7 +32,7 @@ class InitializeHandlerTest extends TestCase
         $handler = new InitializeHandler(
             $implementation,
             $serverCapabilities,
-            ProtocolVersionEnum::V2024_11_05,
+            ProtocolVersion::V2024_11_05,
             'Test instructions',
             null,
         );

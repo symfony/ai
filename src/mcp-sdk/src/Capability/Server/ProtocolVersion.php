@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\McpSdk\Capability\Server;
 
-enum ProtocolVersionEnum: string
+enum ProtocolVersion: string
 {
     case V2024_11_05 = '2024-11-05';
     case V2025_03_26 = '2025-03-26';
