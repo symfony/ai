@@ -30,21 +30,22 @@ final readonly class SessionStore implements MessageStoreInterface
         if (!class_exists(RequestStack::class)) {
             throw new RuntimeException('For using the SessionStore as message store, the symfony/http-foundation package is required. Try running "composer require symfony/http-foundation".');
         }
+
         $this->session = $requestStack->getSession();
     }
 
     public function save(MessageBagInterface $messages): void
     {
-        $this->session->set($messages->getSession()->toRfc4122(), $messages);
+        $this->session->set($messages->getId()->toRfc4122(), $messages);
     }
 
-    public function load(AbstractUid&TimeBasedUidInterface $session): MessageBagInterface
+    public function load(AbstractUid&TimeBasedUidInterface $id): MessageBagInterface
     {
-        return $this->session->get($session->toRfc4122(), new MessageBag());
+        return $this->session->get($id->toRfc4122(), new MessageBag());
     }
 
-    public function clear(AbstractUid&TimeBasedUidInterface $session): void
+    public function clear(): void
     {
-        $this->session->remove($session->toRfc4122());
+        $this->session->clear();
     }
 }

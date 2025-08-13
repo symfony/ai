@@ -32,7 +32,7 @@ final readonly class CacheStore implements MessageStoreInterface
 
     public function save(MessageBagInterface $messages): void
     {
-        $item = $this->cache->getItem($messages->getSession()->toRfc4122());
+        $item = $this->cache->getItem($messages->getId()->toRfc4122());
 
         $item->set($messages);
         $item->expiresAfter($this->ttl);
@@ -40,15 +40,15 @@ final readonly class CacheStore implements MessageStoreInterface
         $this->cache->save($item);
     }
 
-    public function load(AbstractUid&TimeBasedUidInterface $session): MessageBagInterface
+    public function load(AbstractUid&TimeBasedUidInterface $id): MessageBagInterface
     {
-        $item = $this->cache->getItem($session->toRfc4122());
+        $item = $this->cache->getItem($id->toRfc4122());
 
         return $item->isHit() ? $item->get() : new MessageBag();
     }
 
-    public function clear(AbstractUid&TimeBasedUidInterface $session): void
+    public function clear(): void
     {
-        $this->cache->deleteItem($session->toRfc4122());
+        $this->cache->clear();
     }
 }

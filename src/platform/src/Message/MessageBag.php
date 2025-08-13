@@ -11,9 +11,9 @@
 
 namespace Symfony\AI\Platform\Message;
 
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @final
@@ -27,11 +27,13 @@ class MessageBag implements MessageBagInterface
      */
     private array $messages;
 
-    private (AbstractUid&TimeBasedUidInterface)|null $session = null;
+    private AbstractUid&TimeBasedUidInterface $id;
 
     public function __construct(MessageInterface ...$messages)
     {
         $this->messages = array_values($messages);
+
+        $this->id = Uuid::v7();
     }
 
     public function add(MessageInterface $message): void
@@ -115,18 +117,9 @@ class MessageBag implements MessageBagInterface
         return false;
     }
 
-    public function setSession(AbstractUid&TimeBasedUidInterface $session): void
+    public function getId(): AbstractUid&TimeBasedUidInterface
     {
-        $this->session = $session;
-    }
-
-    public function getSession(): AbstractUid&TimeBasedUidInterface
-    {
-        if (!$this->session instanceof TimeBasedUidInterface) {
-            throw new RuntimeException('Current message bag session is not set.');
-        }
-
-        return $this->session;
+        return $this->id;
     }
 
     public function count(): int

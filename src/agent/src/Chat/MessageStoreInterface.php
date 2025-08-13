@@ -19,7 +19,7 @@ interface MessageStoreInterface
 {
     public function save(MessageBagInterface $messages): void;
 
-    public function load(AbstractUid&TimeBasedUidInterface $session): MessageBagInterface;
+    public function load(AbstractUid&TimeBasedUidInterface $id): MessageBagInterface;
 
-    public function clear(AbstractUid&TimeBasedUidInterface $session): void;
+    public function clear(): void;
 }

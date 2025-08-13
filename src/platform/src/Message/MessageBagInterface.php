@@ -41,7 +41,5 @@ interface MessageBagInterface extends \Countable
 
     public function containsImage(): bool;
 
-    public function setSession(AbstractUid&TimeBasedUidInterface $session): void;
-
-    public function getSession(): AbstractUid&TimeBasedUidInterface;
+    public function getId(): AbstractUid&TimeBasedUidInterface;
 }

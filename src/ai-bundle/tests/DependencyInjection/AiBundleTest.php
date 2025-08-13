@@ -120,6 +120,36 @@ class AiBundleTest extends TestCase
         ]);
     }
 
+    public function testAgentsWithChatCanBeDefined()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'another_agent' => [
+                        'model' => ['class' => 'Symfony\AI\Platform\Bridge\Anthropic\Claude', 'name' => 'claude-3-opus-20240229'],
+                        'system_prompt' => 'Be concise.',
+                    ],
+                ],
+                'message_store' => [
+                    'cache' => [
+                        'main_cache' => [
+                            'service' => 'cache.app',
+                        ],
+                    ],
+                ],
+                'chat' => [
+                    'main' => [
+                        'agent' => 'another_agent',
+                        'message_store' => 'cache',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.message_store.cache.main_cache'));
+        $this->assertTrue($container->hasDefinition('ai.chat.main'));
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();
@@ -320,6 +350,27 @@ class AiBundleTest extends TestCase
                             'name' => 'mistral-embed',
                             'options' => ['dimension' => 768],
                         ],
+                    ],
+                ],
+                'message_store' => [
+                    'cache' => [
+                        'my_cache_message_store' => [
+                            'service' => 'cache.system',
+                        ],
+                    ],
+                ],
+                'chat' => [
+                    'my_main_chat_with_cache_store' => [
+                        'agent' => 'my_chat_agent',
+                        'message_store' => 'my_cache_message_store',
+                    ],
+                    'my_second_chat_with_memory_store' => [
+                        'agent' => 'my_chat_agent',
+                        'message_store' => 'memory',
+                    ],
+                    'my_chat_with_session_store' => [
+                        'agent' => 'my_chat_agent',
+                        'message_store' => 'session',
                     ],
                 ],
             ],

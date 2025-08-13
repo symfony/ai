@@ -26,16 +26,16 @@ final class InMemoryStore implements MessageStoreInterface
 
     public function save(MessageBagInterface $messages): void
     {
-        $this->messageBags[$messages->getSession()->toRfc4122()] = $messages;
+        $this->messageBags[$messages->getId()->toRfc4122()] = $messages;
     }
 
-    public function load(AbstractUid&TimeBasedUidInterface $session): MessageBagInterface
+    public function load(AbstractUid&TimeBasedUidInterface $id): MessageBagInterface
     {
-        return $this->messageBags[$session->toRfc4122()] ?? new MessageBag();
+        return $this->messageBags[$id->toRfc4122()] ?? new MessageBag();
     }
 
-    public function clear(AbstractUid&TimeBasedUidInterface $session): void
+    public function clear(): void
     {
-        $this->messageBags[$session->toRfc4122()] = new MessageBag();
+        $this->messageBags = [];
     }
 }

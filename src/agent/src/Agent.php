@@ -21,9 +21,6 @@ use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\Component\Uid\AbstractUid;
-use Symfony\Component\Uid\TimeBasedUidInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
 
@@ -32,8 +29,6 @@ use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
  */
 final readonly class Agent implements AgentInterface
 {
-    private AbstractUid&TimeBasedUidInterface $id;
-
     /**
      * @var InputProcessorInterface[]
      */
@@ -57,8 +52,6 @@ final readonly class Agent implements AgentInterface
     ) {
         $this->inputProcessors = $this->initializeProcessors($inputProcessors, InputProcessorInterface::class);
         $this->outputProcessors = $this->initializeProcessors($outputProcessors, OutputProcessorInterface::class);
-
-        $this->id = Uuid::v7();
     }
 
     /**
@@ -102,11 +95,6 @@ final readonly class Agent implements AgentInterface
         array_map(fn (OutputProcessorInterface $processor) => $processor->processOutput($output), $this->outputProcessors);
 
         return $output->result;
-    }
-
-    public function getId(): AbstractUid&TimeBasedUidInterface
-    {
-        return $this->id;
     }
 
     /**
