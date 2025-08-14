@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use App\Utils\EnvValidator;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use validator\EnvValidator;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
