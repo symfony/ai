@@ -22,7 +22,7 @@ final class OpenMeteoTest extends TestCase
 {
     public function testCurrent()
     {
-        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/openmeteo-current.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/openmeteo-current.json');
         $httpClient = new MockHttpClient($result);
 
         $openMeteo = new OpenMeteo($httpClient);
@@ -40,7 +40,7 @@ final class OpenMeteoTest extends TestCase
 
     public function testForecast()
     {
-        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/openmeteo-forecast.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/openmeteo-forecast.json');
         $httpClient = new MockHttpClient($result);
 
         $openMeteo = new OpenMeteo($httpClient);
@@ -68,13 +68,5 @@ final class OpenMeteoTest extends TestCase
         ];
 
         $this->assertSame($expected, $actual);
-    }
-
-    /**
-     * This can be replaced by `JsonMockResponse::fromFile` when dropping Symfony 6.4.
-     */
-    private function jsonMockResponseFromFile(string $file): JsonMockResponse
-    {
-        return new JsonMockResponse(json_decode(file_get_contents($file), true));
     }
 }
