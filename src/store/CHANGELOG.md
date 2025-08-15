@@ -44,6 +44,7 @@ CHANGELOG
    - Pinecone
    - PostgreSQL with pgvector extension
    - Qdrant
+   - Redis
    - SurrealDB
    - Typesense
  * Add Retrieval Augmented Generation (RAG) support:

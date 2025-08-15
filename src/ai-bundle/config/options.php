@@ -15,6 +15,7 @@ use Codewithkyrian\ChromaDB\Client as ChromaDbClient;
 use MongoDB\Client as MongoDbClient;
 use Probots\Pinecone\Client as PineconeClient;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Store\Bridge\Redis\Distance;
 use Symfony\AI\Store\StoreInterface;
 
 return static function (DefinitionConfigurator $configurator): void {
@@ -275,6 +276,33 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->scalarNode('collection_name')->cannotBeEmpty()->end()
                                 ->scalarNode('dimensions')->end()
                                 ->scalarNode('distance')->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                    ->arrayNode('redis')
+                        ->normalizeKeys(false)
+                        ->useAttributeAsKey('name')
+                        ->arrayPrototype()
+                            ->children()
+                                ->variableNode('connection_parameters')
+                                    ->info('see https://github.com/phpredis/phpredis?tab=readme-ov-file#example-1')
+                                    ->cannotBeEmpty()
+                                ->end()
+                                ->scalarNode('client')
+                                    ->info('a service id of a Redis client')
+                                    ->cannotBeEmpty()
+                                ->end()
+                                ->scalarNode('index_name')->isRequired()->cannotBeEmpty()->end()
+                                ->scalarNode('key_prefix')->defaultValue('vector:')->end()
+                                ->enumNode('distance')
+                                    ->info('Distance metric to use for vector similarity search')
+                                    ->values(Distance::cases())
+                                    ->defaultValue(Distance::Cosine)
+                                ->end()
+                            ->end()
+                            ->validate()
+                                ->ifTrue(static fn ($v) => !isset($v['connection_parameters']) && !isset($v['client']))
+                                ->thenInvalid('Either "connection_parameters" or "client" must be configured.')
                             ->end()
                         ->end()
                     ->end()
