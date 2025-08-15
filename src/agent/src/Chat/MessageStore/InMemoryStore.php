@@ -14,23 +14,28 @@ namespace Symfony\AI\Agent\Chat\MessageStore;
 use Symfony\AI\Agent\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
 
 final class InMemoryStore implements MessageStoreInterface
 {
-    private MessageBagInterface $messages;
+    /**
+     * @var MessageBagInterface[]
+     */
+    private array $messageBags;
 
     public function save(MessageBagInterface $messages): void
     {
-        $this->messages = $messages;
+        $this->messageBags[$messages->getId()->toRfc4122()] = $messages;
     }
 
-    public function load(): MessageBagInterface
+    public function load(AbstractUid&TimeBasedUidInterface $id): MessageBagInterface
     {
-        return $this->messages ?? new MessageBag();
+        return $this->messageBags[$id->toRfc4122()] ?? new MessageBag();
     }
 
     public function clear(): void
     {
-        $this->messages = new MessageBag();
+        $this->messageBags = [];
     }
 }

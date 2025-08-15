@@ -11,6 +11,10 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Component\Uid\Uuid;
+
 /**
  * @final
  *
@@ -23,9 +27,13 @@ class MessageBag implements MessageBagInterface
      */
     private array $messages;
 
+    private AbstractUid&TimeBasedUidInterface $id;
+
     public function __construct(MessageInterface ...$messages)
     {
         $this->messages = array_values($messages);
+
+        $this->id = Uuid::v7();
     }
 
     public function add(MessageInterface $message): void
@@ -107,6 +115,11 @@ class MessageBag implements MessageBagInterface
         }
 
         return false;
+    }
+
+    public function getId(): AbstractUid&TimeBasedUidInterface
+    {
+        return $this->id;
     }
 
     public function count(): int

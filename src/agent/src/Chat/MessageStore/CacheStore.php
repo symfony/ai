@@ -16,12 +16,13 @@ use Symfony\AI\Agent\Chat\MessageStoreInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
 
 final readonly class CacheStore implements MessageStoreInterface
 {
     public function __construct(
         private CacheItemPoolInterface $cache,
-        private string $cacheKey,
         private int $ttl = 86400,
     ) {
         if (!interface_exists(CacheItemPoolInterface::class)) {
@@ -31,7 +32,7 @@ final readonly class CacheStore implements MessageStoreInterface
 
     public function save(MessageBagInterface $messages): void
     {
-        $item = $this->cache->getItem($this->cacheKey);
+        $item = $this->cache->getItem($messages->getId()->toRfc4122());
 
         $item->set($messages);
         $item->expiresAfter($this->ttl);
@@ -39,15 +40,15 @@ final readonly class CacheStore implements MessageStoreInterface
         $this->cache->save($item);
     }
 
-    public function load(): MessageBag
+    public function load(AbstractUid&TimeBasedUidInterface $id): MessageBagInterface
     {
-        $item = $this->cache->getItem($this->cacheKey);
+        $item = $this->cache->getItem($id->toRfc4122());
 
         return $item->isHit() ? $item->get() : new MessageBag();
     }
 
     public function clear(): void
     {
-        $this->cache->deleteItem($this->cacheKey);
+        $this->cache->clear();
     }
 }
