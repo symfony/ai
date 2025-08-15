@@ -13,17 +13,6 @@ namespace Symfony\AI\Platform\Result\Metadata;
 
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
- *
- * @phpstan-type TokenUsageArray array{
- *     prompt_tokens: ?int,
- *     completion_tokens: ?int,
- *     thinking_tokens: ?int,
- *     cached_tokens: ?int,
- *     remaining_tokens: ?int,
- *     remaining_tokens_minute: ?int,
- *     remaining_tokens_month: ?int,
- *     total_tokens: ?int,
- * }
  */
 final class TokenUsage implements \JsonSerializable
 {
@@ -40,9 +29,18 @@ final class TokenUsage implements \JsonSerializable
     }
 
     /**
-     * @return TokenUsageArray
+     * @return array{
+     *      prompt_tokens: ?int,
+     *      completion_tokens: ?int,
+     *      thinking_tokens: ?int,
+     *      cached_tokens: ?int,
+     *      remaining_tokens: ?int,
+     *      remaining_tokens_minute: ?int,
+     *      remaining_tokens_month: ?int,
+     *      total_tokens: ?int,
+     *  }
      */
-    public function toArray(): array
+    public function jsonSerialize(): array
     {
         return [
             'prompt_tokens' => $this->promptTokens,
@@ -54,13 +52,5 @@ final class TokenUsage implements \JsonSerializable
             'remaining_tokens_month' => $this->remainingTokensMonth,
             'total_tokens' => $this->totalTokens,
         ];
-    }
-
-    /**
-     * @return TokenUsageArray
-     */
-    public function jsonSerialize(): array
-    {
-        return $this->toArray();
     }
 }
