@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -36,6 +37,7 @@ final readonly class ElevenLabsResultConverter implements ResultConverterInterfa
         $response = $result->getObject();
 
         return match (true) {
+            $response instanceof \Generator => new StreamResult($response),
             str_contains($response->getInfo('url'), 'speech-to-text') => new TextResult($result->getData()['text']),
             str_contains($response->getInfo('url'), 'text-to-speech') => new BinaryResult($result->getObject()->getContent(), 'audio/mpeg'),
             default => throw new RuntimeException('Unsupported ElevenLabs response.'),

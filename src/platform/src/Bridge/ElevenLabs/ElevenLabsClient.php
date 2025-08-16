@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\RawHttpStreamResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -42,7 +43,7 @@ final readonly class ElevenLabsClient implements ModelClientInterface
         }
 
         if (\in_array($model->getName(), [ElevenLabs::SCRIBE_V1, ElevenLabs::SCRIBE_V1_EXPERIMENTAL], true)) {
-            return $this->doSpeechToTextRequest($model, $payload, $options);
+            return $this->doSpeechToTextRequest($model, $payload);
         }
 
         $capabilities = $this->retrieveCapabilities($model);
@@ -56,9 +57,8 @@ final readonly class ElevenLabsClient implements ModelClientInterface
 
     /**
      * @param array<string|int, mixed> $payload
-     * @param array<string, mixed>     $options
      */
-    private function doSpeechToTextRequest(Model $model, array|string $payload, array $options): RawHttpResult
+    private function doSpeechToTextRequest(Model $model, array|string $payload): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/speech-to-text', $this->hostUrl), [
             'headers' => [
@@ -75,7 +75,7 @@ final readonly class ElevenLabsClient implements ModelClientInterface
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
      */
-    private function doTextToSpeechRequest(Model $model, array|string $payload, array $options): RawHttpResult
+    private function doTextToSpeechRequest(Model $model, array|string $payload, array $options): RawHttpResult|RawHttpStreamResult
     {
         if (!\array_key_exists('voice', $model->getOptions())) {
             throw new InvalidArgumentException('The voice option is required.');
@@ -86,6 +86,33 @@ final readonly class ElevenLabsClient implements ModelClientInterface
         }
 
         $voice = $options['voice'] ??= $model->getOptions()['voice'];
+        $stream = $options['stream'] ??= $model->getOptions()['stream'] ?? false;
+
+        if ($stream) {
+            $streamSource = $this->httpClient->request('POST', \sprintf('%s/text-to-speech/%s/stream', $this->hostUrl, $voice), [
+                'headers' => [
+                    'xi-api-key' => $this->apiKey,
+                ],
+                'json' => [
+                    'text' => $payload['text'],
+                    'model_id' => $model->getName(),
+                ],
+            ]);
+
+            return new RawHttpStreamResult((function () use ($streamSource) {
+                foreach ($this->httpClient->stream($streamSource) as $chunk) {
+                    if ($chunk->isFirst()) {
+                        continue;
+                    }
+
+                    if ('' === $chunk->getContent()) {
+                        continue;
+                    }
+
+                    yield $chunk;
+                }
+            })());
+        }
 
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/text-to-speech/%s', $this->hostUrl, $voice), [
             'headers' => [
