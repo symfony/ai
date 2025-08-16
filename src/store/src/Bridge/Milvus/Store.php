@@ -67,15 +67,18 @@ final readonly class Store implements InitializableStoreInterface, DroppableStor
         return array_map($this->convertToVectorDocument(...), $documents['data']);
     }
 
+    /**
+     * @param array{
+     *     forceDatabaseCreation?: bool,
+     * } $options
+     */
     public function initialize(array $options = []): void
     {
-        if ([] !== $options) {
-            throw new InvalidArgumentException('No supported options.');
+        if (array_key_exists('forceDatabaseCreation', $options) && $options['forceDatabaseCreation']) {
+            $this->request('POST', 'v2/vectordb/databases/create', [
+                'dbName' => $this->database,
+            ]);
         }
-
-        $this->request('POST', 'v2/vectordb/databases/create', [
-            'dbName' => $this->database,
-        ]);
 
         $this->request('POST', 'v2/vectordb/collections/create', [
             'collectionName' => $this->collection,
