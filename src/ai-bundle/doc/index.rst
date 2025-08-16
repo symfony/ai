@@ -34,7 +34,7 @@ Configuration
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
 
-**Advanced Example with Anthropic, Azure, ElevenLabs, Gemini, Ollama multiple agents**
+**Advanced Example with Anthropic, Azure, ElevenLabs, Gemini, Vertex AI, Ollama multiple agents**
 
 .. code-block:: yaml
 
@@ -56,6 +56,9 @@ Configuration
                 output_path: '%env(ELEVEN_LABS_OUTPUT_PATH)%'
             gemini:
                 api_key: '%env(GEMINI_API_KEY)%'
+            vertexai:
+                location: '%env(GOOGLE_CLOUD_LOCATION)%'
+                project_id: '%env(GOOGLE_CLOUD_PROJECT)%'
             ollama:
                 host_url: '%env(OLLAMA_HOST_URL)%'
         agent:

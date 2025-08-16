@@ -8,6 +8,7 @@
         "async-aws/bedrock-runtime": "^1.1",
         "codewithkyrian/transformers": "^0.6.1",
         "doctrine/dbal": "^3.3|^4.0",
+        "google/auth": "^1.47",
         "mrmysql/youtube-transcript": "^0.0.5",
         "php-http/discovery": "^1.20",
         "probots-io/pinecone-php": "^1.1",

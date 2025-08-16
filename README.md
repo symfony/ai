@@ -13,7 +13,7 @@ Symfony AI is a set of components that integrate AI capabilities into PHP applic
 Symfony AI consists of several lower and higher level **components** and the respective integration **bundles**:
 
 * **Components**
-  * **[Platform](src/platform/README.md)**: A unified interface to various AI platforms like OpenAI, Anthropic, Azure, Gemini, and more.
+  * **[Platform](src/platform/README.md)**: A unified interface to various AI platforms like OpenAI, Anthropic, Azure, Gemini, VertexAI, and more.
   * **[Agent](src/agent/README.md)**: Framework for building AI agents that can interact with users and perform tasks.
   * **[Store](src/store/README.md)**: Data storage abstraction with indexing and retrieval for AI applications.
   * **[MCP SDK](src/mcp-sdk/README.md)**: SDK for [Model Context Protocol](https://modelcontextprotocol.io) enabling communication between AI agents and tools.
