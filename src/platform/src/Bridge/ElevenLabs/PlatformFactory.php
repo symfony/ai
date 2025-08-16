@@ -32,7 +32,7 @@ final readonly class PlatformFactory
 
         return new Platform(
             [new ElevenLabsClient($httpClient, $apiKey, $hostUrl)],
-            [new ElevenLabsResultConverter()],
+            [new ElevenLabsResultConverter($httpClient)],
             $contract ?? ElevenLabsContract::create(),
         );
     }

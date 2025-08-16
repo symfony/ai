@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Tests\Bridge\ElevenLabs;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\AudioNormalizer;
@@ -21,6 +20,7 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -30,6 +30,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 #[UsesClass(Model::class)]
 #[UsesClass(Audio::class)]
 #[UsesClass(AudioNormalizer::class)]
+#[UsesClass(RawHttpResult::class)]
 final class ElevenLabsClientTest extends TestCase
 {
     public function testSupportsModel()
@@ -133,7 +134,6 @@ final class ElevenLabsClientTest extends TestCase
         ]), []);
     }
 
-    #[Group('foo')]
     public function testClientCanPerformTextToSpeechRequest()
     {
         $payload = Audio::fromFile(\dirname(__DIR__, 5).'/fixtures/audio.mp3');
@@ -160,6 +160,37 @@ final class ElevenLabsClientTest extends TestCase
             'text' => 'foo',
         ]);
 
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
+
+    public function testClientCanPerformTextToSpeechRequestAsStream()
+    {
+        $payload = Audio::fromFile(\dirname(__DIR__, 5).'/fixtures/audio.mp3');
+
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                [
+                    'model_id' => ElevenLabs::ELEVEN_MULTILINGUAL_V2,
+                    'can_do_text_to_speech' => true,
+                ],
+            ]),
+            new MockResponse($payload->asBinary()),
+        ]);
+
+        $client = new ElevenLabsClient(
+            $httpClient,
+            'https://api.elevenlabs.io/v1',
+            'my-api-key',
+        );
+
+        $result = $client->request(new ElevenLabs(options: [
+            'voice' => 'Dslrhjl3ZpzrctukrQSN',
+            'stream' => true,
+        ]), [
+            'text' => 'foo',
+        ]);
+
+        $this->assertInstanceOf(RawHttpResult::class, $result);
         $this->assertSame(2, $httpClient->getRequestsCount());
     }
 }
