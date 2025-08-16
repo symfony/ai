@@ -40,8 +40,7 @@ final readonly class ModelClient implements ModelClientInterface
     public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
     {
         $url = \sprintf(
-            'https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
-            $this->location,
+            'https://aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
             $this->projectId,
             $this->location,
             $model->getName(),

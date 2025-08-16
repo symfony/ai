@@ -52,7 +52,7 @@ final class ModelClientTest extends TestCase
         $this->assertNotEmpty($info);
         $this->assertSame('POST', $info['http_method']);
         $this->assertSame(
-            'https://global-aiplatform.googleapis.com/v1/projects/test/locations/global/publishers/google/models/gemini-2.0-flash:generateContent',
+            'https://aiplatform.googleapis.com/v1/projects/test/locations/global/publishers/google/models/gemini-2.0-flash:generateContent',
             $info['url'],
         );
         $this->assertSame($expectedResponse, $data);
