@@ -58,7 +58,7 @@ $store->initialize();
 
 // create embeddings for documents as preparation of the chain memory
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
+$vectorizer = new Vectorizer($platform, $embeddings = Embeddings::create());
 $indexer = new Indexer($vectorizer, $store, logger());
 $indexer->index($documents);
 
@@ -66,7 +66,7 @@ $indexer->index($documents);
 $embeddingsMemory = new EmbeddingProvider($platform, $embeddings, $store);
 $memoryProcessor = new MemoryInputProcessor($embeddingsMemory);
 
-$agent = new Agent($platform, new Gpt(Gpt::GPT_4O_MINI), [$memoryProcessor], logger: logger());
+$agent = new Agent($platform, Gpt::create(Gpt::GPT_4O_MINI), [$memoryProcessor], logger: logger());
 $messages = new MessageBag(Message::ofUser('Have we discussed about my friend John in the past? If yes, what did we talk about?'));
 $result = $agent->call($messages);
 

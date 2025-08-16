@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
-$model = new Mistral();
+$model = Mistral::create();
 $agent = new Agent($platform, $model, logger: logger());
 
 $messages = new MessageBag(Message::ofUser('What is the best French cheese?'));

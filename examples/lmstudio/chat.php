@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('LMSTUDIO_HOST_URL'), http_client());
-$model = new Completions('gemma-3-4b-it-qat');
+$model = Completions::create('gemma-3-4b-it-qat');
 
 $agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(

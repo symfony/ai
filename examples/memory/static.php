@@ -21,7 +21,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create($_ENV['OPENAI_API_KEY'], http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI);
+$model = Gpt::create(Gpt::GPT_4O_MINI);
 
 $systemPromptProcessor = new SystemPromptInputProcessor('You are a professional trainer with short, personalized advice and a motivating claim.');
 

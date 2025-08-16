@@ -84,6 +84,6 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
 
-        $this->assertTrue($converter->supports(new Embeddings('test-model')));
+        $this->assertTrue($converter->supports(Embeddings::create('test-model')));
     }
 }

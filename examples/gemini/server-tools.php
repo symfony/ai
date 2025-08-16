@@ -23,7 +23,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 
 // Available server-side tools as of 2025-06-28: url_context, google_search, code_execution
-$llm = new Gemini('gemini-2.5-pro-preview-03-25', ['server_tools' => ['url_context' => true], 'temperature' => 1.0]);
+$llm = Gemini::create('gemini-2.5-pro-preview-03-25', options: ['server_tools' => ['url_context' => true], 'temperature' => 1.0]);
 
 $toolbox = new Toolbox([new Clock()], logger: logger());
 $processor = new AgentProcessor($toolbox);

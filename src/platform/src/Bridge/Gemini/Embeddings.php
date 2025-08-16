@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Valtteri R <valtzu@gmail.com>
  */
-class Embeddings extends Model
+final class Embeddings
 {
     /** Supported dimensions: 3072, 1536, or 768 */
     public const GEMINI_EMBEDDING_EXP_03_07 = 'gemini-embedding-exp-03-07';
@@ -30,8 +30,8 @@ class Embeddings extends Model
     /**
      * @param array{dimensions?: int, task_type?: TaskType|string} $options
      */
-    public function __construct(string $name = self::GEMINI_EMBEDDING_EXP_03_07, array $options = [])
+    public static function create(string $name = self::GEMINI_EMBEDDING_EXP_03_07, array $options = []): Model
     {
-        parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
+        return new Model($name, [Capability::INPUT_MULTIPLE], $options);
     }
 }

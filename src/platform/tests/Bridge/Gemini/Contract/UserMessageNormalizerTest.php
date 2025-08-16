@@ -42,7 +42,7 @@ final class UserMessageNormalizerTest extends TestCase
         $normalizer = new UserMessageNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new UserMessage(new Text('Hello')), context: [
-            Contract::CONTEXT_MODEL => new Gemini(),
+            Contract::CONTEXT_MODEL => Gemini::create(),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a user message'));
     }
