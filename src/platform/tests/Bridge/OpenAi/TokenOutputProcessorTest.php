@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\Metadata\Metadata;
+use Symfony\AI\Platform\Result\Metadata\TokenUsage;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -31,6 +32,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 #[UsesClass(TextResult::class)]
 #[UsesClass(StreamResult::class)]
 #[UsesClass(Metadata::class)]
+#[UsesClass(TokenUsage::class)]
 #[Small]
 final class TokenOutputProcessorTest extends TestCase
 {
@@ -70,8 +72,11 @@ final class TokenOutputProcessorTest extends TestCase
         $processor->processOutput($output);
 
         $metadata = $output->result->getMetadata();
+        $tokenUsage = $metadata->get('token_usage');
+
         $this->assertCount(1, $metadata);
-        $this->assertSame(1000, $metadata->get('remaining_tokens'));
+        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
+        $this->assertSame(1000, $tokenUsage->remainingTokens);
     }
 
     public function testItAddsUsageTokensToMetadata()
@@ -83,7 +88,13 @@ final class TokenOutputProcessorTest extends TestCase
             'usage' => [
                 'prompt_tokens' => 10,
                 'completion_tokens' => 20,
-                'total_tokens' => 30,
+                'total_tokens' => 50,
+                'completion_tokens_details' => [
+                    'reasoning_tokens' => 20,
+                ],
+                'prompt_tokens_details' => [
+                    'cached_tokens' => 40,
+                ],
             ],
         ]);
 
@@ -94,11 +105,15 @@ final class TokenOutputProcessorTest extends TestCase
         $processor->processOutput($output);
 
         $metadata = $output->result->getMetadata();
-        $this->assertCount(4, $metadata);
-        $this->assertSame(1000, $metadata->get('remaining_tokens'));
-        $this->assertSame(10, $metadata->get('prompt_tokens'));
-        $this->assertSame(20, $metadata->get('completion_tokens'));
-        $this->assertSame(30, $metadata->get('total_tokens'));
+        $tokenUsage = $metadata->get('token_usage');
+
+        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
+        $this->assertSame(10, $tokenUsage->promptTokens);
+        $this->assertSame(20, $tokenUsage->completionTokens);
+        $this->assertSame(1000, $tokenUsage->remainingTokens);
+        $this->assertSame(20, $tokenUsage->thinkingTokens);
+        $this->assertSame(40, $tokenUsage->cachedTokens);
+        $this->assertSame(50, $tokenUsage->totalTokens);
     }
 
     public function testItHandlesMissingUsageFields()
@@ -120,11 +135,13 @@ final class TokenOutputProcessorTest extends TestCase
         $processor->processOutput($output);
 
         $metadata = $output->result->getMetadata();
-        $this->assertCount(4, $metadata);
-        $this->assertSame(1000, $metadata->get('remaining_tokens'));
-        $this->assertSame(10, $metadata->get('prompt_tokens'));
-        $this->assertNull($metadata->get('completion_tokens'));
-        $this->assertNull($metadata->get('total_tokens'));
+        $tokenUsage = $metadata->get('token_usage');
+
+        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
+        $this->assertSame(10, $tokenUsage->promptTokens);
+        $this->assertSame(1000, $tokenUsage->remainingTokens);
+        $this->assertNull($tokenUsage->completionTokens);
+        $this->assertNull($tokenUsage->totalTokens);
     }
 
     private function createRawResult(array $data = []): RawHttpResult

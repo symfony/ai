@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Metadata\TokenUsage;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -33,8 +34,11 @@ $result = $agent->call($messages, [
 ]);
 
 $metadata = $result->getMetadata();
+$tokenUsage = $metadata->get('token_usage');
 
-echo 'Utilized Tokens: '.$metadata['total_tokens'].\PHP_EOL;
-echo '-- Prompt Tokens: '.$metadata['prompt_tokens'].\PHP_EOL;
-echo '-- Completion Tokens: '.$metadata['completion_tokens'].\PHP_EOL;
-echo 'Remaining Tokens: '.$metadata['remaining_tokens'].\PHP_EOL;
+assert($tokenUsage instanceof TokenUsage);
+
+echo 'Utilized Tokens: '.$tokenUsage->totalTokens.\PHP_EOL;
+echo '-- Prompt Tokens: '.$tokenUsage->promptTokens.\PHP_EOL;
+echo '-- Completion Tokens: '.$tokenUsage->completionTokens.\PHP_EOL;
+echo 'Remaining Tokens: '.$tokenUsage->remainingTokens.\PHP_EOL;

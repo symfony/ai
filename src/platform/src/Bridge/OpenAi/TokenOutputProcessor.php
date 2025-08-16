@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\OpenAi;
 
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Platform\Result\Metadata\TokenUsage;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -35,19 +36,27 @@ final class TokenOutputProcessor implements OutputProcessorInterface
 
         $metadata = $output->result->getMetadata();
 
-        $metadata->add(
-            'remaining_tokens',
-            (int) $rawResponse->getHeaders(false)['x-ratelimit-remaining-tokens'][0],
+        $remainingTokens = $rawResponse->getHeaders(false)['x-ratelimit-remaining-tokens'][0] ?? null;
+        $tokenUsage = new TokenUsage(
+            remainingTokens: null !== $remainingTokens ? (int) $remainingTokens : null,
         );
 
         $content = $rawResponse->toArray(false);
 
         if (!\array_key_exists('usage', $content)) {
+            $metadata->add('token_usage', $tokenUsage);
+
             return;
         }
 
-        $metadata->add('prompt_tokens', $content['usage']['prompt_tokens'] ?? null);
-        $metadata->add('completion_tokens', $content['usage']['completion_tokens'] ?? null);
-        $metadata->add('total_tokens', $content['usage']['total_tokens'] ?? null);
+        $usage = $content['usage'];
+
+        $tokenUsage->promptTokens = $usage['prompt_tokens'] ?? null;
+        $tokenUsage->completionTokens = $usage['completion_tokens'] ?? null;
+        $tokenUsage->thinkingTokens = $usage['completion_tokens_details']['reasoning_tokens'] ?? null;
+        $tokenUsage->cachedTokens = $usage['prompt_tokens_details']['cached_tokens'] ?? null;
+        $tokenUsage->totalTokens = $usage['total_tokens'] ?? null;
+
+        $metadata->add('token_usage', $tokenUsage);
     }
 }
