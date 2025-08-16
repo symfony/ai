@@ -40,6 +40,7 @@ You can find more advanced usage in combination with an Agent using the store fo
 * `Similarity Search with MariaDB (RAG)`_
 * `Similarity Search with Meilisearch (RAG)`_
 * `Similarity Search with memory storage (RAG)`_
+* `Similarity Search with Milvus (RAG)`_
 * `Similarity Search with MongoDB (RAG)`_
 * `Similarity Search with Neo4j (RAG)`_
 * `Similarity Search with Pinecone (RAG)`_
@@ -62,6 +63,7 @@ Supported Stores
 * `InMemory`_
 * `MariaDB`_ (requires `ext-pdo`)
 * `Meilisearch`_
+* `Milvus`_
 * `MongoDB Atlas`_ (requires `mongodb/mongodb` as additional dependency)
 * `Neo4j`_
 * `Pinecone`_ (requires `probots-io/pinecone-php` as additional dependency)
@@ -101,9 +103,10 @@ This leads to a store implementing two methods::
 
 .. _`Retrieval Augmented Generation`: https://de.wikipedia.org/wiki/Retrieval-Augmented_Generation
 .. _`Similarity Search with MariaDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/mariadb-gemini.php
-.. _`Similarity Search with MongoDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/mongodb.php
 .. _`Similarity Search with Meilisearch (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/meilisearch.php
 .. _`Similarity Search with memory storage (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/in-memory.php
+.. _`Similarity Search with Milvus (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/meilisearch.php
+.. _`Similarity Search with MongoDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/milvus.php
 .. _`Similarity Search with Neo4j (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/neo4j.php
 .. _`Similarity Search with Pinecone (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
 .. _`Similarity Search with Symfony Cache (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cache.php
@@ -113,10 +116,11 @@ This leads to a store implementing two methods::
 .. _`Azure AI Search`: https://azure.microsoft.com/products/ai-services/ai-search
 .. _`Chroma`: https://www.trychroma.com/
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
-.. _`MongoDB Atlas`: https://www.mongodb.com/atlas
 .. _`Pinecone`: https://www.pinecone.io/
 .. _`Postgres`: https://www.postgresql.org/about/news/pgvector-070-released-2852/
 .. _`Meilisearch`: https://www.meilisearch.com/
+.. _`Milvus`: https://milvus.io/
+.. _`MongoDB Atlas`: https://www.mongodb.com/atlas
 .. _`SurrealDB`: https://surrealdb.com/
 .. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
 .. _`Qdrant`: https://qdrant.tech/

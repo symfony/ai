@@ -393,6 +393,17 @@ class AiBundleTest extends TestCase
                             'strategy' => 'cosine',
                         ],
                     ],
+                    'milvus' => [
+                        'my_milvus_store' => [
+                            'endpoint' => 'http://127.0.0.1:19530',
+                            'api_key' => 'foo',
+                            'database' => 'test',
+                            'collection' => 'default',
+                            'vector_field' => '_vectors',
+                            'dimensions' => 768,
+                            'metric_type' => 'COSINE',
+                        ],
+                    ],
                     'mongodb' => [
                         'my_mongo_store' => [
                             'database' => 'my_db',

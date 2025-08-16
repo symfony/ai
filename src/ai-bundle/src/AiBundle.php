@@ -48,6 +48,7 @@ use Symfony\AI\Store\Bridge\Local\DistanceCalculator;
 use Symfony\AI\Store\Bridge\Local\DistanceStrategy;
 use Symfony\AI\Store\Bridge\Local\InMemoryStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
+use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
@@ -626,6 +627,37 @@ final class AiBundle extends AbstractBundle
                 }
 
                 $definition = new Definition(InMemoryStore::class);
+                $definition
+                    ->addTag('ai.store')
+                    ->setArguments($arguments);
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+            }
+        }
+
+        if ('milvus' === $type) {
+            foreach ($stores as $name => $store) {
+                $arguments = [
+                    new Reference('http_client'),
+                    $store['endpoint'],
+                    $store['api_key'],
+                    $store['database'],
+                    $store['collection'],
+                ];
+
+                if (\array_key_exists('vector_field', $store)) {
+                    $arguments[5] = $store['vector_field'];
+                }
+
+                if (\array_key_exists('dimensions', $store)) {
+                    $arguments[6] = $store['dimensions'];
+                }
+
+                if (\array_key_exists('metric_type', $store)) {
+                    $arguments[7] = $store['metric_type'];
+                }
+
+                $definition = new Definition(MilvusStore::class);
                 $definition
                     ->addTag('ai.store')
                     ->setArguments($arguments);
