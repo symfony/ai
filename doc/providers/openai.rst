@@ -130,9 +130,9 @@ Advanced Options
 Vision Capabilities
 ~~~~~~~~~~~~~~~~~~~
 
-Process images with GPT-4 Vision:
+Process images with GPT-4 Vision::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Message\Content\Image;
     use Symfony\AI\Platform\Message\Content\ImageUrl;
@@ -161,9 +161,9 @@ Process images with GPT-4 Vision:
 Audio Processing
 ~~~~~~~~~~~~~~~~
 
-Process audio with GPT-4 audio capabilities:
+Process audio with GPT-4 audio capabilities::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Message\Content\Audio;
 
@@ -177,9 +177,9 @@ Process audio with GPT-4 audio capabilities:
 Tool Calling
 ~~~~~~~~~~~~
 
-Enable function calling:
+Enable function calling::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Tool\Tool;
 
@@ -212,9 +212,9 @@ Enable function calling:
 Structured Output
 ~~~~~~~~~~~~~~~~~
 
-Get JSON responses with guaranteed structure:
+Get JSON responses with guaranteed structure::
 
-.. code-block:: php
+    <?php
 
     $result = $platform->invoke($model, $messages, [
         'response_format' => [
@@ -240,9 +240,9 @@ Get JSON responses with guaranteed structure:
 Streaming
 ~~~~~~~~~
 
-Stream responses for real-time output:
+Stream responses for real-time output::
 
-.. code-block:: php
+    <?php
 
     $result = $platform->invoke($model, $messages, ['stream' => true]);
 
@@ -387,9 +387,9 @@ Count Tokens
 Error Handling
 --------------
 
-Handle OpenAI-specific errors:
+Handle OpenAI-specific errors::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Exception\ContentFilterException;
     use Symfony\AI\Platform\Exception\RuntimeException;

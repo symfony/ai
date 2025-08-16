@@ -138,9 +138,9 @@ Rate Limiting
 
 **Solution:**
 
-1. Implement exponential backoff:
+1. Implement exponential backoff::
 
-.. code-block:: php
+    <?php
 
     use Symfony\Component\HttpClient\RetryableHttpClient;
     use Symfony\Component\HttpClient\Retry\ExponentialBackoffStrategy;
@@ -175,22 +175,22 @@ Token Limits
 
 **Solution:**
 
-1. Reduce message history:
+1. Reduce message history::
 
-.. code-block:: php
+    <?php
 
     // Keep only last N messages
     $messages = $messageHistory->slice(-10);
 
-2. Truncate long content:
+2. Truncate long content::
 
-.. code-block:: php
+    <?php
 
     $content = mb_substr($content, 0, 5000);
 
-3. Use model with larger context:
+3. Use model with larger context::
 
-.. code-block:: php
+    <?php
 
     // Switch to model with larger context window
     $model = new Gpt(Gpt::GPT_4_TURBO); // 128k context
@@ -206,9 +206,9 @@ Content Filtering
 
 **Solution:**
 
-1. Review and adjust prompts:
+1. Review and adjust prompts::
 
-.. code-block:: php
+    <?php
 
     // Add safety instructions to system prompt
     Message::forSystem(
@@ -216,9 +216,9 @@ Content Filtering
          appropriate responses suitable for all audiences.'
     )
 
-2. Handle content filter exceptions:
+2. Handle content filter exceptions::
 
-.. code-block:: php
+    <?php
 
     try {
         $result = $agent->call($messages);
@@ -250,9 +250,9 @@ Tool Not Found
         App\Tool\MyTool:
             tags: ['ai.tool']
 
-2. Check tool attribute:
+2. Check tool attribute::
 
-.. code-block:: php
+    <?php
 
     #[AsTool('my_tool', 'Tool description')]
     class MyTool
@@ -270,9 +270,9 @@ Tool Execution Errors
 
 **Solution:**
 
-Use fault-tolerant toolbox:
+Use fault-tolerant toolbox::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 
@@ -286,9 +286,9 @@ Tool Parameter Issues
 
 **Solution:**
 
-Add parameter validation:
+Add parameter validation::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 
@@ -364,9 +364,9 @@ Connection Issues
     -- If not installed:
     CREATE EXTENSION vector;
 
-3. Initialize store schema:
+3. Initialize store schema::
 
-.. code-block:: php
+    <?php
 
     if ($store instanceof InitializableStoreInterface) {
         $store->initialize();
@@ -382,9 +382,9 @@ Slow Response Times
 
 **Solution:**
 
-1. Use streaming for better perceived performance:
+1. Use streaming for better perceived performance::
 
-.. code-block:: php
+    <?php
 
     $result = $agent->call($messages, ['stream' => true]);
     foreach ($result->getContent() as $chunk) {
@@ -392,18 +392,18 @@ Slow Response Times
         flush();
     }
 
-2. Cache frequently used responses:
+2. Cache frequently used responses::
 
-.. code-block:: php
+    <?php
 
     $cacheKey = md5(json_encode($messages));
     if ($cache->hasItem($cacheKey)) {
         return $cache->getItem($cacheKey)->get();
     }
 
-3. Use faster models for simple tasks:
+3. Use faster models for simple tasks::
 
-.. code-block:: php
+    <?php
 
     // Use GPT-3.5 for simple queries
     $model = new Gpt(Gpt::GPT_35_TURBO);
@@ -415,9 +415,9 @@ Memory Issues
 
 **Solution:**
 
-1. Process documents in chunks:
+1. Process documents in chunks::
 
-.. code-block:: php
+    <?php
 
     $transformer = new TextSplitTransformer(
         maxLength: 500,
@@ -428,9 +428,9 @@ Memory Issues
         $indexer->index($chunk);
     }
 
-2. Use generators for large datasets:
+2. Use generators for large datasets::
 
-.. code-block:: php
+    <?php
 
     function processDocuments(): \Generator
     {
@@ -518,9 +518,9 @@ Mock Platform Not Working
 
 **Solution:**
 
-Properly mock the platform:
+Properly mock the platform::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\InMemoryPlatform;
 
@@ -539,9 +539,9 @@ Properly mock the platform:
 Test Data Fixtures
 ~~~~~~~~~~~~~~~~~~
 
-Create consistent test data:
+Create consistent test data::
 
-.. code-block:: php
+    <?php
 
     class AITestFixtures
     {

@@ -11,9 +11,9 @@ Installation
 
     $ composer require symfony/ai-bundle
 
-The bundle is automatically registered with Symfony Flex. For manual registration:
+The bundle is automatically registered with Symfony Flex. For manual registration::
 
-.. code-block:: php
+    <?php
 
     // config/bundles.php
     return [
@@ -67,9 +67,9 @@ The bundle automatically discovers and registers:
 Service Injection
 ~~~~~~~~~~~~~~~~~
 
-Inject AI services into your classes:
+Inject AI services into your classes::
 
-.. code-block:: php
+    <?php
 
     <?php
     namespace App\Service;
@@ -256,9 +256,9 @@ Security Features
 Tool Authorization
 ~~~~~~~~~~~~~~~~~~
 
-Control tool access with ``#[IsGrantedTool]``:
+Control tool access with ``#[IsGrantedTool]``::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Bundle\Security\Attribute\IsGrantedTool;
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
@@ -274,9 +274,9 @@ Control tool access with ``#[IsGrantedTool]``:
         }
     }
 
-Multiple authorization checks:
+Multiple authorization checks::
 
-.. code-block:: php
+    <?php
 
     #[IsGrantedTool('ROLE_USER')]
     #[AsTool('user_tool', 'User tool')]
@@ -499,9 +499,9 @@ Connection Pooling
 Lazy Loading
 ~~~~~~~~~~~~
 
-Services are lazy-loaded for better performance:
+Services are lazy-loaded for better performance::
 
-.. code-block:: php
+    <?php
 
     // Agent is only instantiated when first used
     class MyService
@@ -522,9 +522,9 @@ Services are lazy-loaded for better performance:
 Bundle Extension
 ----------------
 
-Create custom bundle extensions:
+Create custom bundle extensions::
 
-.. code-block:: php
+    <?php
 
     <?php
     namespace App\DependencyInjection;
@@ -545,9 +545,9 @@ Create custom bundle extensions:
 Compiler Passes
 ~~~~~~~~~~~~~~~
 
-Add custom compiler passes:
+Add custom compiler passes::
 
-.. code-block:: php
+    <?php
 
     use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
     use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -579,16 +579,16 @@ If migrating from standalone component usage:
 4. Update tool registration to use attributes
 5. Remove manual platform initialization
 
-Before:
+Before::
 
-.. code-block:: php
+    <?php
 
     $platform = PlatformFactory::create($_ENV['OPENAI_API_KEY']);
     $agent = new Agent($platform, $model);
 
-After:
+After::
 
-.. code-block:: php
+    <?php
 
     public function __construct(
         private AgentInterface $agent

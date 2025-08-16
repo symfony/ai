@@ -153,9 +153,9 @@ For Symfony Applications
 For Standalone Usage
 ~~~~~~~~~~~~~~~~~~~~
 
-Initialize components programmatically:
+Initialize components programmatically::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
@@ -206,9 +206,9 @@ Common environment variables for different providers:
 Verifying Installation
 ----------------------
 
-Test your installation with a simple script:
+Test your installation with a simple script::
 
-.. code-block:: php
+    <?php
 
     <?php
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;

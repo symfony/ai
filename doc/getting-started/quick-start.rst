@@ -7,9 +7,9 @@ add tool calling, and implement basic RAG functionality.
 Your First AI Chat
 ------------------
 
-Let's start with a basic chat completion:
+Let's start with a basic chat completion::
 
-.. code-block:: php
+    <?php
 
     <?php
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
@@ -154,9 +154,9 @@ Using Tools with Agent
 Streaming Responses
 -------------------
 
-Stream AI responses for better user experience:
+Stream AI responses for better user experience::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
@@ -177,9 +177,9 @@ Stream AI responses for better user experience:
 Working with Images
 -------------------
 
-Process images with multimodal models:
+Process images with multimodal models::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Message\Content\Image;
     use Symfony\AI\Platform\Message\Message;
@@ -313,9 +313,9 @@ Get Structured Response
 Persistent Chat Sessions
 ------------------------
 
-Maintain conversation context across requests:
+Maintain conversation context across requests::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Chat;
     use Symfony\AI\Agent\Chat\MessageStore\SessionStore;
@@ -343,9 +343,9 @@ Maintain conversation context across requests:
 Error Handling
 --------------
 
-Handle API errors gracefully:
+Handle API errors gracefully::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Exception\ContentFilterException;
     use Symfony\AI\Platform\Exception\RuntimeException;
@@ -363,9 +363,9 @@ Handle API errors gracefully:
 Testing Your AI Code
 --------------------
 
-Use in-memory implementations for testing:
+Use in-memory implementations for testing::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\InMemoryPlatform;
     use Symfony\AI\Platform\Model;

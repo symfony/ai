@@ -71,9 +71,9 @@ Document Management
 Text Documents
 ~~~~~~~~~~~~~~
 
-Create and manage text documents with metadata:
+Create and manage text documents with metadata::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\Document\TextDocument;
     use Symfony\AI\Store\Document\Metadata;
@@ -99,9 +99,9 @@ Create and manage text documents with metadata:
 Vector Documents
 ~~~~~~~~~~~~~~~~
 
-Work directly with pre-computed vectors:
+Work directly with pre-computed vectors::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\Document\VectorDocument;
     use Symfony\AI\Platform\Vector\Vector;
@@ -123,9 +123,9 @@ Document Transformation
 Text Splitting
 ~~~~~~~~~~~~~~
 
-Split large documents into manageable chunks:
+Split large documents into manageable chunks::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 
@@ -146,9 +146,9 @@ Split large documents into manageable chunks:
 Chain Transformers
 ~~~~~~~~~~~~~~~~~~
 
-Combine multiple transformers:
+Combine multiple transformers::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\Document\Transformer\ChainTransformer;
     use Symfony\AI\Store\Document\Transformer\ChunkDelayTransformer;
@@ -163,9 +163,9 @@ Combine multiple transformers:
 Document Loading
 ~~~~~~~~~~~~~~~~
 
-Load documents from files:
+Load documents from files::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\Document\Loader\TextFileLoader;
 
@@ -183,9 +183,9 @@ Vector Stores
 In-Memory Store
 ~~~~~~~~~~~~~~~
 
-For development and testing:
+For development and testing::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\InMemoryStore;
 
@@ -198,9 +198,9 @@ For development and testing:
 MariaDB Store
 ~~~~~~~~~~~~~
 
-For production with MariaDB:
+For production with MariaDB::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\Bridge\MariaDb\Store;
 
@@ -219,9 +219,9 @@ For production with MariaDB:
 MongoDB Store
 ~~~~~~~~~~~~~
 
-For MongoDB Atlas with vector search:
+For MongoDB Atlas with vector search::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\Bridge\MongoDb\Store;
     use MongoDB\Client;
@@ -235,9 +235,9 @@ For MongoDB Atlas with vector search:
 Pinecone Store
 ~~~~~~~~~~~~~~
 
-For managed vector database:
+For managed vector database::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\Bridge\Pinecone\Store;
     use Pinecone\Client;
@@ -252,9 +252,9 @@ For managed vector database:
 PostgreSQL Store
 ~~~~~~~~~~~~~~~~
 
-With pgvector extension:
+With pgvector extension::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\Bridge\Postgres\Store;
     use Symfony\AI\Store\Bridge\Postgres\Distance;
@@ -270,9 +270,9 @@ With pgvector extension:
 Cache Store
 ~~~~~~~~~~~
 
-With PSR-6 cache:
+With PSR-6 cache::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\CacheStore;
     use Symfony\Component\Cache\Adapter\FilesystemAdapter;
@@ -283,9 +283,9 @@ With PSR-6 cache:
 Distance Strategies
 -------------------
 
-Configure how similarity is calculated:
+Configure how similarity is calculated::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\DistanceStrategy;
     use Symfony\AI\Store\DistanceCalculator;
@@ -311,9 +311,9 @@ Indexing Strategies
 Batch Indexing
 ~~~~~~~~~~~~~~
 
-Index multiple documents efficiently:
+Index multiple documents efficiently::
 
-.. code-block:: php
+    <?php
 
     $documents = [
         new TextDocument('First document'),
@@ -336,9 +336,9 @@ Index multiple documents efficiently:
 Incremental Indexing
 ~~~~~~~~~~~~~~~~~~~~
 
-Add documents over time:
+Add documents over time::
 
-.. code-block:: php
+    <?php
 
     class DocumentProcessor
     {
@@ -399,9 +399,9 @@ Basic RAG Pattern
 Advanced RAG with Metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Filter results based on metadata:
+Filter results based on metadata::
 
-.. code-block:: php
+    <?php
 
     class MetadataFilteredSearch extends SimilaritySearch
     {
@@ -489,9 +489,9 @@ Performance Optimization
 Caching Embeddings
 ~~~~~~~~~~~~~~~~~~
 
-Cache computed embeddings to avoid recomputation:
+Cache computed embeddings to avoid recomputation::
 
-.. code-block:: php
+    <?php
 
     use Psr\Cache\CacheItemPoolInterface;
 
@@ -518,9 +518,9 @@ Cache computed embeddings to avoid recomputation:
 Batch Processing
 ~~~~~~~~~~~~~~~~
 
-Process documents in batches for efficiency:
+Process documents in batches for efficiency::
 
-.. code-block:: php
+    <?php
 
     class BatchIndexer
     {
@@ -554,9 +554,9 @@ Process documents in batches for efficiency:
 Testing
 -------
 
-Test with in-memory store:
+Test with in-memory store::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Store\InMemoryStore;
     use Symfony\AI\Platform\InMemoryPlatform;

@@ -74,9 +74,9 @@ Core Components
 Platform Component
 ~~~~~~~~~~~~~~~~~~
 
-The Platform component is the foundation that abstracts different AI providers:
+The Platform component is the foundation that abstracts different AI providers::
 
-.. code-block:: php
+    <?php
 
     interface PlatformInterface
     {
@@ -97,9 +97,9 @@ Key concepts:
 Agent Component
 ~~~~~~~~~~~~~~~
 
-The Agent component provides high-level abstractions for AI interactions:
+The Agent component provides high-level abstractions for AI interactions::
 
-.. code-block:: php
+    <?php
 
     interface AgentInterface
     {
@@ -119,9 +119,9 @@ Features:
 Store Component
 ~~~~~~~~~~~~~~~
 
-The Store component handles vector storage for RAG and semantic search:
+The Store component handles vector storage for RAG and semantic search::
 
-.. code-block:: php
+    <?php
 
     interface StoreInterface
     {
@@ -203,9 +203,9 @@ RAG Flow
 Message Architecture
 --------------------
 
-Messages are the core data structure for AI interactions:
+Messages are the core data structure for AI interactions::
 
-.. code-block:: php
+    <?php
 
     // Message hierarchy
     MessageInterface
@@ -231,9 +231,9 @@ Each message:
 Provider Bridges
 ----------------
 
-Provider bridges implement platform-specific logic:
+Provider bridges implement platform-specific logic::
 
-.. code-block:: php
+    <?php
 
     namespace Symfony\AI\Platform\Bridge\OpenAi;
 
@@ -340,9 +340,9 @@ Services are automatically tagged and configured:
 Event System
 ------------
 
-Symfony AI integrates with Symfony's event dispatcher:
+Symfony AI integrates with Symfony's event dispatcher::
 
-.. code-block:: php
+    <?php
 
     // Tool execution events
     class ToolCallsExecuted extends Event

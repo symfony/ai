@@ -53,9 +53,9 @@ Tools enable agents to execute functions and interact with your application.
 Creating Tools
 ~~~~~~~~~~~~~~
 
-Define tools using the ``#[AsTool]`` attribute:
+Define tools using the ``#[AsTool]`` attribute::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
@@ -91,9 +91,9 @@ Define tools using the ``#[AsTool]`` attribute:
 Tool Parameters
 ~~~~~~~~~~~~~~~
 
-Use ``#[With]`` attribute for parameter validation:
+Use ``#[With]`` attribute for parameter validation::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 
@@ -156,9 +156,9 @@ Using Tools with Agent
 Multiple Tool Methods
 ~~~~~~~~~~~~~~~~~~~~~
 
-One class can provide multiple tools:
+One class can provide multiple tools::
 
-.. code-block:: php
+    <?php
 
     #[AsTool('weather_current', 'Get current weather', method: 'current')]
     #[AsTool('weather_forecast', 'Get weather forecast', method: 'forecast')]
@@ -188,9 +188,9 @@ One class can provide multiple tools:
 Fault-Tolerant Toolbox
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Handle tool errors gracefully:
+Handle tool errors gracefully::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 
@@ -210,9 +210,9 @@ Add contextual memory to agent conversations.
 Static Memory
 ~~~~~~~~~~~~~
 
-Provide fixed context that's always available:
+Provide fixed context that's always available::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Memory\StaticMemoryProvider;
     use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -239,9 +239,9 @@ Provide fixed context that's always available:
 Embedding-Based Memory
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Retrieve relevant context based on similarity:
+Retrieve relevant context based on similarity::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Memory\EmbeddingProvider;
     use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
@@ -263,9 +263,9 @@ Retrieve relevant context based on similarity:
 Dynamic Memory Control
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Disable memory for specific calls:
+Disable memory for specific calls::
 
-.. code-block:: php
+    <?php
 
     // Normal call with memory
     $result = $agent->call($messages);
@@ -358,9 +358,9 @@ Processors transform messages and results for specific behaviors.
 Input Processors
 ~~~~~~~~~~~~~~~~
 
-Modify messages before sending to the model:
+Modify messages before sending to the model::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Input;
     use Symfony\AI\Agent\InputProcessorInterface;
@@ -389,9 +389,9 @@ Modify messages before sending to the model:
 Output Processors
 ~~~~~~~~~~~~~~~~~
 
-Transform results after model response:
+Transform results after model response::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Output;
     use Symfony\AI\Agent\OutputProcessorInterface;
@@ -418,9 +418,9 @@ Transform results after model response:
 Chat Sessions
 -------------
 
-Maintain conversation context across multiple interactions:
+Maintain conversation context across multiple interactions::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Chat;
     use Symfony\AI\Agent\Chat\MessageStore\InMemoryStore;
@@ -462,9 +462,9 @@ Advanced Tool Features
 Agent as Tool
 ~~~~~~~~~~~~~
 
-Use one agent as a tool for another:
+Use one agent as a tool for another::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
 
@@ -483,9 +483,9 @@ Use one agent as a tool for another:
 Tool Result Interception
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-React to tool execution results:
+React to tool execution results::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
 
@@ -508,9 +508,9 @@ React to tool execution results:
 Tool Authorization
 ~~~~~~~~~~~~~~~~~~
 
-Restrict tool access based on user permissions:
+Restrict tool access based on user permissions::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Attribute\IsGrantedTool;
 
@@ -528,9 +528,9 @@ Restrict tool access based on user permissions:
 Built-in Tools
 --------------
 
-Symfony AI includes several ready-to-use tools:
+Symfony AI includes several ready-to-use tools::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Agent\Toolbox\Tool\Clock;
     use Symfony\AI\Agent\Toolbox\Tool\Wikipedia;
@@ -560,9 +560,9 @@ Symfony AI includes several ready-to-use tools:
 Testing Agents
 --------------
 
-Test agents with mock tools and platforms:
+Test agents with mock tools and platforms::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\InMemoryPlatform;
 

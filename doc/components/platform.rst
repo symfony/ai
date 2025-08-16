@@ -22,9 +22,9 @@ Basic Usage
 Creating a Platform
 ~~~~~~~~~~~~~~~~~~~
 
-Each provider has a factory for easy initialization:
+Each provider has a factory for easy initialization::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
@@ -41,9 +41,9 @@ Each provider has a factory for easy initialization:
 Working with Messages
 ~~~~~~~~~~~~~~~~~~~~~
 
-Messages represent the conversation between user and AI:
+Messages represent the conversation between user and AI::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
@@ -66,9 +66,9 @@ Message Types
 System Messages
 ~~~~~~~~~~~~~~~
 
-Set the behavior and context for the AI:
+Set the behavior and context for the AI::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Message\Message;
 
@@ -79,9 +79,9 @@ Set the behavior and context for the AI:
 User Messages
 ~~~~~~~~~~~~~
 
-Represent user input with optional multimodal content:
+Represent user input with optional multimodal content::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\Content\Image;
@@ -112,9 +112,9 @@ Represent user input with optional multimodal content:
 Assistant Messages
 ~~~~~~~~~~~~~~~~~~
 
-Represent AI responses:
+Represent AI responses::
 
-.. code-block:: php
+    <?php
 
     $assistantMessage = Message::forAssistant('Here is my response');
 
@@ -129,9 +129,9 @@ Represent AI responses:
 Tool Call Messages
 ~~~~~~~~~~~~~~~~~~
 
-Represent tool execution results:
+Represent tool execution results::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Message\ToolCallMessage;
 
@@ -146,9 +146,9 @@ Models and Capabilities
 Model Configuration
 ~~~~~~~~~~~~~~~~~~~
 
-Models define the AI's capabilities and configuration:
+Models define the AI's capabilities and configuration::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Model;
     use Symfony\AI\Platform\Capability;
@@ -201,9 +201,9 @@ Results and Processing
 Result Types
 ~~~~~~~~~~~~
 
-Different models return different result types:
+Different models return different result types::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Result\TextResult;
     use Symfony\AI\Platform\Result\VectorResult;
@@ -229,9 +229,9 @@ Different models return different result types:
 Accessing Metadata
 ~~~~~~~~~~~~~~~~~~
 
-Results include metadata about the generation:
+Results include metadata about the generation::
 
-.. code-block:: php
+    <?php
 
     $result = $platform->invoke($model, $messages);
 
@@ -248,9 +248,9 @@ Results include metadata about the generation:
 Streaming Responses
 -------------------
 
-Stream responses for real-time output:
+Stream responses for real-time output::
 
-.. code-block:: php
+    <?php
 
     $result = $platform->invoke($model, $messages, ['stream' => true]);
 
@@ -318,9 +318,9 @@ Documents
 Embeddings
 ----------
 
-Generate vector embeddings for semantic search:
+Generate vector embeddings for semantic search::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 
@@ -339,9 +339,9 @@ Generate vector embeddings for semantic search:
 Parallel Processing
 -------------------
 
-Process multiple requests concurrently:
+Process multiple requests concurrently::
 
-.. code-block:: php
+    <?php
 
     // Prepare multiple invocations
     $results = [];
@@ -358,9 +358,9 @@ Process multiple requests concurrently:
 Error Handling
 --------------
 
-Handle platform-specific errors:
+Handle platform-specific errors::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\Exception\ContentFilterException;
     use Symfony\AI\Platform\Exception\RuntimeException;
@@ -378,9 +378,9 @@ Handle platform-specific errors:
 Platform Options
 ----------------
 
-Configure platform behavior:
+Configure platform behavior::
 
-.. code-block:: php
+    <?php
 
     $result = $platform->invoke($model, $messages, [
         // Model parameters
@@ -404,9 +404,9 @@ Configure platform behavior:
 Testing
 -------
 
-Use the InMemoryPlatform for testing:
+Use the InMemoryPlatform for testing::
 
-.. code-block:: php
+    <?php
 
     use Symfony\AI\Platform\InMemoryPlatform;
     use Symfony\AI\Platform\Result\VectorResult;
