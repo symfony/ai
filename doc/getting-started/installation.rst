@@ -155,8 +155,6 @@ For Standalone Usage
 
 Initialize components programmatically::
 
-    <?php
-
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
     use Symfony\AI\Agent\Agent;
@@ -208,9 +206,6 @@ Verifying Installation
 
 Test your installation with a simple script::
 
-    <?php
-
-    <?php
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
     use Symfony\AI\Platform\Message\Message;

@@ -52,7 +52,7 @@ Azure OpenAI
 Programmatic Setup
 ~~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 
@@ -78,7 +78,7 @@ Language Models
 Available GPT Models
 ~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 
@@ -98,7 +98,7 @@ Available GPT Models
 Basic Chat Completion
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
@@ -114,7 +114,7 @@ Basic Chat Completion
 Advanced Options
 ~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     $result = $platform->invoke($model, $messages, [
         'temperature' => 0.7,        // Creativity (0-2, default: 1)
@@ -132,7 +132,7 @@ Vision Capabilities
 
 Process images with GPT-4 Vision::
 
-    <?php
+
 
     use Symfony\AI\Platform\Message\Content\Image;
     use Symfony\AI\Platform\Message\Content\ImageUrl;
@@ -163,7 +163,7 @@ Audio Processing
 
 Process audio with GPT-4 audio capabilities::
 
-    <?php
+
 
     use Symfony\AI\Platform\Message\Content\Audio;
 
@@ -179,7 +179,7 @@ Tool Calling
 
 Enable function calling::
 
-    <?php
+
 
     use Symfony\AI\Platform\Tool\Tool;
 
@@ -214,7 +214,7 @@ Structured Output
 
 Get JSON responses with guaranteed structure::
 
-    <?php
+
 
     $result = $platform->invoke($model, $messages, [
         'response_format' => [
@@ -242,7 +242,7 @@ Streaming
 
 Stream responses for real-time output::
 
-    <?php
+
 
     $result = $platform->invoke($model, $messages, ['stream' => true]);
 
@@ -257,7 +257,7 @@ Embeddings
 Text Embeddings Models
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 
@@ -269,7 +269,7 @@ Text Embeddings Models
 Generate Embeddings
 ~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     // Single text
     $result = $platform->invoke($embeddings, 'Text to embed');
@@ -297,7 +297,7 @@ Image Generation
 DALL-E Models
 ~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Bridge\OpenAi\DallE;
 
@@ -310,7 +310,7 @@ DALL-E Models
 Generate Images
 ~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     // Generate image
     $result = $platform->invoke($dalle3, 'A serene mountain landscape at sunset');
@@ -338,7 +338,7 @@ Audio Transcription
 Whisper Model
 ~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 
@@ -347,7 +347,7 @@ Whisper Model
 Transcribe Audio
 ~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Message\Content\Audio;
 
@@ -370,7 +370,7 @@ Token Management
 Count Tokens
 ~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor;
 
@@ -389,7 +389,7 @@ Error Handling
 
 Handle OpenAI-specific errors::
 
-    <?php
+
 
     use Symfony\AI\Platform\Exception\ContentFilterException;
     use Symfony\AI\Platform\Exception\RuntimeException;

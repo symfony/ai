@@ -13,7 +13,7 @@ Installation
 
 The bundle is automatically registered with Symfony Flex. For manual registration::
 
-    <?php
+
 
     // config/bundles.php
     return [
@@ -47,9 +47,9 @@ The bundle automatically discovers and registers:
 3. **Agents** configured in ``ai.agent``
 4. **Stores** configured in ``ai.store``
 
-.. code-block:: php
+Example tool class::
 
-    <?php
+
     namespace App\Tool;
 
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
@@ -69,9 +69,9 @@ Service Injection
 
 Inject AI services into your classes::
 
-    <?php
 
-    <?php
+
+
     namespace App\Service;
 
     use Symfony\AI\Agent\AgentInterface;
@@ -258,7 +258,7 @@ Tool Authorization
 
 Control tool access with ``#[IsGrantedTool]``::
 
-    <?php
+
 
     use Symfony\AI\Bundle\Security\Attribute\IsGrantedTool;
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
@@ -276,7 +276,7 @@ Control tool access with ``#[IsGrantedTool]``::
 
 Multiple authorization checks::
 
-    <?php
+
 
     #[IsGrantedTool('ROLE_USER')]
     #[AsTool('user_tool', 'User tool')]
@@ -384,7 +384,7 @@ The bundle dispatches these events:
 Agent Events
 ~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Bundle\Event\AgentCallEvent;
     use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -409,7 +409,7 @@ Agent Events
 Tool Events
 ~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
 
@@ -447,7 +447,7 @@ Test Configuration
 Test Helpers
 ~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
     use Symfony\AI\Agent\AgentInterface;
@@ -501,7 +501,7 @@ Lazy Loading
 
 Services are lazy-loaded for better performance::
 
-    <?php
+
 
     // Agent is only instantiated when first used
     class MyService
@@ -524,9 +524,9 @@ Bundle Extension
 
 Create custom bundle extensions::
 
-    <?php
 
-    <?php
+
+
     namespace App\DependencyInjection;
 
     use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -547,7 +547,7 @@ Compiler Passes
 
 Add custom compiler passes::
 
-    <?php
+
 
     use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
     use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -581,14 +581,14 @@ If migrating from standalone component usage:
 
 Before::
 
-    <?php
+
 
     $platform = PlatformFactory::create($_ENV['OPENAI_API_KEY']);
     $agent = new Agent($platform, $model);
 
 After::
 
-    <?php
+
 
     public function __construct(
         private AgentInterface $agent

@@ -51,7 +51,6 @@ Basic Controller
 
 .. code-block:: php
 
-    <?php
     namespace App\Controller;
 
     use Symfony\AI\Agent\AgentInterface;
@@ -185,7 +184,6 @@ Chat Service with Memory
 
 .. code-block:: php
 
-    <?php
     namespace App\Service;
 
     use Symfony\AI\Agent\AgentInterface;
@@ -260,7 +258,6 @@ Weather Tool
 
 .. code-block:: php
 
-    <?php
     namespace App\Tool;
 
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
@@ -438,7 +435,6 @@ Custom System Prompts
 
 .. code-block:: php
 
-    <?php
     namespace App\Service;
 
     class PersonalityService
@@ -562,7 +558,6 @@ Comprehensive Error Handler
 
 .. code-block:: php
 
-    <?php
     namespace App\Service;
 
     use Symfony\AI\Platform\Exception\ContentFilterException;
@@ -623,7 +618,6 @@ Test the Chatbot
 
 .. code-block:: php
 
-    <?php
     namespace App\Tests\Controller;
 
     use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;

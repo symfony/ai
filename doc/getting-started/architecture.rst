@@ -76,8 +76,6 @@ Platform Component
 
 The Platform component is the foundation that abstracts different AI providers::
 
-    <?php
-
     interface PlatformInterface
     {
         public function invoke(
@@ -99,8 +97,6 @@ Agent Component
 
 The Agent component provides high-level abstractions for AI interactions::
 
-    <?php
-
     interface AgentInterface
     {
         public function call(
@@ -120,8 +116,6 @@ Store Component
 ~~~~~~~~~~~~~~~
 
 The Store component handles vector storage for RAG and semantic search::
-
-    <?php
 
     interface StoreInterface
     {
@@ -205,8 +199,6 @@ Message Architecture
 
 Messages are the core data structure for AI interactions::
 
-    <?php
-
     // Message hierarchy
     MessageInterface
     ├── UserMessage
@@ -232,8 +224,6 @@ Provider Bridges
 ----------------
 
 Provider bridges implement platform-specific logic::
-
-    <?php
 
     namespace Symfony\AI\Platform\Bridge\OpenAi;
 
@@ -266,7 +256,7 @@ Symfony AI is designed for extensibility:
 Custom Tools
 ~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     #[AsTool('my_tool', 'Tool description')]
     class MyTool
@@ -280,7 +270,7 @@ Custom Tools
 Custom Processors
 ~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     class MyProcessor implements InputProcessorInterface
     {
@@ -293,7 +283,7 @@ Custom Processors
 Custom Stores
 ~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     class MyStore implements StoreInterface, VectorStoreInterface
     {
@@ -341,8 +331,6 @@ Event System
 ------------
 
 Symfony AI integrates with Symfony's event dispatcher::
-
-    <?php
 
     // Tool execution events
     class ToolCallsExecuted extends Event

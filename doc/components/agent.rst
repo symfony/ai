@@ -23,7 +23,7 @@ Basic Agent Usage
 Creating an Agent
 ~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
@@ -54,8 +54,6 @@ Creating Tools
 ~~~~~~~~~~~~~~
 
 Define tools using the ``#[AsTool]`` attribute::
-
-    <?php
 
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
@@ -93,8 +91,6 @@ Tool Parameters
 
 Use ``#[With]`` attribute for parameter validation::
 
-    <?php
-
     use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 
     #[AsTool('search_products', 'Search for products in the catalog')]
@@ -124,7 +120,7 @@ Use ``#[With]`` attribute for parameter validation::
 Using Tools with Agent
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Agent\Toolbox\Toolbox;
     use Symfony\AI\Agent\Toolbox\AgentProcessor;
@@ -158,8 +154,6 @@ Multiple Tool Methods
 
 One class can provide multiple tools::
 
-    <?php
-
     #[AsTool('weather_current', 'Get current weather', method: 'current')]
     #[AsTool('weather_forecast', 'Get weather forecast', method: 'forecast')]
     class WeatherService
@@ -190,8 +184,6 @@ Fault-Tolerant Toolbox
 
 Handle tool errors gracefully::
 
-    <?php
-
     use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 
     $innerToolbox = Toolbox::create($tool1, $tool2);
@@ -211,8 +203,6 @@ Static Memory
 ~~~~~~~~~~~~~
 
 Provide fixed context that's always available::
-
-    <?php
 
     use Symfony\AI\Agent\Memory\StaticMemoryProvider;
     use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -241,8 +231,6 @@ Embedding-Based Memory
 
 Retrieve relevant context based on similarity::
 
-    <?php
-
     use Symfony\AI\Agent\Memory\EmbeddingProvider;
     use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 
@@ -265,8 +253,6 @@ Dynamic Memory Control
 
 Disable memory for specific calls::
 
-    <?php
-
     // Normal call with memory
     $result = $agent->call($messages);
 
@@ -281,7 +267,7 @@ Get predictable, type-safe responses from agents.
 PHP Class Output
 ~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Agent\StructuredOutput\AgentProcessor;
     use Symfony\AI\Agent\StructuredOutput\ResponseFormatFactory;
@@ -324,7 +310,7 @@ PHP Class Output
 Array Structure Output
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     $result = $agent->call($messages, [
         'response_format' => [
@@ -360,8 +346,6 @@ Input Processors
 
 Modify messages before sending to the model::
 
-    <?php
-
     use Symfony\AI\Agent\Input;
     use Symfony\AI\Agent\InputProcessorInterface;
 
@@ -391,8 +375,6 @@ Output Processors
 
 Transform results after model response::
 
-    <?php
-
     use Symfony\AI\Agent\Output;
     use Symfony\AI\Agent\OutputProcessorInterface;
 
@@ -420,8 +402,6 @@ Chat Sessions
 
 Maintain conversation context across multiple interactions::
 
-    <?php
-
     use Symfony\AI\Agent\Chat;
     use Symfony\AI\Agent\Chat\MessageStore\InMemoryStore;
 
@@ -443,7 +423,7 @@ Maintain conversation context across multiple interactions::
 Session Storage Options
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Agent\Chat\MessageStore\SessionStore;
     use Symfony\AI\Agent\Chat\MessageStore\CacheStore;
@@ -464,8 +444,6 @@ Agent as Tool
 
 Use one agent as a tool for another::
 
-    <?php
-
     use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
 
     // Create specialized agent
@@ -484,8 +462,6 @@ Tool Result Interception
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 React to tool execution results::
-
-    <?php
 
     use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
 
@@ -510,8 +486,6 @@ Tool Authorization
 
 Restrict tool access based on user permissions::
 
-    <?php
-
     use Symfony\AI\Agent\Attribute\IsGrantedTool;
 
     #[IsGrantedTool('ROLE_ADMIN')]
@@ -529,8 +503,6 @@ Built-in Tools
 --------------
 
 Symfony AI includes several ready-to-use tools::
-
-    <?php
 
     use Symfony\AI\Agent\Toolbox\Tool\Clock;
     use Symfony\AI\Agent\Toolbox\Tool\Wikipedia;
@@ -561,8 +533,6 @@ Testing Agents
 --------------
 
 Test agents with mock tools and platforms::
-
-    <?php
 
     use Symfony\AI\Platform\InMemoryPlatform;
 

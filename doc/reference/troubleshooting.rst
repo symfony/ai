@@ -53,7 +53,7 @@ API Connection Issues
 
     cURL error 60: SSL certificate problem: unable to get local issuer certificate
 
-**Solution:**
+**Solution:**:
 
 .. code-block:: php
 
@@ -140,8 +140,6 @@ Rate Limiting
 
 1. Implement exponential backoff::
 
-    <?php
-
     use Symfony\Component\HttpClient\RetryableHttpClient;
     use Symfony\Component\HttpClient\Retry\ExponentialBackoffStrategy;
 
@@ -177,20 +175,14 @@ Token Limits
 
 1. Reduce message history::
 
-    <?php
-
     // Keep only last N messages
     $messages = $messageHistory->slice(-10);
 
 2. Truncate long content::
 
-    <?php
-
     $content = mb_substr($content, 0, 5000);
 
 3. Use model with larger context::
-
-    <?php
 
     // Switch to model with larger context window
     $model = new Gpt(Gpt::GPT_4_TURBO); // 128k context
@@ -208,8 +200,6 @@ Content Filtering
 
 1. Review and adjust prompts::
 
-    <?php
-
     // Add safety instructions to system prompt
     Message::forSystem(
         'You are a helpful assistant. Always provide safe, 
@@ -217,8 +207,6 @@ Content Filtering
     )
 
 2. Handle content filter exceptions::
-
-    <?php
 
     try {
         $result = $agent->call($messages);
@@ -252,8 +240,6 @@ Tool Not Found
 
 2. Check tool attribute::
 
-    <?php
-
     #[AsTool('my_tool', 'Tool description')]
     class MyTool
     {
@@ -272,8 +258,6 @@ Tool Execution Errors
 
 Use fault-tolerant toolbox::
 
-    <?php
-
     use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 
     $toolbox = new FaultTolerantToolbox($innerToolbox);
@@ -287,8 +271,6 @@ Tool Parameter Issues
 **Solution:**
 
 Add parameter validation::
-
-    <?php
 
     use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 
@@ -366,8 +348,6 @@ Connection Issues
 
 3. Initialize store schema::
 
-    <?php
-
     if ($store instanceof InitializableStoreInterface) {
         $store->initialize();
     }
@@ -384,8 +364,6 @@ Slow Response Times
 
 1. Use streaming for better perceived performance::
 
-    <?php
-
     $result = $agent->call($messages, ['stream' => true]);
     foreach ($result->getContent() as $chunk) {
         echo $chunk;
@@ -394,16 +372,12 @@ Slow Response Times
 
 2. Cache frequently used responses::
 
-    <?php
-
     $cacheKey = md5(json_encode($messages));
     if ($cache->hasItem($cacheKey)) {
         return $cache->getItem($cacheKey)->get();
     }
 
 3. Use faster models for simple tasks::
-
-    <?php
 
     // Use GPT-3.5 for simple queries
     $model = new Gpt(Gpt::GPT_35_TURBO);
@@ -417,8 +391,6 @@ Memory Issues
 
 1. Process documents in chunks::
 
-    <?php
-
     $transformer = new TextSplitTransformer(
         maxLength: 500,
         overlap: 50
@@ -429,8 +401,6 @@ Memory Issues
     }
 
 2. Use generators for large datasets::
-
-    <?php
 
     function processDocuments(): \Generator
     {
@@ -478,7 +448,7 @@ Logging
                 level: debug
                 channels: ['ai']
 
-.. code-block:: php
+Then use the logger in your service::
 
     use Psr\Log\LoggerInterface;
 
@@ -520,8 +490,6 @@ Mock Platform Not Working
 
 Properly mock the platform::
 
-    <?php
-
     use Symfony\AI\Platform\InMemoryPlatform;
 
     class ChatTest extends KernelTestCase
@@ -540,8 +508,6 @@ Test Data Fixtures
 ~~~~~~~~~~~~~~~~~~
 
 Create consistent test data::
-
-    <?php
 
     class AITestFixtures
     {

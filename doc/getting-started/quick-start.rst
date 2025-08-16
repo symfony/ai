@@ -9,9 +9,6 @@ Your First AI Chat
 
 Let's start with a basic chat completion::
 
-    <?php
-
-    <?php
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
     use Symfony\AI\Platform\Message\Message;
@@ -45,7 +42,6 @@ Controller Example
 
 .. code-block:: php
 
-    <?php
     namespace App\Controller;
 
     use Symfony\AI\Agent\AgentInterface;
@@ -103,7 +99,6 @@ Creating a Custom Tool
 
 .. code-block:: php
 
-    <?php
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
     #[AsTool('get_weather', 'Get current weather for a location')]
@@ -156,8 +151,6 @@ Streaming Responses
 
 Stream AI responses for better user experience::
 
-    <?php
-
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
@@ -178,8 +171,6 @@ Working with Images
 -------------------
 
 Process images with multimodal models::
-
-    <?php
 
     use Symfony\AI\Platform\Message\Content\Image;
     use Symfony\AI\Platform\Message\Message;
@@ -264,7 +255,6 @@ Define Output Structure
 
 .. code-block:: php
 
-    <?php
     class WeatherInfo
     {
         public string $location;
@@ -315,8 +305,6 @@ Persistent Chat Sessions
 
 Maintain conversation context across requests::
 
-    <?php
-
     use Symfony\AI\Agent\Chat;
     use Symfony\AI\Agent\Chat\MessageStore\SessionStore;
     use Symfony\Component\HttpFoundation\RequestStack;
@@ -345,8 +333,6 @@ Error Handling
 
 Handle API errors gracefully::
 
-    <?php
-
     use Symfony\AI\Platform\Exception\ContentFilterException;
     use Symfony\AI\Platform\Exception\RuntimeException;
 
@@ -364,8 +350,6 @@ Testing Your AI Code
 --------------------
 
 Use in-memory implementations for testing::
-
-    <?php
 
     use Symfony\AI\Platform\InMemoryPlatform;
     use Symfony\AI\Platform\Model;

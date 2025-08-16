@@ -23,7 +23,7 @@ Basic Usage
 Creating a Store
 ~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Store\InMemoryStore;
     use Symfony\AI\Store\Indexer;
@@ -46,7 +46,7 @@ Creating a Store
 Querying the Store
 ~~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Vector\Vector;
 
@@ -72,8 +72,6 @@ Text Documents
 ~~~~~~~~~~~~~~
 
 Create and manage text documents with metadata::
-
-    <?php
 
     use Symfony\AI\Store\Document\TextDocument;
     use Symfony\AI\Store\Document\Metadata;
@@ -101,8 +99,6 @@ Vector Documents
 
 Work directly with pre-computed vectors::
 
-    <?php
-
     use Symfony\AI\Store\Document\VectorDocument;
     use Symfony\AI\Platform\Vector\Vector;
 
@@ -125,8 +121,6 @@ Text Splitting
 
 Split large documents into manageable chunks::
 
-    <?php
-
     use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 
     $transformer = new TextSplitTransformer(
@@ -148,8 +142,6 @@ Chain Transformers
 
 Combine multiple transformers::
 
-    <?php
-
     use Symfony\AI\Store\Document\Transformer\ChainTransformer;
     use Symfony\AI\Store\Document\Transformer\ChunkDelayTransformer;
 
@@ -164,8 +156,6 @@ Document Loading
 ~~~~~~~~~~~~~~~~
 
 Load documents from files::
-
-    <?php
 
     use Symfony\AI\Store\Document\Loader\TextFileLoader;
 
@@ -185,8 +175,6 @@ In-Memory Store
 
 For development and testing::
 
-    <?php
-
     use Symfony\AI\Store\InMemoryStore;
 
     $store = new InMemoryStore();
@@ -199,8 +187,6 @@ MariaDB Store
 ~~~~~~~~~~~~~
 
 For production with MariaDB::
-
-    <?php
 
     use Symfony\AI\Store\Bridge\MariaDb\Store;
 
@@ -221,8 +207,6 @@ MongoDB Store
 
 For MongoDB Atlas with vector search::
 
-    <?php
-
     use Symfony\AI\Store\Bridge\MongoDb\Store;
     use MongoDB\Client;
 
@@ -236,8 +220,6 @@ Pinecone Store
 ~~~~~~~~~~~~~~
 
 For managed vector database::
-
-    <?php
 
     use Symfony\AI\Store\Bridge\Pinecone\Store;
     use Pinecone\Client;
@@ -253,8 +235,6 @@ PostgreSQL Store
 ~~~~~~~~~~~~~~~~
 
 With pgvector extension::
-
-    <?php
 
     use Symfony\AI\Store\Bridge\Postgres\Store;
     use Symfony\AI\Store\Bridge\Postgres\Distance;
@@ -272,8 +252,6 @@ Cache Store
 
 With PSR-6 cache::
 
-    <?php
-
     use Symfony\AI\Store\CacheStore;
     use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
@@ -284,8 +262,6 @@ Distance Strategies
 -------------------
 
 Configure how similarity is calculated::
-
-    <?php
 
     use Symfony\AI\Store\DistanceStrategy;
     use Symfony\AI\Store\DistanceCalculator;
@@ -313,8 +289,6 @@ Batch Indexing
 
 Index multiple documents efficiently::
 
-    <?php
-
     $documents = [
         new TextDocument('First document'),
         new TextDocument('Second document'),
@@ -337,8 +311,6 @@ Incremental Indexing
 ~~~~~~~~~~~~~~~~~~~~
 
 Add documents over time::
-
-    <?php
 
     class DocumentProcessor
     {
@@ -370,7 +342,7 @@ RAG Implementation
 Basic RAG Pattern
 ~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch;
     use Symfony\AI\Agent\Toolbox\Toolbox;
@@ -400,8 +372,6 @@ Advanced RAG with Metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Filter results based on metadata::
-
-    <?php
 
     class MetadataFilteredSearch extends SimilaritySearch
     {
@@ -457,7 +427,7 @@ Symfony Bundle Configuration
 Service Injection
 ~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     namespace App\Service;
 
@@ -491,8 +461,6 @@ Caching Embeddings
 
 Cache computed embeddings to avoid recomputation::
 
-    <?php
-
     use Psr\Cache\CacheItemPoolInterface;
 
     class CachedIndexer
@@ -519,8 +487,6 @@ Batch Processing
 ~~~~~~~~~~~~~~~~
 
 Process documents in batches for efficiency::
-
-    <?php
 
     class BatchIndexer
     {
@@ -555,8 +521,6 @@ Testing
 -------
 
 Test with in-memory store::
-
-    <?php
 
     use Symfony\AI\Store\InMemoryStore;
     use Symfony\AI\Platform\InMemoryPlatform;

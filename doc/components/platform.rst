@@ -24,8 +24,6 @@ Creating a Platform
 
 Each provider has a factory for easy initialization::
 
-    <?php
-
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 
@@ -42,8 +40,6 @@ Working with Messages
 ~~~~~~~~~~~~~~~~~~~~~
 
 Messages represent the conversation between user and AI::
-
-    <?php
 
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
@@ -68,8 +64,6 @@ System Messages
 
 Set the behavior and context for the AI::
 
-    <?php
-
     use Symfony\AI\Platform\Message\Message;
 
     $systemMessage = Message::forSystem(
@@ -80,8 +74,6 @@ User Messages
 ~~~~~~~~~~~~~
 
 Represent user input with optional multimodal content::
-
-    <?php
 
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\Content\Image;
@@ -114,8 +106,6 @@ Assistant Messages
 
 Represent AI responses::
 
-    <?php
-
     $assistantMessage = Message::forAssistant('Here is my response');
 
     // With tool calls
@@ -131,8 +121,6 @@ Tool Call Messages
 
 Represent tool execution results::
 
-    <?php
-
     use Symfony\AI\Platform\Message\ToolCallMessage;
 
     $toolResult = new ToolCallMessage(
@@ -147,8 +135,6 @@ Model Configuration
 ~~~~~~~~~~~~~~~~~~~
 
 Models define the AI's capabilities and configuration::
-
-    <?php
 
     use Symfony\AI\Platform\Model;
     use Symfony\AI\Platform\Capability;
@@ -174,7 +160,7 @@ Models define the AI's capabilities and configuration::
 Checking Capabilities
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     if ($model->hasCapability(Capability::INPUT_IMAGE)) {
         // Model supports image input
@@ -203,8 +189,6 @@ Result Types
 
 Different models return different result types::
 
-    <?php
-
     use Symfony\AI\Platform\Result\TextResult;
     use Symfony\AI\Platform\Result\VectorResult;
     use Symfony\AI\Platform\Result\BinaryResult;
@@ -231,8 +215,6 @@ Accessing Metadata
 
 Results include metadata about the generation::
 
-    <?php
-
     $result = $platform->invoke($model, $messages);
 
     // Token usage
@@ -250,8 +232,6 @@ Streaming Responses
 
 Stream responses for real-time output::
 
-    <?php
-
     $result = $platform->invoke($model, $messages, ['stream' => true]);
 
     // Check if streaming
@@ -268,7 +248,7 @@ Multimodal Input
 Images
 ~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Message\Content\Image;
     use Symfony\AI\Platform\Message\Content\ImageUrl;
@@ -288,7 +268,7 @@ Images
 Audio
 ~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Message\Content\Audio;
 
@@ -301,7 +281,7 @@ Audio
 Documents
 ~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Platform\Message\Content\Document;
     use Symfony\AI\Platform\Message\Content\DocumentUrl;
@@ -319,8 +299,6 @@ Embeddings
 ----------
 
 Generate vector embeddings for semantic search::
-
-    <?php
 
     use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 
@@ -341,8 +319,6 @@ Parallel Processing
 
 Process multiple requests concurrently::
 
-    <?php
-
     // Prepare multiple invocations
     $results = [];
     foreach ($prompts as $prompt) {
@@ -359,8 +335,6 @@ Error Handling
 --------------
 
 Handle platform-specific errors::
-
-    <?php
 
     use Symfony\AI\Platform\Exception\ContentFilterException;
     use Symfony\AI\Platform\Exception\RuntimeException;
@@ -379,8 +353,6 @@ Platform Options
 ----------------
 
 Configure platform behavior::
-
-    <?php
 
     $result = $platform->invoke($model, $messages, [
         // Model parameters
@@ -405,8 +377,6 @@ Testing
 -------
 
 Use the InMemoryPlatform for testing::
-
-    <?php
 
     use Symfony\AI\Platform\InMemoryPlatform;
     use Symfony\AI\Platform\Result\VectorResult;
