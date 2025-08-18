@@ -1,0 +1,46 @@
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-15T11:56:49Z
+
+@chr-hertel
+> Makes token usage explicit
+I like having the value object, we should definitely have that 👍
+But I'm not in favor of having the getTokenUsage() directly on the result since the result is a high lever abstraction and token usage is quite specific to remote inference of GenAI models - not all models have that. let's keep it in the metadata please.
+
+Hmm, I initially thought about keeping it in metadata, but having it inside the Result object also made sense since an API should send us this information. I, so far, have seen such information in the responses of whatever APIs I tried, but perhaps you are right, and other models out there do not provide such information.
+
+> Adds support to automatically register token usage extractors so that the token usage information is available in the result when a model is invoked
+That's a bit misleading since token usage was already sitting on an extension point => OutputProcessor and your design decision to use that extension point to add another extension point doesn't really resonate with me. why is the new extension point needed? it feels like we're just adding them because we can.
+
+Nope, the idea, instead, was to introduce an extension point specific to token usage extraction and exposure. This would also simplify for bridges to their own implentations of the extractor interface if needed.
+
+> Makes the token usage auto-registration configurable
+For me this is too early, i don't think that a use-case, do you? how often do we see the case for someone to bring their own token usage extractor.
+
+So far, in this repository, I have found three such extractors (currently TokenOutputProcessor classes), including the new Google Vertex AI bridge, and all three of them perform the extraction differently, albeit not entirely. As you also rightly pointed out above, token usage is something specific to GenAI models, and not all of them have it. Not all of them will expose the data in a similar fashion, either.
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-15T14:26:22Z
+
+@OskarStark @chr-hertel
+I have reverted the previous changes and only kept the token usage information. Also, edited the PR description.
+Please review the changes.
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-15T21:03:43Z
+
+> almost done i'd say - thanks already!
+
+I am working on autoconfiguring token usage processors inside the AI bundle and based that branch on this one.
+A PR will arrive after this one is finished.
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-18T11:59:39Z
+
+> Good to merge from my end - @OskarStark?
+
+@OskarStark
+Could you have a look?
