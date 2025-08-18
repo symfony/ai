@@ -28,7 +28,7 @@ final class PipelineExecution
      */
     public function __construct(
         private readonly Pipeline $pipeline,
-        private readonly array|string $input,
+        private readonly array $input,
     ) {
     }
 

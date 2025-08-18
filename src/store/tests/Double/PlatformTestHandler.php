@@ -43,7 +43,7 @@ final class PlatformTestHandler implements ModelClientInterface, ResultConverter
         return true;
     }
 
-    public function request(Model $model, array|string|object $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array|object $payload, array $options = []): RawHttpResult
     {
         ++$this->createCalls;
 

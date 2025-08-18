@@ -33,7 +33,7 @@ final readonly class OllamaClient implements ModelClientInterface
         return $model instanceof Ollama;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         $response = $this->httpClient->request('POST', \sprintf('%s/api/show', $this->hostUrl), [
             'json' => [
@@ -58,7 +58,7 @@ final readonly class OllamaClient implements ModelClientInterface
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
      */
-    private function doCompletionRequest(array|string $payload, array $options = []): RawHttpResult
+    private function doCompletionRequest(array $payload, array $options = []): RawHttpResult
     {
         // Revert Ollama's default streaming behavior
         $options['stream'] ??= false;
@@ -78,7 +78,7 @@ final readonly class OllamaClient implements ModelClientInterface
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
      */
-    private function doEmbeddingsRequest(Model $model, array|string $payload, array $options = []): RawHttpResult
+    private function doEmbeddingsRequest(Model $model, array $payload, array $options = []): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/api/embed', $this->hostUrl), [
             'json' => array_merge($options, [

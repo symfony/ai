@@ -35,12 +35,8 @@ final readonly class ElevenLabsClient implements ModelClientInterface
         return $model instanceof ElevenLabs;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
+    public function request(Model $model, array $payload, array $options = []): RawResultInterface
     {
-        if (!\is_array($payload)) {
-            throw new InvalidArgumentException(\sprintf('The payload must be an array, received "%s".', get_debug_type($payload)));
-        }
-
         if (\in_array($model->getName(), [ElevenLabs::SCRIBE_V1, ElevenLabs::SCRIBE_V1_EXPERIMENTAL], true)) {
             return $this->doSpeechToTextRequest($model, $payload, $options);
         }
@@ -58,7 +54,7 @@ final readonly class ElevenLabsClient implements ModelClientInterface
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
      */
-    private function doSpeechToTextRequest(Model $model, array|string $payload, array $options): RawHttpResult
+    private function doSpeechToTextRequest(Model $model, array $payload, array $options): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/speech-to-text', $this->hostUrl), [
             'headers' => [
@@ -75,7 +71,7 @@ final readonly class ElevenLabsClient implements ModelClientInterface
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
      */
-    private function doTextToSpeechRequest(Model $model, array|string $payload, array $options): RawHttpResult
+    private function doTextToSpeechRequest(Model $model, array $payload, array $options): RawHttpResult
     {
         if (!\array_key_exists('voice', $model->getOptions())) {
             throw new InvalidArgumentException('The voice option is required.');

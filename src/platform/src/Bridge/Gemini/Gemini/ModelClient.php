@@ -41,7 +41,7 @@ final readonly class ModelClient implements ModelClientInterface
     /**
      * @throws TransportExceptionInterface When the HTTP request fails due to network issues
      */
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         $url = \sprintf(
             'https://generativelanguage.googleapis.com/v1beta/models/%s:%s',

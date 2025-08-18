@@ -46,7 +46,7 @@ final readonly class GptModelClient implements ModelClientInterface
         return $model instanceof Gpt;
     }
 
-    public function request(Model $model, object|array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, object|array $payload, array $options = []): RawHttpResult
     {
         $url = \sprintf('https://%s/openai/deployments/%s/chat/completions', $this->baseUrl, $this->deployment);
 

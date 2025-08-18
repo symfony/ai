@@ -47,7 +47,7 @@ final readonly class WhisperModelClient implements ModelClientInterface
         return $model instanceof Whisper;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         $task = $options['task'] ?? Task::TRANSCRIPTION;
         $endpoint = Task::TRANSCRIPTION === $task ? 'transcriptions' : 'translations';

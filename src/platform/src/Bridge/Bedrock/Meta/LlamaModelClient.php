@@ -33,7 +33,7 @@ class LlamaModelClient implements ModelClientInterface
         return $model instanceof Llama;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult
+    public function request(Model $model, array $payload, array $options = []): RawBedrockResult
     {
         return new RawBedrockResult($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest([
             'modelId' => $this->getModelId($model),

@@ -32,7 +32,7 @@ class NovaModelClient implements ModelClientInterface
         return $model instanceof Nova;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult
+    public function request(Model $model, array $payload, array $options = []): RawBedrockResult
     {
         $modelOptions = [];
         if (isset($options['tools'])) {

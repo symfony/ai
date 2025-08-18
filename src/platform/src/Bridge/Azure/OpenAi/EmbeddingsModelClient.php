@@ -46,7 +46,7 @@ final readonly class EmbeddingsModelClient implements ModelClientInterface
         return $model instanceof Embeddings;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         $url = \sprintf('https://%s/openai/deployments/%s/embeddings', $this->baseUrl, $this->deployment);
 

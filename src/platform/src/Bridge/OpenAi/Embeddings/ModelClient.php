@@ -37,7 +37,7 @@ final readonly class ModelClient implements PlatformResponseFactory
         return $model instanceof Embeddings;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.openai.com/v1/embeddings', [
             'auth_bearer' => $this->apiKey,

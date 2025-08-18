@@ -38,11 +38,11 @@ final readonly class EmbeddingsModelClient implements ModelClientInterface
         return $model instanceof Embeddings;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
+    public function request(Model $model, array $payload, array $options = []): RawResultInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/embeddings', $this->baseUrl), [
             'auth_bearer' => $this->apiKey,
-            'json' => \is_array($payload) ? array_merge($payload, $options) : $payload,
+            'json' => array_merge($payload, $options),
         ]));
     }
 }

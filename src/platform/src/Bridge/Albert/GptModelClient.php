@@ -43,11 +43,11 @@ final readonly class GptModelClient implements ModelClientInterface
         return $model instanceof Gpt;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
+    public function request(Model $model, array $payload, array $options = []): RawResultInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/chat/completions', $this->baseUrl), [
             'auth_bearer' => $this->apiKey,
-            'json' => \is_array($payload) ? array_merge($payload, $options) : $payload,
+            'json' => array_merge($payload, $options),
         ]));
     }
 }
