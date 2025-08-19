@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-14T22:31:00Z
+
+Needs a rebase after #317
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-16T15:47:57Z
+
+Ah yes, tested the cloud version and it comes with an existing database, hum, one solution might be to add a `forceDatabaseCreation` (name open to debate 😄 ) option in the `initialize` method, this way, if the option is set to `true`, we create the database, otherwise, we "expect" that it exist 🤔
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-18T13:30:18Z
+
+Small update here @chr-hertel @OskarStark, I removed the `DroppableStoreInterface` following the discussion in #285, it's better to do a "big" PR to updated than introducing something that will be removed for clarity later.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-19T08:01:17Z
+
+I just rebased the branch against `main`, @OskarStark, I will work on renaming the env variable in a new PR 🙂
