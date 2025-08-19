@@ -1,0 +1,113 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-08T09:52:40Z
+
+>  Should the VectorDocument be expanded with optional field like ?string $content = null?
+
+IIRC we had something like this in the past, did we @chr-hertel ?
+
+Other than that, it could be a good idea I guess.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-08T10:24:10Z
+
+`documents` with chromadb is more like a document reference (name?) or the original content?
+
+---
+
+Other than that, with #57 I implemented a `source` field that references the "original" while splitting.
+Maybe we can adopt that if we're also talking about a reference here - maybe that also has some synergy with #158
+
+So, my theory here:
+TextDocuments represent a textual version of another resource, e.g. an url, an entity, a file, ...
+
+The `$id` with `UUID` as identifier is obviously too limited, but i would still like to have something to express those relations between documents.
+
+Idea
+* TextDocument has an ID (string|int) based on the source/content/entity/url/file
+* TextDocument get split into multiple documents, still has a parent ID as metadata
+* VectorDocument has the same ID, keeps the parent ID as metadata
+
+(instead a simple ID we could also think of a more sophisticated refernece object or sth, but i'd be lazy on that)
+
+Now
+If a store, like chroma, supports referencing the original documents, that can be supported in the implementation promoting something from metadata
+
+---------------------------------------------------------------------------
+
+by dorrogeray at 2025-08-08T11:20:09Z
+
+> `documents` with chromadb is more like a document reference (name?) or the original content?
+
+Its the original content, the string from which the embedding vectors are generated.
+
+> Other than that, with #57 I implemented a `source` field that references the "original" while splitting. Maybe we can adopt that if we're also talking about a reference here - maybe that also has some synergy with #158
+
+Looking at #57, I can see that the `text` field is added into the metadata, which are then passed onto the `VectorDocument`, so the needed information gets delivered to the store implementation.
+
+The `text` metadata field on the `TextDocument` seems to be a duplicate field since there already is `TextDocument::$content`, but because its there, it gets passed into the `VectorDocument`.
+
+I think that what concerns me a bit is that there are now kind-of standardized metadata fields getting introduced, on which the individual store implementations need to start to rely on if they want to implement certain feature (for example, take the VectorDocument->metadata->text and use it to generate documents when batch storing data into Chroma DB).
+
+The `Metadata` approach is flexible, but if there are going to be some standardized fields like:
+
+- `text`
+- `parent_id`
+- `source`
+
+Then those should probably be enumerated in some `MetadataFields` enum, and then referenced in codebase using this enum, so that detecting the relationship of where these fields are relied on is simple in IDEs?
+
+Alternative would be to have these (or some of these) as actual fields on the `VectorDocument`, like:
+
+- `VectorDocument::$content` (nullable)
+- `VectorDocument::$parentId` (nullable)
+- `VectorDocument::$source` (nullable)
+
+And have them more strictly typed in this way, keeping the `Metadata` clean for more implementation specific fields.
+
+I am not sure which approach is better overall, but `VectorDocument::$content` seems to me to be generic enough to be promoted to property. On the other hand, I am not sure why the `text` metadata field is needed if its already in `TextDocument::$content` (unless the reason is to pass it to `VectorDocument` via metadata) https://github.com/symfony/ai/pull/57/files#diff-b16e907e2249b7da92861730a93ea33b39b43cef67d7f937fea56ba771a8cd19R61
+
+---------------------------------------------------------------------------
+
+by dorrogeray at 2025-08-11T05:27:32Z
+
+@chr-hertel Should I try to go for adding of `private ?string $content = null` field on the `VectorDocument`? Would that be acceptable?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-11T18:40:22Z
+
+So there's actually a third alternative, that might combine both worlds:
+Having a Metadata class, that has a concrete well-defined interface, e.g. `$metadata->getParentId(): ?int|string`, but also stores those information in some kind of reserved array keys, like `_parent_id` - similar to attributes in Symfony's Request object. At least I'd like to treat it like that if a store doesn't support those attributes directly.
+All stores until now basically some kind of key-value attribute thingy. And if a store supports those directly, we could promote them from metadata object to first level.
+
+I think that's currently my favorite after looking at this - we need to think about other stores as well - what do you think about that?
+
+---------------------------------------------------------------------------
+
+by dorrogeray at 2025-08-11T18:49:01Z
+
+Sounds good! 👍
+
+So `_text`, `_parent_id` and `_source`? Or do you preffer `_content` over `_text`?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-11T21:41:00Z
+
+> So _text, _parent_id and _source?
+
+Yes, let's go with text - it relates more to `TextDocument`
+
+---------------------------------------------------------------------------
+
+by dorrogeray at 2025-08-18T10:01:01Z
+
+@chr-hertel @OskarStark its ready for review, please let me know if I need to change anything.. 🙂
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-18T20:14:09Z
+
+Not really impressed by copilots review I must say ... :disappointed:
