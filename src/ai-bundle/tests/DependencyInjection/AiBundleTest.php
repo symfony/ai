@@ -337,6 +337,7 @@ class AiBundleTest extends TestCase
                             ],
                         ],
                         'structured_output' => false,
+                        'token_usage' => true,
                         'system_prompt' => 'You are a helpful assistant.',
                         'include_tools' => true,
                         'tools' => [

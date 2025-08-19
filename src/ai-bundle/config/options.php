@@ -96,6 +96,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->end()
                             ->end()
                         ->end()
+                        ->booleanNode('token_usage')->defaultFalse()->end()
                         ->booleanNode('structured_output')->defaultTrue()->end()
                         ->scalarNode('system_prompt')
                             ->validate()

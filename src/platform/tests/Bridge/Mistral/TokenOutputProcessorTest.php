@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Bridge\Mistral\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\Metadata\TokenUsage;
+use Symfony\AI\Platform\Result\Metadata\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
