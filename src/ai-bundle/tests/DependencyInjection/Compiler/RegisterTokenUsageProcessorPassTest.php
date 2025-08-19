@@ -27,7 +27,7 @@ use Symfony\Component\DependencyInjection\Definition;
 #[UsesClass(Definition::class)]
 class RegisterTokenUsageProcessorPassTest extends TestCase
 {
-    public function testProcessRegistersTokenUsageProcessors(): void
+    public function testProcessRegistersTokenUsageProcessors()
     {
         // Arrange
         $container = new ContainerBuilder();
@@ -46,7 +46,7 @@ class RegisterTokenUsageProcessorPassTest extends TestCase
         $this->assertEquals('mock.token.processor', (string) $container->getAlias('ai.platform.token_usage_processor.openai'));
     }
 
-    public function testProcessIgnoresProcessorsWithoutAttribute(): void
+    public function testProcessIgnoresProcessorsWithoutAttribute()
     {
         // Arrange
         $container = new ContainerBuilder();
@@ -65,7 +65,7 @@ class RegisterTokenUsageProcessorPassTest extends TestCase
         $this->assertFalse($container->hasAlias('ai.platform.token_usage_processor.mistral'));
     }
 
-    public function testProcessHandlesMultiplePlatforms(): void
+    public function testProcessHandlesMultiplePlatforms()
     {
         // Arrange
         $container = new ContainerBuilder();
@@ -104,4 +104,3 @@ class MockMistralTokenProcessor
 class MockProcessorWithoutAttribute
 {
 }
-
