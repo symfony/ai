@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-19T13:02:45Z
+
+Yes, need to work on the changelog and tests, won't update the changelog until the tests are fixed 🙂
+
+Regarding the documentation, the current state is that `InitializableStoreInterface` is the interface for initialization, should we list the change to `ManagedStoreInterface` or just change the name in the file? 🤔
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-19T13:04:06Z
+
+Just change the class name in the changelog as we haven't released yet
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-19T13:10:17Z
+
+Can you create an issue for creating the commands? Thanks
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-19T21:04:58Z
+
+oh wow, nice one :muscle:
+
+needs a rebase tho after #288
