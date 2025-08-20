@@ -31,6 +31,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
@@ -131,5 +132,12 @@ return static function (ContainerConfigurator $container): void {
                 service('.inner'),
             ])
             ->tag('ai.traceable_toolbox')
+
+        // Discovery
+        ->set('ai.store_locator', ServiceLocator::class)
+            ->args([
+                [],
+            ])
+            ->tag('container.service_locator')
     ;
 };
