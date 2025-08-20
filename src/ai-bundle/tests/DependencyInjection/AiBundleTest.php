@@ -34,6 +34,23 @@ class AiBundleTest extends TestCase
         $this->buildContainer($this->getFullConfig());
     }
 
+    public function testCommandsAreDefined()
+    {
+        $container = $this->buildContainer($this->getFullConfig());
+
+        $this->assertTrue($container->hasDefinition('console.command.ai.setup_store'));
+
+        $setupStoreCommandDefinition = $container->getDefinition('console.command.ai.setup_store');
+        $this->assertCount(2, $setupStoreCommandDefinition->getArguments());
+        $this->assertArrayHasKey('console.command', $setupStoreCommandDefinition->getTags());
+
+        $this->assertTrue($container->hasDefinition('console.command.ai.drop_store'));
+
+        $dropStoreCommandDefinition = $container->getDefinition('console.command.ai.drop_store');
+        $this->assertCount(2, $dropStoreCommandDefinition->getArguments());
+        $this->assertArrayHasKey('console.command', $dropStoreCommandDefinition->getTags());
+    }
+
     public function testInjectionAgentAliasIsRegistered()
     {
         $container = $this->buildContainer([
