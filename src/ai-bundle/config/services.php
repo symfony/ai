@@ -28,6 +28,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
+use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract as VertexAiGeminiContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
@@ -45,6 +46,8 @@ return static function (ContainerConfigurator $container): void {
             ->factory([AnthropicContract::class, 'create'])
         ->set('ai.platform.contract.google', Contract::class)
             ->factory([GeminiContract::class, 'create'])
+        ->set('ai.platform.contract.vertexai.gemini', Contract::class)
+            ->factory([VertexAiGeminiContract::class, 'create'])
         ->set('ai.platform.contract.ollama', Contract::class)
             ->factory([OllamaContract::class, 'create'])
         // structured output
