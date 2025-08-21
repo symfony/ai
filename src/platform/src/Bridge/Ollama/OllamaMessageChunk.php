@@ -18,7 +18,7 @@ class OllamaMessageChunk
      */
     public function __construct(
         public readonly string $model,
-        public readonly string $created_at,
+        public readonly \DateTimeImmutable $created_at,
         public readonly array $message,
         public readonly bool $done,
     ) {
@@ -47,7 +47,7 @@ class OllamaMessageChunk
     {
         return new self(
             $data['model'] ?? '',
-            $data['created_at'] ?? '',
+            new \DateTimeImmutable($data['created_at'] ?? ''),
             $data['message'] ?? [],
             $data['done'] ?? false
         );
@@ -56,21 +56,6 @@ class OllamaMessageChunk
     public function getContent(): ?string
     {
         return $this->message['content'] ?? null;
-    }
-
-    public function getCreatedAt(): \DateTimeImmutable
-    {
-        return new \DateTimeImmutable($this->created_at);
-    }
-
-    public function getDone(): bool
-    {
-        return $this->done;
-    }
-
-    public function getModel(): string
-    {
-        return $this->model;
     }
 
     public function getRole(): ?string
