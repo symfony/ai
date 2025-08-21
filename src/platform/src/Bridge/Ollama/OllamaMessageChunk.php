@@ -20,7 +20,7 @@ class OllamaMessageChunk
         public readonly string $model,
         public readonly string $created_at,
         public readonly array $message,
-        public readonly bool $done
+        public readonly bool $done,
     ) {
     }
 
