@@ -11,16 +11,22 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
+use Symfony\AI\Platform\Bridge\Ollama\OllamaMessageChunk;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\Component\HttpClient\Chunk\FirstChunk;
+use Symfony\Component\HttpClient\Chunk\LastChunk;
+use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -34,6 +40,10 @@ final readonly class OllamaResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
+        if ($options['stream'] ?? false) {
+            return new StreamResult($this->convertStream($result->getObject()));
+        }
+
         $data = $result->getData();
 
         return \array_key_exists('embeddings', $data)
@@ -82,5 +92,19 @@ final readonly class OllamaResultConverter implements ResultConverterInterface
                 $data['embeddings'],
             ),
         );
+    }
+
+    private function convertStream(ResponseInterface $result): \Generator
+    {
+        foreach ((new EventSourceHttpClient())->stream($result) as $chunk) {
+            if ($chunk instanceof FirstChunk || $chunk instanceof LastChunk) {
+                continue;
+            }
+
+            $msg = OllamaMessageChunk::fromJsonString($chunk->getContent());
+            if ($msg) {
+                yield $msg;
+            }
+        }
     }
 }
