@@ -36,6 +36,7 @@ class OllamaMessageChunk
         if (!\is_array($data)) {
             return null;
         }
+        
         return self::fromArray($data);
     }
 
