@@ -53,13 +53,28 @@ class OllamaMessageChunk
         );
     }
 
-    public function getRole(): ?string
-    {
-        return $this->message['role'] ?? null;
-    }
-
     public function getContent(): ?string
     {
         return $this->message['content'] ?? null;
+    }
+
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return new \DateTimeImmutable($this->created_at);
+    }
+
+    public function getDone(): bool
+    {
+        return $this->done;
+    }
+
+    public function getModel(): string
+    {
+        return $this->model;
+    }
+
+    public function getRole(): ?string
+    {
+        return $this->message['role'] ?? null;
     }
 }
