@@ -1,0 +1,12 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-20T13:52:06Z
+
+@chr-hertel can you please test this change? And should we drop 0.5 entirely? Thanks
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-20T20:39:59Z
+
+Looks like it was `0.6.1` for me anyways already - let's drop 0.5, yes
+<img width="1289" height="1067" alt="image" src="https://github.com/user-attachments/assets/64d3877c-f84f-4aef-a87a-91b330e8c048" />
