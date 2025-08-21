@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-21T17:02:32Z
+
+Would love to see some tests for this store in this PR, thanks.
+
+Should we define the array shape for $options here, which keys are allowed?
+
+---------------------------------------------------------------------------
+
+by valx76 at 2025-08-21T18:29:30Z
+
+Will try the tests now :)
