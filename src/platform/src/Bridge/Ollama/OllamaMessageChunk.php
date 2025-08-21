@@ -4,6 +4,9 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 
 class OllamaMessageChunk
 {
+    /**
+     * @param array<string, mixed> $message
+     */
     public function __construct(
         public readonly string $model,
         public readonly string $created_at,
@@ -20,6 +23,9 @@ class OllamaMessageChunk
         return self::fromArray($data);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public static function fromArray(array $data): self
     {
         return new self(
