@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
-use Symfony\AI\Platform\Bridge\Ollama\OllamaMessageChunk;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;

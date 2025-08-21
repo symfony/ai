@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
 class OllamaMessageChunk
@@ -12,12 +21,19 @@ class OllamaMessageChunk
         public readonly string $created_at,
         public readonly array $message,
         public readonly bool $done
-    ) {}
+    ) {
+    }
+
+    public function __toString(): string
+    {
+        // Return the assistant's message content if available
+        return $this->message['content'] ?? '';
+    }
 
     public static function fromJsonString(string $json): ?self
     {
         $data = json_decode($json, true);
-        if (!is_array($data)) {
+        if (!\is_array($data)) {
             return null;
         }
         return self::fromArray($data);
@@ -34,12 +50,6 @@ class OllamaMessageChunk
             $data['message'] ?? [],
             $data['done'] ?? false
         );
-    }
-
-    public function __toString(): string
-    {
-        // Return the assistant's message content if available
-        return $this->message['content'] ?? '';
     }
 
     public function getRole(): ?string
