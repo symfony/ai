@@ -34,7 +34,7 @@ jobs:
                     -   php-version: '8.2'
                         symfony-version: '7.4.*'
                     # Symfony 8.0
-                    -   php-version: '8.3'
+                    -   php-version: '8.4'
                         symfony-version: '8.0.*'
 
         env:
