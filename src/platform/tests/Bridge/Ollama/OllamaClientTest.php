@@ -97,7 +97,7 @@ final class OllamaClientTest extends TestCase
             new JsonMockResponse([
                 'capabilities' => ['completion'],
             ]),
-            new MockResponse("data: ".json_encode([
+            new MockResponse('data: '.json_encode([
                 'model' => 'llama3.2',
                 'created_at' => '2025-08-23T10:00:00Z',
                 'message' => ['role' => 'assistant', 'content' => 'Hello world'],
@@ -131,13 +131,13 @@ final class OllamaClientTest extends TestCase
 
     public function testStreamingConverterWithDirectResponse()
     {
-        $streamingData = "data: ".json_encode([
+        $streamingData = 'data: '.json_encode([
             'model' => 'llama3.2',
             'created_at' => '2025-08-23T10:00:00Z',
             'message' => ['role' => 'assistant', 'content' => 'Hello'],
             'done' => false,
-        ])."\n\n" .
-        "data: " . json_encode([
+        ])."\n\n".
+        'data: '.json_encode([
             'model' => 'llama3.2',
             'created_at' => '2025-08-23T10:00:01Z',
             'message' => ['role' => 'assistant', 'content' => ' world'],
