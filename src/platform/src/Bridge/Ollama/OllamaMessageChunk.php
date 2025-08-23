@@ -3,7 +3,7 @@
 /*
  * This file is part of the Symfony package.
  *
- * (c) Shaun Johnston <shaun@snj.au>
+ * (c) Fabien Potencier <fabien@symfony.com>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
+/**
+ * @author Shaun Johnston <shaun@snj.au>
+ */
 final readonly class OllamaMessageChunk
 {
     /**
