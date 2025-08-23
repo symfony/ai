@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
-class OllamaMessageChunk
+final readonly class OllamaMessageChunk
 {
     /**
      * @param array<string, mixed> $message
