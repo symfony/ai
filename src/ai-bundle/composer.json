@@ -42,5 +42,8 @@
             "Symfony\\AI\\AiBundle\\Tests\\": "tests/",
             "Symfony\\AI\\PHPStan\\": "../../.phpstan/"
         }
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse -c phpstan.dist.neon"
     }
 }

@@ -36,6 +36,9 @@
             "Symfony\\AI\\PHPStan\\": "../../.phpstan"
         }
     },
+    "scripts": {
+        "phpstan": "phpstan analyse -c phpstan.dist.neon"
+    },
     "minimum-stability": "dev",
     "prefer-stable": true
 }

@@ -26,3 +26,4 @@ CHANGELOG
  * Add bundle configuration with semantic validation
  * Add support for fault-tolerant tool execution
  * Add structured output configuration support
+ * Add composer script for PHPStan static analysis workflow

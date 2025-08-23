@@ -57,3 +57,4 @@ CHANGELOG
    - Distance/similarity scoring
  * Add custom exception hierarchy with `ExceptionInterface`
  * Add support for specific exceptions for invalid arguments and runtime errors
+ * Add composer script for PHPStan static analysis workflow

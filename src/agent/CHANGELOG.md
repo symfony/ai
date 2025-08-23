@@ -53,3 +53,4 @@ CHANGELOG
  * Add model capability detection before processing
  * Add comprehensive type safety with full PHP type hints
  * Add clear exception hierarchy for different error scenarios
+* Add composer script for PHPStan static analysis workflow

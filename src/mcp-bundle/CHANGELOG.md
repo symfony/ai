@@ -20,3 +20,4 @@ CHANGELOG
  * Add service configuration for MCP server setup
  * Classes extending `\Symfony\AI\McpSdk\Capability\Tool\IdentifierInterface` automatically
    get the `mcp.tool` tag for MCP tool discovery
+ * Add composer script for PHPStan static analysis workflow

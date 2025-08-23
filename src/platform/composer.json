@@ -72,5 +72,8 @@
             "Symfony\\AI\\Fixtures\\": "../../fixtures",
             "Symfony\\AI\\PHPStan\\": "../../.phpstan/"
         }
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse -c phpstan.dist.neon"
     }
 }

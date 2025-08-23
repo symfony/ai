@@ -38,5 +38,8 @@
             "Symfony\\AI\\McpSdk\\Tests\\": "tests/",
             "Symfony\\AI\\PHPStan\\": "../../.phpstan/"
         }
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse -c phpstan.dist.neon"
     }
 }
