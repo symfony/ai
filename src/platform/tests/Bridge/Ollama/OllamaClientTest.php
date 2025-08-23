@@ -16,9 +16,12 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaClient;
+use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 #[CoversClass(OllamaClient::class)]
 #[UsesClass(Ollama::class)]
@@ -86,5 +89,107 @@ final class OllamaClientTest extends TestCase
             ],
             'done' => true,
         ], $response->getData());
+    }
+
+    public function testStreamingIsSupported()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'capabilities' => ['completion'],
+            ]),
+            new MockResponse("data: " . json_encode([
+                'model' => 'llama3.2',
+                'created_at' => '2025-08-23T10:00:00Z',
+                'message' => ['role' => 'assistant', 'content' => 'Hello world'],
+                'done' => true
+            ]) . "\n\n", [
+                'response_headers' => [
+                    'content-type' => 'text/event-stream',
+                ],
+            ]),
+        ], 'http://127.0.0.1:1234');
+
+        $platform = PlatformFactory::create('http://127.0.0.1:1234', $httpClient);
+        $response = $platform->invoke(new Ollama(), [
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => 'Say hello world',
+                ],
+            ],
+            'model' => 'llama3.2',
+        ], [
+            'stream' => true,
+        ]);
+
+        $result = $response->getResult();
+        
+        $this->assertInstanceOf(StreamResult::class, $result);
+        $this->assertInstanceOf(\Generator::class, $result->getContent());
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
+
+    public function testStreamingConverterWithDirectResponse()
+    {
+        $streamingData = "data: " . json_encode([
+            'model' => 'llama3.2',
+            'created_at' => '2025-08-23T10:00:00Z',
+            'message' => ['role' => 'assistant', 'content' => 'Hello'],
+            'done' => false
+        ]) . "\n\n" .
+        "data: " . json_encode([
+            'model' => 'llama3.2',
+            'created_at' => '2025-08-23T10:00:01Z',
+            'message' => ['role' => 'assistant', 'content' => ' world'],
+            'done' => true
+        ]) . "\n\n";
+
+        $mockHttpClient = new MockHttpClient([
+            new MockResponse($streamingData, [
+                'response_headers' => [
+                    'content-type' => 'text/event-stream',
+                ],
+            ]),
+        ]);
+
+        $mockResponse = $mockHttpClient->request('GET', 'http://test.example');
+        $rawResult = new \Symfony\AI\Platform\Result\RawHttpResult($mockResponse);
+        $converter = new \Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter();
+        
+        $result = $converter->convert($rawResult, ['stream' => true]);
+        
+        $this->assertInstanceOf(StreamResult::class, $result);
+        $this->assertInstanceOf(\Generator::class, $result->getContent());
+        
+        $regularMockHttpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'model' => 'llama3.2',
+                'message' => ['role' => 'assistant', 'content' => 'Hello world'],
+                'done' => true
+            ]),
+        ]);
+        
+        $regularMockResponse = $regularMockHttpClient->request('GET', 'http://test.example');
+        $regularRawResult = new \Symfony\AI\Platform\Result\RawHttpResult($regularMockResponse);
+        $regularResult = $converter->convert($regularRawResult, ['stream' => false]);
+        
+        $this->assertNotInstanceOf(StreamResult::class, $regularResult);
+    }
+
+    public function testOllamaMessageChunkParsing()
+    {
+        $jsonData = json_encode([
+            'model' => 'llama3.2',
+            'created_at' => '2025-08-23T10:00:00Z',
+            'message' => ['role' => 'assistant', 'content' => 'Hello world'],
+            'done' => true
+        ]);
+
+        $chunk = \Symfony\AI\Platform\Bridge\Ollama\OllamaMessageChunk::fromJsonString($jsonData);
+        
+        $this->assertNotNull($chunk);
+        $this->assertSame('Hello world', (string) $chunk);
+        $this->assertSame('llama3.2', $chunk->model);
+        $this->assertTrue($chunk->done);
     }
 }
