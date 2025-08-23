@@ -3,7 +3,7 @@
 /*
  * This file is part of the Symfony package.
  *
- * (c) Fabien Potencier <fabien@symfony.com>
+ * (c) Shaun Johnston <shaun@snj.au>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -37,14 +37,6 @@ final readonly class OllamaMessageChunk
             return null;
         }
 
-        return self::fromArray($data);
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    public static function fromArray(array $data): self
-    {
         return new self(
             $data['model'] ?? '',
             new \DateTimeImmutable($data['created_at'] ?? ''),
