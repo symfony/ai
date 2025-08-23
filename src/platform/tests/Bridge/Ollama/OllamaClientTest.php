@@ -97,12 +97,12 @@ final class OllamaClientTest extends TestCase
             new JsonMockResponse([
                 'capabilities' => ['completion'],
             ]),
-            new MockResponse("data: " . json_encode([
+            new MockResponse("data: ".json_encode([
                 'model' => 'llama3.2',
                 'created_at' => '2025-08-23T10:00:00Z',
                 'message' => ['role' => 'assistant', 'content' => 'Hello world'],
-                'done' => true
-            ]) . "\n\n", [
+                'done' => true,
+            ])."\n\n", [
                 'response_headers' => [
                     'content-type' => 'text/event-stream',
                 ],
@@ -123,7 +123,7 @@ final class OllamaClientTest extends TestCase
         ]);
 
         $result = $response->getResult();
-        
+
         $this->assertInstanceOf(StreamResult::class, $result);
         $this->assertInstanceOf(\Generator::class, $result->getContent());
         $this->assertSame(2, $httpClient->getRequestsCount());
@@ -131,18 +131,18 @@ final class OllamaClientTest extends TestCase
 
     public function testStreamingConverterWithDirectResponse()
     {
-        $streamingData = "data: " . json_encode([
+        $streamingData = "data: ".json_encode([
             'model' => 'llama3.2',
             'created_at' => '2025-08-23T10:00:00Z',
             'message' => ['role' => 'assistant', 'content' => 'Hello'],
-            'done' => false
-        ]) . "\n\n" .
+            'done' => false,
+        ])."\n\n" .
         "data: " . json_encode([
             'model' => 'llama3.2',
             'created_at' => '2025-08-23T10:00:01Z',
             'message' => ['role' => 'assistant', 'content' => ' world'],
-            'done' => true
-        ]) . "\n\n";
+            'done' => true,
+        ])."\n\n";
 
         $mockHttpClient = new MockHttpClient([
             new MockResponse($streamingData, [
@@ -155,17 +155,17 @@ final class OllamaClientTest extends TestCase
         $mockResponse = $mockHttpClient->request('GET', 'http://test.example');
         $rawResult = new \Symfony\AI\Platform\Result\RawHttpResult($mockResponse);
         $converter = new \Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter();
-        
+
         $result = $converter->convert($rawResult, ['stream' => true]);
-        
+
         $this->assertInstanceOf(StreamResult::class, $result);
         $this->assertInstanceOf(\Generator::class, $result->getContent());
-        
+
         $regularMockHttpClient = new MockHttpClient([
             new JsonMockResponse([
                 'model' => 'llama3.2',
                 'message' => ['role' => 'assistant', 'content' => 'Hello world'],
-                'done' => true
+                'done' => true,
             ]),
         ]);
         
@@ -182,11 +182,11 @@ final class OllamaClientTest extends TestCase
             'model' => 'llama3.2',
             'created_at' => '2025-08-23T10:00:00Z',
             'message' => ['role' => 'assistant', 'content' => 'Hello world'],
-            'done' => true
+            'done' => true,
         ]);
 
         $chunk = \Symfony\AI\Platform\Bridge\Ollama\OllamaMessageChunk::fromJsonString($jsonData);
-        
+
         $this->assertNotNull($chunk);
         $this->assertSame('Hello world', (string) $chunk);
         $this->assertSame('llama3.2', $chunk->model);
