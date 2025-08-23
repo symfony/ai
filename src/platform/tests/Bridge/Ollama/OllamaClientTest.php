@@ -168,11 +168,11 @@ final class OllamaClientTest extends TestCase
                 'done' => true,
             ]),
         ]);
-        
+
         $regularMockResponse = $regularMockHttpClient->request('GET', 'http://test.example');
         $regularRawResult = new \Symfony\AI\Platform\Result\RawHttpResult($regularMockResponse);
         $regularResult = $converter->convert($regularRawResult, ['stream' => false]);
-        
+
         $this->assertNotInstanceOf(StreamResult::class, $regularResult);
     }
 
