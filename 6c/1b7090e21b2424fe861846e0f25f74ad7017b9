@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-24T21:28:47Z
+
+My heart always feels a bit sad when exposing stuff, but i think your use-case is valid :+1:
+
+Regarding the interface I'm a bit torn but currently in favor of adding it as well. :thinking:
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-08-24T21:43:56Z
+
+> Regarding the interface I'm a bit torn but currently in favor of adding it as well. 🤔
+
+I was hesitating about it because:
+- Symfony codebase itself currently never use AgentInterface::getModel
+- Some people might implements an `AgentInterface` with multiples models (based on the option ?)
+
+Do you confirm I should update the interface in this PR @chr-hertel or you prefer another opinion ?
