@@ -62,6 +62,7 @@ Configuration
             rag:
                 platform: 'ai.platform.azure.gpt_deployment'
                 structured_output: false # Disables support for "output_structure" option, default is true
+                track_token_usage: true # Enable tracking of token usage for the agent, default is true
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
@@ -224,6 +225,69 @@ make sure you have `symfony/security-core` installed in your project.
 The attribute ``IsGrantedTool`` can be added on class- or method-level - even multiple
 times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
+
+Token Usage Tracking
+--------------------
+
+You can enable token usage tracking for agents to monitor and analyze the consumption of tokens by your AI models.
+This feature is particularly useful for cost monitoring and performance optimization.
+
+To enable token usage tracking for an agent, set the ``track_token_usage`` option to ``true``:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                track_token_usage: true
+                model:
+                    class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+                    name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+
+When enabled, the agent will automatically track token usage information and add it to the result metadata.
+The tracked information includes:
+
+* **Prompt tokens**: Number of tokens used in the input/prompt
+* **Completion tokens**: Number of tokens generated in the response
+* **Remaining tokens**: Number of remaining tokens in rate limits (when available)
+* **Cached tokens**: Number of cached tokens used (when available)
+* **Thinking tokens**: Number of reasoning tokens used (for models that support reasoning)
+* **Total tokens**: Total number of tokens used (sum of prompt, completion, thinking, etc)
+
+The token usage information can be accessed from the result metadata::
+
+    use Symfony\AI\Agent\AgentInterface;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Result\Metadata\TokenUsage\TokenUsage;
+
+    final readonly class MyService
+    {
+        public function __construct(
+            private AgentInterface $agent,
+        ) {
+        }
+
+        public function getTokenUsage(string $message): ?TokenUsage
+        {
+            $messages = new MessageBag(Message::ofUser($message));
+            $result = $this->agent->call($messages);
+
+            return $result->getMetadata()->get('token_usage');
+        }
+    }
+
+**Supported Platforms**
+
+Token usage tracking is currently supported for the following platforms:
+
+* **OpenAI**: Tracks all token types including cached and thinking tokens
+* **Mistral**: Tracks basic token usage and rate limit information
+
+For platforms that don't support token usage tracking, enabling this option will have no effect.
+
+**Note**: Token usage tracking is enabled by default.
+If not needed or to avoid unnecessary overhead, it can also be explicitly disabled in the config.
 
 Profiler
 --------

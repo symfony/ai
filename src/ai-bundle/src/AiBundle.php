@@ -32,8 +32,10 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformF
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory as LmStudioPlatformFactory;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory as MistralPlatformFactory;
+use Symfony\AI\Platform\Bridge\Mistral\TokenOutputProcessor as MistralTokenOutputProcessor;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor as OpenAiTokenOutputProcessor;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -460,6 +462,25 @@ final class AiBundle extends AbstractBundle
         if ($config['structured_output']) {
             $inputProcessors[] = new Reference('ai.agent.structured_output_processor');
             $outputProcessors[] = new Reference('ai.agent.structured_output_processor');
+        }
+
+        if ($config['track_token_usage']) {
+            if (!$container->hasDefinition('ai.platform.token_usage_processor.openai')) {
+                $container->setDefinition(
+                    'ai.platform.token_usage_processor.openai',
+                    new Definition(OpenAiTokenOutputProcessor::class),
+                );
+            }
+
+            if (!$container->hasDefinition('ai.platform.token_usage_processor.mistral')) {
+                $container->setDefinition(
+                    'ai.platform.token_usage_processor.mistral',
+                    new Definition(MistralTokenOutputProcessor::class),
+                );
+            }
+
+            $outputProcessors[] = new Reference('ai.platform.token_usage_processor.openai');
+            $outputProcessors[] = new Reference('ai.platform.token_usage_processor.mistral');
         }
 
         // SYSTEM PROMPT

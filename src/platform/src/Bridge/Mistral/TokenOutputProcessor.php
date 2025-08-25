@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Mistral;
 
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
-use Symfony\AI\Platform\Result\Metadata\TokenUsage;
+use Symfony\AI\Platform\Result\Metadata\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
