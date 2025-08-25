@@ -56,7 +56,18 @@ services:
       ports:
           - '8108:8108'
 
-  # Milvus services
+  chromadb:
+      image: chromadb/chroma
+      environment:
+          - IS_PERSISTENT=TRUE
+          - PERSIST_DIRECTORY=/chroma/chroma # this is the default path, change it as needed
+          - ANONYMIZED_TELEMETRY=FALSE
+      volumes:
+          - chroma_vlm:/chroma/chroma
+      ports:
+          - '8001:8000'
+
+    # Milvus services
   etcd:
       container_name: milvus-etcd
       image: quay.io/coreos/etcd:v3.5.18
@@ -122,3 +133,4 @@ volumes:
     etcd_vlm:
     minio_vlm:
     milvus_vlm:
+    chroma_vlm:

@@ -67,8 +67,7 @@ jobs:
 
             surrealdb:
                 image: surrealdb/surrealdb:v2
-                options: >-
-                    start --user symfony --pass symfony
+                options: start --user symfony --pass symfony
                 env:
                     SURREAL_HTTP_MAX_KEY_BODY_SIZE: 49152
                 ports:
@@ -81,6 +80,11 @@ jobs:
                 ports:
                     - '7474:7474'
                     - '7687:7687'
+
+            chromadb:
+                image: chromadb/chroma
+                ports:
+                    - '8001:8000'
 
         env:
             SYMFONY_REQUIRE: ${{ matrix.symfony-version || '>=6.4' }}
