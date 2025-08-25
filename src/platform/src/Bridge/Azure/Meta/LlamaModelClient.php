@@ -34,7 +34,7 @@ final readonly class LlamaModelClient implements ModelClientInterface
         return $model instanceof Llama;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         $url = \sprintf('https://%s/chat/completions', $this->baseUrl);
 

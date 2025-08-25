@@ -38,7 +38,7 @@ final readonly class ModelClient implements ModelClientInterface
         return $model instanceof Mistral;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.mistral.ai/v1/chat/completions', [
             'auth_bearer' => $this->apiKey,

@@ -37,7 +37,7 @@ final readonly class ModelClient implements PlatformResponseFactory
         return $model instanceof Completions;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/v1/chat/completions', $this->hostUrl), [
             'json' => array_merge($options, $payload),

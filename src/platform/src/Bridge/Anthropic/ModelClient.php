@@ -37,7 +37,7 @@ final readonly class ModelClient implements ModelClientInterface
         return $model instanceof Claude;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         $headers = [
             'x-api-key' => $this->apiKey,

@@ -34,7 +34,7 @@ final readonly class ModelClient implements ModelClientInterface
         return $model instanceof Embeddings;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         $url = \sprintf('https://generativelanguage.googleapis.com/v1beta/models/%s:%s', $model->getName(), 'batchEmbedContents');
         $modelOptions = $model->getOptions();
@@ -52,7 +52,7 @@ final readonly class ModelClient implements ModelClientInterface
                         'taskType' => $modelOptions['task_type'] ?? null,
                         'title' => $options['title'] ?? null,
                     ]),
-                    \is_array($payload) ? $payload : [$payload],
+                    $payload,
                 ),
             ],
         ]));
