@@ -17,20 +17,20 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class Whisper extends Model
+final class Whisper
 {
     public const WHISPER_1 = 'whisper-1';
 
     /**
      * @param array<string, mixed> $options
      */
-    public function __construct(string $name = self::WHISPER_1, array $options = [])
+    public static function create(string $name = self::WHISPER_1, array $options = []): Model
     {
         $capabilities = [
             Capability::INPUT_AUDIO,
             Capability::OUTPUT_TEXT,
         ];
 
-        parent::__construct($name, $capabilities, $options);
+        return new Model($name, $capabilities, $options);
     }
 }

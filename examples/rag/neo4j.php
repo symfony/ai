@@ -55,11 +55,11 @@ foreach (Movies::all() as $i => $movie) {
 
 // create embeddings for documents
 $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
-$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
+$vectorizer = new Vectorizer($platform, $embeddings = Embeddings::create());
 $indexer = new Indexer($vectorizer, $store);
 $indexer->index($documents);
 
-$model = new Gpt(Gpt::GPT_4O_MINI);
+$model = Gpt::create(Gpt::GPT_4O_MINI);
 
 $similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());

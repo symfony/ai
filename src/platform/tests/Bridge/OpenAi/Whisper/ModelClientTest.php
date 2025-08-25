@@ -27,7 +27,7 @@ final class ModelClientTest extends TestCase
     public function testItSupportsWhisperModel()
     {
         $client = new ModelClient(new MockHttpClient(), 'test-key');
-        $model = new Whisper();
+        $model = Whisper::create();
 
         $this->assertTrue($client->supports($model));
     }
@@ -44,7 +44,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'test-key');
-        $model = new Whisper();
+        $model = Whisper::create();
         $payload = ['file' => 'audio-data'];
 
         $client->request($model, $payload);
@@ -64,7 +64,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'test-key');
-        $model = new Whisper();
+        $model = Whisper::create();
         $payload = ['file' => 'audio-data'];
         $options = ['task' => Task::TRANSCRIPTION];
 
@@ -85,7 +85,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'test-key');
-        $model = new Whisper();
+        $model = Whisper::create();
         $payload = ['file' => 'audio-data'];
         $options = ['task' => Task::TRANSLATION];
 

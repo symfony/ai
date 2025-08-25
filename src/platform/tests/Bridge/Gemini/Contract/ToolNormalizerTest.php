@@ -37,7 +37,7 @@ final class ToolNormalizerTest extends TestCase
         $normalizer = new ToolNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new Tool(new ExecutionReference(ToolNoParams::class), 'test', 'test'), context: [
-            Contract::CONTEXT_MODEL => new Gemini(),
+            Contract::CONTEXT_MODEL => Gemini::create(),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a tool'));
     }

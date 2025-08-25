@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Result\Metadata\TokenUsage;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI, [
+$model = Gpt::create(Gpt::GPT_4O_MINI, [
     'temperature' => 0.5, // default options for the model
 ]);
 

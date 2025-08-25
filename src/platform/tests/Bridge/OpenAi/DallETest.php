@@ -22,7 +22,7 @@ final class DallETest extends TestCase
 {
     public function testItCreatesDallEWithDefaultSettings()
     {
-        $dallE = new DallE();
+        $dallE = DallE::create();
 
         $this->assertSame(DallE::DALL_E_2, $dallE->getName());
         $this->assertSame([], $dallE->getOptions());
@@ -30,7 +30,7 @@ final class DallETest extends TestCase
 
     public function testItCreatesDallEWithCustomSettings()
     {
-        $dallE = new DallE(DallE::DALL_E_3, ['response_format' => 'base64', 'n' => 2]);
+        $dallE = DallE::create(DallE::DALL_E_3, ['response_format' => 'base64', 'n' => 2]);
 
         $this->assertSame(DallE::DALL_E_3, $dallE->getName());
         $this->assertSame(['response_format' => 'base64', 'n' => 2], $dallE->getOptions());
