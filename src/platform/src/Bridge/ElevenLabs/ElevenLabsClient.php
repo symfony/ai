@@ -42,7 +42,7 @@ final readonly class ElevenLabsClient implements ModelClientInterface
         }
 
         if (\in_array($model->getName(), [ElevenLabs::SCRIBE_V1, ElevenLabs::SCRIBE_V1_EXPERIMENTAL], true)) {
-            return $this->doSpeechToTextRequest($model, $payload, $options);
+            return $this->doSpeechToTextRequest($model, $payload);
         }
 
         $capabilities = $this->retrieveCapabilities($model);
@@ -56,9 +56,8 @@ final readonly class ElevenLabsClient implements ModelClientInterface
 
     /**
      * @param array<string|int, mixed> $payload
-     * @param array<string, mixed>     $options
      */
-    private function doSpeechToTextRequest(Model $model, array|string $payload, array $options): RawHttpResult
+    private function doSpeechToTextRequest(Model $model, array|string $payload): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/speech-to-text', $this->hostUrl), [
             'headers' => [
@@ -86,8 +85,13 @@ final readonly class ElevenLabsClient implements ModelClientInterface
         }
 
         $voice = $options['voice'] ??= $model->getOptions()['voice'];
+        $stream = $options['stream'] ??= $model->getOptions()['stream'] ?? false;
 
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/text-to-speech/%s', $this->hostUrl, $voice), [
+        $url = $stream
+            ? \sprintf('%s/text-to-speech/%s/stream', $this->hostUrl, $voice)
+            : \sprintf('%s/text-to-speech/%s', $this->hostUrl, $voice);
+
+        return new RawHttpResult($this->httpClient->request('POST', $url, [
             'headers' => [
                 'xi-api-key' => $this->apiKey,
             ],

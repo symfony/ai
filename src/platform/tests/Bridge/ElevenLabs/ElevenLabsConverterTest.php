@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\Component\HttpClient\MockHttpClient;
 
 #[CoversClass(ElevenLabsResultConverter::class)]
 #[UsesClass(ElevenLabs::class)]
@@ -31,7 +32,7 @@ final class ElevenLabsConverterTest extends TestCase
 {
     public function testSupportsModel()
     {
-        $converter = new ElevenLabsResultConverter();
+        $converter = new ElevenLabsResultConverter(new MockHttpClient());
 
         $this->assertTrue($converter->supports(new ElevenLabs()));
         $this->assertFalse($converter->supports(new Model('any-model')));
@@ -39,7 +40,7 @@ final class ElevenLabsConverterTest extends TestCase
 
     public function testConvertSpeechToTextResponse()
     {
-        $converter = new ElevenLabsResultConverter();
+        $converter = new ElevenLabsResultConverter(new MockHttpClient());
         $rawResult = new InMemoryRawResult([
             'text' => 'Hello there',
         ], new class {
@@ -57,7 +58,7 @@ final class ElevenLabsConverterTest extends TestCase
 
     public function testConvertTextToSpeechResponse()
     {
-        $converter = new ElevenLabsResultConverter();
+        $converter = new ElevenLabsResultConverter(new MockHttpClient());
         $rawResult = new InMemoryRawResult([], new class {
             public function getInfo(): string
             {
