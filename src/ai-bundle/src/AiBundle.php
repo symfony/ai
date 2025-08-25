@@ -13,6 +13,8 @@ namespace Symfony\AI\AiBundle;
 
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Attribute\AsInputProcessor;
+use Symfony\AI\Agent\Attribute\AsOutputProcessor;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\OutputProcessorInterface;
@@ -108,8 +110,16 @@ final class AiBundle extends AbstractBundle
             }
         }
 
+        [$inputProcessors, $outputProcessors] = $this->getProcessors($builder);
+
         foreach ($config['agent'] as $agentName => $agent) {
-            $this->processAgentConfig($agentName, $agent, $builder);
+            $this->processAgentConfig(
+                $agentName,
+                $agent,
+                $builder,
+                $inputProcessors[$agentName] ?? [],
+                $outputProcessors[$agentName] ?? [],
+            );
         }
 
         foreach ($config['store'] ?? [] as $type => $store) {
@@ -357,9 +367,45 @@ final class AiBundle extends AbstractBundle
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @return array{
+     *     array<string, list<array{int, Definition}>>,
+     *     array<string, list<array{int, Definition}>>,
+     * }
      */
-    private function processAgentConfig(string $name, array $config, ContainerBuilder $container): void
+    private function getProcessors(ContainerBuilder $container): array
+    {
+        $inputProcessors = [];
+        $outputProcessors = [];
+        foreach ($container->getDefinitions() as $definition) {
+            if (
+                $definition->hasTag('container.ignore_attributes')
+                || !$definition->isAutowired()
+                || !($reflectionClass = $container->getReflectionClass($definition->getClass(), false))
+            ) {
+                continue;
+            }
+
+            foreach ($reflectionClass->getAttributes(AsInputProcessor::class, \ReflectionAttribute::IS_INSTANCEOF) as $attribute) {
+                $attribute = $attribute->newInstance();
+
+                $inputProcessors[$attribute->agent][] = [$attribute->priority, $definition];
+            }
+            foreach ($reflectionClass->getAttributes(AsOutputProcessor::class, \ReflectionAttribute::IS_INSTANCEOF) as $attribute) {
+                $attribute = $attribute->newInstance();
+
+                $outputProcessors[$attribute->agent][] = [$attribute->priority, $definition];
+            }
+        }
+
+        return [$inputProcessors, $outputProcessors];
+    }
+
+    /**
+     * @param array<string, mixed>         $config
+     * @param list<array{int, Definition}> $inputProcessors
+     * @param list<array{int, Definition}> $outputProcessors
+     */
+    private function processAgentConfig(string $name, array $config, ContainerBuilder $container, array $inputProcessors, array $outputProcessors): void
     {
         // MODEL
         ['class' => $modelClass, 'name' => $modelName, 'options' => $options] = $config['model'];
@@ -383,9 +429,6 @@ final class AiBundle extends AbstractBundle
             ->addTag('ai.agent')
             ->setArgument(0, new Reference($config['platform']))
             ->setArgument(1, new Reference('ai.agent.'.$name.'.model'));
-
-        $inputProcessors = [];
-        $outputProcessors = [];
 
         // TOOL & PROCESSOR
         if ($config['tools']['enabled']) {
@@ -442,8 +485,8 @@ final class AiBundle extends AbstractBundle
                     ->replaceArgument(0, new Reference('ai.toolbox.'.$name));
                 $container->setDefinition('ai.tool.agent_processor.'.$name, $toolProcessorDefinition);
 
-                $inputProcessors[] = new Reference('ai.tool.agent_processor.'.$name);
-                $outputProcessors[] = new Reference('ai.tool.agent_processor.'.$name);
+                $inputProcessors[] = [0, new Reference('ai.tool.agent_processor.'.$name)];
+                $outputProcessors[] = [0, new Reference('ai.tool.agent_processor.'.$name)];
             } else {
                 if ($config['fault_tolerant_toolbox'] && !$container->hasDefinition('ai.fault_tolerant_toolbox')) {
                     $container->setDefinition('ai.fault_tolerant_toolbox', new Definition(FaultTolerantToolbox::class))
@@ -451,15 +494,15 @@ final class AiBundle extends AbstractBundle
                         ->setDecoratedService('ai.toolbox');
                 }
 
-                $inputProcessors[] = new Reference('ai.tool.agent_processor');
-                $outputProcessors[] = new Reference('ai.tool.agent_processor');
+                $inputProcessors[] = [0, new Reference('ai.tool.agent_processor')];
+                $outputProcessors[] = [0, new Reference('ai.tool.agent_processor')];
             }
         }
 
         // STRUCTURED OUTPUT
         if ($config['structured_output']) {
-            $inputProcessors[] = new Reference('ai.agent.structured_output_processor');
-            $outputProcessors[] = new Reference('ai.agent.structured_output_processor');
+            $inputProcessors[] = [-10, new Reference('ai.agent.structured_output_processor')];
+            $outputProcessors[] = [-10, new Reference('ai.agent.structured_output_processor')];
         }
 
         // SYSTEM PROMPT
@@ -470,12 +513,16 @@ final class AiBundle extends AbstractBundle
                 new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
             ]);
 
-            $inputProcessors[] = $systemPromptInputProcessorDefinition;
+            $inputProcessors[] = [-20, $systemPromptInputProcessorDefinition];
         }
 
+        $sortCb = static fn (array $a, array $b): int => $b[0] <=> $a[0];
+        usort($inputProcessors, $sortCb);
+        usort($outputProcessors, $sortCb);
+
         $agentDefinition
-            ->setArgument(2, $inputProcessors)
-            ->setArgument(3, $outputProcessors)
+            ->setArgument(2, array_column($inputProcessors, 1))
+            ->setArgument(3, array_column($outputProcessors, 1))
             ->setArgument(4, new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
         ;
 
