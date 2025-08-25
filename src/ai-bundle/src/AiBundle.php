@@ -123,6 +123,10 @@ final class AiBundle extends AbstractBundle
 
         $stores = array_keys($builder->findTaggedServiceIds('ai.store'));
 
+        if (1 === \count($stores)) {
+            $builder->setAlias(StoreInterface::class, reset($stores));
+        }
+
         if ([] !== $stores) {
             $references = [];
             foreach ($stores as $storeName) {

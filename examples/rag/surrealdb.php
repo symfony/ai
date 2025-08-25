@@ -24,14 +24,13 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
-use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
 $store = new Store(
-    httpClient: HttpClient::create(),
+    httpClient: http_client(),
     endpointUrl: env('SURREALDB_HOST'),
     user: env('SURREALDB_USER'),
     password: env('SURREALDB_PASS'),

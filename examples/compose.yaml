@@ -1,27 +1,75 @@
 services:
-  mariadb:
-    image: mariadb:11.7
-    environment:
-      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 1
-      MARIADB_DATABASE: my_database
-    ports:
-      - '3309:3306'
+  chromadb:
+      image: chromadb/chroma
+      environment:
+          IS_PERSISTENT: TRUE
+          PERSIST_DIRECTORY: /chroma/chroma # this is the default path, change it as needed
+          ANONYMIZED_TELEMETRY: false
+      volumes:
+          - chroma_vlm:/chroma/chroma
+      ports:
+          - '8001:8000'
 
-  postgres:
-    image: pgvector/pgvector:0.8.0-pg17
-    environment:
-        POSTGRES_DB: my_database
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-    ports:
-        - '5432:5432'
+  clickhouse:
+      image: clickhouse/clickhouse-server
+      environment:
+          CLICKHOUSE_DB: 'symfony'
+          CLICKHOUSE_USER: 'symfony'
+          CLICKHOUSE_PASSWORD: 'symfony'
+      ports:
+          - '8123:8123'
+
+  mariadb:
+      image: mariadb:11.7
+      environment:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 1
+          MARIADB_DATABASE: my_database
+      ports:
+          - '3309:3306'
 
   meilisearch:
-      image: getmeili/meilisearch:v1.15
+      image: getmeili/meilisearch:v1.19
       environment:
           MEILI_MASTER_KEY: '${MEILISEARCH_MASTER_KEY:-changeMe}'
       ports:
           - '7700:7700'
+
+  mongodb:
+      image: mongodb/mongodb-atlas-local
+      environment:
+          MONGODB_INITDB_ROOT_USERNAME: symfony
+          MONGODB_INITDB_ROOT_PASSWORD: symfony
+      ports:
+          - '27018:27017'
+
+  neo4j:
+      image: neo4j
+      environment:
+          NEO4J_AUTH: 'neo4j/${NEO4J_PASSWORD:-symfonyai}'
+      ports:
+          - '7474:7474'
+          - '7687:7687'
+
+  pinecone:
+      image: ghcr.io/pinecone-io/pinecone-index
+      environment:
+          PORT: 5081
+          INDEX_TYPE: serverless
+          VECTOR_TYPE: dense
+          DIMENSION: 1538
+          METRIC: cosine
+      platform: linux/amd64
+      ports:
+          - "5081:5081"
+
+  postgres:
+      image: pgvector/pgvector:0.8.0-pg17
+      environment:
+          POSTGRES_DB: my_database
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+      ports:
+          - '5432:5432'
 
   qdrant:
       image: qdrant/qdrant
@@ -38,14 +86,6 @@ services:
       ports:
           - '8000:8000'
 
-  neo4j:
-      image: neo4j
-      environment:
-          NEO4J_AUTH: 'neo4j/${NEO4J_PASSWORD:-symfonyai}'
-      ports:
-          - '7474:7474'
-          - '7687:7687'
-
   typesense:
       image: typesense/typesense:29.0
       environment:
@@ -61,10 +101,10 @@ services:
       container_name: milvus-etcd
       image: quay.io/coreos/etcd:v3.5.18
       environment:
-          - ETCD_AUTO_COMPACTION_MODE=revision
-          - ETCD_AUTO_COMPACTION_RETENTION=1000
-          - ETCD_QUOTA_BACKEND_BYTES=4294967296
-          - ETCD_SNAPSHOT_COUNT=50000
+          ETCD_AUTO_COMPACTION_MODE: revision
+          ETCD_AUTO_COMPACTION_RETENTION: 1000
+          ETCD_QUOTA_BACKEND_BYTES: 4294967296
+          ETCD_SNAPSHOT_COUNT: 50000
       volumes:
           - etcd_vlm:/etcd
       command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
@@ -80,9 +120,6 @@ services:
       environment:
           MINIO_ACCESS_KEY: minioadmin
           MINIO_SECRET_KEY: minioadmin
-      ports:
-          - '9001:9001'
-          - '9000:9000'
       volumes:
           - minio_vlm:/minio_data
       command: minio server /minio_data --console-address ":9001"
@@ -122,3 +159,4 @@ volumes:
     etcd_vlm:
     minio_vlm:
     milvus_vlm:
+    chroma_vlm:

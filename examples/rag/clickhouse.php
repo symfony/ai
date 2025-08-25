@@ -19,27 +19,24 @@ use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Bridge\Neo4j\Store;
+use Symfony\AI\Store\Bridge\ClickHouse\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
 $store = new Store(
-    httpClient: http_client(),
-    endpointUrl: env('NEO4J_HOST'),
-    username: env('NEO4J_USERNAME'),
-    password: env('NEO4J_PASSWORD'),
-    databaseName: env('NEO4J_DATABASE'),
-    vectorIndexName: 'Movies',
-    nodeName: 'movies',
+    HttpClient::createForBaseUri(env('CLICKHOUSE_HOST')),
+    env('CLICKHOUSE_DATABASE'),
+    env('CLICKHOUSE_TABLE'),
 );
 
-// initialize the table
+// initialize the index
 $store->setup();
 
 // create embeddings and documents
@@ -53,9 +50,9 @@ foreach (Movies::all() as $i => $movie) {
 }
 
 // create embeddings for documents
-$platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
-$indexer = new Indexer($vectorizer, $store);
+$indexer = new Indexer($vectorizer, $store, logger());
 $indexer->index($documents);
 
 $model = new Gpt(Gpt::GPT_4O_MINI);
@@ -63,12 +60,12 @@ $model = new Gpt(Gpt::GPT_4O_MINI);
 $similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor]);
+$agent = new Agent($platform, $model, [$processor], [$processor], logger());
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),
     Message::ofUser('Which movie fits the theme of technology?')
 );
-$response = $agent->call($messages);
+$result = $agent->call($messages);
 
-echo $response->getContent().\PHP_EOL;
+echo $result->getContent().\PHP_EOL;
