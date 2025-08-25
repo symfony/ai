@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\OpenAi;
 
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
-use Symfony\AI\Platform\Result\Metadata\TokenUsage\AsTokenUsageProcessor;
 use Symfony\AI\Platform\Result\Metadata\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -21,7 +20,6 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-#[AsTokenUsageProcessor('openai')]
 final class TokenOutputProcessor implements OutputProcessorInterface
 {
     public function processOutput(Output $output): void

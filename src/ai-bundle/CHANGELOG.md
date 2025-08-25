@@ -26,3 +26,8 @@ CHANGELOG
  * Add bundle configuration with semantic validation
  * Add support for fault-tolerant tool execution
  * Add structured output configuration support
+ * Add token usage tracking:
+   - `track_token_usage` option for agents to monitor AI model consumption
+   - Automatic registration of token output processors for OpenAI and Mistral platforms
+   - Token usage metadata in agent results including prompt, completion, total, cached, and thinking tokens
+   - Rate limit information tracking for supported platforms

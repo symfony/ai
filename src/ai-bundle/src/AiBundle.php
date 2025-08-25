@@ -21,7 +21,6 @@ use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
-use Symfony\AI\AiBundle\DependencyInjection\Compiler\RegisterTokenUsageProcessorPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
@@ -83,13 +82,6 @@ final class AiBundle extends AbstractBundle
     public function configure(DefinitionConfigurator $definition): void
     {
         $definition->import('../config/options.php');
-    }
-
-    public function build(ContainerBuilder $container): void
-    {
-        parent::build($container);
-
-        $container->addCompilerPass(new RegisterTokenUsageProcessorPass());
     }
 
     /**
@@ -491,12 +483,24 @@ final class AiBundle extends AbstractBundle
             $outputProcessors[] = new Reference('ai.agent.structured_output_processor');
         }
 
-        if ($config['track_token_usage']) {
-            $platform = u($config['platform'])->after('ai.platform.')->toString();
+        // TOKEN USAGE TRACKING
+        if (isset($config['track_token_usage']['enabled']) && true === $config['track_token_usage']['enabled']) {
+            $processorClass = $config['track_token_usage']['processor'];
 
-            if ($container->has('ai.platform.token_usage_processor.'.$platform)) {
-                $outputProcessors[] = new Reference('ai.platform.token_usage_processor.'.$platform);
+            if (!is_a($processorClass, OutputProcessorInterface::class, true)) {
+                throw new InvalidArgumentException(\sprintf('"%s" class must implement Symfony\AI\Agent\OutputProcessorInterface.', $processorClass));
             }
+
+            $processorServiceId = 'ai.platform.token_usage_processor.'.strtolower(basename(str_replace('\\', '/', $processorClass)));
+
+            if (!$container->hasDefinition($processorServiceId)) {
+                $container->setDefinition(
+                    $processorServiceId,
+                    new Definition($processorClass),
+                );
+            }
+
+            $outputProcessors[] = new Reference($processorServiceId);
         }
 
         // SYSTEM PROMPT

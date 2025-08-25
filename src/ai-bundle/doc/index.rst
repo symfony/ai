@@ -62,7 +62,9 @@ Configuration
             rag:
                 platform: 'ai.platform.azure.gpt_deployment'
                 structured_output: false # Disables support for "output_structure" option, default is true
-                track_token_usage: true # Enable tracking of token usage for the agent, default is false
+                track_token_usage:
+                    enabled: true # Enable tracking of token usage for the agent, default is true
+                    processor: 'Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor' # Token usage processor to use
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
@@ -225,6 +227,43 @@ make sure you have `symfony/security-core` installed in your project.
 The attribute ``IsGrantedTool`` can be added on class- or method-level - even multiple
 times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
+
+Token Usage Tracking
+--------------------
+
+You can enable token usage tracking for agents to monitor and analyze the consumption of tokens by your AI models.
+This feature is particularly useful for cost monitoring and performance optimization.
+
+To enable token usage tracking for an agent, configure the ``track_token_usage`` option:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                track_token_usage:
+                    enabled: true
+                    processor: 'Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor'
+
+**Configuration Options**
+
+* **enabled**: Boolean to enable/disable token tracking (default: true)
+* **processor**: The token output processor class to use (default: Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor)
+
+**Available Processors**
+
+* ``Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor`` - For OpenAI, Azure OpenAI, and OpenRouter platforms
+* ``Symfony\AI\Platform\Bridge\Mistral\TokenOutputProcessor`` - For Mistral platform
+
+To disable token tracking:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            no_tracking_agent:
+                track_token_usage:
+                    enabled: false
 
 Profiler
 --------

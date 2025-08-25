@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\AiBundle\AiBundle;
+use Symfony\AI\Platform\Bridge\Mistral\TokenOutputProcessor;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -344,7 +345,10 @@ class AiBundleTest extends TestCase
                             ],
                         ],
                         'structured_output' => false,
-                        'track_token_usage' => true,
+                        'track_token_usage' => [
+                            'enabled' => true,
+                            'processor' => TokenOutputProcessor::class,
+                        ],
                         'system_prompt' => 'You are a helpful assistant.',
                         'include_tools' => true,
                         'tools' => [
