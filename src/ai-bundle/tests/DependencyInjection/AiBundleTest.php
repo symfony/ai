@@ -529,6 +529,11 @@ class AiBundleTest extends TestCase
                             'service' => 'cache.system',
                             'identifier' => 'foo',
                         ],
+                        'my_cache_message_store_with_ttl' => [
+                            'service' => 'cache.system',
+                            'identifier' => 'foo',
+                            'ttl' => 3600,
+                        ],
                         'my_memory_message_store' => [],
                         'my_session_message_store' => [
                             'identifier' => 'bar',

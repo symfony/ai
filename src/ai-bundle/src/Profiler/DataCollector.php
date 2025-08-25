@@ -26,6 +26,7 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  *
  * @phpstan-import-type PlatformCallData from TraceablePlatform
  * @phpstan-import-type ToolCallData from TraceableToolbox
+ * @phpstan-import-type MessageStoreData from TraceableMessageStore
  */
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
 {
@@ -113,6 +114,9 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         return $this->data['tool_calls'] ?? [];
     }
 
+    /**
+     * @return MessageStoreData[]
+     */
     public function getMessageStores(): array
     {
         return $this->data['message_stores'] ?? [];

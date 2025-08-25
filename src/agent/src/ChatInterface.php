@@ -29,7 +29,7 @@ interface ChatInterface
      */
     public function submit(UserMessage $message): AssistantMessage;
 
-    public function getCurrentMessageBag(): MessageBagInterface;
+    public function getCurrentMessageBag(): MessageBag;
 
     public function getId(): string;
 }

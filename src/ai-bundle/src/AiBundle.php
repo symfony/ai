@@ -929,6 +929,15 @@ final class AiBundle extends AbstractBundle
     {
         if ('cache' === $type) {
             foreach ($stores as $name => $store) {
+                $arguments = [
+                    new Reference($store['service']),
+                    $store['identifier'] ?? $name,
+                ];
+
+                if (\array_key_exists('ttl', $store)) {
+                    $arguments[] = $store['ttl'];
+                }
+
                 $definition = new Definition(CacheMessageStore::class);
                 $definition
                     ->addTag('ai.message_store')

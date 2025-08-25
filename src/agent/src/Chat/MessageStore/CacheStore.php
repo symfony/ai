@@ -38,7 +38,7 @@ final readonly class CacheStore implements MessageStoreInterface
         $this->cache->save($item);
     }
 
-    public function load(?string $id = null): MessageBagInterface
+    public function load(?string $id = null): MessageBag
     {
         $item = $this->cache->getItem($id ?? $this->id);
 

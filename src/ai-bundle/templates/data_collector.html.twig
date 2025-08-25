@@ -199,12 +199,41 @@
                         <thead>
                             <tr>
                                 <th>Id</th>
+                                <th>Date</th>
                                 <th>Messages</th>
                             </tr>
                         </thead>
                         <tbody>
-                        {% for chatMessage in collector.messageStores %}
-
+                        {% for id, messageBag in collector.messageStores %}
+                            <tr>
+                                <th>{{ id }}</th>
+                                <td>
+                                    {% if messageBag %}
+                                        <ul>
+                                            {% for bag in messageBag %}
+                                                <ul>
+                                                    <li>{{ bag['time']|date }}</li>
+                                                </ul>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <i>none</i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if messageBag %}
+                                        <ul>
+                                            {% for bag in messageBag %}
+                                                <ul>
+                                                    <li>{{ bag['time']|date }}</li>
+                                                </ul>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <i>none</i>
+                                    {% endif %}
+                                </td>
+                            </tr>
                         {% endfor %}
                         </tbody>
                     </table>
@@ -213,7 +242,7 @@
         </div>
     {% else %}
         <div class="empty">
-            <p>No chat calls were performed.</p>
+            <p>No messages were stored.</p>
         </div>
     {% endif %}
 

@@ -13,7 +13,7 @@ namespace Symfony\AI\AiBundle\Profiler;
 
 use Symfony\AI\Agent\ChatInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
-use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 
 /**
@@ -26,7 +26,7 @@ final readonly class TraceableChat implements ChatInterface
     ) {
     }
 
-    public function initiate(MessageBagInterface $messages, ?string $id = null): void
+    public function initiate(MessageBag $messages, ?string $id = null): void
     {
         $this->chat->initiate($messages, $id);
     }
@@ -36,7 +36,7 @@ final readonly class TraceableChat implements ChatInterface
         return $this->chat->submit($message);
     }
 
-    public function getCurrentMessageBag(): MessageBagInterface
+    public function getCurrentMessageBag(): MessageBag
     {
         return $this->chat->getCurrentMessageBag();
     }

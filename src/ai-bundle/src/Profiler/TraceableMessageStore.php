@@ -12,17 +12,20 @@
 namespace Symfony\AI\AiBundle\Profiler;
 
 use Symfony\AI\Agent\Chat\MessageStoreInterface;
-use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\AI\Platform\Message\MessageBag;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
+ *
+ * @phpstan-type MessageStoreData array<string, array{
+ *      message: MessageBag,
+ *      time: \DateTimeImmutable,
+ *  }>
  */
 final class TraceableMessageStore implements MessageStoreInterface
 {
     /**
-     * @var array{
-     *     saved: array<MessageBagInterface>
-     * }
+     * @var MessageStoreData[]
      */
     public array $messages = [];
 
@@ -31,17 +34,17 @@ final class TraceableMessageStore implements MessageStoreInterface
     ) {
     }
 
-    public function save(MessageBagInterface $messages, ?string $id = null): void
+    public function save(MessageBag $messages, ?string $id = null): void
     {
         $this->store->save($messages, $id);
 
-        $this->messages['saved'][] = [
+        $this->messages[$id ?? $this->store->getId()][] = [
             'message' => $messages,
             'time' => new \DateTimeImmutable(),
         ];
     }
 
-    public function load(?string $id = null): MessageBagInterface
+    public function load(?string $id = null): MessageBag
     {
         return $this->store->load($id);
     }

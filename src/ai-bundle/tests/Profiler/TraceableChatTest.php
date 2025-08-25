@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Profiler;
+namespace Symfony\AI\AiBundle\Tests\Profiler;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -19,10 +19,13 @@ use Symfony\AI\Agent\Chat;
 use Symfony\AI\Agent\Chat\MessageStore\InMemoryStore;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Result\TextResult;
 
 #[CoversClass(TraceableChat::class)]
 #[UsesClass(InMemoryStore::class)]
 #[UsesClass(Chat::class)]
+#[UsesClass(Message::class)]
+#[UsesClass(TextResult::class)]
 final class TraceableChatTest extends TestCase
 {
     public function testIdCanBeRetrieved()
@@ -40,6 +43,7 @@ final class TraceableChatTest extends TestCase
     public function testMessageBagCanBeRetrieved()
     {
         $agent = $this->createMock(AgentInterface::class);
+        $agent->expects($this->once())->method('call')->willReturn(new TextResult('foo'));
 
         $store = new InMemoryStore('foo');
         $chat = new Chat($agent, $store);
@@ -47,6 +51,6 @@ final class TraceableChatTest extends TestCase
         $traceableChat = new TraceableChat($chat);
         $traceableChat->submit(Message::ofUser('foo'));
 
-        $this->assertCount(1, $traceableChat->getCurrentMessageBag());
+        $this->assertCount(2, $traceableChat->getCurrentMessageBag());
     }
 }
