@@ -6,7 +6,8 @@
          executionOrder="depends,defects"
          beStrictAboutOutputDuringTests="true"
          failOnRisky="true"
-         failOnWarning="true">
+         failOnWarning="true"
+         bootstrap="tests/bootstrap.php">
 
     <testsuites>
         <testsuite name="default">
