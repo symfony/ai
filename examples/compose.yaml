@@ -31,7 +31,7 @@ services:
           - '6333:6333'
 
   surrealdb:
-      image: surrealdb/surrealdb
+      image: surrealdb/surrealdb:v2
       command: ['start', '--user', 'symfony', '--pass', 'symfony']
       environment:
           SURREAL_HTTP_MAX_KEY_BODY_SIZE: 49152

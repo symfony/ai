@@ -66,8 +66,7 @@ jobs:
                     - '6333:6333'
 
             surrealdb:
-                image: surrealdb/surrealdb
-                options: start --user symfony --pass symfony
+                image: surrealdb/surrealdb:v2
                 env:
                     SURREAL_HTTP_MAX_KEY_BODY_SIZE: 49152
                 ports:
