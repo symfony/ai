@@ -23,6 +23,7 @@ use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
+use Symfony\AI\AIBundle\DependencyInjection\Compiler\ProcessorCollectorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
@@ -80,6 +81,13 @@ use function Symfony\Component\String\u;
  */
 final class AiBundle extends AbstractBundle
 {
+    public function build(ContainerBuilder $container)
+    {
+        parent::build($container);
+
+        $container->addCompilerPass(new ProcessorCollectorCompilerPass());
+    }
+
     public function configure(DefinitionConfigurator $definition): void
     {
         $definition->import('../config/options.php');
@@ -110,15 +118,11 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        [$inputProcessors, $outputProcessors] = $this->getProcessors($builder);
-
         foreach ($config['agent'] as $agentName => $agent) {
             $this->processAgentConfig(
                 $agentName,
                 $agent,
                 $builder,
-                $inputProcessors[$agentName] ?? [],
-                $outputProcessors[$agentName] ?? [],
             );
         }
 
@@ -142,6 +146,20 @@ final class AiBundle extends AbstractBundle
                 'name' => $attribute->name,
                 'description' => $attribute->description,
                 'method' => $attribute->method,
+            ]);
+        });
+
+        $builder->registerAttributeForAutoconfiguration(AsInputProcessor::class, static function (ChildDefinition $definition, AsInputProcessor $attribute): void {
+            $definition->addTag('ai.input_processor', [
+                'agent' => $attribute->agent,
+                'priority' => $attribute->priority,
+            ]);
+        });
+
+        $builder->registerAttributeForAutoconfiguration(AsOutputProcessor::class, static function (ChildDefinition $definition, AsOutputProcessor $attribute): void {
+            $definition->addTag('ai.output_processor', [
+                'agent' => $attribute->agent,
+                'priority' => $attribute->priority,
             ]);
         });
 
@@ -367,45 +385,9 @@ final class AiBundle extends AbstractBundle
     }
 
     /**
-     * @return array{
-     *     array<string, list<array{int, Definition}>>,
-     *     array<string, list<array{int, Definition}>>,
-     * }
+     * @param array<string, mixed> $config
      */
-    private function getProcessors(ContainerBuilder $container): array
-    {
-        $inputProcessors = [];
-        $outputProcessors = [];
-        foreach ($container->getDefinitions() as $definition) {
-            if (
-                $definition->hasTag('container.ignore_attributes')
-                || !$definition->isAutowired()
-                || !($reflectionClass = $container->getReflectionClass($definition->getClass(), false))
-            ) {
-                continue;
-            }
-
-            foreach ($reflectionClass->getAttributes(AsInputProcessor::class, \ReflectionAttribute::IS_INSTANCEOF) as $attribute) {
-                $attribute = $attribute->newInstance();
-
-                $inputProcessors[$attribute->agent][] = [$attribute->priority, $definition];
-            }
-            foreach ($reflectionClass->getAttributes(AsOutputProcessor::class, \ReflectionAttribute::IS_INSTANCEOF) as $attribute) {
-                $attribute = $attribute->newInstance();
-
-                $outputProcessors[$attribute->agent][] = [$attribute->priority, $definition];
-            }
-        }
-
-        return [$inputProcessors, $outputProcessors];
-    }
-
-    /**
-     * @param array<string, mixed>         $config
-     * @param list<array{int, Definition}> $inputProcessors
-     * @param list<array{int, Definition}> $outputProcessors
-     */
-    private function processAgentConfig(string $name, array $config, ContainerBuilder $container, array $inputProcessors, array $outputProcessors): void
+    private function processAgentConfig(string $name, array $config, ContainerBuilder $container): void
     {
         // MODEL
         ['class' => $modelClass, 'name' => $modelName, 'options' => $options] = $config['model'];
@@ -426,7 +408,7 @@ final class AiBundle extends AbstractBundle
 
         // AGENT
         $agentDefinition = (new Definition(Agent::class))
-            ->addTag('ai.agent')
+            ->addTag('ai.agent', ['name' => $name])
             ->setArgument(0, new Reference($config['platform']))
             ->setArgument(1, new Reference('ai.agent.'.$name.'.model'));
 
@@ -482,47 +464,45 @@ final class AiBundle extends AbstractBundle
                 }
 
                 $toolProcessorDefinition = (new ChildDefinition('ai.tool.agent_processor.abstract'))
-                    ->replaceArgument(0, new Reference('ai.toolbox.'.$name));
-                $container->setDefinition('ai.tool.agent_processor.'.$name, $toolProcessorDefinition);
+                    ->replaceArgument(0, new Reference('ai.toolbox.'.$name))
+                    ->addTag('ai.input_processor', ['agent' => $name, 'priority' => 0])
+                    ->addTag('ai.output_processor', ['agent' => $name, 'priority' => 0]);
 
-                $inputProcessors[] = [0, new Reference('ai.tool.agent_processor.'.$name)];
-                $outputProcessors[] = [0, new Reference('ai.tool.agent_processor.'.$name)];
+                $container->setDefinition('ai.tool.agent_processor.'.$name, $toolProcessorDefinition);
             } else {
                 if ($config['fault_tolerant_toolbox'] && !$container->hasDefinition('ai.fault_tolerant_toolbox')) {
                     $container->setDefinition('ai.fault_tolerant_toolbox', new Definition(FaultTolerantToolbox::class))
                         ->setArguments([new Reference('.inner')])
-                        ->setDecoratedService('ai.toolbox');
+                        ->setDecoratedService('ai.toolbox')
+                        ->addTag('ai.input_processor', ['agent' => $name, 'priority' => 0])
+                        ->addTag('ai.output_processor', ['agent' => $name, 'priority' => 0]);
                 }
-
-                $inputProcessors[] = [0, new Reference('ai.tool.agent_processor')];
-                $outputProcessors[] = [0, new Reference('ai.tool.agent_processor')];
             }
         }
 
         // STRUCTURED OUTPUT
         if ($config['structured_output']) {
-            $inputProcessors[] = [-10, new Reference('ai.agent.structured_output_processor')];
-            $outputProcessors[] = [-10, new Reference('ai.agent.structured_output_processor')];
+            $container->getDefinition('ai.agent.structured_output_processor')
+                ->addTag('ai.input_processor', ['agent' => $name, 'priority' => -10])
+                ->addTag('ai.output_processor', ['agent' => $name, 'priority' => -10]);
         }
 
         // SYSTEM PROMPT
         if (\is_string($config['system_prompt'])) {
-            $systemPromptInputProcessorDefinition = new Definition(SystemPromptInputProcessor::class, [
-                $config['system_prompt'],
-                $config['include_tools'] ? new Reference('ai.toolbox.'.$name) : null,
-                new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
-            ]);
+            $systemPromptInputProcessorDefinition = (new Definition(SystemPromptInputProcessor::class))
+                ->setArguments([
+                    $config['system_prompt'],
+                    $config['include_tools'] ? new Reference('ai.toolbox.'.$name) : null,
+                    new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('ai.input_processor', ['agent' => $name, 'priority' => -20]);
 
-            $inputProcessors[] = [-20, $systemPromptInputProcessorDefinition];
+            $container->setDefinition('ai.agent.'.$name.'.system_prompt_processor', $systemPromptInputProcessorDefinition);
         }
 
-        $sortCb = static fn (array $a, array $b): int => $b[0] <=> $a[0];
-        usort($inputProcessors, $sortCb);
-        usort($outputProcessors, $sortCb);
-
         $agentDefinition
-            ->setArgument(2, array_column($inputProcessors, 1))
-            ->setArgument(3, array_column($outputProcessors, 1))
+            ->setArgument(2, []) // placeholder until ProcessorCollectorCompilerPass process.
+            ->setArgument(3, []) // placeholder until ProcessorCollectorCompilerPass process.
             ->setArgument(4, new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
         ;
 
