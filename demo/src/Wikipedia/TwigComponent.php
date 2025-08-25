@@ -11,6 +11,9 @@
 
 namespace App\Wikipedia;
 
+use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Agent\ChatInterface;
+use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
@@ -23,7 +26,8 @@ final class TwigComponent
     use DefaultActionTrait;
 
     public function __construct(
-        private readonly Chat $wikipedia,
+        private readonly ChatInterface $wikipediaChat,
+        private readonly MessageStoreInterface $wikipediaMessageStore,
     ) {
     }
 
@@ -32,18 +36,18 @@ final class TwigComponent
      */
     public function getMessages(): array
     {
-        return $this->wikipedia->loadMessages()->withoutSystemMessage()->getMessages();
+        return $this->wikipediaChat->getCurrentMessageBag()->getMessages();
     }
 
     #[LiveAction]
     public function submit(#[LiveArg] string $message): void
     {
-        $this->wikipedia->submitMessage($message);
+        $this->wikipediaChat->submit(Message::ofUser($message));
     }
 
     #[LiveAction]
     public function reset(): void
     {
-        $this->wikipedia->reset();
+        $this->wikipediaMessageStore->clear();
     }
 }
