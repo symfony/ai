@@ -46,7 +46,7 @@ class Voyage extends Model
     /**
      * @param array{dimensions?: int, inputType?: self::INPUT_TYPE_*, truncation?: bool} $options
      */
-    public function __construct(string $name = self::V3, array $options = [])
+    public function __construct(string $name = self::V3_5_LITE, array $options = [])
     {
         parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
     }
