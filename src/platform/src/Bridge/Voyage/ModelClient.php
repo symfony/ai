@@ -34,11 +34,16 @@ final readonly class ModelClient implements ModelClientInterface
 
     public function request(Model $model, object|string|array $payload, array $options = []): RawHttpResult
     {
+        $modelOptions = $model->getOptions();
+
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.voyageai.com/v1/embeddings', [
             'auth_bearer' => $this->apiKey,
             'json' => [
                 'model' => $model->getName(),
                 'input' => $payload,
+                'input_type' => $modelOptions['inputType'] ?? null,
+                'truncation' => $modelOptions['truncation'] ?? true,
+                'output_dimension' => $modelOptions['dimensions'] ?? null,
             ],
         ]));
     }

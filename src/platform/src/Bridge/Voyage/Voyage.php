@@ -26,8 +26,11 @@ class Voyage extends Model
     public const LAW_2 = 'voyage-law-2';
     public const CODE_2 = 'voyage-code-2';
 
+    public const INPUT_TYPE_DOCUMENT = 'document';
+    public const INPUT_TYPE_QUERY = 'query';
+
     /**
-     * @param array<string, mixed> $options
+     * @param array{dimensions?: int, inputType?: self::INPUT_TYPE_*, truncation?: bool} $options
      */
     public function __construct(string $name = self::V3, array $options = [])
     {
