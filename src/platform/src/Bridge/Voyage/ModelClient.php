@@ -41,7 +41,7 @@ final readonly class ModelClient implements ModelClientInterface
             'json' => [
                 'model' => $model->getName(),
                 'input' => $payload,
-                'input_type' => $modelOptions['inputType'] ?? null,
+                'input_type' => $modelOptions['input_type'] ?? null,
                 'truncation' => $modelOptions['truncation'] ?? true,
                 'output_dimension' => $modelOptions['dimensions'] ?? null,
             ],
