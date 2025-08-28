@@ -143,8 +143,8 @@ final class AiBundle extends AbstractBundle
             $this->processMessageStoreConfig($messageStoreName, $store, $builder);
         }
         $messageStores = array_keys($builder->findTaggedServiceIds('ai.message_store'));
-        if (1 === \count($config['message_store']) && isset($messageStoreName)) {
-            $builder->setAlias(MessageStoreInterface::class, 'ai.message_store.'.$messageStoreName);
+        if (1 === \count($messageStores)) {
+            $builder->setAlias(MessageStoreInterface::class, reset($messageStores));
         }
 
         if ($builder->getParameter('kernel.debug')) {
@@ -162,8 +162,8 @@ final class AiBundle extends AbstractBundle
             $this->processChatConfig($chatName, $chat, $builder);
         }
         $chats = array_keys($builder->findTaggedServiceIds('ai.chat'));
-        if (1 === \count($config['chat']) && isset($chatName)) {
-            $builder->setAlias(ChatInterface::class, 'ai.chat.'.$chatName);
+        if (1 === \count($chats)) {
+            $builder->setAlias(ChatInterface::class, reset($chats));
         }
 
         if ($builder->getParameter('kernel.debug')) {

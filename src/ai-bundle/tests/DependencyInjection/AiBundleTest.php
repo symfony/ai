@@ -290,6 +290,8 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
+        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\ChatInterface'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\Chat\MessageStoreInterface'));
         $this->assertTrue($container->hasDefinition('ai.message_store.cache.main_cache'));
         $this->assertTrue($container->hasDefinition('ai.chat.main'));
     }
