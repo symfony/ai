@@ -139,10 +139,14 @@ final class AiBundle extends AbstractBundle
             $builder->setAlias(Indexer::class, 'ai.indexer.'.$indexerName);
         }
 
-        foreach ($config['message_store'] ?? [] as $type => $store) {
-            $this->processMessageStoreConfig($type, $store, $builder);
+        foreach ($config['message_store'] ?? [] as $messageStoreName => $store) {
+            $this->processMessageStoreConfig($messageStoreName, $store, $builder);
         }
         $messageStores = array_keys($builder->findTaggedServiceIds('ai.message_store'));
+        if (1 === \count($config['message_store']) && isset($messageStoreName)) {
+            $builder->setAlias(MessageStoreInterface::class, 'ai.message_store.'.$messageStoreName);
+        }
+
         if ($builder->getParameter('kernel.debug')) {
             foreach ($messageStores as $messageStore) {
                 $traceableMessageStoreDefinition = (new Definition(TraceableMessageStore::class))
@@ -154,10 +158,14 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        foreach ($config['chat'] as $indexerName => $indexer) {
-            $this->processChatConfig($indexerName, $indexer, $builder);
+        foreach ($config['chat'] as $chatName => $chat) {
+            $this->processChatConfig($chatName, $chat, $builder);
         }
         $chats = array_keys($builder->findTaggedServiceIds('ai.chat'));
+        if (1 === \count($config['chat']) && isset($chatName)) {
+            $builder->setAlias(ChatInterface::class, 'ai.chat.'.$chatName);
+        }
+
         if ($builder->getParameter('kernel.debug')) {
             foreach ($chats as $chat) {
                 $traceableChatDefinition = (new Definition(TraceableChat::class))
