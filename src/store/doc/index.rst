@@ -77,6 +77,28 @@ Supported Stores
 
     See `GitHub`_ for planned stores.
 
+Commands
+--------
+
+While using the `Store` component in your Symfony application along with the ``AiBundle``,
+you can use the ``bin/console ai:store:setup`` command to initialize the store and ``bin/console ai:store:drop`` to clean up the store:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        # ...
+    store:
+        chroma_db:
+            symfonycon:
+                collection: 'symfony_blog'
+
+.. code-block:: terminal
+
+    $ php bin/console ai:store:setup symfonycon
+    $ php bin/console ai:store:drop symfonycon
+
+
 Implementing a Bridge
 ---------------------
 

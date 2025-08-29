@@ -43,7 +43,11 @@ final readonly class CacheStore implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('No supported options.');
         }
 
-        $this->cache->clear();
+        if ($this->cache->hasItem($this->cacheKey)) {
+            return;
+        }
+
+        $this->cache->get($this->cacheKey, static fn (): array => []);
     }
 
     public function add(VectorDocument ...$documents): void

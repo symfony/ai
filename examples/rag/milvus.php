@@ -38,7 +38,7 @@ $store = new Store(
 );
 
 // initialize the index
-$store->initialize();
+$store->setup();
 
 // create embeddings and documents
 $documents = [];

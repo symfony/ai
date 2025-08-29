@@ -41,7 +41,9 @@
         "phpstan/phpstan": "^2.0",
         "phpunit/phpunit": "^11.5",
         "probots-io/pinecone-php": "^1.0",
-        "symfony/cache": "^7.3"
+        "symfony/cache": "^6.4 || ^7.1",
+        "symfony/console": "^6.4 || ^7.1",
+        "symfony/dependency-injection": "^6.4 || ^7.1"
     },
     "config": {
         "sort-packages": true
