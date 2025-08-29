@@ -9,18 +9,18 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\AIBundle\DependencyInjection\Compiler;
+namespace Symfony\AI\AiBundle\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-class ProcessorCollectorCompilerPass implements CompilerPassInterface
+class ProcessorCompilerPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
     {
-        $inputProcessors = $container->findTaggedServiceIds('ai.input_processor');
-        $outputProcessors = $container->findTaggedServiceIds('ai.output_processor');
+        $inputProcessors = $container->findTaggedServiceIds('ai.agent.input_processor');
+        $outputProcessors = $container->findTaggedServiceIds('ai.agent.output_processor');
 
         foreach ($container->findTaggedServiceIds('ai.agent') as $serviceId => $tags) {
             $agentInputProcessors = [];
