@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-29T11:28:44Z
+
+Please rebase after https://github.com/symfony/ai/pull/367 and adjust the tests. thanks
+
+---------------------------------------------------------------------------
+
+by natewiebe13 at 2025-08-29T13:00:49Z
+
+Rebased, updated the test
