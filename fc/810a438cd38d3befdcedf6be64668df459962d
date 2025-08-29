@@ -1,0 +1,46 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-21T10:47:06Z
+
+Can you please add an example in examples/ directory? Thanks
+
+---------------------------------------------------------------------------
+
+by logicalor at 2025-08-21T21:51:02Z
+
+> Can you please add an example in examples/ directory? Thanks
+
+@OskarStark updated with an example
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-22T05:50:01Z
+
+Thanks
+
+It looks like your committer email is not associated with your GitHub account
+
+---------------------------------------------------------------------------
+
+by logicalor at 2025-08-22T07:59:42Z
+
+> Thanks
+>
+> It looks like your committer email is not associated with your GitHub account
+
+@OskarStark thanks, hadn't noticed that. Added.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-24T21:00:58Z
+
+which ollama version do you use?
+<img width="824" height="180" alt="image" src="https://github.com/user-attachments/assets/324d5901-26bd-4805-96a3-b5f2ad1a488b" />
+
+---------------------------------------------------------------------------
+
+by logicalor at 2025-08-28T09:46:41Z
+
+> which ollama version do you use?
+
+@chr-hertel I was running `0.10.1` but just upgraded to `0.11.7`.
