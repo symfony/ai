@@ -1,0 +1,189 @@
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-12T09:13:44Z
+
+> lgtm, ship it
+
+Docs and AI bundle integration need to be added first.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-13T09:00:14Z
+
+Thanks @junaidbinfarooq for your work on this - I think we're getting somewhere.
+Please see my comments and review once again yourself with those in mind - not sure I catched everything.
+
+In general it great to have that bridge, I still wonder tho about the amount of duplicated code with the Gemini bridge and we would need to support API Keys as well ... but both topics are fine as follow up
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-13T09:25:54Z
+
+> Thanks @junaidbinfarooq for your work on this - I think we're getting somewhere. Please see my comments and review once again yourself with those in mind - not sure I catched everything.
+>
+> In general it great to have that bridge, I still wonder tho about the amount of duplicated code with the Gemini bridge and we would need to support API Keys as well ... but both topics are fine as follow up
+
+@chr-hertel
+You're welcome :smile:
+The duplication is expected as I did not touch the existing Gemini bridge code.
+This is what I also pointed out in the PR description about possibly having Vertex AI only as we move forward.
+If this is done, there would be no duplication anywhere as far as Google bridges are concerned.
+And yes, I do believe this is better done in a follow-up PR after a proper discussion on the topic.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-15T20:28:36Z
+
+@junaidbinfarooq are all examples that you added working for you?
+
+i need to apply those changes, any clue why?
+<img width="1305" height="605" alt="image" src="https://github.com/user-attachments/assets/2e0fb356-b193-459d-a49d-610f76231843" />
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-15T20:40:29Z
+
+> @junaidbinfarooq are all examples that you added working for you?
+>
+> i need to apply those changes, any clue why? <img alt="image" width="1305" height="605" src="https://private-user-images.githubusercontent.com/2852185/478566780-2e0fb356-b193-459d-a49d-610f76231843.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTUyOTAwNzUsIm5iZiI6MTc1NTI4OTc3NSwicGF0aCI6Ii8yODUyMTg1LzQ3ODU2Njc4MC0yZTBmYjM1Ni1iMTkzLTQ1OWQtYTQ5ZC02MTBmNzYyMzE4NDMucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MDgxNSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTA4MTVUMjAyOTM1WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9NDc4NDdiNWU5YmFlYjA2MDUyMzYxYzQ3ODNjYTBmODMxNGU0OTRkYWEyY2YyZmRkOTE5MjE3ZGUyZDY2MmFlNSZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.Pd4iua4PZv9gsFuY9O7eekXh91JSTOk_c1cWFRSuUSk">
+
+@chr-hertel
+I just rechecked the vertex ai api and also ran the examples again to verify they are still working as expected. And it is apparent that they are working:
+<img width="1777" height="666" alt="image" src="https://github.com/user-attachments/assets/0711f1fe-9dd4-48ae-9cb4-0b048f5fda7c" />
+Besides, I didn't use versions in model IDs as that is not recommended, IIRC.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-15T21:25:18Z
+
+Hmm, super weird :thinking:
+
+And where is that `$location-aiplatform.googleapi.com/...` coming from?
+Docs say it's just `aiplatform` as subdomain:
+<img width="618" height="229" alt="image" src="https://github.com/user-attachments/assets/4f6f9a00-966c-439a-96e9-328afae230fc" />
+See https://console.cloud.google.com/vertex-ai/publishers/google/model-garden/gemini-2.5-flash-lite
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-16T07:35:43Z
+
+@chr-hertel
+It is actually weird considering I can see both the URLs in the documentation, one that you pointed out and another that I used. For instance:
+1. If you head over to [Api quickstart](https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstart?usertype=adc#make-first-request), you will see the URL that is used in the code. `API_ENDPOINT` basically refers to `{REGION}-aiplatform.googleapis.com`. I used the latter because it is easier for library users to set the location instead of the entire base URL.
+2. In the api reference, which is what I mostly used, admittedly (or surprisingly), the page for the `generateContent` endpoint doesn't show the URL to access the api, but the one for Embeddings does. And it is exactly what I used. Please go to [this](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/text-embeddings-api#syntax) for more details.
+3. There are also other pages that have variations of the same URL.
+
+P.S. I made a change now to remove the location from the start of the request URL for both text and embedding generation after verifying it works. It matches the URL that you referenced, but the location is still there in the middle.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-18T20:52:54Z
+
+and also with that endpoint change the examples `vertexai/token-metadata.php` and `vertexai/toolcall.php` raise errors for me:
+```
+PHP Fatal error:  Uncaught Symfony\AI\Platform\Exception\RuntimeException: Error from Gemini API: "Publisher Model `projects/XXXXXXXXXXX/locations/global/publishers/google/models/gemini-2.0-flash-lite` not found." in /path/to/repo/src/platform/src/Bridge/VertexAi/Gemini/ResultConverter.php:48
+Stack trace:
+#0 /path/to/repo/src/platform/src/Result/ResultPromise.php(48): Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter->convert()
+#1 /path/to/repo/src/platform/src/Result/ResultPromise.php(37): Symfony\AI\Platform\Result\ResultPromise->await()
+#2 /path/to/repo/src/agent/src/Agent.php(82): Symfony\AI\Platform\Result\ResultPromise->getResult()
+#3 /path/to/repo/examples/vertexai/token-metadata.php(28): Symfony\AI\Agent\Agent->call()
+#4 {main}
+  thrown in /path/to/repo/src/platform/src/Bridge/VertexAi/Gemini/ResultConverter.php on line 48
+```
+---
+Btw, code-wise we're good here, thanks for that! I just want to be able to run all examples locally to make sure all integrations are still working. And I'm not super deep into google cloud. is there something special that you configured in vertex? global region? any models or endpoints in action here?
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-19T07:35:24Z
+
+> and also with that endpoint change the examples `vertexai/token-metadata.php` and `vertexai/toolcall.php` raise errors for me:
+>
+> ```
+> PHP Fatal error:  Uncaught Symfony\AI\Platform\Exception\RuntimeException: Error from Gemini API: "Publisher Model `projects/XXXXXXXXXXX/locations/global/publishers/google/models/gemini-2.0-flash-lite` not found." in /path/to/repo/src/platform/src/Bridge/VertexAi/Gemini/ResultConverter.php:48
+> Stack trace:
+> #0 /path/to/repo/src/platform/src/Result/ResultPromise.php(48): Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter->convert()
+> #1 /path/to/repo/src/platform/src/Result/ResultPromise.php(37): Symfony\AI\Platform\Result\ResultPromise->await()
+> #2 /path/to/repo/src/agent/src/Agent.php(82): Symfony\AI\Platform\Result\ResultPromise->getResult()
+> #3 /path/to/repo/examples/vertexai/token-metadata.php(28): Symfony\AI\Agent\Agent->call()
+> #4 {main}
+>   thrown in /path/to/repo/src/platform/src/Bridge/VertexAi/Gemini/ResultConverter.php on line 48
+> ```
+>
+> Btw, code-wise we're good here, thanks for that! I just want to be able to run all examples locally to make sure all integrations are still working. And I'm not super deep into google cloud. is there something special that you configured in vertex? global region? any models or endpoints in action here?
+
+@chr-hertel
+All the examples work for me as they did earlier:
+<img width="1781" height="801" alt="image" src="https://github.com/user-attachments/assets/016e577a-938c-4f9a-a77a-0060f0bf5566" />
+
+## Changes I made:
+### Vertex AI:
+1. Followed the instructions as mentioned [here](https://cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth)
+2. Set the env var `GOOGLE_CLOUD_PROJECT` to the ID of the newly created project on GCloud, created specifically for this purpose (though an existing project should work well too with the right set of permissions/access, I think), and set the env var `GOOGLE_CLOUD_LOCATION` to _us-central1_.
+
+### Locally:
+1. Initialized the gcloud CLI as mentioned in the aforementioned linked page.
+2. Have been using `platform/vendor/autoload.php` directly inside the `examples/bootstrap.php` file right from the start.
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-20T13:11:05Z
+
+@chr-hertel
+Could you let me know if you were able to run the examples or if something still needs to be done here?
+cc @OskarStark
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-20T20:41:14Z
+
+Code-wise all looks good to me - mostly depends on me to find the issue of testing. Not gonna happen this week tho, sorry.
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-26T06:32:29Z
+
+> Code-wise all looks good to me - mostly depends on me to find the issue of testing. Not gonna happen this week tho, sorry.
+
+@chr-hertel
+Any update on this?
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-29T06:13:42Z
+
+> Code-wise all looks good to me - mostly depends on me to find the issue of testing. Not gonna happen this week tho, sorry.
+
+@chr-hertel
+Could you let me know if you managed to give it a shot?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-29T06:24:33Z
+
+@chr-hertel is currently AFK for some days.
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-29T06:48:23Z
+
+> @chr-hertel is currently AFK for some days.
+
+Oh ok.
+Thanks for the update.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-29T08:03:07Z
+
+one thing i learned lately, that it fails due to the region - that was a good pointer of yours - so you could reproduce with switching to `global` - not sure how to deal with that tho - add a hint in docs?
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-29T12:34:23Z
+
+> one thing i learned lately, that it fails due to the region - that was a good pointer of yours - so you could reproduce with switching to `global` - not sure how to deal with that tho - add a hint in docs?
+
+@chr-hertel
+Sure, why not!
+I added a dedicated doc for Vertex AI that has this information, besides other information.
