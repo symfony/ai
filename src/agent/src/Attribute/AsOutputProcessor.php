@@ -15,8 +15,7 @@ namespace Symfony\AI\Agent\Attribute;
 final readonly class AsOutputProcessor
 {
     /**
-     * @param string|null $agent The service id of the agent which will use this processor.
-     *                           Use NULL in order to register this processor on all the existing agents.
+     * @param string|null $agent the service id of the agent which will use this processor, null to register this processor for all existing agents
      */
     public function __construct(
         public ?string $agent = null,
