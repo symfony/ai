@@ -454,19 +454,21 @@ final class AiBundle extends AbstractBundle
                 }
 
                 $toolProcessorDefinition = (new ChildDefinition('ai.tool.agent_processor.abstract'))
-                    ->replaceArgument(0, new Reference('ai.toolbox.'.$name))
+                    ->replaceArgument(0, new Reference('ai.toolbox.'.$name));
+
+                $container->setDefinition('ai.tool.agent_processor.'.$name, $toolProcessorDefinition)
                     ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => 0])
                     ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => 0]);
-
-                $container->setDefinition('ai.tool.agent_processor.'.$name, $toolProcessorDefinition);
             } else {
                 if ($config['fault_tolerant_toolbox'] && !$container->hasDefinition('ai.fault_tolerant_toolbox')) {
                     $container->setDefinition('ai.fault_tolerant_toolbox', new Definition(FaultTolerantToolbox::class))
                         ->setArguments([new Reference('.inner')])
-                        ->setDecoratedService('ai.toolbox')
-                        ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => 0])
-                        ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => 0]);
+                        ->setDecoratedService('ai.toolbox');
                 }
+
+                $container->getDefinition('ai.tool.agent_processor')
+                    ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => 0])
+                    ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => 0]);
             }
         }
 
