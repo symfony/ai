@@ -40,6 +40,9 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - name: Up the examples services
+              run: cd examples && docker compose up -d
+
             - name: Configure environment
               run: |
                   echo COLUMNS=120 >> $GITHUB_ENV
@@ -76,9 +79,6 @@ jobs:
 
             - name: Install examples dependencies
               run: cd examples && composer install && ../link
-
-            - name: Up the examples services
-              run: cd examples && docker compose up -d
 
             - name: Run commands examples
               run: php examples/commands/stores.php
