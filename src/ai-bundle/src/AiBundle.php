@@ -117,11 +117,7 @@ final class AiBundle extends AbstractBundle
         }
 
         foreach ($config['agent'] as $agentName => $agent) {
-            $this->processAgentConfig(
-                $agentName,
-                $agent,
-                $builder,
-            );
+            $this->processAgentConfig($agentName, $agent, $builder);
         }
 
         foreach ($config['store'] ?? [] as $type => $store) {
