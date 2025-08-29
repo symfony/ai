@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-29T22:27:03Z
+
+One thing that got me thinking is that we use the OpenAI contract mostly as default - meaning that the normalizers are mostly in namespace `Symfony\AI\Platform\Contract\Normalizer` - but I tested with Ollama and Cerebras, that are basically using that contract, but got errors - so i guess it's fine to only have it for OpenAI instead of default.
