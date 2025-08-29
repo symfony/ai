@@ -150,23 +150,19 @@ final class AiBundle extends AbstractBundle
         });
 
         $builder->registerAttributeForAutoconfiguration(AsInputProcessor::class, static function (ChildDefinition $definition, AsInputProcessor $attribute): void {
-            $definition->addTag('ai.input_processor', [
+            $definition->addTag('ai.agent.input_processor', [
                 'agent' => $attribute->agent,
                 'priority' => $attribute->priority,
             ]);
         });
 
         $builder->registerAttributeForAutoconfiguration(AsOutputProcessor::class, static function (ChildDefinition $definition, AsOutputProcessor $attribute): void {
-            $definition->addTag('ai.output_processor', [
+            $definition->addTag('ai.agent.output_processor', [
                 'agent' => $attribute->agent,
                 'priority' => $attribute->priority,
             ]);
         });
 
-        $builder->registerForAutoconfiguration(InputProcessorInterface::class)
-            ->addTag('ai.agent.input_processor');
-        $builder->registerForAutoconfiguration(OutputProcessorInterface::class)
-            ->addTag('ai.agent.output_processor');
         $builder->registerForAutoconfiguration(ModelClientInterface::class)
             ->addTag('ai.platform.model_client');
         $builder->registerForAutoconfiguration(ResultConverterInterface::class)
@@ -408,7 +404,7 @@ final class AiBundle extends AbstractBundle
 
         // AGENT
         $agentDefinition = (new Definition(Agent::class))
-            ->addTag('ai.agent', ['name' => $name])
+            ->addTag('ai.agent')
             ->setArgument(0, new Reference($config['platform']))
             ->setArgument(1, new Reference('ai.agent.'.$name.'.model'));
 
@@ -465,8 +461,8 @@ final class AiBundle extends AbstractBundle
 
                 $toolProcessorDefinition = (new ChildDefinition('ai.tool.agent_processor.abstract'))
                     ->replaceArgument(0, new Reference('ai.toolbox.'.$name))
-                    ->addTag('ai.input_processor', ['agent' => $name, 'priority' => 0])
-                    ->addTag('ai.output_processor', ['agent' => $name, 'priority' => 0]);
+                    ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => 0])
+                    ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => 0]);
 
                 $container->setDefinition('ai.tool.agent_processor.'.$name, $toolProcessorDefinition);
             } else {
@@ -474,8 +470,8 @@ final class AiBundle extends AbstractBundle
                     $container->setDefinition('ai.fault_tolerant_toolbox', new Definition(FaultTolerantToolbox::class))
                         ->setArguments([new Reference('.inner')])
                         ->setDecoratedService('ai.toolbox')
-                        ->addTag('ai.input_processor', ['agent' => $name, 'priority' => 0])
-                        ->addTag('ai.output_processor', ['agent' => $name, 'priority' => 0]);
+                        ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => 0])
+                        ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => 0]);
                 }
             }
         }
@@ -483,8 +479,8 @@ final class AiBundle extends AbstractBundle
         // STRUCTURED OUTPUT
         if ($config['structured_output']) {
             $container->getDefinition('ai.agent.structured_output_processor')
-                ->addTag('ai.input_processor', ['agent' => $name, 'priority' => -10])
-                ->addTag('ai.output_processor', ['agent' => $name, 'priority' => -10]);
+                ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => -10])
+                ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => -10]);
         }
 
         // SYSTEM PROMPT
@@ -495,7 +491,7 @@ final class AiBundle extends AbstractBundle
                     $config['include_tools'] ? new Reference('ai.toolbox.'.$name) : null,
                     new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
                 ])
-                ->addTag('ai.input_processor', ['agent' => $name, 'priority' => -20]);
+                ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => -20]);
 
             $container->setDefinition('ai.agent.'.$name.'.system_prompt_processor', $systemPromptInputProcessorDefinition);
         }

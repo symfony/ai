@@ -23,16 +23,12 @@ class ProcessorCollectorCompilerPass implements CompilerPassInterface
         $outputProcessors = $container->findTaggedServiceIds('ai.output_processor');
 
         foreach ($container->findTaggedServiceIds('ai.agent') as $serviceId => $tags) {
-            $agentName = $tags[0]['name'] ?? null;
-            if (!\is_string($agentName)) {
-                continue;
-            }
-
             $agentInputProcessors = [];
             $agentOutputProcessors = [];
             foreach ($inputProcessors as $processorId => $processorTags) {
                 foreach ($processorTags as $tag) {
-                    if (($tag['agent'] ?? null) === $agentName) {
+                    $agent = $tag['agent'] ?? null;
+                    if (null === $agent || $agent === $serviceId) {
                         $priority = $tag['priority'] ?? 0;
                         $agentInputProcessors[] = [$priority, new Reference($processorId)];
                     }
@@ -41,7 +37,8 @@ class ProcessorCollectorCompilerPass implements CompilerPassInterface
 
             foreach ($outputProcessors as $processorId => $processorTags) {
                 foreach ($processorTags as $tag) {
-                    if (($tag['agent'] ?? null) === $agentName) {
+                    $agent = $tag['agent'] ?? null;
+                    if (null === $agent || $agent === $serviceId) {
                         $priority = $tag['priority'] ?? 0;
                         $agentOutputProcessors[] = [$priority, new Reference($processorId)];
                     }
