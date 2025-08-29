@@ -41,7 +41,7 @@ final readonly class ModelClient implements PlatformModelClient
     /**
      * The difference in HuggingFace here is that we treat the payload as the options for the request not only the body.
      */
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         // Extract task from options if provided
         $task = $options['task'] ?? null;
@@ -71,7 +71,7 @@ final readonly class ModelClient implements PlatformModelClient
      *
      * @return array<string, mixed>
      */
-    private function getPayload(array|string $payload, array $options): array
+    private function getPayload(array $payload, array $options): array
     {
         // Expect JSON input if string or not
         if (\is_string($payload) || !(isset($payload['body']) || isset($payload['json']))) {

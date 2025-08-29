@@ -45,7 +45,7 @@ final readonly class ModelClient implements ModelClientInterface
         return $model instanceof Model;
     }
 
-    public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(BaseModel $model, array $payload, array $options = []): RawHttpResult
     {
         return new RawHttpResult(
             $this->httpClient->request(
@@ -55,7 +55,7 @@ final readonly class ModelClient implements ModelClientInterface
                         'Content-Type' => 'application/json',
                         'Authorization' => \sprintf('Bearer %s', $this->apiKey),
                     ],
-                    'json' => \is_array($payload) ? array_merge($payload, $options) : $payload,
+                    'json' => array_merge($payload, $options),
                 ]
             )
         );

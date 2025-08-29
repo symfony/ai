@@ -39,7 +39,7 @@ final readonly class ClaudeModelClient implements ModelClientInterface
         return $model instanceof Claude;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult
+    public function request(Model $model, array $payload, array $options = []): RawBedrockResult
     {
         unset($payload['model']);
 

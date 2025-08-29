@@ -39,7 +39,7 @@ final readonly class ModelClient implements ModelClientInterface
         return $model instanceof DallE;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.openai.com/v1/images/generations', [
             'auth_bearer' => $this->apiKey,

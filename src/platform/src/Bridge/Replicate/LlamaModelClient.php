@@ -32,7 +32,7 @@ final readonly class LlamaModelClient implements ModelClientInterface
         return $model instanceof Llama;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array $payload, array $options = []): RawHttpResult
     {
         $model instanceof Llama || throw new InvalidArgumentException(\sprintf('The model must be an instance of "%s".', Llama::class));
 
