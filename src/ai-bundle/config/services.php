@@ -64,8 +64,6 @@ return static function (ContainerConfigurator $container): void {
                 service('ai.agent.response_format_factory'),
                 service('serializer'),
             ])
-            ->tag('ai.agent.input_processor')
-            ->tag('ai.agent.output_processor')
 
         // tools
         ->set('ai.toolbox.abstract', Toolbox::class)
@@ -107,8 +105,6 @@ return static function (ContainerConfigurator $container): void {
             ])
         ->set('ai.tool.agent_processor', ToolProcessor::class)
             ->parent('ai.tool.agent_processor.abstract')
-            ->tag('ai.agent.input_processor')
-            ->tag('ai.agent.output_processor')
             ->arg('index_0', service('ai.toolbox'))
         ->set('ai.security.is_granted_attribute_listener', IsGrantedToolAttributeListener::class)
             ->args([
