@@ -119,6 +119,14 @@ Configuration
                 model:
                     class: 'Symfony\AI\Platform\Bridge\Mistral\Embeddings'
                     name: !php/const Symfony\AI\Platform\Bridge\Mistral\Embeddings::MISTRAL_EMBED
+        message_store:
+            cache:
+                main:
+                    service: 'cache.app'
+        chat:
+            main:
+                agent: 'research'
+                message_store: 'main'
 
 Usage
 -----
