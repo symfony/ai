@@ -27,7 +27,7 @@ use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
-use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
+use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract as VertexAiGeminiContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
@@ -37,11 +37,8 @@ return static function (ContainerConfigurator $container): void {
     $container->services()
         ->set('ai.platform.contract.default', Contract::class)
             ->factory([Contract::class, 'create'])
-        ->set('ai.platform.contract.openai')
-            ->parent('ai.platform.contract.default')
-            ->args([
-                inline_service(AudioNormalizer::class),
-            ])
+        ->set('ai.platform.contract.openai', Contract::class)
+            ->factory([OpenAiContract::class, 'create'])
         ->set('ai.platform.contract.anthropic', Contract::class)
             ->factory([AnthropicContract::class, 'create'])
         ->set('ai.platform.contract.google', Contract::class)
