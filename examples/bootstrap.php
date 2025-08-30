@@ -11,6 +11,8 @@
 
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\Platform\Result\Metadata\Metadata;
+use Symfony\AI\Platform\Result\Metadata\TokenUsage\TokenUsage;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Dotenv\Dotenv;
@@ -51,4 +53,20 @@ function logger(): LoggerInterface
     };
 
     return new ConsoleLogger(new ConsoleOutput($verbosity));
+}
+
+function print_token_usage(Metadata $metadata): void
+{
+    $tokenUsage = $metadata->get('token_usage');
+
+    assert($tokenUsage instanceof TokenUsage);
+
+    echo 'Prompt tokens: '.$tokenUsage->promptTokens.\PHP_EOL;
+    echo 'Completion tokens: '.$tokenUsage->completionTokens.\PHP_EOL;
+    echo 'Thinking tokens: '.$tokenUsage->thinkingTokens.\PHP_EOL;
+    echo 'Cached tokens: '.$tokenUsage->cachedTokens.\PHP_EOL;
+    echo 'Remaining tokens minute: '.$tokenUsage->remainingTokensMinute.\PHP_EOL;
+    echo 'Remaining tokens month: '.$tokenUsage->remainingTokensMonth.\PHP_EOL;
+    echo 'Remaining tokens: '.$tokenUsage->remainingTokens.\PHP_EOL;
+    echo 'Utilized tokens: '.$tokenUsage->totalTokens.\PHP_EOL;
 }

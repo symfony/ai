@@ -514,6 +514,26 @@ final class AiBundle extends AbstractBundle
             $outputProcessors[] = new Reference('ai.agent.structured_output_processor');
         }
 
+        // TOKEN USAGE TRACKING
+        if (isset($config['track_token_usage']['enabled']) && true === $config['track_token_usage']['enabled']) {
+            $processorClass = $config['track_token_usage']['processor'];
+
+            if (!is_a($processorClass, OutputProcessorInterface::class, true)) {
+                throw new InvalidArgumentException(\sprintf('"%s" class must implement Symfony\AI\Agent\OutputProcessorInterface.', $processorClass));
+            }
+
+            $processorServiceId = 'ai.platform.token_usage_processor.'.strtolower(basename(str_replace('\\', '/', $processorClass)));
+
+            if (!$container->hasDefinition($processorServiceId)) {
+                $container->setDefinition(
+                    $processorServiceId,
+                    new Definition($processorClass),
+                );
+            }
+
+            $outputProcessors[] = new Reference($processorServiceId);
+        }
+
         // SYSTEM PROMPT
         if (\is_string($config['system_prompt'])) {
             $systemPromptInputProcessorDefinition = new Definition(SystemPromptInputProcessor::class, [
