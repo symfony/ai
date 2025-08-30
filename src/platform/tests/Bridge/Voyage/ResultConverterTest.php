@@ -104,11 +104,15 @@ class ResultConverterTest extends TestCase
 
     public static function voyageModelsProvider(): iterable
     {
+        yield 'V3_5' => [Voyage::V3_5];
+        yield 'V3_5_LITE' => [Voyage::V3_5_LITE];
         yield 'V3' => [Voyage::V3];
         yield 'V3_LITE' => [Voyage::V3_LITE];
+        yield 'V3_LARGE' => [Voyage::V3_LARGE];
         yield 'FINANCE_2' => [Voyage::FINANCE_2];
         yield 'MULTILINGUAL_2' => [Voyage::MULTILINGUAL_2];
         yield 'LAW_2' => [Voyage::LAW_2];
+        yield 'CODE_3' => [Voyage::CODE_3];
         yield 'CODE_2' => [Voyage::CODE_2];
     }
 }
