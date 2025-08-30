@@ -19,7 +19,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI);
+$model = Gpt::create(Gpt::GPT_4O_MINI);
 
 $processor = new SystemPromptInputProcessor('You are Yoda and write like he speaks. But short.');
 

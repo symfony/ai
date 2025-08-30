@@ -17,19 +17,21 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-class DallE extends Model
+final class DallE
 {
     public const DALL_E_2 = 'dall-e-2';
     public const DALL_E_3 = 'dall-e-3';
 
-    /** @param array<string, mixed> $options The default options for the model usage */
-    public function __construct(string $name = self::DALL_E_2, array $options = [])
+    /**
+     * @param array<string, mixed> $options The default options for the model usage
+     */
+    public static function create(string $name = self::DALL_E_2, array $options = []): Model
     {
         $capabilities = [
             Capability::INPUT_TEXT,
             Capability::OUTPUT_IMAGE,
         ];
 
-        parent::__construct($name, $capabilities, $options);
+        return new Model($name, $capabilities, $options);
     }
 }

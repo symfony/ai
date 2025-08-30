@@ -25,7 +25,7 @@ The URL Context tool allows Gemini to fetch and analyze content from web pages. 
 
 ::
 
-    $model = new Gemini('gemini-2.5-pro-preview-03-25', [
+    $model = Gemini::create('gemini-2.5-pro-preview-03-25', [
         'server_tools' => [
             'url_context' => true
         ]
@@ -42,7 +42,7 @@ The URL Context tool allows Gemini to fetch and analyze content from web pages. 
 
 The Google Search tool enables the model to search the web and incorporate search results into its results::
 
-    $model = new Gemini('gemini-2.5-pro-preview-03-25', [
+    $model = Gemini::create('gemini-2.5-pro-preview-03-25', [
         'server_tools' => [
             'google_search' => true
         ]
@@ -58,7 +58,7 @@ The Google Search tool enables the model to search the web and incorporate searc
 
 The Code Execution tool provides a sandboxed environment for running code::
 
-    $model = new Gemini('gemini-2.5-pro-preview-03-25', [
+    $model = Gemini::create('gemini-2.5-pro-preview-03-25', [
         'server_tools' => [
             'code_execution' => true
         ]
@@ -75,7 +75,7 @@ The Code Execution tool provides a sandboxed environment for running code::
 
 You can enable multiple server tools simultaneously::
 
-    $model = new Gemini('gemini-2.5-pro-preview-03-25', [
+    $model = Gemini::create('gemini-2.5-pro-preview-03-25', [
         'server_tools' => [
             'url_context' => true,
             'google_search' => true,

@@ -43,7 +43,7 @@ final class GptModelClientTest extends TestCase
         $mockResponse = new JsonMockResponse(['choices' => []]);
         $mockHttpClient->setResponseFactory([$mockResponse]);
 
-        $model = new Gpt('gpt-3.5-turbo');
+        $model = Gpt::create('gpt-3.5-turbo');
         $client->request($model, ['messages' => []]);
     }
 
@@ -64,7 +64,7 @@ final class GptModelClientTest extends TestCase
         $mockResponse = new JsonMockResponse(['choices' => []]);
         $mockHttpClient->setResponseFactory([$mockResponse]);
 
-        $model = new Gpt('gpt-3.5-turbo');
+        $model = Gpt::create('gpt-3.5-turbo');
         $client->request($model, ['messages' => []]);
     }
 
@@ -76,7 +76,7 @@ final class GptModelClientTest extends TestCase
             'https://albert.example.com/'
         );
 
-        $gptModel = new Gpt('gpt-3.5-turbo');
+        $gptModel = Gpt::create('gpt-3.5-turbo');
         $this->assertTrue($client->supports($gptModel));
     }
 
@@ -88,7 +88,7 @@ final class GptModelClientTest extends TestCase
             'https://albert.example.com/'
         );
 
-        $embeddingsModel = new Embeddings('text-embedding-ada-002');
+        $embeddingsModel = Embeddings::create('text-embedding-ada-002');
         $this->assertFalse($client->supports($embeddingsModel));
     }
 
@@ -108,7 +108,7 @@ final class GptModelClientTest extends TestCase
             'https://albert.example.com/v1'
         );
 
-        $model = new Gpt('gpt-3.5-turbo');
+        $model = Gpt::create('gpt-3.5-turbo');
         $result = $client->request($model, $payload, $options);
 
         $this->assertNotNull($capturedRequest);
@@ -175,7 +175,7 @@ final class GptModelClientTest extends TestCase
             'https://albert.example.com/v1'
         );
 
-        $model = new Gpt('gpt-3.5-turbo');
+        $model = Gpt::create('gpt-3.5-turbo');
         $client->request($model, ['messages' => []]);
 
         $this->assertSame('https://albert.example.com/v1/chat/completions', $capturedUrl);
@@ -196,7 +196,7 @@ final class GptModelClientTest extends TestCase
             'https://albert.example.com/v1'
         );
 
-        $model = new Gpt('gpt-3.5-turbo');
+        $model = Gpt::create('gpt-3.5-turbo');
         $client->request($model, ['messages' => []]);
 
         $this->assertSame('https://albert.example.com/v1/chat/completions', $capturedUrl);
