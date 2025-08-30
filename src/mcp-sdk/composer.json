@@ -22,7 +22,8 @@
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.5",
         "symfony/console": "^6.4 || ^7.0",
-        "psr/cache": "^3.0"
+        "psr/cache": "^3.0",
+        "monolog/monolog": "^3.9"
     },
     "suggest": {
         "symfony/console": "To use SymfonyConsoleTransport for STDIO",
