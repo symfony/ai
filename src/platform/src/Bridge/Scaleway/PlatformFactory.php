@@ -1,0 +1,45 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Platform\Bridge\Scaleway;
+
+use Symfony\AI\Platform\Bridge\Scaleway\Llm\ModelClient as ScalewayModelClient;
+use Symfony\AI\Platform\Bridge\Scaleway\Llm\ResultConverter as ScalewayResponseConverter;
+use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Platform;
+use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+
+/**
+ * @author Marcus Stöhr <marcus@fischteich.net>
+ */
+final class PlatformFactory
+{
+    public static function create(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+        ?Contract $contract = null,
+    ): Platform {
+        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
+
+        return new Platform(
+            [
+                new ScalewayModelClient($httpClient, $apiKey),
+                new Embeddings\ModelClient($httpClient, $apiKey),
+            ],
+            [
+                new ScalewayResponseConverter(),
+                new Embeddings\ResultConverter(),
+            ],
+            $contract,
+        );
+    }
+}
