@@ -19,6 +19,9 @@ class ProcessorCompilerPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
     {
+        $this->filterProcessorTags($container, 'ai.agent.input_processor');
+        $this->filterProcessorTags($container, 'ai.agent.output_processor');
+
         $inputProcessors = $container->findTaggedServiceIds('ai.agent.input_processor');
         $outputProcessors = $container->findTaggedServiceIds('ai.agent.output_processor');
 
@@ -53,6 +56,26 @@ class ProcessorCompilerPass implements CompilerPassInterface
             $agentDefinition
                 ->setArgument(2, array_column($agentInputProcessors, 1))
                 ->setArgument(3, array_column($agentOutputProcessors, 1));
+        }
+    }
+
+    /**
+     * Remove interface-based tags in case a service also has an attribute-based tag.
+     */
+    private function filterProcessorTags(ContainerBuilder $container, string $tag): void
+    {
+        $processors = $container->findTaggedServiceIds($tag);
+
+        foreach ($processors as $processorId => $processorTags) {
+            $attributeBasedTag = array_filter($processorTags, static fn (array $tag) => 'attribute' === ($tag['tagged_by'] ?? null));
+            $otherTags = array_filter($processorTags, static fn (array $tag) => !isset($tag['tagged_by']));
+
+            if ([] === $attributeBasedTag) {
+                continue;
+            }
+
+            $container->getDefinition($processorId)
+                ->setTags([$tag => array_merge($attributeBasedTag, $otherTags)]);
         }
     }
 }

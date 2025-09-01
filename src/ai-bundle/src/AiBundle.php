@@ -149,6 +149,7 @@ final class AiBundle extends AbstractBundle
             $definition->addTag('ai.agent.input_processor', [
                 'agent' => $attribute->agent,
                 'priority' => $attribute->priority,
+                'tagged_by' => 'attribute',
             ]);
         });
 
@@ -156,13 +157,14 @@ final class AiBundle extends AbstractBundle
             $definition->addTag('ai.agent.output_processor', [
                 'agent' => $attribute->agent,
                 'priority' => $attribute->priority,
+                'tagged_by' => 'attribute',
             ]);
         });
 
         $builder->registerForAutoconfiguration(InputProcessorInterface::class)
-            ->addTag('ai.agent.input_processor');
+            ->addTag('ai.agent.input_processor', ['tagged_by' => 'interface']);
         $builder->registerForAutoconfiguration(OutputProcessorInterface::class)
-            ->addTag('ai.agent.output_processor');
+            ->addTag('ai.agent.output_processor', ['tagged_by' => 'interface']);
 
         $builder->registerForAutoconfiguration(ModelClientInterface::class)
             ->addTag('ai.platform.model_client');
