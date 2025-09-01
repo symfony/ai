@@ -88,6 +88,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->arrayNode('ollama')
                         ->children()
                             ->scalarNode('host_url')->defaultValue('http://127.0.0.1:11434')->end()
+                            ->scalarNode('cache')->end()
                         ->end()
                     ->end()
                     ->arrayNode('cerebras')
