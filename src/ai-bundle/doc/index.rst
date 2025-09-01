@@ -146,6 +146,34 @@ Use the `Agent` service to leverage models and tools::
         }
     }
 
+**Register Processors**
+
+By default, all services implementing the `InputProcessorInterface` or the
+`OutputProcessorInterface` interfaces are automatically applied to every `Agent`.
+
+This behavior can be overridden/configured with the `#[AsInputProcessor]` and
+the `#[AsOutputProcessor]` attributes::
+
+    use Symfony\AI\Agent\Input;
+    use Symfony\AI\Agent\InputProcessorInterface;
+    use Symfony\AI\Agent\Output;
+    use Symfony\AI\Agent\OutputProcessorInterface;
+
+    #[AsInputProcessor(priority: 99)] // This apply to every agents
+    #[AsOutputProcessor(agent: 'my_agent_id')] // The output processor will only be registered for this specific agent
+    final readonly class MyService implements InputProcessorInterface, OutputProcessorInterface
+    {
+        public function processInput(Input $input): void
+        {
+            // ...
+        }
+
+        public function processOutput(Output $output): void
+        {
+            // ...
+        }
+    }
+
 **Register Tools**
 
 To use existing tools, you can register them as a service:

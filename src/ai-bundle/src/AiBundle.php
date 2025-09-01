@@ -16,6 +16,8 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
+use Symfony\AI\Agent\InputProcessorInterface;
+use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
@@ -156,6 +158,11 @@ final class AiBundle extends AbstractBundle
                 'priority' => $attribute->priority,
             ]);
         });
+
+        $builder->registerForAutoconfiguration(InputProcessorInterface::class)
+            ->addTag('ai.agent.input_processor');
+        $builder->registerForAutoconfiguration(OutputProcessorInterface::class)
+            ->addTag('ai.agent.output_processor');
 
         $builder->registerForAutoconfiguration(ModelClientInterface::class)
             ->addTag('ai.platform.model_client');
@@ -457,8 +464,8 @@ final class AiBundle extends AbstractBundle
                     ->replaceArgument(0, new Reference('ai.toolbox.'.$name));
 
                 $container->setDefinition('ai.tool.agent_processor.'.$name, $toolProcessorDefinition)
-                    ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => 0])
-                    ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => 0]);
+                    ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => -10])
+                    ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => -10]);
             } else {
                 if ($config['fault_tolerant_toolbox'] && !$container->hasDefinition('ai.fault_tolerant_toolbox')) {
                     $container->setDefinition('ai.fault_tolerant_toolbox', new Definition(FaultTolerantToolbox::class))
@@ -467,16 +474,16 @@ final class AiBundle extends AbstractBundle
                 }
 
                 $container->getDefinition('ai.tool.agent_processor')
-                    ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => 0])
-                    ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => 0]);
+                    ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => -10])
+                    ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => -10]);
             }
         }
 
         // STRUCTURED OUTPUT
         if ($config['structured_output']) {
             $container->getDefinition('ai.agent.structured_output_processor')
-                ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => -10])
-                ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => -10]);
+                ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => -20])
+                ->addTag('ai.agent.output_processor', ['agent' => $name, 'priority' => -20]);
         }
 
         // SYSTEM PROMPT
@@ -487,7 +494,7 @@ final class AiBundle extends AbstractBundle
                     $config['include_tools'] ? new Reference('ai.toolbox.'.$name) : null,
                     new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
                 ])
-                ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => -20]);
+                ->addTag('ai.agent.input_processor', ['agent' => $name, 'priority' => -30]);
 
             $container->setDefinition('ai.agent.'.$name.'.system_prompt_processor', $systemPromptInputProcessorDefinition);
         }
