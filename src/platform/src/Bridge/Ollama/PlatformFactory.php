@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -26,11 +27,12 @@ final class PlatformFactory
         string $hostUrl = 'http://localhost:11434',
         ?HttpClientInterface $httpClient = null,
         ?Contract $contract = null,
+        ?CacheInterface $cache = null,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [new OllamaClient($httpClient, $hostUrl)],
+            [new OllamaClient($httpClient, $hostUrl, $cache)],
             [new OllamaResultConverter()],
             $contract ?? OllamaContract::create()
         );

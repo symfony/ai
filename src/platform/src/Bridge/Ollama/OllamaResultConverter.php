@@ -47,13 +47,14 @@ final readonly class OllamaResultConverter implements ResultConverterInterface
 
         return \array_key_exists('embeddings', $data)
             ? $this->doConvertEmbeddings($data)
-            : $this->doConvertCompletion($data);
+            : $this->doConvertCompletion($data, $options);
     }
 
     /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
      */
-    public function doConvertCompletion(array $data): ResultInterface
+    public function doConvertCompletion(array $data, array $options): ResultInterface
     {
         if (!isset($data['message'])) {
             throw new RuntimeException('Response does not contain message.');
@@ -73,7 +74,18 @@ final readonly class OllamaResultConverter implements ResultConverterInterface
             return new ToolCallResult(...$toolCalls);
         }
 
-        return new TextResult($data['message']['content']);
+        $result = new TextResult($data['message']['content']);
+
+        if (\array_key_exists('prompt_cache_key', $options)) {
+            $metadata = $result->getMetadata();
+
+            $metadata->add('cached', true);
+            $metadata->add('prompt_cache_key', $options['prompt_cache_key']);
+            $metadata->add('cached_prompt_count', $data['prompt_eval_count']);
+            $metadata->add('cached_completion_count', $data['eval_count']);
+        }
+
+        return $result;
     }
 
     /**
