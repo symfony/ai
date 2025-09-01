@@ -374,6 +374,29 @@ which can be useful to speed up the processing::
         echo $result->asText().PHP_EOL;
     }
 
+Cached Platform Calls
+---------------------
+
+Thanks to Symfony's Cache component, platform's calls can be cached to reduce network/resources calls/consumption::
+
+    use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+    use Symfony\AI\Platform\CachedPlatform;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\Component\Cache\Adapter\ArrayAdapter;
+    use Symfony\Component\Cache\Adapter\TagAwareAdapter;
+
+    $platform = PlatformFactory::create($apiKey, eventDispatcher: $dispatcher);
+    $cachedPlatform = new CachedPlatform($platform, new TagAwareAdapter(new ArrayAdapter());
+
+    $firstResult = $cachedPlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
+
+    echo $firstResult->getContent().\PHP_EOL;
+
+    $secondResult = $cachedPlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
+
+    echo $secondResult->getContent().\PHP_EOL;
+
 Testing Tools
 -------------
 

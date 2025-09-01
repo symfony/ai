@@ -65,11 +65,15 @@
         "phpstan/phpstan-symfony": "^2.0.6",
         "phpunit/phpunit": "^11.5",
         "symfony/ai-agent": "@dev",
+        "symfony/cache": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
         "symfony/dotenv": "^7.3|^8.0",
         "symfony/finder": "^7.3|^8.0",
         "symfony/process": "^7.3|^8.0",
         "symfony/var-dumper": "^7.3|^8.0"
+    },
+    "suggest": {
+        "symfony/cache": "Enable caching for platforms"
     },
     "autoload": {
         "psr-4": {
