@@ -415,6 +415,16 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('ollama' === $type) {
+            $arguments = [
+                $platform['host_url'],
+                new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                new Reference('ai.platform.contract.ollama'),
+            ];
+
+            if (\array_key_exists('cache', $platform)) {
+                $arguments[] = new Reference($platform['cache'], ContainerInterface::NULL_ON_INVALID_REFERENCE);
+            }
+
             $platformId = 'ai.platform.ollama';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OllamaPlatformFactory::class.'::create')

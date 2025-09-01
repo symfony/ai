@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -28,11 +29,12 @@ final class PlatformFactory
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        ?CacheInterface $cache = null,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [new OllamaClient($httpClient, $hostUrl)],
+            [new OllamaClient($httpClient, $hostUrl, $cache)],
             [new OllamaResultConverter()],
             $modelCatalog,
             $contract ?? OllamaContract::create(),
