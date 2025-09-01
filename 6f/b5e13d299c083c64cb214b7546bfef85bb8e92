@@ -1,0 +1,96 @@
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-19T13:06:29Z
+
+> Off topic, but should also be then integrated in the profiler 🙌🤓
+
+Can that be done separately?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-19T13:11:02Z
+
+Yes should be a follow up PR, maybe create an issue to not forget?
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-20T13:12:48Z
+
+@chr-hertel
+Could you have a look?
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-21T04:41:42Z
+
+> Please remove the indirection via the attribute here. there is no benefit, but only adds complexity to maintain.
+>
+> We know in the bridge exactly for which platform the output processor is intended, could just register them as service (where does that currently happen?) and check for their existence while building the agent, like you did in `AiBundle` class.
+>
+> And please enable and test it with the demo - does it already work for you?
+
+Do you mean we should register such classes as services individually manually?
+I tried to register them dynamically, and this is why the attribute exists.
+
+> And please enable and test it with the demo - does it already work for you?
+
+Integration with the demo app is already done, and I was awaiting this PR's merge so that I could follow it up with another PR that would contain these changes. @OskarStark earlier suggested trying to make the respective changes in the profiler, and this is why I didn't commit/push the changes that pertain to the demo app to keep the surface area of the changes small.
+I tried testing the demo app with **Ollama**. Though everything worked fine, the token usage was obviously empty since the said bridge doesn't have any output processors for token usage yet, which I intended to add as well.
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-25T05:05:02Z
+
+> > Do you mean we should register such classes as services individually manually?
+>
+> Yes please - we don't need to decouple via attribute. That also makes it more brittle. More moving parts, more places to break :D let's keep it simple and register the services directly when the option is `true` programmatic in the `AiBundle` class
+>
+> > I tried testing the demo app with Ollama. Though everything worked fine, the token usage was obviously empty since the said bridge doesn't have any output processors for token usage yet, which I intended to add as well.
+>
+> didn't work for me with openai, but not sure i got it right. let's see after the change 👍
+
+@chr-hertel
+I made the following changes in the latest commit:
+- Removed the attribute to tag token usage output processors
+- Registered the token usage output processors as services manually inside the AI bundle
+- Added token usage information to the documentation
+
+Would it make sense to follow this PR up with another one to add the token usage stuff for demo and probably profiler as well, to keep this PR small?
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-08-25T07:11:30Z
+
+> Would it make sense to follow this PR up with another one to add the token usage stuff for demo and probably profiler as well, to keep this PR small?
+
+Multiple small PR would be great to unlock other TokenOutProcessor PR too :)
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-08-26T06:34:05Z
+
+> > > Do you mean we should register such classes as services individually manually?
+> >
+> >
+> > Yes please - we don't need to decouple via attribute. That also makes it more brittle. More moving parts, more places to break :D let's keep it simple and register the services directly when the option is `true` programmatic in the `AiBundle` class
+> > > I tried testing the demo app with Ollama. Though everything worked fine, the token usage was obviously empty since the said bridge doesn't have any output processors for token usage yet, which I intended to add as well.
+> >
+> >
+> > didn't work for me with openai, but not sure i got it right. let's see after the change 👍
+>
+> @chr-hertel I made the following changes in the latest commit:
+>
+> * Removed the attribute to tag token usage output processors
+> * Registered the token usage output processors as services manually inside the AI bundle
+> * Added token usage information to the documentation
+>
+> Would it make sense to follow this PR up with another one to add the token usage stuff for demo and probably profiler as well, to keep this PR small?
+
+@chr-hertel
+Could you have a look at the latest changes and let me know what you think?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-01T20:02:20Z
+
+Looks quite good to me
