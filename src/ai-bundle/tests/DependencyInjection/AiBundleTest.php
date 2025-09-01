@@ -2757,6 +2757,41 @@ class AiBundleTest extends TestCase
         $this->assertSame('text-embedding-3-small?normalize=false&cache=true&nested%5Bbool%5D=false', $vectorizerDefinition->getArgument(1));
     }
 
+    public function testCachedPlatformCanBeUsed()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'host_url' => 'http://127.0.0.1:11434',
+                    ],
+                    'cache' => [
+                        'ollama' => [
+                            'platform' => 'ai.platform.ollama',
+                            'service' => 'cache.app',
+                            'cache_key' => 'ollama',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.cache.ollama'));
+
+        $definition = $container->getDefinition('ai.platform.cache.ollama');
+        $this->assertCount(3, $definition->getArguments());
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $platformArgument = $definition->getArgument(0);
+        $this->assertSame('.inner', (string) $platformArgument);
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $cacheArgument = $definition->getArgument(1);
+        $this->assertSame('cache.app', (string) $cacheArgument);
+
+        $this->assertSame('ollama', $definition->getArgument(2));
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();
@@ -2793,6 +2828,13 @@ class AiBundleTest extends TestCase
                             'base_url' => 'myazure2.openai.azure.com/',
                             'deployment' => 'gpt-4',
                             'api_version' => '2024-02-15-preview',
+                        ],
+                    ],
+                    'cache' => [
+                        'azure' => [
+                            'platform' => 'ai.platform.azure',
+                            'service' => 'cache.app',
+                            'cache_key' => 'foo',
                         ],
                     ],
                     'eleven_labs' => [

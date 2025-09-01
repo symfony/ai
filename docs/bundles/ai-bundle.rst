@@ -136,6 +136,28 @@ Advanced Example with Multiple Agents
                 vectorizer: 'ai.vectorizer.mistral_embeddings'
                 store: 'ai.store.memory.research'
 
+Cached platform
+---------------
+
+Thanks to Symfony's Cache component, platforms can be decorated and use any cache adapter,
+this platform  allows to reduce network calls / resource comsumption:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openai:
+                api_key: '%env(OPENAI_API_KEY)%'
+            cache:
+                platform: 'ai.platform.openai'
+                service: 'cache.app'
+
+        agent:
+            openai:
+                platform: 'ai.platform.cache.openai'
+                model: 'gpt-4o-mini'
+
 Store Dependency Injection
 --------------------------
 
