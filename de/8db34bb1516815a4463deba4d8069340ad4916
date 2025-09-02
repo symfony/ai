@@ -1,0 +1,164 @@
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-08-29T11:01:46Z
+
+@chr-hertel I think the PR is ready for a new review
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-01T07:17:27Z
+
+> Please make sure it is not needed to use the attribute if an `Input` or `OutputProcessor` is meant to catch all agents. With implementing the interface the intent of the developer is clear and the feature of `#[AsOutputProcessor]` is then to limit it to one (or multiple) agents instead of all.
+
+@chr-hertel I don't think it
+- is easily possible
+- should be recommended
+
+As an exemple there are the following intput/outputprocessor
+https://github.com/symfony/ai/blob/4f83f33b1e622568ef3db5b35cbf13f1023c3447/src/ai-bundle/src/AiBundle.php#L443-L526
+
+If implementing the interface automatically register the processor it means that (for example):
+- Using `$config['structured_output'] = false` on all your agent will let the processor without attribute and then will automatically register it to EVERY agent instead.
+- As soon as you use `$config['structured_output'] = true` on ONE agent, it will remove it from every other agents.
+
+So it may require some extra reflection about how to disable a processor from the auto-discovery logic you want.
+
+Also, in an incremental implementation of this feature we could prefer
+- A PR to allow people manually register processor with the new attributes/tags
+- A PR to automatically add the attribute/tag to the class implementing the interface in some conditions.
+
+They don't have to be in the same PR.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-01T09:56:34Z
+
+No, don't get me wrong, I don't think it is useful to register _all_ Input/OutputProcessor implementations based on the interface - especially the ones that we provide out of the box, like the toolbox or structured output - that should only be based on the bundle config.
+
+I'm talking about the library user land. If someone implements their own processor - default is all agents, limited with attribute
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-01T10:09:17Z
+
+> I'm talking about the library user land. If someone implements their own processor - default is all agents, limited with attribute
+
+Then, how I make a difference (in the config) between an InputProcessor/OutputProcessor from symfony/ai VS from the user lib ? Because if I use
+```
+$builder->registerForAutoconfiguration(InputProcessorInterface::class)
+```
+it will impact both.
+
+Also, the feature is currently doable with just `#[AsInputProcessor]` since I consider the attribute with "null" agent means every agents.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-01T12:52:01Z
+
+> Then, how I make a difference (in the config) between an InputProcessor/OutputProcessor from symfony/ai VS from the user lib ? Because if I use
+>
+> ```
+> $builder->registerForAutoconfiguration(InputProcessorInterface::class)
+> ```
+>
+> it will impact both.
+
+I thought, that with your changes in `src/ai-bundle/config/services.php` that should be fine. Autoconfiguration is not enabled for lib services in the bundle - and maybe it makes the bundle config even easier to add on tag per agent using the structured output or toolbox. but if that doesn't work since i'm overlooking something, i can take a deeper look later on code-level.
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-01T13:27:52Z
+
+> I thought, that with your changes in `src/ai-bundle/config/services.php` that should be fine. Autoconfiguration is not enabled for lib services in the bundle - and maybe it makes the bundle config even easier to add on tag per agent using the structured output or toolbox. but if that doesn't work since i'm overlooking something, i can take a deeper look later on code-level.
+
+I tried on my project and
+```
+dd($container->findTaggedServiceIds('ai.agent.input_processor'));
+```
+returns
+```
+array:2 [
+  "ai.agent.structured_output_processor" => array:1 [
+    0 => []
+  ]
+  "ai.tool.agent_processor" => array:1 [
+    0 => []
+  ]
+]
+```
+so indeed, after my PR it will returns nothing by default ; I'll update the PR.
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-01T14:56:49Z
+
+Should be re-ready then @chr-hertel :)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-01T21:42:03Z
+
+What I did to test this with the demo application:
+
+I added two output processors, as they are easy to test:
+```php
+namespace App;
+
+use Symfony\AI\Agent\Output;
+use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Platform\Result\TextResult;
+
+final readonly class StrRevProcessor implements OutputProcessorInterface
+{
+    public function processOutput(Output $output): void
+    {
+        $result = $output->result;
+
+        if (!$result instanceof TextResult) {
+            return;
+        }
+
+        $output->result = new TextResult(strrev($result->getContent()));
+    }
+}
+```
+
+and
+
+```php
+namespace App;
+
+use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Output;
+use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Platform\Result\TextResult;
+
+#[AsOutputProcessor(agent: 'ai.agent.wikipedia')]
+final readonly class UpperProcessor implements OutputProcessorInterface
+{
+    public function processOutput(Output $output): void
+    {
+        $result = $output->result;
+
+        if (!$result instanceof TextResult) {
+            return;
+        }
+
+        $output->result = new TextResult(strtoupper($result->getContent()));
+    }
+}
+```
+
+But the `UpperProcessor` was not limited to the wikipedia agent, but also registered to all others, based on the interface.
+
+<img width="1307" height="445" alt="image" src="https://github.com/user-attachments/assets/c06100ca-25c0-43a0-b1d8-d96270af31a4" />
+
+---
+
+I agree that it is a bit tricky to fix this, but with your PR all essential parts were already there and this would be my solution to this problem here: d3118940f21a7ea74f045d58535ee73464b6a6c6
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-02T10:56:55Z
+
+@chr-hertel I think https://github.com/symfony/ai/pull/352/commits/4d2cf87e9ff5e8971dd007b08acda20d4f7d33b0 might be enough for your issue
