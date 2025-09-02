@@ -1,0 +1,43 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-24T21:29:49Z
+
+Should wait for #329
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-08-24T21:45:34Z
+
+> Should wait for #329
+
+Yeah, I will rebase after ;)
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-08-28T13:27:13Z
+
+> Should wait for #329
+
+Since #329 seems currently stuck/unfinished, I wonder if this PR couldn't be review/merged first and then https://github.com/symfony/ai/pull/329 will rebased it.
+
+This way I'll be able to use my Processor @chr-hertel :)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-01T20:48:46Z
+
+Ready for rebase :+1:
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-02T09:29:40Z
+
+> Also needs the bundle registration now :)
+
+Indeed, I missed that
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-02T09:48:34Z
+
+Ready @chr-hertel
