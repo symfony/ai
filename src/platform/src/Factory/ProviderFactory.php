@@ -28,7 +28,7 @@ final class ProviderFactory implements ProviderFactoryInterface
         if ('azure' === $providerKey) {
             $engine = strtolower($config->options['engine'] ?? 'openai');
             $factoryFqcn = match ($engine) {
-                'openai' => \Symfony\AI\Platform\Bridge\Azure\OpenAI\PlatformFactory::class,
+                'openai' => \Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory::class,
                 'meta' => \Symfony\AI\Platform\Bridge\Azure\Meta\PlatformFactory::class,
                 default => throw new \InvalidArgumentException(\sprintf('Unsupported Azure engine "%s". Supported: "openai", "meta".', $engine)),
             };
