@@ -15,9 +15,9 @@ use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$ada = new Embeddings(Embeddings::TEXT_ADA_002);
-$small = new Embeddings(Embeddings::TEXT_3_SMALL);
-$large = new Embeddings(Embeddings::TEXT_3_LARGE);
+$ada = Embeddings::create(Embeddings::TEXT_ADA_002);
+$small = Embeddings::create(Embeddings::TEXT_3_SMALL);
+$large = Embeddings::create(Embeddings::TEXT_3_LARGE);
 
 echo 'Initiating parallel embeddings calls to platform ...'.\PHP_EOL;
 $results = [];

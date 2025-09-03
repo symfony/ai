@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class Voyage extends Model
+final class Voyage
 {
     public const V3_5 = 'voyage-3.5';
     public const V3_5_LITE = 'voyage-3.5-lite';
@@ -36,8 +36,8 @@ class Voyage extends Model
     /**
      * @param array{dimensions?: int, input_type?: self::INPUT_TYPE_*, truncation?: bool} $options
      */
-    public function __construct(string $name = self::V3, array $options = [])
+    public static function create(string $name = self::V3, array $options = []): Model
     {
-        parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
+        return new Model($name, [Capability::INPUT_MULTIPLE], $options);
     }
 }

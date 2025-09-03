@@ -24,7 +24,7 @@ if (!isset($_SERVER['AWS_ACCESS_KEY_ID'], $_SERVER['AWS_SECRET_ACCESS_KEY'], $_S
 }
 
 $platform = PlatformFactory::create();
-$model = new Llama(Llama::V3_2_3B_INSTRUCT);
+$model = Llama::create(Llama::V3_2_3B_INSTRUCT);
 
 $agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(

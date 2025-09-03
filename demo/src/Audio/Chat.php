@@ -39,7 +39,7 @@ final class Chat
         $path = tempnam(sys_get_temp_dir(), 'audio-').'.wav';
         file_put_contents($path, base64_decode($base64audio));
 
-        $result = $this->platform->invoke(new Whisper(), Audio::fromFile($path));
+        $result = $this->platform->invoke(Whisper::create(), Audio::fromFile($path));
 
         $this->submitMessage($result->asText());
     }

@@ -29,7 +29,7 @@ class ModelClientTest extends TestCase
     {
         $client = new ModelClient(new MockHttpClient(), 'http://localhost:1234');
 
-        $this->assertTrue($client->supports(new Embeddings('test-model')));
+        $this->assertTrue($client->supports(Embeddings::create('test-model')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -45,7 +45,7 @@ class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new ModelClient($httpClient, 'http://localhost:1234');
 
-        $model = new Embeddings('test-model');
+        $model = Embeddings::create('test-model');
 
         $client->request($model, 'Hello, world!');
     }
@@ -66,7 +66,7 @@ class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new ModelClient($httpClient, 'http://localhost:1234');
 
-        $model = new Embeddings('test-model');
+        $model = Embeddings::create('test-model');
 
         $client->request($model, 'Hello, world!', ['custom_option' => 'value']);
     }
@@ -84,7 +84,7 @@ class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new ModelClient($httpClient, 'http://localhost:1234');
 
-        $model = new Embeddings('test-model');
+        $model = Embeddings::create('test-model');
 
         $client->request($model, ['Hello', 'world']);
     }

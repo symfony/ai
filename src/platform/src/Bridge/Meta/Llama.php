@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class Llama extends Model
+final class Llama
 {
     public const V3_3_70B_INSTRUCT = 'llama-3.3-70B-Instruct';
     public const V3_2_90B_VISION_INSTRUCT = 'llama-3.2-90b-vision-instruct';
@@ -38,13 +38,13 @@ class Llama extends Model
     /**
      * @param array<string, mixed> $options
      */
-    public function __construct(string $name = self::V3_1_405B_INSTRUCT, array $options = [])
+    public static function create(string $name = self::V3_1_405B_INSTRUCT, array $options = []): Model
     {
         $capabilities = [
             Capability::INPUT_MESSAGES,
             Capability::OUTPUT_TEXT,
         ];
 
-        parent::__construct($name, $capabilities, $options);
+        return new Model($name, $capabilities, $options);
     }
 }

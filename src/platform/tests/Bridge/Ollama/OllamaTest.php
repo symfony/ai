@@ -25,7 +25,7 @@ final class OllamaTest extends TestCase
     #[DataProvider('provideModelsWithToolCallingCapability')]
     public function testModelsWithToolCallingCapability(string $modelName)
     {
-        $model = new Ollama($modelName);
+        $model = Ollama::create($modelName);
 
         $this->assertTrue(
             $model->supports(Capability::TOOL_CALLING),
@@ -36,7 +36,7 @@ final class OllamaTest extends TestCase
     #[DataProvider('provideModelsWithoutToolCallingCapability')]
     public function testModelsWithoutToolCallingCapability(string $modelName)
     {
-        $model = new Ollama($modelName);
+        $model = Ollama::create($modelName);
 
         $this->assertFalse(
             $model->supports(Capability::TOOL_CALLING),
@@ -47,7 +47,7 @@ final class OllamaTest extends TestCase
     #[DataProvider('provideModelsWithMultipleInputCapabilities')]
     public function testModelsWithMultipleInputCapabilities(string $modelName)
     {
-        $model = new Ollama($modelName);
+        $model = Ollama::create($modelName);
 
         $this->assertTrue(
             $model->supports(Capability::INPUT_MULTIPLE),

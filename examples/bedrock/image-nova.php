@@ -25,7 +25,7 @@ if (!isset($_SERVER['AWS_ACCESS_KEY_ID'], $_SERVER['AWS_SECRET_ACCESS_KEY'], $_S
 }
 
 $platform = PlatformFactory::create();
-$model = new Nova(Nova::PRO);
+$model = Nova::create(Nova::PRO);
 
 $agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(

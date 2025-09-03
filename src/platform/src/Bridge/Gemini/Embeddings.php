@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Valtteri R <valtzu@gmail.com>
  */
-class Embeddings extends Model
+final class Embeddings
 {
     public const GEMINI_EMBEDDING_EXP_03_07 = 'gemini-embedding-exp-03-07';
     public const TEXT_EMBEDDING_004 = 'text-embedding-004';
@@ -27,8 +27,8 @@ class Embeddings extends Model
     /**
      * @param array{dimensions?: int, task_type?: TaskType|string} $options
      */
-    public function __construct(string $name = self::GEMINI_EMBEDDING_EXP_03_07, array $options = [])
+    public static function create(string $name = self::GEMINI_EMBEDDING_EXP_03_07, array $options = []): Model
     {
-        parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
+        return new Model($name, [Capability::INPUT_MULTIPLE], $options);
     }
 }

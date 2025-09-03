@@ -33,7 +33,7 @@ final class EmbeddingsModelClientTest extends TestCase
             'https://albert.example.com/'
         );
 
-        $embeddingsModel = new Embeddings('text-embedding-ada-002');
+        $embeddingsModel = Embeddings::create('text-embedding-ada-002');
         $this->assertTrue($client->supports($embeddingsModel));
     }
 
@@ -45,7 +45,7 @@ final class EmbeddingsModelClientTest extends TestCase
             'https://albert.example.com/'
         );
 
-        $gptModel = new Gpt('gpt-3.5-turbo');
+        $gptModel = Gpt::create('gpt-3.5-turbo');
         $this->assertFalse($client->supports($gptModel));
     }
 
@@ -65,7 +65,7 @@ final class EmbeddingsModelClientTest extends TestCase
             'https://albert.example.com/v1'
         );
 
-        $model = new Embeddings('text-embedding-ada-002');
+        $model = Embeddings::create('text-embedding-ada-002');
         $result = $client->request($model, $payload, $options);
 
         $this->assertNotNull($capturedRequest);
@@ -126,7 +126,7 @@ final class EmbeddingsModelClientTest extends TestCase
             'https://albert.example.com/v1'
         );
 
-        $model = new Embeddings('text-embedding-ada-002');
+        $model = Embeddings::create('text-embedding-ada-002');
         $client->request($model, ['input' => 'test']);
 
         $this->assertSame('https://albert.example.com/v1/embeddings', $capturedUrl);
@@ -147,7 +147,7 @@ final class EmbeddingsModelClientTest extends TestCase
             'https://albert.example.com/v1'
         );
 
-        $model = new Embeddings('text-embedding-ada-002');
+        $model = Embeddings::create('text-embedding-ada-002');
         $client->request($model, ['input' => 'test']);
 
         $this->assertSame('https://albert.example.com/v1/embeddings', $capturedUrl);
