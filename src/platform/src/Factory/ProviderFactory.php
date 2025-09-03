@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Factory;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -43,7 +44,7 @@ final class ProviderFactory implements ProviderFactoryInterface
             ];
 
             if (!isset($factoryMap[$providerKey])) {
-                throw new \InvalidArgumentException(\sprintf('Unsupported AI provider "%s".', $config->provider));
+                throw new InvalidArgumentException(\sprintf('Unsupported AI provider "%s".', $config->provider));
             }
 
             $factoryFqcn = $factoryMap[$providerKey];

@@ -77,15 +77,15 @@ final class ProviderConfigFactory
                 }
                 $options['engine'] = $engine;
 
-                $host = (string) ($dsn->getHost() ?? '');
+                $host = $dsn->getHost();
                 if ('' === $host) {
                     throw new InvalidArgumentException('Azure DSN requires host: "<resource>.openai.azure.com" or "<resource>.meta.azure.com".');
                 }
 
-                if (!isset($options['deployment']) || '' === $options['deployment']) {
+                if (empty($options['deployment'])) {
                     throw new InvalidArgumentException('Azure DSN requires "deployment" query param.');
                 }
-                if (!isset($options['version']) || '' === $options['version']) {
+                if (empty($options['version'])) {
                     throw new InvalidArgumentException('Azure DSN requires "version" query param.');
                 }
                 break;
@@ -128,8 +128,8 @@ final class ProviderConfigFactory
             'gemini' => 'generativelanguage.googleapis.com',
             'vertex' => 'us-central1-aiplatform.googleapis.com',
             'ollama' => 'localhost',
-            'azure' => throw new \InvalidArgumentException('Azure DSN must specify host (e.g. "<resource>.openai.azure.com").'),
-            default => throw new \InvalidArgumentException(\sprintf('Unknown AI provider "%s".', $provider)),
+            'azure' => throw new InvalidArgumentException('Azure DSN must specify host (e.g. "<resource>.openai.azure.com").'),
+            default => throw new InvalidArgumentException(\sprintf('Unknown AI provider "%s".', $provider)),
         };
     }
 }

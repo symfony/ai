@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Transport;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+
 final class Dsn
 {
     /**
@@ -23,7 +25,7 @@ final class Dsn
     public static function fromString(string $dsn): self
     {
         if (!preg_match('#^([a-zA-Z][a-zA-Z0-9+.\-]*)://#', $dsn, $m)) {
-            throw new \InvalidArgumentException(\sprintf('Invalid DSN "%s": missing scheme.', $dsn));
+            throw new InvalidArgumentException(\sprintf('Invalid DSN "%s": missing scheme.', $dsn));
         }
         $scheme = $m[1];
 
@@ -74,7 +76,7 @@ final class Dsn
             $rest = false === $slash ? '' : substr($rest, $slash);
 
             $hp = explode(':', $authority, 2);
-            $host = $hp[0] ?? '';
+            $host = $hp[0];
             if (isset($hp[1]) && '' !== $hp[1] && ctype_digit($hp[1])) {
                 $port = (int) $hp[1];
             }
