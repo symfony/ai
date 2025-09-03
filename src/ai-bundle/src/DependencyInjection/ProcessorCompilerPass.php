@@ -17,6 +17,8 @@ use Symfony\Component\DependencyInjection\Reference;
 
 class ProcessorCompilerPass implements CompilerPassInterface
 {
+    private const AGENT_PREFIX = 'ai.agent.';
+
     public function process(ContainerBuilder $container): void
     {
         $inputProcessors = $container->findTaggedServiceIds('ai.agent.input_processor');
@@ -32,7 +34,7 @@ class ProcessorCompilerPass implements CompilerPassInterface
                     }
 
                     $agent = $tag['agent'] ?? null;
-                    if (null === $agent || $agent === $serviceId) {
+                    if (null === $agent || self::AGENT_PREFIX.$agent === $serviceId) {
                         $priority = $tag['priority'] ?? 0;
                         $agentInputProcessors[] = [$priority, new Reference($processorId)];
                     }
@@ -46,7 +48,7 @@ class ProcessorCompilerPass implements CompilerPassInterface
                     }
 
                     $agent = $tag['agent'] ?? null;
-                    if (null === $agent || $agent === $serviceId) {
+                    if (null === $agent || self::AGENT_PREFIX.$agent === $serviceId) {
                         $priority = $tag['priority'] ?? 0;
                         $agentOutputProcessors[] = [$priority, new Reference($processorId)];
                     }

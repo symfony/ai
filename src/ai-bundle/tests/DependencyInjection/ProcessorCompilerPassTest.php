@@ -29,10 +29,10 @@ class ProcessorCompilerPassTest extends TestCase
     {
         $container = new ContainerBuilder();
         $container
-            ->register('agent1', Agent::class)
+            ->register('ai.agent.agent1', Agent::class)
             ->addTag('ai.agent');
         $container
-            ->register('agent2', Agent::class)
+            ->register('ai.agent.agent2', Agent::class)
             ->addTag('ai.agent');
         $container
             ->register(DummyInputProcessor1::class, DummyInputProcessor1::class)
@@ -78,28 +78,28 @@ class ProcessorCompilerPassTest extends TestCase
                 new Reference(DummyInputProcessor3::class),
                 new Reference(DummyInputProcessor1::class),
             ],
-            $container->getDefinition('agent1')->getArgument(2)
+            $container->getDefinition('ai.agent.agent1')->getArgument(2)
         );
         $this->assertEquals(
             [
                 new Reference(DummyOutputProcessor3::class),
                 new Reference(DummyOutputProcessor1::class),
             ],
-            $container->getDefinition('agent1')->getArgument(3)
+            $container->getDefinition('ai.agent.agent1')->getArgument(3)
         );
         $this->assertEquals(
             [
                 new Reference(DummyInputProcessor3::class),
                 new Reference(DummyInputProcessor2::class),
             ],
-            $container->getDefinition('agent2')->getArgument(2)
+            $container->getDefinition('ai.agent.agent2')->getArgument(2)
         );
         $this->assertEquals(
             [
                 new Reference(DummyOutputProcessor3::class),
                 new Reference(DummyOutputProcessor2::class),
             ],
-            $container->getDefinition('agent2')->getArgument(3)
+            $container->getDefinition('ai.agent.agent2')->getArgument(3)
         );
     }
 }
