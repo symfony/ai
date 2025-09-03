@@ -13,6 +13,10 @@ namespace Symfony\AI\Platform\Provider;
 
 final readonly class ProviderConfig
 {
+    /**
+     * @param array<string,mixed> $options
+     * @param array<string,mixed> $headers
+     */
     public function __construct(
         public string $provider,
         public string $baseUri,

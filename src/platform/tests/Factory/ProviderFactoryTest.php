@@ -19,6 +19,13 @@ use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAIBridge
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAIBridge;
 use Symfony\AI\Platform\Factory\ProviderFactory;
 
+/**
+ * @phpstan-type BridgeArgs array{apiKey:string, http:object, contract:array<string,mixed>}
+ *
+ * @phpstan-var class-string $openAiFqcn
+ * @phpstan-var class-string $azureOpenAiFqcn
+ * @phpstan-var class-string $azureMetaFqcn
+ */
 #[Group('pf')]
 #[CoversClass(ProviderFactory::class)]
 final class ProviderFactoryTest extends TestCase

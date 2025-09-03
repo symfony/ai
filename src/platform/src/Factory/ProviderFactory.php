@@ -38,7 +38,7 @@ final class ProviderFactory implements ProviderFactoryInterface
                 'anthropic' => \Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory::class,
                 'azure' => \Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory::class,
                 'gemini' => \Symfony\AI\Platform\Bridge\Gemini\PlatformFactory::class,
-                'vertex' => \Symfony\AI\Platform\Bridge\VertexAI\PlatformFactory::class,
+                'vertex' => \Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory::class,
                 'ollama' => \Symfony\AI\Platform\Bridge\Ollama\PlatformFactory::class,
             ];
 

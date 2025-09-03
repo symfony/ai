@@ -13,6 +13,9 @@ namespace Symfony\AI\Platform\Transport;
 
 final class Dsn
 {
+    /**
+     * @param array<string,mixed> $query
+     */
     public function __construct(private string $scheme, private string $host = '', private ?int $port = null, private ?string $user = null, private ?string $password = null, private array $query = [])
     {
     }
@@ -117,6 +120,7 @@ final class Dsn
         return $this->password;
     }
 
+    /** @return array<string,mixed> */
     public function getQuery(): array
     {
         return $this->query;

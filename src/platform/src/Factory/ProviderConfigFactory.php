@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Factory;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Provider\ProviderConfig;
 use Symfony\AI\Platform\Transport\Dsn;
 
@@ -22,7 +23,7 @@ final class ProviderConfigFactory
 
         $provider = strtolower($dsn->getProvider());
         if ('' === $provider) {
-            throw new \InvalidArgumentException('DSN must include a provider (e.g. "ai+openai://...").');
+            throw new InvalidArgumentException('DSN must include a provider (e.g. "ai+openai://...").');
         }
 
         $host = $dsn->getHost();
@@ -72,18 +73,20 @@ final class ProviderConfigFactory
             case 'azure':
                 $engine = strtolower((string) ($q['engine'] ?? 'openai'));
                 if (!\in_array($engine, ['openai', 'meta'], true)) {
-                    throw new \InvalidArgumentException(\sprintf('Unsupported Azure engine "%s". Supported: "openai", "meta".', $engine));
+                    throw new InvalidArgumentException(\sprintf('Unsupported Azure engine "%s". Supported: "openai", "meta".', $engine));
                 }
                 $options['engine'] = $engine;
 
-                if ('' === $dsn->getHost()) {
-                    throw new \InvalidArgumentException('Azure DSN requires host: "<resource>.openai.azure.com" or "<resource>.meta.azure.com".');
+                $host = (string) ($dsn->getHost() ?? '');
+                if ('' === $host) {
+                    throw new InvalidArgumentException('Azure DSN requires host: "<resource>.openai.azure.com" or "<resource>.meta.azure.com".');
                 }
+
                 if (!isset($options['deployment']) || '' === $options['deployment']) {
-                    throw new \InvalidArgumentException('Azure DSN requires "deployment" query param.');
+                    throw new InvalidArgumentException('Azure DSN requires "deployment" query param.');
                 }
                 if (!isset($options['version']) || '' === $options['version']) {
-                    throw new \InvalidArgumentException('Azure DSN requires "version" query param.');
+                    throw new InvalidArgumentException('Azure DSN requires "version" query param.');
                 }
                 break;
 
@@ -95,7 +98,7 @@ final class ProviderConfigFactory
                 break;
 
             default:
-                throw new \InvalidArgumentException(\sprintf('Unknown AI provider "%s".', $provider));
+                throw new InvalidArgumentException(\sprintf('Unknown AI provider "%s".', $provider));
         }
 
         return new ProviderConfig(
