@@ -34,7 +34,7 @@ final class ProviderFactory implements ProviderFactoryInterface
             };
         } else {
             $factoryMap = [
-                'openai' => \Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory::class,
+                'openai' => \Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory::class,
                 'anthropic' => \Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory::class,
                 'azure' => \Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory::class,
                 'gemini' => \Symfony\AI\Platform\Bridge\Gemini\PlatformFactory::class,
