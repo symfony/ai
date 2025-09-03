@@ -23,7 +23,7 @@ use Symfony\AI\Platform\Bridge\Azure\Meta\PlatformFactory as AzureMetaBridge;
 #[CoversClass(ProviderConfigFactory::class)]
 class ProviderConfigFactoryTest extends TestCase
 {
-    public function testOpenAiDefaults(): void
+    public function testOpenAiDefaults()
     {
         $cfg = ProviderConfigFactory::fromDsn(
             'ai+openai://sk-test@api.openai.com?model=gpt-4o-mini&organization=org_123&headers[x-foo]=bar'
@@ -37,7 +37,7 @@ class ProviderConfigFactoryTest extends TestCase
         $this->assertSame('bar', $cfg->headers['x-foo'] ?? null);
     }
 
-    public function testOpenAiWithoutHostUsesDefault(): void
+    public function testOpenAiWithoutHostUsesDefault()
     {
         $cfg = ProviderConfigFactory::fromDsn('ai+openai://sk-test@/?model=gpt-4o-mini');
 
@@ -45,7 +45,7 @@ class ProviderConfigFactoryTest extends TestCase
         $this->assertSame('gpt-4o-mini', $cfg->options['model'] ?? null);
     }
 
-    public function testAzureOpenAiHappyPath(): void
+    public function testAzureOpenAiHappyPath()
     {
         $cfg = ProviderConfigFactory::fromDsn(
             'ai+azure://AZ_KEY@my-resource.openai.azure.com?deployment=gpt-4o&version=2024-08-01-preview&engine=openai'
@@ -59,7 +59,7 @@ class ProviderConfigFactoryTest extends TestCase
         $this->assertSame('openai', $cfg->options['engine'] ?? null);
     }
 
-    public function testAzureMetaHappyPath(): void
+    public function testAzureMetaHappyPath()
     {
         $cfg = ProviderConfigFactory::fromDsn(
             'ai+azure://AZ_KEY@my-resource.meta.azure.com?deployment=llama-3.1&version=2024-08-01-preview&engine=meta'
@@ -71,7 +71,7 @@ class ProviderConfigFactoryTest extends TestCase
         $this->assertSame('llama-3.1', $cfg->options['deployment'] ?? null);
     }
 
-    public function testGenericOptionsAndBooleans(): void
+    public function testGenericOptionsAndBooleans()
     {
         $cfg = ProviderConfigFactory::fromDsn(
             'ai+openai://sk@/?model=gpt-4o-mini&timeout=10&verify_peer=true&proxy=http://proxy:8080'
@@ -82,31 +82,31 @@ class ProviderConfigFactoryTest extends TestCase
         $this->assertSame('http://proxy:8080', $cfg->options['proxy'] ?? null);
     }
 
-    public function testUnknownProviderThrows(): void
+    public function testUnknownProviderThrows()
     {
         $this->expectException(\InvalidArgumentException::class);
         ProviderConfigFactory::fromDsn('ai+unknown://key@host');
     }
 
-    public function testAzureMissingHostThrows(): void
+    public function testAzureMissingHostThrows()
     {
         $this->expectException(\InvalidArgumentException::class);
         ProviderConfigFactory::fromDsn('ai+azure://AZ_KEY@/?deployment=gpt-4o&version=2024-08-01-preview');
     }
 
-    public function testAzureMissingDeploymentThrows(): void
+    public function testAzureMissingDeploymentThrows()
     {
         $this->expectException(\InvalidArgumentException::class);
         ProviderConfigFactory::fromDsn('ai+azure://AZ_KEY@my.openai.azure.com?version=2024-08-01-preview');
     }
 
-    public function testAzureMissingVersionThrows(): void
+    public function testAzureMissingVersionThrows()
     {
         $this->expectException(\InvalidArgumentException::class);
         ProviderConfigFactory::fromDsn('ai+azure://AZ_KEY@my.openai.azure.com?deployment=gpt-4o');
     }
 
-    public function testAzureUnsupportedEngineThrows(): void
+    public function testAzureUnsupportedEngineThrows()
     {
         $this->expectException(\InvalidArgumentException::class);
         ProviderConfigFactory::fromDsn(

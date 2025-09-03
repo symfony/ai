@@ -30,7 +30,7 @@ final class ProviderFactoryTest extends TestCase
         AzureMetaBridge::$lastArgs = [];
     }
 
-    public function testBuildsOpenAiWithBearerAuth(): void
+    public function testBuildsOpenAiWithBearerAuth()
     {
         $factory = new ProviderFactory();
 
@@ -49,7 +49,7 @@ final class ProviderFactoryTest extends TestCase
         $this->assertArrayNotHasKey('api-key', $headers);
     }
 
-    public function testBuildsAzureOpenAiWithApiKeyHeader(): void
+    public function testBuildsAzureOpenAiWithApiKeyHeader()
     {
         $factory = new ProviderFactory();
 
@@ -73,7 +73,7 @@ final class ProviderFactoryTest extends TestCase
         $this->assertArrayNotHasKey('Authorization', $headers);
     }
 
-    public function testBuildsAzureMetaWhenEngineMeta(): void
+    public function testBuildsAzureMetaWhenEngineMeta()
     {
         $factory = new ProviderFactory();
 
@@ -95,7 +95,7 @@ final class ProviderFactoryTest extends TestCase
         $this->assertSame('AZ', $headers['api-key'] ?? null);
     }
 
-    public function testUnsupportedProviderThrows(): void
+    public function testUnsupportedProviderThrows()
     {
         $this->expectException(\InvalidArgumentException::class);
 
@@ -103,7 +103,7 @@ final class ProviderFactoryTest extends TestCase
         $factory->fromDsn('ai+madeup://x@y.z');
     }
 
-    public function testAzureMissingDeploymentOrVersionBubblesUp(): void
+    public function testAzureMissingDeploymentOrVersionBubblesUp()
     {
         $this->expectException(\InvalidArgumentException::class);
 
