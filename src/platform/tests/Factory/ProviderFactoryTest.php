@@ -42,9 +42,8 @@ final class ProviderFactoryTest extends TestCase
 
         $obj = $factory->fromDsn('ai+openai://sk-test@api.openai.com?model=gpt-4o-mini');
 
-        $this->assertIsObject($obj);
         $this->assertSame('openai', $obj->bridge ?? null);
-
+        /** @phpstan-ignore-next-line */
         $args = OpenAIBridge::$lastArgs ?? [];
         $this->assertSame('sk-test', $args['apiKey'] ?? null);
         $this->assertSame('https://api.openai.com', $args['contract']['base_uri'] ?? null);
@@ -63,9 +62,8 @@ final class ProviderFactoryTest extends TestCase
             'ai+azure://AZ@my-resource.openai.azure.com?deployment=gpt-4o&version=2024-08-01-preview&engine=openai'
         );
 
-        $this->assertIsObject($obj);
         $this->assertSame('azure-openai', $obj->bridge ?? null);
-
+        /** @phpstan-ignore-next-line */
         $args = AzureOpenAIBridge::$lastArgs ?? [];
         $this->assertSame('AZ', $args['apiKey'] ?? null);
         $this->assertSame('https://my-resource.openai.azure.com', $args['contract']['base_uri'] ?? null);
@@ -87,9 +85,8 @@ final class ProviderFactoryTest extends TestCase
             'ai+azure://AZ@my-resource.meta.azure.com?deployment=llama-3.1&version=2024-08-01-preview&engine=meta'
         );
 
-        $this->assertIsObject($obj);
         $this->assertSame('azure-meta', $obj->bridge ?? null);
-
+        /** @phpstan-ignore-next-line */
         $args = AzureMetaBridge::$lastArgs ?? [];
         $this->assertSame('AZ', $args['apiKey'] ?? null);
         $this->assertSame('https://my-resource.meta.azure.com', $args['contract']['base_uri'] ?? null);
