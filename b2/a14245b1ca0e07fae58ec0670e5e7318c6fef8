@@ -1,0 +1,66 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-02T10:54:20Z
+
+Ready for review
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-02T19:24:42Z
+
+Ready to merge from my side
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-02T20:46:00Z
+
+oh, i wonder, did you try to use streaming? otherwise maybe a follow up
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-02T20:51:16Z
+
+> oh, i wonder, did you try to use streaming? otherwise maybe a follow up
+
+No not yet, lets follow up
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-02T21:06:19Z
+
+I agree with @GromNaN that we can simplify this a lot if we only allow `my_agent` instead of `ai.agent.my_agent` **or** `my_agent`
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-02T21:22:00Z
+
+It works when I provide a correct one, or a wrong one. But it does not work when I provide none... investigating.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-02T21:32:50Z
+
+Works now!
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-02T21:51:27Z
+
+Common, i feel like you're trolling me ... :joy:
+
+<img width="1116" height="614" alt="image" src="https://github.com/user-attachments/assets/f981008b-b107-44cb-84b5-d74553e25220" />
+
+I'm going to bed now - sad :D
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-03T05:57:35Z
+
+<img width="1602" height="942" alt="CleanShot 2025-09-03 at 07 56 53@2x" src="https://github.com/user-attachments/assets/7857d1f8-abff-4cb4-b3c3-44c1a7227555" />
+<img width="1532" height="634" alt="CleanShot 2025-09-03 at 07 57 09@2x" src="https://github.com/user-attachments/assets/88b2dbf9-3db0-4328-ac60-143a839a39b5" />
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-03T08:06:51Z
+
+Got a 👍 from @chr-hertel via WhatsApp 😄
