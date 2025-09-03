@@ -61,3 +61,7 @@ CHANGELOG
  * Add tool calling support for Ollama platform
  * Allow beta feature flags to be passed into Anthropic model options
  * Add Ollama streaming output support
+
+## [Unreleased]
+
+- feature #402 [AI] Introduced `ProviderFactory` and `ProviderConfigFactory` to create AI provider platforms from DSNs.
