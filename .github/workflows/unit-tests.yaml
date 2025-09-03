@@ -82,3 +82,9 @@ jobs:
                   source .github/workflows/.utils.sh
 
                   echo "$PACKAGES" | xargs -n1 | parallel -j +3 "_run_task {} '(cd src/{} && $COMPOSER_UP && $PHPUNIT)'"
+
+            - name: Run platform provider-factory tests (special bootstrap)
+              if: contains(env.PACKAGES, 'platform')
+              run: |
+                  set -e
+                  (cd src/platform && $COMPOSER_UP && $PHPUNIT -c phpunit.provider-factory.xml)
