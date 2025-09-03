@@ -64,4 +64,4 @@ CHANGELOG
 
 ## [Unreleased]
 
-- feature #402 [AI] Introduced `ProviderFactory` and `ProviderConfigFactory` to create AI provider platforms from DSNs.
+- feature #402 [Platform] Introduced `ProviderFactory` and `ProviderConfigFactory` to create AI provider platforms from DSNs.
