@@ -64,7 +64,7 @@ final class ReflectionFactoryTest extends TestCase
         /** @var Tool[] $metadatas */
         $metadatas = iterator_to_array($this->factory->getTool(ToolRequiredParams::class));
 
-        self::assertToolConfiguration(
+        $this->assertToolConfiguration(
             metadata: $metadatas[0],
             className: ToolRequiredParams::class,
             name: 'tool_required_params',
@@ -96,7 +96,7 @@ final class ReflectionFactoryTest extends TestCase
 
         [$first, $second] = $metadatas;
 
-        self::assertToolConfiguration(
+        $this->assertToolConfiguration(
             metadata: $first,
             className: ToolMultiple::class,
             name: 'tool_hello_world',
@@ -115,7 +115,7 @@ final class ReflectionFactoryTest extends TestCase
             ],
         );
 
-        self::assertToolConfiguration(
+        $this->assertToolConfiguration(
             metadata: $second,
             className: ToolMultiple::class,
             name: 'tool_required_params',

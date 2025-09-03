@@ -29,8 +29,7 @@ final readonly class PlatformFactory
         string $baseUrl,
         string $deployment,
         string $apiVersion,
-        #[\SensitiveParameter]
-        string $apiKey,
+        #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,
         ?Contract $contract = null,
     ): Platform {

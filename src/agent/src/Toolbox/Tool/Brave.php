@@ -26,8 +26,7 @@ final readonly class Brave
      */
     public function __construct(
         private HttpClientInterface $httpClient,
-        #[\SensitiveParameter]
-        private string $apiKey,
+        #[\SensitiveParameter] private string $apiKey,
         private array $options = [],
     ) {
     }

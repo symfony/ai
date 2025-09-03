@@ -25,8 +25,7 @@ final readonly class ModelClient implements PlatformResponseFactory
 {
     public function __construct(
         private HttpClientInterface $httpClient,
-        #[\SensitiveParameter]
-        private string $apiKey,
+        #[\SensitiveParameter] private string $apiKey,
     ) {
         if ('' === $apiKey) {
             throw new InvalidArgumentException('The API key must not be empty.');

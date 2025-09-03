@@ -24,4 +24,4 @@ $result = $platform->invoke($model, <<<TEXT
     salt. The goal was to prevent deficiencies and promote better health in the population.
     TEXT);
 
-echo 'Dimensions: '.$result->asVectors()[0]->getDimensions().\PHP_EOL;
+print_vectors($result);

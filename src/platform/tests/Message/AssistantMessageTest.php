@@ -68,8 +68,8 @@ final class AssistantMessageTest extends TestCase
         $message2 = new AssistantMessage('bar');
 
         $this->assertNotSame($message1->getId()->toRfc4122(), $message2->getId()->toRfc4122());
-        self::assertIsUuidV7($message1->getId()->toRfc4122());
-        self::assertIsUuidV7($message2->getId()->toRfc4122());
+        $this->assertIsUuidV7($message1->getId()->toRfc4122());
+        $this->assertIsUuidV7($message2->getId()->toRfc4122());
     }
 
     public function testSameMessagesHaveDifferentUids()
@@ -78,8 +78,8 @@ final class AssistantMessageTest extends TestCase
         $message2 = new AssistantMessage('foo');
 
         $this->assertNotSame($message1->getId()->toRfc4122(), $message2->getId()->toRfc4122());
-        self::assertIsUuidV7($message1->getId()->toRfc4122());
-        self::assertIsUuidV7($message2->getId()->toRfc4122());
+        $this->assertIsUuidV7($message1->getId()->toRfc4122());
+        $this->assertIsUuidV7($message2->getId()->toRfc4122());
     }
 
     public function testMessageIdImplementsRequiredInterfaces()

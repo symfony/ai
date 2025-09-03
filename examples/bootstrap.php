@@ -13,6 +13,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Metadata\TokenUsage;
+use Symfony\AI\Platform\Result\ResultPromise;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Dotenv\Dotenv;
@@ -70,4 +71,12 @@ function print_token_usage(Metadata $metadata): void
     echo 'Remaining tokens month: '.$tokenUsage->remainingTokensMonth.\PHP_EOL;
     echo 'Remaining tokens: '.$tokenUsage->remainingTokens.\PHP_EOL;
     echo 'Utilized tokens: '.$tokenUsage->totalTokens.\PHP_EOL;
+}
+
+function print_vectors(ResultPromise $result): void
+{
+    assert([] !== $result->asVectors());
+    assert(array_key_exists(0, $result->asVectors()));
+
+    echo 'Dimensions: '.$result->asVectors()[0]->getDimensions().\PHP_EOL;
 }

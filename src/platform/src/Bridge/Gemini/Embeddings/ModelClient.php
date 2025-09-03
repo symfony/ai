@@ -24,8 +24,7 @@ final readonly class ModelClient implements ModelClientInterface
 {
     public function __construct(
         private HttpClientInterface $httpClient,
-        #[\SensitiveParameter]
-        private string $apiKey,
+        #[\SensitiveParameter] private string $apiKey,
     ) {
     }
 

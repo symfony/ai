@@ -26,9 +26,9 @@ final class SmokeTest extends WebTestCase
         $client = static::createClient();
         $client->request('GET', '/');
 
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextSame('h1', 'Welcome to the LLM Chain Demo');
-        self::assertSelectorCount(5, '.card');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextSame('h1', 'Welcome to the LLM Chain Demo');
+        $this->assertSelectorCount(5, '.card');
     }
 
     #[DataProvider('provideChats')]
@@ -37,9 +37,9 @@ final class SmokeTest extends WebTestCase
         $client = static::createClient();
         $client->request('GET', $path);
 
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextSame('h4', $expectedHeadline);
-        self::assertSelectorCount(1, '#chat-submit');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextSame('h4', $expectedHeadline);
+        $this->assertSelectorCount(1, '#chat-submit');
     }
 
     /**

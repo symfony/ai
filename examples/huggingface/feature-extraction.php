@@ -22,4 +22,4 @@ $result = $platform->invoke($model, 'Today is a sunny day and I will get some ic
     'task' => Task::FEATURE_EXTRACTION,
 ]);
 
-echo 'Dimensions: '.$result->asVectors()[0]->getDimensions().\PHP_EOL;
+print_vectors($result);

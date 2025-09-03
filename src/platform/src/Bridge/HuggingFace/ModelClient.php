@@ -27,8 +27,7 @@ final readonly class ModelClient implements PlatformModelClient
     public function __construct(
         HttpClientInterface $httpClient,
         private string $provider,
-        #[\SensitiveParameter]
-        private string $apiKey,
+        #[\SensitiveParameter] private string $apiKey,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }

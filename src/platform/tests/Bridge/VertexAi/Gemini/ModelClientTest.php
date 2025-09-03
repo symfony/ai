@@ -67,7 +67,7 @@ final class ModelClientTest extends TestCase
         ];
         $httpClient = new MockHttpClient(
             function ($method, $url, $options) {
-                self::assertJsonStringEqualsJsonString(
+                $this->assertJsonStringEqualsJsonString(
                     <<<'JSON'
                         {
                           "tools": [

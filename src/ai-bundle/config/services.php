@@ -21,6 +21,7 @@ use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Agent\Toolbox\ToolFactory\AbstractToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
+use Symfony\AI\AiBundle\Command\ChatCommand;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
@@ -137,5 +138,12 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.token_usage_processor.gemini', GeminiTokenOutputProcessor::class)
         ->set('ai.platform.token_usage_processor.openai', OpenAiTokenOutputProcessor::class)
         ->set('ai.platform.token_usage_processor.vertexai', VertexAiTokenOutputProcessor::class)
+
+        // commands
+        ->set('ai.command.chat', ChatCommand::class)
+            ->args([
+                tagged_locator('ai.agent', indexAttribute: 'name'),
+            ])
+            ->tag('console.command')
     ;
 };

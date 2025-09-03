@@ -28,5 +28,5 @@ foreach (['ADA' => $ada, 'Small' => $small, 'Large' => $large] as $name => $mode
 
 echo 'Waiting for the responses ...'.\PHP_EOL;
 foreach ($results as $result) {
-    echo 'Dimensions: '.$result->asVectors()[0]->getDimensions().\PHP_EOL;
+    print_vectors($result);
 }

@@ -28,8 +28,7 @@ final readonly class ModelClient implements PlatformResponseFactory
 
     public function __construct(
         HttpClientInterface $httpClient,
-        #[\SensitiveParameter]
-        private string $apiKey,
+        #[\SensitiveParameter] private string $apiKey,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
         if ('' === $apiKey) {

@@ -27,9 +27,7 @@ final class ModelClientTest extends TestCase
     public function testItSupportsWhisperModel()
     {
         $client = new ModelClient(new MockHttpClient(), 'test-key');
-        $model = new Whisper();
-
-        $this->assertTrue($client->supports($model));
+        $this->assertTrue($client->supports(new Whisper()));
     }
 
     public function testItUsesTranscriptionEndpointByDefault()
@@ -44,10 +42,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'test-key');
-        $model = new Whisper();
-        $payload = ['file' => 'audio-data'];
-
-        $client->request($model, $payload);
+        $client->request(new Whisper(), ['file' => 'audio-data']);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -64,11 +59,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'test-key');
-        $model = new Whisper();
-        $payload = ['file' => 'audio-data'];
-        $options = ['task' => Task::TRANSCRIPTION];
-
-        $client->request($model, $payload, $options);
+        $client->request(new Whisper(), ['file' => 'audio-data'], ['task' => Task::TRANSCRIPTION]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -85,11 +76,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'test-key');
-        $model = new Whisper();
-        $payload = ['file' => 'audio-data'];
-        $options = ['task' => Task::TRANSLATION];
-
-        $client->request($model, $payload, $options);
+        $client->request(new Whisper(), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

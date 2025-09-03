@@ -29,4 +29,4 @@ $result = $platform->invoke($embeddings, <<<TEXT
     country was very peaceful and prosperous. The people lived happily ever after.
     TEXT);
 
-echo 'Dimensions: '.$result->asVectors()[0]->getDimensions().\PHP_EOL;
+print_vectors($result);
