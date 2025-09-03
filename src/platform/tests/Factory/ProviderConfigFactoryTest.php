@@ -15,8 +15,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Factory\ProviderConfigFactory;
-use Symfony\AI\Platform\Bridge\OpenAI\PlatformFactory as OpenAIBridge;
-use Symfony\AI\Platform\Bridge\Azure\OpenAI\PlatformFactory as AzureOpenAIBridge;
+use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAIBridge;
+use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAIBridge;
 use Symfony\AI\Platform\Bridge\Azure\Meta\PlatformFactory as AzureMetaBridge;
 
 #[Group('pf')]
