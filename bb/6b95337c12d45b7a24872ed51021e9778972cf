@@ -1,0 +1,31 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-02T20:51:49Z
+
+Ready to merge
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-02T20:59:24Z
+
+two things:
+* i think it would be more consistent to use `$region` in the ModelClient constructors as well - with the same argument as you used in the issue
+* what do you think about a BaseModelClient that encapsulates that base url handling, and all children could just call `getBaseUrl()` of the base implementation - taking care of the region handling
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-03T05:20:49Z
+
+> i think it would be more consistent to use $region in the ModelClient constructors as well - with the same argument as you used in the issue
+
+makes sense, lets do it
+
+> what do you think about a BaseModelClient that encapsulates that base url handling, and all children could just call getBaseUrl() of the base implementation - taking care of the region handling
+
+I will have a look, but as a follow up then
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-04T05:33:59Z
+
+Ready to merge from my side @chr-hertel @petski
