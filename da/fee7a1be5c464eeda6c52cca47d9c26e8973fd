@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-03T18:22:10Z
+
+> To add tests, we'd need to add google/auth to dev dependencies.
+
+Yes please :+1:
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-03T20:59:19Z
+
+@1ed can you confirm this patch works for you?
