@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by natewiebe13 at 2025-09-05T19:42:03Z
+
+I see the code quality error is due to the new option. Qdrant's filtering is pretty complex, not sure exactly the best way to express the option and how useful it would be to try to match it exactly (especially if it changes)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-05T21:03:04Z
+
+Can you add tests for this new filter?
+
+---------------------------------------------------------------------------
+
+by natewiebe13 at 2025-09-05T21:32:03Z
+
+> Can you add tests for this new filter?
+
+Added
