@@ -23,13 +23,13 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $store = new InMemoryStore();
 $indexer = new Indexer(
-    new Vectorizer($platform, new Embeddings('text-embedding-3-small')),
-    $store,
     new TextFileLoader(),
     [
         new ReplaceTextTransformer(search: '## Plot', replace: '## Synopsis'),
         new TextSplitTransformer(chunkSize: 500, overlap: 100),
-    ]
+    ],
+    new Vectorizer($platform, new Embeddings('text-embedding-3-small')),
+    $store
 );
 
 $movies = [

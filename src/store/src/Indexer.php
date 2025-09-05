@@ -27,10 +27,10 @@ final readonly class Indexer implements IndexerInterface
      * @param TransformerInterface[] $transformers
      */
     public function __construct(
+        private ?LoaderInterface $loader,
+        private array $transformers,
         private VectorizerInterface $vectorizer,
         private StoreInterface $store,
-        private ?LoaderInterface $loader = null,
-        private array $transformers = [],
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
