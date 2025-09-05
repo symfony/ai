@@ -41,18 +41,11 @@ final class SymfonyRegistry extends Registry
             inputSchema: $service instanceof MetadataInterface ? $service->getInputSchema() : null,
         );
 
-        // Create a wrapper callable that adapts the old interface to the new one
-        $callable = function (CallToolRequest $request) use ($service): CallToolResult {
-            if ($service instanceof ToolExecutorInterface) {
-                return $service->call($request);
-            }
+        if (!$service instanceof ToolExecutorInterface) {
+            throw new \InvalidArgumentException('Service must implement ToolExecutorInterface');
+        }
 
-            // For backward compatibility with old tools, we'll need to adapt
-            // This assumes the old tool has a call method that expects arguments
-            throw new \InvalidArgumentException('Service does not implement ToolExecutorInterface and cannot be adapted');
-        };
-
-        // Register the tool with the wrapper callable
-        $this->registerTool($tool, $callable, true);
+        // Register the tool with the service as the callable handler
+        $this->registerTool($tool, [$service, 'call'], true);
     }
 }
