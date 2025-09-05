@@ -40,7 +40,8 @@ $movies = [
 
 $processor->process($movies);
 
-$results = $store->search($platform->invoke(new Embeddings('text-embedding-3-small'), 'Roman gladiator revenge')->asVectors()[0], 2);
+$vector = $platform->invoke(new Embeddings('text-embedding-3-small'), 'Roman gladiator revenge')->asVectors()[0];
+$results = $store->search($vector, 2);
 foreach ($results as $i => $result) {
     echo sprintf("%d. [%.0f%%] %s\n", $i + 1, $result['similarity'] * 100, substr($result['document']->id, 0, 40).'...');
 }
