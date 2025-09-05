@@ -22,6 +22,7 @@ CHANGELOG
    - TransformersPHP (local PHP-based transformer models)
    - LM Studio (local model hosting)
    - Cerebras (language models like Llama 4, Qwen 3, and more)
+   - Scaleway (language models like OpenAI OSS, Llama 4, Qwen 3, and more)
  * Add comprehensive message system with role-based messaging:
    - `UserMessage` for user inputs with multi-modal content
    - `SystemMessage` for system instructions
