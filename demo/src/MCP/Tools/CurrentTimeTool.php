@@ -11,24 +11,27 @@
 
 namespace App\MCP\Tools;
 
+use Mcp\Capability\Tool\IdentifierInterface;
 use Mcp\Capability\Tool\MetadataInterface;
-use Mcp\Capability\Tool\ToolAnnotationsInterface;
-use Mcp\Capability\Tool\ToolCall;
-use Mcp\Capability\Tool\ToolCallResult;
 use Mcp\Capability\Tool\ToolExecutorInterface;
+use Mcp\Schema\Content\TextContent;
+use Mcp\Schema\Request\CallToolRequest;
+use Mcp\Schema\Result\CallToolResult;
 
 /**
  * @author Tom Hart <tom.hart.221@gmail.com>
  */
-class CurrentTimeTool implements MetadataInterface, ToolExecutorInterface
+class CurrentTimeTool implements IdentifierInterface, MetadataInterface, ToolExecutorInterface
 {
-    public function call(ToolCall $input): ToolCallResult
+    public function call(CallToolRequest $request): CallToolResult
     {
-        $format = $input->arguments['format'] ?? 'Y-m-d H:i:s';
+        $format = $request->arguments['format'] ?? 'Y-m-d H:i:s';
 
-        return new ToolCallResult(
-            (new \DateTime('now', new \DateTimeZone('UTC')))->format($format)
-        );
+        $timeString = (new \DateTime('now', new \DateTimeZone('UTC')))->format($format);
+
+        return new CallToolResult([
+            new TextContent($timeString),
+        ]);
     }
 
     public function getName(): string
@@ -52,22 +55,8 @@ class CurrentTimeTool implements MetadataInterface, ToolExecutorInterface
                     'default' => 'Y-m-d H:i:s',
                 ],
             ],
-            'required' => ['format'],
+            'required' => [],
         ];
     }
 
-    public function getOutputSchema(): ?array
-    {
-        return null;
-    }
-
-    public function getTitle(): ?string
-    {
-        return null;
-    }
-
-    public function getAnnotations(): ?ToolAnnotationsInterface
-    {
-        return null;
-    }
 }

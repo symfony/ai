@@ -11,62 +11,51 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Symfony\AI\McpBundle\Registry\SymfonyRegistry;
+use Mcp\JsonRpc\Handler;
+use Mcp\JsonRpc\MessageFactory;
+use Mcp\Schema\Implementation;
 use Mcp\Server;
-use Mcp\Server\NotificationHandler\InitializedHandler;
-use Mcp\Server\RequestHandler\InitializeHandler;
-use Mcp\Server\RequestHandler\PingHandler;
 use Mcp\Server\Transport\Sse\Store\CachePoolStore;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
-        ->set('mcp.server.notification_handler.initialized', InitializedHandler::class)
+        // Core Registry for managing tools, prompts, and resources
+        ->set('mcp.registry', SymfonyRegistry::class)
             ->args([])
-            ->tag('mcp.server.notification_handler')
-        ->set('mcp.server.request_handler.initialize', InitializeHandler::class)
+
+        // Implementation info for the server
+        ->set('mcp.implementation', Implementation::class)
             ->args([
                 param('mcp.app'),
                 param('mcp.version'),
             ])
-            ->tag('mcp.server.request_handler')
-        ->set('mcp.server.request_handler.ping', PingHandler::class)
-            ->args([])
-            ->tag('mcp.server.request_handler')
-        ->set('mcp.server.request_handler.tool_call', ToolCallHandler::class)
-            ->args([
-                service('mcp.tool_executor'),
-            ])
-            ->tag('mcp.server.request_handler')
-        ->set('mcp.server.request_handler.tool_list', ToolListHandler::class)
-            ->args([
-                service('mcp.tool_collection'),
-                param('mcp.page_size'),
-            ])
-            ->tag('mcp.server.request_handler')
 
-        ->set('mcp.message_factory', Factory::class)
-            ->args([])
-        ->set('mcp.server.json_rpc', JsonRpcHandler::class)
+        // Message Factory
+        ->set('mcp.message_factory', MessageFactory::class)
+            ->factory([MessageFactory::class, 'make'])
+
+        // JSON-RPC Handler with all request and notification handlers
+        ->set('mcp.json_rpc_handler', Handler::class)
+            ->factory([Handler::class, 'make'])
             ->args([
-                service('mcp.message_factory'),
-                tagged_iterator('mcp.server.request_handler'),
-                tagged_iterator('mcp.server.notification_handler'),
+                service('mcp.registry'),
+                service('mcp.implementation'),
                 service('logger')->ignoreOnInvalid(),
             ])
+
+        // Main MCP Server
         ->set('mcp.server', Server::class)
             ->args([
-                service('mcp.server.json_rpc'),
+                service('mcp.json_rpc_handler'),
                 service('logger')->ignoreOnInvalid(),
             ])
             ->alias(Server::class, 'mcp.server')
+
+        // SSE Store for Server-Sent Events transport
         ->set('mcp.server.sse.store.cache_pool', CachePoolStore::class)
             ->args([
                 service('cache.app'),
             ])
-        ->set('mcp.tool_chain', ToolChain::class)
-            ->args([
-                tagged_iterator('mcp.tool'),
-            ])
-            ->alias('mcp.tool_executor', 'mcp.tool_chain')
-            ->alias('mcp.tool_collection', 'mcp.tool_chain')
     ;
 };
