@@ -1,0 +1,46 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
+use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Store\Bridge\Local\InMemoryStore;
+use Symfony\AI\Store\Document\DocumentProcessor;
+use Symfony\AI\Store\Document\Loader\TextFileLoader;
+use Symfony\AI\Store\Document\Transformer\ReplaceTextTransformer;
+use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
+use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Indexer;
+
+require_once dirname(__DIR__).'/bootstrap.php';
+
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$store = new InMemoryStore();
+$processor = new DocumentProcessor(
+    new TextFileLoader(),
+    [
+        new ReplaceTextTransformer('## Plot', '## Synopsis'),
+        new TextSplitTransformer(500, 100),
+    ],
+    new Indexer(new Vectorizer($platform, new Embeddings('text-embedding-3-small')), $store)
+);
+
+$movies = [
+    dirname(__DIR__, 2).'/fixtures/movies/gladiator.md',
+    dirname(__DIR__, 2).'/fixtures/movies/inception.md',
+    dirname(__DIR__, 2).'/fixtures/movies/jurassic-park.md',
+];
+
+$processor->process($movies);
+
+$results = $store->search($platform->invoke(new Embeddings('text-embedding-3-small'), 'Roman gladiator revenge')->asVectors()[0], 2);
+foreach ($results as $i => $result) {
+    echo sprintf("%d. [%.0f%%] %s\n", $i + 1, $result['similarity'] * 100, substr($result['document']->id, 0, 40).'...');
+}
