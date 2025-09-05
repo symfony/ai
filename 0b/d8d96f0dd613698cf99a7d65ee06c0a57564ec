@@ -1,0 +1,92 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-20T20:56:19Z
+
+> I moved the commands in the Store component but wasn't sure about it.
+
+no no, that the right decision from my point of view :+1:
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-20T21:00:31Z
+
+Alright, let's talk about functional testing here - that's important to me with that amount of bridges we can't go with manual.
+
+My first idea was to bring in simple store examples, that would setup, add, query and drop. but that would be super similar to the rag ones - well without the agent tho.
+so a) we adopt be commands in those examples, b) we bring in new one with only those for operations, and c) $yourIdea :man_shrugging: :laughing:
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-21T07:19:56Z
+
+What about improving the rag examples by adding the `drop` calls when it's possible?
+
+Maybe just before returning the content to the user?
+
+Don't know if adding examples with commands brings any benefits to the user or we're talking about single-file commands that we can call in the existing examples 🤔
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-22T05:37:57Z
+
+I would keep the examples, but what about using setup and store in CI to see if they are working? Could be a follow up PR imho
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-22T05:38:38Z
+
+Docs are missing
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-24T21:20:58Z
+
+If we could shift it to GitHub actions, that would be fine as well - and it's true, that there is little benefit to users with examples only setup-add-query-drop, true.
+
+We already skipped it in #328 - so we should bring it in now.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-25T14:48:03Z
+
+I was wondering, shouldn't we use the `demo` in actions to show how to use the commands?
+
+We can build a container then make the commands accessible but we already have the `demo` project with configuration, maybe we can improve it and use it as a "functional" test in CI? 🤔
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-26T09:28:37Z
+
+> I was wondering, shouldn't we use the `demo` in actions to show how to use the commands?
+>
+> We can build a container then make the commands accessible but we already have the `demo` project with configuration, maybe we can improve it and use it as a "functional" test in CI? 🤔
+
+The demo currently has only one store - and I like that simplicity there. But I get your point.
+
+So I see two options, test the functional integration only on service level with a PHPUnit testcase neglecting the command level, or bring in a small example script with bootstrapping a console application and registering the commands there. i'm not sure we need a separate container image but go with the setup-php base. but maybe i'm missing something here.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-26T09:52:11Z
+
+Let's add a small console + commands then 👍🏻
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-03T08:07:49Z
+
+Needs a rebase after
+* https://github.com/symfony/ai/pull/395
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-05T09:02:47Z
+
+Needs a rebase after
+* #459
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-09-05T09:09:13Z
+
+Rebase done 👍🏻
