@@ -23,7 +23,7 @@ final class BraveTest extends TestCase
 {
     public function testReturnsSearchResults()
     {
-        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/brave.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/brave.json');
         $httpClient = new MockHttpClient($result);
         $brave = new Brave($httpClient, 'test-api-key');
 
@@ -40,7 +40,7 @@ final class BraveTest extends TestCase
 
     public function testPassesCorrectParametersToApi()
     {
-        $result = $this->jsonMockResponseFromFile(__DIR__.'/fixtures/brave.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/brave.json');
         $httpClient = new MockHttpClient($result);
         $brave = new Brave($httpClient, 'test-api-key', ['extra' => 'option']);
 
@@ -66,13 +66,5 @@ final class BraveTest extends TestCase
         $results = $brave('this should return nothing');
 
         $this->assertEmpty($results);
-    }
-
-    /**
-     * This can be replaced by `JsonMockResponse::fromFile` when dropping Symfony 6.4.
-     */
-    private function jsonMockResponseFromFile(string $file): JsonMockResponse
-    {
-        return new JsonMockResponse(json_decode(file_get_contents($file), true));
     }
 }
