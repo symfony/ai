@@ -12,6 +12,7 @@
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Symfony\AI\McpBundle\Registry\SymfonyRegistry;
+use Symfony\AI\McpBundle\Registry\SymfonyRegistryFactory;
 use Mcp\JsonRpc\Handler;
 use Mcp\JsonRpc\MessageFactory;
 use Mcp\Schema\Implementation;
@@ -20,9 +21,19 @@ use Mcp\Server\Transport\Sse\Store\CachePoolStore;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
+        // Registry factory for configuring discovery
+        ->set('mcp.registry.factory', SymfonyRegistryFactory::class)
+            ->args([
+                param('kernel.project_dir'),
+                param('mcp.discovery.enabled'),
+                param('mcp.discovery.directories'),
+                param('mcp.discovery.exclude'),
+                service('logger')->ignoreOnInvalid(),
+            ])
+
         // Core Registry for managing tools, prompts, and resources
         ->set('mcp.registry', SymfonyRegistry::class)
-            ->args([])
+            ->factory([service('mcp.registry.factory'), 'create'])
 
         // Implementation info for the server
         ->set('mcp.implementation', Implementation::class)
