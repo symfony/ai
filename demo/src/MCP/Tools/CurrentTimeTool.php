@@ -11,11 +11,11 @@
 
 namespace App\MCP\Tools;
 
-use Symfony\AI\McpSdk\Capability\Tool\MetadataInterface;
-use Symfony\AI\McpSdk\Capability\Tool\ToolAnnotationsInterface;
-use Symfony\AI\McpSdk\Capability\Tool\ToolCall;
-use Symfony\AI\McpSdk\Capability\Tool\ToolCallResult;
-use Symfony\AI\McpSdk\Capability\Tool\ToolExecutorInterface;
+use Mcp\Capability\Tool\MetadataInterface;
+use Mcp\Capability\Tool\ToolAnnotationsInterface;
+use Mcp\Capability\Tool\ToolCall;
+use Mcp\Capability\Tool\ToolCallResult;
+use Mcp\Capability\Tool\ToolExecutorInterface;
 
 /**
  * @author Tom Hart <tom.hart.221@gmail.com>

@@ -11,14 +11,14 @@
 
 namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 
+use Mcp\Capability\Tool\IdentifierInterface;
+use Mcp\Server\MethodHandlerInterface as RequestHandlerInterface;
+use Mcp\Server\NotificationHandlerInterface;
+use Mcp\Server\RequestHandler\ListToolsHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\McpBundle;
-use Symfony\AI\McpSdk\Capability\Tool\IdentifierInterface;
-use Symfony\AI\McpSdk\Server\NotificationHandlerInterface;
-use Symfony\AI\McpSdk\Server\RequestHandler\ToolListHandler;
-use Symfony\AI\McpSdk\Server\RequestHandlerInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 #[CoversClass(McpBundle::class)]
@@ -155,7 +155,7 @@ class McpBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('mcp.server.request_handler.tool_list'));
 
         $definition = $container->getDefinition('mcp.server.request_handler.tool_list');
-        $this->assertSame(ToolListHandler::class, $definition->getClass());
+        $this->assertSame(ListToolsHandler::class, $definition->getClass());
     }
 
     public function testCustomPageSizeConfiguration()
