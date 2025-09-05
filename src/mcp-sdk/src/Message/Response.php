@@ -30,7 +30,7 @@ final readonly class Response implements \JsonSerializable
         return [
             'jsonrpc' => '2.0',
             'id' => $this->id,
-            'result' => $this->result,
+            'result' => array_filter($this->result, fn ($value) => null !== $value),
         ];
     }
 }
