@@ -12,7 +12,6 @@
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Store\Bridge\Local\InMemoryStore;
-use Symfony\AI\Store\Document\DocumentProcessor;
 use Symfony\AI\Store\Document\Loader\TextFileLoader;
 use Symfony\AI\Store\Document\Transformer\ReplaceTextTransformer;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
@@ -23,13 +22,14 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $store = new InMemoryStore();
-$processor = new DocumentProcessor(
+$indexer = new Indexer(
+    new Vectorizer($platform, new Embeddings('text-embedding-3-small')),
+    $store,
     new TextFileLoader(),
     [
         new ReplaceTextTransformer(search: '## Plot', replace: '## Synopsis'),
         new TextSplitTransformer(chunkSize: 500, overlap: 100),
-    ],
-    new Indexer(new Vectorizer($platform, new Embeddings('text-embedding-3-small')), $store)
+    ]
 );
 
 $movies = [
@@ -38,7 +38,7 @@ $movies = [
     dirname(__DIR__, 2).'/fixtures/movies/jurassic-park.md',
 ];
 
-$processor->process($movies);
+$indexer($movies);
 
 $vector = $platform->invoke(new Embeddings('text-embedding-3-small'), 'Roman gladiator revenge')->asVectors()[0];
 $results = $store->search($vector, 2);
