@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\McpBundle\Command;
 
-use Symfony\AI\McpSdk\Server;
-use Symfony\AI\McpSdk\Server\Transport\Stdio\SymfonyConsoleTransport;
+use Mcp\Server;
+use Mcp\Server\Transport\StdioTransport;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -30,7 +30,7 @@ class McpCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->server->connect(
-            new SymfonyConsoleTransport($input, $output)
+            new StdioTransport($input, $output)
         );
 
         return Command::SUCCESS;

@@ -11,16 +11,11 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
-use Symfony\AI\McpSdk\Capability\ToolChain;
-use Symfony\AI\McpSdk\Message\Factory;
-use Symfony\AI\McpSdk\Server;
-use Symfony\AI\McpSdk\Server\JsonRpcHandler;
-use Symfony\AI\McpSdk\Server\NotificationHandler\InitializedHandler;
-use Symfony\AI\McpSdk\Server\RequestHandler\InitializeHandler;
-use Symfony\AI\McpSdk\Server\RequestHandler\PingHandler;
-use Symfony\AI\McpSdk\Server\RequestHandler\ToolCallHandler;
-use Symfony\AI\McpSdk\Server\RequestHandler\ToolListHandler;
-use Symfony\AI\McpSdk\Server\Transport\Sse\Store\CachePoolStore;
+use Mcp\Server;
+use Mcp\Server\NotificationHandler\InitializedHandler;
+use Mcp\Server\RequestHandler\InitializeHandler;
+use Mcp\Server\RequestHandler\PingHandler;
+use Mcp\Server\Transport\Sse\Store\CachePoolStore;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
