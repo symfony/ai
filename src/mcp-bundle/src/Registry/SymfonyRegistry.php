@@ -22,7 +22,7 @@ use Mcp\Schema\Tool;
 /**
  * Extended Registry that can register Symfony services as MCP tools.
  *
- * @author Assistant
+ * @author Oskar Stark <oskarstark@googlemail.com>
  */
 final class SymfonyRegistry extends Registry
 {
