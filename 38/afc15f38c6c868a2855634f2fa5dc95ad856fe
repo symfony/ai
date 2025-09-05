@@ -1,0 +1,64 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-04T05:30:01Z
+
+friendly ping @valtzu
+
+---------------------------------------------------------------------------
+
+by pentiminax at 2025-09-04T12:28:29Z
+
+For information: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/code-execution-api
+
+---------------------------------------------------------------------------
+
+by valtzu at 2025-09-04T16:20:01Z
+
+First of all, thanks for working on this – when the `server_tools` were implemented, I only ever tested `google_search` and `url_context`.
+
+In my opinion the output should not contain the generated & executed code by default, since the last message/`part` is a human readable message which already contains the answer to the asked question.
+
+The `code_execution` is a server tool, like `google_search` or `url_context`, and those don't show up in the output either – even though f.e. search results / "sources" are available as `"grounding"` in the response.
+
+---
+
+If I'm building a customer-facing chat bot which should be able to answer to `Calculate 20th fibonacci number. Then find the nearest palindrome to it.` (an example from the `code_execution` docs), I don't think the customer should see the python code.
+
+---
+
+Somewhere we have this feature: `keepToolMessages`. Maybe we could even use that, or add a new one, like `keepServerToolParts` to control if those will be included or not :thinking:
+
+---------------------------------------------------------------------------
+
+by pentiminax at 2025-09-04T16:44:59Z
+
+> First of all, thanks for working on this – when the `server_tools` were implemented, I only ever tested `google_search` and `url_context`.
+>
+> In my opinion the output should not contain the generated & executed code by default, since the last message/`part` is a human readable message which already contains the answer to the asked question.
+>
+> The `code_execution` is a server tool, like `google_search` or `url_context`, and those don't show up in the output either – even though f.e. search results / "sources" are available as `"grounding"` in the response.
+>
+> If I'm building a customer-facing chat bot which should be able to answer to `Calculate 20th fibonacci number. Then find the nearest palindrome to it.` (an example from the `code_execution` docs), I don't think the customer should see the python code.
+>
+> Somewhere we have this feature: `keepToolMessages`. Maybe we could even use that, or add a new one, like `keepServerToolParts` to control if those will be included or not 🤔
+
+Thanks a lot for clarifying! I see your point now. Since `code_execution` is indeed just another server tool like `google_search `or `url_context`, it makes sense to treat it consistently and not expose the raw code by default. The final human-readable message is usually enough for the end user, while the tool details can stay in the background.
+
+I like the idea of making this configurable.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-04T18:41:49Z
+
+The rebase looks wrong
+
+---------------------------------------------------------------------------
+
+by pentiminax at 2025-09-04T20:27:22Z
+
+At the moment the code iterates through the contentParts array and looks for a successful code execution marker.
+
+- Once a successful execution is detected, the flag $successfulCodeExecutionDetected is set to true.
+- From that point onward, it concatenates any following text parts into the $content string.
+- If any text was collected, it returns a TextResult containing that aggregated content.
+- If no content was collected, it throws a RuntimeException("Code execution failed.").
