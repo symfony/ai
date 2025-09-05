@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Chat;
+use Symfony\AI\Agent\Chat\MessageStore\InMemoryStore;
 use Symfony\AI\Agent\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
@@ -27,6 +28,7 @@ use Symfony\AI\Platform\Result\TextResult;
 #[UsesClass(Message::class)]
 #[UsesClass(MessageBag::class)]
 #[UsesClass(TextResult::class)]
+#[UsesClass(InMemoryStore::class)]
 #[Small]
 final class ChatTest extends TestCase
 {
@@ -163,5 +165,19 @@ final class ChatTest extends TestCase
 
         $this->assertInstanceOf(AssistantMessage::class, $result);
         $this->assertSame($assistantContent, $result->content);
+    }
+
+    public function testChatCanReturnCurrentAndSpecificMessageBag()
+    {
+        $agent = $this->createMock(AgentInterface::class);
+        $agent->expects($this->once())
+            ->method('call')
+            ->willReturn(new TextResult('First response'));
+
+        $chat = new Chat($agent, new InMemoryStore());
+        $chat->submit(Message::ofUser('First message'));
+
+        $this->assertCount(2, $chat->getCurrentMessageBag());
+        $this->assertCount(0, $chat->getMessageBag('foo'));
     }
 }

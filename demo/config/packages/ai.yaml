@@ -58,6 +58,22 @@ ai:
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Embeddings'
                 name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Embeddings::TEXT_ADA_002
+    message_store:
+        cache:
+            audio:
+                service: 'cache.app'
+            wikipedia: ~
+            youtube: ~
+    chat:
+        audio:
+            agent: 'audio'
+            message_store: 'cache.audio'
+        wikipedia:
+            agent: 'wikipedia'
+            message_store: 'cache.wikipedia'
+        youtube:
+            agent: 'youtube'
+            message_store: 'cache.youtube'
 
 services:
     _defaults:
