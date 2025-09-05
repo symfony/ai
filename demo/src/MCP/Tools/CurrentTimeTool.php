@@ -21,7 +21,7 @@ use Mcp\Schema\Result\CallToolResult;
 /**
  * @author Tom Hart <tom.hart.221@gmail.com>
  */
-class CurrentTimeTool implements IdentifierInterface, MetadataInterface, ToolExecutorInterface
+final class CurrentTimeTool implements IdentifierInterface, MetadataInterface, ToolExecutorInterface
 {
     public function call(CallToolRequest $request): CallToolResult
     {
