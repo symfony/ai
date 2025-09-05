@@ -26,8 +26,8 @@ $store = new InMemoryStore();
 $processor = new DocumentProcessor(
     new TextFileLoader(),
     [
-        new ReplaceTextTransformer('## Plot', '## Synopsis'),
-        new TextSplitTransformer(500, 100),
+        new ReplaceTextTransformer(search: '## Plot', replace: '## Synopsis'),
+        new TextSplitTransformer(chunkSize: 500, overlap: 100),
     ],
     new Indexer(new Vectorizer($platform, new Embeddings('text-embedding-3-small')), $store)
 );
