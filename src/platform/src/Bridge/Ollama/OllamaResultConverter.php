@@ -52,6 +52,7 @@ final readonly class OllamaResultConverter implements ResultConverterInterface
 
     /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
      */
     public function doConvertCompletion(array $data, array $options): ResultInterface
     {
