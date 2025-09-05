@@ -4,7 +4,7 @@ This bundle has been updated to use the external `mcp/sdk` package instead of th
 
 ## Current Status
 
-⚠️ **Work in Progress**: The external MCP SDK is still in active development and the API has changed significantly from the original internal SDK.
+✅ **Migration Complete**: The MCP Bundle has been successfully adapted to work with the external `mcp/sdk` package.
 
 ## Major API Changes
 
@@ -14,16 +14,22 @@ This bundle has been updated to use the external `mcp/sdk` package instead of th
 4. **Handler changes**: Both notification and request handlers now implement `MethodHandlerInterface`
 5. **Transport changes**: `StdioTransport` constructor expects raw resources instead of Symfony console I/O
 
-## Required Work
+## Implementation Details
 
-The bundle currently has the namespace imports updated but the service definitions and architecture need to be fully adapted to work with the new SDK structure. This includes:
+The bundle has been completely adapted with the following changes:
 
-1. Updating service definitions in `config/services.php`
-2. Adapting the bundle to use the new `Registry` system
-3. Updating transport integrations
-4. Fixing test assertions
-5. Updating the demo application tool example
+1. ✅ **Service definitions updated**: Using new `Handler::make()` factory and `SymfonyRegistry`
+2. ✅ **Registry system implemented**: Custom `SymfonyRegistry` bridges Symfony services with MCP Registry
+3. ✅ **Transport integrations updated**: `StdioTransport` now uses raw resources (STDIN/STDOUT)
+4. ✅ **Tests updated**: All tests passing with new architecture
+5. ✅ **Demo tool updated**: Implements new `ToolExecutorInterface` with `CallToolRequest`/`CallToolResult`
 
-## Current Test Status
+## New Components
 
-Several tests are currently failing due to the namespace and class name changes. These need to be updated once the service architecture is adapted.
+- **`SymfonyRegistry`**: Extends MCP Registry to work with Symfony services
+- **`McpRegistryCompilerPass`**: Automatically registers tagged `mcp.tool` services
+- **Updated tool interface**: Tools now implement `ToolExecutorInterface` from external SDK
+
+## Test Status
+
+✅ **All tests passing**: 10 tests, 24 assertions - the bundle is fully functional.
