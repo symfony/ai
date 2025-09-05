@@ -18,7 +18,7 @@ use Symfony\Component\DependencyInjection\Reference;
 /**
  * Compiler pass to register MCP tools with the Registry.
  *
- * @author Assistant
+ * @author Oskar Stark <oskarstark@googlemail.com>
  */
 final class McpRegistryCompilerPass implements CompilerPassInterface
 {
