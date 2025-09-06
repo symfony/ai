@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Mistral;
 
 use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentNormalizer;
+use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentUrlNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\ToolNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
@@ -36,7 +37,8 @@ final class PlatformFactory
             [new Embeddings\ResultConverter(), new Llm\ResultConverter()],
             $contract ?? Contract::create(
                 new ToolNormalizer(),
-                new DocumentNormalizer()
+                new DocumentNormalizer(),
+                new DocumentUrlNormalizer(),
             ),
         );
     }
