@@ -23,6 +23,14 @@ final readonly class Response implements \JsonSerializable
     }
 
     /**
+     * @param array{jsonrpc: string, id: string|int, result: array<string, mixed>} $data
+     */
+    public static function from(array $data): self
+    {
+        return new self($data['id'], $data['result']);
+    }
+
+    /**
      * @return array{jsonrpc: string, id: string|int, result: array<string, mixed>}
      */
     public function jsonSerialize(): array

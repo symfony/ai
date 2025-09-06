@@ -53,7 +53,7 @@ readonly class JsonRpcHandler
     }
 
     /**
-     * @return iterable<string|null>
+     * @return iterable<string|Response|Error|null>
      *
      * @throws ExceptionInterface When a handler throws an exception during message processing
      * @throws \JsonException     When JSON encoding of the response fails
@@ -82,9 +82,13 @@ readonly class JsonRpcHandler
             $this->logger->info('Decoded incoming message', ['message' => $message]);
 
             try {
-                yield $message instanceof Notification
-                    ? $this->handleNotification($message)
-                    : $this->encodeResponse($this->handleRequest($message));
+                if ($message instanceof Notification) {
+                    yield $this->handleNotification($message);
+                } elseif ($message instanceof Response || $message instanceof Error) {
+                    yield $message;
+                } else {
+                    yield $this->encodeResponse($this->handleRequest($message));
+                }
             } catch (\DomainException) {
                 yield null;
             } catch (NotFoundExceptionInterface $e) {

@@ -11,6 +11,7 @@
 
 require __DIR__.'/vendor/autoload.php';
 
+use Symfony\Component\Clock\Clock;
 use Symfony\Component\Console as SymfonyConsole;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -30,7 +31,7 @@ $jsonRpcHandler = new Symfony\AI\McpSdk\Server\JsonRpcHandler(
 );
 
 // Set up the server
-$sever = new Symfony\AI\McpSdk\Server($jsonRpcHandler, $logger);
+$sever = new Symfony\AI\McpSdk\Server($jsonRpcHandler, new Clock(), logger: $logger);
 
 // Create the transport layer using Symfony Console
 $transport = new Symfony\AI\McpSdk\Server\Transport\Stdio\SymfonyConsoleTransport($input, $output);
