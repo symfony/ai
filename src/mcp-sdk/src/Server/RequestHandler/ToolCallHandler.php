@@ -29,6 +29,9 @@ final class ToolCallHandler extends BaseRequestHandler
     ) {
     }
 
+    /**
+     * @throws \JsonException
+     */
     public function createResponse(Request $message): Response|Error
     {
         $name = $message->params['name'];
@@ -43,7 +46,7 @@ final class ToolCallHandler extends BaseRequestHandler
         $content = match ($result->type) {
             'text' => [
                 'type' => 'text',
-                'text' => $result->result,
+                'text' => json_encode($result->result, \JSON_THROW_ON_ERROR),
             ],
             'image', 'audio' => [
                 'type' => $result->type,
@@ -62,10 +65,16 @@ final class ToolCallHandler extends BaseRequestHandler
             default => throw new InvalidArgumentException(\sprintf('Unsupported tool result type: %s', $result->type)),
         };
 
-        return new Response($message->id, [
+        $response = [
             'content' => [$content], // TODO: allow multiple `ToolCallResult`s in the future
             'isError' => $result->isError,
-        ]);
+        ];
+
+        if ('text' === $result->type && \is_array($result->result) || \is_object($result->result)) {
+            $response['structuredContent'] = $result->result;
+        }
+
+        return new Response($message->id, $response);
     }
 
     protected function supportedMethod(): string
