@@ -11,9 +11,9 @@
 
 namespace Symfony\AI\McpBundle\Controller;
 
-use Symfony\AI\McpSdk\Server;
-use Symfony\AI\McpSdk\Server\Transport\Sse\Store\CachePoolStore;
-use Symfony\AI\McpSdk\Server\Transport\Sse\StreamTransport;
+use Mcp\Server;
+use Mcp\Server\Transport\Sse\Store\CachePoolStore;
+use Mcp\Server\Transport\Sse\StreamTransport;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;

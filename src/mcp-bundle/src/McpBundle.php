@@ -11,12 +11,11 @@
 
 namespace Symfony\AI\McpBundle;
 
+use Mcp\Capability\Tool\IdentifierInterface;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpBundle\DependencyInjection\McpRegistryCompilerPass;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
-use Symfony\AI\McpSdk\Capability\Tool\IdentifierInterface;
-use Symfony\AI\McpSdk\Server\NotificationHandlerInterface;
-use Symfony\AI\McpSdk\Server\RequestHandlerInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -28,6 +27,13 @@ final class McpBundle extends AbstractBundle
     public function configure(DefinitionConfigurator $definition): void
     {
         $definition->import('../config/options.php');
+    }
+
+    public function build(ContainerBuilder $container): void
+    {
+        parent::build($container);
+
+        $container->addCompilerPass(new McpRegistryCompilerPass());
     }
 
     /**
@@ -60,10 +66,6 @@ final class McpBundle extends AbstractBundle
             return;
         }
 
-        $container->registerForAutoconfiguration(NotificationHandlerInterface::class)
-            ->addTag('mcp.server.notification_handler');
-        $container->registerForAutoconfiguration(RequestHandlerInterface::class)
-            ->addTag('mcp.server.request_handler');
 
         if ($transports['stdio']) {
             $container->register('mcp.server.command', McpCommand::class)

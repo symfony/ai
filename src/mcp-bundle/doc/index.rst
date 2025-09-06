@@ -1,7 +1,7 @@
 MCP Bundle
 ==========
 
-Symfony integration bundle for `Model Context Protocol`_ using the Symfony AI MCP SDK `symfony/mcp-sdk`_.
+Symfony integration bundle for `Model Context Protocol`_ using the external MCP SDK `mcp/sdk`_.
 
 **Currently only supports tools as server via Server-Sent Events (SSE) and STDIO.**
 
@@ -64,7 +64,7 @@ Configuration
                     url: 'http://localhost:8000/sse' # URL to SSE endpoint of MCP server
 
 .. _`Model Context Protocol`: https://modelcontextprotocol.io/
-.. _`symfony/mcp-sdk`: https://github.com/symfony/mcp-sdk
+.. _`mcp/sdk`: https://github.com/modelcontextprotocol/php-sdk
 .. _`Claude Desktop`: https://claude.ai/download
 .. _`MCP Server List`: https://modelcontextprotocol.io/examples
 .. _`AI Bundle`: https://github.com/symfony/ai-bundle

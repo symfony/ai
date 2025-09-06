@@ -11,14 +11,14 @@
 
 namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 
+use Mcp\Capability\Tool\IdentifierInterface;
+use Mcp\Server\MethodHandlerInterface as RequestHandlerInterface;
+use Mcp\Server\NotificationHandlerInterface;
+use Mcp\Server\RequestHandler\ListToolsHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\McpBundle;
-use Symfony\AI\McpSdk\Capability\Tool\IdentifierInterface;
-use Symfony\AI\McpSdk\Server\NotificationHandlerInterface;
-use Symfony\AI\McpSdk\Server\RequestHandler\ToolListHandler;
-use Symfony\AI\McpSdk\Server\RequestHandlerInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 #[CoversClass(McpBundle::class)]
@@ -124,25 +124,6 @@ class McpBundleTest extends TestCase
         $this->assertArrayHasKey('mcp.tool', $autoconfiguredInstances[IdentifierInterface::class]->getTags());
     }
 
-    public function testServerAutoconfigurations()
-    {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'stdio' => true,
-                    'sse' => true,
-                ],
-            ],
-        ]);
-
-        $autoconfiguredInstances = $container->getAutoconfiguredInstanceof();
-
-        $this->assertArrayHasKey(NotificationHandlerInterface::class, $autoconfiguredInstances);
-        $this->assertArrayHasKey(RequestHandlerInterface::class, $autoconfiguredInstances);
-
-        $this->assertArrayHasKey('mcp.server.notification_handler', $autoconfiguredInstances[NotificationHandlerInterface::class]->getTags());
-        $this->assertArrayHasKey('mcp.server.request_handler', $autoconfiguredInstances[RequestHandlerInterface::class]->getTags());
-    }
 
     public function testDefaultPageSizeConfiguration()
     {
@@ -151,11 +132,8 @@ class McpBundleTest extends TestCase
         // Test that the default page_size parameter is set to 20
         $this->assertSame(20, $container->getParameter('mcp.page_size'));
 
-        // Test that ToolListHandler is registered
-        $this->assertTrue($container->hasDefinition('mcp.server.request_handler.tool_list'));
-
-        $definition = $container->getDefinition('mcp.server.request_handler.tool_list');
-        $this->assertSame(ToolListHandler::class, $definition->getClass());
+        // Test that the main MCP server service is registered
+        $this->assertTrue($container->hasDefinition('mcp.server'));
     }
 
     public function testCustomPageSizeConfiguration()
@@ -170,7 +148,7 @@ class McpBundleTest extends TestCase
         $this->assertSame(50, $container->getParameter('mcp.page_size'));
     }
 
-    public function testMissingHandlerServices()
+    public function testCoreServicesRegistered()
     {
         $container = $this->buildContainer([
             'mcp' => [
@@ -181,12 +159,10 @@ class McpBundleTest extends TestCase
             ],
         ]);
 
-        // Currently, only ToolListHandler is registered
-        $this->assertTrue($container->hasDefinition('mcp.server.request_handler.tool_list'));
-
-        // These services should be registered but are currently missing
-        $this->assertFalse($container->hasDefinition('mcp.server.request_handler.resource_list'));
-        $this->assertFalse($container->hasDefinition('mcp.server.request_handler.prompt_list'));
+        // Test that core MCP services are registered
+        $this->assertTrue($container->hasDefinition('mcp.registry'));
+        $this->assertTrue($container->hasDefinition('mcp.json_rpc_handler'));
+        $this->assertTrue($container->hasDefinition('mcp.server'));
     }
 
     private function buildContainer(array $configuration): ContainerBuilder
