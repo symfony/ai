@@ -29,13 +29,22 @@ final readonly class TextSplitTransformer implements TransformerInterface
     public const OPTION_CHUNK_SIZE = 'chunk_size';
     public const OPTION_OVERLAP = 'overlap';
 
+    public function __construct(
+        private int $chunkSize = 1000,
+        private int $overlap = 200,
+    ) {
+        if ($this->overlap < 0 || $this->overlap >= $this->chunkSize) {
+            throw new InvalidArgumentException(sprintf('Overlap must be non-negative and less than chunk size. Got chunk size: %d, overlap: %d', $this->chunkSize, $this->overlap));
+        }
+    }
+
     /**
      * @param array{chunk_size?: int, overlap?: int} $options
      */
     public function transform(iterable $documents, array $options = []): iterable
     {
-        $chunkSize = $options[self::OPTION_CHUNK_SIZE] ?? 1000;
-        $overlap = $options[self::OPTION_OVERLAP] ?? 200;
+        $chunkSize = $options[self::OPTION_CHUNK_SIZE] ?? $this->chunkSize;
+        $overlap = $options[self::OPTION_OVERLAP] ?? $this->overlap;
 
         if ($overlap < 0 || $overlap >= $chunkSize) {
             throw new InvalidArgumentException('Overlap must be non-negative and less than chunk size.');

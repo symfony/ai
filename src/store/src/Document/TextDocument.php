@@ -28,4 +28,9 @@ final readonly class TextDocument
             throw new InvalidArgumentException('The content shall not be an empty string.');
         }
     }
+
+    public function withContent(string $content): self
+    {
+        return new self($this->id, $content, $this->metadata);
+    }
 }

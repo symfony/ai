@@ -247,4 +247,38 @@ final class TextDocumentTest extends TestCase
 
         new TextDocument(Uuid::v4(), '   ');
     }
+
+    #[TestDox('withContent() creates new instance with updated content')]
+    public function testWithContent()
+    {
+        $id = Uuid::v4();
+        $originalContent = 'Original content';
+        $newContent = 'Updated content';
+        $metadata = new Metadata(['title' => 'Test Document']);
+
+        $originalDocument = new TextDocument($id, $originalContent, $metadata);
+        $updatedDocument = $originalDocument->withContent($newContent);
+
+        // Original document is unchanged
+        $this->assertSame($originalContent, $originalDocument->content);
+        
+        // New document has updated content but same ID and metadata
+        $this->assertSame($newContent, $updatedDocument->content);
+        $this->assertSame($id, $updatedDocument->id);
+        $this->assertSame($metadata, $updatedDocument->metadata);
+        
+        // Different instances
+        $this->assertNotSame($originalDocument, $updatedDocument);
+    }
+
+    #[TestDox('withContent() validates new content')]
+    public function testWithContentValidatesContent()
+    {
+        $document = new TextDocument(Uuid::v4(), 'Valid content');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The content shall not be an empty string.');
+
+        $document->withContent('   ');
+    }
 }
