@@ -131,10 +131,18 @@ Configuration
             default:
                 vectorizer: 'ai.vectorizer.openai_embeddings'
                 store: 'ai.store.chroma_db.default'
-                
+
             research:
                 vectorizer: 'ai.vectorizer.mistral_embeddings'
                 store: 'ai.store.memory.research'
+        message_store:
+            cache:
+                main:
+                    service: 'cache.app'
+        chat:
+            main:
+                agent: 'research'
+                message_store: 'main'
 
 Usage
 -----
@@ -355,13 +363,13 @@ Vectorizers are defined in the ``vectorizer`` section of your configuration:
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Embeddings::TEXT_EMBEDDING_3_SMALL
                     options:
                         dimensions: 512
-                        
+
             openai_large:
                 platform: 'ai.platform.openai'
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Embeddings'
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Embeddings::TEXT_EMBEDDING_3_LARGE
-                    
+
             mistral_embed:
                 platform: 'ai.platform.mistral'
                 model:
@@ -379,11 +387,11 @@ Once configured, vectorizers can be referenced by name in indexer configurations
             documents:
                 vectorizer: 'ai.vectorizer.openai_small'
                 store: 'ai.store.chroma_db.documents'
-                
+
             research:
                 vectorizer: 'ai.vectorizer.openai_large'
                 store: 'ai.store.chroma_db.research'
-                
+
             knowledge_base:
                 vectorizer: 'ai.vectorizer.mistral_embed'
                 store: 'ai.store.memory.kb'
@@ -391,7 +399,7 @@ Once configured, vectorizers can be referenced by name in indexer configurations
 **Benefits of Configured Vectorizers**
 
 * **Reusability**: Define once, use in multiple indexers
-* **Consistency**: Ensure all indexers using the same vectorizer have identical embedding configuration  
+* **Consistency**: Ensure all indexers using the same vectorizer have identical embedding configuration
 * **Maintainability**: Change vectorizer settings in one place
 
 Profiler
