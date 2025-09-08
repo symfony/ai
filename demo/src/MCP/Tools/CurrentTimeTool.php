@@ -59,3 +59,4 @@ final class CurrentTimeTool implements IdentifierInterface, MetadataInterface, T
         ];
     }
 }
+
