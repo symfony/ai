@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Contract;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ImageNormalizer;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
@@ -24,6 +25,7 @@ final readonly class OpenAiContract extends Contract
     {
         return parent::create(
             new AudioNormalizer(),
+            new ImageNormalizer(),
             new FileNormalizer(),
             ...$normalizer
         );
