@@ -38,5 +38,21 @@ final class McpRegistryCompilerPass implements CompilerPassInterface
                 new Reference($serviceId),
             ]);
         }
+
+        // Find all services tagged as 'mcp.prompt'
+        $taggedServices = $container->findTaggedServiceIds('mcp.prompt');
+        foreach ($taggedServices as $serviceId => $tags) {
+            $registryDefinition->addMethodCall('registerPromptService', [
+                new Reference($serviceId),
+            ]);
+        }
+
+        // Find all services tagged as 'mcp.resource'
+        $taggedServices = $container->findTaggedServiceIds('mcp.resource');
+        foreach ($taggedServices as $serviceId => $tags) {
+            $registryDefinition->addMethodCall('registerResourceService', [
+                new Reference($serviceId),
+            ]);
+        }
     }
 }

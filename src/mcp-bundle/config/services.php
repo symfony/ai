@@ -11,13 +11,13 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
-use Symfony\AI\McpBundle\Registry\SymfonyRegistry;
-use Symfony\AI\McpBundle\Registry\SymfonyRegistryFactory;
 use Mcp\JsonRpc\Handler;
 use Mcp\JsonRpc\MessageFactory;
 use Mcp\Schema\Implementation;
 use Mcp\Server;
 use Mcp\Server\Transport\Sse\Store\CachePoolStore;
+use Symfony\AI\McpBundle\Registry\SymfonyRegistry;
+use Symfony\AI\McpBundle\Registry\SymfonyRegistryFactory;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
@@ -28,6 +28,7 @@ return static function (ContainerConfigurator $container): void {
                 param('mcp.discovery.enabled'),
                 param('mcp.discovery.directories'),
                 param('mcp.discovery.exclude'),
+                param('mcp.server_capabilities'),
                 service('logger')->ignoreOnInvalid(),
             ])
 

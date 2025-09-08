@@ -21,18 +21,24 @@ use Psr\Log\NullLogger;
  */
 final class SymfonyRegistryFactory
 {
+    /**
+     * @param array<string, mixed> $serverCapabilitiesConfig
+     */
     public function __construct(
         private readonly string $projectDir,
         private readonly bool $discoveryEnabled,
+        /** @var array<string> */
         private readonly array $discoveryDirectories,
+        /** @var array<string> */
         private readonly array $discoveryExclude,
+        private readonly array $serverCapabilitiesConfig = [],
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
     public function create(): SymfonyRegistry
     {
-        $registry = new SymfonyRegistry($this->logger);
+        $registry = new SymfonyRegistry($this->logger, $this->serverCapabilitiesConfig);
 
         if ($this->discoveryEnabled) {
             $registry->discoverTools(

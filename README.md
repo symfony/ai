@@ -18,7 +18,7 @@ Symfony AI consists of several lower and higher level **components** and the res
   * **[Store](src/store/README.md)**: Data storage abstraction with indexing and retrieval for AI applications.
 * **Bundles**
   * **[AI Bundle](src/ai-bundle/README.md)**: Symfony integration for AI Platform, Store and Agent components.
-  * **[MCP Bundle](src/mcp-bundle/README.md)**: Symfony integration for external [mcp/sdk](https://github.com/modelcontextprotocol/php-sdk), allowing them to act as MCP servers or clients.
+  * **[MCP Bundle](src/mcp-bundle/README.md)**: Symfony integration for official [mcp/sdk](https://github.com/modelcontextprotocol/php-sdk), allowing them to act as MCP servers or clients.
 
 ## Examples & Demo
 

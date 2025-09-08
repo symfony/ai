@@ -11,6 +11,10 @@
 
 namespace Symfony\AI\McpBundle;
 
+use Mcp\Capability\Prompt\IdentifierInterface as PromptIdentifierInterface;
+use Mcp\Capability\Prompt\PromptGetterInterface;
+use Mcp\Capability\Resource\IdentifierInterface as ResourceIdentifierInterface;
+use Mcp\Capability\Resource\ResourceReaderInterface;
 use Mcp\Capability\Tool\IdentifierInterface;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
@@ -49,6 +53,7 @@ final class McpBundle extends AbstractBundle
         $builder->setParameter('mcp.discovery.enabled', $config['discovery']['enabled'] ?? true);
         $builder->setParameter('mcp.discovery.directories', $config['discovery']['directories'] ?? ['src']);
         $builder->setParameter('mcp.discovery.exclude', $config['discovery']['exclude'] ?? ['vendor', 'var', 'tests']);
+        $builder->setParameter('mcp.server_capabilities', $config['server_capabilities'] ?? []);
 
         if (isset($config['client_transports'])) {
             $this->configureClient($config['client_transports'], $builder);
@@ -57,6 +62,26 @@ final class McpBundle extends AbstractBundle
         $builder
             ->registerForAutoconfiguration(IdentifierInterface::class)
             ->addTag('mcp.tool')
+        ;
+
+        $builder
+            ->registerForAutoconfiguration(PromptIdentifierInterface::class)
+            ->addTag('mcp.prompt')
+        ;
+
+        $builder
+            ->registerForAutoconfiguration(PromptGetterInterface::class)
+            ->addTag('mcp.prompt')
+        ;
+
+        $builder
+            ->registerForAutoconfiguration(ResourceIdentifierInterface::class)
+            ->addTag('mcp.resource')
+        ;
+
+        $builder
+            ->registerForAutoconfiguration(ResourceReaderInterface::class)
+            ->addTag('mcp.resource')
         ;
     }
 
@@ -68,7 +93,6 @@ final class McpBundle extends AbstractBundle
         if (!$transports['stdio'] && !$transports['sse']) {
             return;
         }
-
 
         if ($transports['stdio']) {
             $container->register('mcp.server.command', McpCommand::class)

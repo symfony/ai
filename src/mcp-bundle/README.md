@@ -1,6 +1,6 @@
 # MCP Bundle
 
-Symfony integration bundle for [Model Context Protocol](https://modelcontextprotocol.io/) using the external
+Symfony integration bundle for [Model Context Protocol](https://modelcontextprotocol.io/) using the official
 MCP SDK [mcp/sdk](https://github.com/modelcontextprotocol/php-sdk).
 
 **Currently only supports tools as server via Server-Sent Events (SSE) and STDIO.**

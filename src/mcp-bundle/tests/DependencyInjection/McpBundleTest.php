@@ -12,9 +12,6 @@
 namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 
 use Mcp\Capability\Tool\IdentifierInterface;
-use Mcp\Server\MethodHandlerInterface as RequestHandlerInterface;
-use Mcp\Server\NotificationHandlerInterface;
-use Mcp\Server\RequestHandler\ListToolsHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -124,7 +121,6 @@ class McpBundleTest extends TestCase
         $this->assertArrayHasKey('mcp.tool', $autoconfiguredInstances[IdentifierInterface::class]->getTags());
     }
 
-
     public function testDefaultPageSizeConfiguration()
     {
         $container = $this->buildContainer([]);
@@ -163,6 +159,55 @@ class McpBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('mcp.registry'));
         $this->assertTrue($container->hasDefinition('mcp.json_rpc_handler'));
         $this->assertTrue($container->hasDefinition('mcp.server'));
+    }
+
+    public function testDefaultServerCapabilitiesConfiguration()
+    {
+        $container = $this->buildContainer([]);
+
+        // Test that default server capabilities are set
+        $serverCapabilities = $container->getParameter('mcp.server_capabilities');
+        $this->assertSame([
+            'tools' => true,
+            'tools_list_changed' => null,
+            'resources' => null,
+            'resources_subscribe' => false,
+            'resources_list_changed' => null,
+            'prompts' => null,
+            'prompts_list_changed' => null,
+            'logging' => false,
+            'completions' => true,
+            'experimental' => [],
+        ], $serverCapabilities);
+    }
+
+    public function testCustomServerCapabilitiesConfiguration()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'server_capabilities' => [
+                    'tools' => false,
+                    'logging' => true,
+                    'completions' => false,
+                    'experimental' => ['custom_feature' => true],
+                ],
+            ],
+        ]);
+
+        // Test that custom server capabilities are set
+        $serverCapabilities = $container->getParameter('mcp.server_capabilities');
+        $this->assertSame([
+            'tools' => false,
+            'logging' => true,
+            'completions' => false,
+            'experimental' => ['custom_feature' => true],
+            'tools_list_changed' => null,
+            'resources' => null,
+            'resources_subscribe' => false,
+            'resources_list_changed' => null,
+            'prompts' => null,
+            'prompts_list_changed' => null,
+        ], $serverCapabilities);
     }
 
     private function buildContainer(array $configuration): ContainerBuilder

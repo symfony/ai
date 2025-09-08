@@ -30,7 +30,7 @@ class McpCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->server->connect(
-            new StdioTransport(STDIN, STDOUT)
+            new StdioTransport(\STDIN, \STDOUT)
         );
 
         return Command::SUCCESS;
