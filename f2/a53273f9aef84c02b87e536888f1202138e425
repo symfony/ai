@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-06T00:28:45Z
+
+mixed feelings about the `__invoke` in the interfaces ... i know i started that, but it just looks awful when chaining ...
+
+for example:
+https://github.com/chr-hertel/nca-chat/blob/8f8366ffe9cde07ea53ed7cf728614c3bf4b53b1/src/Store/Indexer.php#L21-L26
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-06T05:20:00Z
+
+Allright let's go with real method names then
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-06T16:00:35Z
+
+> mixed feelings about the __invoke in the interfaces
+
+fixed in
+* #476
