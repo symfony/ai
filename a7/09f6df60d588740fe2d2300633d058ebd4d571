@@ -1,0 +1,10 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-08T06:12:11Z
+
+Shall we rename the PR title?
+
+```diff
+-[Agent] Allow exposing exceptions to AI
++[Agent] Allow exposing tool exceptions to AI
+```
