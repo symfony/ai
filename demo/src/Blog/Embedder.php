@@ -13,7 +13,7 @@ namespace App\Blog;
 
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
-use Symfony\AI\Store\IndexerInterface;
+use Symfony\AI\Store\Document\IndexerInterface;
 
 final readonly class Embedder
 {

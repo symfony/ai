@@ -9,12 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Store;
+namespace Symfony\AI\Store\Document;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\AI\Store\Document\TextDocument;
-use Symfony\AI\Store\Document\VectorizerInterface;
+use Symfony\AI\Store\StoreInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>

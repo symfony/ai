@@ -9,9 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Store;
-
-use Symfony\AI\Store\Document\TextDocument;
+namespace Symfony\AI\Store\Document;
 
 /**
  * Converts a collection of TextDocuments into VectorDocuments and pushes them to a store implementation.
