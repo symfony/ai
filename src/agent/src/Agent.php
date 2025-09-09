@@ -122,4 +122,13 @@ final readonly class Agent implements AgentInterface
 
         return $processors instanceof \Traversable ? iterator_to_array($processors) : $processors;
     }
+
+    public function getSystemMessage(): ?string
+    {
+        $input = new Input($this->model, new MessageBag(), []);
+
+        array_map(fn (InputProcessorInterface $processor) => $processor->processInput($input), $this->inputProcessors);
+
+        return $input->messages->getSystemMessage()?->content;
+    }
 }

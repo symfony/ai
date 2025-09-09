@@ -30,6 +30,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Model;
@@ -404,5 +405,47 @@ final class AgentTest extends TestCase
         $agent = new Agent($platform, $model, $inputProcessors, $outputProcessors);
 
         $this->assertInstanceOf(AgentInterface::class, $agent);
+    }
+
+    public function testGetSystemMessageReturnsExpectedValue()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $model = $this->createMock(Model::class);
+        $expectedSystemMessage = 'System prompt here';
+
+        $inputProcessor = $this->createMock(InputProcessorInterface::class);
+        $outputProcessor = $this->createMock(OutputProcessorInterface::class);
+
+        $inputProcessor->expects($this->once())
+            ->method('processInput')
+            ->willReturnCallback(function (Input $input) use ($expectedSystemMessage) {
+                $input->messages->add(Message::forSystem($expectedSystemMessage));
+            });
+
+        $agent = new Agent($platform, $model, new \ArrayIterator([$inputProcessor]), new \ArrayIterator([$outputProcessor]));
+
+        $systemMessage = $agent->getSystemMessage();
+
+        $this->assertSame($expectedSystemMessage, $systemMessage);
+    }
+
+    public function testGetSystemMessageReturnsNullIfNoSystemMessageSet()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $model = $this->createMock(Model::class);
+
+        $inputProcessor = $this->createMock(InputProcessorInterface::class);
+        $outputProcessor = $this->createMock(OutputProcessorInterface::class);
+
+        $inputProcessor->expects($this->once())
+            ->method('processInput')
+            ->willReturnCallback(function (Input $input) {
+            });
+
+        $agent = new Agent($platform, $model, new \ArrayIterator([$inputProcessor]), new \ArrayIterator([$outputProcessor]));
+
+        $systemMessage = $agent->getSystemMessage();
+
+        $this->assertNull($systemMessage);
     }
 }

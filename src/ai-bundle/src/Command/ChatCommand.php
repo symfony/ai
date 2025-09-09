@@ -126,16 +126,19 @@ final class ChatCommand extends Command
         }
 
         $agent = $this->agents->get($agentName);
+        $systemMessage = $agent->getSystemMessage();
 
         // Now start the chat
         $io = new SymfonyStyle($input, $output);
 
         $io->title(\sprintf('Chat with %s Agent', $agentName));
+        if (null !== $systemMessage) {
+            $io->writeln("<comment>System prompt: $systemMessage</comment>");
+        }
         $io->info('Type your message and press Enter. Type "exit" or "quit" to end the conversation.');
         $io->newLine();
 
         $messages = new MessageBag();
-        $systemPromptDisplayed = false;
 
         while (true) {
             $userInput = $io->ask('You');
@@ -153,13 +156,6 @@ final class ChatCommand extends Command
 
             try {
                 $result = $agent->call($messages);
-
-                // Display system prompt after first successful call
-                if (!$systemPromptDisplayed && null !== ($systemMessage = $messages->getSystemMessage())) {
-                    $io->section('System Prompt');
-                    $io->block($systemMessage->content, null, 'fg=gray', ' ', true);
-                    $systemPromptDisplayed = true;
-                }
 
                 if ($result instanceof TextResult) {
                     $io->write('<fg=yellow>Assistant</>:');
