@@ -31,4 +31,9 @@ interface IndexerInterface
      * @param string|array<string> $source Source identifier (file path, URL, etc.) or array of sources
      */
     public function withSource(string|array $source): self;
+
+    /**
+     * Get the description of what this indexer does.
+     */
+    public function getDescription(): ?string;
 }

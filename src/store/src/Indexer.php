@@ -40,13 +40,14 @@ class Indexer implements IndexerInterface
         string|array|null $source = null,
         private array $transformers = [],
         private LoggerInterface $logger = new NullLogger(),
+        private ?string $description = null,
     ) {
         $this->sources = null === $source ? [] : (array) $source;
     }
 
     public function withSource(string|array $source): self
     {
-        return new self($this->loader, $this->vectorizer, $this->store, $source, $this->transformers, $this->logger);
+        return new self($this->loader, $this->vectorizer, $this->store, $source, $this->transformers, $this->logger, $this->description);
     }
 
     public function index(array $options = []): void
@@ -94,6 +95,11 @@ class Indexer implements IndexerInterface
         }
 
         $this->logger->debug('Document processing completed', ['total_documents' => $counter]);
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
     }
 
     /**

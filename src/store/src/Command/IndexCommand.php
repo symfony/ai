@@ -96,6 +96,11 @@ EOF
 
         $io->title(\sprintf('Indexing documents using "%s" indexer', $indexer));
 
+        $description = $indexerService->getDescription();
+        if (null !== $description) {
+            $io->info($description);
+        }
+
         try {
             $indexerService->index([]);
 
