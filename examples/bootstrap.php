@@ -23,6 +23,16 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 require_once __DIR__.'/vendor/autoload.php';
 (new Dotenv())->loadEnv(__DIR__.'/.env');
 
+// Register custom error handler to convert warnings/notices to exceptions
+set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline): bool {
+    // Only convert warnings and notices to exceptions, let fatal errors be handled normally
+    if (error_reporting() & $errno) {
+        throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+    }
+
+    return false; // Let the normal error handler run
+});
+
 function env(string $var)
 {
     if (!isset($_SERVER[$var])) {
