@@ -636,6 +636,7 @@ class AiBundleTest extends TestCase
                             'class' => 'Symfony\AI\Platform\Bridge\OpenAi\Embeddings',
                             'name' => 'text-embedding-3-small',
                         ],
+                        'options' => ['normalize' => true],
                     ],
                 ],
             ],
@@ -644,7 +645,7 @@ class AiBundleTest extends TestCase
         $vectorizerDefinition = $container->getDefinition('ai.vectorizer.my_vectorizer');
         $arguments = $vectorizerDefinition->getArguments();
 
-        $this->assertCount(3, $arguments, 'Vectorizer should have 3 arguments: platform, model, and logger');
+        $this->assertCount(4, $arguments, 'Vectorizer should have 4 arguments: platform, model, logger, options');
 
         // First argument should be platform reference
         $this->assertInstanceOf(Reference::class, $arguments[0]);
@@ -658,6 +659,10 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $arguments[2]);
         $this->assertSame('logger', (string) $arguments[2]);
         $this->assertSame(ContainerInterface::IGNORE_ON_INVALID_REFERENCE, $arguments[2]->getInvalidBehavior());
+
+        // Fourth argument should be options array
+        $this->assertIsArray($arguments[3]);
+        $this->assertSame(['normalize' => true], $arguments[3]);
     }
 
     public function testIndexerWithConfiguredVectorizer()

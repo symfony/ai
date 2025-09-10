@@ -32,6 +32,7 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Tests\Double\PlatformTestHandler;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Uid\Uuid;
@@ -374,9 +375,45 @@ final class VectorizerTest extends TestCase
 
         $vectorizer = new Vectorizer($platform, $model);
 
-        $this->expectException(\Symfony\AI\Store\Exception\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('No vector returned for string vectorization.');
 
         $vectorizer->vectorize($text);
+    }
+
+    public function testVectorizeStringWithOptions()
+    {
+        $text = 'Option test string';
+        $vector = new Vector([0.42, 0.43, 0.44]);
+
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $model = new Embeddings();
+
+        $vectorizer = new Vectorizer($platform, $model);
+
+        $options = ['model' => 'text-embedding-3-small', 'normalize' => false];
+        $result = $vectorizer->vectorize($text, $options);
+
+        $this->assertInstanceOf(Vector::class, $result);
+        $this->assertEquals($vector, $result);
+    }
+
+    public function testVectorizeTextDocumentsWithOptions()
+    {
+        $documents = [
+            new TextDocument(Uuid::v4(), 'Doc with options'),
+        ];
+        $vector = new Vector([0.9, 0.8, 0.7]);
+
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $model = new Embeddings();
+
+        $vectorizer = new Vectorizer($platform, $model);
+        $options = ['normalize' => true, 'dimensions' => 3];
+        $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents, $options);
+
+        $this->assertCount(1, $vectorDocuments);
+        $this->assertInstanceOf(VectorDocument::class, $vectorDocuments[0]);
+        $this->assertEquals($vector, $vectorDocuments[0]->vector);
     }
 }

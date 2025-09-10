@@ -22,14 +22,17 @@ use Symfony\AI\Platform\Vector\Vector;
 interface VectorizerInterface
 {
     /**
-     * @param TextDocument[] $documents
+     * @param TextDocument[]       $documents
+     * @param array<string, mixed> $options
      *
      * @return VectorDocument[]
      */
-    public function vectorizeTextDocuments(array $documents): array;
+    public function vectorizeTextDocuments(array $documents, array $options = []): array;
 
     /**
      * Vectorizes a single string into a Vector.
+     *
+     * @param array<string, mixed> $options
      */
-    public function vectorize(string $string): Vector;
+    public function vectorize(string $string, array $options = []): Vector;
 }
