@@ -26,4 +26,6 @@ interface AgentInterface
      * @throws ExceptionInterface When the agent encounters an error (e.g., unsupported model capabilities, invalid arguments, network failures, or processor errors)
      */
     public function call(MessageBag $messages, array $options = []): ResultInterface;
+
+    public function getSystemMessage(): ?string;
 }
