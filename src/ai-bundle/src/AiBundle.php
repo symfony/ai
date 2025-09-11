@@ -82,6 +82,7 @@ use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function Symfony\Component\String\u;
 
@@ -611,6 +612,9 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $config['prompt']['text'],
                     $includeTools ? new Reference('ai.toolbox.'.$name) : null,
+                    TranslatorInterface::class,
+                    $config['prompt']['enable_translation'],
+                    $config['prompt']['translation_domain'],
                     new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
                 ])
                 ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -30]);

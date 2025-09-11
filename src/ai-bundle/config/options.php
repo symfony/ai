@@ -142,7 +142,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->ifArray()
                                 ->then(function (array $v) {
                                     if (!isset($v['text']) && !isset($v['include_tools'])) {
-                                        throw new \InvalidArgumentException('Either "text" must be configured for prompt.');
+                                        throw new \InvalidArgumentException('Either "text" or "tools" must be configured for prompt.');
                                     }
 
                                     return $v;
@@ -161,6 +161,14 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->booleanNode('include_tools')
                                     ->info('Include tool definitions at the end of the system prompt')
                                     ->defaultFalse()
+                                ->end()
+                                ->booleanNode('enable_translation')
+                                    ->info('Enable translation for the system prompt')
+                                    ->defaultFalse()
+                                ->end()
+                                ->scalarNode('translation_domain')
+                                    ->info('The translation domain for the system prompt')
+                                    ->defaultNull()
                                 ->end()
                             ->end()
                         ->end()
