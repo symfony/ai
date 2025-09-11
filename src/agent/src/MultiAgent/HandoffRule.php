@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Agent\MultiAgent;
 
+use Symfony\AI\Agent\Exception\InvalidArgumentException;
+
 /**
  * Defines when and how to handoff execution to another agent.
  *
@@ -25,6 +27,13 @@ final readonly class HandoffRule
         private string $agentName,
         private array $triggers = [],
     ) {
+        if (empty($agentName)) {
+            throw new InvalidArgumentException('Agent name cannot be empty.');
+        }
+        
+        if (empty($triggers)) {
+            throw new InvalidArgumentException('Triggers cannot be an empty array.');
+        }
     }
 
     public function getAgentName(): string
