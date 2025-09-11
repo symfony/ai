@@ -16,10 +16,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
-use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
-use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
-use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
@@ -163,7 +159,7 @@ final class ToolboxTest extends TestCase
 
     public function testExecuteWithUnknownTool()
     {
-        $this->expectException(ToolNotFoundException::class);
+        $this->expectException(\Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException::class);
         $this->expectExceptionMessage('Tool not found for call: foo_bar_baz');
 
         $this->toolbox->execute(new ToolCall('call_1234', 'foo_bar_baz'));
@@ -171,7 +167,7 @@ final class ToolboxTest extends TestCase
 
     public function testExecuteWithMisconfiguredTool()
     {
-        $this->expectException(ToolConfigurationException::class);
+        $this->expectException(\Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException::class);
         $this->expectExceptionMessage('Method "foo" not found in tool "'.ToolMisconfigured::class.'".');
 
         $toolbox = new Toolbox([new ToolMisconfigured()], new ReflectionToolFactory());
@@ -181,7 +177,7 @@ final class ToolboxTest extends TestCase
 
     public function testExecuteWithException()
     {
-        $this->expectException(ToolExecutionException::class);
+        $this->expectException(\Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException::class);
         $this->expectExceptionMessage('Execution of tool "tool_exception" failed with error: Tool error.');
 
         $this->toolbox->execute(new ToolCall('call_1234', 'tool_exception'));
@@ -189,7 +185,7 @@ final class ToolboxTest extends TestCase
 
     public function testExecuteWithCustomException()
     {
-        $this->expectException(ToolExecutionExceptionInterface::class);
+        $this->expectException(\Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface::class);
         $this->expectExceptionMessage('Custom error.');
 
         $this->toolbox->execute(new ToolCall('call_1234', 'tool_custom_exception'));

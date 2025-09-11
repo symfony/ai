@@ -14,7 +14,6 @@ namespace Symfony\AI\Platform\Tests\Result;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\TextResult;
 
@@ -35,7 +34,7 @@ final class ChoiceResultTest extends TestCase
 
     public function testChoiceResultWithNoChoices()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('A choice result must contain at least two results.');
 
         new ChoiceResult();

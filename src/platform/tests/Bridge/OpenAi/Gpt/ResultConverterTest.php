@@ -16,8 +16,6 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
-use Symfony\AI\Platform\Exception\ContentFilterException;
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -149,7 +147,7 @@ class ResultConverterTest extends TestCase
                 ];
             });
 
-        $this->expectException(ContentFilterException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\ContentFilterException::class);
         $this->expectExceptionMessage('Content was filtered');
 
         $converter->convert(new RawHttpResult($httpResponse));
@@ -161,7 +159,7 @@ class ResultConverterTest extends TestCase
         $httpResponse = self::createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\RuntimeException::class);
         $this->expectExceptionMessage('Response does not contain choices');
 
         $converter->convert(new RawHttpResult($httpResponse));
@@ -183,7 +181,7 @@ class ResultConverterTest extends TestCase
             ],
         ]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\RuntimeException::class);
         $this->expectExceptionMessage('Unsupported finish reason "unsupported_reason"');
 
         $converter->convert(new RawHttpResult($httpResponse));

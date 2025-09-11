@@ -15,8 +15,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
-use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
@@ -47,7 +45,7 @@ final class ChainFactoryTest extends TestCase
 
     public function testTestGetMetadataNotExistingClass()
     {
-        $this->expectException(ToolException::class);
+        $this->expectException(\Symfony\AI\Agent\Toolbox\Exception\ToolException::class);
         $this->expectExceptionMessage('The reference "NoClass" is not a valid tool.');
 
         iterator_to_array($this->factory->getTool('NoClass'));
@@ -55,7 +53,7 @@ final class ChainFactoryTest extends TestCase
 
     public function testTestGetMetadataNotConfiguredClass()
     {
-        $this->expectException(ToolConfigurationException::class);
+        $this->expectException(\Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException::class);
         $this->expectExceptionMessage(\sprintf('Method "foo" not found in tool "%s".', ToolMisconfigured::class));
 
         iterator_to_array($this->factory->getTool(ToolMisconfigured::class));

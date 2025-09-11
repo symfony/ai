@@ -19,9 +19,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentAwareInterface;
 use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Agent\Exception\InvalidArgumentException;
-use Symfony\AI\Agent\Exception\MissingModelSupportException;
-use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
@@ -103,7 +100,7 @@ final class AgentTest extends TestCase
         $model = $this->createMock(Model::class);
         $invalidProcessor = new \stdClass();
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Agent\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Processor "stdClass" must implement "'.InputProcessorInterface::class.'".');
 
         /* @phpstan-ignore-next-line */
@@ -116,7 +113,7 @@ final class AgentTest extends TestCase
         $model = $this->createMock(Model::class);
         $invalidProcessor = new \stdClass();
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Agent\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Processor "stdClass" must implement "'.OutputProcessorInterface::class.'".');
 
         /* @phpstan-ignore-next-line */
@@ -196,7 +193,7 @@ final class AgentTest extends TestCase
             ->with(Capability::INPUT_AUDIO)
             ->willReturn(false);
 
-        $this->expectException(MissingModelSupportException::class);
+        $this->expectException(\Symfony\AI\Agent\Exception\MissingModelSupportException::class);
 
         $agent = new Agent($platform, $model);
         $agent->call($messages);
@@ -213,7 +210,7 @@ final class AgentTest extends TestCase
             ->with(Capability::INPUT_IMAGE)
             ->willReturn(false);
 
-        $this->expectException(MissingModelSupportException::class);
+        $this->expectException(\Symfony\AI\Agent\Exception\MissingModelSupportException::class);
 
         $agent = new Agent($platform, $model);
         $agent->call($messages);
@@ -304,7 +301,7 @@ final class AgentTest extends TestCase
             ->method('invoke')
             ->willThrowException($exception);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Agent\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Client error');
 
         $agent = new Agent($platform, $model, logger: $logger);
@@ -342,7 +339,7 @@ final class AgentTest extends TestCase
             ->method('invoke')
             ->willThrowException($exception);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Agent\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid request to model or platform');
 
         $agent = new Agent($platform, $model);
@@ -361,7 +358,7 @@ final class AgentTest extends TestCase
             ->method('invoke')
             ->willThrowException($exception);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\Symfony\AI\Agent\Exception\RuntimeException::class);
         $this->expectExceptionMessage('Failed to request model');
 
         $agent = new Agent($platform, $model);

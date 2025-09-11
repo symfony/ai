@@ -15,7 +15,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\File;
 
 #[CoversClass(File::class)]
@@ -35,7 +34,7 @@ final class BinaryTest extends TestCase
 
     public function testThrowsExceptionForInvalidDataUrl()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid audio data URL format.');
 
         File::fromDataUrl('invalid-data-url');

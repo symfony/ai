@@ -18,7 +18,6 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\DallE;
 use Symfony\AI\Platform\Bridge\OpenAi\DallE\ModelClient;
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -30,7 +29,7 @@ final class ModelClientTest extends TestCase
 {
     public function testItThrowsExceptionWhenApiKeyIsEmpty()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('The API key must not be empty.');
 
         new ModelClient(new MockHttpClient(), '');
@@ -44,7 +43,7 @@ final class ModelClientTest extends TestCase
     #[TestWith(['sk'])]
     public function testItThrowsExceptionWhenApiKeyDoesNotStartWithSk(string $invalidApiKey)
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('The API key must start with "sk-".');
 
         new ModelClient(new MockHttpClient(), $invalidApiKey);

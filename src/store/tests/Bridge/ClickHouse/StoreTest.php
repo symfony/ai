@@ -18,7 +18,6 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\ClickHouse\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Uid\Uuid;
@@ -126,7 +125,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'test_db', 'test_table');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\Symfony\AI\Store\Exception\RuntimeException::class);
         $this->expectExceptionMessage('Could not insert data into ClickHouse. Http status code: 500. Response: "Internal Server Error".');
 
         $store->add($document);

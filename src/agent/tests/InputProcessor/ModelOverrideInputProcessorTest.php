@@ -15,7 +15,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessor\ModelOverrideInputProcessor;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
@@ -58,7 +57,7 @@ final class ModelOverrideInputProcessorTest extends TestCase
 
     public function testProcessInputWithInvalidModelOption()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Agent\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Option "model" must be an instance of "'.Model::class.'".');
 
         $gpt = new Gpt();

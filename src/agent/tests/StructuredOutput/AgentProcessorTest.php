@@ -14,7 +14,6 @@ namespace Symfony\AI\Agent\Tests\StructuredOutput;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Exception\MissingModelSupportException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\StructuredOutput\AgentProcessor;
@@ -65,7 +64,7 @@ final class AgentProcessorTest extends TestCase
 
     public function testProcessInputThrowsExceptionWhenLlmDoesNotSupportStructuredOutput()
     {
-        $this->expectException(MissingModelSupportException::class);
+        $this->expectException(\Symfony\AI\Agent\Exception\MissingModelSupportException::class);
 
         $processor = new AgentProcessor(new ConfigurableResponseFormatFactory());
 

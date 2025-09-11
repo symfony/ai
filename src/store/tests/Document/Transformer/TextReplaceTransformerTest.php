@@ -16,7 +16,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\TextReplaceTransformer;
-use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -152,7 +151,7 @@ final class TextReplaceTransformerTest extends TestCase
 
     public function testConstructorThrowsExceptionWhenSearchEqualsReplace()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Search and replace strings must be different.');
 
         new TextReplaceTransformer('same', 'same');
@@ -163,7 +162,7 @@ final class TextReplaceTransformerTest extends TestCase
         $transformer = new TextReplaceTransformer('initial', 'value');
         $document = new TextDocument(Uuid::v4(), 'text');
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Search and replace strings must be different.');
 
         iterator_to_array($transformer->transform([$document], [
@@ -174,7 +173,7 @@ final class TextReplaceTransformerTest extends TestCase
 
     public function testEmptySearchAndReplaceThrowsException()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Search and replace strings must be different.');
 
         new TextReplaceTransformer('', '');

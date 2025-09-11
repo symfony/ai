@@ -17,7 +17,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
-use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -48,7 +47,7 @@ final class TextTrimTransformerTest extends TestCase
     {
         // Note: TextDocument doesn't allow empty content, so we can't test trimming to empty string
         // This test verifies that attempting to create a document with only whitespace throws an exception
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('The content shall not be an empty string.');
 
         new TextDocument(Uuid::v4(), '   ');

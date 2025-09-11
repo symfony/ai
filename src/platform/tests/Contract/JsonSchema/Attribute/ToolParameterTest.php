@@ -14,7 +14,6 @@ namespace Symfony\AI\Platform\Tests\Contract\JsonSchema\Attribute;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
 
 #[CoversClass(With::class)]
 final class ToolParameterTest extends TestCase
@@ -28,7 +27,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidEnumContainsInvalidType()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         $enum = ['value1', new \stdClass()];
         new With(enum: $enum); /* @phpstan-ignore-line argument.type */
     }
@@ -42,7 +41,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidConstEmptyString()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         $const = '   ';
         new With(const: $const);
     }
@@ -56,7 +55,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidPatternEmptyString()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         $pattern = '   ';
         new With(pattern: $pattern);
     }
@@ -70,7 +69,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidMinLengthNegative()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         new With(minLength: -1);
     }
 
@@ -85,7 +84,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidMaxLengthLessThanMinLength()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         new With(minLength: 10, maxLength: 5);
     }
 
@@ -98,7 +97,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidMinimumNegative()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         new With(minimum: -1);
     }
 
@@ -111,7 +110,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidMultipleOfNegative()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         new With(multipleOf: -5);
     }
 
@@ -126,7 +125,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidExclusiveMaximumLessThanExclusiveMinimum()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         new With(exclusiveMinimum: 10, exclusiveMaximum: 5);
     }
 
@@ -141,7 +140,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidMaxItemsLessThanMinItems()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         new With(minItems: 5, maxItems: 1);
     }
 
@@ -153,7 +152,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidUniqueItemsFalse()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         new With(uniqueItems: false);
     }
 
@@ -168,7 +167,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidMaxContainsLessThanMinContains()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         new With(minContains: 3, maxContains: 1);
     }
 
@@ -183,7 +182,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidMaxPropertiesLessThanMinProperties()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         new With(minProperties: 5, maxProperties: 1);
     }
 
@@ -221,7 +220,7 @@ final class ToolParameterTest extends TestCase
 
     public function testInvalidCombination()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         new With(minLength: -1, maxLength: -2);
     }
 }

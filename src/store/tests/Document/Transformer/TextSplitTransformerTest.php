@@ -16,7 +16,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
-use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\Uid\Uuid;
 
 #[CoversClass(TextSplitTransformer::class)]
@@ -163,7 +162,7 @@ final class TextSplitTransformerTest extends TestCase
     public function testSplitWithOverlapGreaterThanChunkSize()
     {
         $document = new TextDocument(Uuid::v4(), 'Abcdefg', new Metadata([]));
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Overlap must be non-negative and less than chunk size.');
 
         iterator_to_array($this->transformer->transform([$document], [
@@ -175,7 +174,7 @@ final class TextSplitTransformerTest extends TestCase
     public function testSplitWithNegativeOverlap()
     {
         $document = new TextDocument(Uuid::v4(), 'Abcdefg', new Metadata([]));
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Overlap must be non-negative and less than chunk size.');
 
         iterator_to_array($this->transformer->transform([$document], [
@@ -208,7 +207,7 @@ final class TextSplitTransformerTest extends TestCase
 
     public function testConstructorWithNegativeOverlap()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Overlap must be non-negative and less than chunk size. Got chunk size: 1000, overlap: -1');
 
         new TextSplitTransformer(1000, -1);
@@ -216,7 +215,7 @@ final class TextSplitTransformerTest extends TestCase
 
     public function testConstructorWithOverlapEqualToChunkSize()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Overlap must be non-negative and less than chunk size. Got chunk size: 500, overlap: 500');
 
         new TextSplitTransformer(500, 500);
@@ -224,7 +223,7 @@ final class TextSplitTransformerTest extends TestCase
 
     public function testConstructorWithOverlapGreaterThanChunkSize()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Overlap must be non-negative and less than chunk size. Got chunk size: 100, overlap: 200');
 
         new TextSplitTransformer(100, 200);
