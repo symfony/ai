@@ -29,9 +29,9 @@ use Symfony\AI\Platform\Result\ResultInterface;
 final class OrchestratedMultiAgent implements AgentInterface
 {
     public function __construct(
-        private AgentInterface $orchestratorAgent,
+        private AgentInterface $orchestrator,
         private HandoffConfiguration $configuration,
-        private string $name = 'orchestrated-multi-agent',
+        private string $name = 'multi-agent',
     ) {
     }
 
@@ -48,10 +48,9 @@ final class OrchestratedMultiAgent implements AgentInterface
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
         $currentMessages = $messages;
-        $handoffCount = 0;
-        $currentAgent = $this->orchestratorAgent;
+        $currentAgent = $this->orchestrator;
 
-        while ($handoffCount < $this->configuration->getMaxHandoffs()) {
+        while (true) {
             // Get response from current agent
             $result = $currentAgent->call($currentMessages, $options);
             $content = $result->getContent();
@@ -65,7 +64,6 @@ final class OrchestratedMultiAgent implements AgentInterface
             }
 
             // Prepare for handoff
-            $handoffCount++;
             $currentAgent = $triggeredRule->getTargetAgent();
             
             // Add the current response to the message history
@@ -79,40 +77,18 @@ final class OrchestratedMultiAgent implements AgentInterface
             }
         }
 
-        throw new RuntimeException(sprintf('Maximum handoffs (%d) exceeded during multi-agent orchestration.', $this->configuration->getMaxHandoffs()));
     }
 
-    /**
-     * Create a new orchestrated multi-agent with a different configuration.
-     */
-    public function withConfiguration(HandoffConfiguration $configuration): self
-    {
-        return new self($this->orchestratorAgent, $configuration, $this->name);
-    }
 
-    /**
-     * Create a new orchestrated multi-agent with a different orchestrator.
-     */
-    public function withOrchestrator(AgentInterface $orchestrator): self
-    {
-        return new self($orchestrator, $this->configuration, $this->name);
-    }
 
-    /**
-     * Create a new orchestrated multi-agent with a different name.
-     */
-    public function withName(string $name): self
-    {
-        return new self($this->orchestratorAgent, $this->configuration, $name);
-    }
 
     public function getConfiguration(): HandoffConfiguration
     {
         return $this->configuration;
     }
 
-    public function getOrchestratorAgent(): AgentInterface
+    public function getOrchestrator(): AgentInterface
     {
-        return $this->orchestratorAgent;
+        return $this->orchestrator;
     }
 }
