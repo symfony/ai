@@ -24,7 +24,6 @@ final readonly class HandoffConfiguration
     public function __construct(
         private array $rules = [],
         private ?string $delegationPrompt = null,
-        private int $maxHandoffs = 10,
     ) {
     }
 
@@ -41,10 +40,6 @@ final readonly class HandoffConfiguration
         return $this->delegationPrompt;
     }
 
-    public function getMaxHandoffs(): int
-    {
-        return $this->maxHandoffs;
-    }
 
     /**
      * Find the first rule that should trigger for the given content.
@@ -67,7 +62,7 @@ final readonly class HandoffConfiguration
      */
     public function withRules(array $rules): self
     {
-        return new self([...$this->rules, ...$rules], $this->delegationPrompt, $this->maxHandoffs);
+        return new self([...$this->rules, ...$rules], $this->delegationPrompt);
     }
 
     /**
@@ -75,14 +70,7 @@ final readonly class HandoffConfiguration
      */
     public function withDelegationPrompt(string $prompt): self
     {
-        return new self($this->rules, $prompt, $this->maxHandoffs);
+        return new self($this->rules, $prompt);
     }
 
-    /**
-     * Create a new configuration with a maximum handoff limit.
-     */
-    public function withMaxHandoffs(int $maxHandoffs): self
-    {
-        return new self($this->rules, $this->delegationPrompt, $maxHandoffs);
-    }
 }
