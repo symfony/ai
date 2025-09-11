@@ -32,11 +32,12 @@ final class MultiAgent implements AgentInterface
 {
     /**
      * @param array<string, AgentInterface> $agents Map of agent names to agent instances
+     * @param HandoffRule[] $rules Rules for agent handoffs
      */
     public function __construct(
         private AgentInterface $orchestrator,
         private array $agents,
-        private HandoffConfig $config,
+        private array $rules,
         private string $name = 'multi-agent',
     ) {
     }
@@ -111,7 +112,7 @@ final class MultiAgent implements AgentInterface
         $agentDescriptions = [];
         $agentNames = ['none'];
         
-        foreach ($this->config->getRules() as $rule) {
+        foreach ($this->rules as $rule) {
             $triggers = implode(', ', $rule->getTriggers());
             $agentDescriptions[] = "- {$rule->getAgentName()}: {$triggers}";
             $agentNames[] = $rule->getAgentName();
