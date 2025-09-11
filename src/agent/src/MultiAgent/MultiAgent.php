@@ -54,9 +54,11 @@ final class MultiAgent implements AgentInterface
      */
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
+        $userMessages = $messages->withoutSystemMessage();
+        
         // Extract the original user message
         $originalUserMessage = null;
-        foreach ($messages->getMessages() as $message) {
+        foreach ($userMessages->getMessages() as $message) {
             if ($message instanceof UserMessage) {
                 $originalUserMessage = $message;
                 break;
@@ -84,7 +86,7 @@ final class MultiAgent implements AgentInterface
         $agentName = $selectionData['agentName'] ?? null;
         
         // If no specific agent is selected, fall back to orchestrator
-        if (!$agentName || !isset($this->agents[$agentName])) {
+        if (!$agentName || $agentName === 'null' || !isset($this->agents[$agentName])) {
             return $this->orchestrator->call($messages, $options);
         }
         
@@ -110,7 +112,7 @@ final class MultiAgent implements AgentInterface
     private function buildAgentSelectionPrompt(string $userQuestion): string
     {
         $agentDescriptions = [];
-        $agentNames = ['none'];
+        $agentNames = ['null'];
         
         foreach ($this->rules as $rule) {
             $triggers = implode(', ', $rule->getTriggers());
@@ -129,7 +131,7 @@ User question: "{$userQuestion}"
 Available agents and their capabilities:
 {$agentList}
 
-Analyze the user's question and select the most appropriate agent. If no specific agent is needed, select "none".
+Analyze the user's question and select the most appropriate agent. If no specific agent is needed, select "null".
 
 Respond with JSON in this exact format:
 {
