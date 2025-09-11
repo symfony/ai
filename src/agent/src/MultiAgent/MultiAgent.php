@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\MultiAgent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\MultiAgent\StructuredOutput\AgentSelection;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;

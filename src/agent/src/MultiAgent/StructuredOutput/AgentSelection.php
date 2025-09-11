@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\MultiAgent;
+namespace Symfony\AI\Agent\MultiAgent\StructuredOutput;
 
 /**
  * Represents the result of agent selection by the orchestrator.
