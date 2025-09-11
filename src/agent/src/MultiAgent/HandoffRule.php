@@ -27,12 +27,8 @@ final readonly class HandoffRule
         private string $agentName,
         private array $triggers = [],
     ) {
-        if (empty($agentName)) {
+        if (trim($agentName) === '') {
             throw new InvalidArgumentException('Agent name cannot be empty.');
-        }
-        
-        if (empty($triggers)) {
-            throw new InvalidArgumentException('Triggers cannot be an empty array.');
         }
     }
 
