@@ -14,7 +14,7 @@ namespace Symfony\AI\Agent\MultiAgent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
-use Symfony\AI\Agent\MultiAgent\StructuredOutput\AgentSelection;
+use Symfony\AI\Agent\MultiAgent\StructuredOutput\TargetAgent;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -74,7 +74,7 @@ final class MultiAgent implements AgentInterface
         $agentSelectionMessages = new MessageBag(Message::ofUser($agentSelectionPrompt));
         
         $selectionOptions = array_merge($options, [
-            'output_structure' => AgentSelection::class,
+            'output_structure' => TargetAgent::class,
         ]);
         
         $selectionResult = $this->orchestrator->call($agentSelectionMessages, $selectionOptions);
@@ -83,7 +83,7 @@ final class MultiAgent implements AgentInterface
             throw new RuntimeException('Expected ObjectResult for agent selection.');
         }
         
-        /** @var AgentSelection $selection */
+        /** @var TargetAgent $selection */
         $selection = $selectionResult->getObject();
         
         // If no specific agent is selected, fall back to orchestrator
