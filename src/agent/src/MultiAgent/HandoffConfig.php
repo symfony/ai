@@ -12,27 +12,15 @@
 namespace Symfony\AI\Agent\MultiAgent;
 
 /**
- * Configuration for orchestrated multi-agent handoffs.
+ * Configuration for multi-agent handoffs.
  *
  * @author Oskar Stark <oskar.stark@googlemail.com>
  */
 final readonly class HandoffConfig
 {
-    /**
-     * @param HandoffRule[] $rules
-     */
     public function __construct(
         private string $delegationPrompt,
-        private array $rules,
     ) {
-    }
-
-    /**
-     * @return HandoffRule[]
-     */
-    public function getRules(): array
-    {
-        return $this->rules;
     }
 
     public function getDelegationPrompt(): string
