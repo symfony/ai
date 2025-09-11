@@ -14,12 +14,10 @@ namespace Symfony\AI\Agent\MultiAgent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
-use Symfony\AI\Agent\MultiAgent\StructuredOutput\TargetAgent;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
@@ -68,31 +66,29 @@ final class MultiAgent implements AgentInterface
             throw new RuntimeException('No user message found in conversation.');
         }
 
-        // Ask orchestrator which agent to target using structured output
+        // Ask orchestrator which agent to target using JSON response format
         $userText = $this->extractTextFromUserMessage($originalUserMessage);
         $agentSelectionPrompt = $this->buildAgentSelectionPrompt($userText);
         $agentSelectionMessages = new MessageBag(Message::ofUser($agentSelectionPrompt));
         
-        $selectionOptions = array_merge($options, [
-            'output_structure' => TargetAgent::class,
-        ]);
+        $selectionResult = $this->orchestrator->call($agentSelectionMessages, $options);
+        $responseContent = $selectionResult->getContent();
         
-        $selectionResult = $this->orchestrator->call($agentSelectionMessages, $selectionOptions);
-        
-        if (!$selectionResult instanceof ObjectResult) {
-            throw new RuntimeException('Expected ObjectResult for agent selection.');
+        // Parse JSON response
+        $selectionData = json_decode($responseContent, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return $this->orchestrator->call($messages, $options);
         }
         
-        /** @var TargetAgent $selection */
-        $selection = $selectionResult->getObject();
+        $agentName = $selectionData['agentName'] ?? null;
         
         // If no specific agent is selected, fall back to orchestrator
-        if (!isset($this->agents[$selection->agentName])) {
+        if (!$agentName || !isset($this->agents[$agentName])) {
             return $this->orchestrator->call($messages, $options);
         }
         
         // Pass the original user question to the selected agent
-        $targetAgent = $this->agents[$selection->agentName];
+        $targetAgent = $this->agents[$agentName];
         $originalMessages = new MessageBag($originalUserMessage);
         
         return $targetAgent->call($originalMessages, $options);
@@ -113,12 +109,16 @@ final class MultiAgent implements AgentInterface
     private function buildAgentSelectionPrompt(string $userQuestion): string
     {
         $agentDescriptions = [];
+        $agentNames = ['none'];
+        
         foreach ($this->config->getRules() as $rule) {
             $triggers = implode(', ', $rule->getTriggers());
             $agentDescriptions[] = "- {$rule->getAgentName()}: {$triggers}";
+            $agentNames[] = $rule->getAgentName();
         }
         
         $agentList = implode("\n", $agentDescriptions);
+        $validAgents = implode('", "', $agentNames);
         
         return <<<PROMPT
 You are an intelligent agent orchestrator. Based on the user's question, determine which specialized agent should handle the request.
@@ -130,7 +130,13 @@ Available agents and their capabilities:
 
 Analyze the user's question and select the most appropriate agent. If no specific agent is needed, select "none".
 
-Provide your selection with reasoning.
+Respond with JSON in this exact format:
+{
+  "agentName": "<one of: \"{$validAgents}\">",
+  "reasoning": "<your reasoning for the selection>"
+}
+
+The agentName must be exactly one of the available agent names or "none".
 PROMPT;
     }
 
