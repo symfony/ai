@@ -51,12 +51,11 @@ final class MultiAgent implements AgentInterface
      */
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
-        $currentMessages = $messages;
         $currentAgent = $this->orchestrator;
 
         while (true) {
             // Get response from current agent
-            $result = $currentAgent->call($currentMessages, $options);
+            $result = $currentAgent->call($messages, $options);
             $content = $result->getContent();
 
             // Check if we need to handoff to another agent
@@ -81,28 +80,11 @@ final class MultiAgent implements AgentInterface
             $currentAgent = $this->agents[$agentName];
             
             // Add the current response to the message history
-            $currentMessages = $currentMessages->with(new Message($content, 'assistant'));
+            $messages = $messages->with(new Message($content, 'assistant'));
             
             // Add delegation prompt
-            $currentMessages = $currentMessages->with(new Message($this->config->getDelegationPrompt(), 'user'));
+            $messages = $messages->with(new Message($this->config->getDelegationPrompt(), 'user'));
         }
     }
 
-    public function getConfig(): HandoffConfig
-    {
-        return $this->config;
-    }
-
-    public function getOrchestrator(): AgentInterface
-    {
-        return $this->orchestrator;
-    }
-
-    /**
-     * @return array<string, AgentInterface>
-     */
-    public function getAgents(): array
-    {
-        return $this->agents;
-    }
 }
