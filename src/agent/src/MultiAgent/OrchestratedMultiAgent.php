@@ -60,7 +60,13 @@ final class OrchestratedMultiAgent implements AgentInterface
             $content = $result->getContent();
 
             // Check if we need to handoff to another agent
-            $triggeredRule = $this->configuration->findTriggeredRule($content);
+            $triggeredRule = null;
+            foreach ($this->configuration->getRules() as $rule) {
+                if ($rule->shouldTrigger($content)) {
+                    $triggeredRule = $rule;
+                    break;
+                }
+            }
             
             if (null === $triggeredRule) {
                 // No handoff needed, return the result
@@ -80,7 +86,7 @@ final class OrchestratedMultiAgent implements AgentInterface
             // Add delegation prompt if available
             if (null !== $triggeredRule->getPrompt()) {
                 $currentMessages = $currentMessages->with(new Message($triggeredRule->getPrompt(), 'user'));
-            } elseif (null !== $this->configuration->getDelegationPrompt()) {
+            } else {
                 $currentMessages = $currentMessages->with(new Message($this->configuration->getDelegationPrompt(), 'user'));
             }
         }
