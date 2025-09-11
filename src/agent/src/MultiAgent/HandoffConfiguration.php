@@ -22,8 +22,8 @@ final readonly class HandoffConfiguration
      * @param HandoffRule[] $rules
      */
     public function __construct(
-        private array $rules = [],
-        private ?string $delegationPrompt = null,
+        private string $delegationPrompt,
+        private array $rules,
     ) {
     }
 
@@ -35,25 +35,12 @@ final readonly class HandoffConfiguration
         return $this->rules;
     }
 
-    public function getDelegationPrompt(): ?string
+    public function getDelegationPrompt(): string
     {
         return $this->delegationPrompt;
     }
 
 
-    /**
-     * Find the first rule that should trigger for the given content.
-     */
-    public function findTriggeredRule(string $content): ?HandoffRule
-    {
-        foreach ($this->rules as $rule) {
-            if ($rule->shouldTrigger($content)) {
-                return $rule;
-            }
-        }
-
-        return null;
-    }
 
 
 }
