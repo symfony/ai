@@ -1,0 +1,150 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-31T21:26:55Z
+
+Looks a bit like you started off with an old base branch?
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-09-01T15:48:31Z
+
+While working on Perplexity specific features integration, I'm wondering how could we handle `search_results` and `citations` response keys?
+
+Related Perplexity API reference: https://docs.perplexity.ai/api-reference/chat-completions-post#response-search-results
+
+It's very specific to Perplexity platform, as they perform real web search internally (without leveraging MCP tools).
+
+I see 2 possible solutions:
+
+- Adding a new `SearchResult` class, extending `BaseResult` with `content`, `search_results` and `citations` properties.
+- Adding a new `SearchResultProcessor`, implementing `OutputProcessorInterface` to "store" `search_results` and `citations` in `Metadata` object.
+
+I'd prefer the 1st one.
+
+WDYT @chr-hertel @OskarStark
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-01T21:46:58Z
+
+Let's go with Metadata first and see if there are similar things in other platforms before creating a new kind of result. It is still text right, but they add the search_results and citations to provide some extra information to the text that was generated, right?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-02T04:43:30Z
+
+Yes I would prefer the metadata option too in the first version
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-09-02T07:05:29Z
+
+It looks like this:
+
+```
+"citations" => array:5 [
+    0 => "https://www.esa-gnc.eu/paper?paper_id=23186"
+    1 => "http://link.springer.com/10.1007/s11367-017-1261-7"
+    2 => "https://www.semanticscholar.org/paper/b11d3453077a784bb5f4b1314b00900d3c177989"
+    3 => "https://www.semanticscholar.org/paper/774c12d06cb39fdc4a92433c5148424aa65f62e0"
+    4 => "https://www.semanticscholar.org/paper/85dd93d2d37850c7d90d76a0fadd99dc217ed6db"
+  ]
+  "search_results" => array:5 [
+    0 => array:5 [
+      "title" => "Evaluating differential GNSS techniques for landing the 1st stage of an RLV – with a skydiver experiment"
+      "url" => "https://www.esa-gnc.eu/paper?paper_id=23186"
+      "date" => "2023-07-31"
+      "last_updated" => null
+      "snippet" => ""
+    ]
+    1 => array:5 [
+      "title" => "A perspective for reducing environmental impacts of mussel culture in Algeria"
+      "url" => "http://link.springer.com/10.1007/s11367-017-1261-7"
+      "date" => "2017-01-27"
+      "last_updated" => null
+      "snippet" => ""
+    ]
+    2 => array:5 [
+      "title" => "Sterculia urens Roxb. a Promising Gum Secreting Tree Used in Worldwide Food Industries"
+      "url" => "https://www.semanticscholar.org/paper/b11d3453077a784bb5f4b1314b00900d3c177989"
+      "date" => null
+      "last_updated" => null
+      "snippet" => ""
+    ]
+    3 => array:5 [
+      "title" => "Sustainable production of microbial polysaccharide xanthan gum from supplemental subststrate."
+      "url" => "https://www.semanticscholar.org/paper/774c12d06cb39fdc4a92433c5148424aa65f62e0"
+      "date" => null
+      "last_updated" => null
+      "snippet" => ""
+    ]
+    4 => array:5 [
+      "title" => "28-THE PHYSICAL FITNESS OF A GROUP OF ELDERLY WOMEN"
+      "url" => "https://www.semanticscholar.org/paper/85dd93d2d37850c7d90d76a0fadd99dc217ed6db"
+      "date" => null
+      "last_updated" => null
+      "snippet" => ""
+    ]
+  ]
+  "object" => "chat.completion"
+  "choices" => array:1 [
+    0 => array:4 [
+      "index" => 0
+      "finish_reason" => "stop"
+      "message" => array:2 [
+        "role" => "assistant"
+        "content" => """
+          The search results provided do not contain relevant information about the best French cheese of the first quarter-century of the 21st century.\n
+          \n
+          Based on general knowledge, determining the "best" French cheese of this period is subjective and depends on criteria such as taste, popularity, awards, and expert opinions. However, some French cheeses have gained international acclaim and continued to be highly regarded in the early 21st century, including:\n
+          \n
+          - **Comté**: A firm cheese from the Jura region, often praised for its complex nutty and fruity flavors. It has won many awards and is considered one of France’s finest cheeses.\n
+          - **Roquefort**: A famous blue cheese made from sheep's milk, known for its strong flavor and creamy texture.\n
+          - **Brie de Meaux**: A soft cheese with a rich, buttery taste, often called the "king of cheeses."\n
+          - **Époisses**: A washed-rind cheese with a powerful aroma and creamy interior, highly regarded by cheese connoisseurs.\n
+          \n
+          Cheese competitions such as the World Cheese Awards and guides like the "Guide des Meilleurs Fromages de France" often highlight these cheeses.\n
+          \n
+          If you are looking for a specific award-winning cheese or expert ranking from the early 21st century, specialized cheese competitions and gastronomic guides would provide the most authoritative information.
+          """
+      ]
+      "delta" => array:2 [
+        "role" => "assistant"
+        "content" => ""
+      ]
+    ]
+  ]
+```
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-09-05T09:55:18Z
+
+@chr-hertel @OskarStark ~~I'm testing streamed responses from Perplexity, and it looks like we will be forced to move `search_results` and `citations` to a specific `SearchResult` object instead of `Metadata`, because Perplexity streams `search_results` and `citations` in the last chunk, after the textual content.
+
+I'd like to avoid your opinion on it, let me know if you have a moment this afternoon for a pair session or next week.~~
+
+EDIT: I was able to find a way to collect `search_result` and `citations` as `Metadata` without breaking the content stream workflow. It's a bit hacky (see https://github.com/symfony/ai/pull/388/files#diff-8f7f00e9dbc36d055dcae94818ef5a6bb7b85b2382847fc5b4814a3e2069f855R31 and https://github.com/symfony/ai/pull/388/files#diff-91a5a85741c578ec9e3c43546b6ff5920cbeaf58831a13a7e64883dfb6608426R62), but it works.
+
+I'm wondering, for another PR, how could we improve the DX here, around Generator usage?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-06T23:19:22Z
+
+From a functional point of view this looks good:
+<img width="1408" height="522" alt="image" src="https://github.com/user-attachments/assets/5ff9e0c8-8f04-4e11-8138-9e3ed18bd075" />
+
+After addressing Oskar's comments we're good to merge here - finally Perplexity - thanks already @welcoMattic!
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-09-11T09:24:04Z
+
+@OskarStark @chr-hertel comments addressed, tests added, ready for a final review and merge!
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-11T09:46:27Z
+
+Just some minor, afterwards good to merge
