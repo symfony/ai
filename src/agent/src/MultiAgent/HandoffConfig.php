@@ -18,9 +18,21 @@ namespace Symfony\AI\Agent\MultiAgent;
  */
 final readonly class HandoffConfig
 {
+    /**
+     * @param HandoffRule[] $rules
+     */
     public function __construct(
         private string $delegationPrompt,
+        private array $rules,
     ) {
+    }
+
+    /**
+     * @return HandoffRule[]
+     */
+    public function getRules(): array
+    {
+        return $this->rules;
     }
 
     public function getDelegationPrompt(): string
