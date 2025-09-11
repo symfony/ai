@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent\MultiAgent;
 
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
+use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
@@ -31,7 +32,7 @@ use Symfony\AI\Platform\Result\ResultInterface;
 final class MultiAgent implements AgentInterface
 {
     /**
-     * @param array<string, AgentInterface> $agents Map of agent names to agent instances
+     * @param AgentInterface[] $agents List of agent instances
      * @param HandoffRule[] $rules Rules for agent handoffs
      */
     public function __construct(
@@ -40,6 +41,13 @@ final class MultiAgent implements AgentInterface
         private array $rules,
         private string $name = 'multi-agent',
     ) {
+        if ($agents === []) {
+            throw new InvalidArgumentException('Agents array cannot be empty.');
+        }
+        
+        if ($rules === []) {
+            throw new InvalidArgumentException('Rules array cannot be empty.');
+        }
     }
 
     public function getName(): string
@@ -86,12 +94,16 @@ final class MultiAgent implements AgentInterface
         $agentName = $selectionData['agentName'] ?? null;
         
         // If no specific agent is selected, fall back to orchestrator
-        if (!$agentName || $agentName === 'null' || !isset($this->agents[$agentName])) {
+        if (!$agentName || $agentName === 'null') {
             return $this->orchestrator->call($messages, $options);
         }
         
-        // Pass the original user question to the selected agent
-        $targetAgent = $this->agents[$agentName];
+        // Find the target agent by name
+        try {
+            $targetAgent = $this->getAgent($agentName);
+        } catch (RuntimeException) {
+            return $this->orchestrator->call($messages, $options);
+        }
         $originalMessages = new MessageBag($originalUserMessage);
         
         return $targetAgent->call($originalMessages, $options);
@@ -142,5 +154,15 @@ Respond with JSON in this exact format:
 The agentName must be exactly one of the available agent names or "none".
 PROMPT;
     }
-
+    
+    private function getAgent(string $agentName): AgentInterface
+    {
+        foreach ($this->agents as $agent) {
+            if ($agent->getName() === $agentName) {
+                return $agent;
+            }
+        }
+        
+        throw new RuntimeException(sprintf('Agent with name "%s" not found.', $agentName));
+    }
 }
