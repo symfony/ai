@@ -34,7 +34,7 @@ final class OrchestratedMultiAgent implements AgentInterface
     public function __construct(
         private AgentInterface $orchestrator,
         private HandoffConfiguration $configuration,
-        private array $agents = [],
+        private array $agents,
         private string $name = 'multi-agent',
     ) {
     }
@@ -83,12 +83,8 @@ final class OrchestratedMultiAgent implements AgentInterface
             // Add the current response to the message history
             $currentMessages = $currentMessages->with(new Message($content, 'assistant'));
             
-            // Add delegation prompt if available
-            if (null !== $triggeredRule->getPrompt()) {
-                $currentMessages = $currentMessages->with(new Message($triggeredRule->getPrompt(), 'user'));
-            } else {
-                $currentMessages = $currentMessages->with(new Message($this->configuration->getDelegationPrompt(), 'user'));
-            }
+            // Add delegation prompt
+            $currentMessages = $currentMessages->with(new Message($this->configuration->getDelegationPrompt(), 'user'));
         }
 
     }

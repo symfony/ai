@@ -24,8 +24,6 @@ final readonly class HandoffRule
     public function __construct(
         private string $agentName,
         private array $triggers = [],
-        private ?string $condition = null,
-        private ?string $prompt = null,
     ) {
     }
 
@@ -42,15 +40,6 @@ final readonly class HandoffRule
         return $this->triggers;
     }
 
-    public function getCondition(): ?string
-    {
-        return $this->condition;
-    }
-
-    public function getPrompt(): ?string
-    {
-        return $this->prompt;
-    }
 
     /**
      * Check if this rule should trigger based on the given content.
