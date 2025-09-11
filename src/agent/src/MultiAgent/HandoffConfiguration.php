@@ -55,22 +55,5 @@ final readonly class HandoffConfiguration
         return null;
     }
 
-    /**
-     * Create a new configuration with additional rules.
-     *
-     * @param HandoffRule[] $rules
-     */
-    public function withRules(array $rules): self
-    {
-        return new self([...$this->rules, ...$rules], $this->delegationPrompt);
-    }
-
-    /**
-     * Create a new configuration with a delegation prompt.
-     */
-    public function withDelegationPrompt(string $prompt): self
-    {
-        return new self($this->rules, $prompt);
-    }
 
 }

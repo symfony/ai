@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Agent\MultiAgent;
 
-use Symfony\AI\Agent\AgentInterface;
-
 /**
  * Defines when and how to handoff execution to another agent.
  *
@@ -24,16 +22,16 @@ final readonly class HandoffRule
      * @param string[] $triggers Keywords or phrases that trigger this handoff rule
      */
     public function __construct(
-        private AgentInterface $targetAgent,
+        private string $agentName,
         private array $triggers = [],
         private ?string $condition = null,
         private ?string $prompt = null,
     ) {
     }
 
-    public function getTargetAgent(): AgentInterface
+    public function getAgentName(): string
     {
-        return $this->targetAgent;
+        return $this->agentName;
     }
 
     /**
