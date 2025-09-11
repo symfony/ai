@@ -23,7 +23,7 @@ interface VectorizerInterface
 {
     /**
      * @param TextDocument[]       $documents
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options   Additional options passed to the vectorizer
      *
      * @return VectorDocument[]
      */

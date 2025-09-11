@@ -665,6 +665,28 @@ class AiBundleTest extends TestCase
         $this->assertSame(['normalize' => true], $arguments[3]);
     }
 
+    public function testVectorizerWithoutOptions()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'vectorizer' => [
+                    'my_vectorizer' => [
+                        'platform' => 'my_platform_service_id',
+                        'model' => [
+                            'class' => 'Symfony\AI\Platform\Bridge\OpenAi\Embeddings',
+                            'name' => 'text-embedding-3-small',
+                        ],
+                        'options' => [],
+                    ],
+                ],
+            ],
+        ]);
+
+        $vectorizerDefinition = $container->getDefinition('ai.vectorizer.my_vectorizer');
+        $arguments = $vectorizerDefinition->getArguments();
+        $this->assertSame([], $arguments[3]);
+    }
+
     public function testIndexerWithConfiguredVectorizer()
     {
         $container = $this->buildContainer([
