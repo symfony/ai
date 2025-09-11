@@ -28,9 +28,13 @@ use Symfony\AI\Platform\Result\ResultInterface;
  */
 final class OrchestratedMultiAgent implements AgentInterface
 {
+    /**
+     * @param array<string, AgentInterface> $agents Map of agent names to agent instances
+     */
     public function __construct(
         private AgentInterface $orchestrator,
         private HandoffConfiguration $configuration,
+        private array $agents = [],
         private string $name = 'multi-agent',
     ) {
     }
@@ -64,7 +68,11 @@ final class OrchestratedMultiAgent implements AgentInterface
             }
 
             // Prepare for handoff
-            $currentAgent = $triggeredRule->getTargetAgent();
+            $agentName = $triggeredRule->getAgentName();
+            if (!isset($this->agents[$agentName])) {
+                throw new RuntimeException(sprintf('Agent "%s" not found in agent registry.', $agentName));
+            }
+            $currentAgent = $this->agents[$agentName];
             
             // Add the current response to the message history
             $currentMessages = $currentMessages->with(new Message($content, 'assistant'));
@@ -90,5 +98,13 @@ final class OrchestratedMultiAgent implements AgentInterface
     public function getOrchestrator(): AgentInterface
     {
         return $this->orchestrator;
+    }
+
+    /**
+     * @return array<string, AgentInterface>
+     */
+    public function getAgents(): array
+    {
+        return $this->agents;
     }
 }
