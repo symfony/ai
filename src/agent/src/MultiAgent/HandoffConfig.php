@@ -16,7 +16,7 @@ namespace Symfony\AI\Agent\MultiAgent;
  *
  * @author Oskar Stark <oskar.stark@googlemail.com>
  */
-final readonly class HandoffConfiguration
+final readonly class HandoffConfig
 {
     /**
      * @param HandoffRule[] $rules
@@ -39,8 +39,4 @@ final readonly class HandoffConfiguration
     {
         return $this->delegationPrompt;
     }
-
-
-
-
 }

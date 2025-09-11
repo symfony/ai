@@ -19,22 +19,22 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
- * An orchestrated multi-agent system that coordinates multiple specialized agents.
+ * A multi-agent system that coordinates multiple specialized agents.
  *
  * This agent acts as a central orchestrator, delegating tasks to specialized agents
  * based on handoff rules and managing the conversation flow between agents.
  *
  * @author Oskar Stark <oskar.stark@googlemail.com>
  */
-final class OrchestratedMultiAgent implements AgentInterface
+final class MultiAgent implements AgentInterface
 {
     /**
      * @param array<string, AgentInterface> $agents Map of agent names to agent instances
      */
     public function __construct(
         private AgentInterface $orchestrator,
-        private HandoffConfiguration $configuration,
         private array $agents,
+        private HandoffConfig $config,
         private string $name = 'multi-agent',
     ) {
     }
@@ -61,7 +61,7 @@ final class OrchestratedMultiAgent implements AgentInterface
 
             // Check if we need to handoff to another agent
             $triggeredRule = null;
-            foreach ($this->configuration->getRules() as $rule) {
+            foreach ($this->config->getRules() as $rule) {
                 if ($rule->shouldTrigger($content)) {
                     $triggeredRule = $rule;
                     break;
@@ -84,17 +84,13 @@ final class OrchestratedMultiAgent implements AgentInterface
             $currentMessages = $currentMessages->with(new Message($content, 'assistant'));
             
             // Add delegation prompt
-            $currentMessages = $currentMessages->with(new Message($this->configuration->getDelegationPrompt(), 'user'));
+            $currentMessages = $currentMessages->with(new Message($this->config->getDelegationPrompt(), 'user'));
         }
-
     }
 
-
-
-
-    public function getConfiguration(): HandoffConfiguration
+    public function getConfig(): HandoffConfig
     {
-        return $this->configuration;
+        return $this->config;
     }
 
     public function getOrchestrator(): AgentInterface
