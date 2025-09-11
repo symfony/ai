@@ -71,3 +71,4 @@ $messages = new MessageBag(
 );
 $result = $multiAgent->call($messages);
 echo $result->getContent().PHP_EOL;
+

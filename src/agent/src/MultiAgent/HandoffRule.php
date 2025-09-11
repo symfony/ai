@@ -45,3 +45,4 @@ final readonly class HandoffRule
         return $this->triggers;
     }
 }
+

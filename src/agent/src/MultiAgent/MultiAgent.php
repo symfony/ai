@@ -64,21 +64,8 @@ final class MultiAgent implements AgentInterface
     {
         $userMessages = $messages->withoutSystemMessage();
         
-        // Extract the original user message
-        $originalUserMessage = null;
-        foreach ($userMessages->getMessages() as $message) {
-            if ($message instanceof UserMessage) {
-                $originalUserMessage = $message;
-                break;
-            }
-        }
-        
-        if (null === $originalUserMessage) {
-            throw new RuntimeException('No user message found in conversation.');
-        }
-
         // Ask orchestrator which agent to target using JSON response format
-        $userText = $this->extractTextFromUserMessage($originalUserMessage);
+        $userText = self::extractUserMessage($userMessages);
         $agentSelectionPrompt = $this->buildAgentSelectionPrompt($userText);
         $agentSelectionMessages = new MessageBag(Message::ofUser($agentSelectionPrompt));
         
@@ -104,21 +91,38 @@ final class MultiAgent implements AgentInterface
         } catch (RuntimeException) {
             return $this->orchestrator->call($messages, $options);
         }
-        $originalMessages = new MessageBag($originalUserMessage);
+        $originalMessages = new MessageBag(self::findUserMessage($userMessages));
         
         return $targetAgent->call($originalMessages, $options);
     }
     
-    private function extractTextFromUserMessage(UserMessage $message): string
+    private static function extractUserMessage(MessageBag $messages): string
     {
-        $textParts = [];
-        foreach ($message->content as $content) {
-            if ($content instanceof Text) {
-                $textParts[] = $content->text;
+        foreach ($messages->getMessages() as $message) {
+            if ($message instanceof UserMessage) {
+                $textParts = [];
+                foreach ($message->content as $content) {
+                    if ($content instanceof Text) {
+                        $textParts[] = $content->text;
+                    }
+                }
+                
+                return implode(' ', $textParts);
             }
         }
         
-        return implode(' ', $textParts);
+        throw new RuntimeException('No user message found in conversation.');
+    }
+    
+    private static function findUserMessage(MessageBag $messages): UserMessage
+    {
+        foreach ($messages->getMessages() as $message) {
+            if ($message instanceof UserMessage) {
+                return $message;
+            }
+        }
+        
+        throw new RuntimeException('No user message found in conversation.');
     }
     
     private function buildAgentSelectionPrompt(string $userQuestion): string
@@ -166,3 +170,4 @@ PROMPT;
         throw new RuntimeException(sprintf('Agent with name "%s" not found.', $agentName));
     }
 }
+
