@@ -12,11 +12,11 @@
 namespace Symfony\AI\Agent\MultiAgent\StructuredOutput;
 
 /**
- * Represents the result of agent selection by the orchestrator.
+ * Represents the target agent selected by the orchestrator.
  *
  * @author Oskar Stark <oskar.stark@googlemail.com>
  */
-final readonly class AgentSelection
+final readonly class TargetAgent
 {
     public function __construct(
         public string $agentName,
