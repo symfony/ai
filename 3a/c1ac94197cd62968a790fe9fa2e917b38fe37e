@@ -1,0 +1,38 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-10T09:35:56Z
+
+to ease the implementation first, we could go with `interface NamedAgentInterface extends AgentInterface` and see where this is going - so you don't have to patch all existing things here, but play around with the `getName` until we're confident to promote it to the `AgentInterface` - would be a different approach to nullable at least
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-10T13:28:36Z
+
+Hmm, I would make it mandatory in the state we are, we could ofc go with:
+
+```diff
+public function __construct(
+    private PlatformInterface $platform,
+    private Model $model,
+    iterable $inputProcessors = [],
+    iterable $outputProcessors = [],
+-    private ?string $name = null,
++    private string $name = 'agent',
+    private LoggerInterface $logger = new NullLogger(),
+) {
+```
+to always have a string
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-10T14:10:43Z
+
+Same for the instructions?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-11T05:01:41Z
+
+> Same for the instructions?
+
+Lets discuss this in #19
