@@ -58,26 +58,22 @@ final class MultiAgent implements AgentInterface
             $result = $currentAgent->call($messages, $options);
             $content = $result->getContent();
 
-            // Check if we need to handoff to another agent
-            $triggeredRule = null;
-            foreach ($this->config->getRules() as $rule) {
-                if ($rule->shouldTrigger($content)) {
-                    $triggeredRule = $rule;
+            // Check if LLM response mentions any agent name for handoff
+            $targetAgentName = null;
+            foreach (array_keys($this->agents) as $agentName) {
+                if (str_contains(strtolower($content), strtolower($agentName))) {
+                    $targetAgentName = $agentName;
                     break;
                 }
             }
             
-            if (null === $triggeredRule) {
+            if (null === $targetAgentName) {
                 // No handoff needed, return the result
                 return $result;
             }
 
             // Prepare for handoff
-            $agentName = $triggeredRule->getAgentName();
-            if (!isset($this->agents[$agentName])) {
-                throw new RuntimeException(sprintf('Agent "%s" not found in agent registry.', $agentName));
-            }
-            $currentAgent = $this->agents[$agentName];
+            $currentAgent = $this->agents[$targetAgentName];
             
             // Add the current response to the message history
             $messages = $messages->with(new Message($content, 'assistant'));
