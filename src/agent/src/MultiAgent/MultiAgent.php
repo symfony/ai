@@ -14,8 +14,11 @@ namespace Symfony\AI\Agent\MultiAgent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
@@ -51,42 +54,87 @@ final class MultiAgent implements AgentInterface
      */
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
-        $currentAgent = $this->orchestrator;
-
-        while (true) {
-            // Get response from current agent
-            $result = $currentAgent->call($messages, $options);
-            $content = $result->getContent();
-
-            // Check if LLM response mentions any triggers from handoff rules
-            $triggeredRule = null;
-            foreach ($this->config->getRules() as $rule) {
-                foreach ($rule->getTriggers() as $trigger) {
-                    if (str_contains(strtolower($content), strtolower($trigger))) {
-                        $triggeredRule = $rule;
-                        break 2;
-                    }
-                }
+        // Extract the original user message
+        $originalUserMessage = null;
+        foreach ($messages->getMessages() as $message) {
+            if ($message instanceof UserMessage) {
+                $originalUserMessage = $message;
+                break;
             }
-            
-            if (null === $triggeredRule) {
-                // No handoff needed, return the result
-                return $result;
-            }
-
-            // Prepare for handoff
-            $agentName = $triggeredRule->getAgentName();
-            if (!isset($this->agents[$agentName])) {
-                throw new RuntimeException(sprintf('Agent "%s" not found in agent registry.', $agentName));
-            }
-            $currentAgent = $this->agents[$agentName];
-            
-            // Add the current response to the message history
-            $messages = $messages->with(new Message($content, 'assistant'));
-            
-            // Add delegation prompt
-            $messages = $messages->with(new Message($this->config->getDelegationPrompt(), 'user'));
         }
+        
+        if (null === $originalUserMessage) {
+            throw new RuntimeException('No user message found in conversation.');
+        }
+
+        // Get initial response from orchestrator
+        $result = $this->orchestrator->call($messages, $options);
+        $content = $result->getContent();
+
+        // Ask orchestrator which agent to target using structured output
+        $userText = $this->extractTextFromUserMessage($originalUserMessage);
+        $agentSelectionPrompt = $this->buildAgentSelectionPrompt($userText);
+        $agentSelectionMessages = new MessageBag(Message::ofUser($agentSelectionPrompt));
+        
+        $selectionOptions = array_merge($options, [
+            'output_structure' => AgentSelection::class,
+        ]);
+        
+        $selectionResult = $this->orchestrator->call($agentSelectionMessages, $selectionOptions);
+        
+        if (!$selectionResult instanceof ObjectResult) {
+            throw new RuntimeException('Expected ObjectResult for agent selection.');
+        }
+        
+        /** @var AgentSelection $selection */
+        $selection = $selectionResult->getObject();
+        
+        // If no specific agent is selected, return the original result
+        if (!isset($this->agents[$selection->agentName])) {
+            return $result;
+        }
+        
+        // Pass the original user question to the selected agent
+        $targetAgent = $this->agents[$selection->agentName];
+        $originalMessages = new MessageBag($originalUserMessage);
+        
+        return $targetAgent->call($originalMessages, $options);
+    }
+    
+    private function extractTextFromUserMessage(UserMessage $message): string
+    {
+        $textParts = [];
+        foreach ($message->content as $content) {
+            if ($content instanceof Text) {
+                $textParts[] = $content->text;
+            }
+        }
+        
+        return implode(' ', $textParts);
+    }
+    
+    private function buildAgentSelectionPrompt(string $userQuestion): string
+    {
+        $agentDescriptions = [];
+        foreach ($this->config->getRules() as $rule) {
+            $triggers = implode(', ', $rule->getTriggers());
+            $agentDescriptions[] = "- {$rule->getAgentName()}: {$triggers}";
+        }
+        
+        $agentList = implode("\n", $agentDescriptions);
+        
+        return <<<PROMPT
+You are an intelligent agent orchestrator. Based on the user's question, determine which specialized agent should handle the request.
+
+User question: "{$userQuestion}"
+
+Available agents and their capabilities:
+{$agentList}
+
+Analyze the user's question and select the most appropriate agent. If no specific agent is needed, select "none".
+
+Provide your selection with reasoning.
+PROMPT;
     }
 
 }
