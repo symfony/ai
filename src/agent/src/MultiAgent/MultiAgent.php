@@ -67,10 +67,6 @@ final class MultiAgent implements AgentInterface
             throw new RuntimeException('No user message found in conversation.');
         }
 
-        // Get initial response from orchestrator
-        $result = $this->orchestrator->call($messages, $options);
-        $content = $result->getContent();
-
         // Ask orchestrator which agent to target using structured output
         $userText = $this->extractTextFromUserMessage($originalUserMessage);
         $agentSelectionPrompt = $this->buildAgentSelectionPrompt($userText);
@@ -89,9 +85,9 @@ final class MultiAgent implements AgentInterface
         /** @var AgentSelection $selection */
         $selection = $selectionResult->getObject();
         
-        // If no specific agent is selected, return the original result
+        // If no specific agent is selected, fall back to orchestrator
         if (!isset($this->agents[$selection->agentName])) {
-            return $result;
+            return $this->orchestrator->call($messages, $options);
         }
         
         // Pass the original user question to the selected agent
