@@ -27,7 +27,7 @@ final readonly class HandoffRule
         private string $agentName,
         private array $triggers = [],
     ) {
-        if (trim($agentName) === '') {
+        if ('' === trim($agentName)) {
             throw new InvalidArgumentException('Agent name cannot be empty.');
         }
     }
@@ -45,4 +45,3 @@ final readonly class HandoffRule
         return $this->triggers;
     }
 }
-

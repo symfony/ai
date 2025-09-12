@@ -33,7 +33,7 @@ final class MultiAgent implements AgentInterface
 {
     /**
      * @param AgentInterface[] $agents List of agent instances
-     * @param HandoffRule[] $rules Rules for agent handoffs
+     * @param HandoffRule[]    $rules  Rules for agent handoffs
      */
     public function __construct(
         private AgentInterface $orchestrator,
@@ -41,11 +41,11 @@ final class MultiAgent implements AgentInterface
         private array $rules,
         private string $name = 'multi-agent',
     ) {
-        if ($agents === []) {
+        if ([] === $agents) {
             throw new InvalidArgumentException('Agents array cannot be empty.');
         }
-        
-        if ($rules === []) {
+
+        if ([] === $rules) {
             throw new InvalidArgumentException('Rules array cannot be empty.');
         }
     }
@@ -63,28 +63,28 @@ final class MultiAgent implements AgentInterface
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
         $userMessages = $messages->withoutSystemMessage();
-        
+
         // Ask orchestrator which agent to target using JSON response format
         $userText = self::extractUserMessage($userMessages);
         $agentSelectionPrompt = $this->buildAgentSelectionPrompt($userText);
         $agentSelectionMessages = new MessageBag(Message::ofUser($agentSelectionPrompt));
-        
+
         $selectionResult = $this->orchestrator->call($agentSelectionMessages, $options);
         $responseContent = $selectionResult->getContent();
-        
+
         // Parse JSON response
         $selectionData = json_decode($responseContent, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
+        if (\JSON_ERROR_NONE !== json_last_error()) {
             return $this->orchestrator->call($messages, $options);
         }
-        
+
         $agentName = $selectionData['agentName'] ?? null;
-        
+
         // If no specific agent is selected, fall back to orchestrator
-        if (!$agentName || $agentName === 'null') {
+        if (!$agentName || 'null' === $agentName) {
             return $this->orchestrator->call($messages, $options);
         }
-        
+
         // Find the target agent by name
         try {
             $targetAgent = $this->getAgent($agentName);
@@ -92,10 +92,10 @@ final class MultiAgent implements AgentInterface
             return $this->orchestrator->call($messages, $options);
         }
         $originalMessages = new MessageBag(self::findUserMessage($userMessages));
-        
+
         return $targetAgent->call($originalMessages, $options);
     }
-    
+
     private static function extractUserMessage(MessageBag $messages): string
     {
         foreach ($messages->getMessages() as $message) {
@@ -106,14 +106,14 @@ final class MultiAgent implements AgentInterface
                         $textParts[] = $content->text;
                     }
                 }
-                
+
                 return implode(' ', $textParts);
             }
         }
-        
+
         throw new RuntimeException('No user message found in conversation.');
     }
-    
+
     private static function findUserMessage(MessageBag $messages): UserMessage
     {
         foreach ($messages->getMessages() as $message) {
@@ -121,24 +121,24 @@ final class MultiAgent implements AgentInterface
                 return $message;
             }
         }
-        
+
         throw new RuntimeException('No user message found in conversation.');
     }
-    
+
     private function buildAgentSelectionPrompt(string $userQuestion): string
     {
         $agentDescriptions = [];
         $agentNames = ['null'];
-        
+
         foreach ($this->rules as $rule) {
             $triggers = implode(', ', $rule->getTriggers());
             $agentDescriptions[] = "- {$rule->getAgentName()}: {$triggers}";
             $agentNames[] = $rule->getAgentName();
         }
-        
+
         $agentList = implode("\n", $agentDescriptions);
         $validAgents = implode('", "', $agentNames);
-        
+
         return <<<PROMPT
 You are an intelligent agent orchestrator. Based on the user's question, determine which specialized agent should handle the request.
 
@@ -158,7 +158,7 @@ Respond with JSON in this exact format:
 The agentName must be exactly one of the available agent names or "none".
 PROMPT;
     }
-    
+
     private function getAgent(string $agentName): AgentInterface
     {
         foreach ($this->agents as $agent) {
@@ -166,8 +166,7 @@ PROMPT;
                 return $agent;
             }
         }
-        
-        throw new RuntimeException(sprintf('Agent with name "%s" not found.', $agentName));
+
+        throw new RuntimeException(\sprintf('Agent with name "%s" not found.', $agentName));
     }
 }
-
