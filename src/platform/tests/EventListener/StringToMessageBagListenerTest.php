@@ -25,7 +25,7 @@ use Symfony\AI\Platform\Model;
 #[CoversClass(StringToMessageBagListener::class)]
 final class StringToMessageBagListenerTest extends TestCase
 {
-    public function testConvertsStringInputToMessageBagForMessagesCapableModel(): void
+    public function testConvertsStringInputToMessageBagForMessagesCapableModel()
     {
         $model = new class('test-model', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]) extends Model {
         };
@@ -45,7 +45,7 @@ final class StringToMessageBagListenerTest extends TestCase
         $this->assertSame('Hello, world!', $content->text);
     }
 
-    public function testDoesNotConvertStringInputForNonMessagesCapableModel(): void
+    public function testDoesNotConvertStringInputForNonMessagesCapableModel()
     {
         $model = new class('test-model', [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT]) extends Model {
         };
@@ -59,7 +59,7 @@ final class StringToMessageBagListenerTest extends TestCase
         $this->assertSame($originalInput, $event->input);
     }
 
-    public function testDoesNotConvertNonStringInput(): void
+    public function testDoesNotConvertNonStringInput()
     {
         $model = new class('test-model', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]) extends Model {
         };
@@ -73,7 +73,7 @@ final class StringToMessageBagListenerTest extends TestCase
         $this->assertSame($originalInput, $event->input);
     }
 
-    public function testDoesNotConvertArrayInput(): void
+    public function testDoesNotConvertArrayInput()
     {
         $model = new class('test-model', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]) extends Model {
         };

@@ -22,7 +22,7 @@ use Symfony\AI\Platform\Model;
 #[CoversClass(PlatformInvokationEvent::class)]
 final class PlatformInvokationEventTest extends TestCase
 {
-    public function testGettersReturnCorrectValues(): void
+    public function testGettersReturnCorrectValues()
     {
         $model = new class('test-model', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]) extends Model {
         };
@@ -37,7 +37,7 @@ final class PlatformInvokationEventTest extends TestCase
         $this->assertSame($options, $event->options);
     }
 
-    public function testSetInputChangesInput(): void
+    public function testSetInputChangesInput()
     {
         $model = new class('test-model', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]) extends Model {
         };
@@ -51,7 +51,7 @@ final class PlatformInvokationEventTest extends TestCase
         $this->assertSame($newInput, $event->input);
     }
 
-    public function testWorksWithDifferentInputTypes(): void
+    public function testWorksWithDifferentInputTypes()
     {
         $model = new class('test-model', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]) extends Model {
         };
