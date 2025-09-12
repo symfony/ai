@@ -157,22 +157,22 @@ return static function (ContainerConfigurator $container): void {
         // commands
         ->set('ai.command.chat', ChatCommand::class)
             ->args([
-                tagged_locator('ai.agent', 'name'),
+                tagged_locator('ai.agent'),
             ])
             ->tag('console.command')
         ->set('ai.command.setup_store', SetupStoreCommand::class)
             ->args([
-                tagged_locator('ai.store', 'name'),
+                tagged_locator('ai.store'),
             ])
             ->tag('console.command')
         ->set('ai.command.drop_store', DropStoreCommand::class)
             ->args([
-                tagged_locator('ai.store', 'name'),
+                tagged_locator('ai.store'),
             ])
             ->tag('console.command')
         ->set('ai.command.index', IndexCommand::class)
             ->args([
-                tagged_locator('ai.indexer', 'name'),
+                tagged_locator('ai.indexer'),
             ])
             ->tag('console.command')
         ->set('ai.command.platform_invoke', PlatformInvokeCommand::class)
@@ -182,3 +182,4 @@ return static function (ContainerConfigurator $container): void {
             ->tag('console.command')
     ;
 };
+
