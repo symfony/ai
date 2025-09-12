@@ -182,23 +182,23 @@ final class PlatformInvokeCommandTest extends TestCase
         ]);
     }
 
-    public function testExecuteWithPerplexityPlatformThrowsException()
+    public function testExecuteWithUnsupportedPlatformThrowsException()
     {
         $platforms = $this->createMock(ServiceLocator::class);
         $mockPlatform = $this->createMock(PlatformInterface::class);
-        $platforms->method('getProvidedServices')->willReturn(['perplexity' => 'service_class']);
-        $platforms->method('has')->with('perplexity')->willReturn(true);
-        $platforms->method('get')->with('perplexity')->willReturn($mockPlatform);
+        $platforms->method('getProvidedServices')->willReturn(['unsupported' => 'service_class']);
+        $platforms->method('has')->with('unsupported')->willReturn(true);
+        $platforms->method('get')->with('unsupported')->willReturn($mockPlatform);
 
         $command = new PlatformInvokeCommand($platforms);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Perplexity platform is not yet supported in ai:platform:invoke command');
+        $this->expectExceptionMessage('Platform "unsupported" is not supported in ai:platform:invoke command');
 
         $commandTester = new CommandTester($command);
         $commandTester->execute([
-            'platform' => 'perplexity',
-            'model' => 'sonar',
+            'platform' => 'unsupported',
+            'model' => 'some-model',
             'message' => 'Test message',
         ]);
     }
