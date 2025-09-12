@@ -30,6 +30,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
 $store = new InMemoryStore();
+$documents = [];
 
 // create embeddings and documents
 foreach (Movies::all() as $i => $movie) {
