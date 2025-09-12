@@ -34,7 +34,7 @@ Configuration
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
 
-**Advanced Example with Anthropic, Azure, ElevenLabs, Gemini, Vertex AI, Ollama multiple agents**
+**Advanced Example with Anthropic, Azure, ElevenLabs, Gemini, Perplexity, Vertex AI, Ollama multiple agents**
 
 .. code-block:: yaml
 
@@ -56,6 +56,8 @@ Configuration
                 output_path: '%env(ELEVEN_LABS_OUTPUT_PATH)%'
             gemini:
                 api_key: '%env(GEMINI_API_KEY)%'
+            perplexity:
+                api_key: '%env(PERPLEXITY_API_KEY)%'
             vertexai:
                 location: '%env(GOOGLE_CLOUD_LOCATION)%'
                 project_id: '%env(GOOGLE_CLOUD_PROJECT)%'
@@ -93,6 +95,12 @@ Configuration
                 tools: # If undefined, all tools are injected into the agent, use "tools: false" to disable tools.
                     - 'Symfony\AI\Agent\Toolbox\Tool\Wikipedia'
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
+            search_agent:
+                platform: 'ai.platform.perplexity'
+                model:
+                    class: 'Symfony\AI\Platform\Bridge\Perplexity\Perplexity'
+                    name: !php/const Symfony\AI\Platform\Bridge\Perplexity\Perplexity::SONAR
+                tools: false
             audio:
                 platform: 'ai.platform.eleven_labs'
                 model:
@@ -131,7 +139,7 @@ Configuration
             default:
                 vectorizer: 'ai.vectorizer.openai_embeddings'
                 store: 'ai.store.chroma_db.default'
-                
+
             research:
                 vectorizer: 'ai.vectorizer.mistral_embeddings'
                 store: 'ai.store.memory.research'
@@ -355,13 +363,13 @@ Vectorizers are defined in the ``vectorizer`` section of your configuration:
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Embeddings::TEXT_EMBEDDING_3_SMALL
                     options:
                         dimensions: 512
-                        
+
             openai_large:
                 platform: 'ai.platform.openai'
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Embeddings'
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Embeddings::TEXT_EMBEDDING_3_LARGE
-                    
+
             mistral_embed:
                 platform: 'ai.platform.mistral'
                 model:
@@ -379,11 +387,11 @@ Once configured, vectorizers can be referenced by name in indexer configurations
             documents:
                 vectorizer: 'ai.vectorizer.openai_small'
                 store: 'ai.store.chroma_db.documents'
-                
+
             research:
                 vectorizer: 'ai.vectorizer.openai_large'
                 store: 'ai.store.chroma_db.research'
-                
+
             knowledge_base:
                 vectorizer: 'ai.vectorizer.mistral_embed'
                 store: 'ai.store.memory.kb'
@@ -391,7 +399,7 @@ Once configured, vectorizers can be referenced by name in indexer configurations
 **Benefits of Configured Vectorizers**
 
 * **Reusability**: Define once, use in multiple indexers
-* **Consistency**: Ensure all indexers using the same vectorizer have identical embedding configuration  
+* **Consistency**: Ensure all indexers using the same vectorizer have identical embedding configuration
 * **Maintainability**: Change vectorizer settings in one place
 
 Profiler

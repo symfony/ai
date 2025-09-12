@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add Symfony bundle for integrating Platform, Agent, and Store components
+ * Add Perplexity platform support with API key configuration
  * Add service configuration:
    - Agent services with configurable platforms and system prompts
    - Tool registration via `#[AsTool]` attribute and `ai.tool` tag

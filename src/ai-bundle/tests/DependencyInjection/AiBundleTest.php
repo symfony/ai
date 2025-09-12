@@ -623,6 +623,31 @@ class AiBundleTest extends TestCase
         ]);
     }
 
+    public function testPerplexityPlatformConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'perplexity' => [
+                        'api_key' => 'pplx-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.perplexity'));
+
+        $definition = $container->getDefinition('ai.platform.perplexity');
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(3, $arguments);
+        $this->assertSame('pplx-test-key', $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('http_client', (string) $arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('ai.platform.contract.perplexity', (string) $arguments[2]);
+    }
+
     public function testVectorizerConfiguration()
     {
         $container = $this->buildContainer([
