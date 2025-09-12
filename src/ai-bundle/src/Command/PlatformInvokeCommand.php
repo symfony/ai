@@ -153,9 +153,13 @@ final class PlatformInvokeCommand extends Command
         return match ($platformName) {
             'openai' => new \Symfony\AI\Platform\Bridge\OpenAi\Gpt($modelName),
             'anthropic' => new \Symfony\AI\Platform\Bridge\Anthropic\Claude($modelName),
-            'google' => new \Symfony\AI\Platform\Bridge\Gemini\Gemini($modelName),
+            'gemini', 'google' => new \Symfony\AI\Platform\Bridge\Gemini\Gemini($modelName),
+            'vertexai' => new \Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model($modelName),
             'ollama' => new \Symfony\AI\Platform\Bridge\Ollama\Ollama($modelName),
             'mistral' => new \Symfony\AI\Platform\Bridge\Mistral\Mistral($modelName),
+            'lmstudio' => new \Symfony\AI\Platform\Bridge\LmStudio\Completions($modelName),
+            'cerebras' => new \Symfony\AI\Platform\Bridge\Cerebras\Model($modelName),
+            'perplexity' => new \Symfony\AI\Platform\Bridge\Perplexity\Perplexity($modelName),
             default => throw new InvalidArgumentException(\sprintf('Platform "%s" is not supported in ai:platform:invoke command', $platformName)),
         };
     }
