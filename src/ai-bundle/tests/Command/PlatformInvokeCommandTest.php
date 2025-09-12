@@ -36,8 +36,8 @@ final class PlatformInvokeCommandTest extends TestCase
 
     public function testExecuteWithNonExistentPlatform()
     {
-        $this->platforms->method('getProvidedServices')->willReturn(['ai.platform.openai' => 'service_class']);
-        $this->platforms->method('has')->with('ai.platform.invalid')->willReturn(false);
+        $this->platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+        $this->platforms->method('has')->with('invalid')->willReturn(false);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Platform "invalid" not found. Available platforms: "openai"');
@@ -68,9 +68,9 @@ final class PlatformInvokeCommandTest extends TestCase
     public function testExecuteWithEmptyMessage()
     {
         $mockPlatform = $this->createMock(PlatformInterface::class);
-        $this->platforms->method('getProvidedServices')->willReturn(['ai.platform.openai' => 'service_class']);
-        $this->platforms->method('has')->with('ai.platform.openai')->willReturn(true);
-        $this->platforms->method('get')->with('ai.platform.openai')->willReturn($mockPlatform);
+        $this->platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+        $this->platforms->method('has')->with('openai')->willReturn(true);
+        $this->platforms->method('get')->with('openai')->willReturn($mockPlatform);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Message is required.');
@@ -101,7 +101,7 @@ final class PlatformInvokeCommandTest extends TestCase
 
     public function testExecuteWithWhitespaceOnlyPlatformName()
     {
-        $this->platforms->method('getProvidedServices')->willReturn(['ai.platform.openai' => 'service_class']);
+        $this->platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Platform name is required.');
@@ -117,9 +117,9 @@ final class PlatformInvokeCommandTest extends TestCase
     public function testExecuteWithWhitespaceOnlyMessage()
     {
         $mockPlatform = $this->createMock(PlatformInterface::class);
-        $this->platforms->method('getProvidedServices')->willReturn(['ai.platform.openai' => 'service_class']);
-        $this->platforms->method('has')->with('ai.platform.openai')->willReturn(true);
-        $this->platforms->method('get')->with('ai.platform.openai')->willReturn($mockPlatform);
+        $this->platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+        $this->platforms->method('has')->with('openai')->willReturn(true);
+        $this->platforms->method('get')->with('openai')->willReturn($mockPlatform);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Message is required.');
@@ -135,9 +135,9 @@ final class PlatformInvokeCommandTest extends TestCase
     public function testExecuteWithEmptyModel()
     {
         $mockPlatform = $this->createMock(PlatformInterface::class);
-        $this->platforms->method('getProvidedServices')->willReturn(['ai.platform.openai' => 'service_class']);
-        $this->platforms->method('has')->with('ai.platform.openai')->willReturn(true);
-        $this->platforms->method('get')->with('ai.platform.openai')->willReturn($mockPlatform);
+        $this->platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+        $this->platforms->method('has')->with('openai')->willReturn(true);
+        $this->platforms->method('get')->with('openai')->willReturn($mockPlatform);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Model is required.');
@@ -153,9 +153,9 @@ final class PlatformInvokeCommandTest extends TestCase
     public function testExecuteWithWhitespaceOnlyModel()
     {
         $mockPlatform = $this->createMock(PlatformInterface::class);
-        $this->platforms->method('getProvidedServices')->willReturn(['ai.platform.openai' => 'service_class']);
-        $this->platforms->method('has')->with('ai.platform.openai')->willReturn(true);
-        $this->platforms->method('get')->with('ai.platform.openai')->willReturn($mockPlatform);
+        $this->platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+        $this->platforms->method('has')->with('openai')->willReturn(true);
+        $this->platforms->method('get')->with('openai')->willReturn($mockPlatform);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Model is required.');
