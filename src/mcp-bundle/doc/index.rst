@@ -63,6 +63,53 @@ Configuration
                 sse:
                     url: 'http://localhost:8000/sse' # URL to SSE endpoint of MCP server
 
+Usage as a remote MCP server
+----------------------------
+
+If your local project runs in docker, it may be easier to run the server as a remote server, thanks to the node package ``mcp-remote``. Node is required.
+
+Configuration for claude desktop:
+
+.. code-block:: json
+
+    {
+      "mcpServers": {
+        "symfony": {
+          "command": "npx",
+          "args": [
+            "mcp-remote",
+            "https://127.0.0.1:8080"
+          ]
+        }
+      }
+    }
+
+Quick tips
+..........
+
+Self Signed certificates
+~~~~~~~~~~~~~~~~~~~~~~~~
+Add the following section:
+
+.. code-block:: json
+
+    "env": {
+      "NODE_EXTRA_CA_CERTS": "full/path/to/cert_root.pem"
+    }
+
+Allow http
+~~~~~~~~~~
+Add the argument ``--allow-http``:
+
+.. code-block:: json
+
+    "args": [
+      "mcp-remote",
+      "https://127.0.0.1:8080",
+      "--allow-http"
+    ]
+
+
 .. _`Model Context Protocol`: https://modelcontextprotocol.io/
 .. _`symfony/mcp-sdk`: https://github.com/symfony/mcp-sdk
 .. _`Claude Desktop`: https://claude.ai/download
