@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\AI\Platform\Event\PlatformInvokationEvent;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultPromise;
@@ -38,6 +40,7 @@ final class Platform implements PlatformInterface
         iterable $modelClients,
         iterable $resultConverters,
         private ?Contract $contract = null,
+        private ?EventDispatcherInterface $eventDispatcher = null,
     ) {
         $this->contract = $contract ?? Contract::create();
         $this->modelClients = $modelClients instanceof \Traversable ? iterator_to_array($modelClients) : $modelClients;
@@ -46,6 +49,13 @@ final class Platform implements PlatformInterface
 
     public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise
     {
+        // Dispatch event to allow input modification
+        if ($this->eventDispatcher) {
+            $event = new PlatformInvokationEvent($model, $input, $options);
+            $this->eventDispatcher->dispatch($event);
+            $input = $event->input;
+        }
+
         $payload = $this->contract->createRequestPayload($model, $input);
         $options = array_merge($model->getOptions(), $options);
 
