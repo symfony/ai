@@ -233,7 +233,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.anthropic'),
                     new Reference('ai.platform.contract.anthropic'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'anthropic']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -256,7 +256,7 @@ final class AiBundle extends AbstractBundle
                         new Reference('ai.platform.model_catalog.azure.openai'),
                         new Reference('ai.platform.contract.openai'),
                     ])
-                    ->addTag('ai.platform');
+                    ->addTag('ai.platform', ['name' => 'azure.'.$name]);
 
                 $container->setDefinition($platformId, $definition);
             }
@@ -277,7 +277,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.elevenlabs'),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'eleven_labs']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -296,7 +296,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.gemini'),
                     new Reference('ai.platform.contract.gemini'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'gemini']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -336,7 +336,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.vertexai.gemini'),
                     new Reference('ai.platform.contract.vertexai.gemini'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'vertexai']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -356,7 +356,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.openai'),
                     $platform['region'] ?? null,
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'openai']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -375,7 +375,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.openrouter'),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'openrouter']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -394,7 +394,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.mistral'),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'mistral']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -413,7 +413,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.lmstudio'),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'lmstudio']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -432,7 +432,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.ollama'),
                     new Reference('ai.platform.contract.ollama'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'ollama']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -451,7 +451,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.cerebras'),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'cerebras']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -470,7 +470,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.voyage'),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'voyage']);
 
             $container->setDefinition($platformId, $definition);
 

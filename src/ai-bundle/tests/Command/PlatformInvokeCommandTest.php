@@ -1,0 +1,269 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\AiBundle\Tests\Command;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
+use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformInterface;
+use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\DependencyInjection\ServiceLocator;
+
+#[CoversClass(PlatformInvokeCommand::class)]
+#[UsesClass(InvalidArgumentException::class)]
+final class PlatformInvokeCommandTest extends TestCase
+{
+    public function testExecuteWithNonExistentPlatform()
+    {
+        $platforms = $this->createMock(ServiceLocator::class);
+        $platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+        $platforms->method('has')->with('invalid')->willReturn(false);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Platform "invalid" not found. Available platforms: "openai"');
+
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'platform' => 'invalid',
+            'model' => 'gpt-4o-mini',
+            'message' => 'Test message',
+        ]);
+    }
+
+    public function testExecuteWithNoPlatformsConfigured()
+    {
+        $platforms = $this->createMock(ServiceLocator::class);
+        $platforms->method('getProvidedServices')->willReturn([]);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No platforms are configured.');
+
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'platform' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'message' => 'Test message',
+        ]);
+    }
+
+    public function testExecuteWithEmptyMessage()
+    {
+        $platforms = $this->createMock(ServiceLocator::class);
+        $mockPlatform = $this->createMock(PlatformInterface::class);
+        $platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+        $platforms->method('has')->with('openai')->willReturn(true);
+        $platforms->method('get')->with('openai')->willReturn($mockPlatform);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Message is required.');
+
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'platform' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'message' => '',
+        ]);
+    }
+
+    public function testInitializeValidatesEarly()
+    {
+        // Test that initialize method validates inputs before execute is called
+        $platforms = $this->createMock(ServiceLocator::class);
+        $platforms->method('getProvidedServices')->willReturn([]);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No platforms are configured.');
+
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'platform' => 'nonexistent',
+            'model' => 'gpt-4o-mini',
+            'message' => 'Test message',
+        ]);
+    }
+
+    public function testExecuteWithWhitespaceOnlyPlatformName()
+    {
+        $platforms = $this->createMock(ServiceLocator::class);
+        $platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Platform name is required.');
+
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'platform' => '   ',  // Only whitespace
+            'model' => 'gpt-4o-mini',
+            'message' => 'Test message',
+        ]);
+    }
+
+    public function testExecuteWithWhitespaceOnlyMessage()
+    {
+        $platforms = $this->createMock(ServiceLocator::class);
+        $mockPlatform = $this->createMock(PlatformInterface::class);
+        $platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+        $platforms->method('has')->with('openai')->willReturn(true);
+        $platforms->method('get')->with('openai')->willReturn($mockPlatform);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Message is required.');
+
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'platform' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'message' => '   ',  // Only whitespace
+        ]);
+    }
+
+    public function testExecuteWithEmptyModel()
+    {
+        $platforms = $this->createMock(ServiceLocator::class);
+        $mockPlatform = $this->createMock(PlatformInterface::class);
+        $platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+        $platforms->method('has')->with('openai')->willReturn(true);
+        $platforms->method('get')->with('openai')->willReturn($mockPlatform);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Model is required.');
+
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'platform' => 'openai',
+            'model' => '',
+            'message' => 'Test message',
+        ]);
+    }
+
+    public function testExecuteWithWhitespaceOnlyModel()
+    {
+        $platforms = $this->createMock(ServiceLocator::class);
+        $mockPlatform = $this->createMock(PlatformInterface::class);
+        $platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class']);
+        $platforms->method('has')->with('openai')->willReturn(true);
+        $platforms->method('get')->with('openai')->willReturn($mockPlatform);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Model is required.');
+
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'platform' => 'openai',
+            'model' => '   ',  // Only whitespace
+            'message' => 'Test message',
+        ]);
+    }
+
+    public function testExecuteWithUnsupportedPlatformThrowsException()
+    {
+        $platforms = $this->createMock(ServiceLocator::class);
+        $mockPlatform = $this->createMock(PlatformInterface::class);
+        $platforms->method('getProvidedServices')->willReturn(['unsupported' => 'service_class']);
+        $platforms->method('has')->with('unsupported')->willReturn(true);
+        $platforms->method('get')->with('unsupported')->willReturn($mockPlatform);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Platform "unsupported" is not supported in ai:platform:invoke command');
+
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'platform' => 'unsupported',
+            'model' => 'some-model',
+            'message' => 'Test message',
+        ]);
+    }
+
+    public function testExecuteWithVertexAiPlatform()
+    {
+        $platforms = $this->createMock(ServiceLocator::class);
+        $mockPlatform = $this->createMock(PlatformInterface::class);
+        $platforms->method('getProvidedServices')->willReturn(['vertexai' => 'service_class']);
+        $platforms->method('has')->with('vertexai')->willReturn(true);
+        $platforms->method('get')->with('vertexai')->willReturn($mockPlatform);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        // This should not throw an exception since vertexai is supported
+        $commandTester = new CommandTester($command);
+        $commandTester->setInputs(['exit']); // Mock user input for chat
+
+        try {
+            $commandTester->execute([
+                'platform' => 'vertexai',
+                'model' => 'gemini-pro',
+                'message' => 'Test message',
+            ]);
+            // If we get here without exception, the platform is properly supported
+            $this->assertTrue(true);
+        } catch (InvalidArgumentException $e) {
+            if (str_contains($e->getMessage(), 'not supported')) {
+                $this->fail('VertexAI platform should be supported but got: '.$e->getMessage());
+            }
+            // Other exceptions are fine (like platform invoke errors)
+            $this->assertTrue(true);
+        }
+    }
+
+    public function testExecuteWithPerplexityPlatform()
+    {
+        $platforms = $this->createMock(ServiceLocator::class);
+        $mockPlatform = $this->createMock(PlatformInterface::class);
+        $platforms->method('getProvidedServices')->willReturn(['perplexity' => 'service_class']);
+        $platforms->method('has')->with('perplexity')->willReturn(true);
+        $platforms->method('get')->with('perplexity')->willReturn($mockPlatform);
+
+        $command = new PlatformInvokeCommand($platforms);
+
+        // This should not throw an "unsupported" exception since perplexity is now supported
+        $commandTester = new CommandTester($command);
+        $commandTester->setInputs(['exit']); // Mock user input for chat
+
+        try {
+            $commandTester->execute([
+                'platform' => 'perplexity',
+                'model' => 'sonar',
+                'message' => 'Test message',
+            ]);
+            // If we get here without exception, the platform is properly supported
+            $this->assertTrue(true);
+        } catch (InvalidArgumentException $e) {
+            if (str_contains($e->getMessage(), 'not supported')) {
+                $this->fail('Perplexity platform should be supported but got: '.$e->getMessage());
+            }
+            // Other exceptions are fine (like platform invoke errors)
+            $this->assertTrue(true);
+        }
+    }
+}
+
+

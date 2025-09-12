@@ -189,3 +189,5 @@ final class AgentCallCommand extends Command
         return array_keys($this->agents->getProvidedServices());
     }
 }
+
+
