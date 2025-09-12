@@ -9,7 +9,7 @@ require __DIR__.'/../vendor/autoload.php';
 use Symfony\Component\Finder\Finder;
 
 $finder = (new Finder())
-    ->in([__DIR__.'/../src/*/', __DIR__.'/../examples/'])
+    ->in([__DIR__.'/../src/*/'])
     ->depth(0)
     ->name('composer.json')
 ;
