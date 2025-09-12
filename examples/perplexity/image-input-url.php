@@ -10,9 +10,10 @@
  */
 
 use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\OutputProcessor\ResultOutputProcessor;
 use Symfony\AI\Platform\Bridge\Perplexity\Perplexity;
 use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory;
-use Symfony\AI\Platform\Bridge\Perplexity\SearchResultProcessor;
+use Symfony\AI\Platform\Bridge\Perplexity\SearchResultHandler;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -21,7 +22,8 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('PERPLEXITY_API_KEY'), http_client());
 $model = new Perplexity();
-$agent = new Agent($platform, $model, outputProcessors: [new SearchResultProcessor()], logger: logger());
+
+$agent = new Agent($platform, $model, outputProcessors: [new ResultOutputProcessor(new SearchResultHandler())], logger: logger());
 
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),

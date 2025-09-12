@@ -1,0 +1,26 @@
+deptrac:
+  paths:
+    - ./src
+  exclude_files:
+    - '#.*test.*#'
+  layers:
+    - name: Agent
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent.*
+    - name: Platform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform.*
+    - name: Store
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store.*
+  ruleset:
+    Platform: ~
+    Agent:
+        - Platform
+        - orm
+        - Store
+    Store:
+        - Platform

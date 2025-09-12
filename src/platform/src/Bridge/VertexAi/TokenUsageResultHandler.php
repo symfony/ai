@@ -11,10 +11,10 @@
 
 namespace Symfony\AI\Platform\Bridge\VertexAi;
 
-use Symfony\AI\Agent\Output;
-use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Metadata\TokenUsage;
+use Symfony\AI\Platform\Result\ResultHandlerInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
@@ -26,7 +26,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
  */
-final class TokenOutputProcessor implements OutputProcessorInterface
+final class TokenUsageResultHandler implements ResultHandlerInterface
 {
     /**
      * @throws TransportExceptionInterface
@@ -35,15 +35,15 @@ final class TokenOutputProcessor implements OutputProcessorInterface
      * @throws DecodingExceptionInterface
      * @throws ClientExceptionInterface
      */
-    public function processOutput(Output $output): void
+    public function handleResult(ResultInterface $result): void
     {
         $tokenUsage = new TokenUsage();
-        $metadata = $output->result->getMetadata();
+        $metadata = $result->getMetadata();
 
-        if ($output->result instanceof StreamResult) {
+        if ($result instanceof StreamResult) {
             $lastChunk = null;
 
-            foreach ($output->result->getContent() as $chunk) {
+            foreach ($result->getContent() as $chunk) {
                 // Store last event that contains usage metadata
                 if (isset($chunk['usageMetadata'])) {
                     $lastChunk = $chunk;
@@ -57,7 +57,7 @@ final class TokenOutputProcessor implements OutputProcessorInterface
             return;
         }
 
-        $rawResponse = $output->result->getRawResult()?->getObject();
+        $rawResponse = $result->getRawResult()?->getObject();
         if (!$rawResponse instanceof ResponseInterface) {
             return;
         }

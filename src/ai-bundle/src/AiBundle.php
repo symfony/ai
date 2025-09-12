@@ -19,6 +19,7 @@ use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
+use Symfony\AI\Agent\OutputProcessor\ResultOutputProcessor;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
@@ -596,9 +597,15 @@ final class AiBundle extends AbstractBundle
                     $platform = 'azure';
                 }
 
-                if ($container->hasDefinition('ai.platform.token_usage_processor.'.$platform)) {
-                    $container->getDefinition('ai.platform.token_usage_processor.'.$platform)
-                        ->addTag('ai.agent.output_processor', ['agent' => $agentId, 'priority' => -30]);
+                if ($container->hasDefinition('ai.platform.token_usage_result_handler.'.$platform)) {
+                    $container->getDefinition('ai.platform.token_usage_result_handler.'.$platform)
+                        ->addTag('ai.agent.token_usage_result_handler', ['agent' => $agentId]);
+
+                    $tokenOutputProcessorDefinition = new Definition(ResultOutputProcessor::class);
+                    $tokenOutputProcessorDefinition->setArgument(0, new Reference('ai.agent.token_usage_result_handler'));
+
+                    $container->setDefinition('ai.platform.token_usage_processor.'.$platform, $tokenOutputProcessorDefinition)
+                        ->addTag('ai.platform.token_usage_processor', ['agent' => $agentId, 'priority' => -30]);
                 }
             }
         }
