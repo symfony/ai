@@ -420,7 +420,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('cerebras' === $type && isset($platform['api_key'])) {
+        if ('cerebras' === $type) {
             $platformId = 'ai.platform.cerebras';
             $definition = (new Definition(Platform::class))
                 ->setFactory(CerebrasPlatformFactory::class.'::create')
@@ -437,7 +437,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('voyage' === $type && isset($platform['api_key'])) {
+        if ('voyage' === $type) {
             $platformId = 'ai.platform.voyage';
             $definition = (new Definition(Platform::class))
                 ->setFactory(VoyagePlatformFactory::class.'::create')
@@ -454,7 +454,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('perplexity' === $type && isset($platform['api_key'])) {
+        if ('perplexity' === $type) {
             $platformId = 'ai.platform.perplexity';
             $definition = (new Definition(Platform::class))
                 ->setFactory(PerplexityPlatformFactory::class.'::create')
