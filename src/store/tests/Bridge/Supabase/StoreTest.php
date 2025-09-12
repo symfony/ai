@@ -25,7 +25,7 @@ use Symfony\Component\Uid\Uuid;
 #[CoversClass(SupabaseStore::class)]
 class StoreTest extends TestCase
 {
-    public function testAddThrowsExceptionOnHttpError(): void
+    public function testAddThrowsExceptionOnHttpError()
     {
         $httpClient = new MockHttpClient(new MockResponse('Error message', ['http_code' => 400]));
         $store = $this->createStore($httpClient);
@@ -36,7 +36,7 @@ class StoreTest extends TestCase
         $store->add($doc);
     }
 
-    public function testAddEmptyDocumentsDoesNothing(): void
+    public function testAddEmptyDocumentsDoesNothing()
     {
         $httpClient = new MockHttpClient();
         $store = $this->createStore($httpClient);
@@ -46,7 +46,7 @@ class StoreTest extends TestCase
         $this->assertSame(0, $httpClient->getRequestsCount());
     }
 
-    public function testAddSingleDocument(): void
+    public function testAddSingleDocument()
     {
         $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 201]));
         $store = $this->createStore($httpClient, 3);
@@ -61,7 +61,7 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testAddMultipleDocuments(): void
+    public function testAddMultipleDocuments()
     {
         $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 201]));
         $store = $this->createStore($httpClient);
@@ -73,7 +73,7 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testAddSkipsDocumentsWithWrongDimension(): void
+    public function testAddSkipsDocumentsWithWrongDimension()
     {
         $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 201]));
         $store = $this->createStore($httpClient);
@@ -85,7 +85,7 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testQueryThrowsExceptionOnHttpError(): void
+    public function testQueryThrowsExceptionOnHttpError()
     {
         $httpClient = new MockHttpClient(new MockResponse('Query failed', ['http_code' => 500]));
         $store = $this->createStore($httpClient);
@@ -96,7 +96,7 @@ class StoreTest extends TestCase
         $store->query($queryVector);
     }
 
-    public function testQueryWithDefaultOptions(): void
+    public function testQueryWithDefaultOptions()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
         $store = $this->createStore($httpClient, 2);
@@ -108,7 +108,7 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testQueryHandlesLimitOption(): void
+    public function testQueryHandlesLimitOption()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
         $store = $this->createStore($httpClient);
@@ -120,7 +120,7 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testQueryThrowsExceptionForWrongVectorDimension(): void
+    public function testQueryThrowsExceptionForWrongVectorDimension()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
         $store = $this->createStore($httpClient);
@@ -132,7 +132,7 @@ class StoreTest extends TestCase
         $store->query($wrongDimensionVector);
     }
 
-    public function testQuerySuccess(): void
+    public function testQuerySuccess()
     {
         $uuid = Uuid::v4();
         $expectedResponse = [
@@ -157,7 +157,7 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testQueryHandlesMultipleResultsAndMultipleOptions(): void
+    public function testQueryHandlesMultipleResultsAndMultipleOptions()
     {
         $uuid1 = Uuid::v4();
         $uuid2 = Uuid::v4();
@@ -196,7 +196,7 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testQueryParsesComplexMetadata(): void
+    public function testQueryParsesComplexMetadata()
     {
         $uuid = Uuid::v4();
         $expectedResponse = [

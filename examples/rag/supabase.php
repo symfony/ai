@@ -51,7 +51,7 @@ foreach (Movies::all() as $movie) {
 }
 
 $platform = PlatformFactory::create(
-    env('OLLAMA_HOST_URL') ?? 'http://localhost:11434',
+    env('OLLAMA_HOST_URL'),
     http_client()
 );
 

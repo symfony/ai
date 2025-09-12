@@ -23,19 +23,17 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
  *
- * Requires pgvector extension to be enabled and a pre-configured table/function.
+ * Supabase vector store implementation using REST API and pgvector.
  *
- * @see https://github.com/pgvector/pgvector
- * @see https://supabase.com/docs/guides/ai/vector-columns
+ * This store provides vector storage capabilities through Supabase's REST API
+ * with pgvector extension support. Unlike direct PostgreSQL access, this implementation
+ * requires manual database setup since Supabase doesn't allow arbitrary SQL execution
+ * via REST API.
  *
- * Supabase store using REST & RPC.
- *
- * Note: Unlike Postgres Store, this store requires manual setup of:
- * 1. pgvector extension
- * 2. Table with vector column
- * 3. RPC function for similarity search
- *
- * This is because Supabase doesn't allow arbitrary SQL execution via REST API.
+ * @see https://github.com/pgvector/pgvector pgvector extension documentation
+ * @see https://supabase.com/docs/guides/ai/vector-columns Supabase vector guide
+ * @see /store/doc/bridges/supabase.rst For detailed info
+ * @see /examples/rag/supabase.php Usage example
  */
 final readonly class Store implements StoreInterface
 {
@@ -103,7 +101,7 @@ final readonly class Store implements StoreInterface
     public function query(Vector $vector, array $options = []): array
     {
         if (\count($vector->getData()) !== $this->vectorDimension) {
-            throw new InvalidArgumentException("Vector dimension mismatch: expected {$this->vectorDimension}");
+            throw new InvalidArgumentException("Vector dimension mismatch: expected {$this->vectorDimension}.");
         }
 
         $matchCount = $options['max_items'] ?? ($options['limit'] ?? 10);
