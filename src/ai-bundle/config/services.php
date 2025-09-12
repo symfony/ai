@@ -166,7 +166,7 @@ return static function (ContainerConfigurator $container): void {
             ->tag('console.command')
         ->set('ai.command.platform_invoke', PlatformInvokeCommand::class)
             ->args([
-                tagged_locator('ai.platform', indexAttribute: 'name'),
+                tagged_locator('ai.platform'),
             ])
             ->tag('console.command')
     ;
