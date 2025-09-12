@@ -1,0 +1,12 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-11T17:14:16Z
+
+how did you end up needing this default? I think it's always there due to the default in the Agent itself:
+https://github.com/symfony/ai/blob/ff082040cc91f23a9cd694df55fc9d9cd64933c0/src/agent/src/Agent.php#L75
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-11T17:22:36Z
+
+It just raised my attention in a test. Feel free to close
