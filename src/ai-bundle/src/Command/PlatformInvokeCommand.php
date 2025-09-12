@@ -156,8 +156,7 @@ final class PlatformInvokeCommand extends Command
             'google' => new \Symfony\AI\Platform\Bridge\Gemini\Gemini($modelName),
             'ollama' => new \Symfony\AI\Platform\Bridge\Ollama\Ollama($modelName),
             'mistral' => new \Symfony\AI\Platform\Bridge\Mistral\Mistral($modelName),
-            'perplexity' => throw new InvalidArgumentException('Perplexity platform is not yet supported in ai:platform:invoke command'),
-            default => new Model($modelName), // Fallback to generic model
+            default => throw new InvalidArgumentException(\sprintf('Platform "%s" is not supported in ai:platform:invoke command', $platformName)),
         };
     }
 }
