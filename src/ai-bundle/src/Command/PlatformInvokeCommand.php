@@ -23,7 +23,6 @@ use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Completion\CompletionSuggestions;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ServiceLocator;
@@ -121,7 +120,7 @@ final class PlatformInvokeCommand extends Command
         try {
             $messages = new MessageBag();
             $messages->add(Message::ofUser($this->message));
-            
+
             $resultPromise = $this->platform->invoke($this->model, $messages);
             $result = $resultPromise->getResult();
 
@@ -131,6 +130,7 @@ final class PlatformInvokeCommand extends Command
                 $io->writeln($result->getContent());
             } else {
                 $io->error('Unexpected response type from platform');
+
                 return Command::FAILURE;
             }
         } catch (\Exception $e) {
@@ -160,5 +160,5 @@ final class PlatformInvokeCommand extends Command
             default => new Model($modelName), // Fallback to generic model
         };
     }
-
 }
+

@@ -24,7 +24,6 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 #[UsesClass(InvalidArgumentException::class)]
 final class PlatformInvokeCommandTest extends TestCase
 {
-
     public function testExecuteWithNonExistentPlatform()
     {
         $platforms = $this->createMock(ServiceLocator::class);

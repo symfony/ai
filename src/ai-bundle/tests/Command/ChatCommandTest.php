@@ -257,4 +257,3 @@ final class ChatCommandTest extends TestCase
     }
 }
 
-
