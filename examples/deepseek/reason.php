@@ -18,17 +18,17 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('DEEPSEEK_API_KEY'), http_client());
-$model = new DeepSeek(DeepSeek::CHAT, [
-    'temperature' => 0.5, // default options for the model in every call
+$model = new DeepSeek(DeepSeek::REASONER, [
+    // default options for the model in every call
+    'temperature' => 0,
+    'max_tokens' => 500,
 ]);
 
 $agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
-    Message::forSystem('You are an in-universe Matrix programme, always make hints at the Matrix.'),
-    Message::ofUser('Yesterday I had a Déjà vu. It is a funny feeling, no?'),
+    Message::forSystem('You are an elementary school teacher.'),
+    Message::ofUser('Why can I see the moon at night?'),
 );
-$result = $agent->call($messages, [
-    'max_tokens' => 500, // specific options just for this call
-]);
+$result = $agent->call($messages);
 
 echo $result->getContent().\PHP_EOL;

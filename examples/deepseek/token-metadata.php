@@ -12,6 +12,7 @@
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\DeepSeek\DeepSeek;
 use Symfony\AI\Platform\Bridge\DeepSeek\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -22,13 +23,13 @@ $model = new DeepSeek(DeepSeek::CHAT, [
     'temperature' => 0.5, // default options for the model in every call
 ]);
 
-$agent = new Agent($platform, $model, logger: logger());
+$agent = new Agent($platform, $model, outputProcessors: [new TokenOutputProcessor()], logger: logger());
 $messages = new MessageBag(
-    Message::forSystem('You are an in-universe Matrix programme, always make hints at the Matrix.'),
-    Message::ofUser('Yesterday I had a Déjà vu. It is a funny feeling, no?'),
+    Message::forSystem('You are a pirate and you write funny.'),
+    Message::ofUser('What is the Symfony framework?'),
 );
 $result = $agent->call($messages, [
     'max_tokens' => 500, // specific options just for this call
 ]);
 
-echo $result->getContent().\PHP_EOL;
+print_token_usage($result->getMetadata());

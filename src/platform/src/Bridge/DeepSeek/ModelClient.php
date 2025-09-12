@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * This file is part of the Symfony package.
  *
@@ -38,8 +36,6 @@ class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
-        // todo: add tools and stuff
-
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.deepseek.com/chat/completions', [
             'auth_bearer' => $this->apiKey,
             'json' => array_merge($payload, $options),
