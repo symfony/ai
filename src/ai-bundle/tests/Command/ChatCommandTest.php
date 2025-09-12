@@ -255,3 +255,4 @@ final class ChatCommandTest extends TestCase
         return new ServiceLocator($factories);
     }
 }
+

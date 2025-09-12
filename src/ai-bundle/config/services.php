@@ -171,3 +171,4 @@ return static function (ContainerConfigurator $container): void {
             ->tag('console.command')
     ;
 };
+
