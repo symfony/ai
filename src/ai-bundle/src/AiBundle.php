@@ -211,7 +211,7 @@ final class AiBundle extends AbstractBundle
      */
     private function processPlatformConfig(string $type, array $platform, ContainerBuilder $container): void
     {
-        if ('anthropic' === $type) {
+        if (PlatformType::Anthropic->value === $type) {
             $platformId = 'ai.platform.anthropic';
             $definition = (new Definition(Platform::class))
                 ->setFactory(AnthropicPlatformFactory::class.'::create')
@@ -229,7 +229,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('azure' === $type) {
+        if (PlatformType::Azure->value === $type) {
             foreach ($platform as $name => $config) {
                 $platformId = 'ai.platform.azure.'.$name;
                 $definition = (new Definition(Platform::class))
@@ -252,7 +252,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('eleven_labs' === $type) {
+        if (PlatformType::ElevenLabs->value === $type) {
             $platformId = 'ai.platform.eleven_labs';
             $definition = (new Definition(Platform::class))
                 ->setFactory(ElevenLabsPlatformFactory::class.'::create')
@@ -271,7 +271,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('gemini' === $type) {
+        if (PlatformType::Gemini->value === $type) {
             $platformId = 'ai.platform.gemini';
             $definition = (new Definition(Platform::class))
                 ->setFactory(GeminiPlatformFactory::class.'::create')
@@ -289,7 +289,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('vertexai' === $type && isset($platform['location'], $platform['project_id'])) {
+        if (PlatformType::VertexAi->value === $type && isset($platform['location'], $platform['project_id'])) {
             if (!class_exists(ApplicationDefaultCredentials::class)) {
                 throw new RuntimeException('For using the Vertex AI platform, google/auth package is required. Try running "composer require google/auth".');
             }
@@ -328,7 +328,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('openai' === $type) {
+        if (PlatformType::OpenAi->value === $type) {
             $platformId = 'ai.platform.openai';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OpenAiPlatformFactory::class.'::create')
@@ -347,7 +347,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('openrouter' === $type) {
+        if (PlatformType::OpenRouter->value === $type) {
             $platformId = 'ai.platform.openrouter';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OpenRouterPlatformFactory::class.'::create')
@@ -365,7 +365,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('mistral' === $type) {
+        if (PlatformType::Mistral->value === $type) {
             $platformId = 'ai.platform.mistral';
             $definition = (new Definition(Platform::class))
                 ->setFactory(MistralPlatformFactory::class.'::create')
@@ -383,7 +383,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('lmstudio' === $type) {
+        if (PlatformType::LmStudio->value === $type) {
             $platformId = 'ai.platform.lmstudio';
             $definition = (new Definition(Platform::class))
                 ->setFactory(LmStudioPlatformFactory::class.'::create')
@@ -401,7 +401,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('ollama' === $type) {
+        if (PlatformType::Ollama->value === $type) {
             $platformId = 'ai.platform.ollama';
             $definition = (new Definition(Platform::class))
                 ->setFactory(MistralPlatformFactory::class.'::create')
@@ -420,7 +420,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('cerebras' === $type) {
+        if (PlatformType::Cerebras->value === $type) {
             $platformId = 'ai.platform.cerebras';
             $definition = (new Definition(Platform::class))
                 ->setFactory(CerebrasPlatformFactory::class.'::create')
@@ -437,7 +437,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('voyage' === $type) {
+        if (PlatformType::Voyage->value === $type) {
             $platformId = 'ai.platform.voyage';
             $definition = (new Definition(Platform::class))
                 ->setFactory(VoyagePlatformFactory::class.'::create')
@@ -454,7 +454,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('perplexity' === $type) {
+        if (PlatformType::Perplexity->value === $type) {
             $platformId = 'ai.platform.perplexity';
             $definition = (new Definition(Platform::class))
                 ->setFactory(PerplexityPlatformFactory::class.'::create')
@@ -632,7 +632,7 @@ final class AiBundle extends AbstractBundle
      */
     private function processStoreConfig(string $type, array $stores, ContainerBuilder $container): void
     {
-        if ('azure_search' === $type) {
+        if (StoreType::AzureSearch->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference('http_client'),
@@ -656,7 +656,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('cache' === $type) {
+        if (StoreType::Cache->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference($store['service']),
@@ -688,7 +688,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('chroma_db' === $type) {
+        if (StoreType::ChromaDb->value === $type) {
             foreach ($stores as $name => $store) {
                 $definition = new Definition(ChromaDbStore::class);
                 $definition
@@ -703,7 +703,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('clickhouse' === $type) {
+        if (StoreType::ClickHouse->value === $type) {
             foreach ($stores as $name => $store) {
                 if (isset($store['http_client'])) {
                     $httpClient = new Reference($store['http_client']);
@@ -730,7 +730,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('cloudflare' === $type) {
+        if (StoreType::Cloudflare->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference('http_client'),
@@ -760,7 +760,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('meilisearch' === $type) {
+        if (StoreType::Meilisearch->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference('http_client'),
@@ -791,7 +791,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('memory' === $type) {
+        if (StoreType::Memory->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [];
 
@@ -816,7 +816,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('milvus' === $type) {
+        if (StoreType::Milvus->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference('http_client'),
@@ -848,7 +848,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('mongodb' === $type) {
+        if (StoreType::MongoDb->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference($store['client']),
@@ -875,7 +875,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('neo4j' === $type) {
+        if (StoreType::Neo4j->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference('http_client'),
@@ -913,7 +913,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('pinecone' === $type) {
+        if (StoreType::Pinecone->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference($store['client']),
@@ -938,7 +938,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('qdrant' === $type) {
+        if (StoreType::Qdrant->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference('http_client'),
@@ -965,7 +965,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('surreal_db' === $type) {
+        if (StoreType::SurrealDb->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference('http_client'),
@@ -1006,7 +1006,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('typesense' === $type) {
+        if (StoreType::Typesense->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference('http_client'),
@@ -1033,7 +1033,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('weaviate' === $type) {
+        if (StoreType::Weaviate->value === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference('http_client'),
