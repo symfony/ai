@@ -37,6 +37,10 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 )]
 final class PlatformInvokeCommand extends Command
 {
+    private string $message;
+    private PlatformInterface $platform;
+    private Model $model;
+
     /**
      * @param ServiceLocator<PlatformInterface> $platforms
      */
@@ -49,7 +53,7 @@ final class PlatformInvokeCommand extends Command
     public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
     {
         if ($input->mustSuggestArgumentValuesFor('platform')) {
-            $suggestions->suggestValues($this->getAvailablePlatformNames());
+            $suggestions->suggestValues(array_keys($this->platforms->getProvidedServices()));
         }
     }
 
@@ -57,18 +61,18 @@ final class PlatformInvokeCommand extends Command
     {
         $this
             ->addArgument('platform', InputArgument::REQUIRED, 'The name of the configured platform to invoke')
+            ->addArgument('model', InputArgument::REQUIRED, 'The model to use for the request')
             ->addArgument('message', InputArgument::REQUIRED, 'The message to send to the AI platform')
-            ->addOption('model', 'm', InputOption::VALUE_REQUIRED, 'Override the configured model')
             ->setHelp(
                 <<<'HELP'
                 The <info>%command.name%</info> command allows you to invoke configured AI platforms with a message.
 
                 Usage:
-                  <info>%command.full_name% <platform_name> "<message>"</info>
+                  <info>%command.full_name% <platform_name> <model> "<message>"</info>
 
                 Examples:
-                  <info>%command.full_name% openai "Hello, world!"</info>
-                  <info>%command.full_name% anthropic "Explain quantum physics" --model claude-3-5-sonnet-20241022</info>
+                  <info>%command.full_name% openai gpt-4o-mini "Hello, world!"</info>
+                  <info>%command.full_name% anthropic claude-3-5-sonnet-20241022 "Explain quantum physics"</info>
 
                 Available platforms depend on your configuration in config/packages/ai.yaml
                 HELP
@@ -77,28 +81,35 @@ final class PlatformInvokeCommand extends Command
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
-        $availablePlatforms = $this->getAvailablePlatformNames();
+        $availablePlatforms = array_keys($this->platforms->getProvidedServices());
 
         if (0 === \count($availablePlatforms)) {
             throw new InvalidArgumentException('No platforms are configured.');
         }
 
-        $platformArg = $input->getArgument('platform');
-        $platformName = \is_string($platformArg) ? $platformArg : '';
+        $platformName = trim((string) $input->getArgument('platform'));
 
-        if (!$platformName) {
+        if ('' === $platformName) {
             throw new InvalidArgumentException('Platform name is required.');
         }
 
-        $platformServiceId = $this->getPlatformServiceId($platformName);
-        if (!$platformServiceId) {
+        if (!$this->platforms->has($platformName)) {
             throw new InvalidArgumentException(\sprintf('Platform "%s" not found. Available platforms: "%s"', $platformName, implode(', ', $availablePlatforms)));
         }
 
-        $messageArg = $input->getArgument('message');
-        $message = \is_string($messageArg) ? $messageArg : '';
+        $this->platform = $this->platforms->get($platformName);
 
-        if (!$message) {
+        $modelName = trim((string) $input->getArgument('model'));
+
+        if ('' === $modelName) {
+            throw new InvalidArgumentException('Model is required.');
+        }
+
+        $this->model = new Model($modelName);
+
+        $this->message = trim((string) $input->getArgument('message'));
+
+        if ('' === $this->message) {
             throw new InvalidArgumentException('Message is required.');
         }
     }
@@ -107,25 +118,15 @@ final class PlatformInvokeCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        // All validation is done in initialize(), so we can safely cast these
-        $platformName = (string) $input->getArgument('platform');
-        $message = (string) $input->getArgument('message');
-        $modelName = $input->getOption('model');
-        $modelName = \is_string($modelName) ? $modelName : null;
-
-        $platformServiceId = $this->getPlatformServiceId($platformName);
-        $platform = $this->platforms->get($platformServiceId);
-
         try {
             $messages = new MessageBag();
-            $messages->add(Message::ofUser($message));
-
-            $model = $modelName ? new Model($modelName) : new Model('gpt-4o-mini');
+            $messages->add(Message::ofUser($this->message));
             
-            $resultPromise = $platform->invoke($model, $messages);
+            $resultPromise = $this->platform->invoke($this->model, $messages);
             $result = $resultPromise->getResult();
 
             if ($result instanceof TextResult) {
+                $platformName = trim((string) $input->getArgument('platform'));
                 $io->success(\sprintf('Response from %s:', $platformName));
                 $io->writeln($result->getContent());
             } else {
@@ -147,42 +148,4 @@ final class PlatformInvokeCommand extends Command
         return Command::SUCCESS;
     }
 
-    /**
-     * @return string[]
-     */
-    private function getAvailablePlatformNames(): array
-    {
-        $serviceIds = array_keys($this->platforms->getProvidedServices());
-        $platformNames = [];
-        
-        foreach ($serviceIds as $serviceId) {
-            // Extract platform name from service ID (e.g., ai.platform.openai -> openai)
-            if (str_starts_with($serviceId, 'ai.platform.')) {
-                $platformNames[] = substr($serviceId, strlen('ai.platform.'));
-            } elseif (str_starts_with($serviceId, 'ai.traceable_platform.')) {
-                $platformNames[] = substr($serviceId, strlen('ai.traceable_platform.'));
-            }
-        }
-        
-        return array_unique($platformNames);
-    }
-
-    private function getPlatformServiceId(string $platformName): ?string
-    {
-        $serviceIds = array_keys($this->platforms->getProvidedServices());
-        
-        // Try traceable platform first (in debug mode)
-        $traceableServiceId = 'ai.traceable_platform.' . $platformName;
-        if (in_array($traceableServiceId, $serviceIds, true)) {
-            return $traceableServiceId;
-        }
-        
-        // Fall back to regular platform
-        $regularServiceId = 'ai.platform.' . $platformName;
-        if (in_array($regularServiceId, $serviceIds, true)) {
-            return $regularServiceId;
-        }
-        
-        return null;
-    }
 }
