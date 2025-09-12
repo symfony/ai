@@ -28,16 +28,10 @@ use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-echo "Make sure you've run the SQL setup from SUPABASE_SETUP.md first!\n\n";
-
 $store = new Store(
-    http: http_client(),
+    httpClient: http_client(),
     url: env('SUPABASE_URL'),
     apiKey: env('SUPABASE_API_KEY'),
-    table: env('SUPABASE_TABLE'),
-    vectorFieldName: env('SUPABASE_VECTOR_FIELD'),
-    vectorDimension: (int) env('SUPABASE_VECTOR_DIMENSION'),
-    functionName: env('SUPABASE_MATCH_FUNCTION')
 );
 
 $documents = [];
@@ -51,22 +45,19 @@ foreach (Movies::all() as $movie) {
 }
 
 $platform = PlatformFactory::create(
-    env('OLLAMA_HOST_URL') ?? 'http://localhost:11434',
+    env('OLLAMA_HOST_URL'),
     http_client()
 );
 
-$embeddingModel = new Ollama('mxbai-embed-large');
-$vectorizer = new Vectorizer($platform, $embeddingModel);
+$vectorizer = new Vectorizer($platform, new Ollama('mxbai-embed-large'));
 $loader = new InMemoryLoader($documents);
 $indexer = new Indexer($loader, $vectorizer, $store, logger: logger());
 $indexer->index();
 
-$chatModel = new Ollama('llama3.2:3b');
-
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $chatModel, [$processor], [$processor], logger: logger());
+$agent = new Agent($platform, new Ollama('llama3.2:3b'), [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),
@@ -74,26 +65,10 @@ $messages = new MessageBag(
 );
 
 echo "Query: Which movie fits the theme of technology?\n";
-echo "Processing...\n";
 
 try {
     $result = $agent->call($messages);
     echo '✅ Response: '.$result->getContent()."\n\n";
-} catch (Exception $e) {
-    echo '❌ Error: '.$e->getMessage()."\n\n";
-}
-
-$messages2 = new MessageBag(
-    Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),
-    Message::ofUser('What are some good action movies?')
-);
-
-echo "Query: What are some good action movies?\n";
-echo "Processing...\n";
-
-try {
-    $result2 = $agent->call($messages2);
-    echo '✅ Response: '.$result2->getContent()."\n\n";
 } catch (Exception $e) {
     echo '❌ Error: '.$e->getMessage()."\n\n";
 }

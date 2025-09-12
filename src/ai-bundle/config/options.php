@@ -493,7 +493,7 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->children()
                                 ->scalarNode('url')->isRequired()->cannotBeEmpty()->end()
                                 ->scalarNode('api_key')->isRequired()->cannotBeEmpty()->end()
-                                ->scalarNode('table')->isRequired()->cannotBeEmpty()->end()
+                                ->scalarNode('table')->end()
                                 ->scalarNode('vector_field')->end()
                                 ->integerNode('vector_dimension')->end()
                                 ->scalarNode('function_name')->end()

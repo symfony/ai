@@ -23,24 +23,20 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
  *
- * Requires pgvector extension to be enabled and a pre-configured table/function.
+ * Supabase vector store implementation using REST API and pgvector.
  *
- * @see https://github.com/pgvector/pgvector
- * @see https://supabase.com/docs/guides/ai/vector-columns
+ * This store provides vector storage capabilities through Supabase's REST API
+ * with pgvector extension support. Unlike direct PostgreSQL access, this implementation
+ * requires manual database setup since Supabase doesn't allow arbitrary SQL execution
+ * via REST API.
  *
- * Supabase store using REST & RPC.
- *
- * Note: Unlike Postgres Store, this store requires manual setup of:
- * 1. pgvector extension
- * 2. Table with vector column
- * 3. RPC function for similarity search
- *
- * This is because Supabase doesn't allow arbitrary SQL execution via REST API.
+ * @see https://github.com/pgvector/pgvector pgvector extension documentation
+ * @see https://supabase.com/docs/guides/ai/vector-columns Supabase vector guide
  */
 final readonly class Store implements StoreInterface
 {
     public function __construct(
-        private HttpClientInterface $http,
+        private HttpClientInterface $httpClient,
         private string $url,
         private string $apiKey,
         private string $table = 'documents',
@@ -73,7 +69,7 @@ final readonly class Store implements StoreInterface
         $chunkSize = 200;
 
         foreach (array_chunk($rows, $chunkSize) as $chunk) {
-            $response = $this->http->request(
+            $response = $this->httpClient->request(
                 'POST',
                 \sprintf('%s/rest/v1/%s', $this->url, $this->table),
                 [
@@ -103,13 +99,13 @@ final readonly class Store implements StoreInterface
     public function query(Vector $vector, array $options = []): array
     {
         if (\count($vector->getData()) !== $this->vectorDimension) {
-            throw new InvalidArgumentException("Vector dimension mismatch: expected {$this->vectorDimension}");
+            throw new InvalidArgumentException("Vector dimension mismatch: expected {$this->vectorDimension}.");
         }
 
         $matchCount = $options['max_items'] ?? ($options['limit'] ?? 10);
         $threshold = $options['min_score'] ?? 0.0;
 
-        $response = $this->http->request(
+        $response = $this->httpClient->request(
             'POST',
             \sprintf('%s/rest/v1/rpc/%s', $this->url, $this->functionName),
             [
@@ -134,15 +130,12 @@ final readonly class Store implements StoreInterface
         $documents = [];
 
         foreach ($records as $record) {
-            if (
-                !isset($record['id'], $record[$this->vectorFieldName], $record['metadata'], $record['score'])
-                || !\is_string($record['id'])
-            ) {
+            if (!isset($record['id'], $record[$this->vectorFieldName], $record['metadata'], $record['score']) || !\is_string($record['id'])) {
                 continue;
             }
 
             $embedding = \is_array($record[$this->vectorFieldName]) ? $record[$this->vectorFieldName] : json_decode($record[$this->vectorFieldName] ?? '{}', true, 512, \JSON_THROW_ON_ERROR);
-            $metadata = \is_array($record['metadata']) ? $record['metadata'] : json_decode($record['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR);
+            $metadata = \is_array($record['metadata']) ? $record['metadata'] : json_decode($record['metadata'], true, 512, \JSON_THROW_ON_ERROR);
 
             $documents[] = new VectorDocument(
                 id: Uuid::fromString($record['id']),

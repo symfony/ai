@@ -17,6 +17,7 @@
         "pinecone",
         "postgres",
         "qdrant",
+        "supabase",
         "surrealdb",
         "typesense",
         "weaviate"

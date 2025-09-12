@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -25,7 +26,7 @@ use Symfony\Component\Uid\Uuid;
 #[CoversClass(SupabaseStore::class)]
 class StoreTest extends TestCase
 {
-    public function testAddThrowsExceptionOnHttpError(): void
+    public function testAddThrowsExceptionOnHttpError()
     {
         $httpClient = new MockHttpClient(new MockResponse('Error message', ['http_code' => 400]));
         $store = $this->createStore($httpClient);
@@ -36,7 +37,7 @@ class StoreTest extends TestCase
         $store->add($doc);
     }
 
-    public function testAddEmptyDocumentsDoesNothing(): void
+    public function testAddEmptyDocumentsDoesNothing()
     {
         $httpClient = new MockHttpClient();
         $store = $this->createStore($httpClient);
@@ -46,7 +47,7 @@ class StoreTest extends TestCase
         $this->assertSame(0, $httpClient->getRequestsCount());
     }
 
-    public function testAddSingleDocument(): void
+    public function testAddSingleDocument()
     {
         $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 201]));
         $store = $this->createStore($httpClient, 3);
@@ -61,66 +62,64 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testAddMultipleDocuments(): void
+    public function testAddMultipleDocuments()
     {
         $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 201]));
         $store = $this->createStore($httpClient);
-        $doc1 = new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2]), new Metadata(['a' => '1']));
-        $doc2 = new VectorDocument(Uuid::v4(), new Vector([0.3, 0.4]), new Metadata(['b' => '2']));
 
-        $store->add($doc1, $doc2);
+        $store->add(
+            new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2]), new Metadata(['a' => '1'])),
+            new VectorDocument(Uuid::v4(), new Vector([0.3, 0.4]), new Metadata(['b' => '2'])),
+        );
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testAddSkipsDocumentsWithWrongDimension(): void
+    public function testAddSkipsDocumentsWithWrongDimension()
     {
         $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 201]));
         $store = $this->createStore($httpClient);
-        $validDoc = new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2]), new Metadata(['valid' => true]));
-        $invalidDoc = new VectorDocument(Uuid::v4(), new Vector([0.1]), new Metadata(['invalid' => true]));
 
-        $store->add($validDoc, $invalidDoc);
+        $store->add(
+            new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2]), new Metadata(['valid' => true])),
+            new VectorDocument(Uuid::v4(), new Vector([0.1]), new Metadata(['invalid' => true])),
+        );
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testQueryThrowsExceptionOnHttpError(): void
+    public function testQueryThrowsExceptionOnHttpError()
     {
         $httpClient = new MockHttpClient(new MockResponse('Query failed', ['http_code' => 500]));
         $store = $this->createStore($httpClient);
         $queryVector = new Vector([1.0, 2.0]);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Supabase query failed: Query failed');
         $store->query($queryVector);
     }
 
-    public function testQueryWithDefaultOptions(): void
+    public function testQueryWithDefaultOptions()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
-        $store = $this->createStore($httpClient, 2);
-        $queryVector = new Vector([1.0, 2.0]);
         $store = $this->createStore($httpClient);
-        $result = $store->query($queryVector);
+        $result = $store->query(new Vector([1.0, 2.0]));
 
         $this->assertSame([], $result);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testQueryHandlesLimitOption(): void
+    public function testQueryHandlesLimitOption()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
         $store = $this->createStore($httpClient);
-        $queryVector = new Vector([1.0, 2.0]);
-        $store = $this->createStore($httpClient);
-        $result = $store->query($queryVector, ['limit' => 1]);
+        $result = $store->query(new Vector([1.0, 2.0]), ['limit' => 1]);
 
         $this->assertSame([], $result);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testQueryThrowsExceptionForWrongVectorDimension(): void
+    public function testQueryThrowsExceptionForWrongVectorDimension()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
         $store = $this->createStore($httpClient);
@@ -132,7 +131,7 @@ class StoreTest extends TestCase
         $store->query($wrongDimensionVector);
     }
 
-    public function testQuerySuccess(): void
+    public function testQuerySuccess()
     {
         $uuid = Uuid::v4();
         $expectedResponse = [
@@ -145,8 +144,7 @@ class StoreTest extends TestCase
         ];
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 3);
-        $queryVector = new Vector([1.0, 2.0, 3.0]);
-        $result = $store->query($queryVector, ['max_items' => 5, 'min_score' => 0.7]);
+        $result = $store->query(new Vector([1.0, 2.0, 3.0]), ['max_items' => 5, 'min_score' => 0.7]);
 
         $this->assertCount(1, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
@@ -157,7 +155,7 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testQueryHandlesMultipleResultsAndMultipleOptions(): void
+    public function testQueryHandlesMultipleResultsAndMultipleOptions()
     {
         $uuid1 = Uuid::v4();
         $uuid2 = Uuid::v4();
@@ -177,9 +175,8 @@ class StoreTest extends TestCase
         ];
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 2);
-        $queryVector = new Vector([1.0, 2.0]);
 
-        $result = $store->query($queryVector, ['max_items' => 2, 'min_score' => 0.8]);
+        $result = $store->query(new Vector([1.0, 2.0]), ['max_items' => 2, 'min_score' => 0.8]);
 
         $this->assertCount(2, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
@@ -196,7 +193,7 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testQueryParsesComplexMetadata(): void
+    public function testQueryParsesComplexMetadata()
     {
         $uuid = Uuid::v4();
         $expectedResponse = [
@@ -209,9 +206,8 @@ class StoreTest extends TestCase
         ];
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 3);
-        $queryVector = new Vector([1.0, 2.0, 3.0]);
 
-        $result = $store->query($queryVector);
+        $result = $store->query(new Vector([1.0, 2.0, 3.0]));
 
         $document = $result[0];
         $metadata = $document->metadata->getArrayCopy();
@@ -226,7 +222,7 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    private function createStore(?MockHttpClient $httpClient = null, ?int $vectorDimension = 2): SupabaseStore
+    private function createStore(MockHttpClient $httpClient, ?int $vectorDimension = 2): SupabaseStore
     {
         return new SupabaseStore(
             $httpClient,
