@@ -188,3 +188,4 @@ final class ChatCommand extends Command
         return array_keys($this->agents->getProvidedServices());
     }
 }
+

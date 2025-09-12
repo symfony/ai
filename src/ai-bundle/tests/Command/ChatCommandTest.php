@@ -256,3 +256,4 @@ final class ChatCommandTest extends TestCase
         return $application;
     }
 }
+
