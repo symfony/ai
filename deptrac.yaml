@@ -20,7 +20,6 @@ deptrac:
     Platform: ~
     Agent:
         - Platform
-        - orm
         - Store
     Store:
         - Platform
