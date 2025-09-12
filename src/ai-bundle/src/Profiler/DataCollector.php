@@ -38,6 +38,11 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     private readonly array $toolboxes;
 
     /**
+     * @var list<array{method: string, duration: float, input: mixed, result: mixed, error: ?\Throwable}>
+     */
+    private array $collectedChatCalls = [];
+
+    /**
      * @param TraceablePlatform[] $platforms
      * @param TraceableToolbox[]  $toolboxes
      */
@@ -52,7 +57,6 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
-        $this->lateCollect();
     }
 
     public function lateCollect(): void
@@ -61,6 +65,18 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
             'tools' => $this->defaultToolBox->getTools(),
             'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
             'tool_calls' => array_merge(...array_map(fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
+            'chat_calls' => $this->cloneVar($this->collectedChatCalls),
+        ];
+    }
+
+    public function collectChatCall(string $method, float $duration, mixed $input, mixed $result, ?\Throwable $error): void
+    {
+        $this->collectedChatCalls[] = [
+            'method' => $method,
+            'duration' => $duration,
+            'input' => $input,
+            'result' => $result,
+            'error' => $error,
         ];
     }
 
@@ -91,6 +107,27 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function getToolCalls(): array
     {
         return $this->data['tool_calls'] ?? [];
+    }
+
+    /**
+     * @return list<array{method: string, duration: float, input: mixed, result: mixed, error: ?\Throwable}>
+     */
+    public function getChatCalls(): array
+    {
+        if (!isset($this->data['chat_calls'])) {
+            return [];
+        }
+
+        /** @var list<array{method: string, duration: float, input: mixed, result: mixed, error: ?\Throwable}> $chatCalls */
+        $chatCalls = $this->data['chat_calls']->getValue(true);
+
+        return $chatCalls;
+    }
+
+    public function reset(): void
+    {
+        $this->data = [];
+        $this->collectedChatCalls = [];
     }
 
     /**

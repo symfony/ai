@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\StructuredOutput\AgentProcessor as StructureOutputProcessor;
 use Symfony\AI\Agent\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Agent\StructuredOutput\ResponseFormatFactoryInterface;
@@ -23,6 +24,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
+use Symfony\AI\AiBundle\Profiler\TraceableAgent;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\Platform\Bridge\AiMlApi\ModelCatalog as AiMlApiModelCatalog;
@@ -168,6 +170,13 @@ return static function (ContainerConfigurator $container): void {
                 service('expression_language')->nullOnInvalid(),
             ])
             ->tag('kernel.event_listener')
+
+        ->set('ai.traceable_agent', TraceableAgent::class)
+        ->decorate(AgentInterface::class, priority: 5)
+        ->args([
+            service('.inner'),
+            service('ai.data_collector'),
+        ])
 
         // profiler
         ->set('ai.data_collector', DataCollector::class)
