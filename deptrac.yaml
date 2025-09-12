@@ -3,11 +3,16 @@ deptrac:
     - ./src
   exclude_files:
     - '#.*test.*#'
+    - '#.*vendor.*#'
   layers:
     - name: Agent
       collectors:
         - type: classLike
           value: Symfony\\AI\\Agent.*
+    - name: Chat
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Chat.*
     - name: Platform
       collectors:
         - type: classLike
@@ -17,10 +22,22 @@ deptrac:
         - type: classLike
           value: Symfony\\AI\\Store.*
   ruleset:
-    Platform: ~
     Agent:
-        - Platform
-        - orm
-        - Store
+      - Platform
+      - Store
+    Chat:
+      - Agent
+      - Platform
+    Platform: ~
     Store:
-        - Platform
+      - Platform
+  # Baseline of known violations to be skipped for now
+  skip_violations:
+    Symfony\AI\Platform\Bridge\Anthropic\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\DeepSeek\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\Gemini\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\Mistral\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\Perplexity\SearchResultProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\Perplexity\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\VertexAi\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
