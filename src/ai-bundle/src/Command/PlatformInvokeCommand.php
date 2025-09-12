@@ -53,7 +53,7 @@ final class PlatformInvokeCommand extends Command
     public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
     {
         if ($input->mustSuggestArgumentValuesFor('platform')) {
-            $suggestions->suggestValues(array_keys($this->platforms->getProvidedServices()));
+            $suggestions->suggestValues($this->getAvailablePlatformNames());
         }
     }
 
@@ -81,7 +81,7 @@ final class PlatformInvokeCommand extends Command
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
-        $availablePlatforms = array_keys($this->platforms->getProvidedServices());
+        $availablePlatforms = $this->getAvailablePlatformNames();
 
         if (0 === \count($availablePlatforms)) {
             throw new InvalidArgumentException('No platforms are configured.');
@@ -93,11 +93,13 @@ final class PlatformInvokeCommand extends Command
             throw new InvalidArgumentException('Platform name is required.');
         }
 
-        if (!$this->platforms->has($platformName)) {
+        $platformServiceId = $this->getPlatformServiceId($platformName);
+
+        if (null === $platformServiceId || !$this->platforms->has($platformServiceId)) {
             throw new InvalidArgumentException(\sprintf('Platform "%s" not found. Available platforms: "%s"', $platformName, implode(', ', $availablePlatforms)));
         }
 
-        $this->platform = $this->platforms->get($platformName);
+        $this->platform = $this->platforms->get($platformServiceId);
 
         $modelName = trim((string) $input->getArgument('model'));
 
@@ -146,6 +148,29 @@ final class PlatformInvokeCommand extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getAvailablePlatformNames(): array
+    {
+        $platformNames = [];
+        
+        foreach (array_keys($this->platforms->getProvidedServices()) as $serviceId) {
+            if (str_starts_with($serviceId, 'ai.platform.')) {
+                $platformNames[] = substr($serviceId, 12); // Remove 'ai.platform.' prefix
+            }
+        }
+
+        return $platformNames;
+    }
+
+    private function getPlatformServiceId(string $platformName): ?string
+    {
+        $serviceId = 'ai.platform.' . $platformName;
+        
+        return $this->platforms->has($serviceId) ? $serviceId : null;
     }
 
 }
