@@ -104,7 +104,7 @@ final class PlatformInvokeCommand extends Command
             throw new InvalidArgumentException('Model is required.');
         }
 
-        $this->model = $this->createModelForPlatform($platformName, $modelName);
+        $this->model = self::createModelForPlatform($platformName, $modelName);
 
         $this->message = trim((string) $input->getArgument('message'));
 
@@ -148,7 +148,7 @@ final class PlatformInvokeCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function createModelForPlatform(string $platformName, string $modelName): Model
+    private static function createModelForPlatform(string $platformName, string $modelName): Model
     {
         return match ($platformName) {
             'openai' => new \Symfony\AI\Platform\Bridge\OpenAi\Gpt($modelName),
