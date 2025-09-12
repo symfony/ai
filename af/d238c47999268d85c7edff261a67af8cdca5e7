@@ -1,0 +1,21 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-12T10:01:53Z
+
+@fabpot now `[Run examples]` is added to the title, I think we need to change the color, as components are in grey:
+<img width="1616" height="242" alt="CleanShot 2025-09-12 at 12 01 23@2x" src="https://github.com/user-attachments/assets/7d7543c8-74f2-4b68-8818-8723b6b7b27f" />
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-12T10:13:30Z
+
+Hmm 🤔 the environment variable is set, but
+<img width="2156" height="1096" alt="CleanShot 2025-09-12 at 12 12 16@2x" src="https://github.com/user-attachments/assets/83ff0d79-5ec8-44c1-999a-95236ec8c809" />
+
+any clue @fabpot ?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-12T10:20:14Z
+
+Ah its not passed to pull requests from a fork 🤔
