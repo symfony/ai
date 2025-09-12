@@ -28,7 +28,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
 /**
- * @author Oskar Stark <oskarstark@gmail.com>
+ * @author Oskar Stark <oskarstark@googlemail.com>
  */
 #[AsCommand(
     name: 'ai:chat',
