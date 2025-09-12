@@ -1,0 +1,33 @@
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-12T14:24:06Z
+
+What about introducing a rule in PHP-CS-Fixer instead @OskarStark
+
+It would be the opposite of https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/doc/rules/strict/declare_strict_types.rst
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-12T14:25:15Z
+
+> What about introducing a rule in PHP-CS-Fixer instead @OskarStark
+
+Would love to have it and enabled for `@Symfony` group 😄
+Open for a PR?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-12T14:35:55Z
+
+fyi @nicolas-grekas 😄
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-12T14:36:13Z
+
+> > What about introducing a rule in PHP-CS-Fixer instead @OskarStark
+>
+> Would love to have it and enabled for `@Symfony` group 😄 Open for a PR?
+
+Sure, but seems like it need to be accepted first https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/discussions/8877
+If you want to +1 the idea
