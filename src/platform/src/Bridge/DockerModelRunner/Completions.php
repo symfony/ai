@@ -36,37 +36,12 @@ class Completions extends Model
     public const SMOLLM_2 = 'ai/smollm2';
     public const SMOLLM_3 = 'ai/smollm3';
 
-    private const TOOL_PATTERNS = [
-        '/./' => [
-            Capability::INPUT_MESSAGES,
-            Capability::OUTPUT_TEXT,
-            Capability::OUTPUT_STRUCTURED,
-        ],
-        '/^llama\D*3(\D*\d+)/' => [
-            Capability::TOOL_CALLING,
-        ],
-        '/^qwen\d(\.\d)?(-coder)?$/' => [
-            Capability::TOOL_CALLING,
-        ],
-        '/^(deepseek|mistral|smollm|seed)/' => [
-            Capability::TOOL_CALLING,
-        ],
-    ];
-
     public function __construct(
         string $name = self::SMOLLM_2,
         array $options = [],
     ) {
-        $capabilities = [];
-
-        foreach (self::TOOL_PATTERNS as $pattern => $possibleCapabilities) {
-            if (1 === preg_match($pattern, $name)) {
-                foreach ($possibleCapabilities as $capability) {
-                    $capabilities[] = $capability;
-                }
-            }
-        }
-
-        parent::__construct($name, $capabilities, $options);
+        // All capabilities are assumed to be supported since we cannot know in advance
+        // whether Docker Model Runner and/or each model allows for a particular capability.
+        parent::__construct($name, Capability::cases(), $options);
     }
 }

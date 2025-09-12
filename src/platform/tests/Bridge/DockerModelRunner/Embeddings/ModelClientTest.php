@@ -55,10 +55,7 @@ class ModelClientTest extends TestCase
         $resultCallback = static function (string $method, string $url, array $options): MockResponse {
             self::assertSame('POST', $method);
             self::assertSame('http://localhost:1234/engines/v1/embeddings', $url);
-            self::assertSame(
-                '{"custom_option":"value","model":"test-model","input":"Hello, world!"}',
-                $options['body']
-            );
+            self::assertSame('{"custom_option":"value","model":"test-model","input":"Hello, world!"}', $options['body']);
 
             return new MockResponse();
         };
