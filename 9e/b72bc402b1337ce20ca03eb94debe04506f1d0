@@ -1,0 +1,15 @@
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-12T13:26:08Z
+
+> LGTM after PHPStan is happy
+
+@OskarStark I dunno currently how to solve the issue with PHPStan, the issue is exposed https://github.com/symfony/ai/pull/515#issuecomment-3285151715
+
+Any advice ?
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-09-12T14:12:41Z
+
+@nictou-weglot could you rebase your branch, we just merge a fix to makes PHPStan happy even on PRs using freshly added new classes on examples.
