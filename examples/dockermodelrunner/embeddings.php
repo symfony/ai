@@ -21,4 +21,4 @@ $response = $platform->invoke(new Embeddings(Embeddings::NOMIC_EMBED_TEXT), <<<T
     country was very peaceful and prosperous. The people lived happily ever after.
     TEXT);
 
-echo 'Dimensions: '.$response->asVectors()[0]->getDimensions().\PHP_EOL;
+print_vectors($response);

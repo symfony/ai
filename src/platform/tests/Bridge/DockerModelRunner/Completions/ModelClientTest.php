@@ -39,10 +39,7 @@ class ModelClientTest extends TestCase
         $resultCallback = static function (string $method, string $url, array $options): MockResponse {
             self::assertSame('POST', $method);
             self::assertSame('http://localhost:1234/engines/v1/chat/completions', $url);
-            self::assertSame(
-                '{"model":"test-model","messages":[{"role":"user","content":"Hello, world!"}]}',
-                $options['body']
-            );
+            self::assertSame('{"model":"test-model","messages":[{"role":"user","content":"Hello, world!"}]}', $options['body']);
 
             return new MockResponse();
         };
@@ -65,10 +62,7 @@ class ModelClientTest extends TestCase
         $resultCallback = static function (string $method, string $url, array $options): MockResponse {
             self::assertSame('POST', $method);
             self::assertSame('http://localhost:1234/engines/v1/chat/completions', $url);
-            self::assertSame(
-                '{"temperature":0.7,"model":"test-model","messages":[{"role":"user","content":"Hello, world!"}]}',
-                $options['body']
-            );
+            self::assertSame('{"temperature":0.7,"model":"test-model","messages":[{"role":"user","content":"Hello, world!"}]}', $options['body']);
 
             return new MockResponse();
         };

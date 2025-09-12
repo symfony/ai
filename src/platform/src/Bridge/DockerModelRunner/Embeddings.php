@@ -24,31 +24,12 @@ class Embeddings extends Model
     public const EMBEDDING_GEMMA = 'ai/embeddinggemma';
     public const GRANITE_EMBEDDING_MULTI = 'ai/granite-embedding-multilingual';
 
-    private const TOOL_PATTERNS = [
-        '/./' => [
-            Capability::INPUT_MESSAGES,
-            Capability::OUTPUT_TEXT,
-            Capability::OUTPUT_STRUCTURED,
-        ],
-        '/^(nomic).*/' => [
-            Capability::INPUT_MULTIPLE,
-        ],
-    ];
-
     public function __construct(
         string $name = self::NOMIC_EMBED_TEXT,
         array $options = [],
     ) {
-        $capabilities = [];
-
-        foreach (self::TOOL_PATTERNS as $pattern => $possibleCapabilities) {
-            if (1 === preg_match($pattern, $name)) {
-                foreach ($possibleCapabilities as $capability) {
-                    $capabilities[] = $capability;
-                }
-            }
-        }
-
-        parent::__construct($name, $capabilities, $options);
+        // All capabilities are assumed to be supported since we cannot know in advance
+        // whether Docker Model Runner and/or each model allows for a particular capability.
+        parent::__construct($name, Capability::cases(), $options);
     }
 }
