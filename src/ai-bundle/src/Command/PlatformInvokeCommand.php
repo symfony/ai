@@ -156,6 +156,7 @@ final class PlatformInvokeCommand extends Command
             'google' => new \Symfony\AI\Platform\Bridge\Gemini\Gemini($modelName),
             'ollama' => new \Symfony\AI\Platform\Bridge\Ollama\Ollama($modelName),
             'mistral' => new \Symfony\AI\Platform\Bridge\Mistral\Mistral($modelName),
+            'perplexity' => new \Symfony\AI\Platform\Bridge\Perplexity\Perplexity($modelName),
             default => new Model($modelName), // Fallback to generic model
         };
     }
