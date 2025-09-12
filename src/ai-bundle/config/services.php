@@ -22,6 +22,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\AbstractToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AiBundle\Command\ChatCommand;
+use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
@@ -145,22 +146,27 @@ return static function (ContainerConfigurator $container): void {
         // commands
         ->set('ai.command.chat', ChatCommand::class)
             ->args([
-                tagged_locator('ai.agent', indexAttribute: 'name'),
+                tagged_locator('ai.agent', 'name'),
             ])
             ->tag('console.command')
         ->set('ai.command.setup_store', SetupStoreCommand::class)
             ->args([
-                tagged_locator('ai.store', indexAttribute: 'name'),
+                tagged_locator('ai.store', 'name'),
             ])
             ->tag('console.command')
         ->set('ai.command.drop_store', DropStoreCommand::class)
             ->args([
-                tagged_locator('ai.store', indexAttribute: 'name'),
+                tagged_locator('ai.store', 'name'),
             ])
             ->tag('console.command')
         ->set('ai.command.index', IndexCommand::class)
             ->args([
-                tagged_locator('ai.indexer', indexAttribute: 'name'),
+                tagged_locator('ai.indexer', 'name'),
+            ])
+            ->tag('console.command')
+        ->set('ai.command.platform_invoke', PlatformInvokeCommand::class)
+            ->args([
+                tagged_locator('ai.platform', 'name'),
             ])
             ->tag('console.command')
     ;

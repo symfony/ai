@@ -222,7 +222,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.anthropic'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'anthropic']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -244,7 +244,7 @@ final class AiBundle extends AbstractBundle
                         new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         new Reference('ai.platform.contract.openai'),
                     ])
-                    ->addTag('ai.platform');
+                    ->addTag('ai.platform', ['name' => 'azure.'.$name]);
 
                 $container->setDefinition($platformId, $definition);
             }
@@ -264,7 +264,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'eleven_labs']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -282,7 +282,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.google'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'gemini']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -321,7 +321,7 @@ final class AiBundle extends AbstractBundle
                     $httpClient,
                     new Reference('ai.platform.contract.vertexai', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'vertexai']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -340,7 +340,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.openai'),
                     $platform['region'] ?? null,
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'openai']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -358,7 +358,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'openrouter']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -376,7 +376,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'mistral']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -394,7 +394,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'lmstudio']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -413,7 +413,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.ollama'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'ollama']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -430,7 +430,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'cerebras']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -447,7 +447,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'voyage']);
 
             $container->setDefinition($platformId, $definition);
 

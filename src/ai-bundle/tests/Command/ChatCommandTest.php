@@ -10,7 +10,7 @@
  */
 
 /**
- * @author Oskar Stark <oskarstark@gmail.com>
+ * @author Oskar Stark <oskarstark@googlemail.com>
  */
 
 namespace Symfony\AI\AiBundle\Tests\Command;
@@ -255,3 +255,4 @@ final class ChatCommandTest extends TestCase
         return new ServiceLocator($factories);
     }
 }
+
