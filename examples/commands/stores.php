@@ -24,6 +24,7 @@ use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
+use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
@@ -87,6 +88,15 @@ $factories = [
         env('QDRANT_HOST'),
         env('QDRANT_SERVICE_API_KEY'),
         'symfony',
+    ),
+    'supabase' => static fn (): SupabaseStore => new SupabaseStore(
+        http_client(),
+        env('SUPABASE_URL'),
+        env('SUPABASE_API_KEY'),
+        env('SUPABASE_TABLE'),
+        env('SUPABASE_VECTOR_FIELD'),
+        env('SUPABASE_VECTOR_DIMENSION'),
+        env('SUPABASE_MATCH_FUNCTION'),
     ),
     'surrealdb' => static fn (): SurrealDbStore => new SurrealDbStore(
         httpClient: http_client(),

@@ -2181,6 +2181,16 @@ class AiBundleTest extends TestCase
                             'namespaced_user' => true,
                         ],
                     ],
+                    'supabase' => [
+                        'my_supabase_store' => [
+                            'url' => 'https://test.supabase.co',
+                            'api_key' => 'supabase_test_key',
+                            'table' => 'my_supabase_table',
+                            'vector_field' => 'my_embedding',
+                            'vector_dimension' => 1024,
+                            'function_name' => 'my_match_function',
+                        ],
+                    ],
                     'typesense' => [
                         'my_typesense_store' => [
                             'endpoint' => 'http://localhost:8108',

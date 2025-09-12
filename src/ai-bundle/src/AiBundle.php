@@ -66,6 +66,7 @@ use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
+use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
@@ -1093,6 +1094,40 @@ final class AiBundle extends AbstractBundle
                     ->setArguments($arguments);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+            }
+        }
+
+        if ('supabase' === $type) {
+            foreach ($stores as $name => $store) {
+                $arguments = [
+                    new Reference('http_client'),
+                    $store['url'],
+                    $store['api_key'],
+                ];
+
+                if (\array_key_exists('table', $store)) {
+                    $arguments[3] = $store['table'];
+                }
+
+                if (\array_key_exists('vector_field', $store)) {
+                    $arguments[4] = $store['vector_field'];
+                }
+
+                if (\array_key_exists('vector_dimension', $store)) {
+                    $arguments[5] = $store['vector_dimension'];
+                }
+
+                if (\array_key_exists('function_name', $store)) {
+                    $arguments[6] = $store['function_name'];
+                }
+
+                $definition = new Definition(SupabaseStore::class);
+                $definition
+                    ->addTag('ai.store')
+                    ->setArguments($arguments);
+
+                $container->setDefinition('ai.store.supabase.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$name, StoreInterface::class, (new Target($name.'Store'))->getParsedName());
             }
         }
     }
