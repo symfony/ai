@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Cerebras;
 
+use Symfony\AI\Platform\Exception\HttpErrorHandler;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -36,8 +37,11 @@ final readonly class ResultConverter implements ResultConverterInterface
 
     public function convert(RawHttpResult|RawResultInterface $result, array $options = []): ResultInterface
     {
+        $response = $result->getObject();
+        HttpErrorHandler::handleHttpError($response);
+
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result->getObject()));
+            return new StreamResult($this->convertStream($response));
         }
 
         $data = $result->getData();

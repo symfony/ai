@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Perplexity;
 
+use Symfony\AI\Platform\Exception\HttpErrorHandler;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Model;
@@ -38,8 +39,11 @@ final class ResultConverter implements PlatformResponseConverter
 
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
+        $response = $result->getObject();
+        HttpErrorHandler::handleHttpError($response);
+
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result->getObject()));
+            return new StreamResult($this->convertStream($response));
         }
 
         $data = $result->getData();

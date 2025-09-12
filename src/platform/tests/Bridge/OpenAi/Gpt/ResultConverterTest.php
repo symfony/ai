@@ -18,7 +18,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\NotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Exception\ServiceUnavailableException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -39,6 +41,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -61,6 +64,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -97,6 +101,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -129,6 +134,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
 
         $httpResponse->expects($this->exactly(1))
             ->method('toArray')
@@ -161,11 +167,9 @@ class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(401);
-        $httpResponse->method('getContent')->willReturn(json_encode([
-            'error' => [
-                'message' => 'Invalid API key provided: sk-invalid',
-            ],
-        ]));
+        $httpResponse->method('getContent')
+            ->with(false)
+            ->willReturn('{"error": {"message": "Invalid API key provided: sk-invalid"}}');
 
         $this->expectException(AuthenticationException::class);
         $this->expectExceptionMessage('Invalid API key provided: sk-invalid');
@@ -177,6 +181,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn([]);
 
         $this->expectException(RuntimeException::class);
@@ -189,6 +194,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -204,6 +210,34 @@ class ResultConverterTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unsupported finish reason "unsupported_reason"');
 
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsNotFoundExceptionForMissingModel()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(404);
+        $httpResponse->method('getContent')
+            ->with(false)
+            ->willReturn('{"error": {"message": "Model gpt-5 not found"}}');
+
+        $this->expectException(NotFoundException::class);
+        $this->expectExceptionMessage('Model gpt-5 not found');
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsServiceUnavailableExceptionFor503()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(503);
+        $httpResponse->method('getContent')
+            ->with(false)
+            ->willReturn('{"error": {"message": "OpenAI servers are temporarily overloaded"}}');
+
+        $this->expectException(ServiceUnavailableException::class);
+        $this->expectExceptionMessage('OpenAI servers are temporarily overloaded');
         $converter->convert(new RawHttpResult($httpResponse));
     }
 }
