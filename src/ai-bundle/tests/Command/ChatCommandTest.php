@@ -18,6 +18,7 @@ namespace Symfony\AI\AiBundle\Tests\Command;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Toolbox\StreamResult;
 use Symfony\AI\AiBundle\Command\ChatCommand;
 use Symfony\AI\AiBundle\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Message;
@@ -63,7 +64,7 @@ final class ChatCommandTest extends TestCase
     public function testCommandExecutesWithValidAgent()
     {
         $agent = $this->createMock(AgentInterface::class);
-        $result = new TextResult('Hello! How can I help you today?');
+        $result = $this->createStreamResult('Hello! How can I help you today?');
 
         $agent->expects($this->once())
             ->method('call')
@@ -155,7 +156,7 @@ final class ChatCommandTest extends TestCase
     {
         $agent1 = $this->createMock(AgentInterface::class);
         $agent2 = $this->createMock(AgentInterface::class);
-        $result = new TextResult('Response from agent 2');
+        $result = $this->createStreamResult('Response from agent 2');
 
         // Only agent2 should be called
         $agent1->expects($this->never())
@@ -192,7 +193,7 @@ final class ChatCommandTest extends TestCase
     public function testCommandWithSystemPromptDisplaysItOnce()
     {
         $agent = $this->createMock(AgentInterface::class);
-        $result = new TextResult('Response');
+        $result = $this->createStreamResult('Response');
 
         $agent->expects($this->exactly(2))
             ->method('call')
@@ -253,5 +254,15 @@ final class ChatCommandTest extends TestCase
         }
 
         return new ServiceLocator($factories);
+    }
+
+    private function createStreamResult(string $text): StreamResult
+    {
+        return new StreamResult(
+            (function () use ($text) {
+                yield $text;
+            })(),
+            static fn ($value, $messages) => new TextResult('Tool call handled: '.$value->getContent()),
+        );
     }
 }
