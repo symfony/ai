@@ -16,6 +16,7 @@ Unified abstraction for AI platforms (OpenAI, Anthropic, Azure, Gemini, VertexAI
 - **Template**: Message templating with pluggable rendering strategies
 - **Tool**: Function calling capabilities
 - **Bridge**: Provider-specific implementations
+- **Speech**: Speech configuration and listener for `stt` / `tts` and `sts` support
 
 ### Key Directories
 - `src/Bridge/`: Provider implementations

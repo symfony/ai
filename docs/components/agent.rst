@@ -731,6 +731,116 @@ Testing a service that uses an agent::
 The ``MockAgent`` provides all the benefits of traditional mocks while offering a more intuitive API for AI agent testing,
 making your tests more reliable and easier to maintain.
 
+Speech support
+~~~~~~~~~~~~~~
+
+Using speech to send messages / receive answers as audio is a common use case when integrating agents and/or chats,
+this approach allows to either send audio and expect text output or send a text and receive an audio content.
+
+Another approach is to use stt / tts together to enable a full audio pipeline, this approach introduce some latency
+(as both input/output must be processed) but allows to create a more natural and "human-like" conversation flow.
+
+Speech support can be enabled using :class:`Symfony\\AI\\Agent\\InputProcessor\\SpeechProcessor` (for `text-to-speech` in this example)::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\InputProcessor\SpeechProcessor;
+    use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Speech\SpeechConfiguration;
+    use Symfony\Component\HttpClient\HttpClient;
+
+    require_once dirname(__DIR__).'/bootstrap.php';
+
+    $platform = OpenAiPlatformFactory::create('key', httpClient: HttpClient::create());
+
+    $agent = new Agent($platform, 'gpt-4o', outputProcessors: [
+        new SpeechProcessor(ElevenLabsPlatformFactory::create(
+            apiKey: 'key',
+            httpClient: http_client()
+        ), new SpeechConfiguration([
+            'tts_model' => 'eleven_multilingual_v2',
+            'tts_options' => [
+                'voice' => 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
+            ],
+        ])),
+    ]);
+    $answer = $agent->call(new MessageBag(
+        Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
+    ));
+
+    echo $answer->getSpeech()->asBinary();
+
+When handling `speech-to-speech`, the process still the same but requires a :class:`Symfony\\AI\\Platform\\Message\\Content\\Audio` as an input::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\InputProcessor\SpeechProcessor;
+    use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Message\Content\Audio;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Speech\SpeechConfiguration;
+    use Symfony\Component\HttpClient\HttpClient;
+
+    require_once dirname(__DIR__).'/bootstrap.php';
+
+    $platform = OpenAiPlatformFactory::create('key', httpClient: HttpClient::create());
+
+    $agent = new Agent($platform, 'gpt-4o', [
+        new SpeechProcessor(ElevenLabsPlatformFactory::create(
+            apiKey: 'key',
+            httpClient: http_client(),
+        ), new SpeechConfiguration([
+            'stt_model' => 'scribe_v1',
+        ]))
+    ]);
+    $answer = $agent->call(new MessageBag(
+        Message::ofUser(Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'))
+    ));
+
+    echo $answer->getContent();
+
+A "STT / TTS sandwich" can be created using the :class:`Symfony\\AI\\Agent\\InputProcessor\\SpeechProcessor` as input and output processor::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\InputProcessor\SpeechProcessor;
+    use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Message\Content\Audio;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Speech\SpeechConfiguration;
+    use Symfony\Component\HttpClient\HttpClient;
+
+    require_once dirname(__DIR__).'/bootstrap.php';
+
+    $platform = OpenAiPlatformFactory::create('key', httpClient: HttpClient::create());
+
+    $speechProcessor = new SpeechProcessor(ElevenLabsPlatformFactory::create(
+        apiKey: 'key',
+        httpClient: http_client(),
+    ), new SpeechConfiguration([
+        'tts_model' => 'eleven_multilingual_v2',
+        'tts_options' => [
+            'voice' => 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
+        ],
+        'stt_model' => 'scribe_v1',
+    ]));
+
+    $agent = new Agent($platform, 'gpt-4o', [$speechProcessor], [$speechProcessor]);
+
+    $answer = $agent->call(new MessageBag(
+        Message::ofUser(Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'))
+    ));
+
+    echo $answer->getSpeech()->asBinary();
+
+.. note::
+
+    Handling both `text-to-speech` and `speech-to-text` introduce latency as most of the process is synchronous.
+
 Code Examples
 ~~~~~~~~~~~~~
 
