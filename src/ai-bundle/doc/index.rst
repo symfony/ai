@@ -109,7 +109,7 @@ Configuration
                     name: !php/const Symfony\AI\Platform\Bridge\ElevenLabs::TEXT_TO_SPEECH
                 tools: false
         store:
-            # also azure_search, meilisearch, memory, mongodb, pinecone, qdrant and surrealdb are supported as store type
+            # also azure_search, meilisearch, memory, mongodb, pinecone, qdrant, surrealdb, and supabase are supported as store type
             chroma_db:
                 # multiple collections possible per type
                 default:
