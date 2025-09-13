@@ -15,12 +15,16 @@ use Symfony\AI\Platform\Result\Stream\ChunkEvent;
 use Symfony\AI\Platform\Result\Stream\CompleteEvent;
 use Symfony\AI\Platform\Result\Stream\ListenerInterface;
 use Symfony\AI\Platform\Result\Stream\StartEvent;
+use Symfony\AI\Platform\Speech\SpeechAwareInterface;
+use Symfony\AI\Platform\Speech\SpeechAwareTrait;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class StreamResult extends BaseResult
+final class StreamResult extends BaseResult implements SpeechAwareInterface
 {
+    use SpeechAwareTrait;
+
     /**
      * @param ListenerInterface[] $listeners
      */
