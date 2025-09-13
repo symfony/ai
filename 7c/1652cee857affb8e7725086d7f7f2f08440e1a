@@ -1,0 +1,31 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-12T11:38:11Z
+
+lets call it `RateLimitExceededException`
+
+---------------------------------------------------------------------------
+
+by floranpagliai at 2025-09-12T11:45:36Z
+
+@OskarStark installation of PHPStan is flakky, don't know if you can launch again the CI.
+
+---------------------------------------------------------------------------
+
+by floranpagliai at 2025-09-12T12:08:16Z
+
+> Could be nice to document ResultConverterInterface::convert that it can throws exception then.
+>
+> With something like
+>
+> ```
+>     /**
+>      * @param array<string, mixed> $options
+>      *
+>      * @throws RateExceededException when rate limit exceeeded
+>      * @throws RuntimeException when another error occured
+>      */
+>     public function convert(RawResultInterface $result, array $options = []): ResultInterface;
+> ```
+
+Agreed, will include it in a try to have a higher level ResultConverter.
