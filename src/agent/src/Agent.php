@@ -34,8 +34,14 @@ final readonly class Agent implements AgentInterface
     private array $outputProcessors;
 
     /**
+     * @var VoiceProviderInterface[]
+     */
+    private array $voiceProviders;
+
+    /**
      * @param InputProcessorInterface[]  $inputProcessors
      * @param OutputProcessorInterface[] $outputProcessors
+     * @param VoiceProviderInterface[]   $voiceProviders
      * @param non-empty-string           $model
      */
     public function __construct(
@@ -43,10 +49,12 @@ final readonly class Agent implements AgentInterface
         private string $model,
         iterable $inputProcessors = [],
         iterable $outputProcessors = [],
+        iterable $voiceProviders = [],
         private string $name = 'agent',
     ) {
         $this->inputProcessors = $this->initializeProcessors($inputProcessors, InputProcessorInterface::class);
         $this->outputProcessors = $this->initializeProcessors($outputProcessors, OutputProcessorInterface::class);
+        $this->voiceProviders = $this->initializeVoiceProviders($voiceProviders);
     }
 
     public function getModel(): string
@@ -79,6 +87,7 @@ final readonly class Agent implements AgentInterface
 
         $output = new Output($model, $result, $messages, $options);
         array_map(fn (OutputProcessorInterface $processor) => $processor->processOutput($output), $this->outputProcessors);
+        array_map(static fn (VoiceProviderInterface $provider) => $provider->addVoice($output), $this->voiceProviders);
 
         return $output->getResult();
     }
@@ -102,5 +111,21 @@ final readonly class Agent implements AgentInterface
         }
 
         return $processors instanceof \Traversable ? iterator_to_array($processors) : $processors;
+    }
+
+    /**
+     * @param VoiceProviderInterface[] $providers
+     *
+     * @return InputProcessorInterface[]|OutputProcessorInterface[]
+     */
+    private function initializeVoiceProviders(iterable $providers): array
+    {
+        foreach ($providers as $provider) {
+            if (!$provider instanceof VoiceProviderInterface) {
+                throw new InvalidArgumentException(\sprintf('Voice provider "%s" must implement "%s".', $provider::class, VoiceProviderInterface::class));
+            }
+        }
+
+        return $providers instanceof \Traversable ? iterator_to_array($providers) : $providers;
     }
 }
