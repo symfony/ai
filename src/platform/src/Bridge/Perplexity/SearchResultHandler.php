@@ -11,29 +11,29 @@
 
 namespace Symfony\AI\Platform\Bridge\Perplexity;
 
-use Symfony\AI\Agent\Output;
-use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Platform\Result\ResultHandlerInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Mathieu Santostefano <msantostefano@proton.me>
  */
-final class SearchResultProcessor implements OutputProcessorInterface
+final class SearchResultHandler implements ResultHandlerInterface
 {
-    public function processOutput(Output $output): void
+    public function handleResult(ResultInterface $result): void
     {
-        $metadata = $output->result->getMetadata();
+        $metadata = $result->getMetadata();
 
-        if ($output->result instanceof StreamResult) {
-            $generator = $output->result->getContent();
+        if ($result instanceof StreamResult) {
+            $generator = $result->getContent();
             // Makes $metadata accessible in the stream loop.
             $generator->send($metadata);
 
             return;
         }
 
-        $rawResponse = $output->result->getRawResult()?->getObject();
+        $rawResponse = $result->getRawResult()?->getObject();
         if (!$rawResponse instanceof ResponseInterface) {
             return;
         }

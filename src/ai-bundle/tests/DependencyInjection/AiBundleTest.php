@@ -543,9 +543,23 @@ class AiBundleTest extends TestCase
 
         $agentId = 'ai.agent.tracked_agent';
 
+        // Token usage determiner must exist for OpenAI platform
+        $tokenUsageDeterminer = $container->getDefinition('ai.platform.token_usage_result_handler.openai');
+        $outputTags = $tokenUsageDeterminer->getTag('ai.agent.token_usage_result_handler');
+
+        $foundTag = false;
+        foreach ($outputTags as $tag) {
+            if (($tag['agent'] ?? '') === $agentId) {
+                $foundTag = true;
+                break;
+            }
+        }
+
+        $this->assertTrue($foundTag, 'Token usage determiner should have output tag with full agent ID');
+
         // Token usage processor must exist for OpenAI platform
-        $tokenUsageProcessor = $container->getDefinition('ai.platform.token_usage_processor.openai');
-        $outputTags = $tokenUsageProcessor->getTag('ai.agent.output_processor');
+        $tokenOutputProcessor = $container->getDefinition('ai.platform.token_usage_processor.openai');
+        $outputTags = $tokenOutputProcessor->getTag('ai.platform.token_usage_processor');
 
         $foundTag = false;
         foreach ($outputTags as $tag) {
