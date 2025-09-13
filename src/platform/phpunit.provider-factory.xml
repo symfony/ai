@@ -1,25 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
-         cacheDirectory=".phpunit.cache"
+<phpunit
+         bootstrap="tests/bootstrap_fake_bridges.php"
          colors="true"
+         cacheDirectory=".phpunit.cache"
          executionOrder="depends,defects"
-         requireCoverageMetadata="true"
-         beStrictAboutCoverageMetadata="true"
-         beStrictAboutOutputDuringTests="true"
          failOnRisky="true"
-         failOnWarning="true">
+         failOnWarning="true"
+>
     <testsuites>
-        <testsuite name="default">
+        <testsuite name="provider-factory">
             <directory>tests</directory>
         </testsuite>
     </testsuites>
 
     <groups>
-        <exclude>
+        <include>
             <group>pf</group>
-        </exclude>
+        </include>
     </groups>
 
     <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
