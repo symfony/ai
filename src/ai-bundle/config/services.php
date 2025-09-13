@@ -64,6 +64,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
 use Symfony\AI\Platform\Serializer\StructuredOutputSerializer;
+use Symfony\AI\Platform\Speech\SpeechProviderListener;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
@@ -243,5 +244,13 @@ return static function (ContainerConfigurator $container): void {
                 tagged_locator('ai.message_store', 'name'),
             ])
             ->tag('console.command')
+
+        // listeners
+        ->set('ai.speech_provider.listener', SpeechProviderListener::class)
+            ->args([
+                tagged_iterator('ai.speech_provider', 'name'),
+                tagged_iterator('ai.speech_listener', 'name'),
+            ])
+            ->tag('kernel.event_subscriber')
     ;
 };

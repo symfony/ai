@@ -1,0 +1,47 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+use Symfony\AI\Agent\Agent;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsSpeechProvider;
+use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Speech\SpeechAwarePlatform;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
+use Symfony\AI\Platform\Speech\SpeechProviderListener;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+
+require_once dirname(__DIR__).'/bootstrap.php';
+
+$eventDispatcher = new EventDispatcher();
+$eventDispatcher->addSubscriber(new SpeechProviderListener([
+    new ElevenLabsSpeechProvider(new SpeechAwarePlatform(
+        PlatformFactory::create(
+            apiKey: env('ELEVEN_LABS_API_KEY'),
+            httpClient: http_client(),
+        ),
+        speechConfiguration: new SpeechConfiguration(
+            ttsModel: 'eleven_multilingual_v2',
+            ttsVoice: 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
+            sttModel: 'eleven_multilingual_v2'
+        )),
+    ),
+], []));
+
+$platform = OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), httpClient: http_client(), eventDispatcher: $eventDispatcher);
+
+$agent = new Agent($platform, 'gpt-4o');
+$answer = $agent->call(new MessageBag(
+    Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
+));
+
+echo $answer->getSpeech('elevenlabs')->asBinary();

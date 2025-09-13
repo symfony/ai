@@ -29,7 +29,8 @@
         "replicate",
         "transformers",
         "vertexai",
-        "voyage"
+        "voyage",
+        "speech"
     ],
     "authors": [
         {

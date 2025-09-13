@@ -12,7 +12,6 @@
 namespace Symfony\AI\AiBundle\Profiler;
 
 use Symfony\AI\Platform\Message\Content\File;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;

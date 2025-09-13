@@ -68,3 +68,6 @@ CHANGELOG
  * Allow beta feature flags to be passed into Anthropic model options
  * Add Ollama streaming output support
  * Add multimodal embedding support for Voyage AI
+ * Introduce support for `Speech`
+ * Add support `Speech` provider:
+   - `ElevenLabs`

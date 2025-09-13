@@ -34,3 +34,4 @@ CHANGELOG
    - Token usage metadata in agent results including prompt, completion, total, cached, and thinking tokens
    - Rate limit information tracking for supported platforms
  * Add support for configuring chats and message stores
+ * Add support for configuring speeches

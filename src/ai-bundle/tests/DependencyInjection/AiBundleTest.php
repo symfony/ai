@@ -31,8 +31,12 @@ use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Exception\RuntimeException as PlatformRuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Speech\SpeechAwarePlatformInterface;
+use Symfony\AI\Platform\Speech\SpeechListenerInterface;
+use Symfony\AI\Platform\Speech\SpeechProviderInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
@@ -134,6 +138,7 @@ class AiBundleTest extends TestCase
             'ai.command.drop_store' => true,
             'ai.command.setup_message_store' => true,
             'ai.command.drop_message_store' => true,
+            'ai.speech_provider.listener' => true,
         ], $container->getRemovedIds());
     }
 
@@ -156,6 +161,7 @@ class AiBundleTest extends TestCase
             'ai.command.drop_store' => true,
             'ai.command.setup_message_store' => true,
             'ai.command.drop_message_store' => true,
+            'ai.speech_provider.listener' => true,
         ], $container->getRemovedIds());
     }
 
@@ -6897,6 +6903,112 @@ class AiBundleTest extends TestCase
         $this->assertSame([], $definition->getArguments());
     }
 
+    public function testSpeechProviderListenerCannotBeRegisteredWithoutSpeechProviders()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'speech' => [],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.speech_provider.listener'));
+        $this->assertFalse($container->hasDefinition('ai.speech.eleven_labs.configuration'));
+    }
+
+    public function testElevenLabsSpeechProviderListenerCannotBeRegisteredWithoutPlaform()
+    {
+        $this->expectException(PlatformRuntimeException::class);
+        $this->expectExceptionMessage('The "elevenlabs" platform cannot be found.');
+        $this->expectExceptionCode(0);
+        $this->buildContainer([
+            'ai' => [
+                'speech' => [
+                    'elevenlabs' => [
+                        'platform' => 'ai.platform.elevenlabs',
+                        'tts_model' => 'foo',
+                        'tts_voice' => 'bar',
+                        'tts_extra_options' => [
+                            'foo' => 'bar',
+                        ],
+                        'stt_model' => 'foo',
+                        'stt_extra_options' => [
+                            'foo' => 'bar',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testElevenLabsSpeechProviderListenerIsRegisteredWithSpeechProviders()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                    ],
+                ],
+                'speech' => [
+                    'elevenlabs' => [
+                        'platform' => 'ai.platform.elevenlabs',
+                        'tts_model' => 'foo',
+                        'tts_voice' => 'bar',
+                        'tts_extra_options' => [
+                            'foo' => 'bar',
+                        ],
+                        'stt_model' => 'foo',
+                        'stt_extra_options' => [
+                            'foo' => 'bar',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.speech_provider.listener'));
+        $this->assertTrue($container->hasDefinition('ai.speech.elevenlabs.configuration'));
+
+        $platformDefinition = $container->getDefinition('ai.platform.elevenlabs');
+        $this->assertCount(6, $platformDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $platformDefinition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $platformDefinition->getArgument(5));
+
+        $speechAwarePlatformDefinition = $container->getDefinition('ai.speech.elevenlabs.platform');
+        $this->assertTrue($speechAwarePlatformDefinition->isLazy());
+        $this->assertCount(2, $speechAwarePlatformDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $speechAwarePlatformDefinition->getArgument(0));
+        $this->assertSame('.inner', (string) $speechAwarePlatformDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $speechAwarePlatformDefinition->getArgument(1));
+        $this->assertSame('ai.speech.elevenlabs.configuration', (string) $speechAwarePlatformDefinition->getArgument(1));
+
+        $this->assertTrue($speechAwarePlatformDefinition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => PlatformInterface::class],
+            ['interface' => SpeechAwarePlatformInterface::class],
+        ], $speechAwarePlatformDefinition->getTag('proxy'));
+        $this->assertTrue($speechAwarePlatformDefinition->hasTag('ai.speech_aware_platform'));
+        $this->assertSame([
+            ['name' => 'elevenlabs'],
+        ], $speechAwarePlatformDefinition->getTag('ai.speech_aware_platform'));
+
+        $providerDefinition = $container->getDefinition('ai.speech_provider.elevenlabs');
+        $this->assertTrue($providerDefinition->isLazy());
+        $this->assertCount(1, $providerDefinition->getArguments());
+        $this->assertSame('ai.speech.elevenlabs.platform', (string) $providerDefinition->getArgument(0));
+
+        $this->assertSame([['interface' => SpeechProviderInterface::class]], $providerDefinition->getTag('proxy'));
+        $this->assertTrue($providerDefinition->hasTag('ai.speech_provider'));
+
+        $listenerDefinition = $container->getDefinition('ai.speech_listener.elevenlabs');
+        $this->assertTrue($listenerDefinition->isLazy());
+        $this->assertCount(1, $listenerDefinition->getArguments());
+        $this->assertSame('ai.speech.elevenlabs.platform', (string) $listenerDefinition->getArgument(0));
+
+        $this->assertSame([['interface' => SpeechListenerInterface::class]], $listenerDefinition->getTag('proxy'));
+        $this->assertTrue($listenerDefinition->hasTag('ai.speech_listener'));
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();
@@ -7442,6 +7554,20 @@ class AiBundleTest extends TestCase
                     'main' => [
                         'agent' => 'my_chat_agent',
                         'message_store' => 'cache',
+                    ],
+                ],
+                'speech' => [
+                    'elevenlabs' => [
+                        'platform' => 'ai.platform.elevenlabs',
+                        'tts_model' => 'foo',
+                        'tts_voice' => 'bar',
+                        'tts_extra_options' => [
+                            'foo' => 'bar',
+                        ],
+                        'stt_model' => 'foo',
+                        'stt_extra_options' => [
+                            'foo' => 'bar',
+                        ],
                     ],
                 ],
                 'vectorizer' => [
