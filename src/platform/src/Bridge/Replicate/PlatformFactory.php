@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Replicate\Contract\LlamaMessageBagNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -30,6 +31,7 @@ final class PlatformFactory
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        ?SpeechConfiguration $speechConfiguration = new SpeechConfiguration(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         return new Platform(
@@ -37,6 +39,7 @@ final class PlatformFactory
             [new LlamaResultConverter()],
             $modelCatalog,
             $contract ?? Contract::create(new LlamaMessageBagNormalizer()),
+            $speechConfiguration,
             $eventDispatcher,
         );
     }

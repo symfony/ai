@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 
 /**
  * A fake implementation of PlatformInterface that returns fixed or callable responses.
@@ -31,6 +32,8 @@ class InMemoryPlatform implements PlatformInterface
 {
     private readonly ModelCatalogInterface $modelCatalog;
 
+    private readonly SpeechConfiguration $speechConfiguration;
+
     /**
      * The mock result can be a string or a callable that returns a string.
      * If it's a closure, it receives the model, input, and optionally options as parameters like a real platform call.
@@ -38,6 +41,7 @@ class InMemoryPlatform implements PlatformInterface
     public function __construct(private readonly \Closure|string $mockResult)
     {
         $this->modelCatalog = new FallbackModelCatalog();
+        $this->speechConfiguration = new SpeechConfiguration();
     }
 
     public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
@@ -60,6 +64,11 @@ class InMemoryPlatform implements PlatformInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->modelCatalog;
+    }
+
+    public function getSpeechConfiguration(): ?SpeechConfiguration
+    {
+        return $this->speechConfiguration;
     }
 
     /**

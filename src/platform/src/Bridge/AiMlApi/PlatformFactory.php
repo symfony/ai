@@ -15,6 +15,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\AiMlApi\Embeddings\ModelClient;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -27,6 +28,7 @@ class PlatformFactory
         ?HttpClientInterface $httpClient = null,
         ?Contract $contract = null,
         string $hostUrl = 'https://api.aimlapi.com',
+        ?SpeechConfiguration $speechConfiguration = new SpeechConfiguration(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         return new Platform(
@@ -40,6 +42,7 @@ class PlatformFactory
             ],
             new ModelCatalog(),
             $contract,
+            $speechConfiguration,
             $eventDispatcher,
         );
     }

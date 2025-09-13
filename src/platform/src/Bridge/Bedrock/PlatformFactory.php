@@ -26,6 +26,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 
 /**
  * @author Björn Altmann
@@ -36,6 +37,7 @@ final class PlatformFactory
         BedrockRuntimeClient $bedrockRuntimeClient = new BedrockRuntimeClient(),
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        ?SpeechConfiguration $speechConfiguration = new SpeechConfiguration(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         if (!class_exists(BedrockRuntimeClient::class)) {
@@ -70,6 +72,7 @@ final class PlatformFactory
                 new NovaContract\ToolNormalizer(),
                 new NovaContract\UserMessageNormalizer(),
             ),
+            $speechConfiguration,
             $eventDispatcher,
         );
     }
