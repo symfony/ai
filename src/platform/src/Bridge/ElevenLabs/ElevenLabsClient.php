@@ -42,18 +42,14 @@ final class ElevenLabsClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('The payload must be an array, received "%s".', get_debug_type($payload)));
         }
 
-        if ($model->supports(Capability::SPEECH_TO_TEXT)) {
-            return $this->doSpeechToTextRequest($model, $payload);
-        }
-
-        if ($model->supports(Capability::TEXT_TO_SPEECH)) {
-            return $this->doTextToSpeechRequest($model, $payload, [
+        return match (true) {
+            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToTextRequest($model, $payload),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeechRequest($model, $payload, [
                 ...$options,
                 ...$model->getOptions(),
-            ]);
-        }
-
-        throw new InvalidArgumentException(\sprintf('The model "%s" does not support text-to-speech or speech-to-text, please check the model information.', $model->getName()));
+            ]),
+            default => throw new InvalidArgumentException(\sprintf('The model "%s" does not support text-to-speech or speech-to-text, please check the model information.', $model->getName())),
+        };
     }
 
     /**
@@ -78,15 +74,11 @@ final class ElevenLabsClient implements ModelClientInterface
      */
     private function doTextToSpeechRequest(Model $model, array|string $payload, array $options): RawHttpResult
     {
-        if (!\array_key_exists('voice', $options)) {
-            throw new InvalidArgumentException('The voice option is required.');
-        }
-
         if (!\array_key_exists('text', $payload)) {
             throw new InvalidArgumentException('The payload must contain a "text" key.');
         }
 
-        $voice = $options['voice'];
+        $voice = $model->getOptions()['voice'] ?? $options['voice'] ?? throw new InvalidArgumentException('The voice option is required.');
         $stream = $options['stream'] ?? false;
 
         $url = $stream

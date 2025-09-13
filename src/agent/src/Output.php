@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent;
 
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Speech\Speech;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -27,6 +28,7 @@ final class Output
         private ResultInterface $result,
         private readonly MessageBag $messageBag,
         private readonly array $options = [],
+        private ?Speech $speech = null,
     ) {
     }
 
@@ -56,5 +58,15 @@ final class Output
     public function getOptions(): array
     {
         return $this->options;
+    }
+
+    public function setSpeech(?Speech $speech): void
+    {
+        $this->speech = $speech;
+    }
+
+    public function getSpeech(): ?Speech
+    {
+        return $this->speech;
     }
 }
