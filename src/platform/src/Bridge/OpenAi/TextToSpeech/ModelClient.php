@@ -47,10 +47,12 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
             throw new InvalidArgumentException('Streaming text to speech results is not supported yet.');
         }
 
+        $input = \is_string($payload) ? $payload : ($payload['text'] ?? throw new InvalidArgumentException('The payload must contain a "text" key.'));
+
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/v1/audio/speech', self::getBaseUrl($this->region)), [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
-            'json' => array_merge($options, ['model' => $model->getName(), 'input' => $payload]),
+            'json' => array_merge($options, ['model' => $model->getName(), 'input' => $input]),
         ]));
     }
 }

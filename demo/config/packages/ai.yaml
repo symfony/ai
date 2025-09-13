@@ -67,6 +67,14 @@ ai:
                   description: |
                       Subagent, that can answer questions about latest news around the Symfony Framework, like latest
                       features, events or community news.
+            speech:
+                speech_to_text_platform: 'ai.platform.openai'
+                stt_model: 'whisper-1'
+                text_to_speech_platform: 'ai.platform.openai'
+                tts_model: 'tts-1'
+                tts_options:
+                    voice: 'coral'
+                    instructions: 'Speak in a cheerful and positive tone.'
         # Multi-agent setup
         orchestrator:
             platform: 'ai.platform.openai'

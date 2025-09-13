@@ -12,6 +12,7 @@ CHANGELOG
  * Update `StreamListener` to use `DeltaEvent` and `TextDelta` instead of `ChunkEvent` and raw strings
  * Update `StreamListener` to react to `ToolCallComplete` instead of `ToolCallResult`
  * Add `ValidateToolCallArgumentsListener` to validate tool call arguments with `symfony/validator` component
+ * Add `SpeechAgent` decorator for speech-to-text and text-to-speech capabilities
 
 0.4
 ---

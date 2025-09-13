@@ -26,6 +26,8 @@ use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Agent\Speech\SpeechConfiguration;
+use Symfony\AI\Agent\SpeechAgent;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
@@ -541,6 +543,8 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => 'cartesia']);
 
             $container->setDefinition('ai.platform.cartesia', $definition);
@@ -585,6 +589,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => $type]);
 
             $container->setDefinition('ai.platform.'.$type, $definition);
@@ -661,7 +666,6 @@ final class AiBundle extends AbstractBundle
                         $config['api_key'],
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         new Reference($config['model_catalog'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        null,
                         new Reference('event_dispatcher'),
                         $config['supports_completions'],
                         $config['supports_embeddings'],
@@ -1212,6 +1216,26 @@ final class AiBundle extends AbstractBundle
 
         $container->setDefinition($agentId, $agentDefinition);
         $container->registerAliasForArgument($agentId, AgentInterface::class, (new Target($name))->getParsedName());
+
+        // SPEECH DECORATOR
+        if (isset($config['speech']) && $config['speech']['enabled']) {
+            $container->setDefinition('ai.agent.'.$name.'.speech_configuration', new Definition(SpeechConfiguration::class))
+                ->setArguments([
+                    '$ttsModel' => $config['speech']['tts_model'],
+                    '$ttsOptions' => $config['speech']['tts_options'],
+                    '$sttModel' => $config['speech']['stt_model'],
+                    '$sttOptions' => $config['speech']['stt_options'],
+                ]);
+
+            $container->setDefinition('ai.speech_agent.'.$name, new Definition(SpeechAgent::class))
+                ->setArguments([
+                    new Reference('.inner'),
+                    new Reference('ai.agent.'.$name.'.speech_configuration'),
+                    null !== $config['speech']['speech_to_text_platform'] ? new Reference($config['speech']['speech_to_text_platform']) : null,
+                    null !== $config['speech']['text_to_speech_platform'] ? new Reference($config['speech']['text_to_speech_platform']) : null,
+                ])
+                ->setDecoratedService($agentId, priority: -1024);
+        }
     }
 
     /**
