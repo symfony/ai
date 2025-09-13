@@ -33,7 +33,7 @@ final class ElevenLabsApiCatalog implements ModelCatalogInterface
         $models = $this->getModels();
 
         if (!\array_key_exists($modelName, $models)) {
-            throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieve from the API.', $modelName));
+            throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieved from the API.', $modelName));
         }
 
         return new ElevenLabs($modelName, $models[$modelName]['capabilities']);
@@ -49,7 +49,7 @@ final class ElevenLabsApiCatalog implements ModelCatalogInterface
 
         $models = $response->toArray();
 
-        $capabilities = fn (array $model): array => match (true) {
+        $capabilities = static fn (array $model): array => match (true) {
             $model['can_do_text_to_speech'] => [
                 Capability::TEXT_TO_SPEECH,
                 Capability::INPUT_TEXT,
