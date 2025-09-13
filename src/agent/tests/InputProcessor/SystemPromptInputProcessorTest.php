@@ -29,6 +29,7 @@ use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SystemPromptInputProcessor::class)]
 #[UsesClass(Gpt::class)]
@@ -89,7 +90,7 @@ final class SystemPromptInputProcessorTest extends TestCase
                 {
                     return null;
                 }
-            }
+            },
         );
 
         $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')));
@@ -127,7 +128,7 @@ final class SystemPromptInputProcessorTest extends TestCase
                 {
                     return null;
                 }
-            }
+            },
         );
 
         $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')));
@@ -167,7 +168,7 @@ final class SystemPromptInputProcessorTest extends TestCase
                 {
                     return null;
                 }
-            }
+            },
         );
 
         $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')));
@@ -185,5 +186,55 @@ final class SystemPromptInputProcessorTest extends TestCase
             ## tool_no_params
             A tool without parameters
             PROMPT, $messages[0]->content);
+    }
+
+    public function testWithTranslatedSystemPrompt()
+    {
+        $processor = new SystemPromptInputProcessor('This is a', null, $this->getTranslator(), true);
+
+        $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')), []);
+        $processor->processInput($input);
+
+        $messages = $input->messages->getMessages();
+        $this->assertCount(2, $messages);
+        $this->assertInstanceOf(SystemMessage::class, $messages[0]);
+        $this->assertInstanceOf(UserMessage::class, $messages[1]);
+        $this->assertSame('This is a cool translated system prompt', $messages[0]->content);
+    }
+
+    public function testWithTranslationDomainSystemPrompt()
+    {
+        $processor = new SystemPromptInputProcessor(
+            'This is a',
+            null,
+            $this->getTranslator(),
+            true,
+            'prompts'
+        );
+
+        $input = new Input(new Gpt(), new MessageBag(), []);
+        $processor->processInput($input);
+
+        $messages = $input->messages->getMessages();
+        $this->assertCount(1, $messages);
+        $this->assertInstanceOf(SystemMessage::class, $messages[0]);
+        $this->assertSame('This is a cool translated system prompt with a translation domain', $messages[0]->content);
+    }
+
+    private function getTranslator(): TranslatorInterface
+    {
+        return new class implements TranslatorInterface {
+            public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
+            {
+                $translated = \sprintf('%s cool translated system prompt', $id);
+
+                return $domain ? $translated.' with a translation domain' : $translated;
+            }
+
+            public function getLocale(): string
+            {
+                return 'en';
+            }
+        };
     }
 }

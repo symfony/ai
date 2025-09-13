@@ -471,11 +471,13 @@ class AiBundleTest extends TestCase
         $firstSystemPrompt = $container->getDefinition('ai.agent.first_agent.system_prompt_processor');
         $firstSystemTags = $firstSystemPrompt->getTag('ai.agent.input_processor');
         $this->assertSame($firstAgentId, $firstSystemTags[0]['agent']);
+        $this->assertCount(3, array_filter($firstSystemPrompt->getArguments()));
 
         // Second agent system prompt processor
         $secondSystemPrompt = $container->getDefinition('ai.agent.second_agent.system_prompt_processor');
         $secondSystemTags = $secondSystemPrompt->getTag('ai.agent.input_processor');
         $this->assertSame($secondAgentId, $secondSystemTags[0]['agent']);
+        $this->assertCount(3, array_filter($secondSystemPrompt->getArguments()));
     }
 
     #[TestDox('Processors work correctly when using the default toolbox')]
@@ -658,6 +660,8 @@ class AiBundleTest extends TestCase
                         'model' => ['class' => 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'],
                         'prompt' => [
                             'text' => 'You are a helpful assistant.',
+                            'enable_translation' => true,
+                            'translation_domain' => 'prompts',
                         ],
                         'tools' => [
                             ['service' => 'some_tool', 'description' => 'Test tool'],
@@ -673,6 +677,8 @@ class AiBundleTest extends TestCase
 
         $this->assertSame('You are a helpful assistant.', $arguments[0]);
         $this->assertNull($arguments[1]); // include_tools is false, so null reference
+        $this->assertTrue($arguments[3]);
+        $this->assertSame('prompts', $arguments[4]);
     }
 
     #[TestDox('System prompt with include_tools enabled works correctly')]
