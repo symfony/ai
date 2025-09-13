@@ -12,12 +12,12 @@
 namespace Symfony\AI\AiBundle\Profiler;
 
 use Symfony\AI\Platform\Message\Content\File;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\AI\Platform\Test\PlainConverter;
 
 /**
@@ -73,6 +73,11 @@ final class TraceablePlatform implements PlatformInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->platform->getModelCatalog();
+    }
+
+    public function getSpeechConfiguration(): ?SpeechConfiguration
+    {
+        return $this->platform->getSpeechConfiguration();
     }
 
     private function createTraceableStreamResult(\Generator $originalStream): StreamResult

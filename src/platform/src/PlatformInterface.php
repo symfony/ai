@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -27,4 +28,6 @@ interface PlatformInterface
     public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult;
 
     public function getModelCatalog(): ModelCatalogInterface;
+
+    public function getSpeechConfiguration(): ?SpeechConfiguration;
 }
