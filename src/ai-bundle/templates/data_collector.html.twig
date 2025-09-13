@@ -1,5 +1,16 @@
 {% extends '@WebProfiler/Profiler/layout.html.twig' %}
 
+{% block head %}
+    {{ parent() }}
+    <style>
+        .profiler-content table.table pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+    </style>
+{% endblock %}
+
 {% block toolbar %}
     {% if collector.platformCalls|length > 0 %}
         {% set icon %}
@@ -12,6 +23,10 @@
 
         {% set text %}
             <div class="sf-toolbar-info-piece">
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Agent Calls</b>
+                    <span class="sf-toolbar-status">{{ collector.agentCalls|length }}</span>
+                </div>
                 <div class="sf-toolbar-info-piece">
                     <b class="label">Configured Platforms</b>
                     <span class="sf-toolbar-status">1</span>
@@ -57,8 +72,53 @@
 
 {% block panel %}
     <h2>Symfony AI</h2>
+
+    <h3>Agent Calls</h3>
+    {% if collector.agentCalls|length %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Method</th>
+                <th>Duration</th>
+                <th>Input</th>
+                <th>Result</th>
+                <th>Error</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for call in collector.agentCalls %}
+                <tr>
+                    <td><code>{{ call.method }}</code></td>
+                    <td class="text-nowrap">{{ (call.duration * 1000)|round(2) }} ms</td>
+                    <td>
+                        <div style="max-width: 400px; overflow-x: auto;"><pre>{{ dump(call.input) }}</pre></div>
+                    </td>
+                    <td>
+                        <div style="max-width: 400px; overflow-x: auto;"><pre>{{ dump(call.result) }}</pre></div>
+                    </td>
+                    <td>
+                        {% if call.error %}
+                            <pre>{{ dump(call.error) }}</pre>
+                        {% else %}
+                            <span class="text-muted">None</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty">
+            <p>No agent calls were made.</p>
+        </div>
+    {% endif %}
+
     <section class="metrics">
         <div class="metric-group">
+            <div class="metric">
+                <span class="value">{{ collector.agentCalls|length }}</span>
+                <span class="label">Agent Calls</span>
+            </div>
             <div class="metric">
                 <span class="value">1</span>
                 <span class="label">Platforms</span>
@@ -80,6 +140,7 @@
             </div>
         </div>
     </section>
+
     <h3>Platform Calls</h3>
     {% if collector.platformCalls|length %}
         <div class="sf-tabs">
@@ -94,78 +155,78 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <th>Model</th>
-                                    <td><strong>{{ constant('class', call.model) }}</strong> (Version: {{ call.model.name }})</td>
-                                </tr>
-                                <tr>
-                                    <th>Input</th>
-                                    <td>
-                                        {% if call.input.messages is defined %}{# expect MessageBag #}
-                                            <ol>
-                                                {% for message in call.input.messages %}
-                                                    <li>
-                                                        <strong>{{ message.role.value|title }}:</strong>
-                                                        {% if 'assistant' == message.role.value and message.hasToolCalls%}
-                                                            {{ _self.tool_calls(message.toolCalls) }}
-                                                        {% elseif 'tool' == message.role.value %}
-                                                            <i>Result of tool call with ID {{ message.toolCall.id }}</i><br />
-                                                            {{ message.content|nl2br }}
-                                                        {% elseif 'user' == message.role.value %}
-                                                            {% for item in message.content %}
-                                                                {% if item.text is defined %}
-                                                                    {{ item.text|nl2br }}
-                                                                {% else %}
-                                                                    <img src="{{ item.url }}" />
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                        {% else %}
-                                                            {{ message.content|nl2br }}
-                                                        {% endif %}
-                                                    </li>
-                                                {% endfor %}
-                                            </ol>
-                                        {% else %}
-                                            {{ dump(call.input) }}
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Options</th>
-                                    <td>
-                                        <ul>
-                                            {% for key, value in call.options %}
-                                                {% if key == 'tools' %}
-                                                    <li>{{ key }}:
-                                                        <ul>
-                                                            {% for tool in value %}
-                                                                <li>{{ tool.name }}</li>
-                                                            {% endfor %}
-                                                        </ul>
-                                                    </li>
-                                                {% else %}
-                                                    <li>{{ key }}: {{ dump(value) }}</li>
-                                                {% endif %}
+                            <tr>
+                                <th>Model</th>
+                                <td><strong>{{ constant('class', call.model) }}</strong> (Version: {{ call.model.name }})</td>
+                            </tr>
+                            <tr>
+                                <th>Input</th>
+                                <td>
+                                    {% if call.input.messages is defined %}{# expect MessageBag #}
+                                        <ol>
+                                            {% for message in call.input.messages %}
+                                                <li>
+                                                    <strong>{{ message.role.value|title }}:</strong>
+                                                    {% if 'assistant' == message.role.value and message.hasToolCalls%}
+                                                        {{ _self.tool_calls(message.toolCalls) }}
+                                                    {% elseif 'tool' == message.role.value %}
+                                                        <i>Result of tool call with ID {{ message.toolCall.id }}</i><br />
+                                                        {{ message.content|nl2br }}
+                                                    {% elseif 'user' == message.role.value %}
+                                                        {% for item in message.content %}
+                                                            {% if item.text is defined %}
+                                                                {{ item.text|nl2br }}
+                                                            {% else %}
+                                                                <img src="{{ item.url }}" />
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        {{ message.content|nl2br }}
+                                                    {% endif %}
+                                                </li>
                                             {% endfor %}
-                                        </ul>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Result</th>
-                                    <td>
-                                        {% if call.input.messages is defined and call.result is iterable %}{# expect array of ToolCall #}
-                                            {{ _self.tool_calls(call.result) }}
-                                        {% elseif call.result is iterable %}{# expect array of Vectors #}
-                                            <ol>
-                                                {% for vector in call.result %}
-                                                    <li>Vector with <strong>{{ vector.dimensions }}</strong> dimensions</li>
-                                                {% endfor %}
-                                            </ol>
-                                        {% else %}
-                                            {{ call.result }}
-                                        {% endif %}
-                                    </td>
-                                </tr>
+                                        </ol>
+                                    {% else %}
+                                        <pre>{{ dump(call.input) }}</pre>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Options</th>
+                                <td>
+                                    <ul>
+                                        {% for key, value in call.options %}
+                                            {% if key == 'tools' %}
+                                                <li>{{ key }}:
+                                                    <ul>
+                                                        {% for tool in value %}
+                                                            <li>{{ tool.name }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </li>
+                                            {% else %}
+                                                <li>{{ key }}: <pre>{{ dump(value) }}</pre></li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Result</th>
+                                <td>
+                                    {% if call.input.messages is defined and call.result is iterable %}{# expect array of ToolCall #}
+                                        {{ _self.tool_calls(call.result) }}
+                                    {% elseif call.result is iterable %}{# expect array of Vectors #}
+                                        <ol>
+                                            {% for vector in call.result %}
+                                                <li>Vector with <strong>{{ vector.dimensions }}</strong> dimensions</li>
+                                            {% endfor %}
+                                        </ol>
+                                    {% else %}
+                                        {{ call.result }}
+                                    {% endif %}
+                                </td>
+                            </tr>
                             </tbody>
                         </table>
                     {% endfor %}
@@ -235,11 +296,11 @@
                     </tr>
                     <tr>
                         <th>Arguments</th>
-                        <td>{{ dump(call.call.arguments) }}</td>
+                        <td><pre>{{ dump(call.call.arguments) }}</pre></td>
                     </tr>
                     <tr>
                         <th>Result</th>
-                        <td>{{ dump(call.result) }}</td>
+                        <td><pre>{{ dump(call.result) }}</pre></td>
                     </tr>
                 </tbody>
             </table>
