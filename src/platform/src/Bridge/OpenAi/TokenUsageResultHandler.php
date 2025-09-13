@@ -9,39 +9,36 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Mistral;
+namespace Symfony\AI\Platform\Bridge\OpenAi;
 
-use Symfony\AI\Agent\Output;
-use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Platform\Metadata\TokenUsage;
+use Symfony\AI\Platform\Result\ResultHandlerInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
- * @author Quentin Fahrner <fahrner.quentin@gmail.com>
+ * @author Denis Zunke <denis.zunke@gmail.com>
  */
-final class TokenOutputProcessor implements OutputProcessorInterface
+final class TokenUsageResultHandler implements ResultHandlerInterface
 {
-    public function processOutput(Output $output): void
+    public function handleResult(ResultInterface $result): void
     {
-        if ($output->result instanceof StreamResult) {
+        if ($result instanceof StreamResult) {
             // Streams have to be handled manually as the tokens are part of the streamed chunks
             return;
         }
 
-        $rawResponse = $output->result->getRawResult()?->getObject();
+        $rawResponse = $result->getRawResult()?->getObject();
         if (!$rawResponse instanceof ResponseInterface) {
             return;
         }
 
-        $metadata = $output->result->getMetadata();
-        $headers = $rawResponse->getHeaders(false);
+        $metadata = $result->getMetadata();
 
-        $remainingTokensMinute = $headers['x-ratelimit-limit-tokens-minute'][0] ?? null;
-        $remainingTokensMonth = $headers['x-ratelimit-limit-tokens-month'][0] ?? null;
+        $remainingTokens = $rawResponse->getHeaders(false)['x-ratelimit-remaining-tokens'][0] ?? null;
         $tokenUsage = new TokenUsage(
-            remainingTokensMinute: null !== $remainingTokensMinute ? (int) $remainingTokensMinute : null,
-            remainingTokensMonth: null !== $remainingTokensMonth ? (int) $remainingTokensMonth : null,
+            remainingTokens: null !== $remainingTokens ? (int) $remainingTokens : null,
         );
 
         $content = $rawResponse->toArray(false);
@@ -56,6 +53,8 @@ final class TokenOutputProcessor implements OutputProcessorInterface
 
         $tokenUsage->promptTokens = $usage['prompt_tokens'] ?? null;
         $tokenUsage->completionTokens = $usage['completion_tokens'] ?? null;
+        $tokenUsage->thinkingTokens = $usage['completion_tokens_details']['reasoning_tokens'] ?? null;
+        $tokenUsage->cachedTokens = $usage['prompt_tokens_details']['cached_tokens'] ?? null;
         $tokenUsage->totalTokens = $usage['total_tokens'] ?? null;
 
         $metadata->add('token_usage', $tokenUsage);

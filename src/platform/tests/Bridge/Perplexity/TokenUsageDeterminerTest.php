@@ -9,79 +9,56 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\OpenAi;
+namespace Symfony\AI\Platform\Tests\Bridge\Perplexity;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Output;
-use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor;
-use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Bridge\Perplexity\TokenUsageResultHandler;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Metadata\TokenUsage;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
-use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-#[CoversClass(TokenOutputProcessor::class)]
-#[UsesClass(Output::class)]
+/**
+ * @author Mathieu Santostefano <msantostefano@proton.me>
+ */
+#[CoversClass(TokenUsageResultHandler::class)]
 #[UsesClass(TextResult::class)]
 #[UsesClass(StreamResult::class)]
 #[UsesClass(Metadata::class)]
 #[UsesClass(TokenUsage::class)]
 #[Small]
-final class TokenOutputProcessorTest extends TestCase
+final class TokenUsageDeterminerTest extends TestCase
 {
     public function testItHandlesStreamResponsesWithoutProcessing()
     {
-        $processor = new TokenOutputProcessor();
+        $tokenUsageResultHandler = new TokenUsageResultHandler();
         $streamResult = new StreamResult((static function () { yield 'test'; })());
-        $output = $this->createOutput($streamResult);
 
-        $processor->processOutput($output);
+        $tokenUsageResultHandler->handleResult($streamResult);
 
-        $metadata = $output->result->getMetadata();
+        $metadata = $streamResult->getMetadata();
         $this->assertCount(0, $metadata);
     }
 
     public function testItDoesNothingWithoutRawResponse()
     {
-        $processor = new TokenOutputProcessor();
+        $tokenUsageResultHandler = new TokenUsageResultHandler();
         $textResult = new TextResult('test');
-        $output = $this->createOutput($textResult);
 
-        $processor->processOutput($output);
+        $tokenUsageResultHandler->handleResult($textResult);
 
-        $metadata = $output->result->getMetadata();
+        $metadata = $textResult->getMetadata();
         $this->assertCount(0, $metadata);
-    }
-
-    public function testItAddsRemainingTokensToMetadata()
-    {
-        $processor = new TokenOutputProcessor();
-        $textResult = new TextResult('test');
-
-        $textResult->setRawResult($this->createRawResult());
-
-        $output = $this->createOutput($textResult);
-
-        $processor->processOutput($output);
-
-        $metadata = $output->result->getMetadata();
-        $tokenUsage = $metadata->get('token_usage');
-
-        $this->assertCount(1, $metadata);
-        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
-        $this->assertSame(1000, $tokenUsage->remainingTokens);
     }
 
     public function testItAddsUsageTokensToMetadata()
     {
-        $processor = new TokenOutputProcessor();
+        $tokenUsageResultHandler = new TokenUsageResultHandler();
         $textResult = new TextResult('test');
 
         $rawResult = $this->createRawResult([
@@ -89,36 +66,27 @@ final class TokenOutputProcessorTest extends TestCase
                 'prompt_tokens' => 10,
                 'completion_tokens' => 20,
                 'total_tokens' => 50,
-                'completion_tokens_details' => [
-                    'reasoning_tokens' => 20,
-                ],
-                'prompt_tokens_details' => [
-                    'cached_tokens' => 40,
-                ],
+                'reasoning_tokens' => 20,
             ],
         ]);
 
         $textResult->setRawResult($rawResult);
 
-        $output = $this->createOutput($textResult);
+        $tokenUsageResultHandler->handleResult($textResult);
 
-        $processor->processOutput($output);
-
-        $metadata = $output->result->getMetadata();
+        $metadata = $textResult->getMetadata();
         $tokenUsage = $metadata->get('token_usage');
 
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(10, $tokenUsage->promptTokens);
         $this->assertSame(20, $tokenUsage->completionTokens);
-        $this->assertSame(1000, $tokenUsage->remainingTokens);
         $this->assertSame(20, $tokenUsage->thinkingTokens);
-        $this->assertSame(40, $tokenUsage->cachedTokens);
         $this->assertSame(50, $tokenUsage->totalTokens);
     }
 
     public function testItHandlesMissingUsageFields()
     {
-        $processor = new TokenOutputProcessor();
+        $tokenUsageResultHandler = new TokenUsageResultHandler();
         $textResult = new TextResult('test');
 
         $rawResult = $this->createRawResult([
@@ -130,38 +98,23 @@ final class TokenOutputProcessorTest extends TestCase
 
         $textResult->setRawResult($rawResult);
 
-        $output = $this->createOutput($textResult);
+        $tokenUsageResultHandler->handleResult($textResult);
 
-        $processor->processOutput($output);
-
-        $metadata = $output->result->getMetadata();
+        $metadata = $textResult->getMetadata();
         $tokenUsage = $metadata->get('token_usage');
 
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(10, $tokenUsage->promptTokens);
-        $this->assertSame(1000, $tokenUsage->remainingTokens);
         $this->assertNull($tokenUsage->completionTokens);
+        $this->assertNull($tokenUsage->thinkingTokens);
         $this->assertNull($tokenUsage->totalTokens);
     }
 
     private function createRawResult(array $data = []): RawHttpResult
     {
         $rawResponse = $this->createStub(ResponseInterface::class);
-        $rawResponse->method('getHeaders')->willReturn([
-            'x-ratelimit-remaining-tokens' => ['1000'],
-        ]);
         $rawResponse->method('toArray')->willReturn($data);
 
         return new RawHttpResult($rawResponse);
-    }
-
-    private function createOutput(ResultInterface $result): Output
-    {
-        return new Output(
-            $this->createStub(Model::class),
-            $result,
-            $this->createStub(MessageBag::class),
-            [],
-        );
     }
 }

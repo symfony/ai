@@ -11,27 +11,27 @@
 
 namespace Symfony\AI\Platform\Bridge\Gemini;
 
-use Symfony\AI\Agent\Output;
-use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Platform\Metadata\TokenUsage;
+use Symfony\AI\Platform\Result\ResultHandlerInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-final class TokenOutputProcessor implements OutputProcessorInterface
+final class TokenUsageResultHandler implements ResultHandlerInterface
 {
-    public function processOutput(Output $output): void
+    public function handleResult(ResultInterface $result): void
     {
-        if ($output->result instanceof StreamResult) {
+        if ($result instanceof StreamResult) {
             // Streams have to be handled manually as the tokens are part of the streamed chunks
             return;
         }
 
-        $rawResponse = $output->result->getRawResult()?->getObject();
+        $rawResponse = $result->getRawResult()?->getObject();
         if (!$rawResponse instanceof ResponseInterface) {
             return;
         }
 
-        $metadata = $output->result->getMetadata();
+        $metadata = $result->getMetadata();
 
         $tokenUsage = new TokenUsage();
 
