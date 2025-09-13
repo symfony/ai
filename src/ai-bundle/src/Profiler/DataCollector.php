@@ -69,7 +69,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         ];
     }
 
-    public function collectChatCall(string $method, float $duration, mixed $input, mixed $result, ?\Throwable $error): void
+    public function collectAgentCall(string $method, float $duration, mixed $input, mixed $result, ?\Throwable $error): void
     {
         $this->collectedChatCalls[] = [
             'method' => $method,
@@ -112,7 +112,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     /**
      * @return list<array{method: string, duration: float, input: mixed, result: mixed, error: ?\Throwable}>
      */
-    public function getChatCalls(): array
+    public function getAgentCalls(): array
     {
         if (!isset($this->data['chat_calls'])) {
             return [];

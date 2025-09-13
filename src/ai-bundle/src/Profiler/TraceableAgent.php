@@ -36,7 +36,7 @@ final class TraceableAgent implements AgentInterface, ResetInterface
             $error = $e;
             throw $e;
         } finally {
-            $this->collector->collectChatCall(
+            $this->collector->collectAgentCall(
                 'call',
                 microtime(true) - $startTime,
                 $messages,
