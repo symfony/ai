@@ -171,14 +171,13 @@ return static function (ContainerConfigurator $container): void {
             ])
             ->tag('kernel.event_listener')
 
-        ->set('ai.traceable_agent', TraceableAgent::class)
-        ->decorate(AgentInterface::class, priority: 5)
-        ->args([
-            service('.inner'),
-            service('ai.data_collector'),
-        ])
-
         // profiler
+        ->set('ai.traceable_agent', TraceableAgent::class)
+            ->decorate(AgentInterface::class, priority: 5)
+            ->args([
+                service('.inner'),
+                service('ai.data_collector'),
+            ])
         ->set('ai.data_collector', DataCollector::class)
             ->args([
                 tagged_iterator('ai.traceable_platform'),
