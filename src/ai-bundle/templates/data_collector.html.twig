@@ -1,5 +1,16 @@
 {% extends '@WebProfiler/Profiler/layout.html.twig' %}
 
+{% block head %}
+    {{ parent() }}
+    <style>
+        .profiler-content table.table pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+    </style>
+{% endblock %}
+
 {% block toolbar %}
     {% if collector.platformCalls|length > 0 %}
         {% set icon %}
@@ -13,8 +24,8 @@
         {% set text %}
             <div class="sf-toolbar-info-piece">
                 <div class="sf-toolbar-info-piece">
-                    <b class="label">Chat Calls</b>
-                    <span class="sf-toolbar-status">{{ collector.chatCalls|length }}</span>
+                    <b class="label">Agent Calls</b>
+                    <span class="sf-toolbar-status">{{ collector.agentCalls|length }}</span>
                 </div>
                 <div class="sf-toolbar-info-piece">
                     <b class="label">Configured Platforms</b>
@@ -62,8 +73,8 @@
 {% block panel %}
     <h2>Symfony AI</h2>
 
-    <h3>Chat Calls</h3>
-    {% if collector.chatCalls|length %}
+    <h3>Agent Calls</h3>
+    {% if collector.agentCalls|length %}
         <table class="table">
             <thead>
             <tr>
@@ -75,15 +86,19 @@
             </tr>
             </thead>
             <tbody>
-            {% for call in collector.chatCalls %}
+            {% for call in collector.agentCalls %}
                 <tr>
                     <td><code>{{ call.method }}</code></td>
                     <td class="text-nowrap">{{ (call.duration * 1000)|round(2) }} ms</td>
-                    <td>{{ dump(call.input) }}</td>
-                    <td>{{ dump(call.result) }}</td>
+                    <td>
+                        <div style="max-width: 400px; overflow-x: auto;"><pre>{{ dump(call.input) }}</pre></div>
+                    </td>
+                    <td>
+                        <div style="max-width: 400px; overflow-x: auto;"><pre>{{ dump(call.result) }}</pre></div>
+                    </td>
                     <td>
                         {% if call.error %}
-                            {{ dump(call.error) }}
+                            <pre>{{ dump(call.error) }}</pre>
                         {% else %}
                             <span class="text-muted">None</span>
                         {% endif %}
@@ -94,19 +109,16 @@
         </table>
     {% else %}
         <div class="empty">
-            <p>No chat calls were made.</p>
+            <p>No agent calls were made.</p>
         </div>
     {% endif %}
 
     <section class="metrics">
         <div class="metric-group">
             <div class="metric">
-                <span class="value">{{ collector.chatCalls|length }}</span>
-                <span class="label">Chat Calls</span>
+                <span class="value">{{ collector.agentCalls|length }}</span>
+                <span class="label">Agent Calls</span>
             </div>
-        </div>
-        <div class="metric-divider"></div>
-        <div class="metric-group">
             <div class="metric">
                 <span class="value">1</span>
                 <span class="label">Platforms</span>
@@ -128,6 +140,7 @@
             </div>
         </div>
     </section>
+
     <h3>Platform Calls</h3>
     {% if collector.platformCalls|length %}
         <div class="sf-tabs">
@@ -137,9 +150,9 @@
                     {% for call in collector.platformCalls %}
                         <table class="table">
                             <thead>
-                            <tr>
-                                <th colspan="2">Call {{ loop.index }}</th>
-                            </tr>
+                                <tr>
+                                    <th colspan="2">Call {{ loop.index }}</th>
+                                </tr>
                             </thead>
                             <tbody>
                             <tr>
@@ -174,7 +187,7 @@
                                             {% endfor %}
                                         </ol>
                                     {% else %}
-                                        {{ dump(call.input) }}
+                                        <pre>{{ dump(call.input) }}</pre>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -192,7 +205,7 @@
                                                     </ul>
                                                 </li>
                                             {% else %}
-                                                <li>{{ key }}: {{ dump(value) }}</li>
+                                                <li>{{ key }}: <pre>{{ dump(value) }}</pre></li>
                                             {% endif %}
                                         {% endfor %}
                                     </ul>
@@ -230,12 +243,12 @@
     {% if collector.tools|length %}
         <table class="table">
             <thead>
-            <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Class & Method</th>
-                <th>Parameters</th>
-            </tr>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Class & Method</th>
+                    <th>Parameters</th>
+                </tr>
             </thead>
             <tbody>
                 {% for tool in collector.tools %}
@@ -272,23 +285,23 @@
         {% for call in collector.toolCalls %}
             <table class="table">
                 <thead>
-                <tr>
-                    <th colspan="2">{{ call.call.name }}</th>
-                </tr>
+                    <tr>
+                        <th colspan="2">{{ call.call.name }}</th>
+                    </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <th>ID</th>
-                    <td>{{ call.call.id }}</td>
-                </tr>
-                <tr>
-                    <th>Arguments</th>
-                    <td>{{ dump(call.call.arguments) }}</td>
-                </tr>
-                <tr>
-                    <th>Result</th>
-                    <td>{{ dump(call.result) }}</td>
-                </tr>
+                    <tr>
+                        <th>ID</th>
+                        <td>{{ call.call.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Arguments</th>
+                        <td><pre>{{ dump(call.call.arguments) }}</pre></td>
+                    </tr>
+                    <tr>
+                        <th>Result</th>
+                        <td><pre>{{ dump(call.result) }}</pre></td>
+                    </tr>
                 </tbody>
             </table>
         {% endfor %}
