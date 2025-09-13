@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Result;
 
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\Exception\RawResultAlreadySetException;
+use Symfony\AI\Platform\Speech\Speech;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -33,4 +34,8 @@ interface ResultInterface
      * @throws RawResultAlreadySetException if the result is tried to be set more than once
      */
     public function setRawResult(RawResultInterface $rawResult): void;
+
+    public function addSpeech(?Speech $speech = null): void;
+
+    public function getSpeech(): ?Speech;
 }

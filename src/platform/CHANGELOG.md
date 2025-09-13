@@ -7,6 +7,7 @@ CHANGELOG
  * Add `StreamListenerInterface` to hook into response streams
  * [BC BREAK] Change `TokenUsageAggregation::__construct()` from variadic to array
  * Add `TokenUsageAggregation::add()` method to add more token usages
+ * Introduce support for speech for `ElevenLabs` and `Cartesia`
 
 0.2
 ---

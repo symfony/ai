@@ -679,6 +679,92 @@ This allows fast and isolated testing of AI-powered features without relying on 
 
     This requires `cURL` and the `ext-curl` extension to be installed.
 
+Speech support
+~~~~~~~~~~~~~~
+
+Using speech to send messages / receive answers as audio is a common use case when integrating agents and/or chats,
+this approach allows to either send audio and expect text output or send a text and receive an audio content.
+
+Another approach is to use stt / tts together to enable a full audio pipeline, this approach introduce some latency
+(as both input/output must be processed) but allows to create a more natural and "human-like" conversation flow.
+
+Speech support can be enabled using :class:`Symfony\\AI\\Platform\\Speech\\SpeechListener` (for `text-to-speech` in this example)::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Speech\SpeechConfiguration;
+    use Symfony\AI\Platform\Speech\SpeechListener;
+    use Symfony\Component\EventDispatcher\EventDispatcher;
+    use Symfony\Component\HttpClient\HttpClient;
+
+    $eventDispatcher = new EventDispatcher();
+    $eventDispatcher->addSubscriber(new SpeechListener([
+        'elevenlabs' => ElevenLabsPlatformFactory::create(
+            env('ELEVEN_LABS_API_KEY'),
+            httpClient: HttpClient::create(),
+        ),
+    ], [
+        'elevenlabs' => new SpeechConfiguration([
+            'tts_model' => 'eleven_multilingual_v2',
+            'tts_options' => [
+                'voice' => 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
+            ],
+        ]),
+    ]));
+
+    $platform = OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), httpClient: HttpClient::create(), eventDispatcher: $eventDispatcher);
+
+    $agent = new Agent($platform, 'gpt-4o');
+    $answer = $agent->call(new MessageBag(
+        Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
+    ));
+
+    echo $answer->getSpeech()->asBinary();
+
+When handling `speech-to-speech`, the process still the same but requires a :class:`Symfony\\AI\\Platform\\Message\\Content\\Audio` as an input::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Message\Content\Audio;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Speech\SpeechConfiguration;
+    use Symfony\AI\Platform\Speech\SpeechListener;
+    use Symfony\Component\EventDispatcher\EventDispatcher;
+    use Symfony\Component\HttpClient\HttpClient;
+
+    $eventDispatcher = new EventDispatcher();
+    $eventDispatcher->addSubscriber(new SpeechListener([
+        'elevenlabs' => ElevenLabsPlatformFactory::create(
+            env('ELEVEN_LABS_API_KEY'),
+            httpClient: HttpClient::create(),
+        ),
+    ], [
+        'elevenlabs' => new SpeechConfiguration([
+            'tts_model' => 'eleven_multilingual_v2',
+            'tts_options' => [
+                'voice' => 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
+            ],
+        ]),
+    ]));
+
+    $platform = OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), httpClient: HttpClient::create(), eventDispatcher: $eventDispatcher);
+
+    $agent = new Agent($platform, 'gpt-4o');
+    $answer = $agent->call(new MessageBag(
+        Message::ofUser(Audio::fromFile(...)
+    ));
+
+    echo $answer->getSpeech()->asBinary();
+
+.. note::
+
+    Handling `speech-to-speech` introduce latency as most of the process is synchronous.
+
 Code Examples
 ~~~~~~~~~~~~~
 
