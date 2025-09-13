@@ -15,8 +15,13 @@ use App\Blog\Command\StreamCommand;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Metadata\Metadata;
+use Symfony\AI\Platform\PlainConverter;
+use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Speech\Speech;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -49,6 +54,15 @@ class StreamCommandTest extends TestCase
 
                 public function setRawResult(RawResultInterface $rawResult): void
                 {
+                }
+
+                public function addSpeech(?Speech $speech = null): void
+                {
+                }
+
+                public function getSpeech(): Speech
+                {
+                    return new Speech(new DeferredResult(new PlainConverter(new TextResult('foo')), new InMemoryRawResult()));
                 }
             });
 

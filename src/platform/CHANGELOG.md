@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.5
+---
+
+ * Introduce support for speech to `ElevenLabs` and `Cartesia` platforms
+
 0.4
 ---
 

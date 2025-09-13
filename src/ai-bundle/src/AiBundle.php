@@ -19,6 +19,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\InputProcessor\SpeechProcessor;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -87,6 +88,7 @@ use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
@@ -532,6 +534,8 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => 'cartesia']);
 
             $container->setDefinition('ai.platform.cartesia', $definition);
@@ -606,6 +610,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => $type]);
 
             $container->setDefinition('ai.platform.'.$type, $definition);
@@ -682,7 +687,6 @@ final class AiBundle extends AbstractBundle
                         $config['api_key'],
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         new Reference($config['model_catalog'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        null,
                         new Reference('event_dispatcher'),
                         $config['supports_completions'],
                         $config['supports_embeddings'],
@@ -1249,6 +1253,46 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -40]);
 
             $container->setDefinition('ai.agent.'.$name.'.memory_input_processor', $memoryInputProcessorDefinition);
+        }
+
+        // Speech
+        if (isset($config['speech']) && $config['speech']['enabled']) {
+            $speechConfigDefinition = (new Definition(SpeechConfiguration::class, [
+                [
+                    'tts_model' => $config['speech']['tts_model'],
+                    'tts_options' => $config['speech']['tts_options'],
+                    'stt_model' => $config['speech']['stt_model'],
+                    'stt_options' => $config['speech']['stt_options'],
+                ],
+            ]))->addTag('ai.speech_configuration', ['platform' => $config['speech']['platform']]);
+
+            $container->setDefinition('ai.agent.'.$name.'.speech_configuration', $speechConfigDefinition);
+
+            $speechPlatformRef = new Reference($config['speech']['platform']);
+
+            if (null !== $config['speech']['stt_model']) {
+                $sttProcessorDefinition = (new Definition(SpeechProcessor::class))
+                    ->setArguments([
+                        $speechPlatformRef,
+                        new Reference('ai.agent.'.$name.'.speech_configuration'),
+                    ])
+                    ->addTag('ai.agent.input_processor', ['priority' => 100]);
+
+                $container->setDefinition('ai.agent.'.$name.'.speech_input_processor', $sttProcessorDefinition);
+            }
+
+            if (null !== $config['speech']['tts_model']) {
+                $ttsProcessorDefinition = (new Definition(SpeechProcessor::class))
+                    ->setArguments([
+                        $speechPlatformRef,
+                        new Reference('ai.agent.'.$name.'.speech_configuration'),
+                    ])
+                    ->addTag('ai.agent.output_processor', ['priority' => -100]);
+
+                $container->setDefinition('ai.agent.'.$name.'.speech_output_processor', $ttsProcessorDefinition);
+            }
+
+            $agentDefinition->addTag('ai.agent.speech', ['speech_platform' => $config['speech']['platform']]);
         }
 
         $agentDefinition

@@ -39,8 +39,8 @@ final class CartesiaClient implements ModelClientInterface
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
         return match (true) {
-            \in_array(Capability::TEXT_TO_SPEECH, $model->getCapabilities()) => $this->doTextToSpeech($model, $payload, $options),
-            \in_array(Capability::SPEECH_TO_TEXT, $model->getCapabilities()) => $this->doSpeechToText($model, $payload, $options),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, $options),
+            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $payload, $options),
             default => throw new RuntimeException(\sprintf('The model "%s" is not supported.', $model->getName())),
         };
     }

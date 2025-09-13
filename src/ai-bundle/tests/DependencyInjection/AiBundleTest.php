@@ -22,6 +22,7 @@ use Probots\Pinecone\Client as PineconeClient;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\InputProcessor\SpeechProcessor;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
@@ -50,6 +51,7 @@ use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
@@ -7738,6 +7740,492 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $arguments[2]);
         $this->assertSame('ai.platform.model_catalog.ovh', (string) $arguments[2]);
         $this->assertNull($definition->getArgument(3));
+    }
+
+    public function testCartesiaSpeechAgentCanBeRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'cartesia' => [
+                        'api_key' => 'cartesia_key_full',
+                        'version' => '2025-04-16',
+                    ],
+                ],
+                'agent' => [
+                    'vocal_assistant' => [
+                        'platform' => 'ai.platform.openai',
+                        'model' => 'gpt-4o',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.cartesia'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant'));
+        $this->assertFalse($container->hasDefinition('ai.agent.vocal_assistant.speech_configuration'));
+        $this->assertFalse($container->hasDefinition('ai.agent.vocal_assistant.speech_input_processor'));
+        $this->assertFalse($container->hasDefinition('ai.agent.vocal_assistant.speech_output_processor'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'cartesia' => [
+                        'api_key' => 'cartesia_key_full',
+                        'version' => '2025-04-16',
+                    ],
+                ],
+                'agent' => [
+                    'vocal_assistant' => [
+                        'platform' => 'ai.platform.openai',
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'enabled' => true,
+                            'platform' => 'ai.platform.cartesia',
+                            'tts_model' => 'foo',
+                            'tts_options' => [
+                                'foo' => 'bar',
+                                'voice' => 'bar',
+                            ],
+                            'stt_model' => 'foo',
+                            'stt_options' => [
+                                'foo' => 'bar',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.cartesia'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_configuration'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_input_processor'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_output_processor'));
+
+        $speechConfigurationDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigurationDefinition->getClass());
+        $this->assertCount(1, $speechConfigurationDefinition->getArguments());
+        $this->assertSame([
+            'tts_model' => 'foo',
+            'tts_options' => [
+                'foo' => 'bar',
+                'voice' => 'bar',
+            ],
+            'stt_model' => 'foo',
+            'stt_options' => [
+                'foo' => 'bar',
+            ],
+        ], $speechConfigurationDefinition->getArgument(0));
+
+        $this->assertTrue($speechConfigurationDefinition->hasTag('ai.speech_configuration'));
+        $this->assertSame([['platform' => 'ai.platform.cartesia']], $speechConfigurationDefinition->getTag('ai.speech_configuration'));
+
+        $inputSpeechProcessorDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_input_processor');
+        $this->assertSame(SpeechProcessor::class, $inputSpeechProcessorDefinition->getClass());
+        $this->assertCount(2, $inputSpeechProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $inputSpeechProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.platform.cartesia', (string) $inputSpeechProcessorDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $inputSpeechProcessorDefinition->getArgument(1));
+        $this->assertSame('ai.agent.vocal_assistant.speech_configuration', (string) $inputSpeechProcessorDefinition->getArgument(1));
+
+        $this->assertTrue($inputSpeechProcessorDefinition->hasTag('ai.agent.input_processor'));
+        $this->assertSame([['priority' => 100]], $inputSpeechProcessorDefinition->getTag('ai.agent.input_processor'));
+
+        $outputSpeechProcessorDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_output_processor');
+        $this->assertSame(SpeechProcessor::class, $outputSpeechProcessorDefinition->getClass());
+        $this->assertCount(2, $outputSpeechProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $outputSpeechProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.platform.cartesia', (string) $outputSpeechProcessorDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $outputSpeechProcessorDefinition->getArgument(1));
+        $this->assertSame('ai.agent.vocal_assistant.speech_configuration', (string) $outputSpeechProcessorDefinition->getArgument(1));
+
+        $this->assertTrue($outputSpeechProcessorDefinition->hasTag('ai.agent.output_processor'));
+        $this->assertSame([['priority' => -100]], $outputSpeechProcessorDefinition->getTag('ai.agent.output_processor'));
+
+        $agentDefinition = $container->getDefinition('ai.agent.vocal_assistant');
+
+        $this->assertTrue($agentDefinition->hasTag('ai.agent.speech'));
+        $this->assertSame([['speech_platform' => 'ai.platform.cartesia']], $agentDefinition->getTag('ai.agent.speech'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'cartesia' => [
+                        'api_key' => 'cartesia_key_full',
+                        'version' => '2025-04-16',
+                    ],
+                ],
+                'agent' => [
+                    'vocal_assistant' => [
+                        'platform' => 'ai.platform.openai',
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'enabled' => true,
+                            'platform' => 'ai.platform.cartesia',
+                            'tts_model' => 'foo',
+                            'tts_options' => [
+                                'foo' => 'bar',
+                                'voice' => 'bar',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.cartesia'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_configuration'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_output_processor'));
+        $this->assertFalse($container->hasDefinition('ai.agent.vocal_assistant.speech_input_processor'));
+
+        $speechConfigurationDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigurationDefinition->getClass());
+        $this->assertCount(1, $speechConfigurationDefinition->getArguments());
+        $this->assertSame([
+            'tts_model' => 'foo',
+            'tts_options' => [
+                'foo' => 'bar',
+                'voice' => 'bar',
+            ],
+            'stt_model' => null,
+            'stt_options' => [],
+        ], $speechConfigurationDefinition->getArgument(0));
+
+        $this->assertTrue($speechConfigurationDefinition->hasTag('ai.speech_configuration'));
+        $this->assertSame([['platform' => 'ai.platform.cartesia']], $speechConfigurationDefinition->getTag('ai.speech_configuration'));
+
+        $outputSpeechProcessorDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_output_processor');
+        $this->assertSame(SpeechProcessor::class, $outputSpeechProcessorDefinition->getClass());
+        $this->assertCount(2, $outputSpeechProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $outputSpeechProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.platform.cartesia', (string) $outputSpeechProcessorDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $outputSpeechProcessorDefinition->getArgument(1));
+        $this->assertSame('ai.agent.vocal_assistant.speech_configuration', (string) $outputSpeechProcessorDefinition->getArgument(1));
+
+        $this->assertTrue($inputSpeechProcessorDefinition->hasTag('ai.agent.input_processor'));
+        $this->assertSame([['priority' => 100]], $inputSpeechProcessorDefinition->getTag('ai.agent.input_processor'));
+
+        $agentDefinition = $container->getDefinition('ai.agent.vocal_assistant');
+
+        $this->assertTrue($agentDefinition->hasTag('ai.agent.speech'));
+        $this->assertSame([['speech_platform' => 'ai.platform.cartesia']], $agentDefinition->getTag('ai.agent.speech'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'cartesia' => [
+                        'api_key' => 'cartesia_key_full',
+                        'version' => '2025-04-16',
+                    ],
+                ],
+                'agent' => [
+                    'vocal_assistant' => [
+                        'platform' => 'ai.platform.openai',
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'enabled' => true,
+                            'platform' => 'ai.platform.cartesia',
+                            'stt_model' => 'foo',
+                            'stt_options' => [
+                                'foo' => 'bar',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.cartesia'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_configuration'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_input_processor'));
+        $this->assertFalse($container->hasDefinition('ai.agent.vocal_assistant.speech_output_processor'));
+
+        $speechConfigurationDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigurationDefinition->getClass());
+        $this->assertCount(1, $speechConfigurationDefinition->getArguments());
+        $this->assertSame([
+            'tts_model' => null,
+            'tts_options' => [],
+            'stt_model' => 'foo',
+            'stt_options' => [
+                'foo' => 'bar',
+            ],
+        ], $speechConfigurationDefinition->getArgument(0));
+
+        $this->assertTrue($speechConfigurationDefinition->hasTag('ai.speech_configuration'));
+        $this->assertSame([['platform' => 'ai.platform.cartesia']], $speechConfigurationDefinition->getTag('ai.speech_configuration'));
+
+        $inputSpeechProcessorDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_input_processor');
+        $this->assertSame(SpeechProcessor::class, $inputSpeechProcessorDefinition->getClass());
+        $this->assertCount(2, $inputSpeechProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $inputSpeechProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.platform.cartesia', (string) $inputSpeechProcessorDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $inputSpeechProcessorDefinition->getArgument(1));
+        $this->assertSame('ai.agent.vocal_assistant.speech_configuration', (string) $inputSpeechProcessorDefinition->getArgument(1));
+
+        $this->assertTrue($outputSpeechProcessorDefinition->hasTag('ai.agent.output_processor'));
+        $this->assertSame([['priority' => -100]], $outputSpeechProcessorDefinition->getTag('ai.agent.output_processor'));
+
+        $agentDefinition = $container->getDefinition('ai.agent.vocal_assistant');
+
+        $this->assertTrue($agentDefinition->hasTag('ai.agent.speech'));
+        $this->assertSame([['speech_platform' => 'ai.platform.cartesia']], $agentDefinition->getTag('ai.agent.speech'));
+    }
+
+    public function testElevenLabsSpeechAgentCanBeRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                    ],
+                ],
+                'agent' => [
+                    'vocal_assistant' => [
+                        'platform' => 'ai.platform.openai',
+                        'model' => 'gpt-4o',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant'));
+        $this->assertFalse($container->hasDefinition('ai.agent.vocal_assistant.speech_configuration'));
+        $this->assertFalse($container->hasDefinition('ai.agent.vocal_assistant.speech_input_processor'));
+        $this->assertFalse($container->hasDefinition('ai.agent.vocal_assistant.speech_output_processor'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                    ],
+                ],
+                'agent' => [
+                    'vocal_assistant' => [
+                        'platform' => 'ai.platform.openai',
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'enabled' => true,
+                            'platform' => 'ai.platform.elevenlabs',
+                            'tts_model' => 'foo',
+                            'tts_options' => [
+                                'foo' => 'bar',
+                                'voice' => 'bar',
+                            ],
+                            'stt_model' => 'foo',
+                            'stt_options' => [
+                                'foo' => 'bar',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_configuration'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_input_processor'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_output_processor'));
+
+        $speechConfigurationDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigurationDefinition->getClass());
+        $this->assertCount(1, $speechConfigurationDefinition->getArguments());
+        $this->assertSame([
+            'tts_model' => 'foo',
+            'tts_options' => [
+                'foo' => 'bar',
+                'voice' => 'bar',
+            ],
+            'stt_model' => 'foo',
+            'stt_options' => [
+                'foo' => 'bar',
+            ],
+        ], $speechConfigurationDefinition->getArgument(0));
+
+        $this->assertTrue($speechConfigurationDefinition->hasTag('ai.speech_configuration'));
+        $this->assertSame([['platform' => 'ai.platform.elevenlabs']], $speechConfigurationDefinition->getTag('ai.speech_configuration'));
+
+        $inputSpeechProcessorDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_input_processor');
+        $this->assertSame(SpeechProcessor::class, $inputSpeechProcessorDefinition->getClass());
+        $this->assertCount(2, $inputSpeechProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $inputSpeechProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.platform.elevenlabs', (string) $inputSpeechProcessorDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $inputSpeechProcessorDefinition->getArgument(1));
+        $this->assertSame('ai.agent.vocal_assistant.speech_configuration', (string) $inputSpeechProcessorDefinition->getArgument(1));
+
+        $this->assertTrue($inputSpeechProcessorDefinition->hasTag('ai.agent.input_processor'));
+        $this->assertSame([['priority' => 100]], $inputSpeechProcessorDefinition->getTag('ai.agent.input_processor'));
+
+        $outputSpeechProcessorDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_output_processor');
+        $this->assertSame(SpeechProcessor::class, $outputSpeechProcessorDefinition->getClass());
+        $this->assertCount(2, $outputSpeechProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $outputSpeechProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.platform.elevenlabs', (string) $outputSpeechProcessorDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $outputSpeechProcessorDefinition->getArgument(1));
+        $this->assertSame('ai.agent.vocal_assistant.speech_configuration', (string) $outputSpeechProcessorDefinition->getArgument(1));
+
+        $this->assertTrue($outputSpeechProcessorDefinition->hasTag('ai.agent.output_processor'));
+        $this->assertSame([['priority' => -100]], $outputSpeechProcessorDefinition->getTag('ai.agent.output_processor'));
+
+        $agentDefinition = $container->getDefinition('ai.agent.vocal_assistant');
+
+        $this->assertTrue($agentDefinition->hasTag('ai.agent.speech'));
+        $this->assertSame([['speech_platform' => 'ai.platform.elevenlabs']], $agentDefinition->getTag('ai.agent.speech'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                    ],
+                ],
+                'agent' => [
+                    'vocal_assistant' => [
+                        'platform' => 'ai.platform.openai',
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'enabled' => true,
+                            'platform' => 'ai.platform.elevenlabs',
+                            'tts_model' => 'foo',
+                            'tts_options' => [
+                                'foo' => 'bar',
+                                'voice' => 'bar',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_configuration'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_output_processor'));
+        $this->assertFalse($container->hasDefinition('ai.agent.vocal_assistant.speech_input_processor'));
+
+        $speechConfigurationDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigurationDefinition->getClass());
+        $this->assertCount(1, $speechConfigurationDefinition->getArguments());
+        $this->assertSame([
+            'tts_model' => 'foo',
+            'tts_options' => [
+                'foo' => 'bar',
+                'voice' => 'bar',
+            ],
+            'stt_model' => null,
+            'stt_options' => [],
+        ], $speechConfigurationDefinition->getArgument(0));
+
+        $this->assertTrue($speechConfigurationDefinition->hasTag('ai.speech_configuration'));
+        $this->assertSame([['platform' => 'ai.platform.elevenlabs']], $speechConfigurationDefinition->getTag('ai.speech_configuration'));
+
+        $outputSpeechProcessorDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_output_processor');
+        $this->assertSame(SpeechProcessor::class, $outputSpeechProcessorDefinition->getClass());
+        $this->assertCount(2, $outputSpeechProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $outputSpeechProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.platform.elevenlabs', (string) $outputSpeechProcessorDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $outputSpeechProcessorDefinition->getArgument(1));
+        $this->assertSame('ai.agent.vocal_assistant.speech_configuration', (string) $outputSpeechProcessorDefinition->getArgument(1));
+
+        $this->assertTrue($inputSpeechProcessorDefinition->hasTag('ai.agent.input_processor'));
+        $this->assertSame([['priority' => 100]], $inputSpeechProcessorDefinition->getTag('ai.agent.input_processor'));
+
+        $agentDefinition = $container->getDefinition('ai.agent.vocal_assistant');
+
+        $this->assertTrue($agentDefinition->hasTag('ai.agent.speech'));
+        $this->assertSame([['speech_platform' => 'ai.platform.elevenlabs']], $agentDefinition->getTag('ai.agent.speech'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                    ],
+                ],
+                'agent' => [
+                    'vocal_assistant' => [
+                        'platform' => 'ai.platform.openai',
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'enabled' => true,
+                            'platform' => 'ai.platform.elevenlabs',
+                            'stt_model' => 'foo',
+                            'stt_options' => [
+                                'foo' => 'bar',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_configuration'));
+        $this->assertTrue($container->hasDefinition('ai.agent.vocal_assistant.speech_input_processor'));
+        $this->assertFalse($container->hasDefinition('ai.agent.vocal_assistant.speech_output_processor'));
+
+        $speechConfigurationDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigurationDefinition->getClass());
+        $this->assertCount(1, $speechConfigurationDefinition->getArguments());
+        $this->assertSame([
+            'tts_model' => null,
+            'tts_options' => [],
+            'stt_model' => 'foo',
+            'stt_options' => [
+                'foo' => 'bar',
+            ],
+        ], $speechConfigurationDefinition->getArgument(0));
+
+        $this->assertTrue($speechConfigurationDefinition->hasTag('ai.speech_configuration'));
+        $this->assertSame([['platform' => 'ai.platform.elevenlabs']], $speechConfigurationDefinition->getTag('ai.speech_configuration'));
+
+        $inputSpeechProcessorDefinition = $container->getDefinition('ai.agent.vocal_assistant.speech_input_processor');
+        $this->assertSame(SpeechProcessor::class, $inputSpeechProcessorDefinition->getClass());
+        $this->assertCount(2, $inputSpeechProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $inputSpeechProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.platform.elevenlabs', (string) $inputSpeechProcessorDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $inputSpeechProcessorDefinition->getArgument(1));
+        $this->assertSame('ai.agent.vocal_assistant.speech_configuration', (string) $inputSpeechProcessorDefinition->getArgument(1));
+
+        $this->assertTrue($outputSpeechProcessorDefinition->hasTag('ai.agent.output_processor'));
+        $this->assertSame([['priority' => -100]], $outputSpeechProcessorDefinition->getTag('ai.agent.output_processor'));
+
+        $agentDefinition = $container->getDefinition('ai.agent.vocal_assistant');
+
+        $this->assertTrue($agentDefinition->hasTag('ai.agent.speech'));
+        $this->assertSame([['speech_platform' => 'ai.platform.elevenlabs']], $agentDefinition->getTag('ai.agent.speech'));
     }
 
     /**

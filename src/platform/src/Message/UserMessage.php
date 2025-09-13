@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Image;
@@ -61,6 +62,19 @@ final class UserMessage implements MessageInterface
         }
 
         return false;
+    }
+
+    public function getAudioContent(): Audio
+    {
+        foreach ($this->content as $content) {
+            if (!$content instanceof Audio) {
+                continue;
+            }
+
+            return $content;
+        }
+
+        throw new RuntimeException('No audio content found.');
     }
 
     public function hasImageContent(): bool
