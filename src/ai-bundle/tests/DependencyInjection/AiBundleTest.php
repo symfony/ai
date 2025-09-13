@@ -1255,6 +1255,9 @@ class AiBundleTest extends TestCase
                         'location' => 'global',
                         'project_id' => '123',
                     ],
+                    'dockermodelrunner' => [
+                        'host_url' => 'http://127.0.0.1:12434',
+                    ],
                 ],
                 'agent' => [
                     'my_chat_agent' => [
