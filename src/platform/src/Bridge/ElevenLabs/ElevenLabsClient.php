@@ -93,7 +93,7 @@ final class ElevenLabsClient implements ModelClientInterface
             throw new InvalidArgumentException('The payload must contain a "text" key.');
         }
 
-        $voice = $options['voice'];
+        $voice = $model->getOptions()['voice'] ?? $options['voice'] ?? throw new InvalidArgumentException('The voice option is required.');
         $stream = $options['stream'] ?? false;
 
         $url = $stream

@@ -8,6 +8,7 @@ CHANGELOG
  * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
  * Add `description` and `example` properties to `#[With]` attribute
  * Generate JSON schema from Symfony Validator constraints when available
+ * Introduce support for speech
 
 0.6
 ---

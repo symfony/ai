@@ -16,6 +16,8 @@ use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Reranking\RerankingEntry;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\Speech\SpeechAwareInterface;
+use Symfony\AI\Platform\Speech\SpeechAwareTrait;
 use Symfony\AI\Platform\TokenUsage\StreamListener;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\Vector\Vector;
@@ -23,9 +25,10 @@ use Symfony\AI\Platform\Vector\Vector;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class DeferredResult
+final class DeferredResult implements SpeechAwareInterface
 {
     use MetadataAwareTrait;
+    use SpeechAwareTrait;
 
     private bool $isConverted = false;
     private ResultInterface $convertedResult;
@@ -70,6 +73,10 @@ final class DeferredResult
             $this->metadata->set($metadata->all());
 
             $this->isConverted = true;
+        }
+
+        if ($this->convertedResult instanceof SpeechAwareInterface) {
+            $this->convertedResult->addSpeech($this->speech);
         }
 
         return $this->convertedResult;
