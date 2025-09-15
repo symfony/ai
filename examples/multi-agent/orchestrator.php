@@ -33,7 +33,7 @@ $orchestrator = new Agent(
 // Create technical agent for handling technical issues
 $technical = new Agent(
     $platform,
-    new Gpt(Gpt::GPT_5),
+    new Gpt(Gpt::GPT_4O_MINI),
     [new SystemPromptInputProcessor('You are a technical support specialist. Help users resolve bugs, problems, and technical errors.')],
     name: 'technical',
     logger: logger()
