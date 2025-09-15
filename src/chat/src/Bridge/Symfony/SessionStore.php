@@ -9,10 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Chat\MessageStore;
+namespace Symfony\AI\Chat\Bridge\Symfony;
 
-use Symfony\AI\Agent\Chat\MessageStoreInterface;
-use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Chat\Exception\RuntimeException;
+use Symfony\AI\Chat\MessageStoreIdentifierTrait;
+use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -20,32 +21,37 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class SessionStore implements MessageStoreInterface
+final class SessionStore implements MessageStoreInterface
 {
+    use MessageStoreIdentifierTrait;
+
     private SessionInterface $session;
 
     public function __construct(
         RequestStack $requestStack,
-        private string $sessionKey = 'messages',
+        string $id = '_message_store_session',
     ) {
         if (!class_exists(RequestStack::class)) {
             throw new RuntimeException('For using the SessionStore as message store, the symfony/http-foundation package is required. Try running "composer require symfony/http-foundation".');
         }
+
         $this->session = $requestStack->getSession();
+
+        $this->setId($id);
     }
 
-    public function save(MessageBag $messages): void
+    public function save(MessageBag $messages, ?string $id = null): void
     {
-        $this->session->set($this->sessionKey, $messages);
+        $this->session->set($id ?? $this->getId(), $messages);
     }
 
-    public function load(): MessageBag
+    public function load(?string $id = null): MessageBag
     {
-        return $this->session->get($this->sessionKey, new MessageBag());
+        return $this->session->get($id ?? $this->getId(), new MessageBag());
     }
 
-    public function clear(): void
+    public function clear(?string $id = null): void
     {
-        $this->session->remove($this->sessionKey);
+        $this->session->remove($id ?? $this->getId());
     }
 }

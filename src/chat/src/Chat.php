@@ -9,9 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent;
+namespace Symfony\AI\Chat;
 
-use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Chat\Exception\LogicException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -50,5 +51,22 @@ final readonly class Chat implements ChatInterface
         $this->store->save($messages);
 
         return $assistantMessage;
+    }
+
+    public function fork(string $id): ChatInterface
+    {
+        $store = $this->store;
+        $forkedMessagesBag = $store->load($id);
+
+        if (!\array_key_exists(MessageStoreIdentifierTrait::class, class_uses($store))) {
+            throw new LogicException(\sprintf('The current store must implement %s to being able to be forked', MessageStoreIdentifierTrait::class));
+        }
+
+        $store->setId($id);
+
+        $self = new self($this->agent, $store);
+        $self->initiate($forkedMessagesBag);
+
+        return $self;
     }
 }
