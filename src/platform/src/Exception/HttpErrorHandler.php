@@ -31,6 +31,7 @@ final class HttpErrorHandler
         match ($statusCode) {
             401 => throw new AuthenticationException($errorMessage),
             404 => throw new NotFoundException($errorMessage),
+            429 => throw new RateLimitExceededException(self::extractRetryAfter($response)),
             503 => throw new ServiceUnavailableException($errorMessage),
             default => throw new RuntimeException(\sprintf('HTTP %d: %s', $statusCode, $errorMessage)),
         };
@@ -44,7 +45,7 @@ final class HttpErrorHandler
             return \sprintf('HTTP %d error', $response->getStatusCode());
         }
 
-        $data = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
+        $data = json_decode($content, true);
 
         if (!\is_array($data)) {
             return $content;
@@ -59,5 +60,48 @@ final class HttpErrorHandler
         }
 
         return $data['message'] ?? $data['detail'] ?? $content;
+    }
+
+    private static function extractRetryAfter(ResponseInterface $response): ?float
+    {
+        $headers = $response->getHeaders(false);
+
+        if (isset($headers['retry-after'][0])) {
+            return (float) $headers['retry-after'][0];
+        }
+
+        if (isset($headers['x-ratelimit-reset-requests'][0])) {
+            return self::parseResetTime($headers['x-ratelimit-reset-requests'][0]);
+        }
+
+        if (isset($headers['x-ratelimit-reset-tokens'][0])) {
+            return self::parseResetTime($headers['x-ratelimit-reset-tokens'][0]);
+        }
+
+        return null;
+    }
+
+    private static function parseResetTime(string $resetTime): ?float
+    {
+        if (is_numeric($resetTime)) {
+            return (float) $resetTime;
+        }
+
+        if (preg_match('/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/', $resetTime, $matches)) {
+            $hours = (int) ($matches[1] ?? 0);
+            $minutes = (int) ($matches[2] ?? 0);
+            $seconds = (int) ($matches[3] ?? 0);
+
+            return (float) ($hours * 3600 + $minutes * 60 + $seconds);
+        }
+
+        $timestamp = strtotime($resetTime);
+        if (false === $timestamp) {
+            return null;
+        }
+
+        $diff = $timestamp - time();
+
+        return $diff > 0 ? (float) $diff : null;
     }
 }

@@ -28,9 +28,12 @@ final class ResultConverterTest extends TestCase
 {
     public function testItReturnsAggregatedTextOnSuccess()
     {
-        $response = $this->createStub(ResponseInterface::class);
+        $response = $this->createMock(ResponseInterface::class);
         $responseContent = file_get_contents(\dirname(__DIR__, 6).'/fixtures/Bridge/Gemini/code_execution_outcome_ok.json');
 
+        $response
+            ->method('getStatusCode')
+            ->willReturn(200);
         $response
             ->method('toArray')
             ->willReturn(json_decode($responseContent, true));
@@ -45,9 +48,12 @@ final class ResultConverterTest extends TestCase
 
     public function testItThrowsExceptionOnFailure()
     {
-        $response = $this->createStub(ResponseInterface::class);
+        $response = $this->createMock(ResponseInterface::class);
         $responseContent = file_get_contents(\dirname(__DIR__, 6).'/fixtures/Bridge/Gemini/code_execution_outcome_failed.json');
 
+        $response
+            ->method('getStatusCode')
+            ->willReturn(200);
         $response
             ->method('toArray')
             ->willReturn(json_decode($responseContent, true));
@@ -60,9 +66,12 @@ final class ResultConverterTest extends TestCase
 
     public function testItThrowsExceptionOnTimeout()
     {
-        $response = $this->createStub(ResponseInterface::class);
+        $response = $this->createMock(ResponseInterface::class);
         $responseContent = file_get_contents(\dirname(__DIR__, 6).'/fixtures/Bridge/Gemini/code_execution_outcome_deadline_exceeded.json');
 
+        $response
+            ->method('getStatusCode')
+            ->willReturn(200);
         $response
             ->method('toArray')
             ->willReturn(json_decode($responseContent, true));

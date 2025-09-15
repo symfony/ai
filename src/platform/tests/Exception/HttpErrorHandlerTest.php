@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\HttpErrorHandler;
 use Symfony\AI\Platform\Exception\NotFoundException;
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServiceUnavailableException;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -154,6 +155,37 @@ class HttpErrorHandlerTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('HTTP 500: HTTP 500 error');
+        HttpErrorHandler::handleHttpError($response);
+    }
+
+    public function testHandleRateLimitWithRetryAfterHeader()
+    {
+        $mockResponse = new MockResponse(
+            '{"error": "Rate limit exceeded"}',
+            ['http_code' => 429, 'response_headers' => ['Retry-After' => ['60']]]
+        );
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
+
+        try {
+            HttpErrorHandler::handleHttpError($response);
+            $this->fail('Expected RateLimitExceededException was not thrown');
+        } catch (RateLimitExceededException $e) {
+            $this->assertEquals(60.0, $e->getRetryAfter());
+        }
+    }
+
+    public function testHandleRateLimitWithoutRetryAfterHeader()
+    {
+        $mockResponse = new MockResponse(
+            '{"error": "Rate limit exceeded"}',
+            ['http_code' => 429]
+        );
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
+
+        $this->expectException(RateLimitExceededException::class);
+        $this->expectExceptionMessage('Rate limit exceeded.');
         HttpErrorHandler::handleHttpError($response);
     }
 }

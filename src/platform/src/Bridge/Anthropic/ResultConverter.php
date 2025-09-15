@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
 use Symfony\AI\Platform\Exception\HttpErrorHandler;
-use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -41,12 +40,6 @@ class ResultConverter implements ResultConverterInterface
     public function convert(RawHttpResult|RawResultInterface $result, array $options = []): ResultInterface
     {
         $response = $result->getObject();
-
-        if (429 === $response->getStatusCode()) {
-            $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
-            $retryAfterValue = $retryAfter ? (float) $retryAfter : null;
-            throw new RateLimitExceededException($retryAfterValue);
-        }
 
         HttpErrorHandler::handleHttpError($response);
 
