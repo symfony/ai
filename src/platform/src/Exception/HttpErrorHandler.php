@@ -38,36 +38,26 @@ final class HttpErrorHandler
 
     private static function extractErrorMessage(ResponseInterface $response): string
     {
-        try {
-            $content = $response->getContent(false);
+        $content = $response->getContent(false);
 
-            if ('' === $content) {
-                return \sprintf('HTTP %d error', $response->getStatusCode());
-            }
-
-            $data = json_decode($content, true);
-
-            if (null === $data || !\is_array($data)) {
-                return \sprintf('HTTP %d error', $response->getStatusCode());
-            }
-
-            if (isset($data['error']['message'])) {
-                return $data['error']['message'];
-            }
-
-            if (isset($data['detail'])) {
-                return $data['detail'];
-            }
-
-            return $content;
-        } catch (\Throwable) {
-            try {
-                $content = $response->getContent(false);
-
-                return !empty($content) ? $content : \sprintf('HTTP %d error', $response->getStatusCode());
-            } catch (\Throwable) {
-                return \sprintf('HTTP %d error', $response->getStatusCode());
-            }
+        if ('' === $content) {
+            return \sprintf('HTTP %d error', $response->getStatusCode());
         }
+
+        $data = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
+
+        if (!\is_array($data)) {
+            return $content;
+        }
+
+        if (isset($data['error']['message'])) {
+            return $data['error']['message'];
+        }
+
+        if (isset($data['error']) && \is_string($data['error'])) {
+            return $data['error'];
+        }
+
+        return $data['message'] ?? $data['detail'] ?? $content;
     }
 }

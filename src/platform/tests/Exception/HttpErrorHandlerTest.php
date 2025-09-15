@@ -18,118 +18,139 @@ use Symfony\AI\Platform\Exception\HttpErrorHandler;
 use Symfony\AI\Platform\Exception\NotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServiceUnavailableException;
+use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
 #[CoversClass(HttpErrorHandler::class)]
 class HttpErrorHandlerTest extends TestCase
 {
-    public function testHandleHttpErrorWithSuccessfulResponse():
+    public function testHandleHttpErrorWithSuccessfulResponse()
     {
-        $response = new MockResponse('{"success": true}', ['http_code' => 200]);
+        $mockResponse = new MockResponse('{"success": true}', ['http_code' => 200]);
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
 
         $this->expectNotToPerformAssertions();
         HttpErrorHandler::handleHttpError($response);
     }
 
-    public function testHandleAuthenticationError():
+    public function testHandleAuthenticationError()
     {
-        $response = new MockResponse(
+        $mockResponse = new MockResponse(
             '{"error": {"message": "Invalid API key"}}',
             ['http_code' => 401]
         );
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
 
         $this->expectException(AuthenticationException::class);
         $this->expectExceptionMessage('Invalid API key');
         HttpErrorHandler::handleHttpError($response);
     }
 
-    public function testHandleNotFoundError():
+    public function testHandleNotFoundError()
     {
-        $response = new MockResponse(
+        $mockResponse = new MockResponse(
             '{"error": {"message": "Model not found"}}',
             ['http_code' => 404]
         );
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
 
         $this->expectException(NotFoundException::class);
         $this->expectExceptionMessage('Model not found');
         HttpErrorHandler::handleHttpError($response);
     }
 
-    public function testHandleServiceUnavailableError():
+    public function testHandleServiceUnavailableError()
     {
-        $response = new MockResponse(
+        $mockResponse = new MockResponse(
             '{"error": {"message": "Service temporarily unavailable"}}',
             ['http_code' => 503]
         );
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
 
         $this->expectException(ServiceUnavailableException::class);
         $this->expectExceptionMessage('Service temporarily unavailable');
         HttpErrorHandler::handleHttpError($response);
     }
 
-    public function testHandleGenericClientError():
+    public function testHandleGenericClientError()
     {
-        $response = new MockResponse(
+        $mockResponse = new MockResponse(
             '{"error": {"message": "Bad request"}}',
             ['http_code' => 400]
         );
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('HTTP 400: Bad request');
         HttpErrorHandler::handleHttpError($response);
     }
 
-    public function testHandleErrorWithDifferentMessageFormats():
+    public function testHandleErrorWithDifferentMessageFormats()
     {
-        $response = new MockResponse(
+        $mockResponse = new MockResponse(
             '{"error": "Direct error message"}',
             ['http_code' => 400]
         );
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('HTTP 400: Direct error message');
         HttpErrorHandler::handleHttpError($response);
     }
 
-    public function testHandleErrorWithMessageField():
+    public function testHandleErrorWithMessageField()
     {
-        $response = new MockResponse(
+        $mockResponse = new MockResponse(
             '{"message": "Simple message format"}',
             ['http_code' => 400]
         );
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('HTTP 400: Simple message format');
         HttpErrorHandler::handleHttpError($response);
     }
 
-    public function testHandleErrorWithDetailField():
+    public function testHandleErrorWithDetailField()
     {
-        $response = new MockResponse(
+        $mockResponse = new MockResponse(
             '{"detail": "Detailed error information"}',
             ['http_code' => 400]
         );
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('HTTP 400: Detailed error information');
         HttpErrorHandler::handleHttpError($response);
     }
 
-    public function testHandleErrorWithInvalidJson():
+    public function testHandleErrorWithInvalidJson()
     {
-        $response = new MockResponse(
+        $mockResponse = new MockResponse(
             'Plain text error message',
             ['http_code' => 500]
         );
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('HTTP 500: Plain text error message');
         HttpErrorHandler::handleHttpError($response);
     }
 
-    public function testHandleErrorWithEmptyResponse():
+    public function testHandleErrorWithEmptyResponse()
     {
-        $response = new MockResponse('', ['http_code' => 500]);
+        $mockResponse = new MockResponse('', ['http_code' => 500]);
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('HTTP 500: HTTP 500 error');
