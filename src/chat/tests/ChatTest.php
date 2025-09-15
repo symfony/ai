@@ -9,27 +9,34 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Tests;
+namespace Symfony\AI\Chat\Tests;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Agent\Chat;
-use Symfony\AI\Agent\Chat\MessageStore\InMemoryStore;
-use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Chat\Bridge\Local\InMemoryStore;
+use Symfony\AI\Chat\Chat;
+use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\ResultPromise;
 use Symfony\AI\Platform\Result\TextResult;
 
 #[CoversClass(Chat::class)]
+#[UsesClass(Agent::class)]
 #[UsesClass(Message::class)]
 #[UsesClass(MessageBag::class)]
 #[UsesClass(TextResult::class)]
 #[UsesClass(InMemoryStore::class)]
+#[UsesClass(ResultPromise::class)]
 #[Small]
 final class ChatTest extends TestCase
 {
@@ -168,17 +175,64 @@ final class ChatTest extends TestCase
         $this->assertSame($assistantContent, $result->content);
     }
 
-    public function testChatCanReturnCurrentAndSpecificMessageBag()
+    public function testChatCanUseAnotherAgentOnceInitialized()
     {
-        $agent = $this->createMock(AgentInterface::class);
-        $agent->expects($this->once())
-            ->method('call')
-            ->willReturn(new TextResult('First response'));
+        $rawResult = $this->createStub(RawResultInterface::class);
 
-        $chat = new Chat($agent, new InMemoryStore());
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->method('invoke')
+            ->willReturn(new ResultPromise(static fn (): TextResult => new TextResult('Assistant response'), $rawResult));
+
+        $model = $this->createMock(Model::class);
+
+        $firstAgent = new Agent($platform, $model);
+
+        $store = new InMemoryStore();
+
+        $chat = new Chat($firstAgent, $store);
         $chat->submit(Message::ofUser('First message'));
 
-        $this->assertCount(2, $chat->getCurrentMessageBag());
-        $this->assertCount(0, $chat->getMessageBag('foo'));
+        $this->assertCount(2, $store->load());
+
+        $secondAgent = new Agent($platform, $model);
+        $chat = new Chat($secondAgent, $store);
+        $chat->submit(Message::ofUser('Second message'));
+
+        $this->assertCount(4, $store->load());
+    }
+
+    public function testChatCanBeForked()
+    {
+        $rawResult = $this->createStub(RawResultInterface::class);
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->method('invoke')
+            ->willReturn(new ResultPromise(static fn (): TextResult => new TextResult('Assistant response'), $rawResult));
+
+        $model = $this->createMock(Model::class);
+
+        $firstAgent = new Agent($platform, $model);
+
+        $store = new InMemoryStore();
+
+        $chat = new Chat($firstAgent, $store);
+        $chat->submit(Message::ofUser('First message'));
+
+        $this->assertCount(2, $store->load());
+
+        $forkedChat = $chat->fork('foo');
+        $forkedChat->submit(Message::ofUser('First message'));
+        $forkedChat->submit(Message::ofUser('Second message'));
+
+        $this->assertCount(4, $store->load('foo'));
+        $this->assertCount(2, $store->load('_message_store_memory'));
+
+        $forkedBackChat = $forkedChat->fork('_message_store_memory');
+        $forkedBackChat->submit(Message::ofUser('First message'));
+        $forkedBackChat->submit(Message::ofUser('Second message'));
+        $forkedBackChat->submit(Message::ofUser('Second message'));
+
+        $this->assertCount(4, $store->load('foo'));
+        $this->assertCount(8, $store->load('_message_store_memory'));
     }
 }

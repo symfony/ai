@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Tests\Chat;
+namespace Symfony\AI\Chat\Tests\Bridge\Symfony;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Chat\MessageStore\SessionStore;
+use Symfony\AI\Chat\Bridge\Symfony\SessionStore;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\HttpFoundation\Request;
@@ -44,7 +44,7 @@ final class SessionStoreTest extends TestCase
         $store = new SessionStore($requestStack);
         $store->save($messageBag);
 
-        $this->assertCount(1, $store->load('_message_store_session'));
+        $this->assertCount(1, $store->load());
     }
 
     public function testItCanStoreMultipleMessageBags()
@@ -70,7 +70,7 @@ final class SessionStoreTest extends TestCase
 
         $this->assertCount(1, $store->load('foo'));
         $this->assertCount(1, $store->load('bar'));
-        $this->assertCount(0, $store->load('_message_store_session'));
+        $this->assertCount(0, $store->load());
     }
 
     public function testItCanClear()
@@ -91,10 +91,10 @@ final class SessionStoreTest extends TestCase
         $store = new SessionStore($requestStack);
         $store->save($bag);
 
-        $this->assertCount(2, $store->load('_message_store_session'));
+        $this->assertCount(2, $store->load());
 
         $store->clear();
 
-        $this->assertCount(0, $store->load('_message_store_session'));
+        $this->assertCount(0, $store->load());
     }
 }

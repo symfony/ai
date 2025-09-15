@@ -2142,6 +2142,10 @@ class AiBundleTest extends TestCase
                         'agent' => 'another_agent',
                         'message_store' => 'cache',
                     ],
+                    'second' => [
+                        'agent' => 'another_agent',
+                        'message_store' => 'cache',
+                    ],
                 ],
             ],
         ]);

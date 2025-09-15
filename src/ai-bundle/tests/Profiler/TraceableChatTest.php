@@ -16,8 +16,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Chat;
-use Symfony\AI\Agent\Chat\MessageStore\InMemoryStore;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
+use Symfony\AI\Chat\Bridge\Local\InMemoryStore;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Result\TextResult;
 
@@ -28,18 +28,6 @@ use Symfony\AI\Platform\Result\TextResult;
 #[UsesClass(TextResult::class)]
 final class TraceableChatTest extends TestCase
 {
-    public function testIdCanBeRetrieved()
-    {
-        $agent = $this->createMock(AgentInterface::class);
-
-        $store = new InMemoryStore('foo');
-        $chat = new Chat($agent, $store);
-
-        $traceableChat = new TraceableChat($chat);
-
-        $this->assertSame('foo', $traceableChat->getId());
-    }
-
     public function testCurrentMessageBagCanBeRetrieved()
     {
         $agent = $this->createMock(AgentInterface::class);

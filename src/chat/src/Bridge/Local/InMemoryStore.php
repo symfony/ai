@@ -9,9 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Chat\MessageStore;
+namespace Symfony\AI\Chat\Bridge\Local;
 
-use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Chat\MessageStoreIdentifierTrait;
+use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**
@@ -19,33 +20,31 @@ use Symfony\AI\Platform\Message\MessageBag;
  */
 final class InMemoryStore implements MessageStoreInterface
 {
+    use MessageStoreIdentifierTrait;
+
     /**
      * @var MessageBag[]
      */
     private array $messageBags;
 
     public function __construct(
-        private readonly string $id = '_message_store_memory',
+        string $id = '_message_store_memory',
     ) {
+        $this->setId($id);
     }
 
     public function save(MessageBag $messages, ?string $id = null): void
     {
-        $this->messageBags[$id ?? $this->id] = $messages;
+        $this->messageBags[$id ?? $this->getId()] = $messages;
     }
 
     public function load(?string $id = null): MessageBag
     {
-        return $this->messageBags[$id ?? $this->id] ?? new MessageBag();
+        return $this->messageBags[$id ?? $this->getId()] ?? new MessageBag();
     }
 
     public function clear(?string $id = null): void
     {
-        $this->messageBags[$id ?? $this->id] = new MessageBag();
-    }
-
-    public function getId(): string
-    {
-        return $this->id;
+        $this->messageBags[$id ?? $this->getId()] = new MessageBag();
     }
 }

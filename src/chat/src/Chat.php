@@ -1,0 +1,71 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Chat;
+
+use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Chat\Exception\LogicException;
+use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\TextResult;
+
+/**
+ * @author Christopher Hertel <mail@christopher-hertel.de>
+ */
+final readonly class Chat implements ChatInterface
+{
+    public function __construct(
+        private AgentInterface $agent,
+        private MessageStoreInterface $store,
+    ) {
+    }
+
+    public function initiate(MessageBag $messages): void
+    {
+        $this->store->clear();
+        $this->store->save($messages);
+    }
+
+    public function submit(UserMessage $message): AssistantMessage
+    {
+        $messages = $this->store->load();
+
+        $messages->add($message);
+        $result = $this->agent->call($messages);
+
+        \assert($result instanceof TextResult);
+
+        $assistantMessage = Message::ofAssistant($result->getContent());
+        $messages->add($assistantMessage);
+
+        $this->store->save($messages);
+
+        return $assistantMessage;
+    }
+
+    public function fork(string $id): ChatInterface
+    {
+        $forkedMessagesBag = $this->store->load($id);
+
+        if (!\array_key_exists(MessageStoreIdentifierTrait::class, class_uses($this->store))) {
+            throw new LogicException(\sprintf('The current store must implement "%s" to being able to be forked.', MessageStoreIdentifierTrait::class));
+        }
+
+        $this->store->setId($id);
+
+        $self = new self($this->agent, $this->store);
+        $self->initiate($forkedMessagesBag);
+
+        return $self;
+    }
+}

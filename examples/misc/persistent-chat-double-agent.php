@@ -10,8 +10,8 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\Chat;
-use Symfony\AI\Agent\Chat\MessageStore\InMemoryStore;
+use Symfony\AI\Chat\Bridge\Local\InMemoryStore;
+use Symfony\AI\Chat\Chat;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -26,21 +26,19 @@ $agent = new Agent($platform, $llm, logger: logger());
 
 $store = new InMemoryStore();
 
-$firstChat = new Chat($agent, $store);
-$secondChat = new Chat($agent, $store);
+$chat = new Chat($agent, $store);
 
-$firstChat->initiate(new MessageBag(
+$chat->initiate(new MessageBag(
     Message::forSystem('You are a helpful assistant. You only answer with short sentences.'),
-), '_first_chat');
-$secondChat->initiate(new MessageBag(
-    Message::forSystem('You are a helpful assistant. You only answer with short sentences.'),
-), '_second_chat');
+));
 
-$firstChat->submit(Message::ofUser('My name is Christopher.'));
-$firstChatMessage = $firstChat->submit(Message::ofUser('What is my name?'));
+$forkedChat = $chat->fork('fork');
 
-$secondChat->submit(Message::ofUser('My name is William.'));
-$secondChatMessage = $secondChat->submit(Message::ofUser('What is my name?'));
+$chat->submit(Message::ofUser('My name is Christopher.'));
+$firstChatMessage = $chat->submit(Message::ofUser('What is my name?'));
+
+$forkedChat->submit(Message::ofUser('My name is William.'));
+$secondChatMessage = $forkedChat->submit(Message::ofUser('What is my name?'));
 
 $firstChatMessageContent = $firstChatMessage->content;
 $secondChatMessageContent = $secondChatMessage->content;

@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Tests\Chat;
+namespace Symfony\AI\Chat\Tests\Bridge\Local;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Chat\MessageStore\InMemoryStore;
+use Symfony\AI\Chat\Bridge\Local\InMemoryStore;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
