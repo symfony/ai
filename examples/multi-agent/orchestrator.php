@@ -64,11 +64,11 @@ $messages = new MessageBag(
     Message::ofUser('I get this error in my php code: "Call to undefined method App\Controller\UserController::getName()" - this is my line of code: $user->getName() where $user is an instance of User entity.')
 );
 $result = $multiAgent->call($messages);
-echo $result->getContent().\PHP_EOL.\PHP_EOL;
+echo substr($result->getContent(), 0, 300).'...'.\PHP_EOL.\PHP_EOL;
 
 echo "=== General Question ===\n";
 $messages = new MessageBag(
     Message::ofUser('Can you give me a lasagne recipe?')
 );
 $result = $multiAgent->call($messages);
-echo $result->getContent().\PHP_EOL;
+echo substr($result->getContent(), 0, 300).'...'.\PHP_EOL;
