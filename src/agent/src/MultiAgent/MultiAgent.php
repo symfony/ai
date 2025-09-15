@@ -69,7 +69,7 @@ final class MultiAgent implements AgentInterface
 
         // Ask orchestrator which agent to target using JSON response format
         $userText = self::extractUserMessage($userMessages);
-        $this->logger->debug('MultiAgent: Processing user message: '.$userText);
+        $this->logger->debug('MultiAgent: Processing user message: '.$userText.' [user_text='.$userText.']', ['user_text' => $userText]);
 
         // Log available rules and agents
         $agentInfo = [];
@@ -77,30 +77,32 @@ final class MultiAgent implements AgentInterface
             $triggers = empty($rule->getTriggers()) ? '[no triggers]' : implode(', ', $rule->getTriggers());
             $agentInfo[] = $rule->getAgentName().' ('.$triggers.')';
         }
-        $this->logger->debug('MultiAgent: Available agents: '.implode(' | ', $agentInfo));
+        $agentDetails = json_encode(array_map(fn ($rule) => ['name' => $rule->getAgentName(), 'triggers' => $rule->getTriggers()], $this->rules));
+        $this->logger->debug('MultiAgent: Available agents: '.implode(' | ', $agentInfo).' [agents='.$agentDetails.']', ['agents' => $this->rules]);
 
         $agentSelectionPrompt = $this->buildAgentSelectionPrompt($userText);
         $agentSelectionMessages = new MessageBag(Message::ofUser($agentSelectionPrompt));
 
         $selectionResult = $this->orchestrator->call($agentSelectionMessages, $options);
         $responseContent = $selectionResult->getContent();
-        $this->logger->debug('MultiAgent: Orchestrator response: '.$responseContent);
+        $this->logger->debug('MultiAgent: Orchestrator response: '.$responseContent.' [response='.substr($responseContent, 0, 100).'...]', ['response' => $responseContent]);
 
         // Parse JSON response
         $selectionData = json_decode($responseContent, true);
         if (\JSON_ERROR_NONE !== json_last_error()) {
-            $this->logger->debug('MultiAgent: JSON parsing failed ('.json_last_error_msg().'), falling back to orchestrator');
+            $errorMsg = json_last_error_msg();
+            $this->logger->debug('MultiAgent: JSON parsing failed ('.$errorMsg.'), falling back to orchestrator [json_error='.$errorMsg.']', ['json_error' => $errorMsg]);
 
             return $this->orchestrator->call($messages, $options);
         }
 
         $agentName = $selectionData['agentName'] ?? null;
         $reasoning = $selectionData['reasoning'] ?? 'No reasoning provided';
-        $this->logger->debug('MultiAgent: Selected agent "'.($agentName ?: 'null').'" - '.$reasoning);
+        $this->logger->debug('MultiAgent: Selected agent "'.($agentName ?: 'null').'" - '.$reasoning.' [selected_agent='.($agentName ?: 'null').', reasoning='.$reasoning.']', ['selected_agent' => $agentName, 'reasoning' => $reasoning]);
 
         // If no specific agent is selected, fall back to orchestrator
         if (!$agentName || 'null' === $agentName) {
-            $this->logger->debug('MultiAgent: No specific agent selected, using orchestrator');
+            $this->logger->debug('MultiAgent: No specific agent selected, using orchestrator [fallback_reason=no_agent_selected]', ['fallback_reason' => 'no_agent_selected']);
 
             return $this->orchestrator->call($messages, $options);
         }
@@ -108,9 +110,9 @@ final class MultiAgent implements AgentInterface
         // Find the target agent by name
         try {
             $targetAgent = $this->getAgent($agentName);
-            $this->logger->debug('MultiAgent: Found and calling agent "'.$agentName.'"');
+            $this->logger->debug('MultiAgent: Found and calling agent "'.$agentName.'" [target_agent='.$agentName.']', ['target_agent' => $agentName]);
         } catch (RuntimeException $e) {
-            $this->logger->debug('MultiAgent: Agent "'.$agentName.'" not found ('.$e->getMessage().'), falling back to orchestrator');
+            $this->logger->debug('MultiAgent: Agent "'.$agentName.'" not found ('.$e->getMessage().'), falling back to orchestrator [requested_agent='.$agentName.', error='.$e->getMessage().', fallback_reason=agent_not_found]', ['requested_agent' => $agentName, 'error' => $e->getMessage(), 'fallback_reason' => 'agent_not_found']);
 
             return $this->orchestrator->call($messages, $options);
         }
