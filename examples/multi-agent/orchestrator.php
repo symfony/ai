@@ -55,7 +55,8 @@ $multiAgent = new MultiAgent(
     rules: [
         new HandoffRule(agentName: 'technical', triggers: ['bug', 'problem', 'technical', 'error']),
         new HandoffRule(agentName: 'general', triggers: []),
-    ]
+    ],
+    logger: logger()
 );
 
 echo "=== Technical Question ===\n";
