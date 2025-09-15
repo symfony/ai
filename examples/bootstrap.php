@@ -53,7 +53,17 @@ function logger(): LoggerInterface
         default => ConsoleOutput::VERBOSITY_NORMAL,
     };
 
-    return new ConsoleLogger(new ConsoleOutput($verbosity));
+    return new class(new ConsoleOutput($verbosity)) extends ConsoleLogger {
+        public function log($level, $message, array $context = []): void
+        {
+            if (!empty($context)) {
+                $contextString = json_encode($context, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
+                $message .= ': '.$contextString;
+            }
+
+            parent::log($level, $message, []);
+        }
+    };
 }
 
 function print_token_usage(Metadata $metadata): void
