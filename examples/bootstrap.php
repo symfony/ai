@@ -57,7 +57,7 @@ function logger(): LoggerInterface
         public function log($level, $message, array $context = []): void
         {
             if (!empty($context)) {
-                $contextString = json_encode($context, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
+                $contextString = json_encode($context, \JSON_UNESCAPED_SLASHES);
                 $message .= ': '.$contextString;
             }
 
