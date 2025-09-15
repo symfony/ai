@@ -48,7 +48,7 @@ $general = new Agent(
     logger: logger()
 );
 
-// Create multi-agent orchestrator
+// Create multi-agent
 $multiAgent = new MultiAgent(
     orchestrator: $orchestrator,
     agents: [$technical, $general],
