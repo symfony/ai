@@ -1,0 +1,82 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-13T21:24:55Z
+
+hmm, i know that it is injected in the prompt, but still i feel it should be standalone config, not below the prompt
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-13T21:28:13Z
+
+> hmm, i know that it is injected in the prompt, but still i feel it should be standalone config, not below the prompt
+
+I thought the same, but it can only work with the SystemInputProcessor and this is only registered, once a prompt is defined 🤷‍♂️ Imagine, you don't add a system prompt but memory, then the memory will be your system prompt, which is weird to me.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-13T21:35:23Z
+
+> but it can only work with the SystemInputProcessor
+
+i think it works on every MessageBag with system prompt - no matter if pushed by the user or the SystemPromptProcessor:
+https://github.com/symfony/ai/blob/d8dfb30470551224f7004411c8d32b6a9e600622/src/agent/src/Memory/MemoryInputProcessor.php#L72-L83
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-13T21:45:42Z
+
+I updated my comment, it's about the result
+
+---------------------------------------------------------------------------
+
+by DZunke at 2025-09-14T07:06:55Z
+
+> hmm, i know that it is injected in the prompt, but still i feel it should be standalone config, not below the prompt
+
+Yeah, feels a bit weird but i was inspired by other libraries doing the same. The memory was always injected to the prompt message type as the memory do not have an own message type. I had shortly also seen some internal OpenAI / Antrophic internal prompt collections where there memory was also injected into the prompt.
+
+Another approach i have seen was to have `bio` or `memory` tools to give the LLM more possibilitied to manage the memory. That approach was also combined with the "static" memory approach.
+
+I, for example, have replaced a static configured fantasy calendar that was a "forced" tooling for each LLM call with this static memory. Also some other personal information are injected here from different sources. I understand the tooling approach more as a dynamic memory to let the LLM decide information from conversation to be stored into a memory that could then be injected again.
+
+An interesting overview about how complex prompts can be filled, for me, was https://github.com/asgeirtj/system_prompts_leaks/tree/main - There is a lot going on in the system prompts that is going beyond just the "System Prompt".
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-14T07:18:42Z
+
+In my case I have a demo where I have a system prompt and adding all activities and apartments of the client. Roughly 15 apartments an 19 activities. I would love to be able to split the "data" front he prompt, so this feels handy.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-14T10:42:47Z
+
+No, don't get me wrong, i'm not questioning that this belongs in the system prompt when looking at the actual payload. I'm questioning if from the configuration point of view, it should go there.
+tbh, i would hide the entire prompt thing going forward, making it more like:
+
+```yaml
+my_agent:
+    platform: 'service_id'
+    model: 'model_name'
+    instruction:
+        text: '...'
+        ...
+    memory: '...'
+    tools: [...]
+```
+
+I think the memory is a feature of the agent, not a feature of the prompt - even tho from an implementation point of view, it is implemented via the system prompt.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-14T11:35:48Z
+
+Fine, but validating, that you can only use memory once a prompt is set, agree?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-15T15:09:35Z
+
+> Fine, but validating, that you can only use memory once a prompt is set, agree?
+
+The memory itself has a prompt - I think even if no system prompt is around, we should add this - and this is actually what the `MemoryInputProcessor` does, if i get it right
