@@ -67,7 +67,7 @@ echo $result->getContent().\PHP_EOL.\PHP_EOL;
 
 echo "=== General Question ===\n";
 $messages = new MessageBag(
-    Message::ofUser('What are some good programming best practices?')
+    Message::ofUser('Can you give me a lasagne recipe?')
 );
 $result = $multiAgent->call($messages);
 echo $result->getContent().\PHP_EOL;
