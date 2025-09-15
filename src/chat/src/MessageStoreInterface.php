@@ -9,9 +9,8 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Chat;
+namespace Symfony\AI\Chat;
 
-use Symfony\AI\Agent\ChatInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**
@@ -27,6 +26,4 @@ interface MessageStoreInterface
     public function load(?string $id = null): MessageBag;
 
     public function clear(?string $id = null): void;
-
-    public function getId(): string;
 }

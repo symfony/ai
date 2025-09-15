@@ -433,7 +433,7 @@ final class AgentTest extends TestCase
         $this->assertSame($name, $agent->getName());
     }
 
-    public function testDoubleAgentCanUseSameMessageStore()
+    public function testMultipleAgentCanUseSameChat()
     {
         $platform = $this->createMock(PlatformInterface::class);
         $platform->method('invoke')
@@ -451,10 +451,10 @@ final class AgentTest extends TestCase
 
         $firstChat->initiate(new MessageBag(
             Message::forSystem('You are a helpful assistant. You only answer with short sentences.'),
-        ), 'foo');
+        ));
         $secondChat->initiate(new MessageBag(
             Message::forSystem('You are a helpful assistant. You only answer with short sentences.'),
-        ), 'bar');
+        ));
 
         $firstChat->submit(new UserMessage(new Text('Hello')));
         $secondChat->submit(new UserMessage(new Text('Hello')));

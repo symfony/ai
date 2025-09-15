@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\AiBundle\Profiler;
 
-use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**
