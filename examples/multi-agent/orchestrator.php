@@ -25,7 +25,7 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 // Create orchestrator agent for routing decisions
 $orchestrator = new Agent(
     $platform,
-    new Gpt(Gpt::GPT_5_NANO),
+    new Gpt(Gpt::GPT_4O_MINI),
     [new SystemPromptInputProcessor('You are an intelligent agent orchestrator that routes user questions to specialized agents.')],
     logger: logger()
 );
