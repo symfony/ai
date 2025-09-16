@@ -131,7 +131,7 @@ return static function (DefinitionConfigurator $configurator): void {
                         ->end()
                         ->booleanNode('structured_output')->defaultTrue()->end()
                         ->scalarNode('memory')
-                            ->info('Plain string or service name of the memory provider implementing MemoryProviderInterface')
+                            ->info('Plain string for static memory or service name prefixed with @ (e.g., "@app.memory_provider")')
                             ->defaultNull()
                             ->validate()
                                 ->ifTrue(function ($v) { return \is_string($v) && '' === $v; })

@@ -1273,6 +1273,42 @@ class AiBundleTest extends TestCase
         $this->assertSame('memory_alias', (string) $arguments[0]);
     }
 
+    #[TestDox('Memory with @ prefix uses service reference directly')]
+    public function testMemoryWithAtPrefixUsesServiceReference()
+    {
+        // Register a memory service before building the container
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.debug', true);
+        $container->setParameter('kernel.environment', 'dev');
+        $container->setParameter('kernel.build_dir', 'public');
+        $container->register('app.memory_provider', StaticMemoryProvider::class);
+
+        $extension = (new AiBundle())->getContainerExtension();
+        $extension->load([
+            'ai' => [
+                'agent' => [
+                    'test_agent' => [
+                        'model' => ['class' => Gpt::class],
+                        'memory' => '@app.memory_provider', // Using @ prefix
+                    ],
+                ],
+            ],
+        ], $container);
+
+        // Verify the agent exists
+        $this->assertTrue($container->hasDefinition('ai.agent.test_agent'));
+
+        // Verify memory processor is created
+        $this->assertTrue($container->hasDefinition('ai.agent.test_agent.memory_input_processor'));
+
+        // Check that the memory processor uses the correct service reference
+        $memoryProcessor = $container->getDefinition('ai.agent.test_agent.memory_input_processor');
+        $arguments = $memoryProcessor->getArguments();
+
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('app.memory_provider', (string) $arguments[0]);
+    }
+
     #[TestDox('Different agents can use different memory types')]
     public function testDifferentAgentsCanUseDifferentMemoryTypes()
     {

@@ -624,10 +624,10 @@ final class AiBundle extends AbstractBundle
         if (isset($config['memory'])) {
             $memoryValue = $config['memory'];
 
-            // Check if the value refers to an existing service
-            if ($container->hasDefinition($memoryValue) || $container->hasAlias($memoryValue)) {
-                // Use existing service as memory provider
-                $memoryProviderReference = new Reference($memoryValue);
+            if (str_starts_with($memoryValue, '@')) {
+                // Treat as service reference
+                $serviceId = substr($memoryValue, 1);
+                $memoryProviderReference = new Reference($serviceId);
             } else {
                 // Create StaticMemoryProvider with the string as static content
                 $staticMemoryProviderDefinition = (new Definition(StaticMemoryProvider::class))

@@ -71,7 +71,7 @@ Configuration
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
-                memory: 'You have access to conversation history and user preferences' # Optional: static memory or service reference
+                memory: '@user_preferences_memory' # Optional: static memory string or service reference with @ prefix
                 prompt: # The system prompt configuration
                     text: 'You are a helpful assistant that can answer questions.' # The prompt text
                     include_tools: true # Include tool definitions at the end of the system prompt
@@ -208,7 +208,7 @@ This static memory content is consistently available to the agent across all con
 
 **Dynamic Memory (Advanced)**
 
-For more sophisticated scenarios, you can reference an existing service that implements dynamic memory:
+For more sophisticated scenarios, you can reference an existing service that implements dynamic memory using the ``@`` prefix:
 
 .. code-block:: yaml
 
@@ -218,7 +218,7 @@ For more sophisticated scenarios, you can reference an existing service that imp
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                     name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
-                memory: 'my_memory_service'  # References an existing service
+                memory: '@my_memory_service'  # References an existing service with @ prefix
                 prompt:
                     text: 'You are a helpful assistant.'
 
@@ -272,16 +272,17 @@ When using a service reference, the memory service must implement the ``Symfony\
 The system automatically detects whether to use static or dynamic memory:
 
 **Static Memory Processing:**
-1. When you provide a string that doesn't match any service name
+1. When you provide a string that doesn't start with ``@``
 2. The system creates a ``StaticMemoryProvider`` automatically
 3. Content is formatted as "## Static Memory" with the provided text
 4. This memory is consistently available across all conversations
 
 **Dynamic Memory Processing:**
-1. When the string matches an existing service in the container
-2. The ``MemoryInputProcessor`` uses that service directly
-3. The service's ``loadMemory()`` method is called before processing user input
-4. Dynamic memory content is injected based on the current context
+1. When the string starts with ``@`` (e.g., ``@my_memory_service``)
+2. The ``@`` prefix is removed and the remaining string is used as a service reference
+3. The ``MemoryInputProcessor`` uses that service directly
+4. The service's ``loadMemory()`` method is called before processing user input
+5. Dynamic memory content is injected based on the current context
 
 In both cases, memory content is prepended to the system message, allowing the agent to utilize the context effectively.
 
