@@ -1,0 +1,152 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-11T15:27:32Z
+
+Can we please make the translator configurable in the bundle? Thanks
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-12T11:40:58Z
+
+so, what we just discussed as config structure:
+```yaml
+system_prompt:
+    prompt: '...',
+    enable_translation: true|false, # default: true if translator is present
+    translation_domain: '...', # default: "messages"
+    include_tools: true|false # default same as now
+```
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-12T11:52:27Z
+
+> so, what we just discussed as config structure:
+>
+> ```yaml
+>     enable_translation: true|false, # default: true if translator is present
+>     translation_domain: '...', # default: "messages"
+> ```
+
+@chr-hertel I feel like this is kinda redundant, you could have only one key by allowing `string|null (default to message)|false` like lot of other places where translation is used
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-12T14:24:02Z
+
+You are right, but it's some kind of a hidden feature. It's not clear, that string or null means, the translator is enabled. So lets go with @chr-hertel proposal
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-13T08:33:47Z
+
+Fyi
+* https://github.com/symfony/ai/pull/576
+* https://github.com/symfony/ai/pull/579
+
+> no (there's no documentation for system input, so not sure where to put it. Open to ideas!
+
+I also added initial documentation in #576 which can be extended now
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-13T10:20:20Z
+
+> Fyi
+>
+> * [[AI Bundle] Restructure `system_prompt` configuration to nest `include_tools` #576](https://github.com/symfony/ai/pull/576)
+> * [[AI Bundle] Rename `system_prompt` to `prompt` and `prompt` key to `text` #579](https://github.com/symfony/ai/pull/579)
+>
+> > no (there's no documentation for system input, so not sure where to put it. Open to ideas!
+>
+> I also added initial documentation in #576 which can be extended now
+
+I fee like that with a `prompt.text` config key, it shouldn't be translated by default. So I expect
+```
+enable_translation: true|false, # default: false
+translation_domain: '...', # default: "messages"
+```
+
+---------------------------------------------------------------------------
+
+by paulinevos at 2025-09-13T10:35:38Z
+
+> it shouldn't be translated by default
+
+Why not?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-13T11:08:53Z
+
+Yeah we can disable by default
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-13T11:31:23Z
+
+> > it shouldn't be translated by default
+>
+> Why not?
+
+I dunno if there is a lot of example in the existing Symfony config for such "translated text" (I only have tanslation domain in mind like validators). But it's called `"text"` not translation key or anything similar/related to any translation.
+
+OskarStark called it a "hidden feature." and if it is, I feel like it's odd having a "hidden modification of the prompt given", which will ends in unexpected results.
+
+But more important, even if I agree it's a useful feature, I feel like the translated prompt is something which will more often not used rather than used.
+- Because I can have question in which the answer does not depend on the local: "What is the sum of 2+3"
+- Or because I can also directly ask for a specific locale "What is ... . Please answer in french".
+- And because prompt is a really delicate thing, something adding one extra word or removing one will ends up with a different result/answer ; it requires lot of testing to get the right prompt. And it will be ten times harder to have the same quality of prompt in different local.
+
+---------------------------------------------------------------------------
+
+by paulinevos at 2025-09-13T13:27:16Z
+
+@VincentLanglet My reasoning is, if there's translation tokens in the text then that would be intentional. And if there are none we'd get the untranslated result. Then for the edge case where translation token syntax might somehow need to be in the prompt, there's an option to disable translation.
+
+But I've now implemented it with `false` as the default.
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-13T13:36:39Z
+
+> @VincentLanglet My reasoning is, if there's translation tokens in the text then that would be intentional.
+
+I agree
+
+> And if there are none we'd get the untranslated result. Then for the edge case where translation token syntax might somehow need to be in the prompt, there's an option to disable translation.
+
+It depends if you're concern about
+- having a useless trans call
+- having a "missing translation" in your profiler etc
+
+I personally try to avoid useless call and missing translations ; but this is maybe not the symfony philosophy
+
+> But I've now implemented it with `false` as the default.
+
+👍
+
+---------------------------------------------------------------------------
+
+by paulinevos at 2025-09-15T10:38:03Z
+
+Hmm, I'm not super convinced about using `TranslatableMessage` in this way, as it seems to add some complexity for a fairly simple use case and it puts a lot of behavior in the bundle that (in my eyes) "belongs to" `SystemPromptInputProcessor`
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-15T11:05:55Z
+
+> Hmm, I'm not super convinced about using `TranslatableMessage` in this way, as it seems to add some complexity for a fairly simple use case and it puts a lot of behavior in the bundle that (in my eyes) "belongs to" `SystemPromptInputProcessor`
+
+We could argue the opposite.
+
+Currently we're adding complexity in SystemPromptInputProcessor which has to be aware about
+- if we want enable translation or not
+- the translation domain
+
+Such things should be "prompt" knownledge rather than SystemPromptInputProcessor one. Quoting the original PR https://github.com/symfony/symfony/pull/37670
+> The service shouldn't need to care how the message is going to be handled, but just needs to create it in a way that it can be translated if needed.
+
+TranslatableMessage is a way to avoid putting this knownledge inside the SystemPromptInputProcessor
+
+It's also a way to allow using translation parameters.
