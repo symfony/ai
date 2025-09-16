@@ -12,14 +12,16 @@
 namespace Symfony\AI\AiBundle\Command;
 
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Toolbox\StreamResult as ToolboxStreamResult;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Completion\CompletionSuggestions;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -96,7 +98,7 @@ final class ChatCommand extends Command
         );
         $question->setErrorMessage('Agent %s is invalid.');
 
-        /** @var \Symfony\Component\Console\Helper\QuestionHelper $helper */
+        /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
         $selectedAgent = $helper->ask($input, $output, $question);
 
@@ -132,7 +134,6 @@ final class ChatCommand extends Command
 
         $io->title(\sprintf('Chat with %s Agent', $agentName));
         $io->info('Type your message and press Enter. Type "exit" or "quit" to end the conversation.');
-        $io->newLine();
 
         $messages = new MessageBag();
         $systemPromptDisplayed = false;
@@ -161,13 +162,17 @@ final class ChatCommand extends Command
                     $systemPromptDisplayed = true;
                 }
 
-                if ($result instanceof TextResult) {
-                    $io->write('<fg=yellow>Assistant</>:');
-                    $io->writeln('');
-                    $io->writeln($result->getContent());
+                if ($result instanceof StreamResult || $result instanceof ToolboxStreamResult) {
+                    $io->writeln(' <fg=yellow>Assistant</>:');
+                    $io->write(' > ');
+                    $resultContent = '';
+                    foreach ($result->getContent() as $word) {
+                        $resultContent .= $word;
+                        $io->write($word);
+                    }
                     $io->newLine();
 
-                    $messages->add(Message::ofAssistant($result->getContent()));
+                    $messages->add(Message::ofAssistant($resultContent));
                 } else {
                     $io->error('Unexpected response type from agent');
                 }
