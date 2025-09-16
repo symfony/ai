@@ -16,7 +16,7 @@ final readonly class ToolCallResult
     public function __construct(
         public string $result,
         /**
-         * @var "text"|"image"|"audio"|"resource"|non-empty-string
+         * @var "text"|"image"|"audio"|"resource"|"structuredContent"|non-empty-string
          */
         public string $type = 'text',
         public string $mimeType = 'text/plan',

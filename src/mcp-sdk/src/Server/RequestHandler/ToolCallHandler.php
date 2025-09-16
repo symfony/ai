@@ -41,7 +41,7 @@ final class ToolCallHandler extends BaseRequestHandler
         }
 
         $content = match ($result->type) {
-            'text' => [
+            'text', 'structuredContent' => [
                 'type' => 'text',
                 'text' => $result->result,
             ],
@@ -62,10 +62,16 @@ final class ToolCallHandler extends BaseRequestHandler
             default => throw new InvalidArgumentException(\sprintf('Unsupported tool result type: %s', $result->type)),
         };
 
-        return new Response($message->id, [
+        $responseResult = [
             'content' => [$content], // TODO: allow multiple `ToolCallResult`s in the future
             'isError' => $result->isError,
-        ]);
+        ];
+
+        if ('structuredContent' === $result->type) {
+            $responseResult['structuredContent'] = json_decode($result->result, true, flags: \JSON_THROW_ON_ERROR);
+        }
+
+        return new Response($message->id, $responseResult);
     }
 
     protected function supportedMethod(): string
