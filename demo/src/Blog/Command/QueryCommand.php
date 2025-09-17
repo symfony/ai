@@ -44,7 +44,7 @@ final class QueryCommand
         $io->comment(\sprintf('Converting "%s" to vector & searching in Chroma DB ...', $search));
         $io->comment('Results are limited to 4 most similar documents.');
 
-        $platformResponse = $this->platform->invoke(new Embeddings(Embeddings::TEXT_3_SMALL), $search);
+        $platformResponse = $this->platform->invoke(new Embeddings(Embeddings::TEXT_ADA_002), $search);
         $queryResponse = $collection->query(
             queryEmbeddings: [$platformResponse->asVectors()[0]->getData()],
             nResults: 4,
