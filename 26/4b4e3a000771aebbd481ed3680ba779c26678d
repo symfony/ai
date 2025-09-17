@@ -1,0 +1,105 @@
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-08-06T21:39:11Z
+
+Why do we want to drop 6.4?
+
+I don't think there is a big burden to support it and it it a huge benefit for adoption of we keep it.
+
+Or am I missing something?
+
+---------------------------------------------------------------------------
+
+by fabpot at 2025-08-07T07:00:08Z
+
+> Why do we want to drop 6.4?
+>
+> I don't think there is a big burden to support it and it it a huge benefit for adoption of we keep it.
+>
+> Or am I missing something?
+
+If you're not able to upgrade to a non-LTS version of Symfony, you will probably not be able to use Symfony AI, which is not stable yet (and probably not before the release of 7.4 LTS), you will probably not be able to upgrade Symony AI frequently which is going to be needed as the space is changing fast.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-07T07:41:47Z
+
+> the CI failures look related
+
+yes, but I think this is due to the fact that not all Symfony components allow 7.4|8 ? just my guess
+
+---------------------------------------------------------------------------
+
+by derrabus at 2025-08-07T08:12:52Z
+
+> > the CI failures look related
+>
+> yes, but I think this is due to the fact that not all Symfony components allow 7.4|8 ? just my guess
+
+No, it's because you're pinning to unstable Symfony branches while requesting stable dependencies.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-07T08:59:35Z
+
+Ok, so we can only merge this, once 7.4 and 8.0 are released?
+
+---------------------------------------------------------------------------
+
+by derrabus at 2025-08-07T11:13:33Z
+
+No, you'll have to lower the minimum stability to dev. Either globally for the project (as we do on symfony/symfony) or on those two CI jobs.
+
+---------------------------------------------------------------------------
+
+by valtzu at 2025-08-08T13:26:27Z
+
+:-1:  from me (at least until 7.4 is out). This will change a one-week proof-of-concept to a bigger "upgrade symfony" project for many companies – assuming that companies prefer LTS _(yet are fine running `symfony/ai@dev`)_.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-20T11:42:41Z
+
+@derrabus I now use the proposed minimum stability and the 7.4 build is passing, but the 8.0 one not 🤔
+
+```
+Loading composer repositories with package information
+Restricting packages listed in "symfony/symfony" to "8.0.*"
+Updating dependencies
+Your requirements could not be resolved to an installable set of packages.
+
+  Problem 1
+    - Root composer.json requires symfony/finder ^7.3|^8.0 -> satisfiable by symfony/finder[8.0.x-dev].
+    - symfony/finder 8.0.x-dev requires php >=8.4 -> your php version (8.3.23) does not satisfy that requirement.
+  Problem 2
+    - Root composer.json requires symfony/filesystem ^7.3|^8.0 -> satisfiable by symfony/filesystem[8.0.x-dev].
+    - symfony/filesystem 8.0.x-dev requires php >=8.4 -> your php version (8.3.23) does not satisfy that requirement.
+
+Error: Your requirements could not be resolved to an installable set of packages.
+
+  Problem 1
+    - Root composer.json requires symfony/finder ^7.3|^8.0 -> satisfiable by symfony/finder[8.0.x-dev].
+    - symfony/finder 8.0.x-dev requires php >=8.4 -> your php version (8.3.23) does not satisfy that requirement.
+  Problem 2
+    - Root composer.json requires symfony/filesystem ^7.3|^8.0 -> satisfiable by symfony/filesystem[8.0.x-dev].
+    - symfony/filesystem 8.0.x-dev requires php >=8.4 -> your php version (8.3.23) does not satisfy that requirement.
+```
+
+---------------------------------------------------------------------------
+
+by derrabus at 2025-08-22T07:30:10Z
+
+@OskarStark Read the error message. ✌️ You need to run the Symfony 8 workflow on PHP 8.4.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-22T07:43:26Z
+
+Thought I pushed it already
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-15T20:20:32Z
+
+Needs
+- [x] https://github.com/CodeWithKyrian/platform-package-installer/pull/3
