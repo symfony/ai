@@ -1,0 +1,50 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-12T16:47:43Z
+
+Let's remove the FeedLoader from the demo and use the new RssFeedLoader, move the FeedLoaderTest to the store component and rename it properly. Update the demo to use your new loader instead of the FeedLoader.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-16T21:05:29Z
+
+Open for finishing this PR? :-)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-17T07:51:12Z
+
+I pushed some changes to your branch
+
+---------------------------------------------------------------------------
+
+by ngrie at 2025-09-17T08:38:53Z
+
+@OskarStark That's fine for me! I did not intend to leave this one unfinished, but I am still travelling for some more days and not spending that much time in front of a computer ...
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-17T08:49:20Z
+
+Enjoy your vacation, I will finish this one :-)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-17T10:25:22Z
+
+I tested the indexer in the Demo app:
+<img width="1476" height="382" alt="CleanShot 2025-09-17 at 12 24 43@2x" src="https://github.com/user-attachments/assets/9f8d3d81-cb83-4d49-9595-029f393f00b7" />
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-17T10:57:36Z
+
+Final test with debug output:
+<img width="2914" height="1182" alt="CleanShot 2025-09-17 at 12 57 13@2x" src="https://github.com/user-attachments/assets/490a647a-e114-48c6-b52e-cbf4e49815d7" />
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-17T11:01:08Z
+
+And the example:
+<img width="2146" height="644" alt="CleanShot 2025-09-17 at 13 00 46@2x" src="https://github.com/user-attachments/assets/792ab55e-c821-40aa-9bfd-92c1a16b8c07" />
