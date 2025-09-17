@@ -1,0 +1,82 @@
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-09-11T15:17:43Z
+
+Consider this first implementation as basic bridge for basic usage. It could be improved during the hackathon by:
+
+- Adding examples (tool calling, image, etc)
+- Add guard about model presence (using "Get model" endpoint https://docs.docker.com/ai/model-runner/api-reference/#available-dmr-endpoints) to avoid calling a non-present model
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-09-12T12:05:09Z
+
+> [!NOTE]
+> PHPStan failure is expected as example code use not yet merged Bridge in Platform package.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-12T12:07:32Z
+
+oh, that's due to #535 and not using the components from the branch but via composer install, right?
+cc @VincentLanglet
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-12T12:21:44Z
+
+> oh, that's due to #535 and not using the components from the branch but via composer install, right? cc @VincentLanglet
+
+Indeed, I'll take a look.
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-09-12T12:26:45Z
+
+@VincentLanglet if you need any help about setting up DMR, I'm on Slack and WorkAdventure (main hall)
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-12T12:45:47Z
+
+> @VincentLanglet if you need any help about setting up DMR, I'm on Slack and WorkAdventure (main hall)
+
+I feel like this can be easily fixed with https://github.com/symfony/ai/pull/552/commits/93464f6a3e6e4db4520bf155852cd4525402e63a
+
+But I get a infinite loop
+https://github.com/symfony/ai/actions/runs/17674610626/job/50233715432?pr=552
+
+I assume it's because of https://github.com/symfony/ai/issues/527 cc @chr-hertel
+
+Not sure if we can do something until...
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-09-12T14:07:22Z
+
+I'm getting something working https://github.com/symfony/ai/pull/568
+
+proof https://github.com/symfony/ai/pull/552
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-16T22:16:53Z
+
+still unable to install and test locally - sorry - can someone else test and confirm?
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-09-17T05:43:19Z
+
+> still unable to install and test locally - sorry - can someone else test and confirm?
+
+What do you need to be able to test? More doc about setting up Docker Model Runner?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-17T07:29:33Z
+
+I forgot to install one model and ended up with:
+<img width="2962" height="1620" alt="CleanShot 2025-09-17 at 09 20 45@2x" src="https://github.com/user-attachments/assets/98db5fd7-5766-4920-934c-45c6d597db2d" />
+
+If possible, it would be nice to throw a `MissingModelException`, if we can check that beforehand. Can be a follow up PR
