@@ -95,7 +95,7 @@ Configuration
                     class: 'Symfony\AI\Platform\Bridge\Anthropic\Claude'
                     name: !php/const Symfony\AI\Platform\Bridge\Anthropic\Claude::SONNET_37
                 tools: # If undefined, all tools are injected into the agent, use "tools: false" to disable tools.
-                    - 'Symfony\AI\Agent\Toolbox\Tool\Wikipedia'
+                    - 'Symfony\AI\Tools\Tool\Wikipedia'
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
             search_agent:
                 platform: 'ai.platform.perplexity'
@@ -408,18 +408,18 @@ To use existing tools, you can register them as a service:
             autoconfigure: true
 
         Symfony\AI\Agent\Toolbox\Tool\Clock: ~
-        Symfony\AI\Agent\Toolbox\Tool\OpenMeteo: ~
-        Symfony\AI\Agent\Toolbox\Tool\SerpApi:
+        Symfony\AI\Tools\Tool\OpenMeteo: ~
+        Symfony\AI\Tools\Tool\SerpApi:
             $apiKey: '%env(SERP_API_KEY)%'
         Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch: ~
-        Symfony\AI\Agent\Toolbox\Tool\Tavily:
+        Symfony\AI\Tools\Tool\Tavily:
           $apiKey: '%env(TAVILY_API_KEY)%'
-        Symfony\AI\Agent\Toolbox\Tool\Wikipedia: ~
-        Symfony\AI\Agent\Toolbox\Tool\YouTubeTranscriber: ~
-        Symfony\AI\Agent\Toolbox\Tool\Firecrawl:
+        Symfony\AI\Tools\Tool\Wikipedia: ~
+        Symfony\AI\Tools\Tool\YouTubeTranscriber: ~
+        Symfony\AI\Tools\Tool\Firecrawl:
           $endpoint: '%env(FIRECRAWL_ENDPOINT)%'
           $apiKey: '%env(FIRECRAWL_API_KEY)%'
-        Symfony\AI\Agent\Toolbox\Tool\Brave:
+        Symfony\AI\Tools\Tool\Brave:
           $apiKey: '%env(BRAVE_API_KEY)%'
 
 Custom tools can be registered by using the ``#[AsTool]`` attribute::
