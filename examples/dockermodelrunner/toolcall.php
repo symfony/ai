@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Bridge\DockerModelRunner\Completions;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Toolbox\Tool\Wikipedia;
+use Symfony\AI\Tools\Tool\Wikipedia;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 

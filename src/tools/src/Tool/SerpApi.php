@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Toolbox\Tool;
+namespace Symfony\AI\Tools\Tool;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\Contracts\HttpClient\HttpClientInterface;

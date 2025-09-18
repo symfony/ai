@@ -1,4 +1,4 @@
-# Symfony AI Toolbox
+# Symfony AI Tools
 
 A collection of third-party tools for Symfony AI agents.
 
@@ -24,7 +24,7 @@ composer require symfony/ai-tools
 ### Brave Search Tool
 
 ```php
-use Symfony\AI\Toolbox\Tool\Brave;
+use Symfony\AI\Tools\Tool\Brave;
 use Symfony\Component\HttpClient\HttpClient;
 
 $httpClient = HttpClient::create();
@@ -36,7 +36,7 @@ $results = $brave('search query');
 ### Firecrawl Tool
 
 ```php
-use Symfony\AI\Toolbox\Tool\Firecrawl;
+use Symfony\AI\Tools\Tool\Firecrawl;
 use Symfony\Component\HttpClient\HttpClient;
 
 $httpClient = HttpClient::create();
@@ -55,7 +55,7 @@ $mapped = $firecrawl->map('https://example.com');
 ### Mapbox Tool
 
 ```php
-use Symfony\AI\Toolbox\Tool\Mapbox;
+use Symfony\AI\Tools\Tool\Mapbox;
 use Symfony\Component\HttpClient\HttpClient;
 
 $httpClient = HttpClient::create();
@@ -71,7 +71,7 @@ $address = $mapbox->reverseGeocode(-77.0365, 38.8977);
 ### OpenMeteo Tool
 
 ```php
-use Symfony\AI\Toolbox\Tool\OpenMeteo;
+use Symfony\AI\Tools\Tool\OpenMeteo;
 use Symfony\Component\HttpClient\HttpClient;
 
 $httpClient = HttpClient::create();
@@ -87,7 +87,7 @@ $forecast = $openMeteo->forecast(52.52, 13.4050); // Berlin coordinates
 ### SerpApi Tool
 
 ```php
-use Symfony\AI\Toolbox\Tool\SerpApi;
+use Symfony\AI\Tools\Tool\SerpApi;
 use Symfony\Component\HttpClient\HttpClient;
 
 $httpClient = HttpClient::create();
@@ -99,7 +99,7 @@ $results = $serpApi('artificial intelligence trends');
 ### Tavily Tool
 
 ```php
-use Symfony\AI\Toolbox\Tool\Tavily;
+use Symfony\AI\Tools\Tool\Tavily;
 use Symfony\Component\HttpClient\HttpClient;
 
 $httpClient = HttpClient::create();
@@ -115,7 +115,7 @@ $extractedContent = $tavily->extract(['https://example.com']);
 ### Wikipedia Tool
 
 ```php
-use Symfony\AI\Toolbox\Tool\Wikipedia;
+use Symfony\AI\Tools\Tool\Wikipedia;
 use Symfony\Component\HttpClient\HttpClient;
 
 $httpClient = HttpClient::create();
@@ -134,7 +134,7 @@ $germanWikipedia = new Wikipedia($httpClient, 'de');
 ### YouTube Transcriber Tool
 
 ```php
-use Symfony\AI\Toolbox\Tool\YouTubeTranscriber;
+use Symfony\AI\Tools\Tool\YouTubeTranscriber;
 use Symfony\Component\HttpClient\HttpClient;
 
 $httpClient = HttpClient::create();

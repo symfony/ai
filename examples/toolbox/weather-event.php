@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ObjectResult;
-use Symfony\AI\Toolbox\Tool\OpenMeteo;
+use Symfony\AI\Tools\Tool\OpenMeteo;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 require_once dirname(__DIR__).'/bootstrap.php';

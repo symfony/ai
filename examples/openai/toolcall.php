@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Toolbox\Tool\YouTubeTranscriber;
+use Symfony\AI\Tools\Tool\YouTubeTranscriber;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 

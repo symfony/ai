@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Toolbox\Tool\YouTubeTranscriber;
+use Symfony\AI\Tools\Tool\YouTubeTranscriber;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 

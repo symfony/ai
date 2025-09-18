@@ -31,13 +31,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Symfony\\AI\\Toolbox\\": "src/"
+            "Symfony\\AI\\Tools\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
             "Symfony\\AI\\PHPStan\\": "../../.phpstan/",
-            "Symfony\\AI\\Toolbox\\Tests\\": "tests/"
+            "Symfony\\AI\\Tools\\Tests\\": "tests/"
         }
     },
     "config": {
