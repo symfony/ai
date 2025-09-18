@@ -29,11 +29,7 @@ To use your application as an MCP server, exposing tools to clients like `Claude
 
 **Creating Tools**
 
-Tools are automatically discovered using PHP attributes. Create a class with methods annotated with ``#[McpTool]``:
-
-.. code-block:: php
-
-    <?php
+Tools are automatically discovered using PHP attributes. Create a class with methods annotated with ``#[McpTool]``::
 
     use Mcp\Capability\Attribute\McpTool;
 
