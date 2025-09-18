@@ -69,10 +69,10 @@ final class McpBundle extends AbstractBundle
                 ])
                 ->setPublic(true)
                 ->addTag('controller.service_arguments');
-
-            $container->register('mcp.server.route_loader', RouteLoader::class)
-                ->setArgument(0, $transports['sse'])
-                ->addTag('routing.loader');
         }
+
+        $container->register('mcp.server.route_loader', RouteLoader::class)
+            ->setArgument(0, $transports['sse'])
+            ->addTag('routing.loader');
     }
 }
