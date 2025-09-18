@@ -29,7 +29,7 @@ final class RouteLoader extends Loader
     public function load(mixed $resource, ?string $type = null): RouteCollection
     {
         if ($this->loaded) {
-            throw new LogicException('Do not add the "mcp" loader twice');
+            throw new LogicException('Do not add the "mcp" loader twice.');
         }
 
         $this->loaded = true;
