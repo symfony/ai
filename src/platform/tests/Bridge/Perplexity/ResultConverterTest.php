@@ -36,6 +36,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -58,6 +59,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -90,6 +92,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn([]);
 
         $this->expectException(RuntimeException::class);
@@ -102,6 +105,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [

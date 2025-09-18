@@ -12,9 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
-use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
-use Symfony\AI\Platform\Exception\RateLimitExceededException;
+use Symfony\AI\Platform\Exception\HttpErrorHandler;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -45,23 +44,7 @@ final class ResultConverter implements ResultConverterInterface
     {
         $response = $result->getObject();
 
-        if (401 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'];
-            throw new AuthenticationException($errorMessage);
-        }
-
-        if (429 === $response->getStatusCode()) {
-            $headers = $response->getHeaders(false);
-            $resetTime = null;
-
-            if (isset($headers['x-ratelimit-reset-requests'][0])) {
-                $resetTime = self::parseResetTime($headers['x-ratelimit-reset-requests'][0]);
-            } elseif (isset($headers['x-ratelimit-reset-tokens'][0])) {
-                $resetTime = self::parseResetTime($headers['x-ratelimit-reset-tokens'][0]);
-            }
-
-            throw new RateLimitExceededException($resetTime);
-        }
+        HttpErrorHandler::handleHttpError($response);
 
         if ($options['stream'] ?? false) {
             return new StreamResult($this->convertStream($response));
@@ -201,26 +184,5 @@ final class ResultConverter implements ResultConverterInterface
         $arguments = json_decode($toolCall['function']['arguments'], true, \JSON_THROW_ON_ERROR);
 
         return new ToolCall($toolCall['id'], $toolCall['function']['name'], $arguments);
-    }
-
-    /**
-     * Converts OpenAI's reset time format (e.g. "1s", "6m0s", "2m30s") into seconds.
-     *
-     * Supported formats:
-     * - "1s"
-     * - "6m0s"
-     * - "2m30s"
-     */
-    private static function parseResetTime(string $resetTime): float
-    {
-        $seconds = 0;
-
-        if (preg_match('/^(?:(\d+)m)?(?:(\d+)s)?$/', $resetTime, $matches)) {
-            $minutes = isset($matches[1]) ? (int) $matches[1] : 0;
-            $secs = isset($matches[2]) ? (int) $matches[2] : 0;
-            $seconds = ($minutes * 60) + $secs;
-        }
-
-        return (float) $seconds;
     }
 }
