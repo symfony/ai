@@ -4,11 +4,11 @@ CHANGELOG
 0.1
 ---
 
-- Brave Search tool
-- Firecrawl tool
-- Mapbox tool
-- OpenMeteo tool
-- SerpApi tool
-- Tavily tool
-- Wikipedia tool
-- YouTube Transcriber tool
+- Add Brave Search tool
+- Add Firecrawl tool
+- Add Mapbox tool
+- Add OpenMeteo tool
+- Add SerpApi tool
+- Add Tavily tool
+- Add Wikipedia tool
+- Add YouTube Transcriber tool
