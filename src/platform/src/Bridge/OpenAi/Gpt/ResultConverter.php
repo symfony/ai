@@ -73,6 +73,10 @@ final class ResultConverter implements ResultConverterInterface
             throw new ContentFilterException($data['error']['message']);
         }
 
+        if (isset($data['error'])) {
+            throw new RuntimeException('Error '.$data['error']['code'].'-'.$data['error']['type'].' ('.$data['error']['param'].'): '.$data['error']['message']);
+        }
+
         if (!isset($data['choices'])) {
             throw new RuntimeException('Response does not contain choices.');
         }
