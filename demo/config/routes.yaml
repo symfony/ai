@@ -49,3 +49,8 @@ stream:
 stream_assistant_reply:
     path: '/stream/assistant-reply'
     controller: 'App\Stream\TwigComponent::streamContent'
+
+# Load MCP routes conditionally based on configuration
+_mcp:
+    resource: .
+    type: mcp

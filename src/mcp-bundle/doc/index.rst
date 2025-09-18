@@ -1,7 +1,7 @@
 MCP Bundle
 ==========
 
-Symfony integration bundle for `Model Context Protocol`_ using the Symfony AI MCP SDK `symfony/mcp-sdk`_.
+Symfony integration bundle for `Model Context Protocol`_ using the official MCP SDK `mcp/sdk`_.
 
 **Currently only supports tools as server via Server-Sent Events (SSE) and STDIO.**
 
@@ -26,6 +26,27 @@ the ``mcp`` section of your ``config/packages/mcp.yaml`` file.
 
 To use your application as an MCP server, exposing tools to clients like `Claude Desktop`_, you need to configure in the
 ``client_transports`` section the transports you want to expose to clients. You can use either STDIO or SSE.
+
+**Creating Tools**
+
+Tools are automatically discovered using PHP attributes. Create a class with methods annotated with ``#[McpTool]``:
+
+.. code-block:: php
+
+    <?php
+
+    use Mcp\Capability\Attribute\McpTool;
+
+    class CurrentTimeTool
+    {
+        #[McpTool(name: 'current-time')]
+        public function getCurrentTime(string $format = 'Y-m-d H:i:s'): string
+        {
+            return (new \DateTime('now', new \DateTimeZone('UTC')))->format($format);
+        }
+    }
+
+Tools are automatically discovered in the ``src/`` directory when the server starts.
 
 **Act as Client**
 
@@ -58,13 +79,13 @@ Configuration
             name:
                 transport: 'stdio' # Transport method to use, either 'stdio' or 'sse'
                 stdio:
-                    command: 'php /path/bin/console mcp' # Command to execute to start the client
+                    command: 'php /path/bin/console mcp:server' # Command to execute to start the client
                     arguments: [] # Arguments to pass to the command
                 sse:
                     url: 'http://localhost:8000/sse' # URL to SSE endpoint of MCP server
 
 .. _`Model Context Protocol`: https://modelcontextprotocol.io/
-.. _`symfony/mcp-sdk`: https://github.com/symfony/mcp-sdk
+.. _`mcp/sdk`: https://github.com/modelcontextprotocol/php-sdk
 .. _`Claude Desktop`: https://claude.ai/download
 .. _`MCP Server List`: https://modelcontextprotocol.io/examples
 .. _`AI Bundle`: https://github.com/symfony/ai-bundle

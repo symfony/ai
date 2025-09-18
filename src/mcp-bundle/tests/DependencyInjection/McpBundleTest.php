@@ -15,10 +15,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\McpBundle;
-use Symfony\AI\McpSdk\Capability\Tool\IdentifierInterface;
-use Symfony\AI\McpSdk\Server\NotificationHandlerInterface;
-use Symfony\AI\McpSdk\Server\RequestHandler\ToolListHandler;
-use Symfony\AI\McpSdk\Server\RequestHandlerInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 #[CoversClass(McpBundle::class)]
@@ -114,17 +110,7 @@ class McpBundleTest extends TestCase
         ];
     }
 
-    public function testToolAutoconfiguration()
-    {
-        $container = $this->buildContainer([]);
-
-        $autoconfiguredInstances = $container->getAutoconfiguredInstanceof();
-
-        $this->assertArrayHasKey(IdentifierInterface::class, $autoconfiguredInstances);
-        $this->assertArrayHasKey('mcp.tool', $autoconfiguredInstances[IdentifierInterface::class]->getTags());
-    }
-
-    public function testServerAutoconfigurations()
+    public function testServerServices()
     {
         $container = $this->buildContainer([
             'mcp' => [
@@ -135,58 +121,9 @@ class McpBundleTest extends TestCase
             ],
         ]);
 
-        $autoconfiguredInstances = $container->getAutoconfiguredInstanceof();
-
-        $this->assertArrayHasKey(NotificationHandlerInterface::class, $autoconfiguredInstances);
-        $this->assertArrayHasKey(RequestHandlerInterface::class, $autoconfiguredInstances);
-
-        $this->assertArrayHasKey('mcp.server.notification_handler', $autoconfiguredInstances[NotificationHandlerInterface::class]->getTags());
-        $this->assertArrayHasKey('mcp.server.request_handler', $autoconfiguredInstances[RequestHandlerInterface::class]->getTags());
-    }
-
-    public function testDefaultPageSizeConfiguration()
-    {
-        $container = $this->buildContainer([]);
-
-        // Test that the default page_size parameter is set to 20
-        $this->assertSame(20, $container->getParameter('mcp.page_size'));
-
-        // Test that ToolListHandler is registered
-        $this->assertTrue($container->hasDefinition('mcp.server.request_handler.tool_list'));
-
-        $definition = $container->getDefinition('mcp.server.request_handler.tool_list');
-        $this->assertSame(ToolListHandler::class, $definition->getClass());
-    }
-
-    public function testCustomPageSizeConfiguration()
-    {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'page_size' => 50,
-            ],
-        ]);
-
-        // Test that the custom page_size parameter is set
-        $this->assertSame(50, $container->getParameter('mcp.page_size'));
-    }
-
-    public function testMissingHandlerServices()
-    {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'stdio' => true,
-                    'sse' => false,
-                ],
-            ],
-        ]);
-
-        // Currently, only ToolListHandler is registered
-        $this->assertTrue($container->hasDefinition('mcp.server.request_handler.tool_list'));
-
-        // These services should be registered but are currently missing
-        $this->assertFalse($container->hasDefinition('mcp.server.request_handler.resource_list'));
-        $this->assertFalse($container->hasDefinition('mcp.server.request_handler.prompt_list'));
+        // Test that core MCP services are registered
+        $this->assertTrue($container->hasDefinition('mcp.server'));
+        $this->assertTrue($container->hasDefinition('mcp.server.sse.store.cache_pool'));
     }
 
     private function buildContainer(array $configuration): ContainerBuilder
@@ -195,6 +132,7 @@ class McpBundleTest extends TestCase
         $container->setParameter('kernel.debug', true);
         $container->setParameter('kernel.environment', 'test');
         $container->setParameter('kernel.build_dir', 'public');
+        $container->setParameter('kernel.project_dir', '/path/to/project');
 
         $extension = (new McpBundle())->getContainerExtension();
         $extension->load($configuration, $container);
