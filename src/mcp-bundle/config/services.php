@@ -19,13 +19,14 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('cache.app'),
             ])
-        ->set('mcp.server', 'Mcp\\Server')
+        ->set('mcp.server.builder', 'Mcp\\Server\\ServerBuilder')
             ->factory(['Mcp\\Server', 'make'])
             ->call('setServerInfo', [param('mcp.app'), param('mcp.version')])
-            ->call('setContainer', [service('service_container')])
             ->call('setLogger', [service('logger')])
             ->call('setDiscovery', [param('kernel.project_dir'), ['src']])
-            ->call('build', [])
+
+        ->set('mcp.server', 'Mcp\\Server')
+            ->factory([service('mcp.server.builder'), 'build'])
 
     ;
 };

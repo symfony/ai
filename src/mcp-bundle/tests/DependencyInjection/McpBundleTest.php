@@ -126,6 +126,21 @@ class McpBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('mcp.server.sse.store.cache_pool'));
     }
 
+    public function testMcpToolAttributeAutoconfiguration()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'stdio' => true,
+                ],
+            ],
+        ]);
+
+        // Test that McpTool attribute is autoconfigured with mcp.tool tag
+        $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
+        $this->assertArrayHasKey('Mcp\Capability\Attribute\McpTool', $attributeAutoconfigurators);
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();

@@ -11,10 +11,13 @@
 
 namespace Symfony\AI\McpBundle;
 
+use Mcp\Capability\Attribute\McpTool;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpBundle\DependencyInjection\McpToolPass;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
@@ -37,9 +40,21 @@ final class McpBundle extends AbstractBundle
         $builder->setParameter('mcp.app', $config['app']);
         $builder->setParameter('mcp.version', $config['version']);
 
+        $builder->registerAttributeForAutoconfiguration(
+            McpTool::class,
+            static function (ChildDefinition $definition): void {
+                $definition->addTag('mcp.tool');
+            }
+        );
+
         if (isset($config['client_transports'])) {
             $this->configureClient($config['client_transports'], $builder);
         }
+    }
+
+    public function build(ContainerBuilder $container): void
+    {
+        $container->addCompilerPass(new McpToolPass());
     }
 
     /**
