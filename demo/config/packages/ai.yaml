@@ -38,7 +38,7 @@ ai:
                 text: 'Please answer the users question based on Wikipedia and provide a link to the article.'
                 include_tools: true
             tools:
-                - 'Symfony\AI\Agent\Toolbox\Tool\Wikipedia'
+                - 'Symfony\AI\Toolbox\Tool\Wikipedia'
         audio:
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
@@ -75,13 +75,14 @@ services:
         autoconfigure: true
 
     # Symfony\AI\Agent\Toolbox\Tool\Clock: ~
-    # Symfony\AI\Agent\Toolbox\Tool\OpenMeteo: ~
-    # Symfony\AI\Agent\Toolbox\Tool\SerpApi:
-    #     $apiKey: '%env(SERP_API_KEY)%'
-    Symfony\AI\Agent\Toolbox\Tool\Wikipedia: ~
     Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch:
         $vectorizer: '@ai.vectorizer.openai'
         $store: '@ai.store.chroma_db.symfonycon'
+
+    # Symfony\AI\Toolbox\Tool\OpenMeteo: ~
+    # Symfony\AI\Toolbox\Tool\SerpApi:
+    #     $apiKey: '%env(SERP_API_KEY)%'
+    Symfony\AI\Toolbox\Tool\Wikipedia: ~
 
     Symfony\AI\Store\Document\Loader\RssFeedLoader: ~
     Symfony\AI\Store\Document\Transformer\TextTrimTransformer: ~

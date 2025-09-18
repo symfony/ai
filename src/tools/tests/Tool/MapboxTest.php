@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Tests\Toolbox\Tool;
+namespace Symfony\AI\Toolbox\Tests\Tool;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Toolbox\Tool\Mapbox;
+use Symfony\AI\Toolbox\Tool\Mapbox;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -22,7 +22,7 @@ final class MapboxTest extends TestCase
 {
     public function testGeocodeWithSingleResult()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/mapbox-geocode-single.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/../fixtures/Tool/mapbox/mapbox-geocode-single.json');
         $httpClient = new MockHttpClient($result);
 
         $mapbox = new Mapbox($httpClient, 'test_token');
@@ -48,7 +48,7 @@ final class MapboxTest extends TestCase
 
     public function testGeocodeWithMultipleResults()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/mapbox-geocode-multiple.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/../fixtures/Tool/mapbox/mapbox-geocode-multiple.json');
         $httpClient = new MockHttpClient($result);
 
         $mapbox = new Mapbox($httpClient, 'test_token');
@@ -83,7 +83,7 @@ final class MapboxTest extends TestCase
 
     public function testGeocodeWithNoResults()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/mapbox-geocode-empty.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/../fixtures/Tool/mapbox/mapbox-geocode-empty.json');
         $httpClient = new MockHttpClient($result);
 
         $mapbox = new Mapbox($httpClient, 'test_token');
@@ -99,7 +99,7 @@ final class MapboxTest extends TestCase
 
     public function testReverseGeocodeWithValidCoordinates()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/mapbox-reverse-geocode.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/../fixtures/Tool/mapbox/mapbox-reverse-geocode.json');
         $httpClient = new MockHttpClient($result);
 
         $mapbox = new Mapbox($httpClient, 'test_token');
@@ -141,7 +141,7 @@ final class MapboxTest extends TestCase
 
     public function testReverseGeocodeWithNoResults()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/mapbox-reverse-geocode-empty.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/../fixtures/Tool/mapbox/mapbox-reverse-geocode-empty.json');
         $httpClient = new MockHttpClient($result);
 
         $mapbox = new Mapbox($httpClient, 'test_token');

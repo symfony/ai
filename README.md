@@ -17,6 +17,7 @@ Symfony AI consists of several lower and higher level **components** and the res
   * **[Agent](src/agent/README.md)**: Framework for building AI agents that can interact with users and perform tasks.
   * **[Store](src/store/README.md)**: Data storage abstraction with indexing and retrieval for AI applications.
   * **[MCP SDK](src/mcp-sdk/README.md)**: SDK for [Model Context Protocol](https://modelcontextprotocol.io) enabling communication between AI agents and tools.
+  * **[Toolbox](src/tools/README.md)**: Collection of third-party tools for AI agents.
 * **Bundles**
   * **[AI Bundle](src/ai-bundle/README.md)**: Symfony integration for AI Platform, Store and Agent components.
   * **[MCP Bundle](src/mcp-bundle/README.md)**: Symfony integration for MCP SDK, allowing them to act as MCP servers or clients.
