@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Tools\Tests\Tool;
+namespace Symfony\AI\Tools\Tests;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Tools\Tool\OpenMeteo;
+use Symfony\AI\Tools\OpenMeteo;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -22,7 +22,7 @@ final class OpenMeteoTest extends TestCase
 {
     public function testCurrent()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../fixtures/Tool/openmeteo/openmeteo-current.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/openmeteo-current.json');
         $httpClient = new MockHttpClient($result);
 
         $openMeteo = new OpenMeteo($httpClient);
@@ -40,7 +40,7 @@ final class OpenMeteoTest extends TestCase
 
     public function testForecast()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../fixtures/Tool/openmeteo/openmeteo-forecast.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/openmeteo-forecast.json');
         $httpClient = new MockHttpClient($result);
 
         $openMeteo = new OpenMeteo($httpClient);

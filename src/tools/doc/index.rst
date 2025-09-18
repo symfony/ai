@@ -22,7 +22,7 @@ Brave Search Tool
 
 Provides web search functionality using the Brave Search API::
 
-    use Symfony\AI\Tools\Tool\Brave;
+    use Symfony\AI\Tools\Brave;
     use Symfony\Component\HttpClient\HttpClient;
 
     $httpClient = HttpClient::create();
@@ -50,7 +50,7 @@ Wikipedia Tool
 
 Provides search and article retrieval from Wikipedia::
 
-    use Symfony\AI\Tools\Tool\Wikipedia;
+    use Symfony\AI\Tools\Wikipedia;
     use Symfony\Component\HttpClient\HttpClient;
 
     $httpClient = HttpClient::create();
@@ -81,8 +81,8 @@ These tools are designed to work with the `Agent Component`_ and can be register
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Agent\Toolbox\AgentProcessor;
     use Symfony\AI\Agent\Toolbox\Toolbox;
-    use Symfony\AI\Tools\Tool\Brave;
-    use Symfony\AI\Tools\Tool\Wikipedia;
+    use Symfony\AI\Tools\Brave;
+    use Symfony\AI\Tools\Wikipedia;
 
     // Initialize HTTP client and tools
     $httpClient = HttpClient::create();

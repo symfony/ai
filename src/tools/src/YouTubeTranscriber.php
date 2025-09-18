@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Tools\Tool;
+namespace Symfony\AI\Tools;
 
 use MrMySQL\YoutubeTranscript\TranscriptListFetcher;
 use Symfony\AI\Agent\Exception\LogicException;
