@@ -37,11 +37,10 @@ final class Platform implements PlatformInterface
     public function __construct(
         iterable $modelClients,
         iterable $resultConverters,
+        private ModelCatalogInterface $modelCatalog,
         private ?Contract $contract = null,
-        private ?ModelCatalogInterface $modelCatalog = null,
     ) {
         $this->contract = $contract ?? Contract::create();
-        $this->modelCatalog = $modelCatalog ?? new ModelCatalog();
         $this->modelClients = $modelClients instanceof \Traversable ? iterator_to_array($modelClients) : $modelClients;
         $this->resultConverters = $resultConverters instanceof \Traversable ? iterator_to_array($resultConverters) : $resultConverters;
     }

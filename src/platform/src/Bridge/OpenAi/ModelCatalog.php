@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Capability;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: string, platform: string, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: string, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
@@ -28,7 +28,6 @@ final class ModelCatalog extends AbstractModelCatalog
             // GPT Models - All GPT models from Gpt.php
             'gpt-3.5-turbo' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -38,7 +37,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-3.5-turbo-instruct' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -48,7 +46,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-4' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -58,7 +55,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-4-turbo' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -69,7 +65,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-4o' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -81,7 +76,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-4o-mini' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -93,7 +87,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-4o-audio-preview' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -104,7 +97,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'o1-mini' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -115,7 +107,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'o1-preview' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -126,7 +117,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'o3-mini' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -138,7 +128,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'o3-mini-high' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -148,7 +137,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-4.5-preview' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -160,7 +148,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-4.1' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -172,7 +159,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-4.1-mini' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -184,7 +170,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-4.1-nano' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -196,7 +181,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-5' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -208,7 +192,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-5-chat-latest' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -218,7 +201,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-5-mini' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -230,7 +212,6 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-5-nano' => [
                 'class' => Gpt::class,
-                'platform' => 'openai',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -244,17 +225,14 @@ final class ModelCatalog extends AbstractModelCatalog
             // Embedding Models - All embedding models from Embeddings.php
             'text-embedding-ada-002' => [
                 'class' => Embeddings::class,
-                'platform' => 'openai',
                 'capabilities' => [Capability::INPUT_TEXT],
             ],
             'text-embedding-3-large' => [
                 'class' => Embeddings::class,
-                'platform' => 'openai',
                 'capabilities' => [Capability::INPUT_TEXT],
             ],
             'text-embedding-3-small' => [
                 'class' => Embeddings::class,
-                'platform' => 'openai',
                 'capabilities' => [Capability::INPUT_TEXT],
             ],
         ];

@@ -1190,7 +1190,6 @@ final class AiBundle extends AbstractBundle
             
             $modelDefinitions[$modelName] = [
                 'class' => $modelConfig['class'],
-                'platform' => $platformName,
                 'capabilities' => $capabilityEnums,
             ];
         }
