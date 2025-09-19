@@ -60,12 +60,24 @@ jobs:
             - name: Build root packages
               run: php .github/build-packages.php
 
+            - name: Install examples dependencies  
+              uses: ramsey/composer-install@v3
+              with:
+                  working-directory: examples
+
+            - name: Link examples
+              working-directory: examples
+              run: ../link
+
             - name: Run PHPStan on examples
-              run: |
-                  cd examples/ && $COMPOSER_UP && ../link && $PHPSTAN
+              working-directory: examples
+              run: $PHPSTAN
 
             - name: Run PHPStan on packages
               run: |
                   source .github/workflows/.utils.sh
 
+                  # Run link script to make Bridge packages available
+                  ./link
+                  
                   echo "$PACKAGES" | xargs -n1 | parallel -j +3 "_run_task {} '(cd src/{} && $COMPOSER_UP && $PHPSTAN)'"
