@@ -4,14 +4,7 @@ CHANGELOG
 0.1
 ---
 
- * Migration from `symfony/mcp-sdk` to official `mcp/sdk`
- * Tool definition changed from interfaces to PHP attributes `#[McpTool]`
- * Automatic tool discovery via attributes instead of manual registration
- * Server creation now uses `Server::make()` builder pattern
- * Updated STDIO transport command to `mcp:server`
- * Simplified service configuration using native SDK patterns
- * Enhanced auto-discovery scanning in `src/` directory
- * Add Symfony bundle bridging MCP-SDK with Symfony applications
+ * Add Symfony bundle providing Model Context Protocol integration using official `mcp/sdk`
  * Add server mode exposing Symfony tools to MCP clients:
    - STDIO transport via `php bin/console mcp:server` command
    - SSE (Server-Sent Events) transport via HTTP endpoints
