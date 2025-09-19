@@ -46,8 +46,7 @@ ai:
                 collection: 'symfony_blog'
     vectorizer:
         openai:
-            model:
-                name: 'text-embedding-ada-002'
+            model: 'text-embedding-ada-002'
     indexer:
         blog:
             loader: 'Symfony\AI\Store\Document\Loader\RssFeedLoader'

@@ -204,12 +204,18 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Enable tracking of token usage for the agent')
                             ->defaultTrue()
                         ->end()
-                        ->arrayNode('model')
-                            ->children()
-                                ->stringNode('name')->defaultNull()->end()
-                                ->arrayNode('options')
-                                    ->variablePrototype()->end()
-                                ->end()
+                        ->variableNode('model')
+                            ->validate()
+                                ->ifTrue(function ($v) {
+                                    return !is_string($v) && (!is_array($v) || !isset($v['name']));
+                                })
+                                ->thenInvalid('Model must be a string or an array with a "name" key.')
+                            ->end()
+                            ->validate()
+                                ->ifString()
+                                ->then(function ($v) {
+                                    return ['name' => $v, 'options' => []];
+                                })
                             ->end()
                         ->end()
                         ->booleanNode('structured_output')->defaultTrue()->end()
@@ -536,12 +542,18 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Service name of platform')
                             ->defaultValue(PlatformInterface::class)
                         ->end()
-                        ->arrayNode('model')
-                            ->children()
-                                ->stringNode('name')->defaultNull()->end()
-                                ->arrayNode('options')
-                                    ->variablePrototype()->end()
-                                ->end()
+                        ->variableNode('model')
+                            ->validate()
+                                ->ifTrue(function ($v) {
+                                    return !is_string($v) && (!is_array($v) || !isset($v['name']));
+                                })
+                                ->thenInvalid('Model must be a string or an array with a "name" key.')
+                            ->end()
+                            ->validate()
+                                ->ifString()
+                                ->then(function ($v) {
+                                    return ['name' => $v, 'options' => []];
+                                })
                             ->end()
                         ->end()
                     ->end()
