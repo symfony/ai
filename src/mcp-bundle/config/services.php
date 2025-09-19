@@ -21,12 +21,18 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('cache.app'),
             ])
+
+        ->set('monolog.logger.mcp')
+            ->parent('monolog.logger_prototype')
+            ->args(['mcp'])
+            ->tag('monolog.logger', ['channel' => 'mcp'])
+
         ->set('mcp.server.builder', ServerBuilder::class)
             ->factory([Server::class, 'make'])
             ->call('setServerInfo', [param('mcp.app'), param('mcp.version')])
             ->call('setPaginationLimit', [param('mcp.pagination_limit')])
             ->call('setInstructions', [param('mcp.instructions')])
-            ->call('setLogger', [service('logger')])
+            ->call('setLogger', [service('monolog.logger.mcp')])
             ->call('setDiscovery', [param('kernel.project_dir'), ['src']])
 
         ->set('mcp.server', Server::class)

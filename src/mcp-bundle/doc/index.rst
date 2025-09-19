@@ -147,6 +147,43 @@ Configuration
                 sse:
                     url: 'http://localhost:8000/sse' # URL to SSE endpoint of MCP server
 
+Logging Configuration
+---------------------
+
+By default, MCP uses a dedicated logger channel that inherits your application's default logging configuration.
+To configure MCP-specific logging, add the following to your ``config/packages/monolog.yaml``:
+
+.. code-block:: yaml
+
+    # config/packages/monolog.yaml
+    monolog:
+        channels: ['mcp']
+        handlers:
+            mcp:
+                type: rotating_file
+                path: '%kernel.logs_dir%/mcp.log'
+                level: info
+                channels: ['mcp']
+                max_files: 30
+
+You can customize the logging level and destination according to your needs:
+
+.. code-block:: yaml
+
+    # Example: Different levels per environment
+    monolog:
+        handlers:
+            mcp_dev:
+                type: stream
+                path: '%kernel.logs_dir%/mcp.log'
+                level: debug
+                channels: ['mcp']
+            mcp_prod:
+                type: slack
+                level: error
+                channels: ['mcp']
+                webhook_url: '%env(SLACK_WEBHOOK)%'
+
 .. _`Model Context Protocol`: https://modelcontextprotocol.io/
 .. _`mcp/sdk`: https://github.com/modelcontextprotocol/php-sdk
 .. _`Claude Desktop`: https://claude.ai/download
