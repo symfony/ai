@@ -11,46 +11,16 @@
 
 namespace Symfony\AI\Platform;
 
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-class ModelCatalog implements ModelCatalogInterface
+class ModelCatalog extends AbstractModelCatalog
 {
-    /**
-     * @param array<string, array{class: string, platform: string, capabilities: list<string>}> $models
-     */
-    public function __construct(
-        private readonly array $models = [],
-    ) {
-    }
-
     public function supports(PlatformInterface $platform): bool
     {
         return [] !== $this->getSupportedModels($platform);
-    }
-
-    public function get(string $modelName): Model
-    {
-        $modelConfig = $this->getModel($modelName);
-
-        if (null === $modelConfig) {
-            throw new InvalidArgumentException(\sprintf('Model "%s" not found in catalog.', $modelName));
-        }
-
-        $modelClass = $modelConfig['class'];
-        if (!class_exists($modelClass)) {
-            throw new InvalidArgumentException(\sprintf('Model class "%s" does not exist.', $modelClass));
-        }
-
-        $model = new $modelClass();
-        if (!$model instanceof Model) {
-            throw new InvalidArgumentException(\sprintf('Model class "%s" must extend %s.', $modelClass, Model::class));
-        }
-
-        return $model;
     }
 
     /**
@@ -69,7 +39,7 @@ class ModelCatalog implements ModelCatalogInterface
         return $supportedModels;
     }
 
-    public function isModelSupportedByPlatform(string $modelName, PlatformInterface $platform): bool
+    private function isModelSupportedByPlatform(string $modelName, PlatformInterface $platform): bool
     {
         $modelConfig = $this->getModel($modelName);
         if (null === $modelConfig || !isset($modelConfig['class'])) {
@@ -96,38 +66,5 @@ class ModelCatalog implements ModelCatalogInterface
         } catch (\Throwable) {
             return true;
         }
-    }
-
-    /**
-     * @return array<string, array{class: string, platform: string, capabilities: list<string>}>
-     */
-    public function getModels(): array
-    {
-        return $this->models;
-    }
-
-    /**
-     * @return array{class: string, platform: string, capabilities: list<string>}|null
-     */
-    public function getModel(string $name): ?array
-    {
-        return $this->models[$name] ?? null;
-    }
-
-    /**
-     * @return list<Capability>
-     */
-    public function getCapabilities(string $modelName): array
-    {
-        $model = $this->getModel($modelName);
-
-        if (null === $model) {
-            return [];
-        }
-
-        return array_map(
-            static fn (string $capability): Capability => Capability::from($capability),
-            $model['capabilities'] ?? []
-        );
     }
 }
