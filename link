@@ -38,7 +38,10 @@ if (!is_dir("$pathToProject/vendor/symfony")) {
 $sfPackages = array();
 
 $filesystem = new Filesystem();
-$directories = glob(__DIR__.'/src/*', GLOB_ONLYDIR | GLOB_NOSORT);
+$braces = array('*', '*/src/Bridge/*');
+$directories = array_merge(...array_values(array_map(function ($part) {
+    return glob(__DIR__.'/src/'.$part, GLOB_ONLYDIR | GLOB_NOSORT);
+}, $braces)));
 
 foreach ($directories as $dir) {
     if ($filesystem->exists($composer = "$dir/composer.json")) {
