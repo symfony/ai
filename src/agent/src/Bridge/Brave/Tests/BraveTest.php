@@ -19,7 +19,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class BraveTest extends TestCase
 {
-    public function testReturnsSearchResults()
+    public function testReturnsSearchResults(): void
     {
         $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/search-results.json');
         $httpClient = new MockHttpClient($result);
@@ -36,7 +36,7 @@ final class BraveTest extends TestCase
         $this->assertSame('https://www.espn.com/nfl/team/_/name/dal/dallas-cowboys', $results[0]['url']);
     }
 
-    public function testPassesCorrectParametersToApi()
+    public function testPassesCorrectParametersToApi(): void
     {
         $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/search-results.json');
         $httpClient = new MockHttpClient($result);
@@ -52,12 +52,13 @@ final class BraveTest extends TestCase
 
         $requestOptions = $result->getRequestOptions();
         $this->assertArrayHasKey('headers', $requestOptions);
+        $this->assertIsArray($requestOptions['headers']);
         $this->assertContains('X-Subscription-Token: test-api-key', $requestOptions['headers']);
     }
 
-    public function testHandlesEmptyResults()
+    public function testHandlesEmptyResults(): void
     {
-        $result = new MockResponse(json_encode(['web' => ['results' => []]]));
+        $result = new MockResponse((string) json_encode(['web' => ['results' => []]]));
         $httpClient = new MockHttpClient($result);
         $brave = new Brave($httpClient, 'test-api-key');
 
