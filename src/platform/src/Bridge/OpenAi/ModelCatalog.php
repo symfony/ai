@@ -24,112 +24,221 @@ final class ModelCatalog extends AbstractModelCatalog
      */
     public function __construct(array $additionalModels = [])
     {
-        $defaultModels = $this->getDefaultOpenAiModels();
-
-        $this->models = array_merge($defaultModels, $additionalModels);
-    }
-
-    /**
-     * @return array<string, array{class: string, platform: string, capabilities: list<Capability>}>
-     */
-    private function getDefaultOpenAiModels(): array
-    {
-        return [
+        $defaultModels = [
             // GPT Models - All GPT models from Gpt.php
             'gpt-3.5-turbo' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-3.5-turbo'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
             ],
             'gpt-3.5-turbo-instruct' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-3.5-turbo-instruct'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
             ],
             'gpt-4' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-4'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
             ],
             'gpt-4-turbo' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-4-turbo'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                ],
             ],
             'gpt-4o' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-4o'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
             ],
             'gpt-4o-mini' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-4o-mini'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
             ],
             'gpt-4o-audio-preview' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-4o-audio-preview'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_AUDIO,
+                ],
             ],
             'o1-mini' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('o1-mini'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                ],
             ],
             'o1-preview' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('o1-preview'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                ],
             ],
             'o3-mini' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('o3-mini'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
             ],
             'o3-mini-high' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('o3-mini-high'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
             ],
             'gpt-4.5-preview' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-4.5-preview'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
             ],
             'gpt-4.1' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-4.1'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
             ],
             'gpt-4.1-mini' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-4.1-mini'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
             ],
             'gpt-4.1-nano' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-4.1-nano'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
             ],
             'gpt-5' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-5'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
             ],
             'gpt-5-chat-latest' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-5-chat-latest'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::INPUT_IMAGE,
+                ],
             ],
             'gpt-5-mini' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-5-mini'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
             ],
             'gpt-5-nano' => [
                 'class' => Gpt::class,
                 'platform' => 'openai',
-                'capabilities' => $this->getGptCapabilities('gpt-5-nano'),
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
             ],
             
             // Embedding Models - All embedding models from Embeddings.php
@@ -149,68 +258,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [Capability::INPUT_TEXT],
             ],
         ];
-    }
 
-    /**
-     * @return list<Capability>
-     */
-    private function getGptCapabilities(string $modelName): array
-    {
-        // Base capabilities for all GPT models
-        $capabilities = [
-            Capability::INPUT_MESSAGES,
-            Capability::OUTPUT_TEXT,
-            Capability::OUTPUT_STREAMING,
-        ];
-
-        // Tool calling capability (all models except gpt-5-chat-latest)
-        if ('gpt-5-chat-latest' !== $modelName) {
-            $capabilities[] = Capability::TOOL_CALLING;
-        }
-
-        // Audio capability (only gpt-4o-audio-preview)
-        if ('gpt-4o-audio-preview' === $modelName) {
-            $capabilities[] = Capability::INPUT_AUDIO;
-        }
-
-        // Image supporting models
-        $imageSupportingModels = [
-            'gpt-4-turbo',
-            'gpt-4o',
-            'gpt-4o-mini',
-            'o1-mini',
-            'o1-preview',
-            'o3-mini',
-            'gpt-4.5-preview',
-            'gpt-4.1',
-            'gpt-4.1-mini',
-            'gpt-4.1-nano',
-            'gpt-5',
-            'gpt-5-mini',
-            'gpt-5-nano',
-            'gpt-5-chat-latest',
-        ];
-        if (in_array($modelName, $imageSupportingModels, true)) {
-            $capabilities[] = Capability::INPUT_IMAGE;
-        }
-
-        // Structured output supporting models
-        $structuredOutputSupportingModels = [
-            'gpt-4o',
-            'gpt-4o-mini',
-            'o3-mini',
-            'gpt-4.5-preview',
-            'gpt-4.1',
-            'gpt-4.1-mini',
-            'gpt-4.1-nano',
-            'gpt-5',
-            'gpt-5-mini',
-            'gpt-5-nano',
-        ];
-        if (in_array($modelName, $structuredOutputSupportingModels, true)) {
-            $capabilities[] = Capability::OUTPUT_STRUCTURED;
-        }
-
-        return $capabilities;
+        $this->models = array_merge($defaultModels, $additionalModels);
     }
 }
