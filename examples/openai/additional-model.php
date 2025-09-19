@@ -37,9 +37,6 @@ $platform = PlatformFactory::create(
     catalog: $modelCatalog
 );
 
-// Use the transcription model
-$transcribeModel = $modelCatalog->getModel('gpt-4o-mini-transcribe');
-
 $messages = new MessageBag(
     Message::ofUser(
         'Please transcribe this audio file.',
@@ -47,6 +44,6 @@ $messages = new MessageBag(
     ),
 );
 
-$result = $platform->invoke($transcribeModel, $messages);
+$result = $platform->invoke($modelCatalog->getModel('gpt-4o-mini-transcribe'), $messages);
 
 echo $result->getResult()->getContent().\PHP_EOL;
