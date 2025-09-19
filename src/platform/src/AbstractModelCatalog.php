@@ -46,6 +46,14 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
     }
 
     /**
+     * @return list<string>
+     */
+    public function getModels(): array
+    {
+        return array_keys($this->models);
+    }
+
+    /**
      * @return array{class: string, platform: string, capabilities: list<Capability>}|null
      */
     private function getModelConfig(string $name): ?array
