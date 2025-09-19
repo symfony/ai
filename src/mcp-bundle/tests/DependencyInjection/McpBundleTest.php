@@ -26,6 +26,8 @@ class McpBundleTest extends TestCase
 
         $this->assertSame('app', $container->getParameter('mcp.app'));
         $this->assertSame('0.0.1', $container->getParameter('mcp.version'));
+        $this->assertSame(50, $container->getParameter('mcp.pagination_limit'));
+        $this->assertNull($container->getParameter('mcp.instructions'));
     }
 
     public function testCustomConfiguration()
@@ -34,11 +36,15 @@ class McpBundleTest extends TestCase
             'mcp' => [
                 'app' => 'my-mcp-app',
                 'version' => '1.2.3',
+                'pagination_limit' => 25,
+                'instructions' => 'This server provides weather and calendar tools',
             ],
         ]);
 
         $this->assertSame('my-mcp-app', $container->getParameter('mcp.app'));
         $this->assertSame('1.2.3', $container->getParameter('mcp.version'));
+        $this->assertSame(25, $container->getParameter('mcp.pagination_limit'));
+        $this->assertSame('This server provides weather and calendar tools', $container->getParameter('mcp.instructions'));
     }
 
     #[DataProvider('provideClientTransportsConfiguration')]

@@ -24,6 +24,8 @@ return static function (ContainerConfigurator $container): void {
         ->set('mcp.server.builder', ServerBuilder::class)
             ->factory([Server::class, 'make'])
             ->call('setServerInfo', [param('mcp.app'), param('mcp.version')])
+            ->call('setPaginationLimit', [param('mcp.pagination_limit')])
+            ->call('setInstructions', [param('mcp.instructions')])
             ->call('setLogger', [service('logger')])
             ->call('setDiscovery', [param('kernel.project_dir'), ['src']])
 

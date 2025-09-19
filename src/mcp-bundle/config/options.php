@@ -16,6 +16,8 @@ return static function (DefinitionConfigurator $configurator): void {
         ->children()
             ->scalarNode('app')->defaultValue('app')->end()
             ->scalarNode('version')->defaultValue('0.0.1')->end()
+            ->integerNode('pagination_limit')->defaultValue(50)->end()
+            ->scalarNode('instructions')->defaultNull()->end()
             ->arrayNode('client_transports')
                 ->children()
                     ->booleanNode('stdio')->defaultFalse()->end()

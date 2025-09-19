@@ -1,6 +1,18 @@
 mcp:
     app: demo-app
     version: 0.0.1
+    pagination_limit: 10
+    instructions: |
+        This demo MCP server provides time management capabilities.
+
+        Available tools:
+        - current-time: Get the current timestamp
+
+        Available resources:
+        - time://current: Current time resource
+
+        Available prompts:
+        - time-analysis: Expert time management analysis
     client_transports:
         stdio: true
         sse: true

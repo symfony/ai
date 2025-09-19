@@ -121,6 +121,18 @@ Configuration
     mcp:
         app: 'app' # Application name to be exposed to clients
         version: '1.0.0' # Application version to be exposed to clients
+        pagination_limit: 50 # Maximum number of items returned per list request (default: 50)
+        instructions: | # Instructions describing how to use the server (for LLMs)
+            This demo MCP server provides time management capabilities.
+
+            Available tools:
+            - current-time: Get the current timestamp
+
+            Available resources:
+            - time://current: Current time resource
+
+            Available prompts:
+            - time-analysis: Expert time management analysis
 
         client_transports:
             stdio: true # Enable STDIO via command

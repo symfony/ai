@@ -45,6 +45,8 @@ final class McpBundle extends AbstractBundle
 
         $builder->setParameter('mcp.app', $config['app']);
         $builder->setParameter('mcp.version', $config['version']);
+        $builder->setParameter('mcp.pagination_limit', $config['pagination_limit']);
+        $builder->setParameter('mcp.instructions', $config['instructions']);
 
         $this->registerMcpAttributes($builder);
 
