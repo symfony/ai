@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Toolbox\Tool;
+namespace Symfony\AI\Tools;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;

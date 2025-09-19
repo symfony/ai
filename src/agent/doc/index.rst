@@ -77,7 +77,7 @@ Tool calling can be enabled by registering the processors in the agent::
 
 Custom tools can basically be any class, but must configure by the ``#[AsTool]`` attribute::
 
-    use Symfony\AI\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
     #[AsTool('company_name', 'Provides the name of your company')]
     final class CompanyName
@@ -97,7 +97,7 @@ JsonSerializable interface, to JSON strings for you. So you can return arrays or
 
 You can configure the method to be called by the LLM with the #[AsTool] attribute and have multiple tools per class::
 
-    use Symfony\AI\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
     #[AsTool(
         name: 'weather_current',
