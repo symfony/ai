@@ -15,7 +15,6 @@ use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\ModelClient as WhisperModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\ResultConverter as WhisperResponseConverter;
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\ModelCatalog;
 use Symfony\AI\Platform\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
@@ -51,8 +50,8 @@ final readonly class PlatformFactory
                 new DallE\ResultConverter(),
                 new WhisperResponseConverter(),
             ],
+            $catalog ?? new \Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog(),
             $contract ?? OpenAiContract::create(),
-            $catalog ?? new ModelCatalog(),
         );
     }
 }
