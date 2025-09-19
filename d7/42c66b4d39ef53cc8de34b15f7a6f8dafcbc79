@@ -1,0 +1,102 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-15T05:45:37Z
+
+Maybe I miss something, but why do we need the `DiscriminatorMap`?
+
+```php
+public function __invoke(
+    Foo|Bar $myVar,
+) {}
+```
+
+Doesn't this contain enough information to resolve it?
+
+---------------------------------------------------------------------------
+
+by HaKIMus at 2025-09-15T09:58:18Z
+
+> Maybe I miss something, but why do we need the `DiscriminatorMap`?
+>
+> ```
+> public function __invoke(
+>     Foo|Bar $myVar,
+> ) {}
+> ```
+>
+> Doesn't this contain enough information to resolve it?
+
+It might be, but [the problematic case](https://github.com/symfony/ai/pull/585/files#diff-f1025dae4c475c116140ae00e19644b7014145191621c2629839f49dd3df0e8fR17) is a `List<Foo|Bar>`. The discriminator map is here primarily for the Agent Processor to know how to deserialize data produced by llm according to our json schema correctly.
+
+If Symfony Serializer would understand how to work with annotated `list<Foo|Bar>` then we could get rid of the DiscriminatorMap. Because it lacks the strategy of deserializing a list of union types we'd get during the deserialization an array structurally reflecting our desired DTO, and not the DTO itself.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-16T20:27:40Z
+
+I have one question, can we simplify the fixture classes to a bare minimum and use simple terminology? I now this is from your real world use case, but for tests, maintenance too much complexity for me. if we need the enum inside the union type, fine, if not, lets remove it or lets only keep 2 values etc.
+
+Thanks
+
+---------------------------------------------------------------------------
+
+by HaKIMus at 2025-09-17T08:08:32Z
+
+@OskarStark I'll simplify and try to make the new DTOs examples more comprehensible max 'till Tomorrow.
+
+@chr-hertel when you ask for examples - you mean like the ones in PR description or something like `examples/openai/structured-output-math.php:24`? I think the second one could be more useful long term.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-17T08:10:58Z
+
+lets add `examples/openai/structured-output-union-types.php`
+
+---------------------------------------------------------------------------
+
+by HaKIMus at 2025-09-17T15:08:26Z
+
+I've simplified the examples to simpler objects and organized them in separated namespaces.
+
+I'm not sure why the pipeline fails with:
+```
+1) Symfony\AI\Platform\Tests\Contract\JsonSchema\FactoryTest::testBuildPropertiesForListOfPolymorphicTypesDto
+Error: Call to undefined method Symfony\Component\Serializer\Attribute\DiscriminatorMap::getMapping()
+```
+Locally the test runs correctly, and I'm on version 8.4.
+```
+php -v
+PHP 8.4.12 (cli) (built: Aug 26 2025 13:36:28) (NTS)
+```
+None of us wants to introduce a ghost error the project, it'd be good to know why it has happened, and I, at the moment, have no clue.
+
+----
+**UPDATE**
+I know why the error is occurring. The pipeline installs the version 8 for symfony serializer, where the DiscriminatorMap doesn't include the method. I'll think of a workaround.
+https://github.com/symfony/serializer/blob/8.0/Attribute/DiscriminatorMap.php
+
+---------------------------------------------------------------------------
+
+by HaKIMus at 2025-09-17T15:53:46Z
+
+@OskarStark @chr-hertel in the release 8.0 of the symfony/serializer package DiscriminatorMap doesn't implement `getMapping()` in favor of public properties. How do you handle such cases in the project? The pipeline builds against 7.* and 8.* version of the serializer.
+
+I'm thinking of the following solutions:
+* Reflectively change the property access
+* Detect the PHP version and access the property based on it (phpstan will not be happy about calling a private property)
+* Do not build against 8.* of symfony serializer
+* Asking nicely to Symfony/Serializer maintainers to support for both getters and access properties
+
+Wdyt?
+
+7.3: https://github.com/symfony/serializer/blob/7.3/Attribute/DiscriminatorMap.php
+8.0: https://github.com/symfony/serializer/blob/8.0/Attribute/DiscriminatorMap.php
+
+EDIT
+I've chosen the reflective approach.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-19T08:26:38Z
+
+One minor and good to merge
