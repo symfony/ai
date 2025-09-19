@@ -12,11 +12,10 @@ This is the Symfony AI monorepo containing multiple components and bundles that 
 - **Platform** (`src/platform/`): Unified interface to AI platforms (OpenAI, Anthropic, Azure, Gemini, VertexAI, etc.)
 - **Agent** (`src/agent/`): Framework for building AI agents that interact with users and perform tasks
 - **Store** (`src/store/`): Data storage abstraction with indexing and retrieval for vector databases
-- **MCP SDK** (`src/mcp-sdk/`): SDK for Model Context Protocol enabling agent-tool communication
 
 ### Integration Bundles
 - **AI Bundle** (`src/ai-bundle/`): Symfony integration for Platform, Store, and Agent components
-- **MCP Bundle** (`src/mcp-bundle/`): Symfony integration for MCP SDK
+- **MCP Bundle** (`src/mcp-bundle/`): Symfony integration for official MCP SDK
 
 ### Supporting Directories
 - **Examples** (`examples/`): Standalone examples demonstrating component usage across different AI platforms
@@ -92,7 +91,7 @@ symfony server:start
 Components are designed to work independently but have these relationships:
 - Agent depends on Platform for AI communication
 - AI Bundle integrates Platform, Agent, and Store
-- MCP Bundle provides MCP SDK integration
+- MCP Bundle provides official MCP SDK integration
 - Store is standalone but often used with Agent for RAG applications
 
 ## Testing Architecture

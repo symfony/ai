@@ -12,11 +12,10 @@ Symfony AI monorepo with independent packages for AI integration in PHP applicat
 - **Platform** (`src/platform/`): Unified AI platform interface (OpenAI, Anthropic, Azure, Gemini, VertexAI)
 - **Agent** (`src/agent/`): AI agent framework for user interaction and task execution
 - **Store** (`src/store/`): Data storage abstraction with vector database support
-- **MCP SDK** (`src/mcp-sdk/`): Model Context Protocol SDK for agent-tool communication
 
 ### Integration Bundles
 - **AI Bundle** (`src/ai-bundle/`): Symfony integration for Platform, Store, and Agent
-- **MCP Bundle** (`src/mcp-bundle/`): Symfony integration for MCP SDK
+- **MCP Bundle** (`src/mcp-bundle/`): Symfony integration for official MCP SDK
 
 ### Supporting Directories
 - **Examples** (`examples/`): Standalone usage examples
