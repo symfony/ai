@@ -3,7 +3,7 @@ MCP Bundle
 
 Symfony integration bundle for `Model Context Protocol`_ using the official MCP SDK `mcp/sdk`_.
 
-**Currently only supports tools as server via Server-Sent Events (SSE) and STDIO.**
+**Supports MCP capabilities (tools, prompts, resources) as server via Server-Sent Events (SSE) and STDIO. Resource templates implementation ready but awaiting MCP SDK support.**
 
 Installation
 ------------
@@ -20,16 +20,14 @@ the ``mcp`` section of your ``config/packages/mcp.yaml`` file.
 
 **Act as Server**
 
-.. warning::
-
-    Currently only supports tools. Support for prompts, resources, and other features coming soon.
-
-To use your application as an MCP server, exposing tools to clients like `Claude Desktop`_, you need to configure in the
+To use your application as an MCP server, exposing tools, prompts, resources, and resource templates to clients like `Claude Desktop`_, you need to configure in the
 ``client_transports`` section the transports you want to expose to clients. You can use either STDIO or SSE.
 
-**Creating Tools**
+**Creating MCP Capabilities**
 
-Tools are automatically discovered using PHP attributes. Create a class with methods annotated with ``#[McpTool]``::
+MCP capabilities are automatically discovered using PHP attributes.
+
+**Tools** - Actions that can be executed::
 
     use Mcp\Capability\Attribute\McpTool;
 
@@ -42,7 +40,64 @@ Tools are automatically discovered using PHP attributes. Create a class with met
         }
     }
 
-Tools are automatically discovered in the ``src/`` directory when the server starts.
+**Prompts** - System instructions for AI context::
+
+    use Mcp\Capability\Attribute\McpPrompt;
+
+    class TimePrompts
+    {
+        #[McpPrompt(name: 'time-analysis')]
+        public function getTimeAnalysisPrompt(): array
+        {
+            return [
+                ['role' => 'user', 'content' => 'You are a time management expert.']
+            ];
+        }
+    }
+
+**Resources** - Static data that can be read::
+
+    use Mcp\Capability\Attribute\McpResource;
+
+    class TimeResource
+    {
+        #[McpResource(uri: 'time://current', name: 'current-time')]
+        public function getCurrentTimeResource(): array
+        {
+            return [
+                'uri' => 'time://current',
+                'mimeType' => 'text/plain',
+                'text' => (new \DateTime('now'))->format('Y-m-d H:i:s')
+            ];
+        }
+    }
+
+**Resource Templates** - Dynamic resources with parameters:
+
+.. note::
+
+    Resource Templates are not yet functional as the underlying MCP SDK is missing the required handlers.
+    See `MCP SDK issue #9 <https://github.com/modelcontextprotocol/php-sdk/issues/9>`_ for implementation status.
+
+::
+
+    use Mcp\Capability\Attribute\McpResourceTemplate;
+
+    class TimeResourceTemplate
+    {
+        #[McpResourceTemplate(uriTemplate: 'time://{timezone}', name: 'time-by-timezone')]
+        public function getTimeByTimezone(string $timezone): array
+        {
+            $time = (new \DateTime('now', new \DateTimeZone($timezone)))->format('Y-m-d H:i:s T');
+            return [
+                'uri' => "time://$timezone",
+                'mimeType' => 'text/plain',
+                'text' => $time
+            ];
+        }
+    }
+
+All capabilities are automatically discovered in the ``src/`` directory when the server starts.
 
 **Act as Client**
 

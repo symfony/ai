@@ -11,9 +11,15 @@
 
 namespace Symfony\AI\McpBundle;
 
+use Mcp\Capability\Attribute\McpPrompt;
+use Mcp\Capability\Attribute\McpResource;
+use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpBundle\DependencyInjection\McpPromptPass;
+use Symfony\AI\McpBundle\DependencyInjection\McpResourcePass;
+use Symfony\AI\McpBundle\DependencyInjection\McpResourceTemplatePass;
 use Symfony\AI\McpBundle\DependencyInjection\McpToolPass;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -40,12 +46,7 @@ final class McpBundle extends AbstractBundle
         $builder->setParameter('mcp.app', $config['app']);
         $builder->setParameter('mcp.version', $config['version']);
 
-        $builder->registerAttributeForAutoconfiguration(
-            McpTool::class,
-            static function (ChildDefinition $definition): void {
-                $definition->addTag('mcp.tool');
-            }
-        );
+        $this->registerMcpAttributes($builder);
 
         if (isset($config['client_transports'])) {
             $this->configureClient($config['client_transports'], $builder);
@@ -55,6 +56,28 @@ final class McpBundle extends AbstractBundle
     public function build(ContainerBuilder $container): void
     {
         $container->addCompilerPass(new McpToolPass());
+        $container->addCompilerPass(new McpPromptPass());
+        $container->addCompilerPass(new McpResourcePass());
+        $container->addCompilerPass(new McpResourceTemplatePass());
+    }
+
+    private function registerMcpAttributes(ContainerBuilder $builder): void
+    {
+        $mcpAttributes = [
+            McpTool::class => 'mcp.tool',
+            McpPrompt::class => 'mcp.prompt',
+            McpResource::class => 'mcp.resource',
+            McpResourceTemplate::class => 'mcp.resource_template',
+        ];
+
+        foreach ($mcpAttributes as $attributeClass => $tag) {
+            $builder->registerAttributeForAutoconfiguration(
+                $attributeClass,
+                static function (ChildDefinition $definition) use ($tag): void {
+                    $definition->addTag($tag);
+                }
+            );
+        }
     }
 
     /**

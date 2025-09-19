@@ -141,6 +141,51 @@ class McpBundleTest extends TestCase
         $this->assertArrayHasKey('Mcp\Capability\Attribute\McpTool', $attributeAutoconfigurators);
     }
 
+    public function testMcpPromptAttributeAutoconfiguration()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'stdio' => true,
+                ],
+            ],
+        ]);
+
+        // Test that McpPrompt attribute is autoconfigured with mcp.prompt tag
+        $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
+        $this->assertArrayHasKey('Mcp\Capability\Attribute\McpPrompt', $attributeAutoconfigurators);
+    }
+
+    public function testMcpResourceAttributeAutoconfiguration()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'stdio' => true,
+                ],
+            ],
+        ]);
+
+        // Test that McpResource attribute is autoconfigured with mcp.resource tag
+        $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
+        $this->assertArrayHasKey('Mcp\Capability\Attribute\McpResource', $attributeAutoconfigurators);
+    }
+
+    public function testMcpResourceTemplateAttributeAutoconfiguration()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'stdio' => true,
+                ],
+            ],
+        ]);
+
+        // Test that McpResourceTemplate attribute is autoconfigured with mcp.resource_template tag
+        $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
+        $this->assertArrayHasKey('Mcp\Capability\Attribute\McpResourceTemplate', $attributeAutoconfigurators);
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();

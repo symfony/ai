@@ -11,10 +11,10 @@
 
 namespace Symfony\AI\McpBundle\DependencyInjection;
 
-final class McpToolPass extends AbstractMcpPass
+final class McpPromptPass extends AbstractMcpPass
 {
     protected function getTag(): string
     {
-        return 'mcp.tool';
+        return 'mcp.prompt';
     }
 }

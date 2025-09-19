@@ -19,3 +19,6 @@ CHANGELOG
  * Add cache-based SSE message storage
  * Add service configuration for MCP server setup
  * Tools using `#[McpTool]` attribute automatically discovered
+ * Prompts using `#[McpPrompt]` attribute automatically discovered
+ * Resources using `#[McpResource]` attribute automatically discovered
+ * Resource templates using `#[McpResourceTemplate]` attribute automatically discovered
