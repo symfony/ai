@@ -1,0 +1,7 @@
+parameters:
+    level: max
+    paths:
+        - .
+    excludePaths:
+        - vendor/
+        - Tests/fixtures/
