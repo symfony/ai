@@ -168,7 +168,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->end()
                 ->end()
             ->end()
-            ->arrayNode('models')
+            ->arrayNode('model')
                 ->useAttributeAsKey('platform')
                 ->arrayPrototype()
                     ->useAttributeAsKey('model_name')

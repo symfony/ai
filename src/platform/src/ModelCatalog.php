@@ -17,18 +17,18 @@ use Symfony\AI\Platform\Exception\ModelNotFoundException;
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-abstract class AbstractModelCatalog implements ModelCatalogInterface
+final class ModelCatalog implements ModelCatalogInterface
 {
     /**
-     * @param array<string, array{class: string, platform: string, capabilities: list<string>}> $models
+     * @param array<string, array{class: string, platform: string, capabilities: list<Capability>}> $models
      */
     public function __construct(
-        protected readonly array $models = [],
+        private readonly array $models = [],
     ) {
     }
 
     /**
-     * @return array<string, array{class: string, platform: string, capabilities: list<string>}>
+     * @return array<string, array{class: string, platform: string, capabilities: list<Capability>}>
      */
     public function getModels(): array
     {
@@ -48,7 +48,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
             throw new InvalidArgumentException(\sprintf('Model class "%s" does not exist.', $modelClass));
         }
 
-        $model = new $modelClass();
+        $model = new $modelClass($modelName, $modelConfig['capabilities']);
         if (!$model instanceof Model) {
             throw new InvalidArgumentException(\sprintf('Model class "%s" must extend %s.', $modelClass, Model::class));
         }
@@ -57,36 +57,15 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
     }
 
     /**
-     * @return list<Capability>
-     */
-    public function getCapabilities(string $modelName): array
-    {
-        $modelConfig = $this->getModelConfig($modelName);
-
-        if (null === $modelConfig) {
-            return [];
-        }
-
-        return array_map(
-            static fn (string $capability): Capability => Capability::from($capability),
-            $modelConfig['capabilities'] ?? []
-        );
-    }
-
-    /**
      * @return list<string>
      */
-    public function getSupportedModels(PlatformInterface $platform): array
+    public function getSupportedModels(): array
     {
-        if (!$this->supports($platform)) {
-            return [];
-        }
-
         return array_keys($this->models);
     }
 
     /**
-     * @return array{class: string, platform: string, capabilities: list<string>}|null
+     * @return array{class: string, platform: string, capabilities: list<Capability>}|null
      */
     private function getModelConfig(string $name): ?array
     {

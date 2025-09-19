@@ -27,7 +27,6 @@ use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
-use Symfony\AI\AiBundle\DependencyInjection\ModelCatalogCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
@@ -48,7 +47,9 @@ use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory as PerplexityPlatformF
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
@@ -99,7 +100,6 @@ final class AiBundle extends AbstractBundle
         parent::build($container);
 
         $container->addCompilerPass(new ProcessorCompilerPass());
-        $container->addCompilerPass(new ModelCatalogCompilerPass());
     }
 
     public function configure(DefinitionConfigurator $definition): void // @phpstan-ignore-line generics.notSubtype
@@ -132,11 +132,12 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        foreach ($config['models'] ?? [] as $platformName => $models) {
-            foreach ($models as $modelName => $model) {
-                $this->processModelConfig($modelName, $model, $platformName, $builder);
-            }
+        foreach ($config['model'] ?? [] as $platformName => $models) {
+            $this->processModelCatalogConfig($platformName, $models, $builder);
         }
+
+        // Ensure default empty model catalogs exist for all platforms
+        $this->ensureDefaultModelCatalogs($builder);
 
         foreach ($config['agent'] as $agentName => $agent) {
             $this->processAgentConfig($agentName, $agent, $builder);
@@ -350,6 +351,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.openai'),
                     $platform['region'] ?? null,
+                    new Reference('ai.model_catalog.openai', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])
                 ->addTag('ai.platform');
 
@@ -1162,20 +1164,58 @@ final class AiBundle extends AbstractBundle
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param array<string, mixed> $models
      */
-    private function processModelConfig(string $modelName, array $config, string $platformName, ContainerBuilder $container): void
+    private function processModelCatalogConfig(string $platformName, array $models, ContainerBuilder $container): void
     {
-        $platformServiceId = 'ai.platform.'.$platformName;
+        $modelDefinitions = [];
+        
+        foreach ($models as $modelName => $modelConfig) {
+            $capabilities = $modelConfig['capabilities'] ?? [];
+            
+            // If no capabilities provided, add all capabilities from Capability enum
+            if (empty($capabilities)) {
+                $capabilityEnums = Capability::cases();
+            } else {
+                // Convert string capabilities to Capability enums
+                if (is_string($capabilities)) {
+                    $capabilities = explode(',', $capabilities);
+                }
+                
+                $capabilityEnums = [];
+                foreach ($capabilities as $capability) {
+                    $capability = trim($capability);
+                    if ($capability !== '') {
+                        $capabilityEnums[] = Capability::from($capability);
+                    }
+                }
+            }
+            
+            $modelDefinitions[$modelName] = [
+                'class' => $modelConfig['class'],
+                'platform' => $platformName,
+                'capabilities' => $capabilityEnums,
+            ];
+        }
+        
+        // Create platform-specific model catalog service
+        $catalogServiceId = 'ai.model_catalog.' . $platformName;
+        $catalogDefinition = new Definition(ModelCatalog::class, [$modelDefinitions]);
+        $container->setDefinition($catalogServiceId, $catalogDefinition);
+    }
 
-        $modelDefinition = new Definition($config['class']);
-        $modelDefinition->addTag('ai.model.catalog', [
-            'name' => $modelName,
-            'class' => $config['class'],
-            'platform' => $platformServiceId,
-            'capabilities' => $config['capabilities'],
-        ]);
-
-        $container->setDefinition('ai.model.catalog.'.$modelName, $modelDefinition);
+    private function ensureDefaultModelCatalogs(ContainerBuilder $container): void
+    {
+        $defaultPlatforms = ['openai', 'anthropic', 'gemini', 'azure', 'mistral', 'ollama', 'perplexity'];
+        
+        foreach ($defaultPlatforms as $platform) {
+            $catalogServiceId = 'ai.model_catalog.' . $platform;
+            
+            // Only create if it doesn't already exist
+            if (!$container->hasDefinition($catalogServiceId)) {
+                $catalogDefinition = new Definition(ModelCatalog::class, [[]]);
+                $container->setDefinition($catalogServiceId, $catalogDefinition);
+            }
+        }
     }
 }

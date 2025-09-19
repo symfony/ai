@@ -30,6 +30,8 @@ final class Platform implements PlatformInterface
      */
     private readonly array $resultConverters;
 
+    private readonly ModelCatalogInterface $modelCatalog;
+
     /**
      * @param iterable<ModelClientInterface>     $modelClients
      * @param iterable<ResultConverterInterface> $resultConverters
@@ -38,8 +40,10 @@ final class Platform implements PlatformInterface
         iterable $modelClients,
         iterable $resultConverters,
         private ?Contract $contract = null,
+        ?ModelCatalogInterface $modelCatalog = null,
     ) {
         $this->contract = $contract ?? Contract::create();
+        $this->modelCatalog = $modelCatalog ?? new ModelCatalog();
         $this->modelClients = $modelClients instanceof \Traversable ? iterator_to_array($modelClients) : $modelClients;
         $this->resultConverters = $resultConverters instanceof \Traversable ? iterator_to_array($resultConverters) : $resultConverters;
     }
