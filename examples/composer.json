@@ -36,6 +36,12 @@
         "phpstan/phpstan": "^2.1"
     },
     "minimum-stability": "dev",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../src/agent/src/Bridge/Brave"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Symfony\\AI\\Fixtures\\": "../fixtures/"
