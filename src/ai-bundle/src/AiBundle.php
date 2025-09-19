@@ -136,9 +136,6 @@ final class AiBundle extends AbstractBundle
             $this->processModelCatalogConfig($platformName, $models, $builder);
         }
 
-        // Ensure default empty model catalogs exist for all platforms
-        $this->ensureDefaultModelCatalogs($builder);
-
         foreach ($config['agent'] as $agentName => $agent) {
             $this->processAgentConfig($agentName, $agent, $builder);
         }
@@ -1204,18 +1201,4 @@ final class AiBundle extends AbstractBundle
         $container->setDefinition($catalogServiceId, $catalogDefinition);
     }
 
-    private function ensureDefaultModelCatalogs(ContainerBuilder $container): void
-    {
-        $defaultPlatforms = ['openai', 'anthropic', 'gemini', 'azure', 'mistral', 'ollama', 'perplexity'];
-        
-        foreach ($defaultPlatforms as $platform) {
-            $catalogServiceId = 'ai.model_catalog.' . $platform;
-            
-            // Only create if it doesn't already exist
-            if (!$container->hasDefinition($catalogServiceId)) {
-                $catalogDefinition = new Definition(ModelCatalog::class, [[]]);
-                $container->setDefinition($catalogServiceId, $catalogDefinition);
-            }
-        }
-    }
 }
