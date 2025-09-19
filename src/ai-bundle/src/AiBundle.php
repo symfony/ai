@@ -132,8 +132,10 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        foreach ($config['models'] ?? [] as $modelName => $model) {
-            $this->processModelConfig($modelName, $model, $builder);
+        foreach ($config['models'] ?? [] as $platformName => $models) {
+            foreach ($models as $modelName => $model) {
+                $this->processModelConfig($modelName, $model, $platformName, $builder);
+            }
         }
 
         foreach ($config['agent'] as $agentName => $agent) {
@@ -1162,13 +1164,15 @@ final class AiBundle extends AbstractBundle
     /**
      * @param array<string, mixed> $config
      */
-    private function processModelConfig(string $modelName, array $config, ContainerBuilder $container): void
+    private function processModelConfig(string $modelName, array $config, string $platformName, ContainerBuilder $container): void
     {
+        $platformServiceId = 'ai.platform.'.$platformName;
+
         $modelDefinition = new Definition($config['class']);
         $modelDefinition->addTag('ai.model.catalog', [
             'name' => $modelName,
             'class' => $config['class'],
-            'platform' => $config['platform'],
+            'platform' => $platformServiceId,
             'capabilities' => $config['capabilities'],
         ]);
 

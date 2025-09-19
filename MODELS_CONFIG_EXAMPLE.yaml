@@ -4,38 +4,48 @@ ai:
   platform:
     openai:
       api_key: '%env(OPENAI_API_KEY)%'
+    anthropic:
+      api_key: '%env(ANTHROPIC_API_KEY)%'
   
   models:
-    gpt-4o-mini:
-      platform: 'ai.platform.openai'
-      class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-      capabilities:
-        - 'input-messages'
-        - 'input-image'
-        - 'output-text'
-        - 'output-streaming'
-        - 'output-structured'
-        - 'tool-calling'
+    openai:
+      gpt-4o-mini:
+        class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+        capabilities:
+          - 'input-messages'
+          - 'input-image'
+          - 'output-text'
+          - 'output-streaming'
+          - 'output-structured'
+          - 'tool-calling'
+      
+      gpt-4o:
+        class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+        capabilities:
+          - 'input-messages'
+          - 'input-image'
+          - 'output-text'
+          - 'output-streaming'
+          - 'output-structured'
+          - 'tool-calling'
+      
+      gpt-4:
+        class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+        capabilities:
+          - 'input-messages'
+          - 'output-text'
+          - 'output-streaming'
+          - 'tool-calling'
     
-    gpt-4o:
-      platform: 'ai.platform.openai'
-      class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-      capabilities:
-        - 'input-messages'
-        - 'input-image'
-        - 'output-text'
-        - 'output-streaming'
-        - 'output-structured'
-        - 'tool-calling'
-    
-    gpt-4:
-      platform: 'ai.platform.openai'
-      class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-      capabilities:
-        - 'input-messages'
-        - 'output-text'
-        - 'output-streaming'
-        - 'tool-calling'
+    anthropic:
+      claude-3-5-sonnet:
+        class: 'Symfony\AI\Platform\Bridge\Anthropic\Claude'
+        capabilities:
+          - 'input-messages'
+          - 'input-image'
+          - 'output-text'
+          - 'output-streaming'
+          - 'tool-calling'
 
   agent:
     my_agent:

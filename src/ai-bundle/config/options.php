@@ -169,49 +169,48 @@ return static function (DefinitionConfigurator $configurator): void {
                 ->end()
             ->end()
             ->arrayNode('models')
-                ->useAttributeAsKey('name')
+                ->useAttributeAsKey('platform')
                 ->arrayPrototype()
-                    ->children()
-                        ->stringNode('platform')
-                            ->info('Service name of the platform that supports this model')
-                            ->isRequired()
-                        ->end()
-                        ->stringNode('class')
-                            ->info('Model class that extends Model')
-                            ->isRequired()
-                            ->validate()
-                                ->ifTrue(function ($v) {
-                                    return !is_a($v, Model::class, true);
-                                })
-                                ->thenInvalid(\sprintf('The model class "%%s" must extend %s.', Model::class))
-                            ->end()
-                        ->end()
-                        ->arrayNode('capabilities')
-                            ->info('Array of capabilities that this model supports')
-                            ->scalarPrototype()
+                    ->useAttributeAsKey('model_name')
+                    ->arrayPrototype()
+                        ->children()
+                            ->stringNode('class')
+                                ->info('Model class that extends Model')
+                                ->isRequired()
                                 ->validate()
                                     ->ifTrue(function ($v) {
-                                        return !\in_array($v, [
-                                            Capability::INPUT_AUDIO->value,
-                                            Capability::INPUT_IMAGE->value,
-                                            Capability::INPUT_MESSAGES->value,
-                                            Capability::INPUT_MULTIPLE->value,
-                                            Capability::INPUT_PDF->value,
-                                            Capability::INPUT_TEXT->value,
-                                            Capability::OUTPUT_AUDIO->value,
-                                            Capability::OUTPUT_IMAGE->value,
-                                            Capability::OUTPUT_STREAMING->value,
-                                            Capability::OUTPUT_STRUCTURED->value,
-                                            Capability::OUTPUT_TEXT->value,
-                                            Capability::TOOL_CALLING->value,
-                                            Capability::TEXT_TO_SPEECH->value,
-                                            Capability::SPEECH_TO_TEXT->value,
-                                        ], true);
+                                        return !is_a($v, Model::class, true);
                                     })
-                                    ->thenInvalid('Invalid capability "%s". Must be one of: '.implode(', ', array_map(fn ($c) => $c->value, Capability::cases())))
+                                    ->thenInvalid(\sprintf('The model class "%%s" must extend %s.', Model::class))
                                 ->end()
                             ->end()
-                            ->defaultValue([])
+                            ->arrayNode('capabilities')
+                                ->info('Array of capabilities that this model supports')
+                                ->scalarPrototype()
+                                    ->validate()
+                                        ->ifTrue(function ($v) {
+                                            return !\in_array($v, [
+                                                Capability::INPUT_AUDIO->value,
+                                                Capability::INPUT_IMAGE->value,
+                                                Capability::INPUT_MESSAGES->value,
+                                                Capability::INPUT_MULTIPLE->value,
+                                                Capability::INPUT_PDF->value,
+                                                Capability::INPUT_TEXT->value,
+                                                Capability::OUTPUT_AUDIO->value,
+                                                Capability::OUTPUT_IMAGE->value,
+                                                Capability::OUTPUT_STREAMING->value,
+                                                Capability::OUTPUT_STRUCTURED->value,
+                                                Capability::OUTPUT_TEXT->value,
+                                                Capability::TOOL_CALLING->value,
+                                                Capability::TEXT_TO_SPEECH->value,
+                                                Capability::SPEECH_TO_TEXT->value,
+                                            ], true);
+                                        })
+                                        ->thenInvalid('Invalid capability "%s". Must be one of: '.implode(', ', array_map(fn ($c) => $c->value, Capability::cases())))
+                                    ->end()
+                                ->end()
+                                ->defaultValue([])
+                            ->end()
                         ->end()
                     ->end()
                 ->end()
