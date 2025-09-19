@@ -60,9 +60,18 @@ jobs:
             - name: Build root packages
               run: php .github/build-packages.php
 
+            - name: Install examples dependencies  
+              uses: ramsey/composer-install@v3
+              with:
+                  working-directory: examples
+
+            - name: Link examples
+              working-directory: examples
+              run: ../link
+
             - name: Run PHPStan on examples
-              run: |
-                  cd examples/ && $COMPOSER_UP && ../link . && $PHPSTAN
+              working-directory: examples
+              run: $PHPSTAN
 
             - name: Run PHPStan on packages
               run: |
