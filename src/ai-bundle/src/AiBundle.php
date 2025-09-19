@@ -84,6 +84,7 @@ use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 use function Symfony\Component\String\u;
@@ -623,13 +624,21 @@ final class AiBundle extends AbstractBundle
         if (isset($config['prompt'])) {
             $includeTools = isset($config['prompt']['include_tools']) && $config['prompt']['include_tools'];
 
+            if ($config['prompt']['enable_translation']) {
+                if (!class_exists(TranslatableMessage::class)) {
+                    throw new RuntimeException('For using prompt translataion, symfony/translation package is required. Try running "composer require symfony/translation".');
+                }
+
+                $prompt = new TranslatableMessage($config['prompt']['text'], domain: $config['prompt']['translation_domain']);
+            } else {
+                $prompt = $config['prompt']['text'];
+            }
+
             $systemPromptInputProcessorDefinition = (new Definition(SystemPromptInputProcessor::class))
                 ->setArguments([
-                    $config['prompt']['text'],
+                    $prompt,
                     $includeTools ? new Reference('ai.toolbox.'.$name) : null,
                     new Reference('translator', ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    $config['prompt']['enable_translation'],
-                    $config['prompt']['translation_domain'],
                     new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
                 ])
                 ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -30]);

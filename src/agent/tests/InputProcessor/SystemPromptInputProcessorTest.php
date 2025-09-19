@@ -29,6 +29,7 @@ use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SystemPromptInputProcessor::class)]
@@ -211,11 +212,9 @@ final class SystemPromptInputProcessorTest extends TestCase
     public function testWithTranslationDomainSystemPrompt()
     {
         $processor = new SystemPromptInputProcessor(
-            'This is a',
+            new TranslatableMessage('This is a', domain: 'prompts'),
             null,
             $this->getTranslator(),
-            true,
-            'prompts'
         );
 
         $input = new Input(new Gpt(), new MessageBag(), []);
@@ -229,13 +228,12 @@ final class SystemPromptInputProcessorTest extends TestCase
 
     public function testWithMissingTranslator()
     {
-        $this->expectExceptionMessage('Prompt translation is enabled but no translator was provided');
+        $this->expectExceptionMessage('Translatable system prompt is not supported when no translator is provided.');
 
         new SystemPromptInputProcessor(
-            'This is a',
+            new TranslatableMessage('This is a'),
             null,
             null,
-            true,
         );
     }
 

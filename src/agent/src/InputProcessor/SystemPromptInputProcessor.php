@@ -19,6 +19,7 @@ use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -31,15 +32,13 @@ final readonly class SystemPromptInputProcessor implements InputProcessorInterfa
      * @param ToolboxInterface|null $toolbox      the tool box to be used to append the tool definitions to the system prompt
      */
     public function __construct(
-        private \Stringable|string $systemPrompt,
+        private \Stringable|TranslatableInterface|string $systemPrompt,
         private ?ToolboxInterface $toolbox = null,
         private ?TranslatorInterface $translator = null,
-        private bool $enableTranslation = false,
-        private ?string $translationDomain = null,
         private LoggerInterface $logger = new NullLogger(),
     ) {
-        if ($this->enableTranslation && !$this->translator) {
-            throw new RuntimeException('Prompt translation is enabled but no translator was provided.');
+        if ($this->systemPrompt instanceof TranslatableInterface && !$this->translator) {
+            throw new RuntimeException('Translatable system prompt is not supported when no translator is provided.');
         }
     }
 
@@ -53,8 +52,8 @@ final readonly class SystemPromptInputProcessor implements InputProcessorInterfa
             return;
         }
 
-        $message = $this->enableTranslation
-            ? $this->translator->trans((string) $this->systemPrompt, [], $this->translationDomain)
+        $message = $this->systemPrompt instanceof TranslatableInterface
+            ? $this->systemPrompt->trans($this->translator)
             : (string) $this->systemPrompt;
 
         if ($this->toolbox instanceof ToolboxInterface
