@@ -49,4 +49,4 @@ $messages = new MessageBag(
 
 $result = $platform->invoke($transcribeModel, $messages);
 
-echo $result->getResult()->getContent()."\n\n";
+echo $result->getResult()->getContent().\PHP_EOL;
