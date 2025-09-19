@@ -25,7 +25,6 @@ final class ModelCatalog extends AbstractModelCatalog
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
-            // GPT Models - All GPT models from Gpt.php
             'gpt-3.5-turbo' => [
                 'class' => Gpt::class,
                 'capabilities' => [
@@ -221,8 +220,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
-            
-            // Embedding Models - All embedding models from Embeddings.php
             'text-embedding-ada-002' => [
                 'class' => Embeddings::class,
                 'capabilities' => [Capability::INPUT_TEXT],
@@ -234,6 +231,27 @@ final class ModelCatalog extends AbstractModelCatalog
             'text-embedding-3-small' => [
                 'class' => Embeddings::class,
                 'capabilities' => [Capability::INPUT_TEXT],
+            ],
+            'whisper-1' => [
+                'class' => Whisper::class,
+                'capabilities' => [
+                    Capability::INPUT_AUDIO,
+                    Capability::OUTPUT_TEXT,
+                ],
+            ],
+            'dall-e-2' => [
+                'class' => DallE::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_IMAGE,
+                ],
+            ],
+            'dall-e-3' => [
+                'class' => DallE::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_IMAGE,
+                ],
             ],
         ];
 

@@ -50,7 +50,7 @@ final readonly class PlatformFactory
                 new DallE\ResultConverter(),
                 new WhisperResponseConverter(),
             ],
-            $catalog ?? new \Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog(),
+            $catalog ?? new ModelCatalog(),
             $contract ?? OpenAiContract::create(),
         );
     }

@@ -20,14 +20,4 @@ use Symfony\AI\Platform\Model;
  */
 class Gpt extends Model
 {
-    /**
-     * @param array<mixed> $options The default options for the model usage
-     */
-    public function __construct(
-        string $name,
-        array $capabilities = [],
-        array $options = [],
-    ) {
-        parent::__construct($name, $capabilities, $options);
-    }
 }

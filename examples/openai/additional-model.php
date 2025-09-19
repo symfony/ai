@@ -44,6 +44,6 @@ $messages = new MessageBag(
     ),
 );
 
-$result = $platform->invoke($modelCatalog->getModel('gpt-4o-mini-transcribe'), $messages);
+$result = $platform->invoke('gpt-4o-mini-transcribe', $messages);
 
 echo $result->getResult()->getContent().\PHP_EOL;

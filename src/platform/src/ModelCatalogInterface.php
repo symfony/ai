@@ -17,4 +17,14 @@ namespace Symfony\AI\Platform;
 interface ModelCatalogInterface
 {
     public function getModel(string $modelName): Model;
+
+    /**
+     * @return array<string, array{class: string, capabilities: list<Capability>}>
+     */
+    public function getModels(): array;
+
+    /**
+     * @return array{class: string, capabilities: list<Capability>}
+     */
+    public function getModelConfig(string $modelName): array;
 }

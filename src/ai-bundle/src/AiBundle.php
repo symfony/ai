@@ -1170,21 +1170,16 @@ final class AiBundle extends AbstractBundle
         foreach ($models as $modelName => $modelConfig) {
             $capabilities = $modelConfig['capabilities'] ?? [];
             
-            // If no capabilities provided, add all capabilities from Capability enum
-            if (empty($capabilities)) {
-                $capabilityEnums = Capability::cases();
-            } else {
-                // Convert string capabilities to Capability enums
-                if (is_string($capabilities)) {
-                    $capabilities = explode(',', $capabilities);
-                }
-                
-                $capabilityEnums = [];
-                foreach ($capabilities as $capability) {
-                    $capability = trim($capability);
-                    if ($capability !== '') {
-                        $capabilityEnums[] = Capability::from($capability);
-                    }
+            // Convert string capabilities to Capability enums
+            if (is_string($capabilities)) {
+                $capabilities = explode(',', $capabilities);
+            }
+            
+            $capabilityEnums = [];
+            foreach ($capabilities as $capability) {
+                $capability = trim($capability);
+                if ($capability !== '') {
+                    $capabilityEnums[] = Capability::from($capability);
                 }
             }
             
@@ -1195,9 +1190,7 @@ final class AiBundle extends AbstractBundle
         }
         
         // Create platform-specific model catalog service
-        $catalogServiceId = 'ai.model_catalog.' . $platformName;
-        $catalogDefinition = new Definition(ModelCatalog::class, [$modelDefinitions]);
-        $container->setDefinition($catalogServiceId, $catalogDefinition);
+        $container->setDefinition('ai.model_catalog.' . $platformName, new Definition(ModelCatalog::class, [$modelDefinitions]));
     }
 
 }

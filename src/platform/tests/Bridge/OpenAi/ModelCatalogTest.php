@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Tests\Bridge\OpenAi;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
@@ -62,22 +63,19 @@ final class ModelCatalogTest extends TestCase
         $this->assertContains('gpt-4o', $supportedModels); // Default models still present
     }
 
-    public function testItReturnsCorrectModelInstance(): void
+    #[TestWith(['gpt-4o', Gpt::class])]
+    #[TestWith(['gpt-4o-mini', Gpt::class])]
+    #[TestWith(['gpt-3.5-turbo', Gpt::class])]
+    #[TestWith(['text-embedding-3-large', Embeddings::class])]
+    #[TestWith(['text-embedding-3-small', Embeddings::class])]
+    #[TestWith(['text-embedding-ada-002', Embeddings::class])]
+    public function testItReturnsCorrectModelInstance(string $modelName, string $expectedClass): void
     {
         $catalog = new ModelCatalog();
 
-        $model = $catalog->getModel('gpt-4o');
+        $model = $catalog->getModel($modelName);
 
-        $this->assertInstanceOf(Gpt::class, $model);
-    }
-
-    public function testItReturnsCorrectEmbeddingModelInstance(): void
-    {
-        $catalog = new ModelCatalog();
-
-        $model = $catalog->getModel('text-embedding-3-large');
-
-        $this->assertInstanceOf(Embeddings::class, $model);
+        $this->assertInstanceOf($expectedClass, $model);
     }
 
     public function testItThrowsExceptionForUnknownModel(): void

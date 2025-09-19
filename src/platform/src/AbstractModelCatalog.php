@@ -20,24 +20,24 @@ use Symfony\AI\Platform\Exception\ModelNotFoundException;
 abstract class AbstractModelCatalog implements ModelCatalogInterface
 {
     /**
-     * @var array<string, array{class: string, platform: string, capabilities: list<Capability>}>
+     * @var array<string, array{class: string, capabilities: list<Capability>}>
      */
     protected readonly array $models;
 
     public function getModel(string $modelName): Model
     {
-        $modelConfig = $this->getModelConfig($modelName);
-
-        if (null === $modelConfig) {
+        if (!isset($this->models[$modelName])) {
             throw ModelNotFoundException::forModelName($modelName);
         }
 
+        $modelConfig = $this->models[$modelName];
         $modelClass = $modelConfig['class'];
+        
         if (!class_exists($modelClass)) {
             throw new InvalidArgumentException(\sprintf('Model class "%s" does not exist.', $modelClass));
         }
 
-        $model = new $modelClass();
+        $model = new $modelClass($modelName, $modelConfig['capabilities']);
         if (!$model instanceof Model) {
             throw new InvalidArgumentException(\sprintf('Model class "%s" must extend %s.', $modelClass, Model::class));
         }
@@ -46,18 +46,23 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
     }
 
     /**
-     * @return list<string>
+     * @return array<string, array{class: string, capabilities: list<Capability>}>
      */
     public function getModels(): array
     {
-        return array_keys($this->models);
+        return $this->models;
     }
 
     /**
-     * @return array{class: string, platform: string, capabilities: list<Capability>}|null
+     * @return array{class: string, capabilities: list<Capability>}
      */
-    private function getModelConfig(string $name): ?array
+    public function getModelConfig(string $modelName): array
     {
-        return $this->models[$name] ?? null;
+        if (!isset($this->models[$modelName])) {
+            throw ModelNotFoundException::forModelName($modelName);
+        }
+
+        return $this->models[$modelName];
     }
+
 }

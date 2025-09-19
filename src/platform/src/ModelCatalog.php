@@ -17,7 +17,7 @@ namespace Symfony\AI\Platform;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: string, platform: string, capabilities: list<Capability>}> $models
+     * @param array<string, array{class: string, capabilities: list<Capability>}> $models
      */
     public function __construct(array $models = [])
     {
