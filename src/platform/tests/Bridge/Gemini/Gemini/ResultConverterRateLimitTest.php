@@ -36,6 +36,7 @@ final class ResultConverterRateLimitTest extends TestCase
         $handler = new ResultConverter();
 
         $this->expectException(RateLimitExceededException::class);
+        $this->expectExceptionCode(429);
         $this->expectExceptionMessage('Rate limit exceeded.');
 
         try {
