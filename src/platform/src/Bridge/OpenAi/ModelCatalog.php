@@ -11,22 +11,14 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi;
 
+use Symfony\AI\Platform\AbstractModelCatalog;
 use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Exception\ModelNotFoundException;
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelCatalogInterface;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-final class ModelCatalog implements ModelCatalogInterface
+final class ModelCatalog extends AbstractModelCatalog
 {
-    /**
-     * @var array<string, array{class: string, platform: string, capabilities: list<Capability>}>
-     */
-    private readonly array $models;
-
     /**
      * @param array<string, array{class: string, platform: string, capabilities: list<Capability>}> $additionalModels
      */
@@ -35,65 +27,6 @@ final class ModelCatalog implements ModelCatalogInterface
         $defaultModels = $this->getDefaultOpenAiModels();
 
         $this->models = array_merge($defaultModels, $additionalModels);
-    }
-
-    /**
-     * @return array<string, array{class: string, platform: string, capabilities: list<Capability>}>
-     */
-    public function getModels(): array
-    {
-        return $this->models;
-    }
-
-    public function getModel(string $modelName): Model
-    {
-        $modelConfig = $this->getModelConfig($modelName);
-
-        if (null === $modelConfig) {
-            throw ModelNotFoundException::forModelName($modelName);
-        }
-
-        $modelClass = $modelConfig['class'];
-        if (!class_exists($modelClass)) {
-            throw new InvalidArgumentException(\sprintf('Model class "%s" does not exist.', $modelClass));
-        }
-
-        $model = new $modelClass();
-        if (!$model instanceof Model) {
-            throw new InvalidArgumentException(\sprintf('Model class "%s" must extend %s.', $modelClass, Model::class));
-        }
-
-        return $model;
-    }
-
-    /**
-     * @return list<Capability>
-     */
-    public function getCapabilities(string $modelName): array
-    {
-        $modelConfig = $this->getModelConfig($modelName);
-
-        if (null === $modelConfig) {
-            return [];
-        }
-
-        return $modelConfig['capabilities'] ?? [];
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function getSupportedModels(): array
-    {
-        return array_keys($this->models);
-    }
-
-    /**
-     * @return array{class: string, platform: string, capabilities: list<Capability>}|null
-     */
-    private function getModelConfig(string $name): ?array
-    {
-        return $this->models[$name] ?? null;
     }
 
     /**
