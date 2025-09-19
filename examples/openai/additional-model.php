@@ -47,8 +47,6 @@ $messages = new MessageBag(
     ),
 );
 
-$result = $platform->invoke($transcribeModel, $messages, [
-    'max_tokens' => 300,
-]);
+$result = $platform->invoke($transcribeModel, $messages);
 
 echo $result->getResult()->getContent()."\n\n";
