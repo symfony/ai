@@ -1183,8 +1183,17 @@ final class AiBundle extends AbstractBundle
                 }
             }
             
+            // Determine the appropriate model class based on platform
+            $modelClass = match ($platformName) {
+                'openai' => \Symfony\AI\Platform\Bridge\OpenAi\Gpt::class,
+                'anthropic' => \Symfony\AI\Platform\Bridge\Anthropic\Claude::class,
+                'gemini' => \Symfony\AI\Platform\Bridge\Gemini\Gemini::class,
+                'mistral' => \Symfony\AI\Platform\Bridge\Mistral\Mistral::class,
+                default => \Symfony\AI\Platform\Model::class,
+            };
+
             $modelDefinitions[$modelName] = [
-                'class' => $modelConfig['class'],
+                'class' => $modelClass,
                 'capabilities' => $capabilityEnums,
             ];
         }
