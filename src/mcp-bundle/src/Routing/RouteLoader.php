@@ -21,7 +21,7 @@ final class RouteLoader extends Loader
     private bool $loaded = false;
 
     public function __construct(
-        private readonly bool $sseTransportEnabled,
+        private bool $sseTransportEnabled,
     ) {
         parent::__construct();
     }

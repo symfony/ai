@@ -75,7 +75,7 @@ Configuration
             name:
                 transport: 'stdio' # Transport method to use, either 'stdio' or 'sse'
                 stdio:
-                    command: 'php /path/bin/console mcp:server' # Command to execute to start the client
+                    command: 'php /path/bin/console mcp:server' # Command to execute to start the server
                     arguments: [] # Arguments to pass to the command
                 sse:
                     url: 'http://localhost:8000/sse' # URL to SSE endpoint of MCP server

@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Mcp\Server;
+use Mcp\Server\ServerBuilder;
 use Mcp\Server\Transport\Sse\Store\CachePoolStore;
 
 return static function (ContainerConfigurator $container): void {
@@ -19,13 +21,13 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('cache.app'),
             ])
-        ->set('mcp.server.builder', 'Mcp\\Server\\ServerBuilder')
-            ->factory(['Mcp\\Server', 'make'])
+        ->set('mcp.server.builder', ServerBuilder::class)
+            ->factory([Server::class, 'make'])
             ->call('setServerInfo', [param('mcp.app'), param('mcp.version')])
             ->call('setLogger', [service('logger')])
             ->call('setDiscovery', [param('kernel.project_dir'), ['src']])
 
-        ->set('mcp.server', 'Mcp\\Server')
+        ->set('mcp.server', Server::class)
             ->factory([service('mcp.server.builder'), 'build'])
 
     ;

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 
+use Mcp\Server\ServerBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\DependencyInjection\McpToolPass;
@@ -23,7 +24,7 @@ class McpToolPassTest extends TestCase
     {
         $container = new ContainerBuilder();
 
-        $container->register('mcp.server.builder', 'Mcp\\Server\\ServerBuilder');
+        $container->register('mcp.server.builder', ServerBuilder::class);
 
         $container->register('tool1', 'MockTool1')
             ->addTag('mcp.tool');
@@ -53,7 +54,7 @@ class McpToolPassTest extends TestCase
     {
         $container = new ContainerBuilder();
 
-        $container->register('mcp.server.builder', 'Mcp\\Server\\ServerBuilder');
+        $container->register('mcp.server.builder', ServerBuilder::class);
         $container->register('service1', 'MockService');
         $container->register('service2', 'MockService');
 
