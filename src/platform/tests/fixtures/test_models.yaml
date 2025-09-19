@@ -1,0 +1,12 @@
+models:
+  test-model:
+    class: TestModelClass
+    capabilities:
+      - input-text
+      - output-text
+  
+  another-test-model:
+    class: AnotherTestModelClass
+    capabilities:
+      - input-messages
+      - tool-calling

@@ -53,7 +53,8 @@
         "symfony/property-info": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0",
         "symfony/type-info": "^7.3|^8.0",
-        "symfony/uid": "^7.3|^8.0"
+        "symfony/uid": "^7.3|^8.0",
+        "symfony/yaml": "^7.3|^8.0"
     },
     "require-dev": {
         "async-aws/bedrock-runtime": "^0.1.0",

@@ -1,0 +1,56 @@
+models:
+  gpt-4o-mini:
+    class: Symfony\AI\Platform\Bridge\OpenAi\Gpt
+    capabilities:
+      - input-messages
+      - input-image
+      - output-text
+      - output-streaming
+      - output-structured
+      - tool-calling
+  
+  gpt-4o:
+    class: Symfony\AI\Platform\Bridge\OpenAi\Gpt
+    capabilities:
+      - input-messages
+      - input-image
+      - output-text
+      - output-streaming
+      - output-structured
+      - tool-calling
+  
+  gpt-4o-audio-preview:
+    class: Symfony\AI\Platform\Bridge\OpenAi\Gpt
+    capabilities:
+      - input-messages
+      - input-audio
+      - input-image
+      - output-text
+      - output-streaming
+      - output-structured
+      - tool-calling
+  
+  gpt-4-turbo:
+    class: Symfony\AI\Platform\Bridge\OpenAi\Gpt
+    capabilities:
+      - input-messages
+      - input-image
+      - output-text
+      - output-streaming
+      - tool-calling
+  
+  gpt-4:
+    class: Symfony\AI\Platform\Bridge\OpenAi\Gpt
+    capabilities:
+      - input-messages
+      - output-text
+      - output-streaming
+      - tool-calling
+  
+  gpt-3.5-turbo:
+    class: Symfony\AI\Platform\Bridge\OpenAi\Gpt
+    capabilities:
+      - input-messages
+      - output-text
+      - output-streaming
+      - tool-calling
