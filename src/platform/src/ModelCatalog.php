@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 
 /**
@@ -29,6 +30,27 @@ class ModelCatalog implements ModelCatalogInterface
     public function supports(PlatformInterface $platform): bool
     {
         return [] !== $this->getSupportedModels($platform);
+    }
+
+    public function get(string $modelName): Model
+    {
+        $modelConfig = $this->getModel($modelName);
+
+        if (null === $modelConfig) {
+            throw new InvalidArgumentException(\sprintf('Model "%s" not found in catalog.', $modelName));
+        }
+
+        $modelClass = $modelConfig['class'];
+        if (!class_exists($modelClass)) {
+            throw new InvalidArgumentException(\sprintf('Model class "%s" does not exist.', $modelClass));
+        }
+
+        $model = new $modelClass();
+        if (!$model instanceof Model) {
+            throw new InvalidArgumentException(\sprintf('Model class "%s" must extend %s.', $modelClass, Model::class));
+        }
+
+        return $model;
     }
 
     /**

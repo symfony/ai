@@ -17,4 +17,6 @@ namespace Symfony\AI\Platform;
 interface ModelCatalogInterface
 {
     public function supports(PlatformInterface $platform): bool;
+
+    public function get(string $modelName): Model;
 }
