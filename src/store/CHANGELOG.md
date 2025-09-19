@@ -45,6 +45,7 @@ CHANGELOG
    - Pinecone
    - PostgreSQL with pgvector extension
    - Qdrant
+   - Supabase
    - SurrealDB
    - Typesense
    - Weaviate
