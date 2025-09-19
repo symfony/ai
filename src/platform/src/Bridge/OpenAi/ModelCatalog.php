@@ -92,6 +92,27 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING->value,
                 ],
             ],
+            'text-embedding-3-large' => [
+                'class' => Embeddings::class,
+                'platform' => 'openai',
+                'capabilities' => [
+                    Capability::INPUT_TEXT->value,
+                ],
+            ],
+            'text-embedding-3-small' => [
+                'class' => Embeddings::class,
+                'platform' => 'openai',
+                'capabilities' => [
+                    Capability::INPUT_TEXT->value,
+                ],
+            ],
+            'text-embedding-ada-002' => [
+                'class' => Embeddings::class,
+                'platform' => 'openai',
+                'capabilities' => [
+                    Capability::INPUT_TEXT->value,
+                ],
+            ],
         ];
 
         parent::__construct($models);
@@ -104,4 +125,3 @@ final class ModelCatalog extends AbstractModelCatalog
             && !str_contains($platform::class, 'Azure');
     }
 }
-
