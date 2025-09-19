@@ -15,6 +15,7 @@ use Codewithkyrian\ChromaDB\Client as ChromaDbClient;
 use MongoDB\Client as MongoDbClient;
 use Probots\Pinecone\Client as PineconeClient;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
@@ -163,6 +164,54 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->defaultValue('http_client')
                                 ->info('Service ID of the HTTP client to use')
                             ->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end()
+            ->arrayNode('models')
+                ->useAttributeAsKey('name')
+                ->arrayPrototype()
+                    ->children()
+                        ->stringNode('platform')
+                            ->info('Service name of the platform that supports this model')
+                            ->isRequired()
+                        ->end()
+                        ->stringNode('class')
+                            ->info('Model class that extends Model')
+                            ->isRequired()
+                            ->validate()
+                                ->ifTrue(function ($v) {
+                                    return !is_a($v, Model::class, true);
+                                })
+                                ->thenInvalid(\sprintf('The model class "%%s" must extend %s.', Model::class))
+                            ->end()
+                        ->end()
+                        ->arrayNode('capabilities')
+                            ->info('Array of capabilities that this model supports')
+                            ->scalarPrototype()
+                                ->validate()
+                                    ->ifTrue(function ($v) {
+                                        return !\in_array($v, [
+                                            Capability::INPUT_AUDIO->value,
+                                            Capability::INPUT_IMAGE->value,
+                                            Capability::INPUT_MESSAGES->value,
+                                            Capability::INPUT_MULTIPLE->value,
+                                            Capability::INPUT_PDF->value,
+                                            Capability::INPUT_TEXT->value,
+                                            Capability::OUTPUT_AUDIO->value,
+                                            Capability::OUTPUT_IMAGE->value,
+                                            Capability::OUTPUT_STREAMING->value,
+                                            Capability::OUTPUT_STRUCTURED->value,
+                                            Capability::OUTPUT_TEXT->value,
+                                            Capability::TOOL_CALLING->value,
+                                            Capability::TEXT_TO_SPEECH->value,
+                                            Capability::SPEECH_TO_TEXT->value,
+                                        ], true);
+                                    })
+                                    ->thenInvalid('Invalid capability "%s". Must be one of: '.implode(', ', array_map(fn ($c) => $c->value, Capability::cases())))
+                                ->end()
+                            ->end()
+                            ->defaultValue([])
                         ->end()
                     ->end()
                 ->end()

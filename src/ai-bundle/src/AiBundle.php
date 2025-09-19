@@ -27,6 +27,7 @@ use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
+use Symfony\AI\AiBundle\DependencyInjection\ModelCatalogCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
@@ -98,6 +99,7 @@ final class AiBundle extends AbstractBundle
         parent::build($container);
 
         $container->addCompilerPass(new ProcessorCompilerPass());
+        $container->addCompilerPass(new ModelCatalogCompilerPass());
     }
 
     public function configure(DefinitionConfigurator $definition): void // @phpstan-ignore-line generics.notSubtype
@@ -128,6 +130,10 @@ final class AiBundle extends AbstractBundle
                 $suffix = u($platform)->afterLast('.')->toString();
                 $builder->setDefinition('ai.traceable_platform.'.$suffix, $traceablePlatformDefinition);
             }
+        }
+
+        foreach ($config['models'] ?? [] as $modelName => $model) {
+            $this->processModelConfig($modelName, $model, $builder);
         }
 
         foreach ($config['agent'] as $agentName => $agent) {
@@ -1151,5 +1157,21 @@ final class AiBundle extends AbstractBundle
         $definition->addTag('ai.indexer', ['name' => $name]);
 
         $container->setDefinition('ai.indexer.'.$name, $definition);
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function processModelConfig(string $modelName, array $config, ContainerBuilder $container): void
+    {
+        $modelDefinition = new Definition($config['class']);
+        $modelDefinition->addTag('ai.model.catalog', [
+            'name' => $modelName,
+            'class' => $config['class'],
+            'platform' => $config['platform'],
+            'capabilities' => $config['capabilities'],
+        ]);
+
+        $container->setDefinition('ai.model.catalog.'.$modelName, $modelDefinition);
     }
 }

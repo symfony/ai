@@ -41,6 +41,8 @@ use Symfony\AI\Platform\Bridge\VertexAi\TokenOutputProcessor as VertexAiTokenOut
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
+use Symfony\AI\Platform\ModelCatalog;
+use Symfony\AI\Platform\ModelCatalogInterface;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
@@ -174,5 +176,12 @@ return static function (ContainerConfigurator $container): void {
                 tagged_locator('ai.indexer', 'name'),
             ])
             ->tag('console.command')
+
+        // model catalog
+        ->set('ai.model_catalog', ModelCatalog::class)
+            ->args([
+                [], // models array will be set by compiler pass
+            ])
+        ->alias(ModelCatalogInterface::class, 'ai.model_catalog')
     ;
 };

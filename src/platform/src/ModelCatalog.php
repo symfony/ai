@@ -12,25 +12,18 @@
 namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
 class ModelCatalog implements ModelCatalogInterface
 {
-    private array $models;
-
-    public function __construct(?string $configPath = null)
-    {
-        $configPath ??= __DIR__.'/Resources/models.yaml';
-
-        if (!file_exists($configPath)) {
-            throw new \InvalidArgumentException(\sprintf('Model configuration file "%s" does not exist.', $configPath));
-        }
-
-        $config = Yaml::parseFile($configPath);
-        $this->models = $config['models'] ?? [];
+    /**
+     * @param array<string, array{class: string, platform: string, capabilities: list<string>}> $models
+     */
+    public function __construct(
+        private readonly array $models = [],
+    ) {
     }
 
     public function supports(PlatformInterface $platform): bool
@@ -84,7 +77,7 @@ class ModelCatalog implements ModelCatalogInterface
     }
 
     /**
-     * @return array<string, array{class: string, capabilities: list<string>}>
+     * @return array<string, array{class: string, platform: string, capabilities: list<string>}>
      */
     public function getModels(): array
     {
@@ -92,7 +85,7 @@ class ModelCatalog implements ModelCatalogInterface
     }
 
     /**
-     * @return array{class: string, capabilities: list<string>}|null
+     * @return array{class: string, platform: string, capabilities: list<string>}|null
      */
     public function getModel(string $name): ?array
     {
