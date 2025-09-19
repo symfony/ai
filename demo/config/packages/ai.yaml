@@ -4,9 +4,7 @@ ai:
             api_key: '%env(OPENAI_API_KEY)%'
     agent:
         blog:
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+            model: 'gpt-4o-mini'
             tools:
                 - 'Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch'
                 - service: 'clock'
@@ -14,9 +12,7 @@ ai:
                   description: 'Provides the current date and time.'
                   method: 'now'
         stream:
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+            model: 'gpt-4o-mini'
             prompt: |
                 You are an example chat application where messages from the LLM are streamed to the user using
                 Server-Sent Events via `symfony/ux-turbo` / Turbo Streams. This example does not use any custom
@@ -24,25 +20,19 @@ ai:
                 Whatever the user asks, tell them about the application & used technologies.
             tools: false
         youtube:
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+            model: 'gpt-4o-mini'
             tools: false
         wikipedia:
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
-                options:
-                    temperature: 0.5
+            model: 'gpt-4o-mini'
+            model_options:
+                temperature: 0.5
             prompt:
                 text: 'Please answer the users question based on Wikipedia and provide a link to the article.'
                 include_tools: true
             tools:
                 - 'Symfony\AI\Agent\Toolbox\Tool\Wikipedia'
         audio:
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+            model: 'gpt-4o-mini'
             prompt: 'You are a friendly chatbot that likes to have a conversation with users and asks them some questions.'
             tools:
                 # Agent in agent 🤯
@@ -55,9 +45,7 @@ ai:
                 collection: 'symfony_blog'
     vectorizer:
         openai:
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Embeddings'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Embeddings::TEXT_ADA_002
+            model: 'text-embedding-ada-002'
     indexer:
         blog:
             loader: 'Symfony\AI\Store\Document\Loader\RssFeedLoader'
