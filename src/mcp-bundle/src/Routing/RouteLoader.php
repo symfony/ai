@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\McpBundle\Routing;
 
-use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\Component\Config\Loader\Loader;
+use Symfony\Component\Routing\Exception\LogicException;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 

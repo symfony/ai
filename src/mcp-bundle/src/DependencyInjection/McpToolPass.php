@@ -25,7 +25,7 @@ final class McpToolPass implements CompilerPassInterface
 
         $taggedServices = $container->findTaggedServiceIds('mcp.tool');
 
-        if (empty($taggedServices)) {
+        if ([] === $taggedServices) {
             return;
         }
 
