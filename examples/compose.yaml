@@ -126,6 +126,11 @@ services:
         ports:
             - '6333:6333'
 
+    redis:
+        image: redis:8.0.3
+        ports:
+            - '6379:6379'
+
     surrealdb:
         image: surrealdb/surrealdb:v2
         command: [ 'start', '--user', 'symfony', '--pass', 'symfony' ]
