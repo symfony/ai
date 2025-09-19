@@ -3,3 +3,4 @@ mcp:
     version: 0.0.1
     client_transports:
         stdio: true
+        sse: true

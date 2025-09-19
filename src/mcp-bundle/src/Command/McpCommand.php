@@ -11,8 +11,9 @@
 
 namespace Symfony\AI\McpBundle\Command;
 
-use Symfony\AI\McpSdk\Server;
-use Symfony\AI\McpSdk\Server\Transport\Stdio\SymfonyConsoleTransport;
+use Mcp\Server;
+use Mcp\Server\Transport\StdioTransport;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -23,15 +24,14 @@ class McpCommand extends Command
 {
     public function __construct(
         private readonly Server $server,
+        private readonly LoggerInterface $logger,
     ) {
         parent::__construct();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->server->connect(
-            new SymfonyConsoleTransport($input, $output)
-        );
+        $this->server->connect(new StdioTransport(logger: $this->logger));
 
         return Command::SUCCESS;
     }

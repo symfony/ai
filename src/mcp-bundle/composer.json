@@ -1,6 +1,6 @@
 {
     "name": "symfony/mcp-bundle",
-    "description": "Symfony integration bundle for Model Context Protocol (via symfony/mcp-sdk)",
+    "description": "Symfony integration bundle for Model Context Protocol (via official mcp/sdk)",
     "license": "MIT",
     "type": "symfony-bundle",
     "authors": [
@@ -16,7 +16,7 @@
         "symfony/framework-bundle": "^7.3|^8.0",
         "symfony/http-foundation": "^7.3|^8.0",
         "symfony/http-kernel": "^7.3|^8.0",
-        "symfony/mcp-sdk": "@dev",
+        "mcp/sdk": "@dev",
         "symfony/routing": "^7.3|^8.0"
     },
     "require-dev": {

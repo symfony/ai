@@ -23,6 +23,7 @@
         "symfony/flex": "^2.5",
         "symfony/framework-bundle": "~7.3.0",
         "symfony/http-client": "~7.3.0",
+        "mcp/sdk": "@dev",
         "symfony/mcp-bundle": "@dev",
         "symfony/monolog-bundle": "^3.10",
         "symfony/runtime": "~7.3.0",
