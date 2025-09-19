@@ -77,17 +77,7 @@ jobs:
               run: |
                   source .github/workflows/.utils.sh
 
+                  # Run link script to make Bridge packages available
+                  ./link
+                  
                   echo "$PACKAGES" | xargs -n1 | parallel -j +3 "_run_task {} '(cd src/{} && $COMPOSER_UP && $PHPSTAN)'"
-
-            - name: Run PHPStan on bridges
-              run: |
-                  source .github/workflows/.utils.sh
-
-                  BRIDGES=$(find src/*/src/Bridge/* -name composer.json -not -path "*/vendor/*" 2>/dev/null | sed 's|/composer.json||' | sed 's|^src/||' | sort | tr '\n' ' ')
-                  if [ -n "$BRIDGES" ]; then
-                      echo "Bridges: $BRIDGES"
-                      ./link
-                      echo "$BRIDGES" | xargs -n1 | parallel -j +3 "_run_task {} '(cd src/{} && $COMPOSER_UP && $PHPSTAN)'"
-                  else
-                      echo "No bridges found"
-                  fi
