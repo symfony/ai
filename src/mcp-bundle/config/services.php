@@ -33,6 +33,7 @@ return static function (ContainerConfigurator $container): void {
             ->call('setPaginationLimit', [param('mcp.pagination_limit')])
             ->call('setInstructions', [param('mcp.instructions')])
             ->call('setLogger', [service('monolog.logger.mcp')])
+            ->call('setEventDispatcher', [service('event_dispatcher')])
             ->call('setDiscovery', [param('kernel.project_dir'), ['src']])
 
         ->set('mcp.server', Server::class)

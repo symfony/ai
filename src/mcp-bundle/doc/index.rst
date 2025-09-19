@@ -184,6 +184,42 @@ You can customize the logging level and destination according to your needs:
                 channels: ['mcp']
                 webhook_url: '%env(SLACK_WEBHOOK)%'
 
+Event System
+------------
+
+The MCP Bundle automatically configures the Symfony EventDispatcher to work with the MCP SDK's event system.
+This allows you to listen for changes to your server's capabilities.
+
+**Available Events**
+
+The MCP SDK dispatches the following events when capabilities are registered:
+
+- ``Mcp\Event\ToolListChangedEvent`` - When a tool is registered
+- ``Mcp\Event\ResourceListChangedEvent`` - When a resource is registered
+- ``Mcp\Event\ResourceTemplateListChangedEvent`` - When a resource template is registered
+- ``Mcp\Event\PromptListChangedEvent`` - When a prompt is registered
+
+**Listening to Events**
+
+You can create event listeners to respond to capability changes:
+
+.. code-block:: php
+
+    use Mcp\Event\ToolListChangedEvent;
+    use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+
+    #[AsEventListener]
+    class McpCapabilityListener
+    {
+        public function onToolListChanged(ToolListChangedEvent $event): void
+        {
+            // Handle tool registration
+            // For example: invalidate cache, log changes, notify clients
+        }
+    }
+
+The events are simple marker events that notify when lists have changed, but don't contain specific details about what was added or modified.
+
 .. _`Model Context Protocol`: https://modelcontextprotocol.io/
 .. _`mcp/sdk`: https://github.com/modelcontextprotocol/php-sdk
 .. _`Claude Desktop`: https://claude.ai/download

@@ -54,6 +54,7 @@ class McpBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('monolog.logger.mcp'));
 
         $definition = $container->getDefinition('monolog.logger.mcp');
+        $this->assertInstanceOf(\Symfony\Component\DependencyInjection\ChildDefinition::class, $definition);
         $this->assertSame('monolog.logger_prototype', $definition->getParent());
         $this->assertSame(['mcp'], $definition->getArguments());
         $this->assertTrue($definition->hasTag('monolog.logger'));
@@ -142,6 +143,19 @@ class McpBundleTest extends TestCase
         // Test that core MCP services are registered
         $this->assertTrue($container->hasDefinition('mcp.server'));
         $this->assertTrue($container->hasDefinition('mcp.server.sse.store.cache_pool'));
+
+        // Test that ServerBuilder is properly configured with EventDispatcher
+        $builderDefinition = $container->getDefinition('mcp.server.builder');
+        $methodCalls = $builderDefinition->getMethodCalls();
+
+        $hasEventDispatcherCall = false;
+        foreach ($methodCalls as $call) {
+            if ('setEventDispatcher' === $call[0]) {
+                $hasEventDispatcherCall = true;
+                break;
+            }
+        }
+        $this->assertTrue($hasEventDispatcherCall, 'ServerBuilder should have setEventDispatcher method call');
     }
 
     public function testMcpToolAttributeAutoconfiguration()
