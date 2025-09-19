@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -44,7 +45,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
         $modelConfig = $this->getModelConfig($modelName);
 
         if (null === $modelConfig) {
-            throw new InvalidArgumentException(\sprintf('Model "%s" not found in catalog.', $modelName));
+            throw ModelNotFoundException::forModelName($modelName);
         }
 
         $modelClass = $modelConfig['class'];
