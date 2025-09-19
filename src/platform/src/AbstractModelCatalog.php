@@ -28,7 +28,20 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
 
     public function get(string $modelName): Model
     {
-        $modelConfig = $this->getModel($modelName);
+        return $this->getModel($modelName);
+    }
+
+    /**
+     * @return array<string, array{class: string, platform: string, capabilities: list<string>}>
+     */
+    public function getModels(): array
+    {
+        return $this->models;
+    }
+
+    public function getModel(string $modelName): Model
+    {
+        $modelConfig = $this->getModelConfig($modelName);
 
         if (null === $modelConfig) {
             throw new InvalidArgumentException(\sprintf('Model "%s" not found in catalog.', $modelName));
@@ -48,35 +61,19 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
     }
 
     /**
-     * @return array<string, array{class: string, platform: string, capabilities: list<string>}>
-     */
-    public function getModels(): array
-    {
-        return $this->models;
-    }
-
-    /**
-     * @return array{class: string, platform: string, capabilities: list<string>}|null
-     */
-    public function getModel(string $name): ?array
-    {
-        return $this->models[$name] ?? null;
-    }
-
-    /**
      * @return list<Capability>
      */
     public function getCapabilities(string $modelName): array
     {
-        $model = $this->getModel($modelName);
+        $modelConfig = $this->getModelConfig($modelName);
 
-        if (null === $model) {
+        if (null === $modelConfig) {
             return [];
         }
 
         return array_map(
             static fn (string $capability): Capability => Capability::from($capability),
-            $model['capabilities'] ?? []
+            $modelConfig['capabilities'] ?? []
         );
     }
 
@@ -90,5 +87,13 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
         }
 
         return array_keys($this->models);
+    }
+
+    /**
+     * @return array{class: string, platform: string, capabilities: list<string>}|null
+     */
+    private function getModelConfig(string $name): ?array
+    {
+        return $this->models[$name] ?? null;
     }
 }

@@ -19,4 +19,6 @@ interface ModelCatalogInterface
     public function supports(PlatformInterface $platform): bool;
 
     public function get(string $modelName): Model;
+
+    public function getModel(string $modelName): Model;
 }

@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Platform;
 
-use Symfony\AI\Platform\Exception\RuntimeException;
-
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
@@ -41,30 +39,13 @@ class ModelCatalog extends AbstractModelCatalog
 
     private function isModelSupportedByPlatform(string $modelName, PlatformInterface $platform): bool
     {
-        $modelConfig = $this->getModel($modelName);
-        if (null === $modelConfig || !isset($modelConfig['class'])) {
-            return false;
-        }
-
-        $modelClass = $modelConfig['class'];
-        if (!class_exists($modelClass)) {
-            return false;
-        }
-
         try {
-            $model = new $modelClass();
-
+            $model = $this->getModel($modelName);
             $platform->invoke($model, '');
 
             return true;
-        } catch (RuntimeException $e) {
-            if (str_contains($e->getMessage(), 'No ModelClient registered for model')) {
-                return false;
-            }
-
-            return true;
         } catch (\Throwable) {
-            return true;
+            return false;
         }
     }
 }
