@@ -62,7 +62,7 @@ jobs:
 
             - name: Run PHPStan on examples
               run: |
-                  cd examples/ && $COMPOSER_UP && ../link && $PHPSTAN
+                  ./link && cd examples/ && $COMPOSER_UP && $PHPSTAN
 
             - name: Run PHPStan on packages
               run: |
