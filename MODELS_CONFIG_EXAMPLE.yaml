@@ -1,0 +1,45 @@
+# Example AI Bundle Configuration with Models
+
+ai:
+  platform:
+    openai:
+      api_key: '%env(OPENAI_API_KEY)%'
+  
+  models:
+    gpt-4o-mini:
+      platform: 'ai.platform.openai'
+      class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+      capabilities:
+        - 'input-messages'
+        - 'input-image'
+        - 'output-text'
+        - 'output-streaming'
+        - 'output-structured'
+        - 'tool-calling'
+    
+    gpt-4o:
+      platform: 'ai.platform.openai'
+      class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+      capabilities:
+        - 'input-messages'
+        - 'input-image'
+        - 'output-text'
+        - 'output-streaming'
+        - 'output-structured'
+        - 'tool-calling'
+    
+    gpt-4:
+      platform: 'ai.platform.openai'
+      class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+      capabilities:
+        - 'input-messages'
+        - 'output-text'
+        - 'output-streaming'
+        - 'tool-calling'
+
+  agent:
+    my_agent:
+      platform: 'ai.platform.openai'
+      model:
+        class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+        name: 'gpt-4o-mini'
