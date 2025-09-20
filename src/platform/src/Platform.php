@@ -59,6 +59,34 @@ final class Platform implements PlatformInterface
     }
 
     /**
+     * @param string $prefix (optional) filters model names by the given prefix
+     *
+     * @return array<string, ModelDefinition>
+     */
+    public function fetchModelDefinitions(string $prefix = ''): array
+    {
+        $allModelDetails = [];
+        foreach ($this->modelClients as $modelClient) {
+            if (!$modelClient instanceof ModelDefinitionsAwareInterface) {
+                continue;
+            }
+            $modelDefinitions = $modelClient->fetchModelDefinitions();
+            if ('' !== $prefix) {
+                $modelDefinitions = array_filter(
+                    $modelDefinitions,
+                    static fn (string $name): bool => str_starts_with($name, $prefix),
+                    \ARRAY_FILTER_USE_KEY
+                );
+            }
+            if ([] !== $modelDefinitions) {
+                $allModelDetails = [...$allModelDetails, ...$modelDefinitions];
+            }
+        }
+
+        return $allModelDetails;
+    }
+
+    /**
      * @param array<string, mixed> $payload
      * @param array<string, mixed> $options
      */
