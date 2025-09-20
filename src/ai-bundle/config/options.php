@@ -15,6 +15,7 @@ use Codewithkyrian\ChromaDB\Client as ChromaDbClient;
 use MongoDB\Client as MongoDbClient;
 use Probots\Pinecone\Client as PineconeClient;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
@@ -167,6 +168,30 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->end()
                 ->end()
             ->end()
+            ->arrayNode('model')
+                ->useAttributeAsKey('platform')
+                ->arrayPrototype()
+                    ->useAttributeAsKey('model_name')
+                    ->validate()
+                        ->ifEmpty()
+                        ->thenInvalid('Model name cannot be empty.')
+                    ->end()
+                    ->arrayPrototype()
+                        ->children()
+                            ->arrayNode('capabilities')
+                                ->info('Array of capabilities that this model supports')
+                                ->enumPrototype(Capability::class)
+                                ->end()
+                                ->defaultValue([])
+                                ->validate()
+                                    ->ifEmpty()
+                                    ->thenInvalid('At least one capability must be specified for each model.')
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end()
             ->arrayNode('agent')
                 ->useAttributeAsKey('name')
                 ->arrayPrototype()
@@ -179,21 +204,18 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Enable tracking of token usage for the agent')
                             ->defaultTrue()
                         ->end()
-                        ->arrayNode('model')
-                            ->children()
-                                ->stringNode('class')
-                                    ->isRequired()
-                                    ->validate()
-                                        ->ifTrue(function ($v) {
-                                            return !is_a($v, Model::class, true);
-                                        })
-                                        ->thenInvalid(\sprintf('The model class "%%s" must extend %s.', Model::class))
-                                    ->end()
-                                ->end()
-                                ->stringNode('name')->defaultNull()->end()
-                                ->arrayNode('options')
-                                    ->variablePrototype()->end()
-                                ->end()
+                        ->variableNode('model')
+                            ->validate()
+                                ->ifTrue(function ($v) {
+                                    return !is_string($v) && (!is_array($v) || !isset($v['name']));
+                                })
+                                ->thenInvalid('Model must be a string or an array with a "name" key.')
+                            ->end()
+                            ->validate()
+                                ->ifString()
+                                ->then(function ($v) {
+                                    return ['name' => $v, 'options' => []];
+                                })
                             ->end()
                         ->end()
                         ->booleanNode('structured_output')->defaultTrue()->end()
@@ -520,21 +542,18 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Service name of platform')
                             ->defaultValue(PlatformInterface::class)
                         ->end()
-                        ->arrayNode('model')
-                            ->children()
-                                ->stringNode('class')
-                                    ->isRequired()
-                                    ->validate()
-                                        ->ifTrue(function ($v) {
-                                            return !is_a($v, Model::class, true);
-                                        })
-                                        ->thenInvalid(\sprintf('The model class "%%s" must extend %s.', Model::class))
-                                    ->end()
-                                ->end()
-                                ->stringNode('name')->defaultNull()->end()
-                                ->arrayNode('options')
-                                    ->variablePrototype()->end()
-                                ->end()
+                        ->variableNode('model')
+                            ->validate()
+                                ->ifTrue(function ($v) {
+                                    return !is_string($v) && (!is_array($v) || !isset($v['name']));
+                                })
+                                ->thenInvalid('Model must be a string or an array with a "name" key.')
+                            ->end()
+                            ->validate()
+                                ->ifString()
+                                ->then(function ($v) {
+                                    return ['name' => $v, 'options' => []];
+                                })
                             ->end()
                         ->end()
                     ->end()

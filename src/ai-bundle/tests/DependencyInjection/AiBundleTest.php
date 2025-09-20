@@ -1946,6 +1946,50 @@ class AiBundleTest extends TestCase
         $this->assertSame('logger', (string) $arguments[6]);
     }
 
+    public function testModelNamesAreNotNormalized()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'model' => [
+                    'openai' => [
+                        'foo-bar' => [
+                            'class' => Gpt::class,
+                            'capabilities' => ['INPUT_TEXT', 'OUTPUT_TEXT'],
+                        ],
+                        'my_custom-model.v2' => [
+                            'class' => Embeddings::class,
+                            'capabilities' => ['INPUT_TEXT'],
+                        ],
+                        'gpt-4o-mini-transcribe' => [
+                            'class' => Gpt::class,
+                            'capabilities' => ['INPUT_AUDIO', 'INPUT_TEXT', 'OUTPUT_TEXT'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        // Verify that model catalog service is created for the platform
+        $this->assertTrue($container->hasDefinition('ai.model_catalog.openai'));
+
+        // Get the model catalog definition and check that model names are preserved exactly
+        $catalogDefinition = $container->getDefinition('ai.model_catalog.openai');
+        $arguments = $catalogDefinition->getArguments();
+        
+        $this->assertCount(1, $arguments);
+        $modelDefinitions = $arguments[0];
+
+        // Verify that model names are not normalized and maintain their original format
+        $this->assertArrayHasKey('foo-bar', $modelDefinitions);
+        $this->assertArrayHasKey('my_custom-model.v2', $modelDefinitions);
+        $this->assertArrayHasKey('gpt-4o-mini-transcribe', $modelDefinitions);
+
+        // Verify model configurations are correct
+        $this->assertSame(Gpt::class, $modelDefinitions['foo-bar']['class']);
+        $this->assertSame(Embeddings::class, $modelDefinitions['my_custom-model.v2']['class']);
+        $this->assertSame(Gpt::class, $modelDefinitions['gpt-4o-mini-transcribe']['class']);
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();

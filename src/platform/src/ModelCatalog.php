@@ -9,15 +9,18 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\OpenAi;
-
-use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\Model;
+namespace Symfony\AI\Platform;
 
 /**
- * @author Christopher Hertel <mail@christopher-hertel.de>
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-class Gpt extends Model
+final class ModelCatalog extends AbstractModelCatalog
 {
+    /**
+     * @param array<string, array{class: string, capabilities: list<Capability>}> $models
+     */
+    public function __construct(array $models = [])
+    {
+        $this->models = $models;
+    }
 }

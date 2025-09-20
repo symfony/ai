@@ -47,7 +47,9 @@ use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory as PerplexityPlatformF
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
@@ -128,6 +130,10 @@ final class AiBundle extends AbstractBundle
                 $suffix = u($platform)->afterLast('.')->toString();
                 $builder->setDefinition('ai.traceable_platform.'.$suffix, $traceablePlatformDefinition);
             }
+        }
+
+        foreach ($config['model'] ?? [] as $platformName => $models) {
+            $this->processModelCatalogConfig($platformName, $models, $builder);
         }
 
         foreach ($config['agent'] as $agentName => $agent) {
@@ -342,6 +348,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.openai'),
                     $platform['region'] ?? null,
+                    new Reference('ai.model_catalog.openai', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])
                 ->addTag('ai.platform');
 
@@ -1152,4 +1159,47 @@ final class AiBundle extends AbstractBundle
 
         $container->setDefinition('ai.indexer.'.$name, $definition);
     }
+
+    /**
+     * @param array<string, mixed> $models
+     */
+    private function processModelCatalogConfig(string $platformName, array $models, ContainerBuilder $container): void
+    {
+        $modelDefinitions = [];
+        
+        foreach ($models as $modelName => $modelConfig) {
+            $capabilities = $modelConfig['capabilities'] ?? [];
+            
+            // Convert string capabilities to Capability enums
+            if (is_string($capabilities)) {
+                $capabilities = explode(',', $capabilities);
+            }
+            
+            $capabilityEnums = [];
+            foreach ($capabilities as $capability) {
+                $capability = trim($capability);
+                if ($capability !== '') {
+                    $capabilityEnums[] = Capability::from($capability);
+                }
+            }
+            
+            // Determine the appropriate model class based on platform
+            $modelClass = match ($platformName) {
+                'openai' => \Symfony\AI\Platform\Bridge\OpenAi\Gpt::class,
+                'anthropic' => \Symfony\AI\Platform\Bridge\Anthropic\Claude::class,
+                'gemini' => \Symfony\AI\Platform\Bridge\Gemini\Gemini::class,
+                'mistral' => \Symfony\AI\Platform\Bridge\Mistral\Mistral::class,
+                default => \Symfony\AI\Platform\Model::class,
+            };
+
+            $modelDefinitions[$modelName] = [
+                'class' => $modelClass,
+                'capabilities' => $capabilityEnums,
+            ];
+        }
+        
+        // Create platform-specific model catalog service
+        $container->setDefinition('ai.model_catalog.' . $platformName, new Definition(ModelCatalog::class, [$modelDefinitions]));
+    }
+
 }
