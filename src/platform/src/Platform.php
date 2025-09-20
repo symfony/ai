@@ -61,6 +61,11 @@ final class Platform implements PlatformInterface
         return $this->convertResult($model, $result, $options);
     }
 
+    public function getModel(string $modelName): Model
+    {
+        return $this->modelCatalog->getModel($modelName);
+    }
+
     /**
      * @param array<string, mixed> $payload
      * @param array<string, mixed> $options

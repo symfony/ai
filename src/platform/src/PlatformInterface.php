@@ -23,4 +23,6 @@ interface PlatformInterface
      * @param array<string, mixed>       $options
      */
     public function invoke(string $model, array|string|object $input, array $options = []): ResultPromise;
+
+    public function getModel(string $modelName): Model;
 }

@@ -19,7 +19,6 @@ use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
@@ -47,7 +46,6 @@ final readonly class Agent implements AgentInterface
     public function __construct(
         private PlatformInterface $platform,
         private string $model,
-        private ModelCatalogInterface $modelCatalog,
         iterable $inputProcessors = [],
         iterable $outputProcessors = [],
         private string $name = 'agent',
@@ -59,7 +57,7 @@ final readonly class Agent implements AgentInterface
 
     public function getModel(): Model
     {
-        return $this->modelCatalog->getModel($this->model);
+        return $this->platform->getModel($this->model);
     }
 
     public function getName(): string
