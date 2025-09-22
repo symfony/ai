@@ -25,6 +25,6 @@ class ResultConverterTest extends TestCase
     {
         $client = new ModelClient(new MockHttpClient(), 'csk-1234567890abcdef');
 
-        $this->assertTrue($client->supports(new Model(Model::GPT_OSS_120B)));
+        $this->assertTrue($client->supports(new Model('llama3.1-8b')));
     }
 }

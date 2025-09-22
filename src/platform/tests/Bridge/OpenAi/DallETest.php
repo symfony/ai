@@ -18,17 +18,17 @@ final class DallETest extends TestCase
 {
     public function testItCreatesDallEWithDefaultSettings()
     {
-        $dallE = new DallE(DallE::DALL_E_2);
+        $dallE = new DallE('dall-e-2');
 
-        $this->assertSame(DallE::DALL_E_2, $dallE->getName());
+        $this->assertSame('dall-e-2', $dallE->getName());
         $this->assertSame([], $dallE->getOptions());
     }
 
     public function testItCreatesDallEWithCustomSettings()
     {
-        $dallE = new DallE(DallE::DALL_E_3, ['response_format' => 'base64', 'n' => 2]);
+        $dallE = new DallE('dall-e-3', options: ['response_format' => 'base64', 'n' => 2]);
 
-        $this->assertSame(DallE::DALL_E_3, $dallE->getName());
+        $this->assertSame('dall-e-3', $dallE->getName());
         $this->assertSame(['response_format' => 'base64', 'n' => 2], $dallE->getOptions());
     }
 }

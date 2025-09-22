@@ -31,7 +31,7 @@ final class ModelClientTest extends TestCase
 
         $client = new ModelClient($httpClient, 'global', 'test');
 
-        $model = new Model(Model::GEMINI_EMBEDDING_001, ['outputDimensionality' => 1536, 'task_type' => TaskType::CLASSIFICATION]);
+        $model = new Model('gemini-embedding-001', options: ['outputDimensionality' => 1536, 'task_type' => TaskType::CLASSIFICATION]);
 
         $result = $client->request($model, 'test payload');
 

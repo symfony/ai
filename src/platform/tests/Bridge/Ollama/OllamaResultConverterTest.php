@@ -28,7 +28,7 @@ final class OllamaResultConverterTest extends TestCase
     {
         $converter = new OllamaResultConverter();
 
-        $this->assertTrue($converter->supports(new Ollama(Ollama::LLAMA_3_2)));
+        $this->assertTrue($converter->supports(new Ollama('llama3.2')));
         $this->assertFalse($converter->supports(new Model('any-model')));
     }
 

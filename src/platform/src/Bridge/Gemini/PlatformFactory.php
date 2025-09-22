@@ -36,6 +36,7 @@ final readonly class PlatformFactory
         return new Platform(
             [new EmbeddingsModelClient($httpClient, $apiKey), new GeminiModelClient($httpClient, $apiKey)],
             [new EmbeddingsResultConverter(), new GeminiResultConverter()],
+            new ModelCatalog(),
             $contract ?? GeminiContract::create(),
         );
     }

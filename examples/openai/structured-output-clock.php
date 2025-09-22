@@ -14,7 +14,6 @@ use Symfony\AI\Agent\StructuredOutput\AgentProcessor as StructuredOutputProcesso
 use Symfony\AI\Agent\Toolbox\AgentProcessor as ToolProcessor;
 use Symfony\AI\Agent\Toolbox\Tool\Clock;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -23,13 +22,12 @@ use Symfony\Component\Clock\Clock as SymfonyClock;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI);
 
 $clock = new Clock(new SymfonyClock());
 $toolbox = new Toolbox([$clock], logger: logger());
 $toolProcessor = new ToolProcessor($toolbox);
 $structuredOutputProcessor = new StructuredOutputProcessor();
-$agent = new Agent($platform, $model, [$toolProcessor, $structuredOutputProcessor], [$toolProcessor, $structuredOutputProcessor]);
+$agent = new Agent($platform, 'gpt-4o-mini', [$toolProcessor, $structuredOutputProcessor], [$toolProcessor, $structuredOutputProcessor]);
 
 $messages = new MessageBag(Message::ofUser('What date and time is it?'));
 $result = $agent->call($messages, ['response_format' => [

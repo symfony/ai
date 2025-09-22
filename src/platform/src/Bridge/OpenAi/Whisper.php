@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi;
 
-use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -19,18 +18,4 @@ use Symfony\AI\Platform\Model;
  */
 class Whisper extends Model
 {
-    public const WHISPER_1 = 'whisper-1';
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    public function __construct(string $name, array $options = [])
-    {
-        $capabilities = [
-            Capability::INPUT_AUDIO,
-            Capability::OUTPUT_TEXT,
-        ];
-
-        parent::__construct($name, $capabilities, $options);
-    }
 }

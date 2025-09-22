@@ -11,14 +11,12 @@
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('gpt2');
 
-$result = $platform->invoke($model, 'The quick brown fox jumps over the lazy', [
+$result = $platform->invoke('gpt2', 'The quick brown fox jumps over the lazy', [
     'task' => Task::TEXT_GENERATION,
 ]);
 

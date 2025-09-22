@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Platform\Bridge\Perplexity\Perplexity;
 use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\Message;
@@ -19,8 +18,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('PERPLEXITY_API_KEY'), http_client());
-$model = new Perplexity(Perplexity::SONAR_DEEP_RESEARCH);
-$agent = new Agent($platform, $model, outputProcessors: [new TokenOutputProcessor()], logger: logger());
+$agent = new Agent($platform, 'sonar', outputProcessors: [new TokenOutputProcessor()], logger: logger());
 
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),

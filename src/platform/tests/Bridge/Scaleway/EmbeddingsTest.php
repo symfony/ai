@@ -21,9 +21,9 @@ final class EmbeddingsTest extends TestCase
 {
     public function testItCreatesEmbeddingsWithDefaultSettings()
     {
-        $embeddings = new Embeddings(Embeddings::BAAI_BGE);
+        $embeddings = new Embeddings('bge-multilingual-gemma2');
 
-        $this->assertSame(Embeddings::BAAI_BGE, $embeddings->getName());
+        $this->assertSame('bge-multilingual-gemma2', $embeddings->getName());
         $this->assertSame([], $embeddings->getOptions());
     }
 }

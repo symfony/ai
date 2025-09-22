@@ -12,6 +12,8 @@
 namespace Symfony\AI\Store\Tests\Double;
 
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\DynamicModelCatalog;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -31,11 +33,11 @@ final class PlatformTestHandler implements ModelClientInterface, ResultConverter
     ) {
     }
 
-    public static function createPlatform(?ResultInterface $create = null): Platform
+    public static function createPlatform(?ResultInterface $create = null, ModelCatalogInterface $modelCatalog = new DynamicModelCatalog()): Platform
     {
         $handler = new self($create);
 
-        return new Platform([$handler], [$handler]);
+        return new Platform([$handler], [$handler], $modelCatalog);
     }
 
     public function supports(Model $model): bool

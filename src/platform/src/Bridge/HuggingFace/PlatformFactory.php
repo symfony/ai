@@ -34,6 +34,7 @@ final readonly class PlatformFactory
         return new Platform(
             [new ModelClient($httpClient, $provider, $apiKey)],
             [new ResultConverter()],
+            new ModelCatalog(),
             $contract ?? Contract::create(
                 new FileNormalizer(),
                 new MessageBagNormalizer(),

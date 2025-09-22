@@ -46,6 +46,7 @@ final readonly class PlatformFactory
                 new DallE\ResultConverter(),
                 new Whisper\ResultConverter(),
             ],
+            new ModelCatalog(),
             $contract ?? OpenAiContract::create(),
         );
     }

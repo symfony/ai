@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
 use Symfony\AI\Platform\Message\Content\Document;
 use Symfony\AI\Platform\Message\Message;
@@ -18,7 +17,6 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
-$model = new Gemini(Gemini::GEMINI_1_5_FLASH);
 
 $messages = new MessageBag(
     Message::ofUser(
@@ -26,6 +24,6 @@ $messages = new MessageBag(
         'What is this document about?',
     ),
 );
-$result = $platform->invoke($model, $messages);
+$result = $platform->invoke('gemini-1.5-flash', $messages);
 
 echo $result->getResult()->getContent().\PHP_EOL;

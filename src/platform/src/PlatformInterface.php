@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform;
 
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Result\ResultPromise;
 
 /**
@@ -19,8 +20,11 @@ use Symfony\AI\Platform\Result\ResultPromise;
 interface PlatformInterface
 {
     /**
-     * @param array<mixed>|string|object $input
-     * @param array<string, mixed>       $options
+     * @param non-empty-string           $model   The model name
+     * @param array<mixed>|string|object $input   The input data
+     * @param array<string, mixed>       $options The options to customize the model invocation
      */
-    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise;
+    public function invoke(string $model, array|string|object $input, array $options = []): ResultPromise;
+
+    public function getModelCatalog(): ModelCatalogInterface;
 }

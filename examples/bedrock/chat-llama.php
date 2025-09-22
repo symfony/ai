@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory;
-use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -23,12 +22,11 @@ if (!isset($_SERVER['AWS_ACCESS_KEY_ID'], $_SERVER['AWS_SECRET_ACCESS_KEY'], $_S
 }
 
 $platform = PlatformFactory::create();
-$model = new Llama(Llama::V3_2_3B_INSTRUCT);
 
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $platform->invoke($model, $messages);
+$result = $platform->invoke('llama-3.2-3b-instruct', $messages);
 
 echo $result->getResult()->getContent().\PHP_EOL;

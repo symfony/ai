@@ -42,10 +42,11 @@ final readonly class Agent implements AgentInterface
     /**
      * @param InputProcessorInterface[]  $inputProcessors
      * @param OutputProcessorInterface[] $outputProcessors
+     * @param non-empty-string           $model
      */
     public function __construct(
         private PlatformInterface $platform,
-        private Model $model,
+        private string $model,
         iterable $inputProcessors = [],
         iterable $outputProcessors = [],
         private string $name = 'agent',
@@ -57,7 +58,7 @@ final readonly class Agent implements AgentInterface
 
     public function getModel(): Model
     {
-        return $this->model;
+        return $this->platform->getModelCatalog()->getModel($this->model);
     }
 
     public function getName(): string
@@ -74,7 +75,7 @@ final readonly class Agent implements AgentInterface
      */
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
-        $input = new Input($this->model, $messages, $options);
+        $input = new Input($this->getModel(), $messages, $options);
         array_map(fn (InputProcessorInterface $processor) => $processor->processInput($input), $this->inputProcessors);
 
         $model = $input->model;
@@ -90,7 +91,7 @@ final readonly class Agent implements AgentInterface
         }
 
         try {
-            $result = $this->platform->invoke($model, $messages, $options)->getResult();
+            $result = $this->platform->invoke($this->model, $messages, $options)->getResult();
         } catch (ClientExceptionInterface $e) {
             $message = $e->getMessage();
             $content = $e->getResponse()->toArray(false);

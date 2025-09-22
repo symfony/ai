@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ModelClient as GeminiModelClient;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter as GeminiResultConverter;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -33,6 +34,7 @@ final readonly class PlatformFactory
         string $projectId,
         ?HttpClientInterface $httpClient = null,
         ?Contract $contract = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
     ): Platform {
         if (!class_exists(ApplicationDefaultCredentials::class)) {
             throw new RuntimeException('For using the Vertex AI platform, google/auth package is required for authentication via application default credentials. Try running "composer require google/auth".');
@@ -43,6 +45,7 @@ final readonly class PlatformFactory
         return new Platform(
             [new GeminiModelClient($httpClient, $location, $projectId), new EmbeddingsModelClient($httpClient, $location, $projectId)],
             [new GeminiResultConverter(), new EmbeddingsResultConverter()],
+            $modelCatalog,
             $contract ?? GeminiContract::create(),
         );
     }

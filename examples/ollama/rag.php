@@ -14,7 +14,6 @@ use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Fixtures\Movies;
-use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -43,16 +42,14 @@ foreach (Movies::all() as $i => $movie) {
 
 // create embeddings for documents
 $platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
-$vectorizer = new Vectorizer($platform, $embeddings = new Ollama(env('OLLAMA_EMBEDDINGS')), logger());
+$vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'), logger());
 $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
-
-$model = new Ollama(env('OLLAMA_LLM'));
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
+$agent = new Agent($platform, env('OLLAMA_LLM'), [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),

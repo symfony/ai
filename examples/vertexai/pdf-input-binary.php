@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Content\Document;
 use Symfony\AI\Platform\Message\Message;
@@ -18,7 +17,6 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once __DIR__.'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client());
-$model = new Model(Model::GEMINI_2_5_FLASH);
 
 $messages = new MessageBag(
     Message::ofUser(
@@ -26,6 +24,6 @@ $messages = new MessageBag(
         'What is this document about?',
     ),
 );
-$result = $platform->invoke($model, $messages);
+$result = $platform->invoke('gemini-2.5-flash', $messages);
 
 echo $result->getResult()->getContent().\PHP_EOL;

@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 use Symfony\AI\Store\Bridge\Local\InMemoryStore;
 use Symfony\AI\Store\Document\Loader\TextFileLoader;
@@ -22,7 +21,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
 $store = new InMemoryStore();
-$vectorizer = new Vectorizer($platform, $embeddings = new Ollama(env('OLLAMA_EMBEDDINGS')), logger());
+$vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'), logger());
 $indexer = new Indexer(
     loader: new TextFileLoader(),
     vectorizer: $vectorizer,

@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform;
 
+use Symfony\AI\Platform\ModelCatalog\DynamicModelCatalog;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\ResultPromise;
@@ -25,16 +27,25 @@ use Symfony\AI\Platform\Result\TextResult;
  */
 class InMemoryPlatform implements PlatformInterface
 {
+    private readonly ModelCatalogInterface $modelCatalog;
+
     /**
      * The mock result can be a string or a callable that returns a string.
      * If it's a closure, it receives the model, input, and optionally options as parameters like a real platform call.
      */
     public function __construct(private readonly \Closure|string $mockResult)
     {
+        $this->modelCatalog = new DynamicModelCatalog();
     }
 
-    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise
+    public function invoke(string $model, array|string|object $input, array $options = []): ResultPromise
     {
+        $model = new class($model) extends Model {
+            public function __construct(string $name)
+            {
+                parent::__construct($name);
+            }
+        };
         $result = \is_string($this->mockResult) ? $this->mockResult : ($this->mockResult)($model, $input, $options);
 
         if ($result instanceof ResultInterface) {
@@ -42,6 +53,11 @@ class InMemoryPlatform implements PlatformInterface
         }
 
         return $this->createPromise(new TextResult($result), $options);
+    }
+
+    public function getModelCatalog(): ModelCatalogInterface
+    {
+        return $this->modelCatalog;
     }
 
     /**

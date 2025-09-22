@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -19,7 +18,6 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$embeddings = new Embeddings(Embeddings::TEXT_3_LARGE);
 
 $textDocuments = [
     new TextDocument(Uuid::v4(), 'Hello World'),
@@ -27,7 +25,7 @@ $textDocuments = [
     new TextDocument(Uuid::v4(), 'PHP Hypertext Preprocessor'),
 ];
 
-$vectorizer = new Vectorizer($platform, $embeddings);
+$vectorizer = new Vectorizer($platform, 'text-embedding-3-large');
 $vectorDocuments = $vectorizer->vectorizeTextDocuments($textDocuments);
 
 dump(array_map(fn (VectorDocument $document) => $document->vector->getDimensions(), $vectorDocuments));

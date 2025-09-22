@@ -13,7 +13,6 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Tool\Wikipedia;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -27,12 +26,11 @@ if (!isset($_SERVER['AWS_ACCESS_KEY_ID'], $_SERVER['AWS_SECRET_ACCESS_KEY'], $_S
 }
 
 $platform = PlatformFactory::create();
-$model = new Nova(Nova::PRO);
 
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia]);
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
+$agent = new Agent($platform, 'nova-pro', [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(
     Message::ofUser('Who is the current chancellor of Germany? Use Wikipedia to find the answer.')

@@ -11,12 +11,10 @@
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('microsoft/tapex-base');
 
 $input = [
     'query' => 'select year where city = beijing',
@@ -26,7 +24,7 @@ $input = [
     ],
 ];
 
-$result = $platform->invoke($model, $input, [
+$result = $platform->invoke('microsoft/tapex-base', $input, [
     'task' => Task::TABLE_QUESTION_ANSWERING,
 ]);
 

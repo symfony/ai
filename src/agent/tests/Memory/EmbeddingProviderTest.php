@@ -99,9 +99,15 @@ final class EmbeddingProviderTest extends TestCase
             $this->createStub(RawResultInterface::class),
         );
 
+        $embeddingModel = $this->createMock(Model::class);
+        $embeddingModel->expects($this->once())
+            ->method('getName')
+            ->willReturn('text-embedding-3-small');
+
         $platform = $this->createMock(PlatformInterface::class);
         $platform->expects($this->once())
             ->method('invoke')
+            ->with('text-embedding-3-small', 'Have we talked about the weather?')
             ->willReturn($resultPromise);
 
         $store = $this->createMock(StoreInterface::class);
@@ -112,7 +118,7 @@ final class EmbeddingProviderTest extends TestCase
 
         $embeddingProvider = new EmbeddingProvider(
             $platform,
-            $this->createStub(Model::class),
+            $embeddingModel,
             $store,
         );
 
@@ -133,9 +139,15 @@ final class EmbeddingProviderTest extends TestCase
             $this->createStub(RawResultInterface::class),
         );
 
+        $embeddingModel = $this->createMock(Model::class);
+        $embeddingModel->expects($this->once())
+            ->method('getName')
+            ->willReturn('text-embedding-3-small');
+
         $platform = $this->createMock(PlatformInterface::class);
         $platform->expects($this->once())
             ->method('invoke')
+            ->with('text-embedding-3-small', 'Have we talked about the weather?')
             ->willReturn($resultPromise);
 
         $store = $this->createMock(StoreInterface::class);
@@ -149,7 +161,7 @@ final class EmbeddingProviderTest extends TestCase
 
         $embeddingProvider = new EmbeddingProvider(
             $platform,
-            $this->createStub(Model::class),
+            $embeddingModel,
             $store,
         );
 

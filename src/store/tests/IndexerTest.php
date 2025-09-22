@@ -12,7 +12,6 @@
 namespace Symfony\AI\Store\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
@@ -35,7 +34,7 @@ final class IndexerTest extends TestCase
         $document = new TextDocument($id = Uuid::v4(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
         $loader = new InMemoryLoader([$document]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings(Embeddings::TEXT_3_SMALL));
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
         $indexer = new Indexer($loader, $vectorizer, $store = new TestStore());
         $indexer->index();
@@ -49,7 +48,7 @@ final class IndexerTest extends TestCase
     public function testIndexEmptyDocumentList()
     {
         $loader = new InMemoryLoader([]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(), new Embeddings(Embeddings::TEXT_3_SMALL));
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(), 'text-embedding-3-small');
 
         $indexer = new Indexer($loader, $vectorizer, $store = new TestStore());
         $indexer->index();
@@ -63,7 +62,7 @@ final class IndexerTest extends TestCase
         $document = new TextDocument($id = Uuid::v4(), 'Test content', $metadata);
         $vector = new Vector([0.1, 0.2, 0.3]);
         $loader = new InMemoryLoader([$document]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings(Embeddings::TEXT_3_SMALL));
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
         $indexer = new Indexer($loader, $vectorizer, $store = new TestStore());
         $indexer->index();
@@ -83,7 +82,7 @@ final class IndexerTest extends TestCase
 
         // InMemoryLoader doesn't use source parameter, so we'll test withSource method's immutability
         $loader = new InMemoryLoader([$document1]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings(Embeddings::TEXT_3_SMALL));
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
         $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), 'source1');
 
@@ -105,11 +104,17 @@ final class IndexerTest extends TestCase
     {
         $document1 = new TextDocument(Uuid::v4(), 'Document 1');
         $document2 = new TextDocument(Uuid::v4(), 'Document 2');
-        $vector = new Vector([0.1, 0.2, 0.3]);
+        $vector1 = new Vector([0.1, 0.2, 0.3]);
+        $vector2 = new Vector([0.4, 0.5, 0.6]);
+        $vector3 = new Vector([0.7, 0.8, 0.9]);
+        $vector4 = new Vector([1.0, 1.1, 1.2]);
+        $vector5 = new Vector([1.3, 1.4, 1.5]);
+        $vector6 = new Vector([1.6, 1.7, 1.8]);
 
         // InMemoryLoader returns all documents regardless of source
         $loader = new InMemoryLoader([$document1, $document2]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings(Embeddings::TEXT_3_SMALL));
+        // Need 6 vectors total: 2 for first indexer, then 2 for each source in the second indexer (2 sources * 2 docs = 4)
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2, $vector3, $vector4, $vector5, $vector6)), 'test-embedding-model');
 
         // Create indexer with single source
         $indexer = new Indexer($loader, $vectorizer, $store1 = new TestStore(), 'source1');
@@ -138,9 +143,11 @@ final class IndexerTest extends TestCase
             new TextDocument(Uuid::v4(), 'Week of Symfony news roundup'),
             new TextDocument(Uuid::v4(), 'Another regular post'),
         ];
-        $vector = new Vector([0.1, 0.2, 0.3]);
+        // Filter will remove the "Week of Symfony" document, leaving 2 documents
+        $vector1 = new Vector([0.1, 0.2, 0.3]);
+        $vector2 = new Vector([0.4, 0.5, 0.6]);
         $loader = new InMemoryLoader($documents);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings(Embeddings::TEXT_3_SMALL));
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
         $filter = new TextContainsFilter('Week of Symfony');
 
         $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), null, [$filter]);
@@ -158,9 +165,11 @@ final class IndexerTest extends TestCase
             new TextDocument(Uuid::v4(), 'SPAM content here'),
             new TextDocument(Uuid::v4(), 'Good content'),
         ];
-        $vector = new Vector([0.1, 0.2, 0.3]);
+        // Filters will remove "Week of Symfony" and "SPAM" documents, leaving 2 documents
+        $vector1 = new Vector([0.1, 0.2, 0.3]);
+        $vector2 = new Vector([0.4, 0.5, 0.6]);
         $loader = new InMemoryLoader($documents);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings(Embeddings::TEXT_3_SMALL));
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
         $filters = [
             new TextContainsFilter('Week of Symfony'),
             new TextContainsFilter('SPAM'),
@@ -180,9 +189,11 @@ final class IndexerTest extends TestCase
             new TextDocument(Uuid::v4(), 'Week of Symfony news'),
             new TextDocument(Uuid::v4(), 'Good content'),
         ];
-        $vector = new Vector([0.1, 0.2, 0.3]);
+        // Filter will remove "Week of Symfony" document, leaving 2 documents
+        $vector1 = new Vector([0.1, 0.2, 0.3]);
+        $vector2 = new Vector([0.4, 0.5, 0.6]);
         $loader = new InMemoryLoader($documents);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings(Embeddings::TEXT_3_SMALL));
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
         $filter = new TextContainsFilter('Week of Symfony');
         $transformer = new class implements TransformerInterface {
             public function transform(iterable $documents, array $options = []): iterable
@@ -214,9 +225,11 @@ final class IndexerTest extends TestCase
             new TextDocument(Uuid::v4(), 'Remove this content'),  // Will be filtered out
             new TextDocument(Uuid::v4(), 'Also keep this one'),
         ];
-        $vector = new Vector([0.1, 0.2, 0.3]);
+        // Filter will remove the "Remove" document, leaving 2 documents
+        $vector1 = new Vector([0.1, 0.2, 0.3]);
+        $vector2 = new Vector([0.4, 0.5, 0.6]);
         $loader = new InMemoryLoader($documents);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings(Embeddings::TEXT_3_SMALL));
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
 
         $filter = new class implements FilterInterface {
             public function filter(iterable $documents, array $options = []): iterable
@@ -257,7 +270,7 @@ final class IndexerTest extends TestCase
         $document = new TextDocument(Uuid::v4(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
         $loader = new InMemoryLoader([$document]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings(Embeddings::TEXT_3_SMALL));
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
         $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), null, []);
         $indexer->index();
@@ -270,7 +283,7 @@ final class IndexerTest extends TestCase
         $document = new TextDocument(Uuid::v4(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
         $loader = new InMemoryLoader([$document]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), new Embeddings(Embeddings::TEXT_3_SMALL));
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
         $filter = new TextContainsFilter('nonexistent');
 
         $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), 'source1', [$filter]);

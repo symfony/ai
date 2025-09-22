@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Store\Bridge\Local\InMemoryStore;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
@@ -25,7 +24,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $store = new InMemoryStore();
-$vectorizer = new Vectorizer($platform, new Embeddings('text-embedding-3-small'));
+$vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
 
 // Sample documents with some unwanted content
 $documents = [

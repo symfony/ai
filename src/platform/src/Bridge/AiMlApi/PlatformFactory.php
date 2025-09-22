@@ -35,6 +35,9 @@ class PlatformFactory
             [
                 new Embeddings\ResultConverter(),
                 new Completions\ResultConverter(),
-            ], $contract);
+            ],
+            new ModelCatalog(),
+            $contract,
+        );
     }
 }

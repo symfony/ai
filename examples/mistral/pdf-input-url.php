@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
 use Symfony\AI\Platform\Message\Content\DocumentUrl;
 use Symfony\AI\Platform\Message\Message;
@@ -18,7 +17,6 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('MISTRAL_API_KEY'), httpClient: http_client());
-$model = new Mistral(Mistral::MISTRAL_SMALL);
 
 $messages = new MessageBag(
     Message::ofUser(
@@ -26,6 +24,6 @@ $messages = new MessageBag(
         'What is this document about?',
     ),
 );
-$result = $platform->invoke($model, $messages);
+$result = $platform->invoke('mistral-small-latest', $messages);
 
 echo $result->getResult()->getContent().\PHP_EOL;

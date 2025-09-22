@@ -10,15 +10,12 @@
  */
 
 use Symfony\AI\Platform\Bridge\Albert\PlatformFactory;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('ALBERT_API_KEY'), env('ALBERT_API_URL'), http_client());
-
-$model = new Gpt('gpt-4o');
 
 $documentContext = <<<'CONTEXT'
     Document: AI Strategy of France
@@ -42,6 +39,6 @@ $messages = new MessageBag(
     Message::ofUser('What are the main objectives of France\'s AI strategy?'),
 );
 
-$result = $platform->invoke($model, $messages);
+$result = $platform->invoke('llama-3.3-70b-instruct', $messages);
 
 echo $result->getResult()->getContent().\PHP_EOL;

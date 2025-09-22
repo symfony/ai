@@ -13,6 +13,7 @@ namespace Symfony\AI\AiBundle\Profiler;
 
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\ResultPromise;
@@ -45,7 +46,7 @@ final class TraceablePlatform implements PlatformInterface
         $this->resultCache = new \WeakMap();
     }
 
-    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise
+    public function invoke(string $model, array|string|object $input, array $options = []): ResultPromise
     {
         $resultPromise = $this->platform->invoke($model, $input, $options);
 
@@ -66,6 +67,11 @@ final class TraceablePlatform implements PlatformInterface
         ];
 
         return $resultPromise;
+    }
+
+    public function getModelCatalog(): ModelCatalogInterface
+    {
+        return $this->platform->getModelCatalog();
     }
 
     private function createTraceableStreamResult(\Generator $originalStream): StreamResult

@@ -52,7 +52,7 @@ final class ContractTest extends TestCase
     public static function providePayloadTestCases(): iterable
     {
         yield 'MessageBag with Gpt' => [
-            'model' => new Gpt(Gpt::GPT_4O),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag(
                 Message::forSystem('System message'),
                 Message::ofUser('User message'),
@@ -70,7 +70,7 @@ final class ContractTest extends TestCase
 
         $audio = Audio::fromFile(\dirname(__DIR__, 3).'/fixtures/audio.mp3');
         yield 'Audio within MessageBag with Gpt' => [
-            'model' => new Gpt(Gpt::GPT_4O),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag(Message::ofUser('What is this recording about?', $audio)),
             'expected' => [
                 'messages' => [
@@ -94,7 +94,7 @@ final class ContractTest extends TestCase
 
         $image = Image::fromFile(\dirname(__DIR__, 3).'/fixtures/image.jpg');
         yield 'Image within MessageBag with Gpt' => [
-            'model' => new Gpt(Gpt::GPT_4O),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag(
                 Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
                 Message::ofUser('Describe the image as a comedian would do it.', $image),
@@ -118,7 +118,7 @@ final class ContractTest extends TestCase
         ];
 
         yield 'ImageUrl within MessageBag with Gpt' => [
-            'model' => new Gpt(Gpt::GPT_4O),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag(
                 Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
                 Message::ofUser('Describe the image as a comedian would do it.', new ImageUrl('https://example.com/image.jpg')),
@@ -142,13 +142,13 @@ final class ContractTest extends TestCase
         ];
 
         yield 'Text Input with Embeddings' => [
-            'model' => new Embeddings(Embeddings::TEXT_3_SMALL),
+            'model' => new Embeddings('text-embedding-3-small'),
             'input' => 'This is a test input.',
             'expected' => 'This is a test input.',
         ];
 
         yield 'Longer Conversation with Gpt' => [
-            'model' => new Gpt(Gpt::GPT_4O),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag(
                 Message::forSystem('My amazing system prompt.'),
                 Message::ofAssistant('It is time to sleep.'),
@@ -192,7 +192,7 @@ final class ContractTest extends TestCase
         };
 
         yield 'MessageBag with custom message from Gpt' => [
-            'model' => new Gpt(Gpt::GPT_4O),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag($customSerializableMessage),
             'expected' => [
                 'messages' => [
@@ -209,7 +209,7 @@ final class ContractTest extends TestCase
 
         $audio = Audio::fromFile(\dirname(__DIR__, 3).'/fixtures/audio.mp3');
 
-        $actual = $contract->createRequestPayload(new Whisper(Whisper::WHISPER_1), $audio);
+        $actual = $contract->createRequestPayload(new Whisper('whisper-1'), $audio);
 
         $this->assertArrayHasKey('model', $actual);
         $this->assertSame('whisper-1', $actual['model']);

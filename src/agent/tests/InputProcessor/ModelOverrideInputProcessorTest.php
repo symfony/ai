@@ -15,8 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessor\ModelOverrideInputProcessor;
-use Symfony\AI\Platform\Bridge\Anthropic\Claude;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 
@@ -24,25 +23,29 @@ final class ModelOverrideInputProcessorTest extends TestCase
 {
     public function testProcessInputWithValidModelOption()
     {
-        $gpt = new Gpt(Gpt::GPT_4O);
-        $claude = new Claude(Claude::SONNET_37);
-        $input = new Input($gpt, new MessageBag(), ['model' => $claude]);
+        $originalModel = new Model('gpt-4o-mini', [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT]);
+        $overrideModel = new Model('gpt-4o', [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT]);
+
+        $input = new Input($originalModel, new MessageBag(), ['model' => $overrideModel]);
 
         $processor = new ModelOverrideInputProcessor();
         $processor->processInput($input);
 
-        $this->assertSame($claude, $input->model);
+        $this->assertSame($overrideModel, $input->model);
+        $this->assertSame('gpt-4o', $input->model->getName());
     }
 
     public function testProcessInputWithoutModelOption()
     {
-        $gpt = new Gpt(Gpt::GPT_4O);
-        $input = new Input($gpt, new MessageBag());
+        $originalModel = new Model('gpt-4o-mini', [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT]);
+
+        $input = new Input($originalModel, new MessageBag());
 
         $processor = new ModelOverrideInputProcessor();
         $processor->processInput($input);
 
-        $this->assertSame($gpt, $input->model);
+        $this->assertSame($originalModel, $input->model);
+        $this->assertSame('gpt-4o-mini', $input->model->getName());
     }
 
     public function testProcessInputWithInvalidModelOption()
@@ -50,9 +53,8 @@ final class ModelOverrideInputProcessorTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(\sprintf('Option "model" must be an instance of "%s".', Model::class));
 
-        $gpt = new Gpt(Gpt::GPT_4O);
-        $model = new MessageBag();
-        $input = new Input($gpt, new MessageBag(), ['model' => $model]);
+        $originalModel = new Model('gpt-4o-mini', [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT]);
+        $input = new Input($originalModel, new MessageBag(), ['model' => new MessageBag()]);
 
         $processor = new ModelOverrideInputProcessor();
         $processor->processInput($input);

@@ -11,12 +11,10 @@
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('facebook/bart-large-cnn');
 
 $longText = <<<TEXT
     The tower is 324 metres (1,063 ft) tall, about the same height as an 81-storey building, and the tallest structure
@@ -28,7 +26,7 @@ $longText = <<<TEXT
     free-standing structure in France after the Millau Viaduct.
     TEXT;
 
-$result = $platform->invoke($model, $longText, [
+$result = $platform->invoke('facebook/bart-large-cnn', $longText, [
     'task' => Task::SUMMARIZATION,
 ]);
 

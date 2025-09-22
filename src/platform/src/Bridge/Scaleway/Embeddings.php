@@ -18,13 +18,11 @@ use Symfony\AI\Platform\Model;
  */
 final class Embeddings extends Model
 {
-    public const BAAI_BGE = 'bge-multilingual-gemma2';
-
     /**
      * @param array<string, mixed> $options
      */
-    public function __construct(string $name = self::BAAI_BGE, array $options = [])
+    public function __construct(string $name, array $capabilities = [], array $options = [])
     {
-        parent::__construct($name, [], $options);
+        parent::__construct($name, $capabilities, $options);
     }
 }

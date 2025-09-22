@@ -12,15 +12,13 @@
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Content\Audio;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('MIT/ast-finetuned-audioset-10-10-0.4593');
 $audio = Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3');
 
-$result = $platform->invoke($model, $audio, [
+$result = $platform->invoke('MIT/ast-finetuned-audioset-10-10-0.4593', $audio, [
     'task' => Task::AUDIO_CLASSIFICATION,
 ]);
 

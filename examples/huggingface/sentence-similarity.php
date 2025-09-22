@@ -11,12 +11,10 @@
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('sentence-transformers/all-MiniLM-L6-v2');
 
 $input = [
     'source_sentence' => 'That is a happy dog',
@@ -27,7 +25,7 @@ $input = [
     ],
 ];
 
-$result = $platform->invoke($model, $input, [
+$result = $platform->invoke('sentence-transformers/all-MiniLM-L6-v2', $input, [
     'task' => Task::SENTENCE_SIMILARITY,
 ]);
 
