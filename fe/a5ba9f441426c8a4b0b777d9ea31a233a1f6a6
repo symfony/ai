@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-22T18:07:03Z
+
+Is this for the DSN thingy or what are you aiming for?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-22T18:17:09Z
+
+And for the model catalog to be able to modify options, as the bundle will not provide a model object anymore, just a plain string
