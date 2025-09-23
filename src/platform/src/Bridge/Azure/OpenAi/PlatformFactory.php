@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\Azure\OpenAi;
 
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
 use Symfony\AI\Platform\Contract;
@@ -40,7 +38,7 @@ final readonly class PlatformFactory
 
         return new Platform(
             [$gptModelClient, $embeddingsModelClient, $whisperModelClient],
-            [new Gpt\ResultConverter(), new Embeddings\ResultConverter(), new Whisper\ResultConverter()],
+            [new Whisper\ResultConverter(), Contract\ResultConverter::create()],
             $contract ?? Contract::create(new AudioNormalizer()),
         );
     }

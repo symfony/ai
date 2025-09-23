@@ -28,6 +28,7 @@
         "symfony/event-dispatcher": "^7.3|^8.0",
         "symfony/filesystem": "^7.3|^8.0",
         "symfony/finder": "^7.3|^8.0",
+        "symfony/json-path": "^7.3|^8.0",
         "symfony/process": "^7.3|^8.0",
         "symfony/var-dumper": "^7.3|^8.0"
     },

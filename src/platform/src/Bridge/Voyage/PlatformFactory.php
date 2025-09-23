@@ -28,6 +28,6 @@ final class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform([new ModelClient($httpClient, $apiKey)], [new ResultConverter()], $contract);
+        return new Platform([new ModelClient($httpClient, $apiKey)], [Contract\ResultConverter::create()], $contract);
     }
 }

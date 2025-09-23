@@ -49,6 +49,7 @@
         "psr/log": "^3.0",
         "symfony/clock": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
+        "symfony/json-path": "^7.3|^8.0",
         "symfony/property-access": "^7.3|^8.0",
         "symfony/property-info": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0",

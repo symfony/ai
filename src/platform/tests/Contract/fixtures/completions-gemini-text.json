@@ -1,0 +1,35 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "Ahoy there, matey! So ye be askin about this \"Symfony\" contraption, eh?"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": -0.63778162484217171
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 15,
+    "candidatesTokenCount": 396,
+    "totalTokenCount": 411,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 15
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 396
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "do6OaO_TIb2bm9IPhI_MuQg"
+}
