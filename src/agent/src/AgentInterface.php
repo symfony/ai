@@ -31,4 +31,6 @@ interface AgentInterface
      * Get the agent's name, which can be used for debugging or multi-agent configuration.
      */
     public function getName(): string;
+
+    public function getSystemMessage(): ?string;
 }

@@ -108,6 +108,15 @@ final readonly class Agent implements AgentInterface
         return $output->result;
     }
 
+    public function getSystemMessage(): ?string
+    {
+        $input = new Input($this->model, new MessageBag(), []);
+
+        array_map(fn (InputProcessorInterface $processor) => $processor->processInput($input), $this->inputProcessors);
+
+        return $input->messages->getSystemMessage()?->content;
+    }
+
     /**
      * @param InputProcessorInterface[]|OutputProcessorInterface[] $processors
      * @param class-string                                         $interface
