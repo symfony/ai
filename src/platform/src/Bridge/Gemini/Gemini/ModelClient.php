@@ -60,6 +60,10 @@ final readonly class ModelClient implements ModelClientInterface
         unset($generationConfig['generationConfig']['tools']);
         unset($generationConfig['generationConfig']['server_tools']);
 
+        if ([] === $generationConfig['generationConfig']) {
+            $generationConfig = [];
+        }
+
         if (isset($options['tools'])) {
             $generationConfig['tools'][] = ['functionDeclarations' => $options['tools']];
             unset($options['tools']);

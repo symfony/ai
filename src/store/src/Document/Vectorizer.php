@@ -28,14 +28,14 @@ final readonly class Vectorizer implements VectorizerInterface
     ) {
     }
 
-    public function vectorizeTextDocuments(array $documents): array
+    public function vectorizeTextDocuments(array $documents, array $options = []): array
     {
         $documentCount = \count($documents);
         $this->logger->info('Starting vectorization process', ['document_count' => $documentCount]);
 
         if ($this->model->supports(Capability::INPUT_MULTIPLE)) {
             $this->logger->debug('Using batch vectorization with model that supports multiple inputs');
-            $result = $this->platform->invoke($this->model, array_map(fn (TextDocument $document) => $document->content, $documents));
+            $result = $this->platform->invoke($this->model, array_map(fn (TextDocument $document) => $document->content, $documents), $options);
 
             $vectors = $result->asVectors();
             $this->logger->debug('Batch vectorization completed', ['vector_count' => \count($vectors)]);
@@ -44,7 +44,7 @@ final readonly class Vectorizer implements VectorizerInterface
             $results = [];
             foreach ($documents as $i => $document) {
                 $this->logger->debug('Vectorizing document', ['document_index' => $i, 'document_id' => $document->id]);
-                $results[] = $this->platform->invoke($this->model, $document->content);
+                $results[] = $this->platform->invoke($this->model, $document->content, $options);
             }
 
             $vectors = [];
@@ -67,11 +67,11 @@ final readonly class Vectorizer implements VectorizerInterface
         return $vectorDocuments;
     }
 
-    public function vectorize(string $string): Vector
+    public function vectorize(string|\Stringable $string, array $options = []): Vector
     {
-        $this->logger->debug('Vectorizing string', ['string' => $string]);
+        $this->logger->debug('Vectorizing string', ['string' => (string) $string]);
 
-        $result = $this->platform->invoke($this->model, $string);
+        $result = $this->platform->invoke($this->model, (string) $string, $options);
         $vectors = $result->asVectors();
 
         if (!isset($vectors[0])) {

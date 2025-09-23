@@ -11,7 +11,7 @@
          failOnRisky="true"
          failOnWarning="true">
     <testsuites>
-        <testsuite name="default">
+        <testsuite name="symfony/ai-platform">
             <directory>tests</directory>
         </testsuite>
     </testsuites>

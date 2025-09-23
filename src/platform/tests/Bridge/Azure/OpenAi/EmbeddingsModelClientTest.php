@@ -77,7 +77,7 @@ final class EmbeddingsModelClientTest extends TestCase
     {
         $client = new EmbeddingsModelClient(new MockHttpClient(), 'test.azure.com', 'deployment', '2023-12-01', 'api-key');
 
-        $this->assertTrue($client->supports(new Embeddings()));
+        $this->assertTrue($client->supports(new Embeddings(Embeddings::TEXT_3_SMALL)));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -93,6 +93,6 @@ final class EmbeddingsModelClientTest extends TestCase
 
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new EmbeddingsModelClient($httpClient, 'test.azure.com', 'embeddings-deployment', '2023-12-01', 'test-api-key');
-        $client->request(new Embeddings(), 'Hello, world!');
+        $client->request(new Embeddings(Embeddings::TEXT_3_SMALL), 'Hello, world!');
     }
 }

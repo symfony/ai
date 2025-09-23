@@ -1,0 +1,28 @@
+{
+  "type": "FeatureCollection",
+  "query": ["brandenburg", "gate", "berlin"],
+  "features": [
+    {
+      "id": "poi.123456",
+      "type": "Feature",
+      "place_type": ["poi"],
+      "relevance": 1.0,
+      "place_name": "Brandenburg Gate, Pariser Platz, 10117 Berlin, Germany",
+      "center": [13.377704, 52.516275],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [13.377704, 52.516275]
+      },
+      "context": [
+        {
+          "id": "region.12345",
+          "text": "Berlin"
+        },
+        {
+          "id": "country.6789",
+          "text": "Germany"
+        }
+      ]
+    }
+  ]
+}

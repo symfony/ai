@@ -91,7 +91,7 @@ final readonly class ResultConverter implements ResultConverterInterface
                 try {
                     $data = json_decode($delta, true, 512, \JSON_THROW_ON_ERROR);
                 } catch (\JsonException $e) {
-                    throw new RuntimeException('Failed to decode JSON response.', 0, $e);
+                    throw new RuntimeException('Failed to decode JSON response.', previous: $e);
                 }
 
                 $choices = array_map($this->convertChoice(...), $data['candidates'] ?? []);

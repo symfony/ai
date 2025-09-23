@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
+use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -151,6 +152,23 @@ class ResultConverterTest extends TestCase
 
         $this->expectException(ContentFilterException::class);
         $this->expectExceptionMessage('Content was filtered');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsAuthenticationExceptionOnInvalidApiKey()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(401);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'error' => [
+                'message' => 'Invalid API key provided: sk-invalid',
+            ],
+        ]));
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('Invalid API key provided: sk-invalid');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }

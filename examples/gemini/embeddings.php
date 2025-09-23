@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
-$embeddings = new Embeddings();
+$embeddings = new Embeddings(Embeddings::GEMINI_EMBEDDING_EXP_03_07);
 
 $result = $platform->invoke($embeddings, <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.

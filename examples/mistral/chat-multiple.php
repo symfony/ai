@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -18,17 +17,16 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
-$agent = new Agent($platform, new Mistral(), logger: logger());
 
 $messages = new MessageBag(
     Message::forSystem('Just give short answers.'),
     Message::ofUser('What is your favorite color?'),
 );
-$result = $agent->call($messages, [
+$result = $platform->invoke(new Mistral(), $messages, [
     'temperature' => 1.5,
     'n' => 10,
 ]);
 
-foreach ($result->getContent() as $key => $choice) {
+foreach ($result->getResult()->getContent() as $key => $choice) {
     echo sprintf('Choice #%d: %s', ++$key, $choice->getContent()).\PHP_EOL;
 }

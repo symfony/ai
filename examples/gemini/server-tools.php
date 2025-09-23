@@ -27,7 +27,7 @@ $llm = new Gemini('gemini-2.5-pro-preview-03-25', ['server_tools' => ['url_conte
 
 $toolbox = new Toolbox([new Clock()], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $llm, [$processor], [$processor], logger());
+$agent = new Agent($platform, $llm, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(
     Message::ofUser(

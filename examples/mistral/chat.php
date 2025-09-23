@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -19,11 +18,10 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
 $model = new Mistral();
-$agent = new Agent($platform, $model, logger: logger());
 
 $messages = new MessageBag(Message::ofUser('What is the best French cheese?'));
-$result = $agent->call($messages, [
+$result = $platform->invoke($model, $messages, [
     'temperature' => 0.7,
 ]);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->getResult()->getContent().\PHP_EOL;

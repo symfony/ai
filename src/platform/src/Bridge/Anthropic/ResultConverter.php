@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -23,7 +24,6 @@ use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\Component\HttpClient\Chunk\ServerSentEvent;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
-use Symfony\Component\HttpClient\Exception\JsonException;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 
 /**
@@ -38,8 +38,16 @@ class ResultConverter implements ResultConverterInterface
 
     public function convert(RawHttpResult|RawResultInterface $result, array $options = []): ResultInterface
     {
+        $response = $result->getObject();
+
+        if (429 === $response->getStatusCode()) {
+            $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
+            $retryAfterValue = $retryAfter ? (float) $retryAfter : null;
+            throw new RateLimitExceededException($retryAfterValue);
+        }
+
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result->getObject()));
+            return new StreamResult($this->convertStream($response));
         }
 
         $data = $result->getData();
@@ -73,12 +81,7 @@ class ResultConverter implements ResultConverterInterface
                 continue;
             }
 
-            try {
-                $data = $chunk->getArrayData();
-            } catch (JsonException) {
-                // try catch only needed for Symfony 6.4
-                continue;
-            }
+            $data = $chunk->getArrayData();
 
             if ('content_block_delta' != $data['type'] || !isset($data['delta']['text'])) {
                 continue;

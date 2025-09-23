@@ -26,7 +26,7 @@ $model = new Gpt(Gpt::GPT_4O_MINI);
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 $messages = new MessageBag(Message::ofUser(<<<TXT
         First, define unicorn in 30 words.
         Then lookup at Wikipedia what the irish history looks like in 2 sentences.

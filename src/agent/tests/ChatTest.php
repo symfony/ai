@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Tests;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Chat;
@@ -30,8 +31,8 @@ use Symfony\AI\Platform\Result\TextResult;
 #[Small]
 final class ChatTest extends TestCase
 {
-    private AgentInterface&\PHPUnit\Framework\MockObject\MockObject $agent;
-    private MessageStoreInterface&\PHPUnit\Framework\MockObject\MockObject $store;
+    private AgentInterface&MockObject $agent;
+    private MessageStoreInterface&MockObject $store;
     private Chat $chat;
 
     protected function setUp(): void

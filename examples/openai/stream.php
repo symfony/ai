@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -20,16 +19,15 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $model = new Gpt(Gpt::GPT_4O_MINI);
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a thoughtful philosopher.'),
     Message::ofUser('What is the purpose of an ant?'),
 );
-$result = $agent->call($messages, [
+$result = $platform->invoke($model, $messages, [
     'stream' => true, // enable streaming of response text
 ]);
 
-foreach ($result->getContent() as $word) {
+foreach ($result->getResult()->getContent() as $word) {
     echo $word;
 }
 echo \PHP_EOL;

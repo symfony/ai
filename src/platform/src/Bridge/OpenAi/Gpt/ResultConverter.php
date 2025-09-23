@@ -12,7 +12,9 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -26,7 +28,6 @@ use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\Component\HttpClient\Chunk\ServerSentEvent;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
-use Symfony\Component\HttpClient\Exception\JsonException;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 
 /**
@@ -42,8 +43,28 @@ final class ResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
+        $response = $result->getObject();
+
+        if (401 === $response->getStatusCode()) {
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'];
+            throw new AuthenticationException($errorMessage);
+        }
+
+        if (429 === $response->getStatusCode()) {
+            $headers = $response->getHeaders(false);
+            $resetTime = null;
+
+            if (isset($headers['x-ratelimit-reset-requests'][0])) {
+                $resetTime = self::parseResetTime($headers['x-ratelimit-reset-requests'][0]);
+            } elseif (isset($headers['x-ratelimit-reset-tokens'][0])) {
+                $resetTime = self::parseResetTime($headers['x-ratelimit-reset-tokens'][0]);
+            }
+
+            throw new RateLimitExceededException($resetTime);
+        }
+
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result->getObject()));
+            return new StreamResult($this->convertStream($response));
         }
 
         $data = $result->getData();
@@ -69,12 +90,7 @@ final class ResultConverter implements ResultConverterInterface
                 continue;
             }
 
-            try {
-                $data = $chunk->getArrayData();
-            } catch (JsonException) {
-                // try catch only needed for Symfony 6.4
-                continue;
-            }
+            $data = $chunk->getArrayData();
 
             if ($this->streamIsToolCall($data)) {
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
@@ -185,5 +201,26 @@ final class ResultConverter implements ResultConverterInterface
         $arguments = json_decode($toolCall['function']['arguments'], true, \JSON_THROW_ON_ERROR);
 
         return new ToolCall($toolCall['id'], $toolCall['function']['name'], $arguments);
+    }
+
+    /**
+     * Converts OpenAI's reset time format (e.g. "1s", "6m0s", "2m30s") into seconds.
+     *
+     * Supported formats:
+     * - "1s"
+     * - "6m0s"
+     * - "2m30s"
+     */
+    private static function parseResetTime(string $resetTime): float
+    {
+        $seconds = 0;
+
+        if (preg_match('/^(?:(\d+)m)?(?:(\d+)s)?$/', $resetTime, $matches)) {
+            $minutes = isset($matches[1]) ? (int) $matches[1] : 0;
+            $secs = isset($matches[2]) ? (int) $matches[2] : 0;
+            $seconds = ($minutes * 60) + $secs;
+        }
+
+        return (float) $seconds;
     }
 }

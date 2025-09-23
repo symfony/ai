@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory;
 require_once __DIR__.'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client());
-$embeddings = new Model();
+$embeddings = new Model(Model::GEMINI_EMBEDDING_001);
 
 $result = $platform->invoke($embeddings, <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.

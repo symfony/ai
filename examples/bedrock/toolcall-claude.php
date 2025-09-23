@@ -32,7 +32,7 @@ $model = new Claude('claude-3-7-sonnet-20250219');
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia]);
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
 $result = $agent->call($messages);

@@ -4,6 +4,7 @@ CHANGELOG
 0.1
 ---
 
+ * Add support for union types and polymorphic types via DiscriminatorMap
  * Add Agent class as central orchestrator for AI interactions through the Platform component
  * Add input/output processing pipeline:
    - `InputProcessorInterface` for pre-processing messages and options
@@ -26,6 +27,7 @@ CHANGELOG
    - `Clock` for current date/time
    - `Brave` for web search integration
    - `Crawler` for web page crawling
+   - `Mapbox` for geocoding addresses to coordinates and reverse geocoding
    - `OpenMeteo` for weather information
    - `SerpApi` for search engine results
    - `Tavily` for AI-powered search
@@ -53,3 +55,4 @@ CHANGELOG
  * Add model capability detection before processing
  * Add comprehensive type safety with full PHP type hints
  * Add clear exception hierarchy for different error scenarios
+ * Add translation support for system prompts

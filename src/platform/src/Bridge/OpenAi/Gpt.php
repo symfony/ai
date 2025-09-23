@@ -75,7 +75,7 @@ class Gpt extends Model
      */
     public function __construct(
         string $name = self::GPT_4O,
-        array $options = ['temperature' => 1.0],
+        array $options = [],
     ) {
         $capabilities = [
             Capability::INPUT_MESSAGES,

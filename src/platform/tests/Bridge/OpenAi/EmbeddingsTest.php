@@ -25,7 +25,7 @@ final class EmbeddingsTest extends TestCase
 {
     public function testItCreatesEmbeddingsWithDefaultSettings()
     {
-        $embeddings = new Embeddings();
+        $embeddings = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $this->assertSame(Embeddings::TEXT_3_SMALL, $embeddings->getName());
         $this->assertSame([], $embeddings->getOptions());

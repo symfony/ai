@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Message\Message;
@@ -26,11 +25,10 @@ $platform = PlatformFactory::create(
 );
 $model = new Gpt(Gpt::GPT_4O_MINI);
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $agent->call($messages);
+$result = $platform->invoke($model, $messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->getResult()->getContent().\PHP_EOL;

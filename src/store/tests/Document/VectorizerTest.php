@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -32,6 +33,7 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Tests\Double\PlatformTestHandler;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Uid\Uuid;
@@ -64,7 +66,7 @@ final class VectorizerTest extends TestCase
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
 
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
@@ -85,7 +87,7 @@ final class VectorizerTest extends TestCase
         $vector = new Vector([0.1, 0.2, 0.3]);
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $vectorDocuments = $vectorizer->vectorizeTextDocuments([$document]);
@@ -100,7 +102,7 @@ final class VectorizerTest extends TestCase
     public function testVectorizeEmptyDocumentsArray()
     {
         $platform = PlatformTestHandler::createPlatform(new VectorResult());
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $vectorDocuments = $vectorizer->vectorizeTextDocuments([]);
@@ -124,7 +126,7 @@ final class VectorizerTest extends TestCase
         ];
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
@@ -155,7 +157,7 @@ final class VectorizerTest extends TestCase
         ];
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
@@ -184,7 +186,7 @@ final class VectorizerTest extends TestCase
         $platform = PlatformTestHandler::createPlatform(
             $count > 0 ? new VectorResult(...$vectors) : new VectorResult()
         );
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
@@ -223,7 +225,7 @@ final class VectorizerTest extends TestCase
         $vector = new Vector($dimensions);
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $vectorDocuments = $vectorizer->vectorizeTextDocuments([$document]);
@@ -247,7 +249,7 @@ final class VectorizerTest extends TestCase
         ];
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
@@ -326,7 +328,7 @@ final class VectorizerTest extends TestCase
         $vector = new Vector([0.1, 0.2, 0.3]);
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $result = $vectorizer->vectorize($text);
@@ -341,7 +343,7 @@ final class VectorizerTest extends TestCase
         $vector = new Vector([0.5, 0.6, 0.7]);
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $result = $vectorizer->vectorize($text);
@@ -356,7 +358,7 @@ final class VectorizerTest extends TestCase
         $vector = new Vector([0.0, 0.0, 0.0]);
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
         $result = $vectorizer->vectorize($text);
@@ -370,13 +372,160 @@ final class VectorizerTest extends TestCase
         $text = 'Test string';
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult());
-        $model = new Embeddings();
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
 
         $vectorizer = new Vectorizer($platform, $model);
 
-        $this->expectException(\Symfony\AI\Store\Exception\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('No vector returned for string vectorization.');
 
         $vectorizer->vectorize($text);
+    }
+
+    public function testVectorizeTextDocumentsPassesOptionsToInvoke()
+    {
+        $documents = [
+            new TextDocument(Uuid::v4(), 'Test document', new Metadata(['source' => 'test'])),
+        ];
+
+        $vector = new Vector([0.1, 0.2, 0.3]);
+        $options = ['max_tokens' => 1000, 'temperature' => 0.5];
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with(
+                $this->isInstanceOf(Model::class),
+                $this->equalTo('Test document'),
+                $this->equalTo($options)
+            )
+            ->willReturn(new ResultPromise(fn () => new VectorResult($vector), $this->createMock(RawResultInterface::class)));
+
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
+
+        $vectorizer = new Vectorizer($platform, $model);
+        $result = $vectorizer->vectorizeTextDocuments($documents, $options);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals($vector, $result[0]->vector);
+    }
+
+    public function testVectorizeTextDocumentsWithEmptyOptions()
+    {
+        $documents = [
+            new TextDocument(Uuid::v4(), 'Test document'),
+        ];
+
+        $vector = new Vector([0.1, 0.2, 0.3]);
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with(
+                $this->isInstanceOf(Model::class),
+                $this->equalTo('Test document'),
+                $this->equalTo([])
+            )
+            ->willReturn(new ResultPromise(fn () => new VectorResult($vector), $this->createMock(RawResultInterface::class)));
+
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
+
+        $vectorizer = new Vectorizer($platform, $model);
+        $result = $vectorizer->vectorizeTextDocuments($documents);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals($vector, $result[0]->vector);
+    }
+
+    public function testVectorizeStringPassesOptionsToInvoke()
+    {
+        $text = 'Test string';
+        $vector = new Vector([0.1, 0.2, 0.3]);
+        $options = ['temperature' => 0.7, 'max_tokens' => 500];
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with(
+                $this->isInstanceOf(Model::class),
+                $this->equalTo($text),
+                $this->equalTo($options)
+            )
+            ->willReturn(new ResultPromise(fn () => new VectorResult($vector), $this->createMock(RawResultInterface::class)));
+
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
+
+        $vectorizer = new Vectorizer($platform, $model);
+        $result = $vectorizer->vectorize($text, $options);
+
+        $this->assertEquals($vector, $result);
+    }
+
+    public function testVectorizeStringWithEmptyOptions()
+    {
+        $text = 'Test string';
+        $vector = new Vector([0.1, 0.2, 0.3]);
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with(
+                $this->isInstanceOf(Model::class),
+                $this->equalTo($text),
+                $this->equalTo([])
+            )
+            ->willReturn(new ResultPromise(fn () => new VectorResult($vector), $this->createMock(RawResultInterface::class)));
+
+        $model = new Embeddings(Embeddings::TEXT_3_SMALL);
+
+        $vectorizer = new Vectorizer($platform, $model);
+        $result = $vectorizer->vectorize($text);
+
+        $this->assertEquals($vector, $result);
+    }
+
+    public function testVectorizeTextDocumentsWithoutBatchSupportPassesOptions()
+    {
+        $model = $this->createMock(Model::class);
+        $model->expects($this->once())
+            ->method('supports')
+            ->with(Capability::INPUT_MULTIPLE)
+            ->willReturn(false);
+
+        $documents = [
+            new TextDocument(Uuid::v4(), 'Document 1'),
+            new TextDocument(Uuid::v4(), 'Document 2'),
+        ];
+
+        $vectors = [
+            new Vector([0.1, 0.2]),
+            new Vector([0.3, 0.4]),
+        ];
+
+        $options = ['max_tokens' => 2000];
+
+        $platform = $this->createMock(PlatformInterface::class);
+
+        $invokeCallCount = 0;
+        $platform->expects($this->exactly(2))
+            ->method('invoke')
+            ->willReturnCallback(function ($passedModel, $passedContent, $passedOptions) use ($options, $vectors, &$invokeCallCount) {
+                $this->assertInstanceOf(Model::class, $passedModel);
+                $this->assertEquals($options, $passedOptions);
+
+                $expectedContent = 0 === $invokeCallCount ? 'Document 1' : 'Document 2';
+                $this->assertEquals($expectedContent, $passedContent);
+
+                $vector = $vectors[$invokeCallCount++];
+
+                return new ResultPromise(fn () => new VectorResult($vector), $this->createMock(RawResultInterface::class));
+            });
+
+        $vectorizer = new Vectorizer($platform, $model);
+        $result = $vectorizer->vectorizeTextDocuments($documents, $options);
+
+        $this->assertCount(2, $result);
+        $this->assertEquals($vectors[0], $result[0]->vector);
+        $this->assertEquals($vectors[1], $result[1]->vector);
     }
 }

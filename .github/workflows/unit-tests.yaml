@@ -30,12 +30,15 @@ jobs:
                     # lowest deps
                     -   php-version: '8.2'
                         dependency-version: 'lowest'
-                    # LTS version of Symfony
+                    # Symfony 7.4 LTS
                     -   php-version: '8.2'
-                        symfony-version: '6.4.*'
+                        symfony-version: '7.4.*'
+                    # Symfony 8.0
+                    -   php-version: '8.4'
+                        symfony-version: '8.0.*'
 
         env:
-            SYMFONY_REQUIRE: ${{ matrix.symfony-version || '>=6.4' }}
+            SYMFONY_REQUIRE: ${{ matrix.symfony-version || '>=7.3' }}
 
         steps:
             - uses: actions/checkout@v5

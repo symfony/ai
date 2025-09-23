@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Bridge\Neo4j\Store;
+use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -54,13 +55,13 @@ foreach (Movies::all() as $i => $movie) {
 
 // create embeddings for documents
 $platform = PlatformFactory::create($_SERVER['OPENAI_API_KEY']);
-$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
-$indexer = new Indexer($vectorizer, $store);
+$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings(Embeddings::TEXT_3_SMALL), logger());
+$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
 
 $model = new Gpt(Gpt::GPT_4O_MINI);
 
-$similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
+$similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, $model, [$processor], [$processor]);

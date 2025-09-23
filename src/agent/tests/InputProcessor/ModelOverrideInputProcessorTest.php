@@ -48,7 +48,7 @@ final class ModelOverrideInputProcessorTest extends TestCase
     public function testProcessInputWithoutModelOption()
     {
         $gpt = new Gpt();
-        $input = new Input($gpt, new MessageBag(), []);
+        $input = new Input($gpt, new MessageBag());
 
         $processor = new ModelOverrideInputProcessor();
         $processor->processInput($input);

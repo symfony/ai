@@ -17,7 +17,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
 $result = $platform->invoke(
-    model: new DallE(), // Utilize Dall-E 2 version in default
+    model: new DallE(DallE::DALL_E_2),
     input: 'A cartoon-style elephant with a long trunk and large ears.',
     options: [
         'response_format' => 'url', // Generate response as URL

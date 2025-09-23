@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory;
 use Symfony\AI\Platform\Message\Content\Image;
@@ -27,7 +26,6 @@ if (!isset($_SERVER['AWS_ACCESS_KEY_ID'], $_SERVER['AWS_SECRET_ACCESS_KEY'], $_S
 $platform = PlatformFactory::create();
 $model = new Claude('claude-3-7-sonnet-20250219');
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
     Message::ofUser(
@@ -35,6 +33,6 @@ $messages = new MessageBag(
         Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'),
     ),
 );
-$result = $agent->call($messages);
+$result = $platform->invoke($model, $messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->getResult()->getContent().\PHP_EOL;

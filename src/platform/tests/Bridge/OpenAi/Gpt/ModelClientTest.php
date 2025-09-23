@@ -81,7 +81,7 @@ final class ModelClientTest extends TestCase
     {
         $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
 
-        $this->assertTrue($modelClient->supports(new Gpt()));
+        $this->assertTrue($modelClient->supports(new Gpt(Gpt::GPT_4O)));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -96,7 +96,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new Gpt(), ['model' => 'gpt-4o', 'messages' => [['role' => 'user', 'content' => 'test message']]], ['temperature' => 1]);
+        $modelClient->request(new Gpt(Gpt::GPT_4O), ['model' => 'gpt-4o', 'messages' => [['role' => 'user', 'content' => 'test message']]], ['temperature' => 1]);
     }
 
     public function testItIsExecutingTheCorrectRequestWithArrayPayload()
@@ -111,7 +111,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new Gpt(), ['model' => 'gpt-4o', 'messages' => [['role' => 'user', 'content' => 'Hello']]], ['temperature' => 0.7]);
+        $modelClient->request(new Gpt(Gpt::GPT_4O), ['model' => 'gpt-4o', 'messages' => [['role' => 'user', 'content' => 'Hello']]], ['temperature' => 0.7]);
     }
 
     #[TestWith(['EU', 'https://eu.api.openai.com/v1/chat/completions'])]
@@ -128,6 +128,6 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key', $region);
-        $modelClient->request(new Gpt(), ['messages' => []], []);
+        $modelClient->request(new Gpt(Gpt::GPT_4O), ['messages' => []], []);
     }
 }

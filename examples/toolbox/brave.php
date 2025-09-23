@@ -28,7 +28,7 @@ $brave = new Brave(http_client(), env('BRAVE_API_KEY'));
 $crawler = new Crawler(http_client());
 $toolbox = new Toolbox([$brave, $crawler], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(Message::ofUser('What was the latest game result of Dallas Cowboys?'));
 $result = $agent->call($messages);

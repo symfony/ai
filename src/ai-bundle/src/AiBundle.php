@@ -19,6 +19,8 @@ use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
+use Symfony\AI\Agent\Memory\MemoryInputProcessor;
+use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
@@ -33,6 +35,7 @@ use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFactory;
+use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory as DockerModelRunnerPlatformFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory as LmStudioPlatformFactory;
@@ -40,6 +43,7 @@ use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory as MistralPlatformFactory
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
+use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory as PerplexityPlatformFactory;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -89,7 +93,7 @@ use function Symfony\Component\String\u;
  */
 final class AiBundle extends AbstractBundle
 {
-    public function build(ContainerBuilder $container)
+    public function build(ContainerBuilder $container): void
     {
         parent::build($container);
 
@@ -218,7 +222,7 @@ final class AiBundle extends AbstractBundle
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['api_key'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.anthropic'),
                 ])
                 ->addTag('ai.platform');
@@ -240,7 +244,7 @@ final class AiBundle extends AbstractBundle
                         $config['deployment'],
                         $config['api_version'],
                         $config['api_key'],
-                        new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                        new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         new Reference('ai.platform.contract.openai'),
                     ])
                     ->addTag('ai.platform');
@@ -260,7 +264,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     $platform['host'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
                 ])
                 ->addTag('ai.platform');
@@ -278,7 +282,7 @@ final class AiBundle extends AbstractBundle
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['api_key'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.google'),
                 ])
                 ->addTag('ai.platform');
@@ -335,7 +339,7 @@ final class AiBundle extends AbstractBundle
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['api_key'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.openai'),
                     $platform['region'] ?? null,
                 ])
@@ -354,7 +358,7 @@ final class AiBundle extends AbstractBundle
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['api_key'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
                 ])
                 ->addTag('ai.platform');
@@ -372,7 +376,7 @@ final class AiBundle extends AbstractBundle
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['api_key'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
                 ])
                 ->addTag('ai.platform');
@@ -383,17 +387,17 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('lmstudio' === $type) {
-            $platformId = 'symfony_ai.platform.lmstudio';
+            $platformId = 'ai.platform.lmstudio';
             $definition = (new Definition(Platform::class))
                 ->setFactory(LmStudioPlatformFactory::class.'::create')
                 ->setLazy(true)
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['host_url'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
                 ])
-                ->addTag('symfony_ai.platform');
+                ->addTag('ai.platform');
 
             $container->setDefinition($platformId, $definition);
 
@@ -403,13 +407,12 @@ final class AiBundle extends AbstractBundle
         if ('ollama' === $type) {
             $platformId = 'ai.platform.ollama';
             $definition = (new Definition(Platform::class))
-                ->setFactory(MistralPlatformFactory::class.'::create')
                 ->setFactory(OllamaPlatformFactory::class.'::create')
                 ->setLazy(true)
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['host_url'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.ollama'),
                 ])
                 ->addTag('ai.platform');
@@ -419,7 +422,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('cerebras' === $type && isset($platform['api_key'])) {
+        if ('cerebras' === $type) {
             $platformId = 'ai.platform.cerebras';
             $definition = (new Definition(Platform::class))
                 ->setFactory(CerebrasPlatformFactory::class.'::create')
@@ -427,7 +430,7 @@ final class AiBundle extends AbstractBundle
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['api_key'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])
                 ->addTag('ai.platform');
 
@@ -436,7 +439,7 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('voyage' === $type && isset($platform['api_key'])) {
+        if ('voyage' === $type) {
             $platformId = 'ai.platform.voyage';
             $definition = (new Definition(Platform::class))
                 ->setFactory(VoyagePlatformFactory::class.'::create')
@@ -444,7 +447,43 @@ final class AiBundle extends AbstractBundle
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['api_key'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('ai.platform');
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('perplexity' === $type) {
+            $platformId = 'ai.platform.perplexity';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(PerplexityPlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.contract.perplexity'),
+                ])
+                ->addTag('ai.platform');
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('dockermodelrunner' === $type) {
+            $platformId = 'ai.platform.dockermodelrunner';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(DockerModelRunnerPlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['host_url'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.contract.default'),
                 ])
                 ->addTag('ai.platform');
 
@@ -463,10 +502,6 @@ final class AiBundle extends AbstractBundle
     {
         // MODEL
         ['class' => $modelClass, 'name' => $modelName, 'options' => $options] = $config['model'];
-
-        if (!is_a($modelClass, Model::class, true)) {
-            throw new InvalidArgumentException(\sprintf('"%s" class is not extending Symfony\AI\Platform\Model.', $modelClass));
-        }
 
         $modelDefinition = new Definition($modelClass);
         if (null !== $modelName) {
@@ -585,11 +620,16 @@ final class AiBundle extends AbstractBundle
         }
 
         // SYSTEM PROMPT
-        if (\is_string($config['system_prompt'])) {
+        if (isset($config['prompt'])) {
+            $includeTools = isset($config['prompt']['include_tools']) && $config['prompt']['include_tools'];
+
             $systemPromptInputProcessorDefinition = (new Definition(SystemPromptInputProcessor::class))
                 ->setArguments([
-                    $config['system_prompt'],
-                    $config['include_tools'] ? new Reference('ai.toolbox.'.$name) : null,
+                    $config['prompt']['text'],
+                    $includeTools ? new Reference('ai.toolbox.'.$name) : null,
+                    new Reference('translator', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $config['prompt']['enable_translation'],
+                    $config['prompt']['translation_domain'],
                     new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
                 ])
                 ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -30]);
@@ -597,10 +637,35 @@ final class AiBundle extends AbstractBundle
             $container->setDefinition('ai.agent.'.$name.'.system_prompt_processor', $systemPromptInputProcessorDefinition);
         }
 
+        // MEMORY PROVIDER
+        if (isset($config['memory'])) {
+            $memoryValue = $config['memory'];
+
+            if (\is_array($memoryValue) && isset($memoryValue['service'])) {
+                // Array configuration with service key - use the service directly
+                $memoryProviderReference = new Reference($memoryValue['service']);
+            } else {
+                // String configuration - always create StaticMemoryProvider
+                $staticMemoryProviderDefinition = (new Definition(StaticMemoryProvider::class))
+                    ->setArguments([$memoryValue]);
+
+                $staticMemoryServiceId = 'ai.agent.'.$name.'.static_memory_provider';
+                $container->setDefinition($staticMemoryServiceId, $staticMemoryProviderDefinition);
+                $memoryProviderReference = new Reference($staticMemoryServiceId);
+            }
+
+            $memoryInputProcessorDefinition = (new Definition(MemoryInputProcessor::class))
+                ->setArguments([$memoryProviderReference])
+                ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -40]);
+
+            $container->setDefinition('ai.agent.'.$name.'.memory_input_processor', $memoryInputProcessorDefinition);
+        }
+
         $agentDefinition
             ->setArgument(2, []) // placeholder until ProcessorCompilerPass process.
             ->setArgument(3, []) // placeholder until ProcessorCompilerPass process.
-            ->setArgument(4, new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
+            ->setArgument(4, $name)
+            ->setArgument(5, new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
         ;
 
         $container->setDefinition($agentId, $agentDefinition);
@@ -1039,10 +1104,6 @@ final class AiBundle extends AbstractBundle
     {
         ['class' => $modelClass, 'name' => $modelName, 'options' => $options] = $config['model'];
 
-        if (!is_a($modelClass, Model::class, true)) {
-            throw new InvalidArgumentException(\sprintf('"%s" class is not extending Symfony\AI\Platform\Model.', $modelClass));
-        }
-
         $modelDefinition = (new Definition((string) $modelClass));
         if (null !== $modelName) {
             $modelDefinition->setArgument(0, $modelName);
@@ -1069,8 +1130,13 @@ final class AiBundle extends AbstractBundle
     private function processIndexerConfig(int|string $name, array $config, ContainerBuilder $container): void
     {
         $transformers = [];
-        foreach ($config['transformers'] ?? [] as $transformer) {
+        foreach ($config['transformers'] as $transformer) {
             $transformers[] = new Reference($transformer);
+        }
+
+        $filters = [];
+        foreach ($config['filters'] as $filter) {
+            $filters[] = new Reference($filter);
         }
 
         $definition = new Definition(Indexer::class, [
@@ -1078,6 +1144,7 @@ final class AiBundle extends AbstractBundle
             new Reference($config['vectorizer']),
             new Reference($config['store']),
             $config['source'],
+            $filters,
             $transformers,
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);

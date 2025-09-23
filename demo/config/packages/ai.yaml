@@ -4,7 +4,6 @@ ai:
             api_key: '%env(OPENAI_API_KEY)%'
     agent:
         blog:
-            # platform: 'ai.platform.anthropic'
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                 name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
@@ -18,7 +17,7 @@ ai:
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                 name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
-            system_prompt: |
+            prompt: |
                 You are an example chat application where messages from the LLM are streamed to the user using
                 Server-Sent Events via `symfony/ux-turbo` / Turbo Streams. This example does not use any custom
                 javascript and solely relies on the built-in `live` & `turbo_stream` Stimulus controllers.
@@ -35,15 +34,16 @@ ai:
                 name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
                 options:
                     temperature: 0.5
-            system_prompt: 'Please answer the users question based on Wikipedia and provide a link to the article.'
-            include_tools: true
+            prompt:
+                text: 'Please answer the users question based on Wikipedia and provide a link to the article.'
+                include_tools: true
             tools:
                 - 'Symfony\AI\Agent\Toolbox\Tool\Wikipedia'
         audio:
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                 name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
-            system_prompt: 'You are a friendly chatbot that likes to have a conversation with users and asks them some questions.'
+            prompt: 'You are a friendly chatbot that likes to have a conversation with users and asks them some questions.'
             tools:
                 # Agent in agent 🤯
                 - agent: 'blog'
@@ -54,17 +54,19 @@ ai:
             symfonycon:
                 collection: 'symfony_blog'
     vectorizer:
-        openai_embeddings:
+        openai:
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Embeddings'
                 name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Embeddings::TEXT_ADA_002
     indexer:
         blog:
-            loader: 'App\Blog\FeedLoader'
+            loader: 'Symfony\AI\Store\Document\Loader\RssFeedLoader'
             source: 'https://feeds.feedburner.com/symfony/blog'
+            filters:
+                - 'app.filter.week_of_symfony'
             transformers:
                 - 'Symfony\AI\Store\Document\Transformer\TextTrimTransformer'
-            vectorizer: 'ai.vectorizer.openai_embeddings'
+            vectorizer: 'ai.vectorizer.openai'
             store: 'ai.store.chroma_db.symfonycon'
 
 services:
@@ -78,6 +80,14 @@ services:
     #     $apiKey: '%env(SERP_API_KEY)%'
     Symfony\AI\Agent\Toolbox\Tool\Wikipedia: ~
     Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch:
-        $vectorizer: '@ai.vectorizer.openai_embeddings'
-    
+        $vectorizer: '@ai.vectorizer.openai'
+        $store: '@ai.store.chroma_db.symfonycon'
+
+    Symfony\AI\Store\Document\Loader\RssFeedLoader: ~
     Symfony\AI\Store\Document\Transformer\TextTrimTransformer: ~
+    
+    app.filter.week_of_symfony:
+        class: 'Symfony\AI\Store\Document\Filter\TextContainsFilter'
+        arguments:
+            $needle: 'Week of Symfony'
+            $caseSensitive: false

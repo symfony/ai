@@ -22,7 +22,7 @@ $platform = PlatformFactory::create(
     env('AZURE_OPENAI_KEY'),
     http_client(),
 );
-$model = new Whisper();
+$model = new Whisper(Whisper::WHISPER_1);
 $file = Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3');
 
 $result = $platform->invoke($model, $file);

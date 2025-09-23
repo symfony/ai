@@ -36,9 +36,9 @@
         "ext-fileinfo": "*",
         "psr/log": "^3.0",
         "symfony/ai-platform": "@dev",
-        "symfony/clock": "^6.4 || ^7.1",
-        "symfony/http-client": "^6.4 || ^7.1",
-        "symfony/uid": "^6.4 || ^7.1"
+        "symfony/clock": "^7.3|^8.0",
+        "symfony/http-client": "^7.3|^8.0",
+        "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
         "codewithkyrian/chromadb-php": "^0.2.1 || ^0.3 || ^0.4",
@@ -49,7 +49,8 @@
         "probots-io/pinecone-php": "^1.0",
         "symfony/cache": "^6.4 || ^7.1",
         "symfony/console": "^6.4 || ^7.1",
-        "symfony/dependency-injection": "^6.4 || ^7.1"
+        "symfony/dependency-injection": "^6.4 || ^7.1",
+        "symfony/dom-crawler": "^6.4 || ^7.1"
     },
     "conflict": {
         "mongodb/mongodb": "<1.21"
@@ -73,5 +74,6 @@
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"
         }
-    }
+    },
+    "minimum-stability": "dev"
 }

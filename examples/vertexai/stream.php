@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -20,17 +19,16 @@ require_once __DIR__.'/bootstrap.php';
 $platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client());
 $model = new Model(Model::GEMINI_2_5_FLASH);
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are an expert assistant in geography.'),
     Message::ofUser('Where is Mount Fuji?'),
 );
 
-$result = $agent->call($messages, [
+$result = $platform->invoke($model, $messages, [
     'stream' => true,
 ]);
 
-foreach ($result->getContent() as $word) {
+foreach ($result->getResult()->getContent() as $word) {
     echo $word;
 }
 

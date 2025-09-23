@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -42,8 +43,14 @@ final readonly class ResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
+        $response = $result->getObject();
+
+        if (429 === $response->getStatusCode()) {
+            throw new RateLimitExceededException();
+        }
+
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result->getObject()));
+            return new StreamResult($this->convertStream($response));
         }
 
         $data = $result->getData();
@@ -85,7 +92,7 @@ final readonly class ResultConverter implements ResultConverterInterface
                 try {
                     $data = json_decode($delta, true, 512, \JSON_THROW_ON_ERROR);
                 } catch (\JsonException $e) {
-                    throw new RuntimeException('Failed to decode JSON response.', 0, $e);
+                    throw new RuntimeException('Failed to decode JSON response.', previous: $e);
                 }
 
                 $choices = array_map($this->convertChoice(...), $data['candidates'] ?? []);

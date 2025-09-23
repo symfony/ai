@@ -20,10 +20,10 @@ final readonly class OllamaMessageChunk
      * @param array<string, mixed> $message
      */
     public function __construct(
-        public readonly string $model,
-        public readonly \DateTimeImmutable $created_at,
-        public readonly array $message,
-        public readonly bool $done,
+        public string $model,
+        public \DateTimeImmutable $created_at,
+        public array $message,
+        public bool $done,
     ) {
     }
 

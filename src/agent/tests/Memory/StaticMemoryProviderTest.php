@@ -33,7 +33,7 @@ final class StaticMemoryProviderTest extends TestCase
     {
         $provider = new StaticMemoryProvider();
 
-        $memory = $provider->loadMemory(new Input(
+        $memory = $provider->load(new Input(
             $this->createStub(Model::class),
             new MessageBag(),
             []
@@ -49,7 +49,7 @@ final class StaticMemoryProviderTest extends TestCase
             $fact2 = 'Water is wet',
         );
 
-        $memory = $provider->loadMemory(new Input(
+        $memory = $provider->load(new Input(
             $this->createStub(Model::class),
             new MessageBag(),
             []

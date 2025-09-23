@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -20,16 +19,13 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('ANTHROPIC_API_KEY'), httpClient: http_client());
 $model = new Claude();
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a thoughtful philosopher.'),
     Message::ofUser('What is the purpose of an ant?'),
 );
-$result = $agent->call($messages, [
-    'stream' => true, // enable streaming of response text
-]);
+$result = $platform->invoke($model, $messages, ['stream' => true]);
 
-foreach ($result->getContent() as $word) {
+foreach ($result->getResult()->getContent() as $word) {
     echo $word;
 }
 echo \PHP_EOL;

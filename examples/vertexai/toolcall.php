@@ -25,7 +25,7 @@ $model = new Model(Model::GEMINI_2_0_FLASH_LITE);
 
 $toolbox = new Toolbox([new Clock()], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(Message::ofUser('What time is it?'));
 $result = $agent->call($messages);

@@ -23,7 +23,7 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $model = new Gpt(Gpt::GPT_4O_MINI);
 
 $processor = new AgentProcessor();
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),

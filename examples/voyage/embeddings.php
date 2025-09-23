@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Bridge\Voyage\Voyage;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('VOYAGE_API_KEY'), http_client());
-$embeddings = new Voyage();
+$embeddings = new Voyage(Voyage::V3);
 
 $result = $platform->invoke($embeddings, <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.

@@ -28,7 +28,7 @@ $metadataFactory = (new MemoryToolFactory())
     ->addTool(Clock::class, 'clock', 'Get the current date and time', 'now');
 $toolbox = new Toolbox([new Clock()], $metadataFactory, logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(Message::ofUser('What date and time is it?'));
 $result = $agent->call($messages);

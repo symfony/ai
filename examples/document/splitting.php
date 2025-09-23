@@ -18,6 +18,6 @@ $loader = new TextFileLoader();
 $splitter = new TextSplitTransformer();
 $source = dirname(__DIR__, 2).'/fixtures/lorem.txt';
 
-$documents = iterator_to_array($splitter($loader($source)));
+$documents = iterator_to_array($splitter->transform($loader->load($source)));
 
 dump($documents);

@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Azure\Meta\PlatformFactory;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Message\Message;
@@ -20,9 +19,8 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('AZURE_LLAMA_BASEURL'), env('AZURE_LLAMA_KEY'), http_client());
 $model = new Llama(Llama::V3_3_70B_INSTRUCT);
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(Message::ofUser('I am going to Paris, what should I see?'));
-$result = $agent->call($messages, [
+$result = $platform->invoke($model, $messages, [
     'max_tokens' => 2048,
     'temperature' => 0.8,
     'top_p' => 0.1,
@@ -30,4 +28,4 @@ $result = $agent->call($messages, [
     'frequency_penalty' => 0,
 ]);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->getResult()->getContent().\PHP_EOL;

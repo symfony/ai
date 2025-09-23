@@ -17,9 +17,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI, [
-    'temperature' => 0.5, // default options for the model
-]);
+$model = new Gpt(Gpt::GPT_4O_MINI);
 
 $messages = new MessageBag(
     Message::forSystem('You will be given a letter and you answer with only the next letter of the alphabet.'),

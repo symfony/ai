@@ -1,2 +1,3 @@
 rules:
+    - Symfony\AI\PHPStan\ForbidDeclareStrictTypesRule
     - Symfony\AI\PHPStan\ForbidNativeExceptionRule

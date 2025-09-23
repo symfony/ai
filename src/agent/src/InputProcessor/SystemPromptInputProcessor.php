@@ -13,11 +13,13 @@ namespace Symfony\AI\Agent\InputProcessor;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -31,8 +33,14 @@ final readonly class SystemPromptInputProcessor implements InputProcessorInterfa
     public function __construct(
         private \Stringable|string $systemPrompt,
         private ?ToolboxInterface $toolbox = null,
+        private ?TranslatorInterface $translator = null,
+        private bool $enableTranslation = false,
+        private ?string $translationDomain = null,
         private LoggerInterface $logger = new NullLogger(),
     ) {
+        if ($this->enableTranslation && !$this->translator) {
+            throw new RuntimeException('Prompt translation is enabled but no translator was provided.');
+        }
     }
 
     public function processInput(Input $input): void
@@ -45,7 +53,9 @@ final readonly class SystemPromptInputProcessor implements InputProcessorInterfa
             return;
         }
 
-        $message = (string) $this->systemPrompt;
+        $message = $this->enableTranslation
+            ? $this->translator->trans((string) $this->systemPrompt, [], $this->translationDomain)
+            : (string) $this->systemPrompt;
 
         if ($this->toolbox instanceof ToolboxInterface
             && [] !== $this->toolbox->getTools()
@@ -61,9 +71,11 @@ final readonly class SystemPromptInputProcessor implements InputProcessorInterfa
             ));
 
             $message = <<<PROMPT
-                {$this->systemPrompt}
+                {$message}
 
-                # Available tools
+                # Tools
+
+                The following tools are available to assist you in completing the user's request:
 
                 {$tools}
                 PROMPT;

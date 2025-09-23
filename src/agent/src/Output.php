@@ -27,7 +27,7 @@ final class Output
         public readonly Model $model,
         public ResultInterface $result,
         public readonly MessageBag $messages,
-        public readonly array $options,
+        public readonly array $options = [],
     ) {
     }
 }

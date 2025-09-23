@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Cerebras\Model;
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -19,18 +18,16 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('CEREBRAS_API_KEY'), http_client());
 
-$agent = new Agent($platform, new Model(), logger: logger());
-
 $messages = new MessageBag(
     Message::forSystem('You are an expert in places and geography who always responds concisely.'),
     Message::ofUser('What are the top three destinations in France?'),
 );
 
-$result = $agent->call($messages, [
+$result = $platform->invoke(new Model(Model::LLAMA3_1_8B), $messages, [
     'stream' => true,
 ]);
 
-foreach ($result->getContent() as $word) {
+foreach ($result->getResult()->getContent() as $word) {
     echo $word;
 }
 echo \PHP_EOL;

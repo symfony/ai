@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent\Tests\StructuredOutput;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Exception\MissingModelSupportException;
@@ -20,7 +21,13 @@ use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\StructuredOutput\AgentProcessor;
 use Symfony\AI\Fixtures\SomeStructure;
 use Symfony\AI\Fixtures\StructuredOutput\MathReasoning;
+use Symfony\AI\Fixtures\StructuredOutput\PolymorphicType\ListItemAge;
+use Symfony\AI\Fixtures\StructuredOutput\PolymorphicType\ListItemName;
+use Symfony\AI\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
 use Symfony\AI\Fixtures\StructuredOutput\Step;
+use Symfony\AI\Fixtures\StructuredOutput\UnionType\HumanReadableTimeUnion;
+use Symfony\AI\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
+use Symfony\AI\Fixtures\StructuredOutput\UnionType\UnixTimestampUnion;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
@@ -56,7 +63,7 @@ final class AgentProcessorTest extends TestCase
         $processor = new AgentProcessor(new ConfigurableResponseFormatFactory());
 
         $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
-        $input = new Input($model, new MessageBag(), []);
+        $input = new Input($model, new MessageBag());
 
         $processor->processInput($input);
 
@@ -153,6 +160,103 @@ final class AgentProcessorTest extends TestCase
         $this->assertSame('x = -3.75', $structure->finalAnswer);
     }
 
+    /**
+     * @param class-string $expectedTimeStructure
+     */
+    #[DataProvider('unionTimeTypeProvider')]
+    public function testProcessOutputWithUnionTypeResponseFormat(TextResult $result, string $expectedTimeStructure)
+    {
+        $processor = new AgentProcessor(new ConfigurableResponseFormatFactory(['some' => 'format']));
+
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+        $options = ['output_structure' => UnionTypeDto::class];
+        $input = new Input($model, new MessageBag(), $options);
+        $processor->processInput($input);
+
+        $output = new Output($model, $result, new MessageBag(), $input->getOptions());
+        $processor->processOutput($output);
+
+        $this->assertInstanceOf(ObjectResult::class, $output->result);
+        /** @var UnionTypeDto $structure */
+        $structure = $output->result->getContent();
+        $this->assertInstanceOf(UnionTypeDto::class, $structure);
+
+        $this->assertInstanceOf($expectedTimeStructure, $structure->time);
+    }
+
+    public static function unionTimeTypeProvider(): array
+    {
+        $unixTimestampResult = new TextResult(<<<JSON
+          {
+            "time": {
+                "timestamp": 2212121
+              }
+          }
+        JSON);
+
+        $humanReadableResult = new TextResult(<<<JSON
+          {
+            "time": {
+                "readableTime": "2023-10-10T10:10:10+00:00"
+              }
+          }
+        JSON);
+
+        return [
+            [$unixTimestampResult, UnixTimestampUnion::class],
+            [$humanReadableResult, HumanReadableTimeUnion::class],
+        ];
+    }
+
+    public function testProcessOutputWithCorrectPolymorphicTypesResponseFormat()
+    {
+        $processor = new AgentProcessor(new ConfigurableResponseFormatFactory(['some' => 'format']));
+
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+        $options = ['output_structure' => ListOfPolymorphicTypesDto::class];
+        $input = new Input($model, new MessageBag(), $options);
+        $processor->processInput($input);
+
+        $result = new TextResult(<<<JSON
+            {
+                "items": [
+                    {
+                        "type": "name",
+                        "name": "John Doe"
+                    },
+                    {
+                        "type": "age",
+                        "age": 24
+                    }
+                ]
+            }
+            JSON);
+
+        $output = new Output($model, $result, new MessageBag(), $input->getOptions());
+
+        $processor->processOutput($output);
+
+        $this->assertInstanceOf(ObjectResult::class, $output->result);
+
+        /** @var ListOfPolymorphicTypesDto $structure */
+        $structure = $output->result->getContent();
+        $this->assertInstanceOf(ListOfPolymorphicTypesDto::class, $structure);
+
+        $this->assertCount(2, $structure->items);
+
+        $nameItem = $structure->items[0];
+        $ageItem = $structure->items[1];
+
+        $this->assertInstanceOf(ListItemName::class, $nameItem);
+        $this->assertInstanceOf(ListItemAge::class, $ageItem);
+
+        $this->assertSame('John Doe', $nameItem->name);
+        $this->assertSame(24, $ageItem->age);
+
+        $this->assertSame('name', $nameItem->type);
+        $this->assertSame('age', $ageItem->type);
+    }
+
     public function testProcessOutputWithoutResponseFormat()
     {
         $resultFormatFactory = new ConfigurableResponseFormatFactory();
@@ -162,7 +266,7 @@ final class AgentProcessorTest extends TestCase
         $model = self::createMock(Model::class);
         $result = new TextResult('');
 
-        $output = new Output($model, $result, new MessageBag(), []);
+        $output = new Output($model, $result, new MessageBag());
 
         $processor->processOutput($output);
 

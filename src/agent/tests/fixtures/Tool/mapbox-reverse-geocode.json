@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "address.987654321",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-73.985131, 40.758895]
+      },
+      "properties": {
+        "mapbox_id": "address.987654321",
+        "feature_type": "address",
+        "name": "Times Square",
+        "coordinates": {
+          "longitude": -73.985131,
+          "latitude": 40.758895,
+          "accuracy": "rooftop"
+        },
+        "place_formatted": "Times Square, New York, NY 10036, United States",
+        "context": {
+          "place": {
+            "mapbox_id": "place.12345",
+            "name": "New York"
+          },
+          "region": {
+            "mapbox_id": "region.6789",
+            "name": "New York"
+          },
+          "country": {
+            "mapbox_id": "country.54321",
+            "name": "United States"
+          }
+        }
+      }
+    }
+  ],
+  "attribution": "NOTICE: © 2024 Mapbox and its suppliers."
+}

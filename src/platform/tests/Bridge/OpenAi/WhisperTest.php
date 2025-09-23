@@ -25,7 +25,7 @@ final class WhisperTest extends TestCase
 {
     public function testItCreatesWhisperWithDefaultSettings()
     {
-        $whisper = new Whisper();
+        $whisper = new Whisper(Whisper::WHISPER_1);
 
         $this->assertSame(Whisper::WHISPER_1, $whisper->getName());
         $this->assertSame([], $whisper->getOptions());

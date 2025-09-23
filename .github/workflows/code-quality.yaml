@@ -60,6 +60,10 @@ jobs:
             - name: Build root packages
               run: php .github/build-packages.php
 
+            - name: Run PHPStan on examples
+              run: |
+                  cd examples/ && $COMPOSER_UP && ../link && $PHPSTAN
+
             - name: Run PHPStan on packages
               run: |
                   source .github/workflows/.utils.sh

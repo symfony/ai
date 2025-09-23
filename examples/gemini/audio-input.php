@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
 use Symfony\AI\Platform\Message\Content\Audio;
@@ -21,13 +20,12 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 $model = new Gemini(Gemini::GEMINI_1_5_FLASH);
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::ofUser(
         'What is this recording about?',
         Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'),
     ),
 );
-$result = $agent->call($messages);
+$result = $platform->invoke($model, $messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->getResult()->getContent().\PHP_EOL;

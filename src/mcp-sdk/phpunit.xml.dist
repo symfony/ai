@@ -9,7 +9,7 @@
          failOnWarning="true">
 
     <testsuites>
-        <testsuite name="default">
+        <testsuite name="symfony/mcp-sdk">
             <directory>tests</directory>
         </testsuite>
     </testsuites>

@@ -11,8 +11,8 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/mcp-sdk": "@dev",
-        "symfony/console": "^7.2"
+        "symfony/console": "^7.3|^8.0",
+        "symfony/mcp-sdk": "@dev"
     },
     "minimum-stability": "stable",
     "autoload": {
@@ -21,4 +21,3 @@
         }
     }
 }
-

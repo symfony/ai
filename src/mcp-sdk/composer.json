@@ -1,8 +1,8 @@
 {
     "name": "symfony/mcp-sdk",
-    "type": "library",
     "description": "Model Context Protocol SDK for Client and Server applications in PHP",
     "license": "MIT",
+    "type": "library",
     "authors": [
         {
             "name": "Christopher Hertel",
@@ -16,17 +16,17 @@
     "require": {
         "php": "^8.2",
         "psr/log": "^1.0 || ^2.0 || ^3.0",
-        "symfony/uid": "^6.4 || ^7.0"
+        "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.5",
-        "symfony/console": "^6.4 || ^7.0",
-        "psr/cache": "^3.0"
+        "psr/cache": "^3.0",
+        "symfony/console": "^7.3|^8.0"
     },
     "suggest": {
-        "symfony/console": "To use SymfonyConsoleTransport for STDIO",
-        "psr/cache": "To use CachePoolStore with SSE Transport"
+        "psr/cache": "To use CachePoolStore with SSE Transport",
+        "symfony/console": "To use SymfonyConsoleTransport for STDIO"
     },
     "autoload": {
         "psr-4": {
@@ -38,5 +38,6 @@
             "Symfony\\AI\\McpSdk\\Tests\\": "tests/",
             "Symfony\\AI\\PHPStan\\": "../../.phpstan/"
         }
-    }
+    },
+    "minimum-stability": "dev"
 }

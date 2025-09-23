@@ -25,7 +25,7 @@ class Embeddings extends Model
     /**
      * @param array<string, mixed> $options
      */
-    public function __construct(string $name = self::TEXT_3_SMALL, array $options = [])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, [], $options);
     }

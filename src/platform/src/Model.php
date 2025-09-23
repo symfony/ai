@@ -11,12 +11,15 @@
 
 namespace Symfony\AI\Platform;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 class Model
 {
     /**
+     * @param non-empty-string     $name
      * @param Capability[]         $capabilities
      * @param array<string, mixed> $options
      */
@@ -25,8 +28,14 @@ class Model
         private readonly array $capabilities = [],
         private readonly array $options = [],
     ) {
+        if ('' === trim($name)) {
+            throw new InvalidArgumentException('Model name cannot be empty.');
+        }
     }
 
+    /**
+     * @return non-empty-string
+     */
     public function getName(): string
     {
         return $this->name;

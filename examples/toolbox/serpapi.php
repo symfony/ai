@@ -26,7 +26,7 @@ $model = new Gpt(Gpt::GPT_4O_MINI);
 $serpApi = new SerpApi(http_client(), env('SERP_API_KEY'));
 $toolbox = new Toolbox([$serpApi], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
 $result = $agent->call($messages);

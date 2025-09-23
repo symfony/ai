@@ -26,7 +26,7 @@ $model = new Gpt(Gpt::GPT_4O_MINI);
 $tavily = new Tavily(http_client(), env('TAVILY_API_KEY'));
 $toolbox = new Toolbox([$tavily], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(Message::ofUser('What was the latest game result of Dallas Cowboys?'));
 $result = $agent->call($messages);

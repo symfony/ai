@@ -21,5 +21,5 @@ interface MemoryProviderInterface
     /**
      * @return list<Memory>
      */
-    public function loadMemory(Input $input): array;
+    public function load(Input $input): array;
 }

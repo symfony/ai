@@ -29,7 +29,7 @@ final class Model extends BaseModel
     /**
      * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/text-embeddings-api for various options
      */
-    public function __construct(string $name = self::GEMINI_EMBEDDING_001, array $options = [])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE], $options);
     }

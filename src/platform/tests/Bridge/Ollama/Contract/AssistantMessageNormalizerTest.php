@@ -42,7 +42,7 @@ final class AssistantMessageNormalizerTest extends TestCase
     public function testSupportsNormalization()
     {
         $this->assertTrue($this->normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
-            Contract::CONTEXT_MODEL => new Ollama(),
+            Contract::CONTEXT_MODEL => new Ollama(Ollama::LLAMA_3_2),
         ]));
         $this->assertFalse($this->normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
             Contract::CONTEXT_MODEL => new Model('any-model'),

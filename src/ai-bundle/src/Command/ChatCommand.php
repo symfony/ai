@@ -20,6 +20,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Completion\CompletionSuggestions;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -28,7 +29,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
 /**
- * @author Oskar Stark <oskarstark@gmail.com>
+ * @author Oskar Stark <oskarstark@googlemail.com>
  */
 #[AsCommand(
     name: 'ai:chat',
@@ -96,7 +97,7 @@ final class ChatCommand extends Command
         );
         $question->setErrorMessage('Agent %s is invalid.');
 
-        /** @var \Symfony\Component\Console\Helper\QuestionHelper $helper */
+        /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
         $selectedAgent = $helper->ask($input, $output, $question);
 

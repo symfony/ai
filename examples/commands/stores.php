@@ -116,8 +116,10 @@ $storesIds = array_keys($factories);
 $application = new Application();
 $application->setAutoExit(false);
 $application->setCatchExceptions(false);
-$application->add(new SetupStoreCommand(new ServiceLocator($factories)));
-$application->add(new DropStoreCommand(new ServiceLocator($factories)));
+$application->addCommands([
+    new SetupStoreCommand(new ServiceLocator($factories)),
+    new DropStoreCommand(new ServiceLocator($factories)),
+]);
 
 foreach ($storesIds as $store) {
     $setupOutputCode = $application->run(new ArrayInput([

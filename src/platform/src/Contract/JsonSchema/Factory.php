@@ -13,12 +13,14 @@ namespace Symfony\AI\Platform\Contract\JsonSchema;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\Component\Serializer\Attribute\DiscriminatorMap;
 use Symfony\Component\TypeInfo\Type;
 use Symfony\Component\TypeInfo\Type\BackedEnumType;
 use Symfony\Component\TypeInfo\Type\BuiltinType;
 use Symfony\Component\TypeInfo\Type\CollectionType;
 use Symfony\Component\TypeInfo\Type\NullableType;
 use Symfony\Component\TypeInfo\Type\ObjectType;
+use Symfony\Component\TypeInfo\Type\UnionType;
 use Symfony\Component\TypeInfo\TypeIdentifier;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 
@@ -47,6 +49,7 @@ use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
  *         minProperties?: int,
  *         maxProperties?: int,
  *         dependentRequired?: bool,
+ *         anyOf?: list<mixed>,
  *     }>,
  *     required: list<string>,
  *     additionalProperties: false,
@@ -110,7 +113,10 @@ final readonly class Factory
             $schema = $this->getTypeSchema($type);
 
             if ($type->isNullable()) {
-                $schema['type'] = [$schema['type'], 'null'];
+                // anyOf already contains the null variant when applicable; do nothing
+                if (!isset($schema['anyOf'])) {
+                    $schema['type'] = [$schema['type'], 'null'];
+                }
             } elseif (!($element instanceof \ReflectionParameter && $element->isOptional())) {
                 $result['required'][] = $name;
             }
@@ -151,6 +157,21 @@ final readonly class Factory
             }
         }
 
+        if ($type instanceof UnionType) {
+            // Do not handle nullables as a union but directly return the wrapped type schema
+            if (2 === \count($type->getTypes()) && $type->isNullable() && $type instanceof NullableType) {
+                return $this->getTypeSchema($type->getWrappedType());
+            }
+
+            $variants = [];
+
+            foreach ($type->getTypes() as $variant) {
+                $variants[] = $this->getTypeSchema($variant);
+            }
+
+            return ['anyOf' => $variants];
+        }
+
         switch (true) {
             case $type->isIdentifiedBy(TypeIdentifier::INT):
                 return ['type' => 'integer'];
@@ -167,6 +188,22 @@ final readonly class Factory
 
                 if ($collectionValueType->isIdentifiedBy(TypeIdentifier::OBJECT)) {
                     \assert($collectionValueType instanceof ObjectType);
+
+                    // Check for the DiscriminatorMap attribute to handle polymorphic arrays
+                    $discriminatorMapping = $this->findDiscriminatorMapping($collectionValueType->getClassName());
+                    if ($discriminatorMapping) {
+                        $discriminators = [];
+                        foreach ($discriminatorMapping as $_ => $discriminator) {
+                            $discriminators[] = $this->buildProperties($discriminator);
+                        }
+
+                        return [
+                            'type' => 'array',
+                            'items' => [
+                                'anyOf' => $discriminators,
+                            ],
+                        ];
+                    }
 
                     return [
                         'type' => 'array',
@@ -195,6 +232,8 @@ final readonly class Factory
                 }
 
                 // no break
+            case $type->isIdentifiedBy(TypeIdentifier::NULL):
+                return ['type' => 'null'];
             case $type->isIdentifiedBy(TypeIdentifier::STRING):
             default:
                 // Fallback to string for any unhandled types
@@ -232,5 +271,35 @@ final readonly class Factory
             'type' => $jsonType,
             'enum' => $values,
         ];
+    }
+
+    /**
+     * @param class-string $className
+     *
+     * @return array<string, class-string>|null
+     *
+     * @throws \ReflectionException
+     */
+    private function findDiscriminatorMapping(string $className): ?array
+    {
+        /** @var \ReflectionAttribute<DiscriminatorMap>[] $attributes */
+        $attributes = (new \ReflectionClass($className))->getAttributes(DiscriminatorMap::class);
+        $result = \count($attributes) > 0 ? $attributes[array_key_first($attributes)]->newInstance() : null;
+
+        if (!$result) {
+            return null;
+        }
+
+        /**
+         * In the 8.* release of symfony/serializer DiscriminatorMap removes the getMapping() method in favor of property access.
+         * This satisfies the project's pipeline that builds against both < and >= 8.* release.
+         * This logic can be removed once the project builds against >= 8.* only.
+         *
+         * @see https://github.com/symfony/ai/pull/585#issuecomment-3303631346
+         */
+        $reflectionProperty = new \ReflectionProperty($result, 'mapping');
+        $reflectionProperty->setAccessible(true);
+
+        return $reflectionProperty->getValue($result);
     }
 }

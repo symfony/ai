@@ -26,7 +26,7 @@ $model = new Claude();
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
 $result = $agent->call($messages);

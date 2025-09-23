@@ -45,7 +45,7 @@ final class MessageBagNormalizerTest extends TestCase
         $normalizer = new MessageBagNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new MessageBag(), context: [
-            Contract::CONTEXT_MODEL => new Model(),
+            Contract::CONTEXT_MODEL => new Model(Model::GEMINI_2_5_PRO),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a message bag'));
     }

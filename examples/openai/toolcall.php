@@ -26,7 +26,7 @@ $model = new Gpt(Gpt::GPT_4O_MINI);
 $transcriber = new YouTubeTranscriber(http_client());
 $toolbox = new Toolbox([$transcriber], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(Message::ofUser('Please summarize this video for me: https://www.youtube.com/watch?v=6uXW-ulpj0s'));
 $result = $agent->call($messages);

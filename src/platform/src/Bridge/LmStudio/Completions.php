@@ -27,7 +27,7 @@ class Completions extends Model
 
     public function __construct(
         string $name,
-        array $options = ['temperature' => 0.7],
+        array $options = [],
         array $capabilities = self::DEFAULT_CAPABILITIES,
     ) {
         parent::__construct($name, $capabilities, $options);

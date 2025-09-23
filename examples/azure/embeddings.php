@@ -21,7 +21,7 @@ $platform = PlatformFactory::create(
     env('AZURE_OPENAI_KEY'),
     http_client(),
 );
-$embeddings = new Embeddings();
+$embeddings = new Embeddings(Embeddings::TEXT_3_SMALL);
 
 $result = $platform->invoke($embeddings, <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.

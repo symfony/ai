@@ -25,10 +25,10 @@ final class GptTest extends TestCase
 {
     public function testItCreatesGptWithDefaultSettings()
     {
-        $gpt = new Gpt();
+        $gpt = new Gpt(Gpt::GPT_4O);
 
         $this->assertSame(Gpt::GPT_4O, $gpt->getName());
-        $this->assertSame(['temperature' => 1.0], $gpt->getOptions());
+        $this->assertSame([], $gpt->getOptions());
     }
 
     public function testItCreatesGptWithCustomSettings()

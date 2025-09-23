@@ -13,6 +13,7 @@ namespace Symfony\AI\Store;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Store\Document\FilterInterface;
 use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\TransformerInterface;
@@ -30,14 +31,16 @@ class Indexer implements IndexerInterface
     private array $sources = [];
 
     /**
-     * @param string|array<string>|null $source
-     * @param TransformerInterface[]    $transformers
+     * @param string|array<string>|null $source       Source identifier(s) for data loading (file paths, URLs, etc.)
+     * @param FilterInterface[]         $filters      Filters to apply after loading documents to remove unwanted content
+     * @param TransformerInterface[]    $transformers Transformers to mutate documents after filtering (chunking, cleaning, etc.)
      */
     public function __construct(
         private LoaderInterface $loader,
         private VectorizerInterface $vectorizer,
         private StoreInterface $store,
         string|array|null $source = null,
+        private array $filters = [],
         private array $transformers = [],
         private LoggerInterface $logger = new NullLogger(),
     ) {
@@ -46,7 +49,7 @@ class Indexer implements IndexerInterface
 
     public function withSource(string|array $source): self
     {
-        return new self($this->loader, $this->vectorizer, $this->store, $source, $this->transformers, $this->logger);
+        return new self($this->loader, $this->vectorizer, $this->store, $source, $this->filters, $this->transformers, $this->logger);
     }
 
     public function index(array $options = []): void
@@ -67,6 +70,11 @@ class Indexer implements IndexerInterface
             $this->logger->debug('No documents to process', ['sources' => $this->sources]);
 
             return;
+        }
+
+        // Filter documents through all filters
+        foreach ($this->filters as $filter) {
+            $documents = $filter->filter($documents);
         }
 
         // Transform documents through all transformers

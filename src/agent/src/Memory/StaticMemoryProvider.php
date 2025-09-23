@@ -28,7 +28,7 @@ final readonly class StaticMemoryProvider implements MemoryProviderInterface
         $this->memory = $memory;
     }
 
-    public function loadMemory(Input $input): array
+    public function load(Input $input): array
     {
         if (0 === \count($this->memory)) {
             return [];

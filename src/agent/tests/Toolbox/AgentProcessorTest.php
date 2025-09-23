@@ -49,7 +49,7 @@ class AgentProcessorTest extends TestCase
 
         $model = new Model('gpt-4', [Capability::TOOL_CALLING]);
         $processor = new AgentProcessor($toolbox);
-        $input = new Input($model, new MessageBag(), []);
+        $input = new Input($model, new MessageBag());
 
         $processor->processInput($input);
 
@@ -65,7 +65,7 @@ class AgentProcessorTest extends TestCase
 
         $model = new Model('gpt-4', [Capability::TOOL_CALLING]);
         $processor = new AgentProcessor($toolbox);
-        $input = new Input($model, new MessageBag(), []);
+        $input = new Input($model, new MessageBag());
 
         $processor->processInput($input);
 
@@ -94,7 +94,7 @@ class AgentProcessorTest extends TestCase
 
         $model = new Model('gpt-3');
         $processor = new AgentProcessor($this->createStub(ToolboxInterface::class));
-        $input = new Input($model, new MessageBag(), []);
+        $input = new Input($model, new MessageBag());
 
         $processor->processInput($input);
     }
@@ -115,7 +115,7 @@ class AgentProcessorTest extends TestCase
         $processor = new AgentProcessor($toolbox, keepToolMessages: true);
         $processor->setAgent($agent);
 
-        $output = new Output($model, $result, $messageBag, []);
+        $output = new Output($model, $result, $messageBag);
 
         $processor->processOutput($output);
 
@@ -140,7 +140,7 @@ class AgentProcessorTest extends TestCase
         $processor = new AgentProcessor($toolbox, keepToolMessages: false);
         $processor->setAgent($agent);
 
-        $output = new Output($model, $result, $messageBag, []);
+        $output = new Output($model, $result, $messageBag);
 
         $processor->processOutput($output);
 

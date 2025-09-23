@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Content\Image;
@@ -21,7 +20,6 @@ require_once __DIR__.'/bootstrap.php';
 $platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client());
 $model = new Model(Model::GEMINI_2_5_PRO);
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
     Message::ofUser(
@@ -29,6 +27,6 @@ $messages = new MessageBag(
         Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'),
     ),
 );
-$result = $agent->call($messages);
+$result = $platform->invoke($model, $messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->getResult()->getContent().\PHP_EOL;

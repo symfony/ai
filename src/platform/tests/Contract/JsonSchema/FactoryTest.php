@@ -16,7 +16,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Fixtures\StructuredOutput\MathReasoning;
+use Symfony\AI\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
 use Symfony\AI\Fixtures\StructuredOutput\Step;
+use Symfony\AI\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
 use Symfony\AI\Fixtures\StructuredOutput\User;
 use Symfony\AI\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Fixtures\Tool\ToolOptionalParam;
@@ -224,6 +226,100 @@ final class FactoryTest extends TestCase
         $actual = $this->factory->buildProperties(MathReasoning::class);
 
         $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesForListOfPolymorphicTypesDto()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'items' => [
+                    'type' => 'array',
+                    'items' => [
+                        'anyOf' => [
+                            [
+                                'type' => 'object',
+                                'properties' => [
+                                    'name' => ['type' => 'string'],
+                                    'type' => [
+                                        'type' => 'string',
+                                        'pattern' => '^name$',
+                                    ],
+                                ],
+                                'required' => [
+                                    'name',
+                                    'type',
+                                ],
+                                'additionalProperties' => false,
+                            ],
+                            [
+                                'type' => 'object',
+                                'properties' => [
+                                    'age' => ['type' => 'integer'],
+                                    'type' => [
+                                        'type' => 'string',
+                                        'pattern' => '^age$',
+                                    ],
+                                ],
+                                'required' => [
+                                    'age',
+                                    'type',
+                                ],
+                                'additionalProperties' => false,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'required' => ['items'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(ListOfPolymorphicTypesDto::class);
+
+        $this->assertSame($expected, $actual);
+        $this->assertSame($expected['type'], $actual['type']);
+        $this->assertSame($expected['required'], $actual['required']);
+    }
+
+    public function testBuildPropertiesForUnionTypeDto()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'time' => [
+                    'anyOf' => [
+                        [
+                            'type' => 'object',
+                            'properties' => [
+                                'readableTime' => ['type' => 'string'],
+                            ],
+                            'required' => ['readableTime'],
+                            'additionalProperties' => false,
+                        ],
+                        [
+                            'type' => 'object',
+                            'properties' => [
+                                'timestamp' => ['type' => 'integer'],
+                            ],
+                            'required' => ['timestamp'],
+                            'additionalProperties' => false,
+                        ],
+                        [
+                            'type' => 'null',
+                        ],
+                    ],
+                ],
+            ],
+            'required' => [],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(UnionTypeDto::class);
+
+        $this->assertSame($expected, $actual);
+        $this->assertSame($expected['type'], $actual['type']);
+        $this->assertSame($expected['required'], $actual['required']);
     }
 
     public function testBuildPropertiesForStepClass()

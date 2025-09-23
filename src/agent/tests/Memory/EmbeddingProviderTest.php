@@ -55,7 +55,7 @@ final class EmbeddingProviderTest extends TestCase
             $store,
         );
 
-        $embeddingProvider->loadMemory(new Input(
+        $embeddingProvider->load(new Input(
             $this->createStub(Model::class),
             new MessageBag(),
             [],
@@ -76,7 +76,7 @@ final class EmbeddingProviderTest extends TestCase
             $store,
         );
 
-        $embeddingProvider->loadMemory(new Input(
+        $embeddingProvider->load(new Input(
             $this->createStub(Model::class),
             new MessageBag(Message::forSystem('This is a system message')),
             [],
@@ -97,7 +97,7 @@ final class EmbeddingProviderTest extends TestCase
             $store,
         );
 
-        $embeddingProvider->loadMemory(new Input(
+        $embeddingProvider->load(new Input(
             $this->createStub(Model::class),
             new MessageBag(Message::ofUser(new ImageUrl('foo.jpg'))),
             [],
@@ -129,7 +129,7 @@ final class EmbeddingProviderTest extends TestCase
             $store,
         );
 
-        $memory = $embeddingProvider->loadMemory(new Input(
+        $memory = $embeddingProvider->load(new Input(
             $this->createStub(Model::class),
             new MessageBag(Message::ofUser(new Text('Have we talked about the weather?'))),
             [],
@@ -166,7 +166,7 @@ final class EmbeddingProviderTest extends TestCase
             $store,
         );
 
-        $memory = $embeddingProvider->loadMemory(new Input(
+        $memory = $embeddingProvider->load(new Input(
             $this->createStub(Model::class),
             new MessageBag(Message::ofUser(new Text('Have we talked about the weather?'))),
             [],

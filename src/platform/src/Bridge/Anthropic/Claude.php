@@ -36,7 +36,7 @@ class Claude extends Model
      */
     public function __construct(
         string $name = self::SONNET_37,
-        array $options = ['temperature' => 1.0, 'max_tokens' => 1000],
+        array $options = ['max_tokens' => 1000],
     ) {
         $capabilities = [
             Capability::INPUT_MESSAGES,

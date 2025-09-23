@@ -23,7 +23,7 @@ class DallE extends Model
     public const DALL_E_3 = 'dall-e-3';
 
     /** @param array<string, mixed> $options The default options for the model usage */
-    public function __construct(string $name = self::DALL_E_2, array $options = [])
+    public function __construct(string $name, array $options = [])
     {
         $capabilities = [
             Capability::INPUT_TEXT,

@@ -1,0 +1,828 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0"
+    xmlns:content="http://purl.org/rss/1.0/modules/content/"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:atom="http://www.w3.org/2005/Atom"
+>
+    <channel>
+        <title>Symfony Blog</title>
+        <atom:link href="https://feeds.feedburner.com/symfony/blog" rel="self" type="application/rss+xml" />
+        <link>https://symfony.com/blog/</link>
+        <description>Most recent posts published on the Symfony project blog</description>
+        <pubDate>Fri, 12 Sep 2025 14:25:38 +0200</pubDate>
+        <lastBuildDate>Thu, 11 Sep 2025 14:30:00 +0200</lastBuildDate>
+        <language>en</language>
+                        <item>
+            <title><![CDATA[Save the date, SymfonyDay Montreal 2026!]]></title>
+            <link>https://symfony.com/blog/save-the-date-symfonyday-montreal-2026?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</link>
+            <description>
+    
+
+
+We’re thrilled to announce that SymfonyDay Montreal is happening on June 4, 2026! 🎉
+
+Mark your calendars, tell your friends, and get ready for a day full of inspiring talks, networking opportunities, and the vibrant energy of the Symfony community…</description>
+            <content:encoded><![CDATA[
+                                <p><a class="block text-center" href="https://live.symfony.com/2026-montreal" title="Blog 1200X440Px">
+    <img src="https://symfony.com/uploads/assets/blog/BLOG-1200x440px.png" alt="Blog 1200X440Px">
+</a></p>
+
+<p>We’re thrilled to announce that SymfonyDay Montreal is happening on <strong>June 4, 2026! 🎉</strong></p>
+
+<p>Mark your calendars, tell your friends, and get ready for a day full of inspiring talks, networking opportunities, and the vibrant energy of the Symfony community in Canada! 🍁</p>
+
+<p>🎟️ Register now to secure your seat, <a href="https://live.symfony.com/2026-montreal/registration/"><strong>here!</strong></a></p>
+
+<hr />
+
+<p>📝<strong>Call for papers is open!</strong></p>
+
+<p><strong><a href="https://live.symfony.com/2026-montreal/cfp">Submit your talk</a></strong> for SymfonyDay Montreal 2026! Every selected speaker will receive a complimentary conference ticket and a speaker gift! Speakers who do not live in the conference city will also have their travel and accommodation expenses covered.</p>
+
+<p>If you have never spoken at a conference before, you can take advantage of our <strong><a href="https://symfony.com/doc/current/contributing/community/speaker-mentoring.html">speaker mentoring program!</a></strong> Experienced speakers will gladly assist you in preparing for your conference, whether it involves creating your slides or rehearsing your talk. Feel free to seek advice in the #diversity or #speaker-mentoring channels on the <strong><a href="https://symfony.com/slack">Symfony Devs Slack</a></strong> or include comments requesting guidance when submitting your talk proposal.</p>
+
+<hr />
+
+<p>🤝 <strong>Want to support the event?</strong></p>
+
+<p>Become a sponsor and showcase your brand to an engaged audience of developers.</p>
+
+<p>⚡Contact Hadrien Cren by <a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#58;e&#x76;&#x65;&#x6e;&#x74;&#115;&#64;&#115;y&#x6d;&#x66;&#x6f;&#x6e;&#121;&#46;&#99;&#111;&#x6d;">email</a> to learn more about the options.</p>
+
+<p><strong>We can’t wait to see you there!</strong></p>
+
+<p><a class="block text-center" href="https://linktr.ee/symfony">
+   <img src="https://symfony.com/uploads/assets/blog/Banner-BLOG.png" alt="Banner Blog">
+</a></p>
+
+                <hr style="margin-bottom: 5px" />
+                <div style="font-size: 90%">
+                    <a href="https://symfony.com/sponsor">Sponsor</a> the Symfony project.
+                </div>
+            ]]></content:encoded>
+            <guid isPermaLink="false">https://symfony.com/blog/save-the-date-symfonyday-montreal-2026?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</guid>
+            <dc:creator><![CDATA[ Paola Suárez ]]></dc:creator>
+            <pubDate>Thu, 11 Sep 2025 14:30:00 +0200</pubDate>
+            <comments>https://symfony.com/blog/save-the-date-symfonyday-montreal-2026?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed#comments-list</comments>
+        </item>
+                        <item>
+            <title><![CDATA[SymfonyCon Amsterdam 2025: Call for IT student volunteers: Volunteer, Learn & Connect!]]></title>
+            <link>https://symfony.com/blog/symfonycon-amsterdam-2025-call-for-it-student-volunteers-volunteer-learn-and-connect?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</link>
+            <description>
+  
+
+
+🎓SymfonyCon Amsterdam 2025: Call for IT Student Volunteers!
+
+Are you an IT or computer science student looking to gain hands-on experience, grow your network, and take part in an international tech event? 🎤✨
+Symfony is looking for motivated student…</description>
+            <content:encoded><![CDATA[
+                                <p><a class="block text-center" href="https://live.symfony.com/2025-amsterdam-con/">
+  <img src="https://symfony.com/uploads/assets/blog/NL-BLOG-Banner.png" alt="Nl Blog Banner">
+</a></p>
+
+<p>🎓<strong>SymfonyCon Amsterdam 2025: Call for IT Student Volunteers!</strong></p>
+
+<p>Are you an IT or computer science student looking to gain hands-on experience, grow your network, and take part in an international tech event? 🎤✨
+Symfony is looking for motivated student volunteers to join the adventure at SymfonyCon Amsterdam 2025!</p>
+
+<p>📍<strong>Where:</strong> Amsterdam, The Netherlands</p>
+
+<p>🗓️<strong>When:</strong> November 28–29, 2025</p>
+
+<p>Volunteering with us means helping out for one day and getting a <strong>free ticket</strong> to attend the conference the other day, so you don’t miss out on the action!</p>
+
+<hr />
+
+<p>💼 <strong>Volunteer Tasks</strong></p>
+
+<p>As a volunteer, you’ll be assigned to:</p>
+
+<p>✔️Welcome attendees</p>
+
+<p>✔️Provide directions and information</p>
+
+<p>✔️Help ensure everything runs smoothly!</p>
+
+<hr />
+
+<p>✅ <strong>Requirements</strong></p>
+
+<p>To apply, you must:</p>
+
+<p>✔️Be a student in computer science / IT (all backgrounds welcome!)</p>
+
+<p>✔️Be curious about careers in development or tech</p>
+
+<p>✔️Be available for at least one full day during the event</p>
+
+<p>✔️Speak English (conference language)</p>
+
+<hr />
+
+<p>🎁 <strong>What You Get</strong></p>
+
+<p>Free access to the full 2-day SymfonyCon Amsterdam 2025 conference</p>
+
+<p>✔️Opportunities to network with developers, speakers, and community leaders</p>
+
+<p>✔️Delicious lunches included</p>
+
+<p>✔️An unforgettable experience in an inclusive and friendly environment!</p>
+
+<hr />
+
+<p>🚫 <strong>Please note:</strong></p>
+
+<p>We are unable to cover:</p>
+
+<p>✔️Travel or accommodation costs ✔️Dinners or evening expenses</p>
+
+<hr />
+
+<p>💌 <strong>How to Apply:</strong></p>
+
+<p>Interested? Send us an email at <em>events@symfony.com</em> with:</p>
+
+<p>✔️Your name, school, and area of study</p>
+
+<p>✔️The reason you’d like to volunteer</p>
+
+<p>✔️Confirmation of your availability on November 28 or 29, 2025</p>
+
+<hr />
+
+<p><strong>Be part of the Symfony community, gain valuable experience, and help make this event amazing!
+We can’t wait to meet you! 🧑‍💻💬 #SymfonyCon</strong></p>
+
+<hr />
+
+<p><a class="block text-center" href="https://linktr.ee/symfony">
+   <img src="https://symfony.com/uploads/assets/blog/Banner-BLOG.png" alt="Banner Blog">
+</a></p>
+
+                <hr style="margin-bottom: 5px" />
+                <div style="font-size: 90%">
+                    <a href="https://symfony.com/sponsor">Sponsor</a> the Symfony project.
+                </div>
+            ]]></content:encoded>
+            <guid isPermaLink="false">https://symfony.com/blog/symfonycon-amsterdam-2025-call-for-it-student-volunteers-volunteer-learn-and-connect?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</guid>
+            <dc:creator><![CDATA[ Paola Suárez ]]></dc:creator>
+            <pubDate>Wed, 10 Sep 2025 09:00:00 +0200</pubDate>
+            <comments>https://symfony.com/blog/symfonycon-amsterdam-2025-call-for-it-student-volunteers-volunteer-learn-and-connect?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed#comments-list</comments>
+        </item>
+                        <item>
+            <title><![CDATA[Seven Symfony Core Team Members Speaking Next Week at the API Platform Conference 2025]]></title>
+            <link>https://symfony.com/blog/seven-symfony-core-team-members-speaking-next-week-at-the-api-platform-conference-2025?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</link>
+            <description>
+    
+
+The API Platform Conference, the only event dedicated to the API Platform framework and its ecosystem, will take place next week in Lille, France, on September 18–19, 2025. More than 30 talks are scheduled, in both French and English, covering case…</description>
+            <content:encoded><![CDATA[
+                                <p><a class="block text-center" href="https://api-platform.com/con/2025/" title="Logo Conference 2025">
+    <img src="https://symfony.com/uploads/assets/blog/logo-conference-2025.webp" alt="Logo Conference 2025">
+</a>
+<a href="https://api-platform.com/con/2025/">The API Platform Conference</a>, the only event dedicated to the API Platform framework and its ecosystem, will take place next week in Lille, France, on September 18–19, 2025. More than 30 talks are scheduled, in both French and English, covering case studies around API Platform, as well as tools and frameworks related to this project, created 10 years ago and now a leading solution for building modern and efficient APIs.</p>
+
+<p>Among all the incredible speakers and sessions planned during these two days, seven Symfony Core Team members will take the stage at EuraTechnologies, one of Europe’s first startup incubators:</p>
+
+<ul>
+<li><strong><a href="https://api-platform.com/fr/con/2025/speakers/kevin-dunglas/">Kévin Dunglas</a></strong>, API Platform's creator, will open the conference with a talk about enhancing your API Platform APIs with Go thanks to FrankenPHP.</li>
+<li><strong><a href="https://api-platform.com/fr/con/2025/speakers/fabien-potencier/">Fabien Potencier</a></strong>, Symfony's creator, will speak about how LLMs are going to change the way we build APIs.</li>
+<li><a href="https://api-platform.com/con/2025/conferences/#nicolas-keynote"><strong>Nicolas Grekas</strong></a>, Symfony's principal core team member, will deliver a keynote on Symfony’s configuration formats and their impact on DX on Friday afternoon, September 19.</li>
+<li><strong><a href="https://api-platform.com/fr/con/2025/conferences/#mercure-sse-api-platform-et-un-llm-elevent-un-chat-bot">Mathieu Santostefano</a></strong> will show how to integrate an LLM into a chatbot with a JS client, a PHP API, and Mercure.</li>
+<li><strong><a href="https://api-platform.com/fr/con/2025/conferences/#mongodb-demandez-en-plus-a-votre-base-de-donnees">Jérôme Tamarelle</a></strong> will help you optimize your use of MongoDB with API Platform.</li>
+<li><strong><a href="https://api-platform.com/fr/con/2025/conferences/#api-platform-jsonencoder-and-esa-for-a-skyrocketing-api">Mathias Arlaud</a></strong> will present how to streamline API performance with JsonStreamer &amp; ESA.</li>
+<li><strong><a href="https://api-platform.com/fr/con/2025/conferences/#pie-the-next-big-thing">Alexandre Daubois</a></strong> will present PIE and explain how this PHP extension is set to transform the way we use PHP extensions.</li>
+</ul>
+
+<p>More information about the speakers and schedule can be found on the <a href="https://api-platform.com/fr/con/2025/">event’s website</a>.</p>
+
+<p>Also, for the first time—and after months of careful stitching—<a href="https://x.com/dunglas/status/1962814466027815094">the first FrankenPHP elePHPant plushies</a> will be on sale at a special conference price in Lille. Don’t miss your chance to attend this incredible event, and make sure to secure your seat before ticketing closes this week.
+Any questions about the API Platform Conference 2025? Get in touch with <a href="&#109;&#x61;&#105;&#x6c;&#116;&#x6f;:&#101;&#x76;&#101;&#x6e;&#116;&#x73;&#64;&#x6c;e&#115;&#x2d;&#116;&#x69;&#108;&#x6c;&#101;&#x75;&#x6c;&#115;&#x2e;&#99;&#x6f;&#111;&#x70;">Les-Tilleuls.coop</a>, the event organizers.</p>
+
+                <hr style="margin-bottom: 5px" />
+                <div style="font-size: 90%">
+                    <a href="https://symfony.com/sponsor">Sponsor</a> the Symfony project.
+                </div>
+            ]]></content:encoded>
+            <guid isPermaLink="false">https://symfony.com/blog/seven-symfony-core-team-members-speaking-next-week-at-the-api-platform-conference-2025?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</guid>
+            <dc:creator><![CDATA[ Cécile HAMEREL ]]></dc:creator>
+            <pubDate>Mon, 08 Sep 2025 15:30:00 +0200</pubDate>
+            <comments>https://symfony.com/blog/seven-symfony-core-team-members-speaking-next-week-at-the-api-platform-conference-2025?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed#comments-list</comments>
+        </item>
+                        <item>
+            <title><![CDATA[A Week of Symfony #975 (September 1–7, 2025)]]></title>
+            <link>https://symfony.com/blog/a-week-of-symfony-975-september-1-7-2025?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</link>
+            <description>This week, Symfony development activity focused on merging new features for the upcoming Symfony 7.4 and 8.0 versions: added a Video constraint, introduced an access_decision() Twig function to get the security voter decision details, and added support for…</description>
+            <content:encoded><![CDATA[
+                                <p>This week, Symfony development activity focused on merging new features for the upcoming Symfony 7.4 and 8.0 versions: added a <a href="https://github.com/symfony/symfony/commit/95f0098cbb9861531acc860e69e578dfcef82359">Video constraint</a>, introduced an <a href="https://github.com/symfony/symfony/commit/4919062b51bcad7ad18a3f8062ce6fc36a15ff6c">access_decision() Twig function</a> to get the security voter decision details, and added <a href="https://github.com/symfony/symfony/commit/ae256f91a9cacc470fe77eca87aedd81c65ca55e">support for DTOs in Input attributes</a> for invokable commands. We also announced that Symfony will provide <a href="https://symfony.com/blog/symfony-to-provide-the-official-mcp-sdk">the official MCP SDK for PHP</a>, announced the first talks of the <a href="https://live.symfony.com/2025-amsterdam-con/">SymfonyCon Amsterdam 2025</a> conference and continued <a href="https://symfony.com/blog/celebrating-ryan-weaver-through-his-talks">celebrating the legacy of Ryan Weaver</a>.</p>
+
+<h2>Symfony development highlights</h2>
+
+<p>This week, 76 pull requests were merged (59 in code and 17 in docs) and 44 issues were closed (35 in code and 9 in docs). Excluding merges, 37 authors made 18,757 additions and 6,253 deletions. See details for <a href="https://github.com/symfony/symfony/pulse">code</a> and <a href="https://github.com/symfony/symfony-docs/pulse">docs</a>.</p>
+
+<p><a href="https://github.com/symfony/symfony/commits/6.4">6.4 changelog</a>:</p>
+
+<ul>
+<li><a href="https://github.com/symfony/symfony/commit/d33a8867ef6bda98742aac975e0e1ebcf874f9c7">d33a886</a>: &#91;Inflector, String&#93; fix edge cases</li>
+<li><a href="https://github.com/symfony/symfony/commit/bbfcf84e35e1fe69cf0082c240bbea584bdd87b6">bbfcf84</a>: &#91;Serializer&#93; fix dealing with asymmetric visilibity for properties</li>
+<li><a href="https://github.com/symfony/symfony/commit/e6dfb3dda2079fd16b983161d3c1504f9a89d7ba">e6dfb3d</a>: &#91;HttpFoundation&#93; change session column type from TEXT to STRING in SQL Server</li>
+<li><a href="https://github.com/symfony/symfony/commit/1dd5bd143a8a88f8347e23d540ee7c497bbf3f8c">1dd5bd1</a>: &#91;Messenger&#93; fix incompatibility with expected lowercase columns in Firebird database</li>
+<li><a href="https://github.com/symfony/symfony/commit/2205b62431c42ddfb46a163a7312fd8a9f26b719">2205b62</a>: &#91;Security&#93; pass attributes to nested ChainUserProviders</li>
+<li><a href="https://github.com/symfony/symfony/commit/3cd859f924e743444a51e72b5d0458da6781e3fc">3cd859f</a>: &#91;Cache&#93; make TagAwareAdapter registrable as a service</li>
+<li><a href="https://github.com/symfony/symfony/commit/e3b664d7d5fe81308bcaa181aa394f251888ba5f">e3b664d</a>: &#91;Cache&#93; fix internal representation of non-static values</li>
+<li><a href="https://github.com/symfony/symfony/commit/1ff83e0548128115190a4eb3d2757c3b1c73581b">1ff83e0</a>: &#91;SecurityBundle&#93; prevent accessing the tracked token storage when collecting data</li>
+<li><a href="https://github.com/symfony/symfony/commit/a57c946d3b8d477964da5303fa693a9b7c4e6227">a57c946</a>: &#91;Serializer&#93; fix normalizing objects with accessors having the same name as a property</li>
+<li><a href="https://github.com/symfony/symfony/commit/713f09983e2311b2b38f17959af84a6c277e8dcc">713f099</a>: &#91;PHPUnit Bridge&#93; replace backtick operator, deprecated in PHP 8.5, with shell_exec()</li>
+<li><a href="https://github.com/symfony/symfony/commit/c5ac44048e5cd48a31cb4d76796117c5c89ff339">c5ac440</a>: &#91;Security&#93; fix HttpUtils::createRequest() when the base request is forwarded</li>
+<li><a href="https://github.com/symfony/symfony/commit/a143fa2ec19aaa4da43c305b9d4cc3fe0e82bb56">a143fa2</a>:  use the empty string instead of null as an array offset</li>
+</ul>
+
+<p><a href="https://github.com/symfony/symfony/commits/7.3">7.3 changelog</a>:</p>
+
+<ul>
+<li><a href="https://github.com/symfony/symfony/commit/6e42b3659d2590fffdbb5262e13ff53326fc846b">6e42b36</a>: &#91;JsonStreamer&#93; fix decoding iterable lists</li>
+<li><a href="https://github.com/symfony/symfony/commit/5ff7e23ed0db8db31a795b9935266be8d49048fd">5ff7e23</a>: &#91;DependencyInjection&#93; respect original service class when a proxy is defined</li>
+<li><a href="https://github.com/symfony/symfony/commit/acb2027b982869f0bcea0cd9c0bdb316952d5d2b">acb2027</a>: &#91;JsonStreamer&#93; fix encoding iterable lists</li>
+<li><a href="https://github.com/symfony/symfony/commit/87ba5d86b5d7704990b95da4548fb7712f6768e9">87ba5d8</a>: &#91;Config&#93; fix ReflectionClassResource hash validation</li>
+<li><a href="https://github.com/symfony/symfony/commit/177881159c46427504a309c1424419abeb1494c9">1778811</a>: &#91;DependencyInjection&#93; fix optimizing ClassExistenceResource</li>
+<li><a href="https://github.com/symfony/symfony/commit/e7c41fe0635bd1e76767452cffdc7374ad26179b">e7c41fe</a>: &#91;Validator&#93; fall back to legacy options handling if configured named arguments do not match</li>
+<li><a href="https://github.com/symfony/symfony/commit/9157094f846366609fcc859dd5cb475b650c6c24">9157094</a>: &#91;Routing&#93; don't rebuild cache when controller action body changes</li>
+<li><a href="https://github.com/symfony/symfony/commit/e265f33a78943294901795a31a0ceec4fa19a534">e265f33</a>: &#91;Messenger&#93; map legacy options to the "sentinel" key when parsing DSNs</li>
+</ul>
+
+<p><a href="https://github.com/symfony/symfony/commits/7.4">7.4 changelog</a>:</p>
+
+<ul>
+<li><a href="https://github.com/symfony/symfony/commit/67016b9d13d0aa164bcca122c978b2c1e1098dd6">67016b9</a>: &#91;Serializer, Validator&#93; add JSON schema for validating and autocompleting YAML config files</li>
+<li><a href="https://github.com/symfony/symfony/commit/7278aa035af69b83d398b7220669ecb61be5a639">7278aa0</a>: &#91;DependencyInjection&#93; parse attributes found on abstract classes for resource definitions</li>
+<li><a href="https://github.com/symfony/symfony/commit/145abacb951cee7bbb3f25ca1ace89d1044f9515">145abac</a>: &#91;Runtime&#93; expose the runtime class in $_SERVER['APP_RUNTIME']</li>
+<li><a href="https://github.com/symfony/symfony/commit/18d76685235c43ad82245e298cdf8d2b385d33a8">18d7668</a>: &#91;DependencyInjection&#93; allow multiple #[AsDecorator] attributes</li>
+<li><a href="https://github.com/symfony/symfony/commit/95f0098cbb9861531acc860e69e578dfcef82359">95f0098</a>: &#91;Validator&#93; add Video constraint for validating video files</li>
+<li><a href="https://github.com/symfony/symfony/commit/bae2c06d9ab8bff7d4548b171bceab28c8c525ac">bae2c06</a>: &#91;DependencyInjection&#93; optimize AutowireRequiredMethodsPass</li>
+<li><a href="https://github.com/symfony/symfony/commit/4919062b51bcad7ad18a3f8062ce6fc36a15ff6c">4919062</a>: &#91;Security, TwigBridge&#93; add access_decision() and access_decision_for_user()</li>
+<li><a href="https://github.com/symfony/symfony/commit/d052b75a21d4d30bf3ec23ee5ab6f9080b76094e">d052b75</a>: &#91;DoctrineBridge&#93; use a single table in isSameDatabaseChecker</li>
+<li><a href="https://github.com/symfony/symfony/commit/c539c77a949bc9ab464abdd4cb9c941f4474d18a">c539c77</a>: &#91;Validator&#93; allow using attributes to declare compile-time constraint metadata</li>
+<li><a href="https://github.com/symfony/symfony/commit/bde5221a2b34f53ca9ecde4f72bf08f488b2ad5a">bde5221</a>: &#91;Serializer&#93; allow using attributes to declare compile-time serialization metadata</li>
+<li><a href="https://github.com/symfony/symfony/commit/c1021595cf59909dcb9aff3822553a99be46b0d1">c102159</a>: &#91;FrameworkBundle&#93; do not parse attributes on abstract classes with DI &lt; 7.4</li>
+<li><a href="https://github.com/symfony/symfony/commit/a9dcea4a7ca45e68585255e8e3ce38a773e21e20">a9dcea4</a>: &#91;VarExporter&#93; add support for exporting named closures</li>
+<li><a href="https://github.com/symfony/symfony/commit/75935f8494c737539f6dd9d1d260272b39b5cbbe">75935f8</a>: &#91;DependencyInjection&#93; allow Class::function(...) and global_function(...) closures in PHP DSL for factories</li>
+<li><a href="https://github.com/symfony/symfony/commit/eedf441d3fe150323b66f7cbc44ab559f47665a4">eedf441</a>: &#91;Security, SecurityBundle&#93; dump role hierarchy as mermaid chart</li>
+<li><a href="https://github.com/symfony/symfony/commit/ae256f91a9cacc470fe77eca87aedd81c65ca55e">ae256f9</a>: &#91;Console&#93; add #[Input] attribute to support DTOs in invokable commands</li>
+</ul>
+
+<p><a href="https://github.com/symfony/symfony/commits/8.0">8.0 changelog</a>:</p>
+
+<ul>
+<li><a href="https://github.com/symfony/symfony/commit/1d6ac7918c9c0357916369f916da69b04a00a351">1d6ac79</a>: &#91;Security&#93; make UserChainProvider implement AttributesBasedUserProvider</li>
+<li><a href="https://github.com/symfony/symfony/commit/f7e16f185100aee304b928e6c314301d448241aa">f7e16f1</a>:  remove ClassMetadataFactoryCompiler and other legacy cleanups</li>
+</ul>
+
+<h2>Newest issues and pull requests</h2>
+
+<ul>
+<li><a href="https://github.com/symfony/symfony/issues/61576">Support bitwise operations with PHP constants in YAML configuration files</a></li>
+<li><a href="https://github.com/symfony/symfony/issues/61603">[Webhook] Add subscriber id to the subscriber class when sending webhooks </a></li>
+</ul>
+
+<h2>Symfony Jobs</h2>
+
+<p>These are some of the most recent Symfony job offers:</p>
+
+<ul>
+<li><strong>Lead Symfony Developer</strong> at Buddy &amp; Selly<br>
+Full-time - €70,000 – €80,000 / year<br>
+Full remote<br>
+<a href="https://symfony.com/jobs/f35bca6">View details</a></li>
+<li><strong>Lead Symfony Developer</strong> at A-Cube API<br>
+Full-time - €54,000 – €72,000 / year<br>
+Full remote<br>
+<a href="https://symfony.com/jobs/9c8eec5">View details</a></li>
+<li><strong>Backend Symfony Developer</strong> at Spyrit<br>
+Full-time - €40,000 – €55,000 / year<br>
+Remote + part-time onsite (Versailles, France)<br>
+<a href="https://symfony.com/jobs/186e258">View details</a></li>
+<li><strong>Backend Symfony Developer</strong> at Evergrowth<br>
+Full-time - €60,000 – €72,000 / year<br>
+Full remote<br>
+<a href="https://symfony.com/jobs/ee526ac">View details</a></li>
+<li><strong>Backend Symfony Developer</strong> at Eneba<br>
+Full-time - €55,000 – €66,000 / year<br>
+Full remote<br>
+<a href="https://symfony.com/jobs/3bd882f">View details</a></li>
+</ul>
+
+<p>You can <a href="https://symfony.com/jobs">publish a Symfony job offer for free</a> on symfony.com.</p>
+
+<h2>They talked about us</h2>
+
+<ul>
+<li><a href="https://symfonystation.mobileatom.net/weekly-communiques/symfony-station-communique-05-september-2025">Symfony Station Communiqué - Stardate: ✦ 05 September 2025 ✦</a></li>
+<li><a href="https://dev.to/mykola_vantukh/ddd-in-symfony-7-clean-architecture-and-deptrac-enforced-boundaries-120a">DDD with Symfony 7: Clean Architecture and Deptrac boundaries</a></li>
+<li><a href="https://browsely.ai/blog/symfony-as-jwt-provider">Symfony as JWT provider</a></li>
+<li><a href="https://dev.to/mattleads/ai-on-autopilot-automating-your-ai-agents-with-symfony-scheduler-55f9">AI on Autopilot: Automating Your AI Agents with Symfony Scheduler</a></li>
+<li><a href="https://dev.to/sebk69/small-resource-server-symfony-client-bundle-1481">Small Resource Server &amp; Symfony Client Bundle</a></li>
+<li><a href="https://dev.to/mattleads/simplify-ai-agent-deployment-dockerizing-symfony-for-scalable-28pp">Simplify AI-Agent Deployment: Dockerizing Symfony for Scalable</a></li>
+<li><a href="https://developpeur-freelance.io/cloudflare-turnstile-turbo/">Turnstile et Turbo, comment on fait ? (un peu d'aide de stimulus ?)</a></li>
+</ul>
+
+<h2>Call to Action</h2>
+
+<ul>
+<li>Follow Symfony <a href="https://x.com/symfony">on X</a>, <a href="https://mastodon.social/@symfony">on Mastodon</a>, <a href="https://bsky.app/profile/symfony.com">on Bluesky</a> and <a href="https://www.threads.net/@symfony">on Threads</a> and share this article.</li>
+<li><a href="https://feeds.feedburner.com/symfony/blog">Subscribe to the Symfony blog RSS</a> and never miss a Symfony story again.</li>
+</ul>
+
+                <hr style="margin-bottom: 5px" />
+                <div style="font-size: 90%">
+                    <a href="https://symfony.com/sponsor">Sponsor</a> the Symfony project.
+                </div>
+            ]]></content:encoded>
+            <guid isPermaLink="false">https://symfony.com/blog/a-week-of-symfony-975-september-1-7-2025?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</guid>
+            <dc:creator><![CDATA[ Javier Eguiluz ]]></dc:creator>
+            <pubDate>Sun, 07 Sep 2025 09:23:00 +0200</pubDate>
+            <comments>https://symfony.com/blog/a-week-of-symfony-975-september-1-7-2025?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed#comments-list</comments>
+        </item>
+                        <item>
+            <title><![CDATA[Symfony to Provide the Official MCP SDK]]></title>
+            <link>https://symfony.com/blog/symfony-to-provide-the-official-mcp-sdk?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</link>
+            <description>Today, we are announcing that Symfony teamed up with The PHP Foundation, and
+Anthropic&#039;s MCP team to launch the official MCP SDK. Our goal is a
+framework-agnostic, production-ready library the entire PHP ecosystem can rely on.
+The Symfony team will lead maintenance,…</description>
+            <content:encoded><![CDATA[
+                                <p>Today, we are announcing that Symfony teamed up with The PHP Foundation, and
+Anthropic's MCP team to launch the official MCP SDK. Our goal is a
+framework-agnostic, production-ready library the entire PHP ecosystem can rely on.</p>
+<p>The Symfony team will lead maintenance, with contributions from the broader
+community, including <a href="https://github.com/CodeWithKyrian" class="reference external" rel="external noopener noreferrer" target="_blank">Kyrian Obikwelu</a> (<a href="https://github.com/php-mcp" class="reference external" rel="external noopener noreferrer" target="_blank">PHP-MCP</a>).</p>
+<div class="section">
+<h2 id="model-context-protocol"><a class="headerlink" href="#model-context-protocol" title="Permalink to this headline">Model Context Protocol</a></h2>
+<p>Less than a year ago, Anthropic released the <a href="https://modelcontextprotocol.io/" class="reference external" rel="external noopener noreferrer" target="_blank">Model Context Protocol</a> (MCP), an
+open protocol to standardize how LLM-powered client applications interact with
+context-providing servers. The specification is designed around common
+capabilities that are used when building agents and complex workflows, like
+Prompts, Tools, Resources, and more.</p>
+<p>The specification is designed around common capabilities, used when building
+agents and complex workflow — such as Prompts, Tools, and Resources — and has
+already seen broad adoption across the software industry. Published under the
+MIT license, MCP first shipped with SDKs in Python and TypeScript, sparking
+hundreds of open-source <a href="https://modelcontextprotocol.io/clients" class="reference external" rel="external noopener noreferrer" target="_blank">clients</a>, <a href="https://modelcontextprotocol.io/examples" class="reference external" rel="external noopener noreferrer" target="_blank">servers</a>, and <a href="https://modelcontextprotocol.io/docs/sdk" class="reference external" rel="external noopener noreferrer" target="_blank">SDKs</a> in more languages.</p>
+</div>
+<div class="section">
+<h2 id="symfony-joining-forces-for-the-official-mcp-sdk"><a class="headerlink" href="#symfony-joining-forces-for-the-official-mcp-sdk" title="Permalink to this headline">Symfony joining forces for the official MCP SDK</a></h2>
+<p>When we <a href="https://symfony.com/blog/kicking-off-the-symfony-ai-initiative" class="reference external">kicked off the Symfony AI initiative</a>, a low-level MCP SDK was already
+part of it. It was rather a first draft - not yet feature complete - and meant
+to evolve as part of the initiative. In parallel, the <a href="https://github.com/php-mcp" class="reference external" rel="external noopener noreferrer" target="_blank">PHP-MCP project</a>
+maintained multiple MCP-related packages as well.</p>
+<p>Now, thanks to an initiative led by <strong>The PHP Foundation</strong> in collaboration
+with <strong>Anthropic's MCP team</strong>, Symfony and PHP-MCP are joining forces to
+provide <strong>the official PHP MCP SDK</strong>.</p>
+<div translate="no" data-loc="1" class="notranslate codeblock codeblock-length-sm codeblock-terminal codeblock-bash">
+        <div class="codeblock-scroll">
+        
+        <pre class="codeblock-code"><code><span class="hljs-prompt">$ </span>composer require mcp/sdk</code></pre>
+    </div>
+</div>
+</div>
+<div class="section">
+<h2 id="still-work-in-progress"><a class="headerlink" href="#still-work-in-progress" title="Permalink to this headline">Still work in progress</a></h2>
+<p>The repository and package are now public, but we have not yet tagged a stable
+release. As with the Symfony AI initiative, we're inviting the community to
+help shape the SDK together.</p>
+<div class="section">
+<h3 id="how-to-get-started"><a class="headerlink" href="#how-to-get-started" title="Permalink to this headline">How to Get Started</a></h3>
+<ul>
+    <li>Explore the repo: <a href="https://github.com/modelcontextprotocol/php-sdk" class="reference external" rel="external noopener noreferrer" target="_blank">github.com/modelcontextprotocol/php-sdk</a></li>
+<li>Check open issues and examples</li>
+<li>Try it out and share feedback</li>
+<li>Join Symfony AI Hackathon for hands-on collaboration</li>
+</ul>
+</div>
+</div>
+<div class="section">
+<h2 id="closing-notes"><a class="headerlink" href="#closing-notes" title="Permalink to this headline">Closing Notes</a></h2>
+<p>We would like to thank <a href="https://experimentalworks.net/" class="reference external" rel="external noopener noreferrer" target="_blank">David Soria Parra</a> (Anthropic) and <a href="https://pronskiy.com/" class="reference external" rel="external noopener noreferrer" target="_blank">Roman Pronskiy</a> (PHP Foundation) for their initiative, and <a href="https://github.com/CodeWithKyrian" class="reference external" rel="external noopener noreferrer" target="_blank">Kyrian Obikwelu</a>, of PHP-MCP, for heading into this endeavor with us.</p>
+<p>As part of this transition, the current symfony/ai MCP SDK package will be deprecated and removed.</p>
+</div>
+                <hr style="margin-bottom: 5px" />
+                <div style="font-size: 90%">
+                    <a href="https://symfony.com/sponsor">Sponsor</a> the Symfony project.
+                </div>
+            ]]></content:encoded>
+            <guid isPermaLink="false">https://symfony.com/blog/symfony-to-provide-the-official-mcp-sdk?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</guid>
+            <dc:creator><![CDATA[ Christopher Hertel ]]></dc:creator>
+            <pubDate>Fri, 05 Sep 2025 11:01:00 +0200</pubDate>
+            <comments>https://symfony.com/blog/symfony-to-provide-the-official-mcp-sdk?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed#comments-list</comments>
+        </item>
+                        <item>
+            <title><![CDATA[Celebrating Ryan Weaver Through His Talks]]></title>
+            <link>https://symfony.com/blog/celebrating-ryan-weaver-through-his-talks?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</link>
+            <description>Ryan Weaver was a gifted teacher, a brilliant developer, and a true friend to our
+community. In the past days, we&#039;ve remembered his kindness, his humor, and the joy he brought
+to so many developers around the world. Today, we&#039;d like to honor his legacy in…</description>
+            <content:encoded><![CDATA[
+                                <p>Ryan Weaver was a gifted teacher, a brilliant developer, and a true friend to our
+community. In the past days, <a href="https://symfony.com/blog/remembering-ryan-weaver-teacher-core-team-member-friend" class="reference external">we've remembered his kindness, his humor, and the joy he brought</a>
+to so many developers around the world. Today, we'd like to honor his legacy in
+a special way: <strong>by making all of his Symfony conference talks free to watch</strong>.</p>
+<p>While the technical details in these talks may eventually become outdated,
+Ryan's unique ability to teach, his infectious enthusiasm, and his remarkable
+talent for making complex concepts accessible will remain timeless. This is our
+way of ensuring his legacy continues to inspire developers for years to come.</p>
+<div class="figure">
+    <img alt="Ryan Weaver at SymfonyCon 2018" class="align-center" src="https://symfony.com/uploads/assets/blog/ryan-weaver-symfonycon-2018.webp">
+    <p class="text-center"><small>Ryan Weaver delivering a talk during the SymfonyCon 2018 conference</small></p>
+</div>
+<p>Many of you will remember his iconic talk at <strong>SymfonyCon 2022 in Disneyland</strong>
+Paris, where he playfully delivered his talk while dressed as various Disney
+characters (<a href="https://live.symfony.com/account/replay/video/672" class="reference external">watch it here</a>).
+Or his most recent talk at <strong>SymfonyOnline January 2024</strong>, celebrating the third
+anniversary of Symfony UX with the same energy that had defined his career
+(<a href="https://live.symfony.com/account/replay/video/915" class="reference external">watch it here</a>).</p>
+<p>Ryan's expertise extended far beyond front-end. During <strong>SymfonyWorld Online 2020</strong>,
+the first conference held entirely online due to the COVID-19 pandemic, he delivered
+a masterclass on the new Symfony security system introduced in version 5.x
+(<a href="https://live.symfony.com/account/replay/video/523" class="reference external">watch it here</a>).</p>
+<p>And if you'd like travel back to where it all began, don't miss his very first
+recorded Symfony conference talk at <strong>SymfonyCon Warsaw 2013</strong>, a front-end session
+that captured the spirit of a young but already brilliant teacher
+(<a href="https://live.symfony.com/account/replay/video/11" class="reference external">watch it here</a>).</p>
+<p>These are just a few highlights of Ryan's remarkable contributions on stage,
+now available for everyone to watch. We encourage you to revisit them, to smile,
+to learn, and to feel the passion he poured into every word:</p>
+<p><a href="https://live.symfony.com/account/replay/speaker/weaverryan" class="reference external">Watch all of Ryan Weaver's talks at Symfony Conferences</a></p>
+<p>Through his talks, Ryan continues to teach us, not only about Symfony, but about
+joy, creativity, and community. Thank you, Ryan. We'll keep learning from you.</p>
+                <hr style="margin-bottom: 5px" />
+                <div style="font-size: 90%">
+                    <a href="https://symfony.com/sponsor">Sponsor</a> the Symfony project.
+                </div>
+            ]]></content:encoded>
+            <guid isPermaLink="false">https://symfony.com/blog/celebrating-ryan-weaver-through-his-talks?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</guid>
+            <dc:creator><![CDATA[ Javier Eguiluz ]]></dc:creator>
+            <pubDate>Fri, 05 Sep 2025 08:56:00 +0200</pubDate>
+            <comments>https://symfony.com/blog/celebrating-ryan-weaver-through-his-talks?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed#comments-list</comments>
+        </item>
+                        <item>
+            <title><![CDATA[SymfonyCon Amsterdam 2025: Where have the women of tech history gone? 2.0]]></title>
+            <link>https://symfony.com/blog/symfonycon-amsterdam-2025-where-have-the-women-of-tech-history-gone-2-0?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</link>
+            <description>
+    
+
+
+SymfonyCon Amsterdam 2025, our next annual international Symfony conference, will take place on:
+
+
+November 25 &amp;amp; 26 with two days of hands-on workshops to learn, practice, and enhance your skills in small groups.
+November 27 &amp;amp; 28 with three…</description>
+            <content:encoded><![CDATA[
+                                <p><a class="block text-center" href="https://live.symfony.com/2025-amsterdam-con/schedule/where-have-the-women-of-tech-history-gone-2-0" title="Laura Durieux Blog">
+    <img src="https://symfony.com/uploads/assets/blog/Laura-Durieux-blog.jpg" alt="Laura Durieux Blog">
+</a></p>
+
+<p>SymfonyCon Amsterdam 2025, our next annual international Symfony conference, will take place on:</p>
+
+<ul>
+<li><strong>November 25 &amp; 26</strong> with two days of hands-on workshops to learn, practice, and enhance your skills in small groups.</li>
+<li><strong>November 27 &amp; 28</strong> with three English-speaking tracks, an Unconference track, and a lively community evening.</li>
+</ul>
+
+<p>The first part of the schedule is available <a href="https://live.symfony.com/2025-amsterdam-con/schedule"><strong>here</strong></a>, as well as the complete list of workshop topics.</p>
+
+<p>Stay in the look out for more to come!👀</p>
+
+<hr />
+
+<h3>🎤 New speaker announcement!</h3>
+
+<p>We’re thrilled to welcome <a href="https://connect.symfony.com/profile/devgirl_"><strong>Laura Durieux</strong></a>, <a href="https://x.com/devgirl__"><strong>@devgirl__</strong></a>, Web Developer &amp; Twitch Streamer, Freelance, as a speaker at SymfonyCon Amsterdam 2025!</p>
+
+<p>In her talk <strong>“<a href="https://live.symfony.com/2025-amsterdam-con/schedule/where-have-the-women-of-tech-history-gone-2-0">SymfonyCon Amsterdam 2025: Where have the women of tech history gone? 2.0</a>”</strong> you will travel into the history of computer science to uncover the remarkable achievements of even more amazing women.</p>
+
+<p>"With the last chapter, we explored the extraordinary contributions of women to the history of computer science. But did you know that was just the tip of the iceberg? After diving deeper into this fascinating subject, I’ve uncovered even more incredible stories to share.</p>
+
+<p>What about the pioneer behind assembly language? Or the creator of the STP, without which the World Wide Web might never have existed? And what about the brilliant mind behind the ARM architecture?"</p>
+
+<hr />
+
+<h3>SymfonyCon Amsterdam 2025 is coming fast!</h3>
+
+<p>🎟️ <strong>Register</strong> now to enjoy regular price and choose the ticket that suits you the best among workshop, conference and combo ticket. <a href="https://live.symfony.com/2025-amsterdam-con/registration/">Check all the details and get your ticket!</a></p>
+
+<p>🖥️ Check out the exciting <strong>14 workshop topics</strong> <a href="https://live.symfony.com/2025-amsterdam-con/workshop">on this page</a>.</p>
+
+<p>🎤 Explore the great lineup of <strong>conference talks <a href="https://live.symfony.com/2025-amsterdam-con/schedule">here</a></strong>, featuring top-notch expert speakers as <a href="https://connect.symfony.com/profile/fabpot">Fabien Potencier</a>, <a href="https://connect.symfony.com/profile/chertel">Christopher Hertel</a>, <a href="https://connect.symfony.com/profile/chalas_r">Robin Chalas</a>, <a href="https://connect.symfony.com/profile/tobias">Tobias Nyholm</a>, <a href="https://connect.symfony.com/profile/alcaeus">Andreas Braun</a>, <a href="https://connect.symfony.com/profile/afilina">Anna Filina</a>, <a href="https://connect.symfony.com/profile/paulinevos">Pauline Vos</a>, <a href="https://connect.symfony.com/profile/skoop">Stefan Koopmanschap</a>, <a href="https://connect.symfony.com/profile/nicolas-grekas">Nicolas Grekas</a>, <a href="https://connect.symfony.com/profile/icambridge">Iain Cambridge</a>, <a href="https://connect.symfony.com/profile/sebastian_bergmann">Sebastian Bergmann</a>, <a href="https://connect.symfony.com/profile/konradoboza">Konrad Oboza</a>, <a href="https://connect.symfony.com/profile/alexandresalome">Alexandre Salome</a>, <a href="https://connect.symfony.com/profile/soyuka">Antoine Bluchet</a>, <a href="https://connect.symfony.com/profile/dunglas">Kévin Dunglas</a>, <a href="https://connect.symfony.com/profile/akrabat">Rob Allen</a>, <a href="https://connect.symfony.com/profile/mtarld">Mathias Arlaud</a>, <a href="https://connect.symfony.com/profile/beberlei">Benjamin Eberlei</a>, <a href="https://connect.symfony.com/profile/haruatari">Viktor Pikaev</a>, <a href="https://connect.symfony.com/profile/valentinrusev">Viktor Pikaev</a>, <a href="https://connect.symfony.com/profile/romain">Romain Neutron</a>.</p>
+
+<p>🫵 Participate in the <strong>Unconference track</strong>, a participant-driven format where attendees shape the content and discussions in real-time. Have a topic you're passionate about? Claim your slot by emailing us at <code>events@symfony.com</code> and set the stage for an unforgettable experience. Each unconference talk lasts 20 minutes with a screen and projector available on both days.</p>
+
+<p>🎉 <strong>Celebrate Symfony’s 20th Anniversary</strong> with us at the Kanarie Club! Join us for an unforgettable evening of drinks, music, and good vibes on Thursday, November 27 from 7:30 to 10:30 pm at the vibrant Kanarie Club, right in the heart of De Hallen — a lively food court with 21 amazing stands (grab your favorite bites, bring them to the Kanarie club!) Dress as you like or simply add a touch of fun!✨</p>
+
+<p>💻 Save the date for the <strong>Symfony hackathon</strong> on November 29. Everyone is welcome to join the hackday! Whether you're an experienced contributor or new to the community, your participation is highly valued as it brings a fresh perspective! More details are available <a href="https://live.symfony.com/2025-amsterdam-con/hackday">here</a>. The hackathon will be hosted in Volkshotel Amsterdam from 09:30 a.m. to 3:00 p.m. CET. thanks to the support of <a href="https://baksla.sh/">Baksla.sh</a>.</p>
+
+<p>📖 Read our <strong><a href="https://live.symfony.com/2025-amsterdam-con/venue">attendee guide</a></strong> for venue, accommodation, and transportation details.</p>
+
+<p>👕 Complete your <strong><a href="https://live.symfony.com/account">Symfony Live profile</a></strong> to inform us of your dietary preferences, T-shirt size and talk preferences!</p>
+
+<hr />
+
+<p>Joins us online!</p>
+
+<p>💡Follow the "conference" blog posts to not miss anything!</p>
+
+<p>Want the latest Symfony updates? Follow us and tune in from wherever you are 🌎</p>
+
+<p><a class="block text-center" href="https://linktr.ee/symfony">
+   <img src="https://symfony.com/uploads/assets/blog/Banner-BLOG.png" alt="Banner Blog">
+</a></p>
+
+                <hr style="margin-bottom: 5px" />
+                <div style="font-size: 90%">
+                    <a href="https://symfony.com/sponsor">Sponsor</a> the Symfony project.
+                </div>
+            ]]></content:encoded>
+            <guid isPermaLink="false">https://symfony.com/blog/symfonycon-amsterdam-2025-where-have-the-women-of-tech-history-gone-2-0?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</guid>
+            <dc:creator><![CDATA[ Eloïse Charrier ]]></dc:creator>
+            <pubDate>Thu, 04 Sep 2025 17:45:00 +0200</pubDate>
+            <comments>https://symfony.com/blog/symfonycon-amsterdam-2025-where-have-the-women-of-tech-history-gone-2-0?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed#comments-list</comments>
+        </item>
+                        <item>
+            <title><![CDATA[SymfonyCon Amsterdam 2025: Make your AI useful with MCP]]></title>
+            <link>https://symfony.com/blog/symfonycon-amsterdam-2025-make-your-ai-useful-with-mcp?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</link>
+            <description>
+    
+
+
+SymfonyCon Amsterdam 2025, our next annual international Symfony conference, will take place on:
+
+
+November 25 &amp;amp; 26 with two days of hands-on workshops to learn, practice, and enhance your skills in small groups.
+November 27 &amp;amp; 28 with three…</description>
+            <content:encoded><![CDATA[
+                                <p><a class="block text-center" href="https://live.symfony.com/2025-amsterdam-con/schedule/make-your-ai-useful-with-mcp" title="Tobias Nyholm">
+    <img src="https://symfony.com/uploads/assets/blog/Tobias-Nyholm.png" alt="Tobias Nyholm">
+</a></p>
+
+<p>SymfonyCon Amsterdam 2025, our next annual international Symfony conference, will take place on:</p>
+
+<ul>
+<li><strong>November 25 &amp; 26</strong> with two days of hands-on workshops to learn, practice, and enhance your skills in small groups.</li>
+<li><strong>November 27 &amp; 28</strong> with three English-speaking tracks, an Unconference track, and a lively community evening.</li>
+</ul>
+
+<p>The first part of the schedule is available <a href="https://live.symfony.com/2025-amsterdam-con/schedule"><strong>here</strong></a>, as well as the complete list of workshop topics.</p>
+
+<p>Stay in the look out for more to come!👀</p>
+
+<hr />
+
+<h3>🎤 New speaker announcement!</h3>
+
+<p>We’re thrilled to welcome <a href="https://connect.symfony.com/profile/tobias"><strong>Tobias Nyholm</strong></a> <a href="https://x.com/TobiasNyholm">(@TobiasNyholm)</a>, Eneba, as a speaker at SymfonyCon Amsterdam 2025! 🙌</p>
+
+<p>In his talk <strong>“<a href="https://live.symfony.com/2025-amsterdam-con/schedule/make-your-ai-useful-with-mcp">Make your AI useful with MCP</a>”</strong> he will go over the MCP protocol, why we care and how to use it to create an AI service that is helpful.</p>
+
+<p>"Wouldn't it be great if we can use our LLM to answer very specific questions? Wouldn't it be great to move away from a general purpose machine to something tailor made for me or my users? If we could stop asking questions like "What is the area of a sphere?" and more like:</p>
+
+<ul>
+<li>"What is the status on my last order?"</li>
+<li>"What are the total fees given to a supplier X?"</li>
+<li>"How many images have I uploaded this year?"</li>
+</ul>
+
+<hr />
+
+<h3>SymfonyCon Amsterdam 2025 is coming fast!</h3>
+
+<p>🎟️ <strong>Register</strong> now to enjoy regular price and choose the ticket that suits you the best among workshop, conference and combo ticket. <a href="https://live.symfony.com/2025-amsterdam-con/registration/">Check all the details and get your ticket!</a></p>
+
+<p>🖥️ Check out the exciting <strong>14 workshop topics</strong> <a href="https://live.symfony.com/2025-amsterdam-con/workshop">on this page</a>.</p>
+
+<p>🎤 Explore the great lineup of <strong>conference talks <a href="https://live.symfony.com/2025-amsterdam-con/schedule">here</a></strong>, featuring top-notch expert speakers as <a href="https://connect.symfony.com/profile/fabpot">Fabien Potencier</a>, <a href="https://connect.symfony.com/profile/chertel">Christopher Hertel</a>, <a href="https://connect.symfony.com/profile/chalas_r">Robin Chalas</a>, <a href="https://connect.symfony.com/profile/tobias">Tobias Nyholm</a>, <a href="https://connect.symfony.com/profile/alcaeus">Andreas Braun</a>, <a href="https://connect.symfony.com/profile/afilina">Anna Filina</a>, <a href="https://connect.symfony.com/profile/paulinevos">Pauline Vos</a>, <a href="https://connect.symfony.com/profile/skoop">Stefan Koopmanschap</a>, <a href="https://connect.symfony.com/profile/nicolas-grekas">Nicolas Grekas</a>, <a href="https://connect.symfony.com/profile/icambridge">Iain Cambridge</a>, <a href="https://connect.symfony.com/profile/sebastian_bergmann">Sebastian Bergmann</a>, <a href="https://connect.symfony.com/profile/konradoboza">Konrad Oboza</a>, <a href="https://connect.symfony.com/profile/alexandresalome">Alexandre Salome</a>, <a href="https://connect.symfony.com/profile/soyuka">Antoine Bluchet</a>, <a href="https://connect.symfony.com/profile/dunglas">Kévin Dunglas</a>, <a href="https://connect.symfony.com/profile/akrabat">Rob Allen</a>, <a href="https://connect.symfony.com/profile/mtarld">Mathias Arlaud</a>, <a href="https://connect.symfony.com/profile/beberlei">Benjamin Eberlei</a>, <a href="https://connect.symfony.com/profile/haruatari">Viktor Pikaev</a>, <a href="https://connect.symfony.com/profile/valentinrusev">Viktor Pikaev</a>, <a href="https://connect.symfony.com/profile/romain">Romain Neutron</a>.</p>
+
+<p>🫵 Participate in the <strong>Unconference track</strong>, a participant-driven format where attendees shape the content and discussions in real-time. Have a topic you're passionate about? Claim your slot by emailing us at <code>events@symfony.com</code> and set the stage for an unforgettable experience. Each unconference talk lasts 20 minutes with a screen and projector available on both days.</p>
+
+<p>🎉 <strong>Celebrate Symfony’s 20th Anniversary</strong> with us at the Kanarie Club! Join us for an unforgettable evening of drinks, music, and good vibes on Thursday, November 27 from 7:30 to 10:30 pm at the vibrant Kanarie Club, right in the heart of De Hallen — a lively food court with 21 amazing stands (grab your favorite bites, bring them to the Kanarie club!) Dress as you like or simply add a touch of fun!✨</p>
+
+<p>💻 Save the date for the <strong>Symfony hackathon</strong> on November 29. Everyone is welcome to join the hackday! Whether you're an experienced contributor or new to the community, your participation is highly valued as it brings a fresh perspective! More details are available <a href="https://live.symfony.com/2025-amsterdam-con/hackday">here</a>. The hackathon will be hosted in Volkshotel Amsterdam from 09:30 a.m. to 3:00 p.m. CET. thanks to the support of <a href="https://baksla.sh/">Baksla.sh</a>.</p>
+
+<p>📖 Read our <strong><a href="https://live.symfony.com/2025-amsterdam-con/venue">attendee guide</a></strong> for venue, accommodation, and transportation details.</p>
+
+<p>👕 Complete your <strong><a href="https://live.symfony.com/account">Symfony Live profile</a></strong> to inform us of your dietary preferences, T-shirt size and talk preferences!</p>
+
+<hr />
+
+<p>Joins us online!</p>
+
+<p>💡Follow the "conference" blog posts to not miss anything!</p>
+
+<p>Want the latest Symfony updates? Follow us and tune in from wherever you are 🌎</p>
+
+<p><a class="block text-center" href="https://linktr.ee/symfony">
+   <img src="https://symfony.com/uploads/assets/blog/Banner-BLOG.png" alt="Banner Blog">
+</a></p>
+
+                <hr style="margin-bottom: 5px" />
+                <div style="font-size: 90%">
+                    <a href="https://symfony.com/sponsor">Sponsor</a> the Symfony project.
+                </div>
+            ]]></content:encoded>
+            <guid isPermaLink="false">https://symfony.com/blog/symfonycon-amsterdam-2025-make-your-ai-useful-with-mcp?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</guid>
+            <dc:creator><![CDATA[ Eloïse Charrier ]]></dc:creator>
+            <pubDate>Wed, 03 Sep 2025 12:15:00 +0200</pubDate>
+            <comments>https://symfony.com/blog/symfonycon-amsterdam-2025-make-your-ai-useful-with-mcp?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed#comments-list</comments>
+        </item>
+                        <item>
+            <title><![CDATA[SymfonyCon Amsterdam 2025: Practical AI Integrations with Symfony]]></title>
+            <link>https://symfony.com/blog/symfonycon-amsterdam-2025-practical-ai-integrations-with-symfony?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</link>
+            <description>
+    
+
+
+SymfonyCon Amsterdam 2025, our next annual international Symfony conference, will take place on:
+
+
+November 25 &amp;amp; 26 with two days of hands-on workshops to learn, practice, and enhance your skills in small groups.
+November 27 &amp;amp; 28 with three…</description>
+            <content:encoded><![CDATA[
+                                <p><a class="block text-center" href="https://live.symfony.com/2025-amsterdam-con." title="At El Stoffel">
+    <img src="https://symfony.com/uploads/assets/blog/at-el-stoffel.jpg" alt="At El Stoffel">
+</a></p>
+
+<p>SymfonyCon Amsterdam 2025, our next annual international Symfony conference, will take place on:</p>
+
+<ul>
+<li><strong>November 25 &amp; 26</strong> with two days of hands-on workshops to learn, practice, and enhance your skills in small groups.</li>
+<li><strong>November 27 &amp; 28</strong> with three English-speaking tracks, an Unconference track, and a lively community evening.</li>
+</ul>
+
+<p>The first part of the schedule is available <a href="https://live.symfony.com/2025-amsterdam-con/schedule"><strong>here</strong></a>, as well as the complete list of workshop topics.</p>
+
+<p>Stay in the look out for more to come!👀</p>
+
+<hr />
+
+<h3>🎤 New speaker announcement!</h3>
+
+<p>We’re thrilled to welcome <a href="https://connect.symfony.com/profile/chertel"><strong>Christopher Hertel</strong></a> <a href="https://x.com/el_stoffel">(@el_stoffel)</a>, Software architect, AMCS Group, as a speaker at SymfonyCon Amsterdam 2025! 🙌</p>
+
+<p>🤖 In his talk <strong>“<a href="https://live.symfony.com/2025-amsterdam-con/schedule/practical-ai-integrations-with-symfony">Practical AI Integrations with Symfony</a>”</strong>, Christopher cuts through the AI buzz to show you real, actionable ways to bring AI-powered features, far beyond chatbots, into your PHP applications and scalable architectures.</p>
+
+<p>If you’re exploring how to integrate Symfony AI, searching for inspiration, or wondering what’s actually possible, this talk is your roadmap to making AI work for you. 🚀</p>
+
+<hr />
+
+<h3>SymfonyCon Amsterdam 2025 is coming fast!</h3>
+
+<p>🎟️ <strong>Register</strong> now to enjoy regular price and choose the ticket that suits you the best among workshop, conference and combo ticket. <a href="https://live.symfony.com/2025-amsterdam-con/registration/">Check all the details and get your ticket!</a></p>
+
+<p>🖥️ Check out the exciting <strong>14 workshop topics</strong> <a href="https://live.symfony.com/2025-amsterdam-con/workshop">on this page</a>.</p>
+
+<p>🎤 Explore the great lineup of <strong>conference talks <a href="https://live.symfony.com/2025-amsterdam-con/schedule">here</a></strong>, featuring top-notch expert speakers as <a href="https://connect.symfony.com/profile/fabpot">Fabien Potencier</a>, <a href="https://connect.symfony.com/profile/chertel">Christopher Hertel</a>, <a href="https://connect.symfony.com/profile/chalas_r">Robin Chalas</a>, <a href="https://connect.symfony.com/profile/tobias">Tobias Nyholm</a>, <a href="https://connect.symfony.com/profile/alcaeus">Andreas Braun</a>, <a href="https://connect.symfony.com/profile/afilina">Anna Filina</a>, <a href="https://connect.symfony.com/profile/paulinevos">Pauline Vos</a>, <a href="https://connect.symfony.com/profile/skoop">Stefan Koopmanschap</a>, <a href="https://connect.symfony.com/profile/nicolas-grekas">Nicolas Grekas</a>, <a href="https://connect.symfony.com/profile/icambridge">Iain Cambridge</a>, <a href="https://connect.symfony.com/profile/sebastian_bergmann">Sebastian Bergmann</a>, <a href="https://connect.symfony.com/profile/konradoboza">Konrad Oboza</a>, <a href="https://connect.symfony.com/profile/alexandresalome">Alexandre Salome</a>, <a href="https://connect.symfony.com/profile/soyuka">Antoine Bluchet</a>, <a href="https://connect.symfony.com/profile/dunglas">Kévin Dunglas</a>, <a href="https://connect.symfony.com/profile/akrabat">Rob Allen</a>, <a href="https://connect.symfony.com/profile/mtarld">Mathias Arlaud</a>, <a href="https://connect.symfony.com/profile/beberlei">Benjamin Eberlei</a>, <a href="https://connect.symfony.com/profile/haruatari">Viktor Pikaev</a>, <a href="https://connect.symfony.com/profile/valentinrusev">Viktor Pikaev</a>, <a href="https://connect.symfony.com/profile/romain">Romain Neutron</a>.</p>
+
+<p>🫵 Participate in the <strong>Unconference track</strong>, a participant-driven format where attendees shape the content and discussions in real-time. Have a topic you're passionate about? Claim your slot by emailing us at <code>events@symfony.com</code> and set the stage for an unforgettable experience. Each unconference talk lasts 20 minutes with a screen and projector available on both days.</p>
+
+<p>🎉 <strong>Celebrate Symfony’s 20th Anniversary</strong> with us at the Kanarie Club! Join us for an unforgettable evening of drinks, music, and good vibes on Thursday, November 27 from 7:30 to 10:30 pm at the vibrant Kanarie Club, right in the heart of De Hallen — a lively food court with 21 amazing stands (grab your favorite bites, bring them to the Kanarie club!) Dress as you like or simply add a touch of fun!✨</p>
+
+<p>💻 Save the date for the <strong>Symfony hackathon</strong> on November 29. Everyone is welcome to join the hackday! Whether you're an experienced contributor or new to the community, your participation is highly valued as it brings a fresh perspective! More details are available <a href="https://live.symfony.com/2025-amsterdam-con/hackday">here</a>. The hackathon will be hosted in Volkshotel Amsterdam from 09:30 a.m. to 3:00 p.m. CET. thanks to the support of <a href="https://baksla.sh/">Baksla.sh</a>.</p>
+
+<p>📖 Read our <strong><a href="https://live.symfony.com/2025-amsterdam-con/venue">attendee guide</a></strong> for venue, accommodation, and transportation details.</p>
+
+<p>👕 Complete your <strong><a href="https://live.symfony.com/account">Symfony Live profile</a></strong> to inform us of your dietary preferences, T-shirt size and talk preferences!</p>
+
+<hr />
+
+<p>Joins us online!</p>
+
+<p>💡Follow the "conference" blog posts to not miss anything!</p>
+
+<p>Want the latest Symfony updates? Follow us and tune in from wherever you are 🌎</p>
+
+<p><a class="block text-center" href="https://linktr.ee/symfony">
+   <img src="https://symfony.com/uploads/assets/blog/Banner-BLOG.png" alt="Banner Blog">
+</a></p>
+
+                <hr style="margin-bottom: 5px" />
+                <div style="font-size: 90%">
+                    <a href="https://symfony.com/sponsor">Sponsor</a> the Symfony project.
+                </div>
+            ]]></content:encoded>
+            <guid isPermaLink="false">https://symfony.com/blog/symfonycon-amsterdam-2025-practical-ai-integrations-with-symfony?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</guid>
+            <dc:creator><![CDATA[ Paola Suárez ]]></dc:creator>
+            <pubDate>Tue, 02 Sep 2025 15:00:00 +0200</pubDate>
+            <comments>https://symfony.com/blog/symfonycon-amsterdam-2025-practical-ai-integrations-with-symfony?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed#comments-list</comments>
+        </item>
+                        <item>
+            <title><![CDATA[A Week of Symfony #974 (August 25–31, 2025)]]></title>
+            <link>https://symfony.com/blog/a-week-of-symfony-974-august-25-31-2025?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</link>
+            <description>This week, we celebrated the life and legacy of Ryan Weaver, a beloved teacher, contributor, and friend whose work at SymfonyCasts helped thousands discover the joy of Symfony. His kindness, humor, and dedication to lifting others up made our community stronger,…</description>
+            <content:encoded><![CDATA[
+                                <p>This week, we celebrated <a href="https://symfony.com/blog/remembering-ryan-weaver-teacher-core-team-member-friend">the life and legacy of Ryan Weaver</a>, a beloved teacher, contributor, and friend whose work at SymfonyCasts helped thousands discover the joy of Symfony. His kindness, humor, and dedication to lifting others up made our community stronger, and his spirit will continue to inspire everything we build. To honor Ryan, we encourage the community to keep learning, keep sharing, and <a href="https://symfony.com/blog/remembering-ryan-weaver-teacher-core-team-member-friend">support SymfonyCasts and his family</a>.</p>
+
+<h2>Symfony development highlights</h2>
+
+<p>This week, 28 pull requests were merged (26 in code and 2 in docs) and 19 issues were closed (15 in code and 4 in docs). Excluding merges, 18 authors made 10,219 additions and 5,782 deletions. See details for <a href="https://github.com/symfony/symfony/pulse">code</a> and <a href="https://github.com/symfony/symfony-docs/pulse">docs</a>.</p>
+
+<p><a href="https://github.com/symfony/symfony/commits/6.4">6.4 changelog</a>:</p>
+
+<ul>
+<li><a href="https://github.com/symfony/symfony/commit/179b553559228b2cdf6e6078ff39fb8567e81d80">179b553</a>: &#91;FrameworkBundle&#93; don't collect CLI profiles if the profiler is disabled</li>
+<li><a href="https://github.com/symfony/symfony/commit/1fc42d8233534cdf86b405f565e88b60e851e384">1fc42d8</a>: &#91;HttpClient&#93; fix PHP 8.5 deprecation using str_increment()</li>
+<li><a href="https://github.com/symfony/symfony/commit/89c03604281f302de0d3e7c894112bc749f633da">89c0360</a>: &#91;Yaml&#93; fix scope resolution operator in flow mapping keys</li>
+<li><a href="https://github.com/symfony/symfony/commit/8a54b6e8b27ad57b5215d2608c345afd1346e617">8a54b6e</a>: &#91;Intl&#93; add metadata about currencies' validity dates</li>
+<li><a href="https://github.com/symfony/symfony/commit/ece4f3ed51722b245484ed14f49b353544629335">ece4f3e</a>: &#91;Security&#93; fix attribute-based chained user providers</li>
+</ul>
+
+<p><a href="https://github.com/symfony/symfony/commits/7.3">7.3 changelog</a>:</p>
+
+<ul>
+<li><a href="https://github.com/symfony/symfony/commit/8ec0d38c60ea248c3197dab6b1b3c058ffe80eff">8ec0d38</a>: &#91;Serializer&#93; don't fallback to default serializer if tags specify a named one</li>
+<li><a href="https://github.com/symfony/symfony/commit/62eb0191bb2b4f61cc2d32b701742d4cfcdba3f2">62eb019</a>: &#91;TypeInfo&#93; prevent interfaces extending BackedEnum to be treated as BackedEnums</li>
+</ul>
+
+<p><a href="https://github.com/symfony/symfony/commits/7.4">7.4 changelog</a>:</p>
+
+<ul>
+<li><a href="https://github.com/symfony/symfony/commit/3ab58a47ea72c72a6a087bdfe080021f50bd32a2">3ab58a4</a>: &#91;Routing&#93; make RoutingControllerPass and AttributeServicesLoader final</li>
+<li><a href="https://github.com/symfony/symfony/commit/b0f0bdf0b9946cb159c0941b34593277e23f2cc8">b0f0bdf</a>: &#91;DependencyInjection&#93; add routing.controller to the list of known DI tags</li>
+<li><a href="https://github.com/symfony/symfony/commit/c228caaafabeb327bcfaf55b224c72e6106f5d87">c228caa</a>: &#91;Runtime&#93; support runtime options as a string</li>
+<li><a href="https://github.com/symfony/symfony/commit/07273dffe4a7ac605f0ce979d5ac9ccddac34080">07273df</a>: &#91;ObjectMapper&#93; cache attributes in memory</li>
+</ul>
+
+<p><a href="https://github.com/symfony/symfony/commits/8.0">8.0 changelog</a>:</p>
+
+<ul>
+<li><a href="https://github.com/symfony/symfony/commit/cbcb165247cf90407dd99f2984c052e1dcd94ab4">cbcb165</a>: &#91;DependencyInjection&#93; throw when a service's id a non-existing FQCN</li>
+<li><a href="https://github.com/symfony/symfony/commit/bff881147c6e9dea6bfe7fac9e40cbb0427f5338">bff8811</a>: &#91;Validator&#93; require a top-level domain by default in the Url constraint</li>
+</ul>
+
+<h2>Newest issues and pull requests</h2>
+
+<ul>
+<li><a href="https://github.com/symfony/symfony/pull/61517">[FrameworkBundle][JsonPath] Add support for custom JsonPath functions</a></li>
+<li><a href="https://github.com/symfony/symfony/issues/61549">Allow TagAwareCacheInterface to get cached items by tag </a></li>
+<li><a href="https://github.com/symfony/symfony/pull/61515">[ObjectMapper] dump mapping code</a></li>
+<li><a href="https://github.com/symfony/symfony/pull/61528">[Validator] Allow using attributes to declare compile-time constraint metadata</a></li>
+<li><a href="https://github.com/symfony/symfony/pull/61545">[Validator] Add #[ExtendsValidationFor] to declare new constraints for a class</a></li>
+<li><a href="https://github.com/symfony/symfony/pull/61563">[Serializer] Add #[ExtendsSerializationFor] to declare new serialization attributes for a class</a></li>
+</ul>
+
+<h2>Symfony Jobs</h2>
+
+<p>These are some of the most recent Symfony job offers:</p>
+
+<ul>
+<li><strong>Lead Symfony Developer</strong> at A-Cube API<br>
+Full-time - €54,000 – €72,000 / year<br>
+Full remote<br>
+<a href="https://symfony.com/jobs/9c8eec5">View details</a></li>
+<li><strong>Backend Symfony Developer</strong> at Spyrit<br>
+Full-time - €40,000 – €55,000 / year<br>
+Remote + part-time onsite (Versailles, France)<br>
+<a href="https://symfony.com/jobs/186e258">View details</a></li>
+<li><strong>Backend Symfony Developer</strong> at Evergrowth<br>
+Full-time - €60,000 – €72,000 / year<br>
+Full remote<br>
+<a href="https://symfony.com/jobs/ee526ac">View details</a></li>
+<li><strong>Backend Symfony Developer</strong> at Eneba<br>
+Full-time - €55,000 – €66,000 / year<br>
+Full remote<br>
+<a href="https://symfony.com/jobs/3bd882f">View details</a></li>
+<li><strong>Backend Symfony Developer</strong> at Citrus Systems<br>
+Full-time - €3,000 – €6,000 / month<br>
+Remote + part-time onsite (Belgrade, Serbia)<br>
+<a href="https://symfony.com/jobs/2315aa1">View details</a></li>
+</ul>
+
+<p>You can <a href="https://symfony.com/jobs">publish a Symfony job offer for free</a> on symfony.com.</p>
+
+<h2>They talked about us</h2>
+
+<ul>
+<li><a href="https://symfonystation.mobileatom.net/weekly-communiques/symfony-station-communique-22-august-2025">Symfony Station Communiqué - Stardate: ✦ 22 August 2025 ✦</a></li>
+<li><a href="https://dev.to/mattleads/crafting-your-own-ai-agent-with-symfony-a-11-minute-guide-86i">Crafting Your Own AI Agent with Symfony: A 11-Minute Guide</a></li>
+<li><a href="https://dev.to/tbeaumont79/implement-multi-tenant-architecture-in-symfony-4l1l">Implement Multi Tenant Architecture in Symfony</a></li>
+<li><a href="https://dev.to/mattleads/turbocharging-ai-agents-with-symfonys-async-approach-a-deep-dive-33d7">Turbocharging AI Agents with Symfony’s Async Approach: A Deep Dive</a></li>
+<li><a href="https://jolicode.com/blog/symfony-ai-simplifier-lanalyse-de-similarites-de-textes-et-linteraction-avec-vos-llms-favoris">Symfony AI : simplifier l’analyse de similarités de textes et l’interaction avec vos LLMs favoris</a></li>
+</ul>
+
+<h2>Call to Action</h2>
+
+<ul>
+<li>Follow Symfony <a href="https://x.com/symfony">on X</a>, <a href="https://mastodon.social/@symfony">on Mastodon</a>, <a href="https://bsky.app/profile/symfony.com">on Bluesky</a> and <a href="https://www.threads.net/@symfony">on Threads</a> and share this article.</li>
+<li><a href="https://feeds.feedburner.com/symfony/blog">Subscribe to the Symfony blog RSS</a> and never miss a Symfony story again.</li>
+</ul>
+
+                <hr style="margin-bottom: 5px" />
+                <div style="font-size: 90%">
+                    <a href="https://symfony.com/sponsor">Sponsor</a> the Symfony project.
+                </div>
+            ]]></content:encoded>
+            <guid isPermaLink="false">https://symfony.com/blog/a-week-of-symfony-974-august-25-31-2025?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed</guid>
+            <dc:creator><![CDATA[ Javier Eguiluz ]]></dc:creator>
+            <pubDate>Sun, 31 Aug 2025 09:16:00 +0200</pubDate>
+            <comments>https://symfony.com/blog/a-week-of-symfony-974-august-25-31-2025?utm_source=Symfony%20Blog%20Feed&amp;utm_medium=feed#comments-list</comments>
+        </item>
+            </channel>
+</rss>

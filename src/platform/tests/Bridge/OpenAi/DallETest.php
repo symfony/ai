@@ -22,7 +22,7 @@ final class DallETest extends TestCase
 {
     public function testItCreatesDallEWithDefaultSettings()
     {
-        $dallE = new DallE();
+        $dallE = new DallE(DallE::DALL_E_2);
 
         $this->assertSame(DallE::DALL_E_2, $dallE->getName());
         $this->assertSame([], $dallE->getOptions());

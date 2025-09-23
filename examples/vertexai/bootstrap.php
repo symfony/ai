@@ -20,7 +20,7 @@ function adc_aware_http_client(): HttpClientInterface
 {
     $credentials = ApplicationDefaultCredentials::getCredentials(['https://www.googleapis.com/auth/cloud-platform']);
     $httpClient = HttpClient::create([
-        'auth_bearer' => $credentials?->fetchAuthToken()['access_token'] ?? null,
+        'auth_bearer' => $credentials->fetchAuthToken()['access_token'] ?? null,
     ]);
 
     if ($httpClient instanceof LoggerAwareInterface) {

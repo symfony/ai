@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
-$model = new Embeddings();
+$model = new Embeddings(Embeddings::MISTRAL_EMBED);
 
 $result = $platform->invoke($model, <<<TEXT
     In the middle of the 20th century, food scientists began to understand the importance of vitamins and minerals in

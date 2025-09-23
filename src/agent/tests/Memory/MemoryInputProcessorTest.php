@@ -64,12 +64,12 @@ final class MemoryInputProcessorTest extends TestCase
     {
         $firstMemoryProvider = $this->createMock(MemoryProviderInterface::class);
         $firstMemoryProvider->expects($this->once())
-            ->method('loadMemory')
+            ->method('load')
             ->willReturn([new Memory('First memory content')]);
 
         $secondMemoryProvider = $this->createMock(MemoryProviderInterface::class);
         $secondMemoryProvider->expects($this->once())
-            ->method('loadMemory')
+            ->method('load')
             ->willReturn([]);
 
         $memoryInputProcessor = new MemoryInputProcessor(
@@ -86,8 +86,6 @@ final class MemoryInputProcessorTest extends TestCase
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
         $this->assertSame(
             <<<MARKDOWN
-                You are a helpful and kind assistant.
-
                 # Conversation Memory
                 This is the memory I have found for this conversation. The memory has more weight to answer user input,
                 so try to answer utilizing the memory as much as possible. Your answer must be changed to fit the given
@@ -95,6 +93,10 @@ final class MemoryInputProcessorTest extends TestCase
                 reference it as this is just for your reference.
 
                 First memory content
+
+                # System Prompt
+
+                You are a helpful and kind assistant.
                 MARKDOWN,
             $input->messages->getSystemMessage()->content,
         );
@@ -104,7 +106,7 @@ final class MemoryInputProcessorTest extends TestCase
     {
         $firstMemoryProvider = $this->createMock(MemoryProviderInterface::class);
         $firstMemoryProvider->expects($this->once())
-            ->method('loadMemory')
+            ->method('load')
             ->willReturn([new Memory('First memory content')]);
 
         $memoryInputProcessor = new MemoryInputProcessor($firstMemoryProvider);
@@ -134,7 +136,7 @@ final class MemoryInputProcessorTest extends TestCase
     {
         $firstMemoryProvider = $this->createMock(MemoryProviderInterface::class);
         $firstMemoryProvider->expects($this->once())
-            ->method('loadMemory')
+            ->method('load')
             ->willReturn([new Memory('First memory content'), new Memory('Second memory content')]);
 
         $memoryInputProcessor = new MemoryInputProcessor($firstMemoryProvider);
@@ -165,7 +167,7 @@ final class MemoryInputProcessorTest extends TestCase
     {
         $firstMemoryProvider = $this->createMock(MemoryProviderInterface::class);
         $firstMemoryProvider->expects($this->once())
-            ->method('loadMemory')
+            ->method('load')
             ->willReturn([]);
 
         $memoryInputProcessor = new MemoryInputProcessor($firstMemoryProvider);

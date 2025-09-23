@@ -32,7 +32,7 @@ $model = new Nova();
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia]);
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(
     Message::ofUser('Who is the current chancellor of Germany? Use Wikipedia to find the answer.')

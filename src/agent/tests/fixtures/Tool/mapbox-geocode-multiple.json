@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "query": ["paris"],
+  "features": [
+    {
+      "id": "place.123",
+      "type": "Feature",
+      "place_type": ["place"],
+      "relevance": 1.0,
+      "place_name": "Paris, France",
+      "center": [2.3522, 48.8566],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.3522, 48.8566]
+      }
+    },
+    {
+      "id": "place.456",
+      "type": "Feature", 
+      "place_type": ["place"],
+      "relevance": 0.8,
+      "place_name": "Paris, Texas, United States",
+      "center": [-95.5555, 33.6609],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-95.5555, 33.6609]
+      }
+    }
+  ]
+}

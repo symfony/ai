@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions;
 use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory;
 use Symfony\AI\Platform\Capability;
@@ -25,7 +24,6 @@ $model = new Completions(
     capabilities: [...Completions::DEFAULT_CAPABILITIES, Capability::INPUT_IMAGE]
 );
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
     Message::ofUser(
@@ -33,6 +31,6 @@ $messages = new MessageBag(
         Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'),
     ),
 );
-$result = $agent->call($messages);
+$result = $platform->invoke($model, $messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->getResult()->getContent().\PHP_EOL;

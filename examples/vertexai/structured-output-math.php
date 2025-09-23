@@ -23,7 +23,7 @@ $platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CL
 $model = new Model(Model::GEMINI_2_5_FLASH_LITE);
 
 $processor = new AgentProcessor();
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),

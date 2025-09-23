@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
@@ -21,7 +20,6 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('ANTHROPIC_API_KEY'), httpClient: http_client());
 $model = new Claude(Claude::SONNET_37);
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
     Message::ofUser(
@@ -29,6 +27,6 @@ $messages = new MessageBag(
         'Describe this image.',
     ),
 );
-$result = $agent->call($messages);
+$result = $platform->invoke($model, $messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->getResult()->getContent().\PHP_EOL;

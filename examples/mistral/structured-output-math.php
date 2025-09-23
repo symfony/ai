@@ -28,7 +28,7 @@ $model = new Mistral(Mistral::MISTRAL_SMALL);
 $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
 
 $processor = new AgentProcessor(new ResponseFormatFactory(), $serializer);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),

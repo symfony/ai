@@ -39,7 +39,7 @@ final class Model extends BaseModel
      * @see https://inference-docs.cerebras.ai/api-reference/chat-completions for details like options
      */
     public function __construct(
-        string $name = self::LLAMA3_1_8B,
+        string $name,
         array $capabilities = self::CAPABILITIES,
         array $options = [],
     ) {

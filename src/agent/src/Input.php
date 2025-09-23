@@ -25,7 +25,7 @@ final class Input
     public function __construct(
         public Model $model,
         public MessageBag $messages,
-        private array $options,
+        private array $options = [],
     ) {
     }
 

@@ -78,7 +78,7 @@ final class WhisperModelClientTest extends TestCase
             '2023-12-01-preview',
             'test-key'
         );
-        $model = new Whisper();
+        $model = new Whisper(Whisper::WHISPER_1);
 
         $this->assertTrue($client->supports($model));
     }
@@ -95,7 +95,7 @@ final class WhisperModelClientTest extends TestCase
         ]);
 
         $client = new WhisperModelClient($httpClient, 'test.azure.com', 'whspr', '2023-12', 'test-key');
-        $client->request(new Whisper(), ['file' => 'audio-data']);
+        $client->request(new Whisper(Whisper::WHISPER_1), ['file' => 'audio-data']);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -112,7 +112,7 @@ final class WhisperModelClientTest extends TestCase
         ]);
 
         $client = new WhisperModelClient($httpClient, 'test.azure.com', 'whspr', '2023-12', 'test-key');
-        $client->request(new Whisper(), ['file' => 'audio-data'], ['task' => Task::TRANSCRIPTION]);
+        $client->request(new Whisper(Whisper::WHISPER_1), ['file' => 'audio-data'], ['task' => Task::TRANSCRIPTION]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -129,7 +129,7 @@ final class WhisperModelClientTest extends TestCase
         ]);
 
         $client = new WhisperModelClient($httpClient, 'test.azure.com', 'whspr', '2023-12', 'test-key');
-        $client->request(new Whisper(), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
+        $client->request(new Whisper(Whisper::WHISPER_1), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

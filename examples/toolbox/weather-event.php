@@ -30,7 +30,7 @@ $openMeteo = new OpenMeteo(http_client());
 $toolbox = new Toolbox([$openMeteo], logger: logger());
 $eventDispatcher = new EventDispatcher();
 $processor = new AgentProcessor($toolbox, eventDispatcher: $eventDispatcher);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 // Add tool call result listener to enforce chain exits direct with structured response for weather tools
 $eventDispatcher->addListener(ToolCallsExecuted::class, function (ToolCallsExecuted $event): void {

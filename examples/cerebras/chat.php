@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Cerebras\Model;
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -19,11 +18,10 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('CEREBRAS_API_KEY'), http_client());
 
-$agent = new Agent($platform, new Model(), logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('How is the weather in Tokyo today?'),
 );
-$result = $agent->call($messages);
+$result = $platform->invoke(new Model(Model::LLAMA3_1_8B), $messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->getResult()->getContent().\PHP_EOL;

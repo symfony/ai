@@ -16,8 +16,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaClient;
+use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -32,7 +34,7 @@ final class OllamaClientTest extends TestCase
     {
         $client = new OllamaClient(new MockHttpClient(), 'http://localhost:1234');
 
-        $this->assertTrue($client->supports(new Ollama()));
+        $this->assertTrue($client->supports(new Ollama(Ollama::LLAMA_3_2)));
         $this->assertFalse($client->supports(new Model('any-model')));
     }
 
@@ -53,7 +55,7 @@ final class OllamaClientTest extends TestCase
         ], 'http://127.0.0.1:1234');
 
         $client = new OllamaClient($httpClient, 'http://127.0.0.1:1234');
-        $response = $client->request(new Ollama(), [
+        $response = $client->request(new Ollama(Ollama::LLAMA_3_2), [
             'messages' => [
                 [
                     'role' => 'user',
@@ -110,7 +112,7 @@ final class OllamaClientTest extends TestCase
         ], 'http://127.0.0.1:1234');
 
         $platform = PlatformFactory::create('http://127.0.0.1:1234', $httpClient);
-        $response = $platform->invoke(new Ollama(), [
+        $response = $platform->invoke(new Ollama(Ollama::LLAMA_3_2), [
             'messages' => [
                 [
                     'role' => 'user',
@@ -153,8 +155,8 @@ final class OllamaClientTest extends TestCase
         ]);
 
         $mockResponse = $mockHttpClient->request('GET', 'http://test.example');
-        $rawResult = new \Symfony\AI\Platform\Result\RawHttpResult($mockResponse);
-        $converter = new \Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter();
+        $rawResult = new RawHttpResult($mockResponse);
+        $converter = new OllamaResultConverter();
 
         $result = $converter->convert($rawResult, ['stream' => true]);
 
@@ -170,7 +172,7 @@ final class OllamaClientTest extends TestCase
         ]);
 
         $regularMockResponse = $regularMockHttpClient->request('GET', 'http://test.example');
-        $regularRawResult = new \Symfony\AI\Platform\Result\RawHttpResult($regularMockResponse);
+        $regularRawResult = new RawHttpResult($regularMockResponse);
         $regularResult = $converter->convert($regularRawResult, ['stream' => false]);
 
         $this->assertNotInstanceOf(StreamResult::class, $regularResult);

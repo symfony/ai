@@ -62,7 +62,7 @@ EOF
         ;
     }
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $storeName = $input->getArgument('store');
         if (!$this->stores->has($storeName)) {

@@ -48,6 +48,7 @@ final readonly class Agent implements AgentInterface
         private Model $model,
         iterable $inputProcessors = [],
         iterable $outputProcessors = [],
+        private string $name = 'agent',
         private LoggerInterface $logger = new NullLogger(),
     ) {
         $this->inputProcessors = $this->initializeProcessors($inputProcessors, InputProcessorInterface::class);
@@ -57,6 +58,11 @@ final readonly class Agent implements AgentInterface
     public function getModel(): Model
     {
         return $this->model;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
     }
 
     /**

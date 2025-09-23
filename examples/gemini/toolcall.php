@@ -21,11 +21,11 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
-$llm = new Gemini(Gemini::GEMINI_2_FLASH);
+$model = new Gemini(Gemini::GEMINI_2_FLASH);
 
 $toolbox = new Toolbox([new Clock()], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $llm, [$processor], [$processor], logger());
+$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(Message::ofUser('What time is it?'));
 $result = $agent->call($messages);

@@ -45,7 +45,7 @@ final readonly class Brave
      * }>
      */
     public function __invoke(
-        #[With(maximum: 500)]
+        #[With(maxLength: 500)]
         string $query,
         int $count = 20,
         #[With(minimum: 0, maximum: 9)]

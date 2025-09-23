@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -20,16 +19,15 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 $model = new Gemini(Gemini::GEMINI_2_FLASH);
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a funny clown that entertains people.'),
     Message::ofUser('What is the purpose of an ant?'),
 );
-$result = $agent->call($messages, [
+$result = $platform->invoke($model, $messages, [
     'stream' => true, // enable streaming of response text
 ]);
 
-foreach ($result->getContent() as $word) {
+foreach ($result->getResult()->getContent() as $word) {
     echo $word;
 }
 echo \PHP_EOL;

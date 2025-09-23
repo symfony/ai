@@ -27,7 +27,7 @@ class Embeddings extends Model
     /**
      * @param array{dimensions?: int, task_type?: TaskType|string} $options
      */
-    public function __construct(string $name = self::GEMINI_EMBEDDING_EXP_03_07, array $options = [])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
     }

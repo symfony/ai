@@ -23,15 +23,22 @@ final readonly class Clock
 {
     public function __construct(
         private ClockInterface $clock = new SymfonyClock(),
+        private ?string $timezone = null,
     ) {
     }
 
     public function __invoke(): string
     {
+        $now = $this->clock->now();
+
+        if (null !== $this->timezone) {
+            $now = $now->setTimezone(new \DateTimeZone($this->timezone));
+        }
+
         return \sprintf(
             'Current date is %s (YYYY-MM-DD) and the time is %s (HH:MM:SS).',
-            $this->clock->now()->format('Y-m-d'),
-            $this->clock->now()->format('H:i:s'),
+            $now->format('Y-m-d'),
+            $now->format('H:i:s'),
         );
     }
 }

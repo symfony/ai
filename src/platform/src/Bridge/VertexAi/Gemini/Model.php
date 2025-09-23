@@ -30,7 +30,7 @@ final class Model extends BaseModel
      *
      * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference for more details
      */
-    public function __construct(string $name = self::GEMINI_2_5_PRO, array $options = [])
+    public function __construct(string $name, array $options = [])
     {
         $capabilities = [
             Capability::INPUT_MESSAGES,

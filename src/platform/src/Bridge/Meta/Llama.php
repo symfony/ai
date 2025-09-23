@@ -38,7 +38,7 @@ class Llama extends Model
     /**
      * @param array<string, mixed> $options
      */
-    public function __construct(string $name = self::V3_1_405B_INSTRUCT, array $options = [])
+    public function __construct(string $name, array $options = [])
     {
         $capabilities = [
             Capability::INPUT_MESSAGES,

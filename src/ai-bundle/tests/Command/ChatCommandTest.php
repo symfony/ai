@@ -10,7 +10,7 @@
  */
 
 /**
- * @author Oskar Stark <oskarstark@gmail.com>
+ * @author Oskar Stark <oskarstark@googlemail.com>
  */
 
 namespace Symfony\AI\AiBundle\Tests\Command;
@@ -24,6 +24,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
@@ -39,8 +40,7 @@ final class ChatCommandTest extends TestCase
         ];
 
         $command = new ChatCommand($this->createServiceLocator($agents));
-        $application = new Application();
-        $application->add($command);
+        $application = self::createApplication($command);
 
         $commandTester = new CommandTester($command);
 
@@ -74,8 +74,7 @@ final class ChatCommandTest extends TestCase
         ];
 
         $command = new ChatCommand($this->createServiceLocator($agents));
-        $application = new Application();
-        $application->add($command);
+        $application = self::createApplication($command);
 
         $commandTester = new CommandTester($command);
 
@@ -104,8 +103,7 @@ final class ChatCommandTest extends TestCase
         ];
 
         $command = new ChatCommand($this->createServiceLocator($agents));
-        $application = new Application();
-        $application->add($command);
+        $application = self::createApplication($command);
 
         $commandTester = new CommandTester($command);
 
@@ -133,8 +131,7 @@ final class ChatCommandTest extends TestCase
         ];
 
         $command = new ChatCommand($this->createServiceLocator($agents));
-        $application = new Application();
-        $application->add($command);
+        $application = self::createApplication($command);
 
         $commandTester = new CommandTester($command);
 
@@ -171,8 +168,7 @@ final class ChatCommandTest extends TestCase
         ];
 
         $command = new ChatCommand($this->createServiceLocator($agents));
-        $application = new Application();
-        $application->add($command);
+        $application = self::createApplication($command);
 
         $commandTester = new CommandTester($command);
         $commandTester->setInputs(['test', 'exit']);
@@ -210,8 +206,7 @@ final class ChatCommandTest extends TestCase
         ];
 
         $command = new ChatCommand($this->createServiceLocator($agents));
-        $application = new Application();
-        $application->add($command);
+        $application = self::createApplication($command);
 
         $commandTester = new CommandTester($command);
 
@@ -253,5 +248,13 @@ final class ChatCommandTest extends TestCase
         }
 
         return new ServiceLocator($factories);
+    }
+
+    private static function createApplication(Command $command): Application
+    {
+        $application = new Application();
+        $application->addCommands([$command]);
+
+        return $application;
     }
 }
