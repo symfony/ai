@@ -1,0 +1,15 @@
+includes:
+    - ../../.phpstan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - src/
+        - tests/
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        -
+            message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
+        -
+            identifier: missingType.iterableValue
+            path: tests/*
