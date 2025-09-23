@@ -14,6 +14,7 @@ namespace Symfony\Component\Config\Definition\Configurator;
 use Codewithkyrian\ChromaDB\Client as ChromaDbClient;
 use MongoDB\Client as MongoDbClient;
 use Probots\Pinecone\Client as PineconeClient;
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
@@ -22,6 +23,31 @@ use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 return static function (DefinitionConfigurator $configurator): void {
+    $addModelNode = static function (NodeDefinition $node): NodeDefinition {
+        return $node
+            ->children()
+                ->stringNode('class')
+                    ->isRequired()
+                    ->validate()
+                        ->ifTrue(function ($v) {
+                            return !is_a($v, Model::class, true);
+                        })
+                        ->thenInvalid(\sprintf('The model class "%%s" must extend %s.', Model::class))
+                    ->end()
+                ->end()
+                ->stringNode('name')->isRequired()->end()
+                ->arrayNode('options')
+                    ->variablePrototype()->end()
+                ->end()
+            ->end()
+            ->validate()
+                ->ifTrue(function ($v) {
+                    return isset($v['name']) && str_contains($v['name'], '?') && !empty($v['options']);
+                })
+                ->thenInvalid('Cannot specify both query parameters in model name and options array. Use either "model.name" with query parameters (e.g., "gpt-4o-mini?temperature=0.5") or separate "model.name" and "model.options".')
+            ->end();
+    };
+
     $configurator->rootNode()
         ->children()
             ->arrayNode('platform')
@@ -179,29 +205,7 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Enable tracking of token usage for the agent')
                             ->defaultTrue()
                         ->end()
-                        ->arrayNode('model')
-                            ->children()
-                                ->stringNode('class')
-                                    ->isRequired()
-                                    ->validate()
-                                        ->ifTrue(function ($v) {
-                                            return !is_a($v, Model::class, true);
-                                        })
-                                        ->thenInvalid(\sprintf('The model class "%%s" must extend %s.', Model::class))
-                                    ->end()
-                                ->end()
-                                ->stringNode('name')->isRequired()->end()
-                                ->arrayNode('options')
-                                    ->variablePrototype()->end()
-                                ->end()
-                            ->end()
-                            ->validate()
-                                ->ifTrue(function ($v) {
-                                    return isset($v['name']) && str_contains($v['name'], '?') && !empty($v['options']);
-                                })
-                                ->thenInvalid('Cannot specify both query parameters in model name and options array. Use either "model.name" with query parameters (e.g., "gpt-4o-mini?temperature=0.5") or separate "model.name" and "model.options".')
-                            ->end()
-                        ->end()
+                        ->append($addModelNode($configurator->arrayNode('model')))
                         ->booleanNode('structured_output')->defaultTrue()->end()
                         ->variableNode('memory')
                             ->info('Memory configuration: string for static memory, or array with "service" key for service reference')
@@ -526,29 +530,7 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Service name of platform')
                             ->defaultValue(PlatformInterface::class)
                         ->end()
-                        ->arrayNode('model')
-                            ->children()
-                                ->stringNode('class')
-                                    ->isRequired()
-                                    ->validate()
-                                        ->ifTrue(function ($v) {
-                                            return !is_a($v, Model::class, true);
-                                        })
-                                        ->thenInvalid(\sprintf('The model class "%%s" must extend %s.', Model::class))
-                                    ->end()
-                                ->end()
-                                ->stringNode('name')->isRequired()->end()
-                                ->arrayNode('options')
-                                    ->variablePrototype()->end()
-                                ->end()
-                            ->end()
-                            ->validate()
-                                ->ifTrue(function ($v) {
-                                    return isset($v['name']) && str_contains($v['name'], '?') && !empty($v['options']);
-                                })
-                                ->thenInvalid('Cannot specify both query parameters in model name and options array. Use either "model.name" with query parameters (e.g., "gpt-4o-mini?temperature=0.5") or separate "model.name" and "model.options".')
-                            ->end()
-                        ->end()
+                        ->append($addModelNode($configurator->arrayNode('model')))
                     ->end()
                 ->end()
             ->end()
