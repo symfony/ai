@@ -71,6 +71,6 @@ final readonly class FailoverStore implements ManagedStoreInterface, StoreInterf
             }
         }
 
-        throw new RuntimeException('No store available');
+        throw new RuntimeException('No store available.');
     }
 }
