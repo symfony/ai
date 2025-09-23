@@ -1,0 +1,21 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-21T18:09:08Z
+
+So I would have to use `StoreInterface $chromadbBlogStore` instead of `StoreInterface $blogStore`?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-21T18:54:08Z
+
+What about registering both? The long and the short version? I would argue, that this is not really common use case, right?
+
+Also docs would need an update
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-09-21T18:58:33Z
+
+@chr-hertel Yes
+
+@OskarStark Yes, agree on the fact that it's not a common approach (even if it can be used when you're migrating from one to another), registering both is fine for me if @chr-hertel agreed on it 👍🏻
