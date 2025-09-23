@@ -23,14 +23,28 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $llm = new Gpt(Gpt::GPT_4O_MINI);
 
 $agent = new Agent($platform, $llm, logger: logger());
-$chat = new Chat($agent, new InMemoryStore());
 
-$messages = new MessageBag(
+$store = new InMemoryStore();
+
+$chat = new Chat($agent, $store);
+
+$chat->initiate(new MessageBag(
     Message::forSystem('You are a helpful assistant. You only answer with short sentences.'),
-);
+));
 
-$chat->initiate($messages);
+$forkedChat = $chat->fork('fork');
+
 $chat->submit(Message::ofUser('My name is Christopher.'));
-$message = $chat->submit(Message::ofUser('What is my name?'));
+$firstChatMessage = $chat->submit(Message::ofUser('What is my name?'));
 
-echo $message->content.\PHP_EOL;
+$forkedChat->submit(Message::ofUser('My name is William.'));
+$secondChatMessage = $forkedChat->submit(Message::ofUser('What is my name?'));
+
+$firstChatMessageContent = $firstChatMessage->content;
+$secondChatMessageContent = $secondChatMessage->content;
+
+echo $firstChatMessageContent.\PHP_EOL;
+echo $secondChatMessageContent.\PHP_EOL;
+
+assert(str_contains($firstChatMessageContent, 'Christopher'));
+assert(!str_contains($secondChatMessageContent, 'Christopher'));

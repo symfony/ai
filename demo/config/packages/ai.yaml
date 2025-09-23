@@ -68,6 +68,22 @@ ai:
                 - 'Symfony\AI\Store\Document\Transformer\TextTrimTransformer'
             vectorizer: 'ai.vectorizer.openai'
             store: 'ai.store.chroma_db.symfonycon'
+    message_store:
+        cache:
+            audio:
+                service: 'cache.app'
+            wikipedia: ~
+            youtube: ~
+    chat:
+        audio:
+            agent: 'audio'
+            message_store: 'cache.audio'
+        wikipedia:
+            agent: 'wikipedia'
+            message_store: 'cache.wikipedia'
+        youtube:
+            agent: 'youtube'
+            message_store: 'cache.youtube'
 
 services:
     _defaults:

@@ -16,6 +16,7 @@
     "require": {
         "php": ">=8.2",
         "symfony/ai-agent": "@dev",
+        "symfony/ai-chat": "@dev",
         "symfony/ai-platform": "@dev",
         "symfony/ai-store": "@dev",
         "symfony/config": "^7.3|^8.0",

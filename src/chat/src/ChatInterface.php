@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent;
+namespace Symfony\AI\Chat;
 
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
@@ -27,4 +27,6 @@ interface ChatInterface
      * @throws ExceptionInterface When the chat submission fails due to agent errors
      */
     public function submit(UserMessage $message): AssistantMessage;
+
+    public function fork(string $id): self;
 }

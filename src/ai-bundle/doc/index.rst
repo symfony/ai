@@ -144,6 +144,14 @@ Configuration
             research:
                 vectorizer: 'ai.vectorizer.mistral_embeddings'
                 store: 'ai.store.memory.research'
+        message_store:
+            cache:
+                main:
+                    service: 'cache.app'
+        chat:
+            main:
+                agent: 'research'
+                message_store: 'main'
 
 Store Dependency Injection
 --------------------------
