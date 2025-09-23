@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
-use Symfony\AI\Platform\Exception\RateLimitExceededException;
+use Symfony\AI\Platform\Exception\HttpErrorHandler;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -45,9 +45,7 @@ final readonly class ResultConverter implements ResultConverterInterface
     {
         $response = $result->getObject();
 
-        if (429 === $response->getStatusCode()) {
-            throw new RateLimitExceededException();
-        }
+        HttpErrorHandler::handleHttpError($response);
 
         if ($options['stream'] ?? false) {
             return new StreamResult($this->convertStream($response));
