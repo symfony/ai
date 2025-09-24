@@ -1,0 +1,105 @@
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-09-18T18:59:42Z
+
+ @chr-hertel What do you think of this approach:
+  ```php
+// Interface
+  interface McpToolInterface {}
+
+  // Autoconfiguration
+  $container->registerForAutoconfiguration(McpToolInterface::class)->addTag('mcp.tool');
+
+  // CompilerPass
+  $taggedServices = $container->findTaggedServiceIds('mcp.tool');
+  foreach ($taggedServices as $id => $tags) {
+      $container->getDefinition($id)->setPublic(true);
+  }
+```
+
+In SDK's ReferenceHandler::getClassInstance()
+```php
+  private function getClassInstance(string $className): object
+  {
+      if (null !== $this->container && $this->container->has($className)) {
+          return $this->container->get($className);
+      }
+
+      return new $className();
+  }
+```
+
+  Our CompilerPass makes services public so the SDK's ReferenceHandler can use Symfony's DIC.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-18T19:08:04Z
+
+Goal would be to use the attributes, that are already around in the SDK - and we can use a service locator to skip making the public
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-09-18T19:40:57Z
+
+> Goal would be to use the attributes, that are already around in the SDK - and we can use a service locator to skip making the public
+
+  I'm not entirely sure we need to go through the `mcp.tool` tag intermediate step.
+
+  Currently the flow is:
+  1. `#[McpTool]` attribute → auto-tagged as `mcp.tool`
+  2. Compiler pass finds tagged services → creates Service Locator
+
+  We could potentially scan for `#[McpTool]` attributes directly in the compiler pass instead of using tags.
+
+  **Pros**
+  - Separation of concerns between autoconfiguration and service locator creation
+  - Allows manual tagging if needed
+  - Built-in debuggability with `debug:container --tag=mcp.tool`
+
+  **Pros of direct attribute scanning:**
+  - One less intermediate step
+  - More direct connection between attribute and service locator
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-19T06:02:08Z
+
+I started some work here https://github.com/symfony/ai/pull/460 (mostly vibe coding, so maybe ignore the code changes), but check the docs and namespace changes, maybe it can help you.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-19T06:02:50Z
+
+You should also remove the symfony/mcp-sdk completely here in this PR
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-09-19T18:18:15Z
+
+ Could you please do a complete review? I've added in addition to the tool :
+  - prompts, resources, resourceTemplates support ([but resourceTemplates not implemented yet in sdk](https://github.com/modelcontextprotocol/php-sdk/issues/9))
+  - dedicated MCP logger
+  - Symfony event integration
+  - pagination/instructions configuration
+
+  Feels like I'm going in all directions 😅 I'm not really sure what the bundle should handle vs what the SDK should handle.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-21T19:58:26Z
+
+Two things, besides the rebase, make sense still:
+* Replacing SSE with HTTP, since we merged https://github.com/modelcontextprotocol/php-sdk/pull/49
+* the `setContainer` in the passes always replaces the container - does it work to have prompts and tools in parallel?
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-09-24T08:49:31Z
+
+a34e6c4
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-24T20:34:30Z
+
+Okay, we'll need to wait for https://github.com/modelcontextprotocol/php-sdk/pull/79, but let's work with new PRs on top of this - instead of making this bigger.
