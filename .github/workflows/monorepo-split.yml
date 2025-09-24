@@ -1,0 +1,65 @@
+name: Monorepo Split (Symfony AI)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install splitsh-lite
+        run: |
+          curl -L https://github.com/splitsh/lite/releases/download/v1.0.1/splitsh-lite_linux_amd64 \
+            -o /usr/local/bin/splitsh-lite
+          chmod +x /usr/local/bin/splitsh-lite
+      # splitsh-lite is the fast subtree splitter used by Symfony. :contentReference[oaicite:1]{index=1}
+
+      - name: Set up SSH for pushing
+        env:
+          SSH_KEY: ${{ secrets.SPLIT_PUSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s" "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Define packages (matrix emulation)
+        id: pkgs
+        run: |
+          cat > packages.json <<'JSON'
+          [
+            { "prefix": "src/platform",   "repo": "git@github.com:taffy41/ai-platform.git",  "branch": "main" },
+            { "prefix": "src/agent",      "repo": "git@github.com:taffy41/ai-agent.git",     "branch": "main" },
+            { "prefix": "src/store",      "repo": "git@github.com:taffy41/ai-store.git",     "branch": "main" },
+            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:taffy41/mcp-sdk.git",      "branch": "main" },
+            { "prefix": "src/ai-bundle",  "repo": "git@github.com:taffy41/ai-bundle.git",    "branch": "main" },
+            { "prefix": "src/mcp-bundle", "repo": "git@github.com:taffy41/mcp-bundle.git",   "branch": "main" }
+          ]
+          JSON
+
+      - name: Split & push each package
+        run: |
+          jq -c '.[]' packages.json | while read row; do
+            prefix=$(echo "$row" | jq -r '.prefix')
+            repo=$(echo "$row"   | jq -r '.repo')
+            branch=$(echo "$row" | jq -r '.branch')
+
+            echo "::group::Splitting $prefix -> $repo ($branch)"
+            # ensure all refs/tags available (in case checkout was shallow before)
+            git fetch --all --tags
+
+            commit=$(splitsh-lite --prefix="$prefix")
+            split_branch="${prefix//\//-}-split"
+            git update-ref "refs/heads/$split_branch" "$commit"
+
+            git push "$repo" "refs/heads/$split_branch:$branch" --force
+            echo "::endgroup::"
+          done
+        shell: bash
