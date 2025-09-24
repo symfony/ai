@@ -6,8 +6,11 @@ on:
     tags: [ "*" ]
   workflow_dispatch:
 
+# Needed if you rely on GITHUB_TOKEN fallback
+permissions:
+  contents: write
+
 env:
-  # Where we install libgit2's pkg-config files
   PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
 
 jobs:
@@ -61,27 +64,25 @@ jobs:
           sudo mv splitsh-lite /usr/local/bin/splitsh-lite
           splitsh-lite --version || true
 
-      - name: Set up SSH for pushing
+      - name: Configure git (HTTPS + token)
         env:
-          SSH_KEY: ${{ secrets.SPLIT_PUSH_KEY }}
+          PUSH_TOKEN: ${{ secrets.SPLIT_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          mkdir -p ~/.ssh
-          printf "%s" "$SSH_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
+          # Use the token for any https://github.com/* URL
+          git config --global url."https://${PUSH_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
-      - name: Define packages
+      - name: Define packages (HTTPS URLs)
         run: |
           cat > packages.json <<'JSON'
           [
-            { "prefix": "src/platform",   "repo": "git@github.com:taffy41/ai-platform.git",  "branch": "main" },
-            { "prefix": "src/agent",      "repo": "git@github.com:taffy41/ai-agent.git",     "branch": "main" },
-            { "prefix": "src/store",      "repo": "git@github.com:taffy41/ai-store.git",     "branch": "main" },
-            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:taffy41/mcp-sdk.git",      "branch": "main" },
-            { "prefix": "src/ai-bundle",  "repo": "git@github.com:taffy41/ai-bundle.git",    "branch": "main" },
-            { "prefix": "src/mcp-bundle", "repo": "git@github.com:taffy41/mcp-bundle.git",   "branch": "main" }
+            { "prefix": "src/platform",   "repo": "https://github.com/taffy41/ai-platform.git",  "branch": "main" },
+            { "prefix": "src/agent",      "repo": "https://github.com/taffy41/ai-agent.git",     "branch": "main" },
+            { "prefix": "src/store",      "repo": "https://github.com/taffy41/ai-store.git",     "branch": "main" },
+            { "prefix": "src/mcp-sdk",    "repo": "https://github.com/taffy41/mcp-sdk.git",      "branch": "main" },
+            { "prefix": "src/ai-bundle",  "repo": "https://github.com/taffy41/ai-bundle.git",    "branch": "main" },
+            { "prefix": "src/mcp-bundle", "repo": "https://github.com/taffy41/mcp-bundle.git",   "branch": "main" }
           ]
           JSON
 
@@ -101,7 +102,6 @@ jobs:
               echo "::endgroup::"
               continue
             fi
-
             split_branch="${prefix//\//-}-split"
             git update-ref "refs/heads/$split_branch" "$commit"
             git push "$repo" "refs/heads/$split_branch:$branch" --force
@@ -158,27 +158,24 @@ jobs:
           sudo mv splitsh-lite /usr/local/bin/splitsh-lite
           splitsh-lite --version || true
 
-      - name: Set up SSH for pushing
+      - name: Configure git (HTTPS + token)
         env:
-          SSH_KEY: ${{ secrets.SPLIT_PUSH_KEY }}
+          PUSH_TOKEN: ${{ secrets.SPLIT_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          mkdir -p ~/.ssh
-          printf "%s" "$SSH_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
+          git config --global url."https://${PUSH_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
-      - name: Define packages
+      - name: Define packages (HTTPS URLs)
         run: |
           cat > packages.json <<'JSON'
           [
-            { "prefix": "src/platform",   "repo": "git@github.com:taffy41/ai-platform.git"  },
-            { "prefix": "src/agent",      "repo": "git@github.com:taffy41/ai-agent.git"     },
-            { "prefix": "src/store",      "repo": "git@github.com:taffy41/ai-store.git"     },
-            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:taffy41/mcp-sdk.git"      },
-            { "prefix": "src/ai-bundle",  "repo": "git@github.com:taffy41/ai-bundle.git"    },
-            { "prefix": "src/mcp-bundle", "repo": "git@github.com:taffy41/mcp-bundle.git"   }
+            { "prefix": "src/platform",   "repo": "https://github.com/taffy41/ai-platform.git"  },
+            { "prefix": "src/agent",      "repo": "https://github.com/taffy41/ai-agent.git"     },
+            { "prefix": "src/store",      "repo": "https://github.com/taffy41/ai-store.git"     },
+            { "prefix": "src/mcp-sdk",    "repo": "https://github.com/taffy41/mcp-sdk.git"      },
+            { "prefix": "src/ai-bundle",  "repo": "https://github.com/taffy41/ai-bundle.git"    },
+            { "prefix": "src/mcp-bundle", "repo": "https://github.com/taffy41/mcp-bundle.git"   }
           ]
           JSON
 
