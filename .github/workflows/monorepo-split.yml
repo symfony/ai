@@ -1,4 +1,4 @@
-name: Monorepo Split (Symfony AI via GitHub App)
+name: Monorepo Split (Symfony AI via GitHub App + PRs)
 
 on:
   push:
@@ -9,13 +9,14 @@ on:
 # This only affects GITHUB_TOKEN (we're using an App token), but it's fine to keep.
 permissions:
   contents: write
+  pull-requests: write
 
 env:
   PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
 
 jobs:
   split-branches:
-    name: Split on branch pushes
+    name: Split on branch pushes (open PRs)
     if: ${{ github.event_name != 'push' || startsWith(github.ref, 'refs/heads/') }}
     runs-on: ubuntu-latest
 
@@ -82,7 +83,7 @@ jobs:
             ai-bundle
             mcp-bundle
           permissions: >-
-            {"contents":"write","metadata":"read"}
+            {"contents":"write","pull_requests":"write","metadata":"read"}
 
       - name: Configure git identity & credentials
         env:
@@ -117,16 +118,58 @@ jobs:
           ]
           JSON
 
-      - name: Split & push each package (branches)
+      - name: Split, push split branches & open/update PRs
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          MONO_REPO: ${{ github.repository }}
+          MONO_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
+
+          create_or_update_pr () {
+            local owner="$1" repo="$2" base_branch="$3" head_branch="$4" title="$5" body="$6"
+            local api="https://api.github.com/repos/${owner}/${repo}"
+
+            echo "Checking for existing PR from '${head_branch}' into '${base_branch}' on ${owner}/${repo}..."
+            existing=$(curl -sS -H "Authorization: Bearer ${APP_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "${api}/pulls?state=open&head=${owner}:${head_branch}&base=${base_branch}" | jq '.[0].number // empty')
+
+            if [ -n "$existing" ]; then
+              echo "PR #${existing} already open; updating title/body."
+              curl -sS -X PATCH -H "Authorization: Bearer ${APP_TOKEN}" -H "Accept: application/vnd.github+json" \
+                "${api}/pulls/${existing}" \
+                -d "$(jq -n --arg t "$title" --arg b "$body" '{title:$t, body:$b}')" >/dev/null
+              echo "Updated PR #${existing}."
+            else
+              echo "Creating new PR..."
+              pr_resp=$(curl -sS -X POST -H "Authorization: Bearer ${APP_TOKEN}" -H "Accept: application/vnd.github+json" \
+                "${api}/pulls" \
+                -d "$(jq -n --arg t "$title" --arg b "$body" --arg h "$head_branch" --arg base "$base_branch" '{title:$t, body:$b, head:$h, base:$base, maintainer_can_modify:true, draft:false}')" )
+              pr_num=$(echo "$pr_resp" | jq -r '.number')
+              pr_url=$(echo "$pr_resp" | jq -r '.html_url')
+              if [ "$pr_num" = "null" ] || [ -z "$pr_num" ]; then
+                echo "Failed to create PR. Response:"
+                echo "$pr_resp"
+                exit 1
+              fi
+              echo "Created PR #${pr_num} (${pr_url})."
+            fi
+          }
+
           git fetch --all --tags
+
           jq -c '.[]' packages.json | while read -r row; do
             prefix=$(echo "$row" | jq -r '.prefix')
-            repo=$(echo "$row"   | jq -r '.repo')
-            branch=$(echo "$row" | jq -r '.branch')
+            repo_url=$(echo "$row" | jq -r '.repo')
+            base_branch=$(echo "$row" | jq -r '.branch')
 
-            echo "::group::Splitting $prefix -> $repo ($branch)"
+            # Derive owner/repo from URL
+            owner_repo=${repo_url#https://github.com/}
+            owner_repo=${owner_repo%.git}
+            owner=${owner_repo%%/*}
+            repo=${owner_repo##*/}
+
+            echo "::group::Splitting $prefix -> $owner/$repo (base: $base_branch)"
             commit=$(splitsh-lite --prefix="$prefix" || true)
             if [ -z "$commit" ]; then
               echo "No commit produced for $prefix; skipping."
@@ -135,125 +178,139 @@ jobs:
             fi
 
             split_branch="${prefix//\//-}-split"
+
+            # Create/update a local ref for the split content
             git update-ref "refs/heads/$split_branch" "$commit"
 
-            # If target repo main is protected, this force push will fail.
-            # Option A (direct to main):
-            git push "$repo" "refs/heads/$split_branch:$branch" --force
+            # Push split branch to target repo (force is OK on a non-protected feature branch)
+            echo "Pushing $split_branch to $owner/$repo..."
+            git push "$repo_url" "refs/heads/$split_branch:$split_branch" --force
 
-            # Option B (safer): push to split branch and open a PR out-of-band
-            # git push "$repo" "refs/heads/$split_branch:$split_branch" --force
+            # Open or update a PR from split branch -> base_branch
+            pr_title="Monorepo split: ${prefix} → ${base_branch}"
+            pr_body=$(cat <<EOF
+  Automated split from **${MONO_REPO}** @ \`${MONO_SHA}\`.
+
+- Prefix: \`${prefix}\`
+- Source repo: \`${MONO_REPO}\`
+- Split commit: \`${commit}\`
+
+  > This PR is auto-generated by splitsh-lite + GitHub App. Subsequent runs will force-push \`${split_branch}\` and keep this PR up to date.
+  EOF
+  )
+  create_or_update_pr "$owner" "$repo" "$base_branch" "$split_branch" "$pr_title" "$pr_body"
+
+  echo "::endgroup::"
+  done
+
+split-tags:
+  name: Split on tag pushes (push tags directly)
+  if: ${{ startsWith(github.ref, 'refs/tags/') }}
+  runs-on: ubuntu-latest
+
+  steps:
+    - name: Checkout full history
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Install build deps
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y build-essential cmake pkg-config \
+                                libssl-dev libssh2-1-dev zlib1g-dev \
+                                curl jq
+
+    - name: Build & install libgit2 v1.5.0
+      run: |
+        set -euo pipefail
+        curl -L https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz -o libgit2.tar.gz
+        tar xf libgit2.tar.gz
+        cd libgit2-1.5.0
+        mkdir build && cd build
+        cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+        cmake --build . -- -j"$(nproc)"
+        sudo cmake --install .
+        echo "/usr/local/lib" | sudo tee /etc/ld.so.conf.d/usr-local-lib.conf
+        sudo ldconfig
+
+    - name: Install Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: "1.22"
+
+    - name: Build splitsh-lite v2.0.0
+      env:
+        PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
+      run: |
+        set -euo pipefail
+        curl -L https://github.com/splitsh/lite/archive/refs/tags/v2.0.0.tar.gz -o splitsh-lite.tar.gz
+        tar xf splitsh-lite.tar.gz
+        cd lite-2.0.0
+        go build -v -o ../splitsh-lite .
+        cd ..
+        chmod +x splitsh-lite
+        sudo mv splitsh-lite /usr/local/bin/splitsh-lite
+        splitsh-lite --version || true
+
+    - name: Create GitHub App token
+      id: app-token
+      uses: actions/create-github-app-token@v2
+      with:
+        app-id: ${{ secrets.APP_ID }}
+        private-key: ${{ secrets.APP_PRIVATE_KEY }}
+        owner: taffy41
+        repositories: |
+          ai-platform
+          ai-agent
+          ai-store
+          mcp-sdk
+          ai-bundle
+          mcp-bundle
+        permissions: >-
+          {"contents":"write","metadata":"read"}
+
+    - name: Configure git identity & credentials
+      env:
+        APP_TOKEN: ${{ steps.app-token.outputs.token }}
+      run: |
+        git config --global user.email "${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+        git config --global user.name  "${{ steps.app-token.outputs.app-slug }}[bot]"
+        git config --global url."https://x-access-token:${APP_TOKEN}@github.com/".insteadOf "https://github.com/"
+
+    - name: Define packages (HTTPS URLs)
+      run: |
+        cat > packages.json <<'JSON'
+        [
+          { "prefix": "src/platform",   "repo": "https://github.com/taffy41/ai-platform.git"  },
+          { "prefix": "src/agent",      "repo": "https://github.com/taffy41/ai-agent.git"     },
+          { "prefix": "src/store",      "repo": "https://github.com/taffy41/ai-store.git"     },
+          { "prefix": "src/mcp-sdk",    "repo": "https://github.com/taffy41/mcp-sdk.git"      },
+          { "prefix": "src/ai-bundle",  "repo": "https://github.com/taffy41/ai-bundle.git"    },
+          { "prefix": "src/mcp-bundle", "repo": "https://github.com/taffy41/mcp-bundle.git"   }
+        ]
+        JSON
+
+    - name: Split & push tag to each package repo
+      env:
+        TAG: ${{ github.ref_name }}
+      run: |
+        set -euo pipefail
+        git fetch --all --tags
+        jq -c '.[]' packages.json | while read -r row; do
+          prefix=$(echo "$row" | jq -r '.prefix')
+          repo_url=$(echo "$row" | jq -r '.repo')
+
+          echo "::group::Tag split $TAG for $prefix"
+          commit=$(splitsh-lite --prefix="$prefix" --origin="refs/tags/$TAG" || true)
+          if [ -z "$commit" ]; then
+            echo "No split commit for $prefix at tag $TAG; skipping."
             echo "::endgroup::"
-          done
+            continue
+          fi
 
-  split-tags:
-    name: Split on tag pushes
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout full history
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Install build deps
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y build-essential cmake pkg-config \
-                                  libssl-dev libssh2-1-dev zlib1g-dev \
-                                  curl jq
-
-      - name: Build & install libgit2 v1.5.0
-        run: |
-          set -euo pipefail
-          curl -L https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz -o libgit2.tar.gz
-          tar xf libgit2.tar.gz
-          cd libgit2-1.5.0
-          mkdir build && cd build
-          cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
-          cmake --build . -- -j"$(nproc)"
-          sudo cmake --install .
-          echo "/usr/local/lib" | sudo tee /etc/ld.so.conf.d/usr-local-lib.conf
-          sudo ldconfig
-
-      - name: Install Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
-
-      - name: Build splitsh-lite v2.0.0
-        env:
-          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
-        run: |
-          set -euo pipefail
-          curl -L https://github.com/splitsh/lite/archive/refs/tags/v2.0.0.tar.gz -o splitsh-lite.tar.gz
-          tar xf splitsh-lite.tar.gz
-          cd lite-2.0.0
-          go build -v -o ../splitsh-lite .
-          cd ..
-          chmod +x splitsh-lite
-          sudo mv splitsh-lite /usr/local/bin/splitsh-lite
-          splitsh-lite --version || true
-
-      - name: Create GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: taffy41
-          repositories: |
-            ai-platform
-            ai-agent
-            ai-store
-            mcp-sdk
-            ai-bundle
-            mcp-bundle
-          permissions: >-
-            {"contents":"write","metadata":"read"}
-
-      - name: Configure git identity & credentials
-        env:
-          APP_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          git config --global user.email "${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
-          git config --global user.name  "${{ steps.app-token.outputs.app-slug }}[bot]"
-          git config --global url."https://x-access-token:${APP_TOKEN}@github.com/".insteadOf "https://github.com/"
-
-      - name: Define packages (HTTPS URLs)
-        run: |
-          cat > packages.json <<'JSON'
-          [
-            { "prefix": "src/platform",   "repo": "https://github.com/taffy41/ai-platform.git"  },
-            { "prefix": "src/agent",      "repo": "https://github.com/taffy41/ai-agent.git"     },
-            { "prefix": "src/store",      "repo": "https://github.com/taffy41/ai-store.git"     },
-            { "prefix": "src/mcp-sdk",    "repo": "https://github.com/taffy41/mcp-sdk.git"      },
-            { "prefix": "src/ai-bundle",  "repo": "https://github.com/taffy41/ai-bundle.git"    },
-            { "prefix": "src/mcp-bundle", "repo": "https://github.com/taffy41/mcp-bundle.git"   }
-          ]
-          JSON
-
-      - name: Split & push tag to each package repo
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          git fetch --all --tags
-          jq -c '.[]' packages.json | while read -r row; do
-            prefix=$(echo "$row" | jq -r '.prefix')
-            repo=$(echo "$row"   | jq -r '.repo')
-
-            echo "::group::Tag split $TAG for $prefix"
-            commit=$(splitsh-lite --prefix="$prefix" --origin="refs/tags/$TAG" || true)
-            if [ -z "$commit" ]; then
-              echo "No split commit for $prefix at tag $TAG; skipping."
-              echo "::endgroup::"
-              continue
-            fi
-
-            git tag -f "$TAG" "$commit"
-            git push "$repo" "refs/tags/$TAG" --force
-            echo "::endgroup::"
-          done
+          git tag -f "$TAG" "$commit"
+          git push "$repo_url" "refs/tags/$TAG" --force
+          echo "::endgroup::"
+        done
