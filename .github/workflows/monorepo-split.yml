@@ -1,4 +1,4 @@
-name: Monorepo Split (Symfony AI)
+name: Monorepo Split (Symfony AI via GitHub App)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     tags: [ "*" ]
   workflow_dispatch:
 
-# Needed if you rely on GITHUB_TOKEN fallback
+# Not strictly required when pushing with an App token, but safe to keep.
 permissions:
   contents: write
 
@@ -25,6 +25,7 @@ jobs:
         with:
           fetch-depth: 0
 
+      # --- Build splitsh-lite v2.0.0 requirements (libgit2 v1.5.0) ---
       - name: Install build deps
         run: |
           sudo apt-get update -y
@@ -64,15 +65,22 @@ jobs:
           sudo mv splitsh-lite /usr/local/bin/splitsh-lite
           splitsh-lite --version || true
 
-      - name: Configure git (HTTPS + token)
-        env:
-          PUSH_TOKEN: ${{ secrets.SPLIT_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          # Use the token for any https://github.com/* URL
-          git config --global url."https://${PUSH_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+      # --- Authenticate as GitHub App (installation) for pushes over HTTPS ---
+      - name: Generate GitHub App token
+        id: app-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          installation_id: ${{ secrets.INSTALLATION_ID }}
 
+      - name: Configure git (HTTPS + App token)
+        run: |
+          git config --global user.email "split-bot@users.noreply.github.com"
+          git config --global user.name "split-bot"
+          git config --global url."https://x-access-token:${{ steps['app-token'].outputs.token }}@github.com/".insteadOf "https://github.com/"
+
+      # --- Define packages & split ---
       - name: Define packages (HTTPS URLs)
         run: |
           cat > packages.json <<'JSON'
@@ -158,13 +166,19 @@ jobs:
           sudo mv splitsh-lite /usr/local/bin/splitsh-lite
           splitsh-lite --version || true
 
-      - name: Configure git (HTTPS + token)
-        env:
-          PUSH_TOKEN: ${{ secrets.SPLIT_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
+      - name: Generate GitHub App token
+        id: app-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          installation_id: ${{ secrets.INSTALLATION_ID }}
+
+      - name: Configure git (HTTPS + App token)
         run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git config --global url."https://${PUSH_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+          git config --global user.email "split-bot@users.noreply.github.com"
+          git config --global user.name "split-bot"
+          git config --global url."https://x-access-token:${{ steps['app-token'].outputs.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Define packages (HTTPS URLs)
         run: |
