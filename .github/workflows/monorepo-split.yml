@@ -6,6 +6,7 @@ on:
     tags: [ "*" ]
   workflow_dispatch:
 
+# This only affects GITHUB_TOKEN (we're using an App token), but it's fine to keep.
 permissions:
   contents: write
 
@@ -23,6 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false  # prevent checkout from setting GITHUB_TOKEN creds
 
       # --- Build splitsh-lite requirements ---
       - name: Install build deps
@@ -79,11 +81,28 @@ jobs:
             mcp-sdk
             ai-bundle
             mcp-bundle
+          permissions: >-
+            {"contents":"write","metadata":"read"}
 
-      - name: Configure git identity
+      - name: Configure git identity & credentials
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git config --global user.email "${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
           git config --global user.name  "${{ steps.app-token.outputs.app-slug }}[bot]"
+          # inject the App token automatically for any https://github.com/* URL
+          git config --global url."https://x-access-token:${APP_TOKEN}@github.com/".insteadOf "https://github.com/"
+
+      - name: Quick diagnostics
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          echo "App slug: ${{ steps.app-token.outputs.app-slug }}"
+          echo "Token expires at: ${{ steps.app-token.outputs.expires-at }}"
+          echo "Installation repositories visible to this token:"
+          curl -sS -H "Authorization: Bearer ${APP_TOKEN}" -H "Accept: application/vnd.github+json" \
+            https://api.github.com/installation/repositories | jq '.total_count, .repositories[].full_name'
 
       - name: Define packages (HTTPS URLs)
         run: |
@@ -99,8 +118,6 @@ jobs:
           JSON
 
       - name: Split & push each package (branches)
-        env:
-          APP_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
           git fetch --all --tags
@@ -120,10 +137,12 @@ jobs:
             split_branch="${prefix//\//-}-split"
             git update-ref "refs/heads/$split_branch" "$commit"
 
-            # Embed the App token directly in the push URL
-            push_url="${repo/https:\/\/github.com\//https:\/\/x-access-token:${APP_TOKEN}@github.com/}"
-            echo "Pushing to $push_url"
-            git push "$push_url" "refs/heads/$split_branch:$branch" --force
+            # If target repo main is protected, this force push will fail.
+            # Option A (direct to main):
+            git push "$repo" "refs/heads/$split_branch:$branch" --force
+
+            # Option B (safer): push to split branch and open a PR out-of-band
+            # git push "$repo" "refs/heads/$split_branch:$split_branch" --force
             echo "::endgroup::"
           done
 
@@ -137,6 +156,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Install build deps
         run: |
@@ -191,11 +211,16 @@ jobs:
             mcp-sdk
             ai-bundle
             mcp-bundle
+          permissions: >-
+            {"contents":"write","metadata":"read"}
 
-      - name: Configure git identity
+      - name: Configure git identity & credentials
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git config --global user.email "${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
           git config --global user.name  "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config --global url."https://x-access-token:${APP_TOKEN}@github.com/".insteadOf "https://github.com/"
 
       - name: Define packages (HTTPS URLs)
         run: |
@@ -213,7 +238,6 @@ jobs:
       - name: Split & push tag to each package repo
         env:
           TAG: ${{ github.ref_name }}
-          APP_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
           git fetch --all --tags
@@ -230,9 +254,6 @@ jobs:
             fi
 
             git tag -f "$TAG" "$commit"
-
-            push_url="${repo/https:\/\/github.com\//https:\/\/x-access-token:${APP_TOKEN}@github.com/}"
-            echo "Pushing tag to $push_url"
-            git push "$push_url" "refs/tags/$TAG" --force
+            git push "$repo" "refs/tags/$TAG" --force
             echo "::endgroup::"
           done
