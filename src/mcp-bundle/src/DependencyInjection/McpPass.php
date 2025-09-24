@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-abstract class AbstractMcpPass implements CompilerPassInterface
+final class McpPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
     {
@@ -23,17 +23,21 @@ abstract class AbstractMcpPass implements CompilerPassInterface
             return;
         }
 
-        $taggedServices = $container->findTaggedServiceIds($this->getTag());
+        $allMcpServices = [];
+        $mcpTags = ['mcp.tool', 'mcp.prompt', 'mcp.resource', 'mcp.resource_template'];
 
-        if ([] === $taggedServices) {
+        foreach ($mcpTags as $tag) {
+            $taggedServices = $container->findTaggedServiceIds($tag);
+            $allMcpServices = array_merge($allMcpServices, $taggedServices);
+        }
+
+        if ([] === $allMcpServices) {
             return;
         }
 
-        $serviceLocatorRef = ServiceLocatorTagPass::register($container, $taggedServices);
+        $serviceLocatorRef = ServiceLocatorTagPass::register($container, $allMcpServices);
 
         $container->getDefinition('mcp.server.builder')
             ->addMethodCall('setContainer', [$serviceLocatorRef]);
     }
-
-    abstract protected function getTag(): string;
 }

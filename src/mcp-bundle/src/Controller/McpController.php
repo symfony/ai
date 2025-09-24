@@ -12,40 +12,42 @@
 namespace Symfony\AI\McpBundle\Controller;
 
 use Mcp\Server;
-use Mcp\Server\Transport\Sse\Store\CachePoolStore;
-use Mcp\Server\Transport\Sse\StreamTransport;
+use Mcp\Server\Transport\StreamableHttpTransport;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Symfony\Bridge\PsrHttpMessage\HttpFoundationFactoryInterface;
+use Symfony\Bridge\PsrHttpMessage\HttpMessageFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Uid\Uuid;
 
 final readonly class McpController
 {
     public function __construct(
         private Server $server,
-        private CachePoolStore $store,
-        private UrlGeneratorInterface $urlGenerator,
+        private HttpMessageFactoryInterface $psrHttpFactory,
+        private HttpFoundationFactoryInterface $httpFoundationFactory,
+        private ResponseFactoryInterface $responseFactory,
+        private StreamFactoryInterface $streamFactory,
+        private ?LoggerInterface $logger = null,
     ) {
     }
 
-    public function sse(): StreamedResponse
+    public function handle(Request $request): Response
     {
-        $id = Uuid::v4();
-        $endpoint = $this->urlGenerator->generate('_mcp_messages', ['id' => $id], UrlGeneratorInterface::ABSOLUTE_URL);
-        $transport = new StreamTransport($endpoint, $this->store, $id);
+        $psrRequest = $this->psrHttpFactory->createRequest($request);
 
-        return new StreamedResponse(fn () => $this->server->connect($transport), headers: [
-            'Content-Type' => 'text/event-stream',
-            'Cache-Control' => 'no-cache',
-            'X-Accel-Buffering' => 'no',
-        ]);
-    }
+        $transport = new StreamableHttpTransport(
+            $psrRequest,
+            $this->responseFactory,
+            $this->streamFactory,
+            $this->logger ?? new NullLogger(),
+        );
 
-    public function messages(Request $request, Uuid $id): Response
-    {
-        $this->store->push($id, $request->getContent());
+        $this->server->connect($transport);
+        $psrResponse = $transport->listen();
 
-        return new Response();
+        return $this->httpFoundationFactory->createResponse($psrResponse);
     }
 }

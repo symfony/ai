@@ -83,7 +83,7 @@ class McpBundleTest extends TestCase
         yield 'no transports enabled' => [
             'config' => [
                 'stdio' => false,
-                'sse' => false,
+                'http' => false,
             ],
             'expectedServices' => [
                 'mcp.server.command' => false,
@@ -95,7 +95,7 @@ class McpBundleTest extends TestCase
         yield 'stdio transport enabled' => [
             'config' => [
                 'stdio' => true,
-                'sse' => false,
+                'http' => false,
             ],
             'expectedServices' => [
                 'mcp.server.command' => true,
@@ -104,10 +104,10 @@ class McpBundleTest extends TestCase
             ],
         ];
 
-        yield 'sse transport enabled' => [
+        yield 'http transport enabled' => [
             'config' => [
                 'stdio' => false,
-                'sse' => true,
+                'http' => true,
             ],
             'expectedServices' => [
                 'mcp.server.command' => false,
@@ -119,7 +119,7 @@ class McpBundleTest extends TestCase
         yield 'both transports enabled' => [
             'config' => [
                 'stdio' => true,
-                'sse' => true,
+                'http' => true,
             ],
             'expectedServices' => [
                 'mcp.server.command' => true,
@@ -135,14 +135,14 @@ class McpBundleTest extends TestCase
             'mcp' => [
                 'client_transports' => [
                     'stdio' => true,
-                    'sse' => true,
+                    'http' => true,
                 ],
             ],
         ]);
 
         // Test that core MCP services are registered
         $this->assertTrue($container->hasDefinition('mcp.server'));
-        $this->assertTrue($container->hasDefinition('mcp.server.sse.store.cache_pool'));
+        $this->assertTrue($container->hasDefinition('mcp.session.store'));
 
         // Test that ServerBuilder is properly configured with EventDispatcher
         $builderDefinition = $container->getDefinition('mcp.server.builder');
@@ -216,6 +216,86 @@ class McpBundleTest extends TestCase
         // Test that McpResourceTemplate attribute is autoconfigured with mcp.resource_template tag
         $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
         $this->assertArrayHasKey('Mcp\Capability\Attribute\McpResourceTemplate', $attributeAutoconfigurators);
+    }
+
+    public function testHttpConfigurationDefaults()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+            ],
+        ]);
+
+        // Test HTTP route loader defaults
+        $this->assertTrue($container->hasDefinition('mcp.server.route_loader'));
+        $routeLoaderDefinition = $container->getDefinition('mcp.server.route_loader');
+        $arguments = $routeLoaderDefinition->getArguments();
+        $this->assertTrue($arguments[0]); // HTTP transport enabled
+        $this->assertSame('/_mcp', $arguments[1]); // Default path
+
+        // Test session store defaults (file store)
+        $this->assertTrue($container->hasDefinition('mcp.session.store'));
+        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
+        $this->assertSame('Mcp\Server\Session\FileSessionStore', $sessionStoreDefinition->getClass());
+        $sessionArguments = $sessionStoreDefinition->getArguments();
+        $this->assertSame('%kernel.cache_dir%/mcp-sessions', $sessionArguments[0]); // Default directory
+        $this->assertSame(3600, $sessionArguments[1]); // Default TTL
+    }
+
+    public function testHttpConfigurationCustom()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'path' => '/custom-mcp',
+                    'session' => [
+                        'store' => 'memory',
+                        'directory' => '/custom/sessions',
+                        'ttl' => 7200,
+                    ],
+                ],
+            ],
+        ]);
+
+        // Test custom HTTP path
+        $routeLoaderDefinition = $container->getDefinition('mcp.server.route_loader');
+        $arguments = $routeLoaderDefinition->getArguments();
+        $this->assertSame('/custom-mcp', $arguments[1]);
+
+        // Test custom session store (memory)
+        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
+        $this->assertSame('Mcp\Server\Session\InMemorySessionStore', $sessionStoreDefinition->getClass());
+        $sessionArguments = $sessionStoreDefinition->getArguments();
+        $this->assertSame(7200, $sessionArguments[0]); // Custom TTL for memory store
+    }
+
+    public function testSessionStoreFileConfiguration()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'session' => [
+                        'store' => 'file',
+                        'directory' => '/var/cache/mcp',
+                        'ttl' => 1800,
+                    ],
+                ],
+            ],
+        ]);
+
+        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
+        $this->assertSame('Mcp\Server\Session\FileSessionStore', $sessionStoreDefinition->getClass());
+        $arguments = $sessionStoreDefinition->getArguments();
+        $this->assertSame('/var/cache/mcp', $arguments[0]); // Custom directory
+        $this->assertSame(1800, $arguments[1]); // Custom TTL
     }
 
     private function buildContainer(array $configuration): ContainerBuilder

@@ -13,15 +13,9 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Mcp\Server;
 use Mcp\Server\ServerBuilder;
-use Mcp\Server\Transport\Sse\Store\CachePoolStore;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
-        ->set('mcp.server.sse.store.cache_pool', CachePoolStore::class)
-            ->args([
-                service('cache.app'),
-            ])
-
         ->set('monolog.logger.mcp')
             ->parent('monolog.logger_prototype')
             ->args(['mcp'])
@@ -34,6 +28,7 @@ return static function (ContainerConfigurator $container): void {
             ->call('setInstructions', [param('mcp.instructions')])
             ->call('setLogger', [service('monolog.logger.mcp')])
             ->call('setEventDispatcher', [service('event_dispatcher')])
+            ->call('setSession', [service('mcp.session.store')])
             ->call('setDiscovery', [param('kernel.project_dir'), ['src']])
 
         ->set('mcp.server', Server::class)

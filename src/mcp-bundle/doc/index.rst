@@ -3,7 +3,7 @@ MCP Bundle
 
 Symfony integration bundle for `Model Context Protocol`_ using the official MCP SDK `mcp/sdk`_.
 
-**Supports MCP capabilities (tools, prompts, resources) as server via Server-Sent Events (SSE) and STDIO. Resource templates implementation ready but awaiting MCP SDK support.**
+**Supports MCP capabilities (tools, prompts, resources) as server via HTTP transport and STDIO. Resource templates implementation ready but awaiting MCP SDK support.**
 
 Installation
 ------------
@@ -21,7 +21,7 @@ the ``mcp`` section of your ``config/packages/mcp.yaml`` file.
 **Act as Server**
 
 To use your application as an MCP server, exposing tools, prompts, resources, and resource templates to clients like `Claude Desktop`_, you need to configure in the
-``client_transports`` section the transports you want to expose to clients. You can use either STDIO or SSE.
+``client_transports`` section the transports you want to expose to clients. You can use either STDIO or HTTP.
 
 **Creating MCP Capabilities**
 
@@ -99,6 +99,21 @@ MCP capabilities are automatically discovered using PHP attributes.
 
 All capabilities are automatically discovered in the ``src/`` directory when the server starts.
 
+**Transport Types**
+
+The MCP Bundle supports two transport types for server communication:
+
+- **STDIO Transport** - For command-line clients (e.g., ``symfony console mcp:server``)
+- **HTTP Transport** - For web-based clients and MCP Inspector using streamable HTTP connections
+
+The HTTP transport uses the MCP SDK's ``StreamableHttpTransport`` which supports:
+
+- JSON-RPC 2.0 over HTTP POST requests
+- Session management with configurable storage (file/memory)
+- CORS headers for cross-origin requests
+- Proper MCP initialization handshake
+
+
 **Act as Client**
 
 .. warning::
@@ -106,7 +121,7 @@ All capabilities are automatically discovered in the ``src/`` directory when the
     Not implemented yet, but planned for the future.
 
 To use your application as an MCP client, integrating other MCP servers, you need to configure the ``servers`` you want
-to connect to. You can use either  STDIO or Server-Sent Events (SSE) as transport methods.
+to connect to. You can use either STDIO or HTTP as transport methods.
 
 You can find a list of example Servers in the `MCP Server List`_.
 
@@ -122,30 +137,34 @@ Configuration
         app: 'app' # Application name to be exposed to clients
         version: '1.0.0' # Application version to be exposed to clients
         pagination_limit: 50 # Maximum number of items returned per list request (default: 50)
-        instructions: | # Instructions describing how to use the server (for LLMs)
-            This demo MCP server provides time management capabilities.
+        instructions: | # Instructions describing server purpose and usage context (for LLMs)
+            This server provides time management capabilities for developers.
 
-            Available tools:
-            - current-time: Get the current timestamp
+            Use when working with timestamps, time zones, or time-based calculations.
+            All timestamps are in UTC unless specified otherwise.
 
-            Available resources:
-            - time://current: Current time resource
-
-            Available prompts:
-            - time-analysis: Expert time management analysis
+            Example contexts: logging, debugging, time-sensitive operations.
 
         client_transports:
             stdio: true # Enable STDIO via command
-            sse: true # Enable Server-Sent Event via controller
+            http: true # Enable HTTP transport via controller
+
+        # HTTP transport configuration (optional)
+        http:
+            path: /_mcp # HTTP endpoint path (default: /_mcp)
+            session:
+                store: file # Session store type: 'file' or 'memory' (default: file)
+                directory: '%kernel.cache_dir%/mcp-sessions' # Directory for file store (default: cache_dir/mcp-sessions)
+                ttl: 3600 # Session TTL in seconds (default: 3600)
 
         servers:
             name:
-                transport: 'stdio' # Transport method to use, either 'stdio' or 'sse'
+                transport: 'stdio' # Transport method to use, either 'stdio' or 'http'
                 stdio:
                     command: 'php /path/bin/console mcp:server' # Command to execute to start the server
                     arguments: [] # Arguments to pass to the command
-                sse:
-                    url: 'http://localhost:8000/sse' # URL to SSE endpoint of MCP server
+                http:
+                    url: 'http://localhost:8000/_mcp' # URL to HTTP endpoint of MCP server
 
 Logging Configuration
 ---------------------
