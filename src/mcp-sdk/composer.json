@@ -22,7 +22,7 @@
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.5",
         "psr/cache": "^3.0",
-        "symfony/console": "^7.3|^8.0"
+        "symfony/console": "^6.4|^7.3|^8.0"
     },
     "suggest": {
         "psr/cache": "To use CachePoolStore with SSE Transport",

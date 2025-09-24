@@ -36,9 +36,9 @@
         "ext-fileinfo": "*",
         "psr/log": "^3.0",
         "symfony/ai-platform": "@dev",
-        "symfony/clock": "^7.3|^8.0",
-        "symfony/http-client": "^7.3|^8.0",
-        "symfony/uid": "^7.3|^8.0"
+        "symfony/clock": "^6.4|^7.3|^8.0",
+        "symfony/http-client": "^6.4|^7.3|^8.0",
+        "symfony/uid": "^6.4|^7.3|^8.0"
     },
     "require-dev": {
         "codewithkyrian/chromadb-php": "^0.2.1 || ^0.3 || ^0.4",

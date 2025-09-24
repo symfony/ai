@@ -18,11 +18,11 @@
         "symfony/ai-agent": "@dev",
         "symfony/ai-platform": "@dev",
         "symfony/ai-store": "@dev",
-        "symfony/config": "^7.3|^8.0",
-        "symfony/console": "^7.3|^8.0",
-        "symfony/dependency-injection": "^7.3|^8.0",
-        "symfony/framework-bundle": "^7.3|^8.0",
-        "symfony/string": "^7.3|^8.0"
+        "symfony/config": "^6.4|^7.3|^8.0",
+        "symfony/console": "^6.4|^7.3|^8.0",
+        "symfony/dependency-injection": "^6.4|^7.3|^8.0",
+        "symfony/framework-bundle": "^6.4|^7.3|^8.0",
+        "symfony/string": "^6.4|^7.3|^8.0"
     },
     "require-dev": {
         "google/auth": "^1.47",
