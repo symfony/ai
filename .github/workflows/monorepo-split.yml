@@ -8,9 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  split-branches:
-    name: Split on branch pushes
-    if: ${{ github.event_name != 'push' || startsWith(github.ref, 'refs/heads/') }}
+  split:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout full history
@@ -18,18 +16,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install splitsh-lite (linux amd64) safely
+      - name: Install dependencies (Go, libgit2 etc)
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y jq curl
-          url=$(curl -sL https://api.github.com/repos/splitsh/lite/releases/latest \
-            | jq -r '.assets[] | select(.name | test("linux.*(amd64|x86_64)"; "i")) | .browser_download_url' \
-            | head -n1)
-          echo "Downloading: $url"
-          curl -L "$url" -o /usr/local/bin/splitsh-lite
-          chmod +x /usr/local/bin/splitsh-lite
-          /usr/local/bin/splitsh-lite --version || true
-        # Uses official splitsh/lite releases. :contentReference[oaicite:0]{index=0}
+          sudo apt-get install -y build-essential pkg-config libgit2-dev
+          # install Go (if not already)
+          sudo apt-get install -y golang-go
+
+      - name: Fetch splitsh lite v2.0.0 source
+        run: |
+          curl -L https://github.com/splitsh/lite/archive/refs/tags/v2.0.0.tar.gz -o splitsh-lite.tar.gz
+          tar xf splitsh-lite.tar.gz
+          cd lite-2.0.0
+          # Build (per README instructions)
+          go build -o ../splitsh-lite .
+
+      - name: Install splitsh-lite binary
+        run: |
+          chmod +x splitsh-lite
+          mv splitsh-lite /usr/local/bin/splitsh-lite
+          splitsh-lite --version || true
 
       - name: Set up SSH for pushing
         env:
@@ -42,29 +48,24 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Define packages
-        id: pkgs
+      - name: Define packages & split & push
         run: |
           cat > packages.json <<'JSON'
           [
-            { "prefix": "src/platform",   "repo": "git@github.com:taffy41/ai-platform.git",  "branch": "main" },
-            { "prefix": "src/agent",      "repo": "git@github.com:taffy41/ai-agent.git",     "branch": "main" },
-            { "prefix": "src/store",      "repo": "git@github.com:taffy41/ai-store.git",     "branch": "main" },
-            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:taffy41/mcp-sdk.git",      "branch": "main" },
-            { "prefix": "src/ai-bundle",  "repo": "git@github.com:taffy41/ai-bundle.git",    "branch": "main" },
-            { "prefix": "src/mcp-bundle", "repo": "git@github.com:taffy41/mcp-bundle.git",   "branch": "main" }
+            { "prefix": "src/platform",   "repo": "git@github.com:YOUR_ORG/ai-platform.git",  "branch": "main" },
+            { "prefix": "src/agent",      "repo": "git@github.com:YOUR_ORG/ai-agent.git",     "branch": "main" },
+            { "prefix": "src/store",      "repo": "git@github.com:YOUR_ORG/ai-store.git",     "branch": "main" },
+            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:YOUR_ORG/mcp-sdk.git",      "branch": "main" },
+            { "prefix": "src/ai-bundle",  "repo": "git@github.com:YOUR_ORG/ai-bundle.git",    "branch": "main" },
+            { "prefix": "src/mcp-bundle", "repo": "git@github.com:YOUR_ORG/mcp-bundle.git",   "branch": "main" }
           ]
           JSON
 
-      - name: Split & push each package
-        run: |
-          set -euo pipefail
           git fetch --all --tags
           jq -c '.[]' packages.json | while read -r row; do
             prefix=$(echo "$row" | jq -r '.prefix')
             repo=$(echo "$row"   | jq -r '.repo')
             branch=$(echo "$row" | jq -r '.branch')
-
             echo "::group::Splitting $prefix -> $repo ($branch)"
             commit=$(splitsh-lite --prefix="$prefix")
             if [ -z "$commit" ]; then
@@ -80,7 +81,7 @@ jobs:
 
   split-tags:
     name: Split on tag pushes
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout full history
@@ -88,17 +89,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install splitsh-lite (linux amd64) safely
+      - name: Install dependencies (Go, libgit2)
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y jq curl
-          url=$(curl -sL https://api.github.com/repos/splitsh/lite/releases/latest \
-            | jq -r '.assets[] | select(.name | test("linux.*(amd64|x86_64)"; "i")) | .browser_download_url' \
-            | head -n1)
-          echo "Downloading: $url"
-          curl -L "$url" -o /usr/local/bin/splitsh-lite
-          chmod +x /usr/local/bin/splitsh-lite
-          /usr/local/bin/splitsh-lite --version || true
+          sudo apt-get install -y build-essential pkg-config libgit2-dev golang-go
+
+      - name: Fetch & build splitsh-lite
+        run: |
+          curl -L https://github.com/splitsh/lite/archive/refs/tags/v2.0.0.tar.gz -o splitsh-lite.tar.gz
+          tar xf splitsh-lite.tar.gz
+          cd lite-2.0.0
+          go build -o ../splitsh-lite .
+          chmod +x splitsh-lite
+          mv splitsh-lite /usr/local/bin/splitsh-lite
+          splitsh-lite --version || true
 
       - name: Set up SSH for pushing
         env:
@@ -111,33 +115,29 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Define packages
-        run: |
-          cat > packages.json <<'JSON'
-          [
-            { "prefix": "src/platform",   "repo": "git@github.com:taffy41/ai-platform.git"  },
-            { "prefix": "src/agent",      "repo": "git@github.com:taffy41/ai-agent.git"     },
-            { "prefix": "src/store",      "repo": "git@github.com:taffy41/ai-store.git"     },
-            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:taffy41/mcp-sdk.git"      },
-            { "prefix": "src/ai-bundle",  "repo": "git@github.com:taffy41/ai-bundle.git"    },
-            { "prefix": "src/mcp-bundle", "repo": "git@github.com:taffy41/mcp-bundle.git"   }
-          ]
-          JSON
-
-      - name: Split & push tag to each package repo
+      - name: Define packages & split tags
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          set -euo pipefail
+          cat > packages.json <<'JSON'
+          [
+            { "prefix": "src/platform",   "repo": "git@github.com:YOUR_ORG/ai-platform.git"  },
+            { "prefix": "src/agent",      "repo": "git@github.com:YOUR_ORG/ai-agent.git"     },
+            { "prefix": "src/store",      "repo": "git@github.com:YOUR_ORG/ai-store.git"     },
+            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:YOUR_ORG/mcp-sdk.git"      },
+            { "prefix": "src/ai-bundle",  "repo": "git@github.com:YOUR_ORG/ai-bundle.git"    },
+            { "prefix": "src/mcp-bundle", "repo": "git@github.com:YOUR_ORG/mcp-bundle.git"   }
+          ]
+          JSON
+
           git fetch --all --tags
           jq -c '.[]' packages.json | while read -r row; do
             prefix=$(echo "$row" | jq -r '.prefix')
             repo=$(echo "$row"   | jq -r '.repo')
-
-            echo "::group::Tag split $TAG for $prefix -> $repo"
+            echo "::group::Splitting tag $TAG for $prefix -> $repo"
             commit=$(splitsh-lite --prefix="$prefix" --origin="refs/tags/$TAG" || true)
             if [ -z "$commit" ]; then
-              echo "No changes for $prefix at tag $TAG; skipping."
+              echo "No split commit for $prefix at tag $TAG; skipping."
               echo "::endgroup::"
               continue
             fi
