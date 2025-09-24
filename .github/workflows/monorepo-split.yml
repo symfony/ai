@@ -18,11 +18,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install splitsh-lite
+      - name: Install splitsh-lite (linux amd64) safely
         run: |
-          curl -L https://github.com/splitsh/lite/releases/download/v1.0.1/splitsh-lite_linux_amd64 \
-            -o /usr/local/bin/splitsh-lite
+          sudo apt-get update -y
+          sudo apt-get install -y jq curl
+          url=$(curl -sL https://api.github.com/repos/splitsh/lite/releases/latest \
+            | jq -r '.assets[] | select(.name | test("linux.*(amd64|x86_64)"; "i")) | .browser_download_url' \
+            | head -n1)
+          echo "Downloading: $url"
+          curl -L "$url" -o /usr/local/bin/splitsh-lite
           chmod +x /usr/local/bin/splitsh-lite
+          /usr/local/bin/splitsh-lite --version || true
+        # Uses official splitsh/lite releases. :contentReference[oaicite:0]{index=0}
 
       - name: Set up SSH for pushing
         env:
@@ -40,12 +47,12 @@ jobs:
         run: |
           cat > packages.json <<'JSON'
           [
-            { "prefix": "src/platform",   "repo": "git@github.com:YOUR_ORG/ai-platform.git",  "branch": "main" },
-            { "prefix": "src/agent",      "repo": "git@github.com:YOUR_ORG/ai-agent.git",     "branch": "main" },
-            { "prefix": "src/store",      "repo": "git@github.com:YOUR_ORG/ai-store.git",     "branch": "main" },
-            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:YOUR_ORG/mcp-sdk.git",      "branch": "main" },
-            { "prefix": "src/ai-bundle",  "repo": "git@github.com:YOUR_ORG/ai-bundle.git",    "branch": "main" },
-            { "prefix": "src/mcp-bundle", "repo": "git@github.com:YOUR_ORG/mcp-bundle.git",   "branch": "main" }
+            { "prefix": "src/platform",   "repo": "git@github.com:taffy41/ai-platform.git",  "branch": "main" },
+            { "prefix": "src/agent",      "repo": "git@github.com:taffy41/ai-agent.git",     "branch": "main" },
+            { "prefix": "src/store",      "repo": "git@github.com:taffy41/ai-store.git",     "branch": "main" },
+            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:taffy41/mcp-sdk.git",      "branch": "main" },
+            { "prefix": "src/ai-bundle",  "repo": "git@github.com:taffy41/ai-bundle.git",    "branch": "main" },
+            { "prefix": "src/mcp-bundle", "repo": "git@github.com:taffy41/mcp-bundle.git",   "branch": "main" }
           ]
           JSON
 
@@ -81,11 +88,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install splitsh-lite
+      - name: Install splitsh-lite (linux amd64) safely
         run: |
-          curl -L https://github.com/splitsh/lite/releases/download/v1.0.1/splitsh-lite_linux_amd64 \
-            -o /usr/local/bin/splitsh-lite
+          sudo apt-get update -y
+          sudo apt-get install -y jq curl
+          url=$(curl -sL https://api.github.com/repos/splitsh/lite/releases/latest \
+            | jq -r '.assets[] | select(.name | test("linux.*(amd64|x86_64)"; "i")) | .browser_download_url' \
+            | head -n1)
+          echo "Downloading: $url"
+          curl -L "$url" -o /usr/local/bin/splitsh-lite
           chmod +x /usr/local/bin/splitsh-lite
+          /usr/local/bin/splitsh-lite --version || true
 
       - name: Set up SSH for pushing
         env:
@@ -102,12 +115,12 @@ jobs:
         run: |
           cat > packages.json <<'JSON'
           [
-            { "prefix": "src/platform",   "repo": "git@github.com:YOUR_ORG/ai-platform.git"  },
-            { "prefix": "src/agent",      "repo": "git@github.com:YOUR_ORG/ai-agent.git"     },
-            { "prefix": "src/store",      "repo": "git@github.com:YOUR_ORG/ai-store.git"     },
-            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:YOUR_ORG/mcp-sdk.git"      },
-            { "prefix": "src/ai-bundle",  "repo": "git@github.com:YOUR_ORG/ai-bundle.git"    },
-            { "prefix": "src/mcp-bundle", "repo": "git@github.com:YOUR_ORG/mcp-bundle.git"   }
+            { "prefix": "src/platform",   "repo": "git@github.com:taffy41/ai-platform.git"  },
+            { "prefix": "src/agent",      "repo": "git@github.com:taffy41/ai-agent.git"     },
+            { "prefix": "src/store",      "repo": "git@github.com:taffy41/ai-store.git"     },
+            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:taffy41/mcp-sdk.git"      },
+            { "prefix": "src/ai-bundle",  "repo": "git@github.com:taffy41/ai-bundle.git"    },
+            { "prefix": "src/mcp-bundle", "repo": "git@github.com:taffy41/mcp-bundle.git"   }
           ]
           JSON
 
@@ -122,15 +135,12 @@ jobs:
             repo=$(echo "$row"   | jq -r '.repo')
 
             echo "::group::Tag split $TAG for $prefix -> $repo"
-            # Split from the tag ref so the package tag points to the correct subtree commit
             commit=$(splitsh-lite --prefix="$prefix" --origin="refs/tags/$TAG" || true)
             if [ -z "$commit" ]; then
               echo "No changes for $prefix at tag $TAG; skipping."
               echo "::endgroup::"
               continue
             fi
-
-            # Create (or move) the tag locally at the split commit, then push it
             git tag -f "$TAG" "$commit"
             git push "$repo" "refs/tags/$TAG" --force
             echo "::endgroup::"
