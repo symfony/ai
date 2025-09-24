@@ -6,7 +6,6 @@ on:
     tags: [ "*" ]
   workflow_dispatch:
 
-# Not strictly required when pushing with an App token, but safe to keep.
 permissions:
   contents: write
 
@@ -25,7 +24,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # --- Build splitsh-lite v2.0.0 requirements (libgit2 v1.5.0) ---
+      # --- Build splitsh-lite requirements ---
       - name: Install build deps
         run: |
           sudo apt-get update -y
@@ -33,15 +32,14 @@ jobs:
                                   libssl-dev libssh2-1-dev zlib1g-dev \
                                   curl jq
 
-      - name: Build & install libgit2 v1.5.0 (required by git2go v34)
+      - name: Build & install libgit2 v1.5.0 (needed by git2go v34)
         run: |
-          set -euo pipefail
           curl -L https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz -o libgit2.tar.gz
           tar xf libgit2.tar.gz
           cd libgit2-1.5.0
           mkdir build && cd build
           cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
-          cmake --build . --config Release -- -j"$(nproc)"
+          cmake --build . -- -j"$(nproc)"
           sudo cmake --install .
           echo "/usr/local/lib" | sudo tee /etc/ld.so.conf.d/usr-local-lib.conf
           sudo ldconfig
@@ -51,11 +49,10 @@ jobs:
         with:
           go-version: "1.22"
 
-      - name: Fetch splitsh-lite v2.0.0 source and build
+      - name: Build splitsh-lite v2.0.0
         env:
           PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
         run: |
-          set -euo pipefail
           curl -L https://github.com/splitsh/lite/archive/refs/tags/v2.0.0.tar.gz -o splitsh-lite.tar.gz
           tar xf splitsh-lite.tar.gz
           cd lite-2.0.0
@@ -65,23 +62,30 @@ jobs:
           sudo mv splitsh-lite /usr/local/bin/splitsh-lite
           splitsh-lite --version || true
 
-      # --- Authenticate as GitHub App (installation) for pushes over HTTPS ---
-      - name: Generate GitHub App token
+      # --- Authenticate via GitHub App ---
+      - name: Create GitHub App token
         id: app-token
-        uses: tibdex/github-app-token@v2
+        uses: actions/create-github-app-token@v2
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-          installation_id: ${{ secrets.INSTALLATION_ID }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: taffy41
+          repositories: |
+            ai-platform
+            ai-agent
+            ai-store
+            mcp-sdk
+            ai-bundle
+            mcp-bundle
 
-      - name: Configure git (HTTPS + App token)
+      - name: Configure git
         run: |
-          git config --global user.email "split-bot@users.noreply.github.com"
-          git config --global user.name "split-bot"
-          git config --global url."https://x-access-token:${{ steps['app-token'].outputs.token }}@github.com/".insteadOf "https://github.com/"
+          git config --global user.email "${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+          git config --global user.name  "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
 
-      # --- Define packages & split ---
-      - name: Define packages (HTTPS URLs)
+      # --- Define and split packages ---
+      - name: Define packages
         run: |
           cat > packages.json <<'JSON'
           [
@@ -96,7 +100,6 @@ jobs:
 
       - name: Split & push each package (branches)
         run: |
-          set -euo pipefail
           git fetch --all --tags
           jq -c '.[]' packages.json | while read -r row; do
             prefix=$(echo "$row" | jq -r '.prefix')
@@ -106,7 +109,7 @@ jobs:
             echo "::group::Splitting $prefix -> $repo ($branch)"
             commit=$(splitsh-lite --prefix="$prefix" || true)
             if [ -z "$commit" ]; then
-              echo "No commit produced for $prefix; skipping."
+              echo "No commit for $prefix"
               echo "::endgroup::"
               continue
             fi
@@ -134,15 +137,14 @@ jobs:
                                   libssl-dev libssh2-1-dev zlib1g-dev \
                                   curl jq
 
-      - name: Build & install libgit2 v1.5.0 (required by git2go v34)
+      - name: Build & install libgit2 v1.5.0
         run: |
-          set -euo pipefail
           curl -L https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz -o libgit2.tar.gz
           tar xf libgit2.tar.gz
           cd libgit2-1.5.0
           mkdir build && cd build
           cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
-          cmake --build . --config Release -- -j"$(nproc)"
+          cmake --build . -- -j"$(nproc)"
           sudo cmake --install .
           echo "/usr/local/lib" | sudo tee /etc/ld.so.conf.d/usr-local-lib.conf
           sudo ldconfig
@@ -152,11 +154,10 @@ jobs:
         with:
           go-version: "1.22"
 
-      - name: Fetch splitsh-lite v2.0.0 source and build
+      - name: Build splitsh-lite v2.0.0
         env:
           PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
         run: |
-          set -euo pipefail
           curl -L https://github.com/splitsh/lite/archive/refs/tags/v2.0.0.tar.gz -o splitsh-lite.tar.gz
           tar xf splitsh-lite.tar.gz
           cd lite-2.0.0
@@ -166,21 +167,28 @@ jobs:
           sudo mv splitsh-lite /usr/local/bin/splitsh-lite
           splitsh-lite --version || true
 
-      - name: Generate GitHub App token
+      - name: Create GitHub App token
         id: app-token
-        uses: tibdex/github-app-token@v2
+        uses: actions/create-github-app-token@v2
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-          installation_id: ${{ secrets.INSTALLATION_ID }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: taffy41
+          repositories: |
+            ai-platform
+            ai-agent
+            ai-store
+            mcp-sdk
+            ai-bundle
+            mcp-bundle
 
-      - name: Configure git (HTTPS + App token)
+      - name: Configure git
         run: |
-          git config --global user.email "split-bot@users.noreply.github.com"
-          git config --global user.name "split-bot"
-          git config --global url."https://x-access-token:${{ steps['app-token'].outputs.token }}@github.com/".insteadOf "https://github.com/"
+          git config --global user.email "${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+          git config --global user.name  "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
 
-      - name: Define packages (HTTPS URLs)
+      - name: Define packages
         run: |
           cat > packages.json <<'JSON'
           [
@@ -197,7 +205,6 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          set -euo pipefail
           git fetch --all --tags
           jq -c '.[]' packages.json | while read -r row; do
             prefix=$(echo "$row" | jq -r '.prefix')
