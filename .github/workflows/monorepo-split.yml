@@ -3,38 +3,62 @@ name: Monorepo Split (Symfony AI)
 on:
   push:
     branches: [ main ]
-    tags:
-      - "*"
+    tags: [ "*" ]
   workflow_dispatch:
 
+env:
+  # Where we install libgit2's pkg-config files
+  PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+
 jobs:
-  split:
+  split-branches:
+    name: Split on branch pushes
+    if: ${{ github.event_name != 'push' || startsWith(github.ref, 'refs/heads/') }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout full history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install dependencies (Go, libgit2 etc)
+      - name: Install build deps
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y build-essential pkg-config libgit2-dev
-          # install Go (if not already)
-          sudo apt-get install -y golang-go
+          sudo apt-get install -y build-essential cmake pkg-config \
+                                  libssl-dev libssh2-1-dev zlib1g-dev \
+                                  curl jq
 
-      - name: Fetch splitsh lite v2.0.0 source
+      - name: Build & install libgit2 v1.5.0 (required by git2go v34)
         run: |
+          set -euo pipefail
+          curl -L https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz -o libgit2.tar.gz
+          tar xf libgit2.tar.gz
+          cd libgit2-1.5.0
+          mkdir build && cd build
+          cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+          cmake --build . --config Release -- -j"$(nproc)"
+          sudo cmake --install .
+          echo "/usr/local/lib" | sudo tee /etc/ld.so.conf.d/usr-local-lib.conf
+          sudo ldconfig
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Fetch splitsh-lite v2.0.0 source and build
+        env:
+          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
+        run: |
+          set -euo pipefail
           curl -L https://github.com/splitsh/lite/archive/refs/tags/v2.0.0.tar.gz -o splitsh-lite.tar.gz
           tar xf splitsh-lite.tar.gz
           cd lite-2.0.0
-          # Build (per README instructions)
-          go build -o ../splitsh-lite .
-
-      - name: Install splitsh-lite binary
-        run: |
+          go build -v -o ../splitsh-lite .
+          cd ..
           chmod +x splitsh-lite
-          mv splitsh-lite /usr/local/bin/splitsh-lite
+          sudo mv splitsh-lite /usr/local/bin/splitsh-lite
           splitsh-lite --version || true
 
       - name: Set up SSH for pushing
@@ -48,31 +72,36 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Define packages & split & push
+      - name: Define packages
         run: |
           cat > packages.json <<'JSON'
           [
-            { "prefix": "src/platform",   "repo": "git@github.com:YOUR_ORG/ai-platform.git",  "branch": "main" },
-            { "prefix": "src/agent",      "repo": "git@github.com:YOUR_ORG/ai-agent.git",     "branch": "main" },
-            { "prefix": "src/store",      "repo": "git@github.com:YOUR_ORG/ai-store.git",     "branch": "main" },
-            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:YOUR_ORG/mcp-sdk.git",      "branch": "main" },
-            { "prefix": "src/ai-bundle",  "repo": "git@github.com:YOUR_ORG/ai-bundle.git",    "branch": "main" },
-            { "prefix": "src/mcp-bundle", "repo": "git@github.com:YOUR_ORG/mcp-bundle.git",   "branch": "main" }
+            { "prefix": "src/platform",   "repo": "git@github.com:taffy41/ai-platform.git",  "branch": "main" },
+            { "prefix": "src/agent",      "repo": "git@github.com:taffy41/ai-agent.git",     "branch": "main" },
+            { "prefix": "src/store",      "repo": "git@github.com:taffy41/ai-store.git",     "branch": "main" },
+            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:taffy41/mcp-sdk.git",      "branch": "main" },
+            { "prefix": "src/ai-bundle",  "repo": "git@github.com:taffy41/ai-bundle.git",    "branch": "main" },
+            { "prefix": "src/mcp-bundle", "repo": "git@github.com:taffy41/mcp-bundle.git",   "branch": "main" }
           ]
           JSON
 
+      - name: Split & push each package (branches)
+        run: |
+          set -euo pipefail
           git fetch --all --tags
           jq -c '.[]' packages.json | while read -r row; do
             prefix=$(echo "$row" | jq -r '.prefix')
             repo=$(echo "$row"   | jq -r '.repo')
             branch=$(echo "$row" | jq -r '.branch')
+
             echo "::group::Splitting $prefix -> $repo ($branch)"
-            commit=$(splitsh-lite --prefix="$prefix")
+            commit=$(splitsh-lite --prefix="$prefix" || true)
             if [ -z "$commit" ]; then
               echo "No commit produced for $prefix; skipping."
               echo "::endgroup::"
               continue
             fi
+
             split_branch="${prefix//\//-}-split"
             git update-ref "refs/heads/$split_branch" "$commit"
             git push "$repo" "refs/heads/$split_branch:$branch" --force
@@ -81,27 +110,52 @@ jobs:
 
   split-tags:
     name: Split on tag pushes
-    if: startsWith(github.ref, 'refs/tags/')
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout full history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install dependencies (Go, libgit2)
+      - name: Install build deps
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y build-essential pkg-config libgit2-dev golang-go
+          sudo apt-get install -y build-essential cmake pkg-config \
+                                  libssl-dev libssh2-1-dev zlib1g-dev \
+                                  curl jq
 
-      - name: Fetch & build splitsh-lite
+      - name: Build & install libgit2 v1.5.0 (required by git2go v34)
         run: |
+          set -euo pipefail
+          curl -L https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz -o libgit2.tar.gz
+          tar xf libgit2.tar.gz
+          cd libgit2-1.5.0
+          mkdir build && cd build
+          cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+          cmake --build . --config Release -- -j"$(nproc)"
+          sudo cmake --install .
+          echo "/usr/local/lib" | sudo tee /etc/ld.so.conf.d/usr-local-lib.conf
+          sudo ldconfig
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Fetch splitsh-lite v2.0.0 source and build
+        env:
+          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
+        run: |
+          set -euo pipefail
           curl -L https://github.com/splitsh/lite/archive/refs/tags/v2.0.0.tar.gz -o splitsh-lite.tar.gz
           tar xf splitsh-lite.tar.gz
           cd lite-2.0.0
-          go build -o ../splitsh-lite .
+          go build -v -o ../splitsh-lite .
+          cd ..
           chmod +x splitsh-lite
-          mv splitsh-lite /usr/local/bin/splitsh-lite
+          sudo mv splitsh-lite /usr/local/bin/splitsh-lite
           splitsh-lite --version || true
 
       - name: Set up SSH for pushing
@@ -115,26 +169,30 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Define packages & split tags
-        env:
-          TAG: ${{ github.ref_name }}
+      - name: Define packages
         run: |
           cat > packages.json <<'JSON'
           [
-            { "prefix": "src/platform",   "repo": "git@github.com:YOUR_ORG/ai-platform.git"  },
-            { "prefix": "src/agent",      "repo": "git@github.com:YOUR_ORG/ai-agent.git"     },
-            { "prefix": "src/store",      "repo": "git@github.com:YOUR_ORG/ai-store.git"     },
-            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:YOUR_ORG/mcp-sdk.git"      },
-            { "prefix": "src/ai-bundle",  "repo": "git@github.com:YOUR_ORG/ai-bundle.git"    },
-            { "prefix": "src/mcp-bundle", "repo": "git@github.com:YOUR_ORG/mcp-bundle.git"   }
+            { "prefix": "src/platform",   "repo": "git@github.com:taffy41/ai-platform.git"  },
+            { "prefix": "src/agent",      "repo": "git@github.com:taffy41/ai-agent.git"     },
+            { "prefix": "src/store",      "repo": "git@github.com:taffy41/ai-store.git"     },
+            { "prefix": "src/mcp-sdk",    "repo": "git@github.com:taffy41/mcp-sdk.git"      },
+            { "prefix": "src/ai-bundle",  "repo": "git@github.com:taffy41/ai-bundle.git"    },
+            { "prefix": "src/mcp-bundle", "repo": "git@github.com:taffy41/mcp-bundle.git"   }
           ]
           JSON
 
+      - name: Split & push tag to each package repo
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
           git fetch --all --tags
           jq -c '.[]' packages.json | while read -r row; do
             prefix=$(echo "$row" | jq -r '.prefix')
             repo=$(echo "$row"   | jq -r '.repo')
-            echo "::group::Splitting tag $TAG for $prefix -> $repo"
+
+            echo "::group::Tag split $TAG for $prefix -> $repo"
             commit=$(splitsh-lite --prefix="$prefix" --origin="refs/tags/$TAG" || true)
             if [ -z "$commit" ]; then
               echo "No split commit for $prefix at tag $TAG; skipping."
