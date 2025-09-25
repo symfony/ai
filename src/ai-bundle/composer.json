@@ -1,5 +1,5 @@
 {
-    "name": "taffy41/ai-bundle",
+    "name": "symfony/ai-bundle",
     "description": "Integration bundle for Symfony AI components",
     "license": "MIT",
     "type": "symfony-bundle",

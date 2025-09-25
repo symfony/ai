@@ -1,5 +1,5 @@
 {
-    "name": "taffy41/mcp-bundle",
+    "name": "symfony/mcp-bundle",
     "description": "Symfony integration bundle for Model Context Protocol (via symfony/mcp-sdk)",
     "license": "MIT",
     "type": "symfony-bundle",
