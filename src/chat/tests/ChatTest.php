@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Tests;
+namespace Symfony\AI\Chat\Tests;
 
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Agent\Chat;
-use Symfony\AI\Agent\Chat\MessageStoreInterface;
+use Symfony\AI\Chat\Chat;
+use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;

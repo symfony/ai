@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Chat\MessageStore;
+namespace Symfony\AI\Chat\Bridge\Local;
 
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\AI\Agent\Chat\MessageStoreInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**

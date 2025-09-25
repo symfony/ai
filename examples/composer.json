@@ -17,6 +17,7 @@
         "probots-io/pinecone-php": "^1.0",
         "psr/http-factory-implementation": "*",
         "symfony/ai-agent": "@dev",
+        "symfony/ai-chat": "@dev",
         "symfony/ai-platform": "@dev",
         "symfony/ai-store": "@dev",
         "symfony/cache": "^7.3|^8.0",

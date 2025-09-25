@@ -11,7 +11,6 @@ Framework for building AI agents with user interaction and task execution. Built
 ### Core Classes
 - **Agent** (`src/Agent.php`): Main orchestration class
 - **AgentInterface**: Contract for implementations
-- **Chat** (`src/Chat.php`): High-level conversation interface
 - **Input/Output** (`src/Input.php`, `src/Output.php`): Pipeline data containers
 
 ### Processing Pipeline

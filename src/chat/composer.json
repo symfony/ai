@@ -1,0 +1,54 @@
+{
+    "name": "symfony/ai-chat",
+    "description": "PHP library for building chats with agents.",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "ai",
+        "llm",
+        "agent",
+        "chat"
+    ],
+    "authors": [
+        {
+            "name": "Christopher Hertel",
+            "email": "mail@christopher-hertel.de"
+        },
+        {
+            "name": "Oskar Stark",
+            "email": "oskarstark@googlemail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/ai-agent": "@dev"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.13",
+        "symfony/http-foundation": "^7.3|^8.0",
+        "psr/cache": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Chat\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\Chat\\Tests\\": "tests/",
+            "Symfony\\AI\\PHPStan\\": "../../.phpstan/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    },
+    "minimum-stability": "dev"
+}
