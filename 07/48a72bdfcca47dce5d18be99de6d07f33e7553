@@ -1,0 +1,55 @@
+---------------------------------------------------------------------------
+
+by daFish at 2025-09-01T13:12:34Z
+
+First round of comments adressed - thanks @OskarStark and @welcoMattic.
+
+---------------------------------------------------------------------------
+
+by daFish at 2025-09-01T15:00:14Z
+
+@chr-hertel @OskarStark Should the configuration of the bundle be in a separate PR?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-01T16:14:56Z
+
+> @chr-hertel @OskarStark Should the configuration of the bundle be in a separate PR?
+
+No, I prefer it here in this PR, thanks
+
+---------------------------------------------------------------------------
+
+by daFish at 2025-09-03T09:52:28Z
+
+Added support for embeddings with an example.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-17T06:19:27Z
+
+Needs a rebase
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-22T16:51:55Z
+
+Please add tests
+
+---------------------------------------------------------------------------
+
+by daFish at 2025-09-24T07:34:52Z
+
+I am in the process of writing the tests. Should be done be tomorrow. Sorry for the delay.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-24T07:41:43Z
+
+No worries, take your time. Thanks for the feedback
+
+---------------------------------------------------------------------------
+
+by daFish at 2025-09-25T14:54:15Z
+
+@OskarStark Added the missing tests and also added more examples.
