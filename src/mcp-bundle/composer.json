@@ -16,7 +16,7 @@
         "symfony/framework-bundle": "^6.4|^7.3|^8.0",
         "symfony/http-foundation": "^6.4|^7.3|^8.0",
         "symfony/http-kernel": "^6.4|^7.3|^8.0",
-        "symfony/mcp-sdk": "@dev",
+        "taffy41/mcp-sdk": "@dev",
         "symfony/routing": "^6.4|^7.3|^8.0"
     },
     "require-dev": {
