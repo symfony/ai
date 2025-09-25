@@ -15,9 +15,9 @@
     ],
     "require": {
         "php": ">=8.2",
-        "taffy41/ai-agent": "@dev",
-        "taffy41/ai-platform": "@dev",
-        "taffy41/ai-store": "@dev",
+        "symfony/ai-agent": "@dev",
+        "symfony/ai-platform": "@dev",
+        "symfony/ai-store": "@dev",
         "symfony/config": "^6.4|^7.3|^8.0",
         "symfony/console": "^6.4|^7.3|^8.0",
         "symfony/dependency-injection": "^6.4|^7.3|^8.0",

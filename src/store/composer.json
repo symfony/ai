@@ -35,7 +35,7 @@
         "php": ">=8.2",
         "ext-fileinfo": "*",
         "psr/log": "^3.0",
-        "taffy41/ai-platform": "@dev",
+        "symfony/ai-platform": "@dev",
         "symfony/clock": "^6.4|^7.3|^8.0",
         "symfony/http-client": "^6.4|^7.3|^8.0",
         "symfony/uid": "^6.4|^7.3|^8.0"

@@ -62,7 +62,7 @@
         "phpstan/phpstan": "^2.1.17",
         "phpstan/phpstan-symfony": "^2.0.6",
         "phpunit/phpunit": "^11.5",
-        "taffy41/ai-agent": "@dev",
+        "symfony/ai-agent": "@dev",
         "symfony/console": "^6.4|^7.3|^8.0",
         "symfony/dotenv": "^6.4|^7.3|^8.0",
         "symfony/event-dispatcher": "^6.4|^7.3|^8.0",
