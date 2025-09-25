@@ -1,5 +1,5 @@
 {
-    "name": "symfony/ai-agent",
+    "name": "taffy41/ai-agent",
     "description": "PHP library for building agentic applications.",
     "license": "MIT",
     "type": "library",

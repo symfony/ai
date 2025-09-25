@@ -1,5 +1,5 @@
 {
-    "name": "symfony/ai-store",
+    "name": "taffy41/ai-store",
     "description": "Low-level abstraction for storing and retrieving documents in a vector store.",
     "license": "MIT",
     "type": "library",

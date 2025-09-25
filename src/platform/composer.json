@@ -1,5 +1,5 @@
 {
-    "name": "symfony/ai-platform",
+    "name": "taffy41/ai-platform",
     "description": "PHP library for interacting with AI platform provider.",
     "license": "MIT",
     "type": "library",

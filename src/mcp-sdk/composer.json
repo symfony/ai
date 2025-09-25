@@ -1,5 +1,5 @@
 {
-    "name": "symfony/mcp-sdk",
+    "name": "taffy41/mcp-sdk",
     "description": "Model Context Protocol SDK for Client and Server applications in PHP",
     "license": "MIT",
     "type": "library",
