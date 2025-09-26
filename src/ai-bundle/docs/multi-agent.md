@@ -23,7 +23,6 @@ ai:
                 
                 # Fallback to general agent when no specific conditions match
                 - to: 'ai.agent.general'
-                  when: []
             
             # Optional: Custom logger service
             logger: 'monolog.logger.ai'
@@ -107,5 +106,4 @@ ai:
                 
                 # General inquiries (fallback)
                 - to: 'ai.agent.general_support'
-                  when: []
 ```

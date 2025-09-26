@@ -93,7 +93,6 @@ ai:
                 - to: 'ai.agent.technical'
                   when: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
                 - to: 'ai.agent.general'
-                  when: []
 
 services:
     _defaults:
