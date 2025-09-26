@@ -43,7 +43,7 @@ $technical = new Agent(
 $general = new Agent(
     $platform,
     new Gpt(Gpt::GPT_4O_MINI),
-    [new SystemPromptInputProcessor('You are a helpful general assistant. Assist users with any questions or tasks they may have. You should neverr ever answer technical question.')],
+    [new SystemPromptInputProcessor('You are a helpful general assistant. Assist users with any questions or tasks they may have. You should never ever answer technical question.')],
     name: 'general',
     logger: logger()
 );
