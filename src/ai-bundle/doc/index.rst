@@ -445,13 +445,13 @@ The AI Bundle provides a configuration system for creating multi-agent orchestra
             # Define named multi-agent systems
             support:
                 # The main orchestrator agent that analyzes requests
-                orchestrator: 'ai.agent.orchestrator'
+                orchestrator: 'orchestrator'
                 
-                # Handoff rules mapping agent service IDs to trigger keywords
+                # Handoff rules mapping agents to trigger keywords
                 # Minimum 2 handoffs required (otherwise use the agent directly)
                 handoffs:
-                    'ai.agent.technical': ['bug', 'problem', 'technical', 'error', 'code', 'debug']
-                    'ai.agent.general': []  # Fallback when no specific conditions match
+                    'technical': ['bug', 'problem', 'technical', 'error', 'code', 'debug']
+                    'general': []  # Fallback when no specific conditions match
 
 Each multi-agent configuration automatically registers a service with the ID pattern ``ai.multi_agent.{name}``.
 
@@ -483,8 +483,12 @@ For the example above, the service ``ai.multi_agent.support`` is registered and 
 
 Handoff rules are defined as a key-value mapping where:
 
-* **Key**: The service ID of the target agent to delegate to
+* **Key**: The name of the target agent (automatically prefixed with ``ai.agent.``)
 * **Value**: An array of keywords or phrases that trigger this handoff. When the orchestrator identifies these keywords in the user's request, it delegates to the specified agent. An empty array acts as a fallback for requests that don't match other rules.
+
+.. note::
+
+    Agent names are automatically prefixed with ``ai.agent.`` for convenience. You can use either ``'technical'`` or ``'ai.agent.technical'`` - both will resolve to the same service.
 
 **How It Works**
 
@@ -507,12 +511,12 @@ Handoff rules are defined as a key-value mapping where:
     ai:
         multi_agent:
             customer_service:
-                orchestrator: 'ai.agent.analyzer'
+                orchestrator: 'analyzer'
                 handoffs:
-                    'ai.agent.tech_support': ['error', 'bug', 'crash', 'not working', 'broken']
-                    'ai.agent.billing': ['payment', 'invoice', 'billing', 'subscription', 'price']
-                    'ai.agent.product_info': ['features', 'how to', 'tutorial', 'guide', 'documentation']
-                    'ai.agent.general_support': []  # Fallback for general inquiries
+                    'tech_support': ['error', 'bug', 'crash', 'not working', 'broken']
+                    'billing': ['payment', 'invoice', 'billing', 'subscription', 'price']
+                    'product_info': ['features', 'how to', 'tutorial', 'guide', 'documentation']
+                    'general_support': []  # Fallback for general inquiries
 
 Usage
 -----

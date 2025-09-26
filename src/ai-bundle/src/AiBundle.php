@@ -1217,7 +1217,9 @@ final class AiBundle extends AbstractBundle
     {
         $handoffs = [];
 
-        foreach ($config['handoffs'] as $agentServiceId => $whenConditions) {
+        foreach ($config['handoffs'] as $agentName => $whenConditions) {
+            // Automatically prefix agent names with 'ai.agent.' for convenience
+            $agentServiceId = str_starts_with($agentName, 'ai.agent.') ? $agentName : 'ai.agent.'.$agentName;
             $agentReference = new Reference($agentServiceId);
             
             $handoffDefinition = new Definition(Handoff::class, [
@@ -1229,8 +1231,14 @@ final class AiBundle extends AbstractBundle
         }
 
         $multiAgentId = 'ai.multi_agent.'.$name;
+        
+        // Automatically prefix orchestrator with 'ai.agent.' for convenience
+        $orchestratorServiceId = str_starts_with($config['orchestrator'], 'ai.agent.') 
+            ? $config['orchestrator'] 
+            : 'ai.agent.'.$config['orchestrator'];
+        
         $multiAgentDefinition = new Definition(MultiAgent::class, [
-            new Reference($config['orchestrator']),
+            new Reference($orchestratorServiceId),
             $handoffs,
             $name,
         ]);

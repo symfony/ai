@@ -69,10 +69,10 @@ ai:
             tools: false
     multi_agent:
         support:
-            orchestrator: 'ai.agent.orchestrator'
+            orchestrator: 'orchestrator'
             handoffs:
-                'ai.agent.technical': ['bug', 'problem', 'technical', 'error', 'code', 'debug']
-                'ai.agent.general': []
+                'technical': ['bug', 'problem', 'technical', 'error', 'code', 'debug']
+                'general': []
     store:
         chroma_db:
             symfonycon:
