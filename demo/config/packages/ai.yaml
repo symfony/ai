@@ -72,7 +72,7 @@ ai:
             orchestrator: 'orchestrator'
             handoffs:
                 technical: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
-                general: []
+                general: ~
     store:
         chroma_db:
             symfonycon:

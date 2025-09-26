@@ -450,8 +450,8 @@ The AI Bundle provides a configuration system for creating multi-agent orchestra
                 # Handoff rules mapping agents to trigger keywords
                 # Minimum 2 handoffs required (otherwise use the agent directly)
                 handoffs:
-                    'technical': ['bug', 'problem', 'technical', 'error', 'code', 'debug']
-                    'general': []  # Fallback when no specific conditions match
+                    technical: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
+                    general: ~  # Fallback when no specific conditions match
 
 Each multi-agent configuration automatically registers a service with the ID pattern ``ai.multi_agent.{name}``.
 
@@ -484,7 +484,7 @@ For the example above, the service ``ai.multi_agent.support`` is registered and 
 Handoff rules are defined as a key-value mapping where:
 
 * **Key**: The name of the target agent (automatically prefixed with ``ai.agent.``)
-* **Value**: An array of keywords or phrases that trigger this handoff. When the orchestrator identifies these keywords in the user's request, it delegates to the specified agent. An empty array acts as a fallback for requests that don't match other rules.
+* **Value**: An array of keywords or phrases that trigger this handoff. When the orchestrator identifies these keywords in the user's request, it delegates to the specified agent. Use ``~`` (null) or ``[]`` (empty array) for fallback agents that handle requests not matching other rules.
 
 .. note::
 
@@ -513,10 +513,10 @@ Handoff rules are defined as a key-value mapping where:
             customer_service:
                 orchestrator: 'analyzer'
                 handoffs:
-                    'tech_support': ['error', 'bug', 'crash', 'not working', 'broken']
-                    'billing': ['payment', 'invoice', 'billing', 'subscription', 'price']
-                    'product_info': ['features', 'how to', 'tutorial', 'guide', 'documentation']
-                    'general_support': []  # Fallback for general inquiries
+                    tech_support: ['error', 'bug', 'crash', 'not working', 'broken']
+                    billing: ['payment', 'invoice', 'billing', 'subscription', 'price']
+                    product_info: ['features', 'how to', 'tutorial', 'guide', 'documentation']
+                    general_support: ~  # Fallback for general inquiries
 
 Usage
 -----

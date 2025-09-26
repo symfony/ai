@@ -1224,7 +1224,7 @@ final class AiBundle extends AbstractBundle
             
             $handoffDefinition = new Definition(Handoff::class, [
                 $agentReference,
-                $whenConditions,
+                $whenConditions ?? [],  // Convert null to empty array for fallback agents
             ]);
             
             $handoffs[] = $handoffDefinition;
