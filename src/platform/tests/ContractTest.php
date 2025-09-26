@@ -142,7 +142,7 @@ final class ContractTest extends TestCase
         ];
 
         yield 'Text Input with Embeddings' => [
-            'model' => new Embeddings(Embeddings::TEXT_3_SMALL),
+            'model' => new Embeddings('text-embedding-3-small'),
             'input' => 'This is a test input.',
             'expected' => 'This is a test input.',
         ];
@@ -209,7 +209,7 @@ final class ContractTest extends TestCase
 
         $audio = Audio::fromFile(\dirname(__DIR__, 3).'/fixtures/audio.mp3');
 
-        $actual = $contract->createRequestPayload(new Whisper(Whisper::WHISPER_1), $audio);
+        $actual = $contract->createRequestPayload(new Whisper('whisper-1'), $audio);
 
         $this->assertArrayHasKey('model', $actual);
         $this->assertSame('whisper-1', $actual['model']);
