@@ -21,7 +21,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI);
+$model = new Gpt('gpt-4o-mini');
 
 $serpApi = new SerpApi(http_client(), env('SERP_API_KEY'));
 $toolbox = new Toolbox([$serpApi], logger: logger());

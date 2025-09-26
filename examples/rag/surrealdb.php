@@ -59,7 +59,7 @@ $vectorizer = new Vectorizer($platform, $embeddings = new Embeddings(Embeddings:
 $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
 
-$model = new Gpt(Gpt::GPT_4O_MINI);
+$model = new Gpt('gpt-4o-mini');
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());

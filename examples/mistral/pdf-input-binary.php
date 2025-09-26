@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('MISTRAL_API_KEY'), httpClient: http_client());
-$model = new Mistral(Mistral::MISTRAL_SMALL);
+$model = new Mistral('mistral-small-latest');
 
 $messages = new MessageBag(
     Message::ofUser(

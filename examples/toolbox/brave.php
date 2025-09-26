@@ -22,7 +22,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI);
+$model = new Gpt('gpt-4o-mini');
 
 $brave = new Brave(http_client(), env('BRAVE_API_KEY'));
 $crawler = new Crawler(http_client());

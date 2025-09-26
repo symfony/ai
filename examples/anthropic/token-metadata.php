@@ -19,7 +19,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('ANTHROPIC_API_KEY'), http_client());
-$model = new Claude(Claude::SONNET_37);
+$model = new Claude('claude-3-7-sonnet-latest');
 
 $agent = new Agent($platform, $model, outputProcessors: [new TokenOutputProcessor()], logger: logger());
 $messages = new MessageBag(

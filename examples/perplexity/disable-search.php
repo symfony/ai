@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('PERPLEXITY_API_KEY'), http_client());
-$model = new Perplexity(Perplexity::SONAR);
+$model = new Perplexity('sonar');
 
 $messages = new MessageBag(Message::ofUser('What is 2 + 2?'));
 $response = $platform->invoke($model, $messages, [

@@ -23,7 +23,7 @@ $platform = PlatformFactory::create(
     env('AZURE_OPENAI_KEY'),
     http_client(),
 );
-$model = new Gpt(Gpt::GPT_4O_MINI);
+$model = new Gpt('gpt-4o-mini');
 
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),

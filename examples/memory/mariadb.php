@@ -66,7 +66,7 @@ $indexer->index($documents);
 $embeddingsMemory = new EmbeddingProvider($platform, $embeddings, $store);
 $memoryProcessor = new MemoryInputProcessor($embeddingsMemory);
 
-$agent = new Agent($platform, new Gpt(Gpt::GPT_4O_MINI), [$memoryProcessor], logger: logger());
+$agent = new Agent($platform, new Gpt('gpt-4o-mini'), [$memoryProcessor], logger: logger());
 $messages = new MessageBag(Message::ofUser('Have we discussed about my friend John in the past? If yes, what did we talk about?'));
 $result = $agent->call($messages);
 

@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('REPLICATE_API_KEY'), http_client());
-$model = new Llama(Llama::V3_1_405B_INSTRUCT);
+$model = new Llama('llama-3.1-405b-instruct');
 
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),

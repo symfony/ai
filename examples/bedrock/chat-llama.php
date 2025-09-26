@@ -23,7 +23,7 @@ if (!isset($_SERVER['AWS_ACCESS_KEY_ID'], $_SERVER['AWS_SECRET_ACCESS_KEY'], $_S
 }
 
 $platform = PlatformFactory::create();
-$model = new Llama(Llama::V3_2_3B_INSTRUCT);
+$model = new Llama('llama-3.2-3b-instruct');
 
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),

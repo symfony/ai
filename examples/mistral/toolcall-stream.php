@@ -21,7 +21,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
-$model = new Mistral(Mistral::MISTRAL_LARGE);
+$model = new Mistral('mistral-large-latest');
 
 $transcriber = new YouTubeTranscriber(http_client());
 $toolbox = new Toolbox([$transcriber], logger: logger());

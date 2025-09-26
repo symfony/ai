@@ -19,7 +19,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('PERPLEXITY_API_KEY'), http_client());
-$model = new Perplexity(Perplexity::SONAR_DEEP_RESEARCH);
+$model = new Perplexity('sonar'_DEEP_RESEARCH);
 $agent = new Agent($platform, $model, outputProcessors: [new TokenOutputProcessor()], logger: logger());
 
 $messages = new MessageBag(

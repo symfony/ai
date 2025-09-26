@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('AZURE_LLAMA_BASEURL'), env('AZURE_LLAMA_KEY'), http_client());
-$model = new Llama(Llama::V3_3_70B_INSTRUCT);
+$model = new Llama('llama-3.3-70B-Instruct');
 
 $messages = new MessageBag(Message::ofUser('I am going to Paris, what should I see?'));
 $result = $platform->invoke($model, $messages, [

@@ -23,7 +23,7 @@ use Symfony\Component\Clock\Clock as SymfonyClock;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
-$model = new Gemini(Gemini::GEMINI_1_5_FLASH);
+$model = new Gemini('gemini-1.5-flash');
 
 $clock = new Clock(new SymfonyClock());
 $toolbox = new Toolbox([$clock]);

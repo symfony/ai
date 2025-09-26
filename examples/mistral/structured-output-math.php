@@ -24,7 +24,7 @@ use Symfony\Component\Serializer\Serializer;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
-$model = new Mistral(Mistral::MISTRAL_SMALL);
+$model = new Mistral('mistral-small-latest');
 $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
 
 $processor = new AgentProcessor(new ResponseFormatFactory(), $serializer);

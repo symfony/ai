@@ -59,7 +59,7 @@ $vectorizer = new Vectorizer($platform, $embeddings, logger());
 $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
 
-$model = new Gemini(Gemini::GEMINI_2_FLASH_LITE);
+$model = new Gemini('gemini-2.0-flash'_LITE);
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());

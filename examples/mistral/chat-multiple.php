@@ -22,7 +22,7 @@ $messages = new MessageBag(
     Message::forSystem('Just give short answers.'),
     Message::ofUser('What is your favorite color?'),
 );
-$result = $platform->invoke(new Mistral(Mistral::MISTRAL_LARGE), $messages, [
+$result = $platform->invoke(new Mistral('mistral-large-latest'), $messages, [
     'temperature' => 1.5,
     'n' => 10,
 ]);

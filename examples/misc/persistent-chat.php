@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$llm = new Gpt(Gpt::GPT_4O_MINI);
+$llm = new Gpt('gpt-4o-mini');
 
 $agent = new Agent($platform, $llm, logger: logger());
 $chat = new Chat($agent, new InMemoryStore());
