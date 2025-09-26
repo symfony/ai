@@ -58,8 +58,7 @@ final class BraveTest extends TestCase
 
     public function testHandlesEmptyResults()
     {
-        $result = new MockResponse((string) json_encode(['web' => ['results' => []]]));
-        $httpClient = new MockHttpClient($result);
+        $httpClient = new MockHttpClient(new JsonMockResponse(['web' => ['results' => []]]));
         $brave = new Brave($httpClient, 'test-api-key');
 
         $results = $brave('this should return nothing');
