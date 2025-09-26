@@ -1,0 +1,1 @@
+{"version":2,"defects":[],"times":{"Symfony\\AI\\Agent\\Bridge\\Brave\\Tests\\BraveTest::testReturnsSearchResults":0.007,"Symfony\\AI\\Agent\\Bridge\\Brave\\Tests\\BraveTest::testPassesCorrectParametersToApi":0.001,"Symfony\\AI\\Agent\\Bridge\\Brave\\Tests\\BraveTest::testHandlesEmptyResults":0}}
