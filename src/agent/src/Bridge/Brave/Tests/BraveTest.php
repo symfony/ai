@@ -19,7 +19,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class BraveTest extends TestCase
 {
-    public function testReturnsSearchResults(): void
+    public function testReturnsSearchResults()
     {
         $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/search-results.json');
         $httpClient = new MockHttpClient($result);
@@ -36,7 +36,7 @@ final class BraveTest extends TestCase
         $this->assertSame('https://www.espn.com/nfl/team/_/name/dal/dallas-cowboys', $results[0]['url']);
     }
 
-    public function testPassesCorrectParametersToApi(): void
+    public function testPassesCorrectParametersToApi()
     {
         $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/search-results.json');
         $httpClient = new MockHttpClient($result);
@@ -56,7 +56,7 @@ final class BraveTest extends TestCase
         $this->assertContains('X-Subscription-Token: test-api-key', $requestOptions['headers']);
     }
 
-    public function testHandlesEmptyResults(): void
+    public function testHandlesEmptyResults()
     {
         $result = new MockResponse((string) json_encode(['web' => ['results' => []]]));
         $httpClient = new MockHttpClient($result);
