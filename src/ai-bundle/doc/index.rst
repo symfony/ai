@@ -433,16 +433,14 @@ The system uses explicit configuration to determine memory behavior:
 In both cases, memory content is prepended to the system message, allowing the agent to utilize the context effectively.
 
 Multi-Agent Orchestration
-------------------------
+-------------------------
 
 The AI Bundle provides a configuration system for creating multi-agent orchestrators that route requests to specialized agents based on defined handoff rules.
 
-**Configuration**
-
-Configure multi-agent systems in your ``config/packages/ai.yaml`` file:
 
 .. code-block:: yaml
 
+    # config/packages/ai.yaml
     ai:
         multi_agent:
             # Define named multi-agent systems
