@@ -447,15 +447,11 @@ The AI Bundle provides a configuration system for creating multi-agent orchestra
                 # The main orchestrator agent that analyzes requests
                 orchestrator: 'ai.agent.orchestrator'
                 
-                # Handoff rules defining when to route to specific agents
+                # Handoff rules mapping agent service IDs to trigger keywords
                 # Minimum 2 handoffs required (otherwise use the agent directly)
                 handoffs:
-                    # Route to technical agent for specific keywords
-                    - to: 'ai.agent.technical'
-                      when: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
-                    
-                    # Fallback to general agent when no specific conditions match
-                    - to: 'ai.agent.general'
+                    'ai.agent.technical': ['bug', 'problem', 'technical', 'error', 'code', 'debug']
+                    'ai.agent.general': []  # Fallback when no specific conditions match
 
 Each multi-agent configuration automatically registers a service with the ID pattern ``ai.multi_agent.{name}``.
 
@@ -485,10 +481,10 @@ For the example above, the service ``ai.multi_agent.support`` is registered and 
 
 **Handoff Rules**
 
-Handoff rules determine when to delegate to specific agents:
+Handoff rules are defined as a key-value mapping where:
 
-* ``to`` (required): The service ID of the target agent to delegate to.
-* ``when`` (optional): An array of keywords or phrases that trigger this handoff. When the orchestrator identifies these keywords in the user's request, it delegates to the specified agent. If ``when`` is empty or not specified, the handoff acts as a fallback for requests that don't match other rules.
+* **Key**: The service ID of the target agent to delegate to
+* **Value**: An array of keywords or phrases that trigger this handoff. When the orchestrator identifies these keywords in the user's request, it delegates to the specified agent. An empty array acts as a fallback for requests that don't match other rules.
 
 **How It Works**
 
@@ -513,20 +509,10 @@ Handoff rules determine when to delegate to specific agents:
             customer_service:
                 orchestrator: 'ai.agent.analyzer'
                 handoffs:
-                    # Technical support
-                    - to: 'ai.agent.tech_support'
-                      when: ['error', 'bug', 'crash', 'not working', 'broken']
-                    
-                    # Billing inquiries
-                    - to: 'ai.agent.billing'
-                      when: ['payment', 'invoice', 'billing', 'subscription', 'price']
-                    
-                    # Product information
-                    - to: 'ai.agent.product_info'
-                      when: ['features', 'how to', 'tutorial', 'guide', 'documentation']
-                    
-                    # General inquiries (fallback)
-                    - to: 'ai.agent.general_support'
+                    'ai.agent.tech_support': ['error', 'bug', 'crash', 'not working', 'broken']
+                    'ai.agent.billing': ['payment', 'invoice', 'billing', 'subscription', 'price']
+                    'ai.agent.product_info': ['features', 'how to', 'tutorial', 'guide', 'documentation']
+                    'ai.agent.general_support': []  # Fallback for general inquiries
 
 Usage
 -----

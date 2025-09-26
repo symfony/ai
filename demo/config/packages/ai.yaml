@@ -71,9 +71,8 @@ ai:
         support:
             orchestrator: 'ai.agent.orchestrator'
             handoffs:
-                - to: 'ai.agent.technical'
-                  when: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
-                - to: 'ai.agent.general'
+                'ai.agent.technical': ['bug', 'problem', 'technical', 'error', 'code', 'debug']
+                'ai.agent.general': []
     store:
         chroma_db:
             symfonycon:

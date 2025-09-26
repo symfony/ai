@@ -1217,12 +1217,12 @@ final class AiBundle extends AbstractBundle
     {
         $handoffs = [];
 
-        foreach ($config['handoffs'] as $handoffConfig) {
-            $agentReference = new Reference($handoffConfig['to']);
+        foreach ($config['handoffs'] as $agentServiceId => $whenConditions) {
+            $agentReference = new Reference($agentServiceId);
             
             $handoffDefinition = new Definition(Handoff::class, [
                 $agentReference,
-                $handoffConfig['when'] ?? [],
+                $whenConditions,
             ]);
             
             $handoffs[] = $handoffDefinition;
