@@ -33,7 +33,7 @@ final class SystemPromptInputProcessorTest extends TestCase
     {
         $processor = new SystemPromptInputProcessor('This is a system prompt');
 
-        $input = new Input(new Gpt(Gpt::GPT_4O), new MessageBag(Message::ofUser('This is a user message')));
+        $input = new Input(new Gpt('gpt-4o'), new MessageBag(Message::ofUser('This is a user message')));
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();
@@ -51,7 +51,7 @@ final class SystemPromptInputProcessorTest extends TestCase
             Message::forSystem('This is already a system prompt'),
             Message::ofUser('This is a user message'),
         );
-        $input = new Input(new Gpt(Gpt::GPT_4O), $messages);
+        $input = new Input(new Gpt('gpt-4o'), $messages);
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();
@@ -78,7 +78,7 @@ final class SystemPromptInputProcessorTest extends TestCase
             },
         );
 
-        $input = new Input(new Gpt(Gpt::GPT_4O), new MessageBag(Message::ofUser('This is a user message')));
+        $input = new Input(new Gpt('gpt-4o'), new MessageBag(Message::ofUser('This is a user message')));
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();
@@ -118,7 +118,7 @@ final class SystemPromptInputProcessorTest extends TestCase
             true,
         );
 
-        $input = new Input(new Gpt(Gpt::GPT_4O), new MessageBag(Message::ofUser('This is a user message')));
+        $input = new Input(new Gpt('gpt-4o'), new MessageBag(Message::ofUser('This is a user message')));
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();
@@ -160,7 +160,7 @@ final class SystemPromptInputProcessorTest extends TestCase
             },
         );
 
-        $input = new Input(new Gpt(Gpt::GPT_4O), new MessageBag(Message::ofUser('This is a user message')));
+        $input = new Input(new Gpt('gpt-4o'), new MessageBag(Message::ofUser('This is a user message')));
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();
@@ -183,7 +183,7 @@ final class SystemPromptInputProcessorTest extends TestCase
     {
         $processor = new SystemPromptInputProcessor('This is a', null, $this->getTranslator(), true);
 
-        $input = new Input(new Gpt(Gpt::GPT_4O), new MessageBag(Message::ofUser('This is a user message')), []);
+        $input = new Input(new Gpt('gpt-4o'), new MessageBag(Message::ofUser('This is a user message')), []);
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();
@@ -203,7 +203,7 @@ final class SystemPromptInputProcessorTest extends TestCase
             'prompts'
         );
 
-        $input = new Input(new Gpt(Gpt::GPT_4O), new MessageBag(), []);
+        $input = new Input(new Gpt('gpt-4o'), new MessageBag(), []);
         $processor->processInput($input);
 
         $messages = $input->messages->getMessages();

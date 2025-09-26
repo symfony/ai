@@ -24,8 +24,8 @@ final class ModelOverrideInputProcessorTest extends TestCase
 {
     public function testProcessInputWithValidModelOption()
     {
-        $gpt = new Gpt(Gpt::GPT_4O);
-        $claude = new Claude(Claude::SONNET_37);
+        $gpt = new Gpt('gpt-4o');
+        $claude = new Claude('claude-3-7-sonnet-latest');
         $input = new Input($gpt, new MessageBag(), ['model' => $claude]);
 
         $processor = new ModelOverrideInputProcessor();
@@ -36,7 +36,7 @@ final class ModelOverrideInputProcessorTest extends TestCase
 
     public function testProcessInputWithoutModelOption()
     {
-        $gpt = new Gpt(Gpt::GPT_4O);
+        $gpt = new Gpt('gpt-4o');
         $input = new Input($gpt, new MessageBag());
 
         $processor = new ModelOverrideInputProcessor();
@@ -50,7 +50,7 @@ final class ModelOverrideInputProcessorTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(\sprintf('Option "model" must be an instance of "%s".', Model::class));
 
-        $gpt = new Gpt(Gpt::GPT_4O);
+        $gpt = new Gpt('gpt-4o');
         $model = new MessageBag();
         $input = new Input($gpt, new MessageBag(), ['model' => $model]);
 

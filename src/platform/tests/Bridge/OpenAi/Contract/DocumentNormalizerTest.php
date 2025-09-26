@@ -25,7 +25,7 @@ final class DocumentNormalizerTest extends TestCase
         $normalizer = new DocumentNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new Document('some content', 'application/pdf'), context: [
-            Contract::CONTEXT_MODEL => new Gpt(Gpt::GPT_4O),
+            Contract::CONTEXT_MODEL => new Gpt('gpt-4o'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a document'));
     }
