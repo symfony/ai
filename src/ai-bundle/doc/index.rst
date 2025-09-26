@@ -437,7 +437,6 @@ Multi-Agent Orchestration
 
 The AI Bundle provides a configuration system for creating multi-agent orchestrators that route requests to specialized agents based on defined handoff rules.
 
-
 .. code-block:: yaml
 
     # config/packages/ai.yaml
@@ -457,8 +456,6 @@ The AI Bundle provides a configuration system for creating multi-agent orchestra
                     
                     # Fallback to general agent when no specific conditions match
                     - to: 'ai.agent.general'
-
-**Service Registration**
 
 Each multi-agent configuration automatically registers a service with the ID pattern ``ai.multi_agent.{name}``.
 
