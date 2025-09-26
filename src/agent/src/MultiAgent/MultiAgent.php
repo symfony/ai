@@ -34,7 +34,8 @@ use Symfony\AI\Platform\Result\ResultInterface;
 final class MultiAgent implements AgentInterface
 {
     /**
-     * @param Handoff[] $handoffs Handoff definitions for agent routing
+     * @param Handoff[]           $handoffs Handoff definitions for agent routing
+     * @param non-empty-string    $name     Name of the multi-agent
      */
     public function __construct(
         private AgentInterface $orchestrator,
@@ -51,6 +52,9 @@ final class MultiAgent implements AgentInterface
         }
     }
 
+    /**
+     * @return non-empty-string
+     */
     public function getName(): string
     {
         return $this->name;
