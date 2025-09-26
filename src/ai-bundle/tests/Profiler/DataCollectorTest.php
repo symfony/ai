@@ -43,7 +43,7 @@ class DataCollectorTest extends TestCase
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
-        $this->assertSame('Assistant response', $dataCollector->getPlatformCalls()[0]['result']);
+        $this->assertSame('Assistant response', $dataCollector->getPlatformCalls()[0]['result']->getValue(true));
     }
 
     public function testCollectsDataForStreamingResponse()
@@ -67,6 +67,6 @@ class DataCollectorTest extends TestCase
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
-        $this->assertSame('Assistant response', $dataCollector->getPlatformCalls()[0]['result']);
+        $this->assertSame('Assistant response', $dataCollector->getPlatformCalls()[0]['result']->getValue(true));
     }
 }
