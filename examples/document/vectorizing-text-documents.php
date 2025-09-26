@@ -19,7 +19,7 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$embeddings = new Embeddings(Embeddings::TEXT_3_LARGE);
+$embeddings = new Embeddings('text-embedding-3-large');
 
 $textDocuments = [
     new TextDocument(Uuid::v4(), 'Hello World'),

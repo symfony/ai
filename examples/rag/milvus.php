@@ -53,7 +53,7 @@ foreach (Movies::all() as $i => $movie) {
 
 // create embeddings for documents
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings(Embeddings::TEXT_3_SMALL), logger());
+$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings('text-embedding-3-small'), logger());
 $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
 

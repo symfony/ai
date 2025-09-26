@@ -58,7 +58,7 @@ $store->setup();
 
 // create embeddings for documents as preparation of the chain memory
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings(Embeddings::TEXT_3_SMALL));
+$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings('text-embedding-3-small'));
 $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
 
