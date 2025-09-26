@@ -21,6 +21,8 @@ use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
+use Symfony\AI\Agent\MultiAgent\Handoff;
+use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
@@ -162,6 +164,10 @@ final class AiBundle extends AbstractBundle
         }
         if (1 === \count($config['indexer']) && isset($indexerName)) {
             $builder->setAlias(IndexerInterface::class, 'ai.indexer.'.$indexerName);
+        }
+
+        foreach ($config['multi_agent'] ?? [] as $multiAgentName => $multiAgent) {
+            $this->processMultiAgentConfig($multiAgentName, $multiAgent, $builder);
         }
 
         $builder->registerAttributeForAutoconfiguration(AsTool::class, static function (ChildDefinition $definition, AsTool $attribute): void {
@@ -1202,5 +1208,38 @@ final class AiBundle extends AbstractBundle
         $definition->addTag('ai.indexer', ['name' => $name]);
 
         $container->setDefinition('ai.indexer.'.$name, $definition);
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function processMultiAgentConfig(string $name, array $config, ContainerBuilder $container): void
+    {
+        $handoffs = [];
+
+        foreach ($config['handoffs'] as $handoffConfig) {
+            $agentReference = new Reference($handoffConfig['to']);
+            
+            $handoffDefinition = new Definition(Handoff::class, [
+                $agentReference,
+                $handoffConfig['when'] ?? [],
+            ]);
+            
+            $handoffs[] = $handoffDefinition;
+        }
+
+        $multiAgentId = 'ai.multi_agent.'.$name;
+        $multiAgentDefinition = new Definition(MultiAgent::class, [
+            new Reference($config['orchestrator']),
+            $handoffs,
+            $name,
+            new Reference($config['logger'] ?? 'logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+        ]);
+
+        $multiAgentDefinition->addTag('ai.multi_agent', ['name' => $name]);
+        $multiAgentDefinition->addTag('ai.agent', ['name' => $name]);
+
+        $container->setDefinition($multiAgentId, $multiAgentDefinition);
+        $container->registerAliasForArgument($multiAgentId, AgentInterface::class, (new Target($name.'MultiAgent'))->getParsedName());
     }
 }

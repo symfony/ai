@@ -49,6 +49,24 @@ ai:
                 - agent: 'blog'
                   name: 'symfony_blog'
                   description: 'Can answer questions based on the Symfony blog.'
+        orchestrator:
+            model:
+                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+            prompt: 'You are an intelligent agent orchestrator that routes user questions to specialized agents.'
+            tools: false
+        technical:
+            model:
+                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+            prompt: 'You are a technical support specialist. Help users resolve bugs, problems, and technical errors.'
+            tools: false
+        general:
+            model:
+                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
+                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+            prompt: 'You are a helpful general assistant. Assist users with any questions or tasks they may have.'
+            tools: false
     store:
         chroma_db:
             symfonycon:
@@ -68,6 +86,14 @@ ai:
                 - 'Symfony\AI\Store\Document\Transformer\TextTrimTransformer'
             vectorizer: 'ai.vectorizer.openai'
             store: 'ai.store.chroma_db.symfonycon'
+    multi_agent:
+        support:
+            orchestrator: 'ai.agent.orchestrator'
+            handoffs:
+                - to: 'ai.agent.technical'
+                  when: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
+                - to: 'ai.agent.general'
+                  when: []
 
 services:
     _defaults:
