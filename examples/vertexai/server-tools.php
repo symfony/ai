@@ -18,7 +18,7 @@ require_once __DIR__.'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client());
 
-$model = new Model(Model::GEMINI_2_5_PRO, ['server_tools' => ['url_context' => true]]);
+$model = new Model('gemini-2.5-pro', ['server_tools' => ['url_context' => true]]);
 
 $messages = new MessageBag(
     Message::ofUser(

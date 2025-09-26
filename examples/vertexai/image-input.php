@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once __DIR__.'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client());
-$model = new Model(Model::GEMINI_2_5_PRO);
+$model = new Model('gemini-2.5-pro');
 
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
