@@ -67,6 +67,7 @@ use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
+use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
@@ -1136,6 +1137,40 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('supabase' === $type) {
+            foreach ($stores as $name => $store) {
+                $arguments = [
+                    isset($store['http_client']) ? new Reference($store['http_client']) : new Definition(HttpClientInterface::class),
+                    $store['url'],
+                    $store['api_key'],
+                ];
+
+                if (\array_key_exists('table', $store)) {
+                    $arguments[3] = $store['table'];
+                }
+
+                if (\array_key_exists('vector_field', $store)) {
+                    $arguments[4] = $store['vector_field'];
+                }
+
+                if (\array_key_exists('vector_dimension', $store)) {
+                    $arguments[5] = $store['vector_dimension'];
+                }
+
+                if (\array_key_exists('function_name', $store)) {
+                    $arguments[6] = $store['function_name'];
+                }
+
+                $definition = new Definition(SupabaseStore::class);
+                $definition
+                    ->addTag('ai.store')
+                    ->setArguments($arguments);
+
+                $container->setDefinition('ai.store.supabase.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$name, StoreInterface::class, (new Target($name.'Store'))->getParsedName());
             }
         }
     }

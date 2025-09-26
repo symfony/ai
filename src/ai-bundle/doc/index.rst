@@ -241,7 +241,7 @@ You can also define models for the vectorizer this way:
 HTTP Client Configuration
 -------------------------
 
-Each platform can be configured with a custom HTTP client service to handle API requests. 
+Each platform can be configured with a custom HTTP client service to handle API requests.
 This allows you to customize timeouts, proxy settings, SSL configurations, and other HTTP-specific options.
 
 By default, all platforms use the standard Symfony HTTP client service (``http_client``):
@@ -330,7 +330,7 @@ The system prompt text will be automatically translated using the configured tra
 Memory Provider Configuration
 -----------------------------
 
-Memory providers allow agents to access and utilize conversation history and context from previous interactions. 
+Memory providers allow agents to access and utilize conversation history and context from previous interactions.
 This enables agents to maintain context across conversations and provide more personalized responses.
 
 **Static Memory (Simple)**
@@ -385,7 +385,7 @@ Memory can work independently or alongside the system prompt:
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
                 memory: 'You are a helpful assistant with conversation history'
-            
+
             # Agent with both memory and prompt (memory prepended to prompt)
             memory_and_prompt_agent:
                 model:
