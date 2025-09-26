@@ -464,12 +464,12 @@ For the example above, the service ``ai.multi_agent.support`` is registered and 
     use Symfony\AI\Agent\AgentInterface;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
-    use Symfony\Contracts\Service\Attribute\Target;
+    use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
     final class SupportController
     {
         public function __construct(
-            #[Target('supportMultiAgent')]
+            #[Autowire(service: 'ai.multi_agent.support')]
             private AgentInterface $supportAgent,
         ) {
         }
