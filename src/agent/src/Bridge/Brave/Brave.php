@@ -63,19 +63,19 @@ final readonly class Brave
         $data = $result->toArray();
 
         $results = [];
-        if (isset($data['web']) && is_array($data['web']) && isset($data['web']['results']) && is_array($data['web']['results'])) {
+        if (isset($data['web']) && \is_array($data['web']) && isset($data['web']['results']) && \is_array($data['web']['results'])) {
             $results = $data['web']['results'];
         }
 
         return array_values(array_map(static function (mixed $result): array {
-            if (!is_array($result)) {
+            if (!\is_array($result)) {
                 return ['title' => '', 'description' => '', 'url' => ''];
             }
 
             return [
-                'title' => is_string($result['title'] ?? null) ? $result['title'] : '',
-                'description' => is_string($result['description'] ?? null) ? $result['description'] : '',
-                'url' => is_string($result['url'] ?? null) ? $result['url'] : '',
+                'title' => \is_string($result['title'] ?? null) ? $result['title'] : '',
+                'description' => \is_string($result['description'] ?? null) ? $result['description'] : '',
+                'url' => \is_string($result['url'] ?? null) ? $result['url'] : '',
             ];
         }, $results));
     }

@@ -15,7 +15,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Bridge\Brave\Brave;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
-use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class BraveTest extends TestCase
 {
