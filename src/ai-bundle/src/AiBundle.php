@@ -1233,7 +1233,6 @@ final class AiBundle extends AbstractBundle
             new Reference($config['orchestrator']),
             $handoffs,
             $name,
-            new Reference($config['logger'] ?? 'logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
 
         $multiAgentDefinition->addTag('ai.multi_agent', ['name' => $name]);

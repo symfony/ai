@@ -23,9 +23,6 @@ ai:
                 
                 # Fallback to general agent when no specific conditions match
                 - to: 'ai.agent.general'
-            
-            # Optional: Custom logger service
-            logger: 'monolog.logger.ai'
 ```
 
 ## Service Registration
