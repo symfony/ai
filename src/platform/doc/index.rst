@@ -39,7 +39,7 @@ For example, to use the OpenAI provider, you would typically do something like t
     $embeddings = new Embeddings(Embeddings::TEXT_3_SMALL);
 
     // Language Model in version gpt-4o-mini
-    $model = new Gpt(Gpt::GPT_4O_MINI);
+    $model = new Gpt('gpt-4o-mini');
 
 And with a ``Symfony\AI\Platform\PlatformInterface`` instance, and a ``Symfony\AI\Platform\Model`` instance, you can now
 use the platform to interact with the AI model::

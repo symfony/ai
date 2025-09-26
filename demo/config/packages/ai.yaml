@@ -6,7 +6,7 @@ ai:
         blog:
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                name: 'gpt-4o-mini'
             tools:
                 - 'Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch'
                 - service: 'clock'
@@ -16,7 +16,7 @@ ai:
         stream:
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                name: 'gpt-4o-mini'
             prompt: |
                 You are an example chat application where messages from the LLM are streamed to the user using
                 Server-Sent Events via `symfony/ux-turbo` / Turbo Streams. This example does not use any custom
@@ -26,12 +26,12 @@ ai:
         youtube:
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                name: 'gpt-4o-mini'
             tools: false
         wikipedia:
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                name: 'gpt-4o-mini'
                 options:
                     temperature: 0.5
             prompt:
@@ -57,7 +57,7 @@ ai:
         openai:
             model:
                 class: 'Symfony\AI\Platform\Bridge\OpenAi\Embeddings'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Embeddings::TEXT_ADA_002
+                name: 'text-embedding-ada-002'
     indexer:
         blog:
             loader: 'Symfony\AI\Store\Document\Loader\RssFeedLoader'

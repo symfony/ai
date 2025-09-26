@@ -47,7 +47,7 @@ final class TwigComponent
             Message::ofUser($instruction, Image::fromDataUrl($image))
         );
 
-        $result = $this->platform->invoke(new Gpt(Gpt::GPT_4O_MINI), $messageBag, [
+        $result = $this->platform->invoke(new Gpt('gpt-4o-mini'), $messageBag, [
             'max_tokens' => 100,
         ]);
 

@@ -32,7 +32,7 @@ Configuration
             default:
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                    name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                    name: 'gpt-4o-mini'
 
 **Advanced Example with Anthropic, Azure, ElevenLabs, Gemini, Perplexity, Vertex AI, Ollama multiple agents**
 
@@ -70,7 +70,7 @@ Configuration
                 track_token_usage: true # Enable tracking of token usage for the agent, default is true
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                    name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                    name: 'gpt-4o-mini'
                 memory: 'You have access to conversation history and user preferences' # Optional: static memory content
                 prompt: # The system prompt configuration
                     text: 'You are a helpful assistant that can answer questions.' # The prompt text
@@ -93,7 +93,7 @@ Configuration
                 platform: 'ai.platform.anthropic'
                 model:
                     class: 'Symfony\AI\Platform\Bridge\Anthropic\Claude'
-                    name: !php/const Symfony\AI\Platform\Bridge\Anthropic\Claude::SONNET_37
+                    name: 'claude-3-7-sonnet-latest'
                 tools: # If undefined, all tools are injected into the agent, use "tools: false" to disable tools.
                     - 'Symfony\AI\Agent\Toolbox\Tool\Wikipedia'
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
@@ -101,7 +101,7 @@ Configuration
                 platform: 'ai.platform.perplexity'
                 model:
                     class: 'Symfony\AI\Platform\Bridge\Perplexity\Perplexity'
-                    name: !php/const Symfony\AI\Platform\Bridge\Perplexity\Perplexity::SONAR
+                    name: 'sonar'
                 tools: false
             audio:
                 platform: 'ai.platform.eleven_labs'
@@ -276,7 +276,7 @@ For basic usage, specify the system prompt as a simple string:
             my_agent:
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                    name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                    name: 'gpt-4o-mini'
                 prompt: 'You are a helpful assistant.'
 
 **Advanced Configuration**
@@ -290,7 +290,7 @@ For more control, such as including tool definitions in the system prompt, use t
             my_agent:
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                    name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                    name: 'gpt-4o-mini'
                 prompt:
                     text: 'You are a helpful assistant that can answer questions.'
                     include_tools: true # Include tool definitions at the end of the system prompt
@@ -319,7 +319,7 @@ Then configure the prompt with translation enabled:
             my_agent:
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                    name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                    name: 'gpt-4o-mini'
                 prompt:
                     text: 'agent.system_prompt'  # Translation key
                     enable_translation: true
@@ -344,7 +344,7 @@ The simplest way to add memory is to provide a string that will be used as stati
             my_agent:
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                    name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                    name: 'gpt-4o-mini'
                 memory: 'You have access to user preferences and conversation history'
                 prompt:
                     text: 'You are a helpful assistant.'
@@ -363,7 +363,7 @@ Use the array syntax with a ``service`` key to explicitly reference a service:
             my_agent:
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                    name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                    name: 'gpt-4o-mini'
                 memory:
                     service: 'my_memory_service'  # Explicitly references an existing service
                 prompt:
@@ -628,7 +628,7 @@ To disable token usage tracking for an agent, set the ``track_token_usage`` opti
                 track_token_usage: false
                 model:
                     class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                    name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                    name: 'gpt-4o-mini'
 
 Vectorizers
 -----------
