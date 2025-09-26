@@ -140,6 +140,10 @@ final class AiBundle extends AbstractBundle
             $builder->setAlias(AgentInterface::class, 'ai.agent.'.$agentName);
         }
 
+        foreach ($config['multi_agent'] ?? [] as $multiAgentName => $multiAgent) {
+            $this->processMultiAgentConfig($multiAgentName, $multiAgent, $builder);
+        }
+
         foreach ($config['store'] ?? [] as $type => $store) {
             $this->processStoreConfig($type, $store, $builder);
         }
@@ -164,10 +168,6 @@ final class AiBundle extends AbstractBundle
         }
         if (1 === \count($config['indexer']) && isset($indexerName)) {
             $builder->setAlias(IndexerInterface::class, 'ai.indexer.'.$indexerName);
-        }
-
-        foreach ($config['multi_agent'] ?? [] as $multiAgentName => $multiAgent) {
-            $this->processMultiAgentConfig($multiAgentName, $multiAgent, $builder);
         }
 
         $builder->registerAttributeForAutoconfiguration(AsTool::class, static function (ChildDefinition $definition, AsTool $attribute): void {
