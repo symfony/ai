@@ -25,10 +25,22 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 final class PlatformTestHandler implements ModelClientInterface, ResultConverterInterface
 {
     public int $createCalls = 0;
+    private int $convertCallIndex = 0;
+    /** @var Vector[] */
+    private array $vectors = [];
+
+    private bool $isBatchMode = false;
 
     public function __construct(
         private readonly ?ResultInterface $create = null,
     ) {
+        // If a VectorResult with multiple vectors is provided, extract them for sequential access
+        if ($create instanceof VectorResult) {
+            // Get vectors from the VectorResult
+            foreach ($create->getContent() as $vector) {
+                $this->vectors[] = $vector;
+            }
+        }
     }
 
     public static function createPlatform(?ResultInterface $create = null): Platform
@@ -47,11 +59,33 @@ final class PlatformTestHandler implements ModelClientInterface, ResultConverter
     {
         ++$this->createCalls;
 
+        // Detect batch mode when payload is an array (multiple documents)
+        $this->isBatchMode = \is_array($payload);
+
         return new RawHttpResult(new MockResponse());
     }
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
+        // In batch mode, return all vectors at once
+        if ($this->isBatchMode && $this->create instanceof VectorResult) {
+            return $this->create;
+        }
+
+        // In sequential mode, return vectors one at a time
+        if ([] !== $this->vectors) {
+            // Return vectors one at a time
+            if ($this->convertCallIndex < \count($this->vectors)) {
+                $vector = $this->vectors[$this->convertCallIndex];
+                ++$this->convertCallIndex;
+
+                return new VectorResult($vector);
+            }
+
+            // Fall back to original create if we've exhausted vectors
+            return $this->create ?? new VectorResult(new Vector([1, 2, 3]));
+        }
+
         return $this->create ?? new VectorResult(new Vector([1, 2, 3]));
     }
 }
