@@ -77,7 +77,4 @@ jobs:
               run: |
                   source .github/workflows/.utils.sh
 
-                  # Run link script to make Bridge packages available
-                  ./link
-
                   echo "$PACKAGES" | xargs -n1 | parallel -j +3 "_run_task {} '(cd src/{} && $COMPOSER_UP && $PHPSTAN)'"
