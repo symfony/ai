@@ -17,7 +17,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('AIMLAPI_API_KEY'), http_client());
 $embeddings = new Embeddings(
-    name: Embeddings::TEXT_EMBEDDING_3_SMALL
+    name: 'text-embedding-3-small'
 );
 
 $vectorizer = new Vectorizer($platform, $embeddings);
