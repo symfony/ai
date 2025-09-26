@@ -68,8 +68,14 @@ jobs:
             - name: Build root packages
               run: php .github/build-packages.php
 
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v3
+              with:
+                  working-directory: examples
+
             - name: Run commands examples
-              run: php examples/commands/stores.php
+              working-directory: examples
+              run: php commands/stores.php
 
     demo:
         runs-on: ubuntu-latest
