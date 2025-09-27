@@ -13,8 +13,8 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Exception\AuthenticationException;
-use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
+use Symfony\AI\Platform\Exception\ResultException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -46,8 +46,8 @@ final class ResultConverter implements ResultConverterInterface
         $response = $result->getObject();
 
         if (401 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'];
-            throw new AuthenticationException($errorMessage);
+            $data = $response->toArray(false);
+            throw new AuthenticationException($data['error']['message'], $data['error']);
         }
 
         if (429 === $response->getStatusCode()) {
@@ -64,17 +64,17 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($response));
+            return new StreamResult($this->convertStream($result->getObject()));
         }
 
         $data = $result->getData();
 
-        if (isset($data['error']['code']) && 'content_filter' === $data['error']['code']) {
-            throw new ContentFilterException($data['error']['message']);
+        if (isset($data['error'])) {
+            throw new ResultException($data['error']['message'], $data['error']);
         }
 
         if (!isset($data['choices'])) {
-            throw new RuntimeException('Response does not contain choices.');
+            throw new ResultException('Result does not contain choices.');
         }
 
         $choices = array_map($this->convertChoice(...), $data['choices']);
