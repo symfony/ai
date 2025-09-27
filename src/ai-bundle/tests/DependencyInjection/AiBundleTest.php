@@ -2109,6 +2109,39 @@ class AiBundleTest extends TestCase
         $this->assertSame('logger', (string) $arguments[6]);
     }
 
+    public function testPromptCachingCanBeUsedWithOllama()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'host_url' => 'http://127.0.0.1:11434',
+                        'cache' => 'cache.app',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
+
+        $definition = $container->getDefinition('ai.platform.ollama');
+        $this->assertCount(4, $definition->getArguments());
+
+        $this->assertSame('http://127.0.0.1:11434', $definition->getArgument(0));
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $httpClientArgument = $definition->getArgument(1);
+        $this->assertSame('http_client', (string) $httpClientArgument);
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $contractArgument = $definition->getArgument(2);
+        $this->assertSame('ai.platform.contract.ollama', (string) $contractArgument);
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $cacheArgument = $definition->getArgument(3);
+        $this->assertSame('cache.app', (string) $cacheArgument);
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();

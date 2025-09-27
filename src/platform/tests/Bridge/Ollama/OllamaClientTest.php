@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -171,5 +172,65 @@ final class OllamaClientTest extends TestCase
         $regularResult = $converter->convert($regularRawResult, ['stream' => false]);
 
         $this->assertNotInstanceOf(StreamResult::class, $regularResult);
+    }
+
+    public function testPromptCachingIsSupported()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'capabilities' => ['completion'],
+            ]),
+            new JsonMockResponse([
+                'model' => 'llama3.2',
+                'created_at' => '2025-08-23T10:00:01Z',
+                'message' => ['role' => 'assistant', 'content' => 'Hello world'],
+                'prompt_eval_count' => 10,
+                'eval_count' => 10,
+                'done' => true,
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['completion'],
+            ]),
+        ]);
+
+        $platform = PlatformFactory::create('http://127.0.0.1:1234', $httpClient, cache: new ArrayAdapter());
+
+        $firstCall = $platform->invoke(new Ollama(Ollama::LLAMA_3_2), [
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => 'Say hello world',
+                ],
+            ],
+            'model' => 'llama3.2',
+        ], [
+            'prompt_cache_key' => 'foo',
+        ]);
+
+        $result = $firstCall->getResult();
+
+        $this->assertSame('Hello world', $result->getContent());
+        $this->assertSame(10, $result->getMetadata()->get('cached_prompt_count'));
+        $this->assertSame(10, $result->getMetadata()->get('cached_completion_count'));
+
+        $secondCall = $platform->invoke(new Ollama(Ollama::LLAMA_3_2), [
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => 'Say hello world',
+                ],
+            ],
+            'model' => 'llama3.2',
+        ], [
+            'prompt_cache_key' => 'foo',
+        ]);
+
+        $secondResult = $secondCall->getResult();
+
+        $this->assertSame('Hello world', $secondResult->getContent());
+        $this->assertSame(10, $secondResult->getMetadata()->get('cached_prompt_count'));
+        $this->assertSame(10, $secondResult->getMetadata()->get('cached_completion_count'));
+
+        $this->assertSame(3, $httpClient->getRequestsCount());
     }
 }
