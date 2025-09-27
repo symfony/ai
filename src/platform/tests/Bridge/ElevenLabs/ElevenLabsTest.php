@@ -127,9 +127,9 @@ final class ElevenLabsTest extends TestCase
         yield [ElevenLabs::ELEVEN_FLASH_V250];
         yield [ElevenLabs::ELEVEN_FLASH_V2];
         yield [ElevenLabs::ELEVEN_TURBO_V2_5];
-        yield [ElevenLabs::ELEVEN_TURBO_v2];
+        yield [ElevenLabs::ELEVEN_TURBO_V2];
         yield [ElevenLabs::ELEVEN_MULTILINGUAL_STS_V2];
-        yield [ElevenLabs::ELEVEN_MULTILINGUAL_ttv_V2];
+        yield [ElevenLabs::ELEVEN_MULTILINGUAL_TTV_V2];
         yield [ElevenLabs::ELEVEN_ENGLISH_STS_V2];
     }
 }

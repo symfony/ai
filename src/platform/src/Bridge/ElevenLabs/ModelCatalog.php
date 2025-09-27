@@ -30,6 +30,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
                 ],
             ],
             'eleven_ttv_v3' => [
@@ -37,6 +38,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
                 ],
             ],
             'eleven_multilingual_v2' => [
@@ -44,6 +46,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
                 ],
             ],
             'eleven_flash_v2_5' => [
@@ -51,6 +54,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
                 ],
             ],
             'eleven_flashv2' => [
@@ -58,6 +62,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
                 ],
             ],
             'eleven_turbo_v2_5' => [
@@ -65,6 +70,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
                 ],
             ],
             'eleven_turbo_v2' => [
@@ -72,6 +78,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
                 ],
             ],
             'eleven_multilingual_sts_v2' => [
@@ -79,6 +86,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
                 ],
             ],
             'eleven_multilingual_ttv_v2' => [
@@ -86,6 +94,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
                 ],
             ],
             'eleven_english_sts_v2' => [
@@ -93,6 +102,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
                 ],
             ],
             'scribe_v1' => [
@@ -100,6 +110,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_AUDIO,
                     Capability::OUTPUT_TEXT,
+                    Capability::SPEECH_TO_TEXT,
                 ],
             ],
             'scribe_v1_experimental' => [
@@ -107,6 +118,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_AUDIO,
                     Capability::OUTPUT_TEXT,
+                    Capability::SPEECH_TO_TEXT,
                 ],
             ],
         ];
