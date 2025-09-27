@@ -1,0 +1,11 @@
+includes:
+    - ../../.phpstan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - src/
+        - tests/
+    ignoreErrors:
+        -
+            message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"

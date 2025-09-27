@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Chat\MessageStore;
+namespace Symfony\AI\Chat\Bridge\HttpFoundation;
 
-use Symfony\AI\Agent\Chat\MessageStoreInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;

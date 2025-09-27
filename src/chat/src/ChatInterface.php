@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent;
+namespace Symfony\AI\Chat;
 
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
