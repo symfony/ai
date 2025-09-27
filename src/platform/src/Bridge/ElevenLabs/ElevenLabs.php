@@ -18,38 +18,4 @@ use Symfony\AI\Platform\Model;
  */
 final class ElevenLabs extends Model
 {
-    // text-to-speech models
-    public const ELEVEN_V3 = 'eleven_v3';
-    public const ELEVEN_TTV_V3 = 'eleven_ttv_v3';
-    public const ELEVEN_MULTILINGUAL_V2 = 'eleven_multilingual_v2';
-    public const ELEVEN_FLASH_V250 = 'eleven_flash_v2_5';
-    public const ELEVEN_FLASH_V2 = 'eleven_flashv2';
-    public const ELEVEN_TURBO_V2_5 = 'eleven_turbo_v2_5';
-    public const ELEVEN_TURBO_V2 = 'eleven_turbo_v2';
-    public const ELEVEN_MULTILINGUAL_STS_V2 = 'eleven_multilingual_sts_v2';
-    public const ELEVEN_MULTILINGUAL_TTV_V2 = 'eleven_multilingual_ttv_v2';
-    public const ELEVEN_ENGLISH_STS_V2 = 'eleven_english_sts_v2';
-
-    // speech-to-text models
-    public const SCRIBE_V1 = 'scribe_v1';
-    public const SCRIBE_V1_EXPERIMENTAL = 'scribe_v1_experimental';
-
-    public function __construct(string $name, array $options = [])
-    {
-        $capabilities = [
-            Capability::INPUT_TEXT,
-            Capability::OUTPUT_AUDIO,
-            Capability::TEXT_TO_SPEECH,
-        ];
-
-        if (\in_array($name, [self::SCRIBE_V1, self::SCRIBE_V1_EXPERIMENTAL], true)) {
-            $capabilities = [
-                Capability::INPUT_AUDIO,
-                Capability::OUTPUT_TEXT,
-                Capability::SPEECH_TO_TEXT,
-            ];
-        }
-
-        parent::__construct($name, $capabilities, $options);
-    }
 }
