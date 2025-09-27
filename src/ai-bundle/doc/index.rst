@@ -432,6 +432,92 @@ The system uses explicit configuration to determine memory behavior:
 
 In both cases, memory content is prepended to the system message, allowing the agent to utilize the context effectively.
 
+Multi-Agent Orchestration
+-------------------------
+
+The AI Bundle provides a configuration system for creating multi-agent orchestrators that route requests to specialized agents based on defined handoff rules.
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        multi_agent:
+            # Define named multi-agent systems
+            support:
+                # The main orchestrator agent that analyzes requests
+                orchestrator: 'orchestrator'
+                
+                # Handoff rules mapping agents to trigger keywords
+                # Minimum 2 handoffs required (otherwise use the agent directly)
+                handoffs:
+                    technical: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
+                    general: ~  # Fallback when no specific conditions match
+
+Each multi-agent configuration automatically registers a service with the ID pattern ``ai.multi_agent.{name}``.
+
+For the example above, the service ``ai.multi_agent.support`` is registered and can be injected::
+
+    use Symfony\AI\Agent\AgentInterface;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
+    final class SupportController
+    {
+        public function __construct(
+            #[Autowire(service: 'ai.multi_agent.support')]
+            private AgentInterface $supportAgent,
+        ) {
+        }
+        
+        public function askSupport(string $question): string
+        {
+            $messages = new MessageBag(Message::ofUser($question));
+            $response = $this->supportAgent->call($messages);
+            
+            return $response->getContent();
+        }
+    }
+
+**Handoff Rules**
+
+Handoff rules are defined as a key-value mapping where:
+
+* **Key**: The name of the target agent (automatically prefixed with ``ai.agent.``)
+* **Value**: An array of keywords or phrases that trigger this handoff. When the orchestrator identifies these keywords in the user's request, it delegates to the specified agent. Use ``~`` (null) or ``[]`` (empty array) for fallback agents that handle requests not matching other rules.
+
+.. note::
+
+    Agent names are automatically prefixed with ``ai.agent.`` for convenience. You can use either ``'technical'`` or ``'ai.agent.technical'`` - both will resolve to the same service.
+
+**How It Works**
+
+1. The orchestrator agent receives the initial request
+2. It analyzes the request content and matches it against handoff rules
+3. If keywords match a handoff's ``when`` conditions, the request is delegated to that agent
+4. If no specific conditions match, a fallback handoff (with empty ``when``) is used
+5. The delegated agent processes the request and returns the response
+
+**Requirements**
+
+* At least 2 handoff rules must be defined (for a single handoff, use the agent directly)
+* The orchestrator and all referenced agents must be registered as services
+* All agent services must implement ``Symfony\AI\Agent\AgentInterface``
+
+**Example: Customer Service Bot**
+
+.. code-block:: yaml
+
+    ai:
+        multi_agent:
+            customer_service:
+                orchestrator: 'analyzer'
+                handoffs:
+                    tech_support: ['error', 'bug', 'crash', 'not working', 'broken']
+                    billing: ['payment', 'invoice', 'billing', 'subscription', 'price']
+                    product_info: ['features', 'how to', 'tutorial', 'guide', 'documentation']
+                    general_support: ~  # Fallback for general inquiries
+
 Usage
 -----
 
