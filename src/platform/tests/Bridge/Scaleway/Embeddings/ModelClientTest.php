@@ -43,7 +43,7 @@ final class ModelClientTest extends TestCase
     {
         $modelClient = new ModelClient(new MockHttpClient(), 'scaleway-api-key');
 
-        $this->assertTrue($modelClient->supports(new Embeddings(Embeddings::BAAI_BGE)));
+        $this->assertTrue($modelClient->supports(new Embeddings('bge-multilingual-gemma2')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -58,7 +58,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'scaleway-api-key');
-        $modelClient->request(new Embeddings(Embeddings::BAAI_BGE), 'test text', []);
+        $modelClient->request(new Embeddings('bge-multilingual-gemma2'), 'test text', []);
     }
 
     public function testItIsExecutingTheCorrectRequestWithCustomOptions()
@@ -73,7 +73,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'scaleway-api-key');
-        $modelClient->request(new Embeddings(Embeddings::BAAI_BGE), 'test text', ['dimensions' => 256]);
+        $modelClient->request(new Embeddings('bge-multilingual-gemma2'), 'test text', ['dimensions' => 256]);
     }
 
     public function testItIsExecutingTheCorrectRequestWithArrayInput()
@@ -88,6 +88,6 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'scaleway-api-key');
-        $modelClient->request(new Embeddings(Embeddings::BAAI_BGE), ['text1', 'text2', 'text3'], []);
+        $modelClient->request(new Embeddings('bge-multilingual-gemma2'), ['text1', 'text2', 'text3'], []);
     }
 }

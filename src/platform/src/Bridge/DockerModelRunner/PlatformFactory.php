@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\DockerModelRunner;
 
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -25,6 +26,7 @@ class PlatformFactory
         string $hostUrl = 'http://localhost:12434',
         ?HttpClientInterface $httpClient = null,
         ?Contract $contract = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
@@ -36,6 +38,9 @@ class PlatformFactory
             [
                 new Embeddings\ResultConverter(),
                 new Completions\ResultConverter(),
-            ], $contract);
+            ],
+            $modelCatalog,
+            $contract
+        );
     }
 }

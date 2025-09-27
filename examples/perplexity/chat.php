@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Perplexity\Perplexity;
 use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -17,9 +16,8 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('PERPLEXITY_API_KEY'), http_client());
-$model = new Perplexity(Perplexity::SONAR);
 
 $messages = new MessageBag(Message::ofUser('What is the best French cheese?'));
-$response = $platform->invoke($model, $messages);
+$response = $platform->invoke('sonar', $messages);
 
 echo $response->getResult()->getContent().\PHP_EOL;

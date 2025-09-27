@@ -50,6 +50,7 @@ final class PlatformFactory
                 new EmbeddingsModelClient($httpClient, $apiKey, $baseUrl),
             ],
             [new Gpt\ResultConverter(), new Embeddings\ResultConverter()],
+            new ModelCatalog(),
             Contract::create(),
         );
     }

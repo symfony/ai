@@ -29,7 +29,7 @@ final class OllamaClientTest extends TestCase
     {
         $client = new OllamaClient(new MockHttpClient(), 'http://localhost:1234');
 
-        $this->assertTrue($client->supports(new Ollama(Ollama::LLAMA_3_2)));
+        $this->assertTrue($client->supports(new Ollama('llama3.2')));
         $this->assertFalse($client->supports(new Model('any-model')));
     }
 
@@ -50,7 +50,7 @@ final class OllamaClientTest extends TestCase
         ], 'http://127.0.0.1:1234');
 
         $client = new OllamaClient($httpClient, 'http://127.0.0.1:1234');
-        $response = $client->request(new Ollama(Ollama::LLAMA_3_2), [
+        $response = $client->request(new Ollama('llama3.2'), [
             'messages' => [
                 [
                     'role' => 'user',
@@ -107,7 +107,7 @@ final class OllamaClientTest extends TestCase
         ], 'http://127.0.0.1:1234');
 
         $platform = PlatformFactory::create('http://127.0.0.1:1234', $httpClient);
-        $response = $platform->invoke(new Ollama(Ollama::LLAMA_3_2), [
+        $response = $platform->invoke('llama3.2', [
             'messages' => [
                 [
                     'role' => 'user',

@@ -37,7 +37,7 @@ final class ContractTest extends TestCase
             new UserMessageNormalizer(),
         );
 
-        $this->assertEquals($expected, $contract->createRequestPayload(new Nova(Nova::PRO), $bag));
+        $this->assertEquals($expected, $contract->createRequestPayload(new Nova('nova-pro'), $bag));
     }
 
     /**

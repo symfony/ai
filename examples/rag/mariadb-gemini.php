@@ -16,9 +16,6 @@ use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Fixtures\Movies;
-use Symfony\AI\Platform\Bridge\Gemini\Embeddings;
-use Symfony\AI\Platform\Bridge\Gemini\Embeddings\TaskType;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -54,17 +51,15 @@ $store->setup(['dimensions' => 768]);
 
 // create embeddings for documents
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
-$embeddings = new Embeddings(Embeddings::GEMINI_EMBEDDING_EXP_03_07, ['dimensions' => 768, 'task_type' => TaskType::SemanticSimilarity]);
-$vectorizer = new Vectorizer($platform, $embeddings, logger());
+$model = 'gemini-embedding-exp-03-07?dimensions=768&task_type=SEMANTIC_SIMILARITY';
+$vectorizer = new Vectorizer($platform, $model, logger());
 $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
-
-$model = new Gemini(Gemini::GEMINI_2_FLASH_LITE);
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
+$agent = new Agent($platform, 'gemini-2.0-flash-lite-preview-02-05', [$processor], [$processor], logger: logger());
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),

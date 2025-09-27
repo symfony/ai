@@ -21,7 +21,7 @@ class Model
     /**
      * @param non-empty-string     $name
      * @param Capability[]         $capabilities
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options      The default options for the model usage
      */
     public function __construct(
         private readonly string $name,

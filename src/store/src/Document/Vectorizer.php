@@ -14,7 +14,6 @@ namespace Symfony\AI\Store\Document;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Exception\RuntimeException;
@@ -23,7 +22,7 @@ final readonly class Vectorizer implements VectorizerInterface
 {
     public function __construct(
         private PlatformInterface $platform,
-        private Model $model,
+        private string $model,
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -33,7 +32,7 @@ final readonly class Vectorizer implements VectorizerInterface
         $documentCount = \count($documents);
         $this->logger->info('Starting vectorization process', ['document_count' => $documentCount]);
 
-        if ($this->model->supports(Capability::INPUT_MULTIPLE)) {
+        if ($this->platform->getModelCatalog()->getModel($this->model)->supports(Capability::INPUT_MULTIPLE)) {
             $this->logger->debug('Using batch vectorization with model that supports multiple inputs');
             $result = $this->platform->invoke($this->model, array_map(fn (TextDocument $document) => $document->content, $documents), $options);
 

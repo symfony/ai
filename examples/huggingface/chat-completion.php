@@ -13,15 +13,13 @@ use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('HuggingFaceH4/zephyr-7b-beta');
 
 $messages = new MessageBag(Message::ofUser('Hello, how are you doing today?'));
-$result = $platform->invoke($model, $messages, [
+$result = $platform->invoke('HuggingFaceH4/zephyr-7b-beta', $messages, [
     'task' => Task::CHAT_COMPLETION,
 ]);
 

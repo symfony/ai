@@ -13,17 +13,15 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\StructuredOutput\AgentProcessor;
 use Symfony\AI\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory;
-use Symfony\AI\Platform\Bridge\Scaleway\Scaleway;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('SCALEWAY_SECRET_KEY'), http_client());
-$model = new Scaleway(Scaleway::OPENAI_OSS);
 
 $processor = new AgentProcessor();
-$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
+$agent = new Agent($platform, 'gpt-oss-120b', [$processor], [$processor], logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),

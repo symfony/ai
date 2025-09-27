@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -32,6 +33,7 @@ final readonly class PlatformFactory
         #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,
         ?Contract $contract = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
         $embeddingsModelClient = new EmbeddingsModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey);
@@ -41,6 +43,7 @@ final readonly class PlatformFactory
         return new Platform(
             [$gptModelClient, $embeddingsModelClient, $whisperModelClient],
             [new Gpt\ResultConverter(), new Embeddings\ResultConverter(), new Whisper\ResultConverter()],
+            $modelCatalog,
             $contract ?? Contract::create(new AudioNormalizer()),
         );
     }

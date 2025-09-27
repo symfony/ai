@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultPromise;
 
@@ -37,6 +38,7 @@ final class Platform implements PlatformInterface
     public function __construct(
         iterable $modelClients,
         iterable $resultConverters,
+        private ModelCatalogInterface $modelCatalog,
         private ?Contract $contract = null,
     ) {
         $this->contract = $contract ?? Contract::create();
@@ -44,8 +46,9 @@ final class Platform implements PlatformInterface
         $this->resultConverters = $resultConverters instanceof \Traversable ? iterator_to_array($resultConverters) : $resultConverters;
     }
 
-    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise
+    public function invoke(string $model, array|string|object $input, array $options = []): ResultPromise
     {
+        $model = $this->modelCatalog->getModel($model);
         $payload = $this->contract->createRequestPayload($model, $input);
         $options = array_merge($model->getOptions(), $options);
 
@@ -56,6 +59,11 @@ final class Platform implements PlatformInterface
         $result = $this->doInvoke($model, $payload, $options);
 
         return $this->convertResult($model, $result, $options);
+    }
+
+    public function getModelCatalog(): ModelCatalogInterface
+    {
+        return $this->modelCatalog;
     }
 
     /**

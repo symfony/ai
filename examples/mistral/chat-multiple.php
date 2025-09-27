@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -22,7 +21,7 @@ $messages = new MessageBag(
     Message::forSystem('Just give short answers.'),
     Message::ofUser('What is your favorite color?'),
 );
-$result = $platform->invoke(new Mistral(Mistral::MISTRAL_LARGE), $messages, [
+$result = $platform->invoke('mistral-large-latest', $messages, [
     'temperature' => 1.5,
     'n' => 10,
 ]);

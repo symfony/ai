@@ -54,7 +54,7 @@ final class ModelClientTest extends TestCase
     public function testItSupportsWhisperModel()
     {
         $client = new ModelClient(new MockHttpClient(), 'sk-test-key');
-        $this->assertTrue($client->supports(new Whisper(Whisper::WHISPER_1)));
+        $this->assertTrue($client->supports(new Whisper('whisper-1')));
     }
 
     public function testItUsesTranscriptionEndpointByDefault()
@@ -69,7 +69,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'sk-test-key');
-        $client->request(new Whisper(Whisper::WHISPER_1), ['file' => 'audio-data']);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data']);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -86,7 +86,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'sk-test-key');
-        $client->request(new Whisper(Whisper::WHISPER_1), ['file' => 'audio-data'], ['task' => Task::TRANSCRIPTION]);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['task' => Task::TRANSCRIPTION]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -103,7 +103,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'sk-test-key');
-        $client->request(new Whisper(Whisper::WHISPER_1), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -123,7 +123,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'sk-test-key', $region);
-        $client->request(new Whisper(Whisper::WHISPER_1), ['file' => 'audio-data']);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data']);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -143,7 +143,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'sk-test-key', $region);
-        $client->request(new Whisper(Whisper::WHISPER_1), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

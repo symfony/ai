@@ -30,10 +30,8 @@ final class NovaResultConverterTest extends TestCase
     #[TestDox('Supports Nova model')]
     public function testSupports()
     {
-        $model = new Nova(Nova::PRO);
-
         $converter = new NovaResultConverter();
-        $this->assertTrue($converter->supports($model));
+        $this->assertTrue($converter->supports(new Nova('nova-pro')));
     }
 
     #[TestDox('Converts response with text content to TextResult')]

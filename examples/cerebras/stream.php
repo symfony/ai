@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Cerebras\Model;
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -23,7 +22,7 @@ $messages = new MessageBag(
     Message::ofUser('What are the top three destinations in France?'),
 );
 
-$result = $platform->invoke(new Model(Model::LLAMA3_1_8B), $messages, [
+$result = $platform->invoke('llama3.1-8b', $messages, [
     'stream' => true,
 ]);
 

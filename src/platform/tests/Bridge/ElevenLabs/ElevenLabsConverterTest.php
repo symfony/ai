@@ -26,7 +26,7 @@ final class ElevenLabsConverterTest extends TestCase
     {
         $converter = new ElevenLabsResultConverter(new MockHttpClient());
 
-        $this->assertTrue($converter->supports(new ElevenLabs(ElevenLabs::ELEVEN_MULTILINGUAL_V2)));
+        $this->assertTrue($converter->supports(new ElevenLabs('eleven_multilingual_v2')));
         $this->assertFalse($converter->supports(new Model('any-model')));
     }
 

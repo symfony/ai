@@ -9,15 +9,14 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$ada = new Embeddings(Embeddings::TEXT_ADA_002);
-$small = new Embeddings(Embeddings::TEXT_3_SMALL);
-$large = new Embeddings(Embeddings::TEXT_3_LARGE);
+$ada = 'text-embedding-ada-002';
+$small = 'text-embedding-3-small';
+$large = 'text-embedding-3-large';
 
 echo 'Initiating parallel embeddings calls to platform ...'.\PHP_EOL;
 $results = [];

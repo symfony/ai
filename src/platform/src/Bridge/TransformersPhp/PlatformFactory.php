@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\TransformersPhp;
 
 use Codewithkyrian\Transformers\Transformers;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 
 /**
@@ -20,12 +21,12 @@ use Symfony\AI\Platform\Platform;
  */
 final readonly class PlatformFactory
 {
-    public static function create(): Platform
+    public static function create(ModelCatalogInterface $modelCatalog = new ModelCatalog()): Platform
     {
         if (!class_exists(Transformers::class)) {
             throw new RuntimeException('For using the TransformersPHP with FFI to run models in PHP, the codewithkyrian/transformers package is required. Try running "composer require codewithkyrian/transformers".');
         }
 
-        return new Platform([new ModelClient()], [new ResultConverter()]);
+        return new Platform([new ModelClient()], [new ResultConverter()], $modelCatalog);
     }
 }

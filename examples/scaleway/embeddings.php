@@ -9,14 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Scaleway\Embeddings;
 use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('SCALEWAY_SECRET_KEY'), http_client());
 
-$result = $platform->invoke(new Embeddings(), <<<TEXT
+$result = $platform->invoke('bge-multilingual-gemma2', <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.
     The people of Japan were very kind and hardworking. They loved their country very much and took care of it. The
     country was very peaceful and prosperous. The people lived happily ever after.

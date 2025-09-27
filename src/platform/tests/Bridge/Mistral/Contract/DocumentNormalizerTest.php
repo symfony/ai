@@ -25,7 +25,7 @@ final class DocumentNormalizerTest extends TestCase
         $normalizer = new DocumentNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new Document('some content', 'application/pdf'), context: [
-            Contract::CONTEXT_MODEL => new Mistral(Mistral::MISTRAL_LARGE),
+            Contract::CONTEXT_MODEL => new Mistral('mistral-large-latest'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a document'));
     }

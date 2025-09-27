@@ -12,7 +12,6 @@
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\StructuredOutput\AgentProcessor;
 use Symfony\AI\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -20,10 +19,8 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI);
-
 $processor = new AgentProcessor();
-$agent = new Agent($platform, $model, [$processor], [$processor], logger: logger());
+$agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor], logger: logger());
 $messages = new MessageBag(
     Message::forSystem(<<<PROMPT
         You are a time assistant! You can provide time either as a unix timestamp or as a human readable time format.

@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Voyage;
 
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Voyage\ResultConverter;
 use Symfony\AI\Platform\Bridge\Voyage\Voyage;
@@ -85,25 +84,10 @@ class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($result));
     }
 
-    #[DataProvider('voyageModelsProvider')]
-    public function testItSupportsVoyageModel(string $modelName)
+    public function testItSupportsVoyageModel()
     {
         $converter = new ResultConverter();
 
-        $this->assertTrue($converter->supports(new Voyage($modelName)));
-    }
-
-    public static function voyageModelsProvider(): iterable
-    {
-        yield 'V3_5' => [Voyage::V3_5];
-        yield 'V3_5_LITE' => [Voyage::V3_5_LITE];
-        yield 'V3' => [Voyage::V3];
-        yield 'V3_LITE' => [Voyage::V3_LITE];
-        yield 'V3_LARGE' => [Voyage::V3_LARGE];
-        yield 'FINANCE_2' => [Voyage::FINANCE_2];
-        yield 'MULTILINGUAL_2' => [Voyage::MULTILINGUAL_2];
-        yield 'LAW_2' => [Voyage::LAW_2];
-        yield 'CODE_3' => [Voyage::CODE_3];
-        yield 'CODE_2' => [Voyage::CODE_2];
+        $this->assertTrue($converter->supports(new Voyage('voyage-3-5')));
     }
 }

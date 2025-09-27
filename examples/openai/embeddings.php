@@ -9,15 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$embeddings = new Embeddings(Embeddings::TEXT_3_SMALL);
 
-$result = $platform->invoke($embeddings, <<<TEXT
+$result = $platform->invoke('text-embedding-3-small', <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.
     The people of Japan were very kind and hardworking. They loved their country very much and took care of it. The
     country was very peaceful and prosperous. The people lived happily ever after.

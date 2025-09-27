@@ -14,7 +14,6 @@ use Symfony\AI\Agent\StructuredOutput\AgentProcessor as StructuredOutputProcesso
 use Symfony\AI\Agent\Toolbox\AgentProcessor as ToolProcessor;
 use Symfony\AI\Agent\Toolbox\Tool\Clock;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -23,13 +22,12 @@ use Symfony\Component\Clock\Clock as SymfonyClock;
 require_once __DIR__.'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client());
-$model = new Model(Model::GEMINI_2_5_PRO);
 
 $clock = new Clock(new SymfonyClock());
 $toolbox = new Toolbox([$clock]);
 $toolProcessor = new ToolProcessor($toolbox);
 $structuredOutputProcessor = new StructuredOutputProcessor();
-$agent = new Agent($platform, $model, [$toolProcessor, $structuredOutputProcessor], [$toolProcessor, $structuredOutputProcessor], logger: logger());
+$agent = new Agent($platform, 'gemini-2.5-pro', [$toolProcessor, $structuredOutputProcessor], [$toolProcessor, $structuredOutputProcessor], logger: logger());
 
 $messages = new MessageBag(Message::ofUser('What date and time is it?'));
 $result = $agent->call($messages, ['response_format' => [

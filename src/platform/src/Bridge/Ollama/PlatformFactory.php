@@ -32,7 +32,8 @@ final class PlatformFactory
         return new Platform(
             [new OllamaClient($httpClient, $hostUrl)],
             [new OllamaResultConverter()],
-            $contract ?? OllamaContract::create()
+            new ModelCatalog(),
+            $contract ?? OllamaContract::create(),
         );
     }
 }

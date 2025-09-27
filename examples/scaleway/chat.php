@@ -10,19 +10,17 @@
  */
 
 use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory;
-use Symfony\AI\Platform\Bridge\Scaleway\Scaleway;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('SCALEWAY_SECRET_KEY'), http_client());
-$model = new Scaleway(Scaleway::OPENAI_OSS);
 
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $platform->invoke($model, $messages);
+$result = $platform->invoke('gpt-oss-120b', $messages);
 
 echo $result->asText().\PHP_EOL;

@@ -32,6 +32,7 @@ final class PlatformFactory
         return new Platform(
             [new ModelClient($httpClient, $apiKey)],
             [new ResultConverter()],
+            new ModelCatalog(),
             $contract ?? PerplexityContract::create(),
         );
     }

@@ -11,15 +11,13 @@
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('facebook/bart-large-mnli');
 
 $text = 'Hi, I recently bought a device from your company but it is not working as advertised and I would like to get reimbursed!';
-$result = $platform->invoke($model, $text, [
+$result = $platform->invoke('facebook/bart-large-mnli', $text, [
     'task' => Task::ZERO_SHOT_CLASSIFICATION,
     'candidate_labels' => ['refund', 'legal', 'faq'],
 ]);

@@ -21,17 +21,17 @@ final class WhisperTest extends TestCase
 {
     public function testItCreatesWhisperWithDefaultSettings()
     {
-        $whisper = new Whisper(Whisper::WHISPER_1);
+        $whisper = new Whisper('whisper-1');
 
-        $this->assertSame(Whisper::WHISPER_1, $whisper->getName());
+        $this->assertSame('whisper-1', $whisper->getName());
         $this->assertSame([], $whisper->getOptions());
     }
 
     public function testItCreatesWhisperWithCustomSettings()
     {
-        $whisper = new Whisper(Whisper::WHISPER_1, ['language' => 'en', 'response_format' => 'json']);
+        $whisper = new Whisper('whisper-1', options: ['language' => 'en', 'response_format' => 'json']);
 
-        $this->assertSame(Whisper::WHISPER_1, $whisper->getName());
+        $this->assertSame('whisper-1', $whisper->getName());
         $this->assertSame(['language' => 'en', 'response_format' => 'json'], $whisper->getOptions());
     }
 }

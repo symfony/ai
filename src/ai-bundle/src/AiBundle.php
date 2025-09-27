@@ -48,7 +48,6 @@ use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory as ScalewayPlatformFacto
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
 use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
@@ -226,6 +225,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.anthropic'),
+                    new Reference('ai.platform.model_catalog.anthropic'),
                 ])
                 ->addTag('ai.platform');
 
@@ -248,6 +248,7 @@ final class AiBundle extends AbstractBundle
                         $config['api_key'],
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         new Reference('ai.platform.contract.openai'),
+                        new Reference('ai.platform.model_catalog.azure.openai'),
                     ])
                     ->addTag('ai.platform');
 
@@ -268,6 +269,7 @@ final class AiBundle extends AbstractBundle
                     $platform['host'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
+                    new Reference('ai.platform.model_catalog.elevenlabs'),
                 ])
                 ->addTag('ai.platform');
 
@@ -286,6 +288,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.google'),
+                    new Reference('ai.platform.model_catalog.gemini'),
                 ])
                 ->addTag('ai.platform');
 
@@ -324,7 +327,8 @@ final class AiBundle extends AbstractBundle
                     $platform['location'],
                     $platform['project_id'],
                     $httpClient,
-                    new Reference('ai.platform.contract.vertexai.gemini', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.contract.vertexai', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.vertexai.gemini'),
                 ])
                 ->addTag('ai.platform');
 
@@ -362,6 +366,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
+                    new Reference('ai.platform.model_catalog.openrouter'),
                 ])
                 ->addTag('ai.platform');
 
@@ -380,6 +385,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
+                    new Reference('ai.platform.model_catalog.mistral'),
                 ])
                 ->addTag('ai.platform');
 
@@ -398,6 +404,7 @@ final class AiBundle extends AbstractBundle
                     $platform['host_url'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
+                    new Reference('ai.platform.model_catalog.lmstudio'),
                 ])
                 ->addTag('ai.platform');
 
@@ -416,6 +423,7 @@ final class AiBundle extends AbstractBundle
                     $platform['host_url'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.ollama'),
+                    new Reference('ai.platform.model_catalog.ollama'),
                 ])
                 ->addTag('ai.platform');
 
@@ -433,6 +441,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.cerebras'),
                 ])
                 ->addTag('ai.platform');
 
@@ -450,6 +459,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.voyage'),
                 ])
                 ->addTag('ai.platform');
 
@@ -486,6 +496,7 @@ final class AiBundle extends AbstractBundle
                     $platform['host_url'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.default'),
+                    new Reference('ai.platform.model_catalog.dockermodelrunner'),
                 ])
                 ->addTag('ai.platform');
 
@@ -503,6 +514,8 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.contract.default'),
+                    new Reference('ai.platform.model_catalog.scaleway'),
                 ])
                 ->addTag('ai.platform');
 
@@ -519,33 +532,12 @@ final class AiBundle extends AbstractBundle
      */
     private function processAgentConfig(string $name, array $config, ContainerBuilder $container): void
     {
-        // MODEL
-        ['class' => $modelClass, 'name' => $modelName, 'options' => $options] = $config['model'];
-
-        // Parse query parameters from model name if present
-        if (str_contains((string) $modelName, '?')) {
-            $parsed = parse_url($modelName);
-            $modelName = $parsed['path'] ?? '';
-
-            if (isset($parsed['query'])) {
-                parse_str($parsed['query'], $options);
-            }
-        }
-
-        $modelDefinition = new Definition($modelClass);
-        $modelDefinition->setArgument(0, $modelName);
-        if ([] !== $options) {
-            $modelDefinition->setArgument(1, $options);
-        }
-        $modelDefinition->addTag('ai.model.language_model');
-        $container->setDefinition('ai.agent.'.$name.'.model', $modelDefinition);
-
         // AGENT
         $agentId = 'ai.agent.'.$name;
         $agentDefinition = (new Definition(Agent::class))
             ->addTag('ai.agent', ['name' => $name])
             ->setArgument(0, new Reference($config['platform']))
-            ->setArgument(1, new Reference('ai.agent.'.$name.'.model'));
+            ->setArgument(1, $config['model']);
 
         // TOOL & PROCESSOR
         if ($config['tools']['enabled']) {
@@ -1154,30 +1146,9 @@ final class AiBundle extends AbstractBundle
      */
     private function processVectorizerConfig(string $name, array $config, ContainerBuilder $container): void
     {
-        ['class' => $modelClass, 'name' => $modelName, 'options' => $options] = $config['model'];
-
-        // Parse query parameters from model name if present
-        if (str_contains((string) $modelName, '?')) {
-            $parsed = parse_url($modelName);
-            $modelName = $parsed['path'] ?? '';
-
-            if (isset($parsed['query'])) {
-                parse_str($parsed['query'], $options);
-            }
-        }
-
-        $modelDefinition = (new Definition((string) $modelClass));
-        $modelDefinition->setArgument(0, $modelName);
-        if ([] !== $options) {
-            $modelDefinition->setArgument(1, $options);
-        }
-
-        $modelDefinition->addTag('ai.model.embeddings_model');
-        $container->setDefinition('ai.vectorizer.'.$name.'.model', $modelDefinition);
-
         $vectorizerDefinition = new Definition(Vectorizer::class, [
             new Reference($config['platform']),
-            new Reference('ai.vectorizer.'.$name.'.model'),
+            $config['model'],
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
         $vectorizerDefinition->addTag('ai.vectorizer', ['name' => $name]);

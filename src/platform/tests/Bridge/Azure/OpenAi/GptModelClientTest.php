@@ -71,7 +71,7 @@ final class GptModelClientTest extends TestCase
     {
         $client = new GptModelClient(new MockHttpClient(), 'test.azure.com', 'deployment', '2023-12-01', 'api-key');
 
-        $this->assertTrue($client->supports(new Gpt(Gpt::GPT_4O)));
+        $this->assertTrue($client->supports(new Gpt('gpt-4o')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -87,6 +87,6 @@ final class GptModelClientTest extends TestCase
 
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new GptModelClient($httpClient, 'test.azure.com', 'gpt-deployment', '2023-12-01', 'test-api-key');
-        $client->request(new Gpt(Gpt::GPT_4O), ['messages' => [['role' => 'user', 'content' => 'Hello']]]);
+        $client->request(new Gpt('gpt-4o'), ['messages' => [['role' => 'user', 'content' => 'Hello']]]);
     }
 }

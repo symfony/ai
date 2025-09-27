@@ -51,7 +51,7 @@ final class ModelClientTest extends TestCase
     {
         $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
 
-        $this->assertTrue($modelClient->supports(new Scaleway(Scaleway::DEEPSEEK)));
+        $this->assertTrue($modelClient->supports(new Scaleway('deepseek-r1-distill-llama-70b')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -66,7 +66,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'scaleway-api-key');
-        $modelClient->request(new Scaleway(Scaleway::DEEPSEEK), ['model' => 'deepseek-r1-distill-llama-70b', 'messages' => [['role' => 'user', 'content' => 'test message']]], ['temperature' => 1]);
+        $modelClient->request(new Scaleway('deepseek-r1-distill-llama-70b'), ['model' => 'deepseek-r1-distill-llama-70b', 'messages' => [['role' => 'user', 'content' => 'test message']]], ['temperature' => 1]);
     }
 
     public function testItIsExecutingTheCorrectRequestWithArrayPayload()
@@ -81,7 +81,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'scaleway-api-key');
-        $modelClient->request(new Scaleway(Scaleway::DEEPSEEK), ['model' => 'deepseek-r1-distill-llama-70b', 'messages' => [['role' => 'user', 'content' => 'Hello']]], ['temperature' => 0.7]);
+        $modelClient->request(new Scaleway('deepseek-r1-distill-llama-70b'), ['model' => 'deepseek-r1-distill-llama-70b', 'messages' => [['role' => 'user', 'content' => 'Hello']]], ['temperature' => 0.7]);
     }
 
     public function testItUsesCorrectBaseUrl()
@@ -95,6 +95,6 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'scaleway-api-key');
-        $modelClient->request(new Scaleway(Scaleway::DEEPSEEK), ['messages' => []], []);
+        $modelClient->request(new Scaleway('deepseek-r1-distill-llama-70b'), ['messages' => []], []);
     }
 }

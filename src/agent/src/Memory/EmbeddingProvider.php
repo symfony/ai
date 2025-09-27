@@ -53,7 +53,7 @@ final readonly class EmbeddingProvider implements MemoryProviderInterface
 
         $userMessageTextContent = array_shift($userMessageTextContent);
 
-        $vectors = $this->platform->invoke($this->model, $userMessageTextContent->text)->asVectors();
+        $vectors = $this->platform->invoke($this->model->getName(), $userMessageTextContent->text)->asVectors();
         $foundEmbeddingContent = $this->vectorStore->query($vectors[0]);
         if (0 === \count($foundEmbeddingContent)) {
             return [];

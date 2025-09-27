@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Platform\Bridge\DockerModelRunner\Completions;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -18,9 +17,8 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('DOCKER_MODEL_RUNNER_HOST_URL'), http_client());
-$model = new Completions(Completions::GEMMA_3_N);
 
-$agent = new Agent($platform, $model, logger: logger());
+$agent = new Agent($platform, 'ai/gemma3n', logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),

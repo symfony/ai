@@ -55,7 +55,7 @@ final class ModelClientTest extends TestCase
     {
         $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
 
-        $this->assertTrue($modelClient->supports(new DallE(DallE::DALL_E_2)));
+        $this->assertTrue($modelClient->supports(new DallE('dall-e-2')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -70,7 +70,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new DallE(DallE::DALL_E_2), 'foo', ['n' => 1, 'response_format' => 'url']);
+        $modelClient->request(new DallE('dall-e-2'), 'foo', ['n' => 1, 'response_format' => 'url']);
     }
 
     #[TestWith(['EU', 'https://eu.api.openai.com/v1/images/generations'])]
@@ -87,6 +87,6 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key', $region);
-        $modelClient->request(new DallE(DallE::DALL_E_2), 'foo', ['n' => 1, 'response_format' => 'url']);
+        $modelClient->request(new DallE('dall-e-2'), 'foo', ['n' => 1, 'response_format' => 'url']);
     }
 }

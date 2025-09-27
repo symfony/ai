@@ -18,7 +18,6 @@ use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultPromise;
@@ -36,7 +35,7 @@ class DataCollectorTest extends TestCase
 
         $platform->method('invoke')->willReturn(new ResultPromise(static fn () => $result, $this->createStub(RawResultInterface::class)));
 
-        $result = $traceablePlatform->invoke($this->createStub(Model::class), $messageBag, ['stream' => false]);
+        $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
         $this->assertSame('Assistant response', $result->asText());
 
         $dataCollector = new DataCollector([$traceablePlatform], $this->createStub(ToolboxInterface::class), []);
@@ -60,7 +59,7 @@ class DataCollectorTest extends TestCase
 
         $platform->method('invoke')->willReturn(new ResultPromise(static fn () => $result, $this->createStub(RawResultInterface::class)));
 
-        $result = $traceablePlatform->invoke($this->createStub(Model::class), $messageBag, ['stream' => true]);
+        $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
         $this->assertSame('Assistant response', implode('', iterator_to_array($result->asStream())));
 
         $dataCollector = new DataCollector([$traceablePlatform], $this->createStub(ToolboxInterface::class), []);

@@ -11,14 +11,12 @@
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('thenlper/gte-large');
 
-$result = $platform->invoke($model, 'Today is a sunny day and I will get some ice cream.', [
+$result = $platform->invoke('thenlper/gte-large', 'Today is a sunny day and I will get some ice cream.', [
     'task' => Task::FEATURE_EXTRACTION,
 ]);
 

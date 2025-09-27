@@ -12,15 +12,13 @@
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Content\Audio;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('openai/whisper-large-v3');
 $audio = Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3');
 
-$result = $platform->invoke($model, $audio, [
+$result = $platform->invoke('openai/whisper-large-v3', $audio, [
     'task' => Task::AUTOMATIC_SPEECH_RECOGNITION,
 ]);
 

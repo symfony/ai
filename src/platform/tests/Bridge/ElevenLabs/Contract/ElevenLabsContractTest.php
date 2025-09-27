@@ -24,7 +24,7 @@ final class ElevenLabsContractTest extends TestCase
 
         $contract = ElevenLabsContract::create();
 
-        $payload = $contract->createRequestPayload(new ElevenLabs(ElevenLabs::ELEVEN_MULTILINGUAL_V2), $audio);
+        $payload = $contract->createRequestPayload(new ElevenLabs('eleven_multilingual_v2'), $audio);
 
         $this->assertSame([
             'type' => 'input_audio',

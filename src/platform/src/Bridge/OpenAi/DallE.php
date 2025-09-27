@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi;
 
-use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -19,17 +18,4 @@ use Symfony\AI\Platform\Model;
  */
 class DallE extends Model
 {
-    public const DALL_E_2 = 'dall-e-2';
-    public const DALL_E_3 = 'dall-e-3';
-
-    /** @param array<string, mixed> $options The default options for the model usage */
-    public function __construct(string $name, array $options = [])
-    {
-        $capabilities = [
-            Capability::INPUT_TEXT,
-            Capability::OUTPUT_IMAGE,
-        ];
-
-        parent::__construct($name, $capabilities, $options);
-    }
 }

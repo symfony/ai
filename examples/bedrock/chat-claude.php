@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -23,12 +22,11 @@ if (!isset($_SERVER['AWS_ACCESS_KEY_ID'], $_SERVER['AWS_SECRET_ACCESS_KEY'], $_S
 }
 
 $platform = PlatformFactory::create();
-$model = new Claude('claude-3-7-sonnet-20250219');
 
 $messages = new MessageBag(
     Message::forSystem('You answer questions in short and concise manner.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $platform->invoke($model, $messages);
+$result = $platform->invoke('claude-3-7-sonnet-20250219', $messages);
 
 echo $result->getResult()->getContent().\PHP_EOL;

@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentUrlNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\ToolNormalizer;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -29,12 +30,14 @@ final class PlatformFactory
         string $apiKey,
         ?HttpClientInterface $httpClient = null,
         ?Contract $contract = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
             [new Embeddings\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey)],
             [new Embeddings\ResultConverter(), new Llm\ResultConverter()],
+            $modelCatalog,
             $contract ?? Contract::create(
                 new ToolNormalizer(),
                 new DocumentNormalizer(),

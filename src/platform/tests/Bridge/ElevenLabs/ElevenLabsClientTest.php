@@ -32,7 +32,7 @@ final class ElevenLabsClientTest extends TestCase
             'my-api-key',
         );
 
-        $this->assertTrue($client->supports(new ElevenLabs(ElevenLabs::ELEVEN_MULTILINGUAL_V2)));
+        $this->assertTrue($client->supports(new ElevenLabs('eleven_multilingual_v2')));
         $this->assertFalse($client->supports(new Model('any-model')));
     }
 
@@ -72,7 +72,7 @@ final class ElevenLabsClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The payload must be an array, received "string".');
         $this->expectExceptionCode(0);
-        $client->request(new ElevenLabs(ElevenLabs::ELEVEN_MULTILINGUAL_V2), 'foo');
+        $client->request(new ElevenLabs('eleven_multilingual_v2'), 'foo');
     }
 
     public function testClientCanPerformSpeechToTextRequest()
@@ -91,7 +91,7 @@ final class ElevenLabsClientTest extends TestCase
 
         $payload = $normalizer->normalize(Audio::fromFile(\dirname(__DIR__, 5).'/fixtures/audio.mp3'));
 
-        $client->request(new ElevenLabs(ElevenLabs::SCRIBE_V1), $payload);
+        $client->request(new ElevenLabs('scribe_v1'), $payload);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -122,7 +122,7 @@ final class ElevenLabsClientTest extends TestCase
         $mockHttpClient = new MockHttpClient([
             new JsonMockResponse([
                 [
-                    'model_id' => ElevenLabs::ELEVEN_MULTILINGUAL_V2,
+                    'model_id' => 'eleven_multilingual_v2',
                     'can_do_text_to_speech' => true,
                 ],
             ]),
@@ -137,7 +137,7 @@ final class ElevenLabsClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The payload must contain a "text" key');
         $this->expectExceptionCode(0);
-        $client->request(new ElevenLabs(ElevenLabs::ELEVEN_MULTILINGUAL_V2, [
+        $client->request(new ElevenLabs('eleven_multilingual_v2', options: [
             'voice' => 'Dslrhjl3ZpzrctukrQSN',
         ]), []);
     }
@@ -149,7 +149,7 @@ final class ElevenLabsClientTest extends TestCase
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
                 [
-                    'model_id' => ElevenLabs::ELEVEN_MULTILINGUAL_V2,
+                    'model_id' => 'eleven_multilingual_v2',
                     'can_do_text_to_speech' => true,
                 ],
             ]),
@@ -161,7 +161,7 @@ final class ElevenLabsClientTest extends TestCase
             'my-api-key',
         );
 
-        $client->request(new ElevenLabs(ElevenLabs::ELEVEN_MULTILINGUAL_V2, [
+        $client->request(new ElevenLabs('eleven_multilingual_v2', options: [
             'voice' => 'Dslrhjl3ZpzrctukrQSN',
         ]), [
             'text' => 'foo',
@@ -205,7 +205,7 @@ final class ElevenLabsClientTest extends TestCase
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
                 [
-                    'model_id' => ElevenLabs::ELEVEN_MULTILINGUAL_V2,
+                    'model_id' => 'eleven_multilingual_v2',
                     'can_do_text_to_speech' => true,
                 ],
             ]),
@@ -217,7 +217,7 @@ final class ElevenLabsClientTest extends TestCase
             'my-api-key',
         );
 
-        $result = $client->request(new ElevenLabs(ElevenLabs::ELEVEN_MULTILINGUAL_V2, [
+        $result = $client->request(new ElevenLabs('eleven_multilingual_v2', options: [
             'voice' => 'Dslrhjl3ZpzrctukrQSN',
             'stream' => true,
         ]), [

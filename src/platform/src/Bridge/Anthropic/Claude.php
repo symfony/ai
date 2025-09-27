@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
-use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -34,16 +33,8 @@ class Claude extends Model
     /**
      * @param array<string, mixed> $options The default options for the model usage
      */
-    public function __construct(string $name, array $options = [])
+    public function __construct(string $name, array $capabilities = [], array $options = [])
     {
-        $capabilities = [
-            Capability::INPUT_MESSAGES,
-            Capability::INPUT_IMAGE,
-            Capability::OUTPUT_TEXT,
-            Capability::OUTPUT_STREAMING,
-            Capability::TOOL_CALLING,
-        ];
-
         if (!isset($options['max_tokens'])) {
             $options['max_tokens'] = 1000;
         }

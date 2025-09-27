@@ -13,7 +13,6 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -21,7 +20,6 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create($_ENV['OPENAI_API_KEY'], http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI);
 
 $systemPromptProcessor = new SystemPromptInputProcessor('You are a professional trainer with short, personalized advice and a motivating claim.');
 
@@ -32,8 +30,8 @@ $personalFacts = new StaticMemoryProvider(
 );
 $memoryProcessor = new MemoryInputProcessor($personalFacts);
 
-$chain = new Agent($platform, $model, [$systemPromptProcessor, $memoryProcessor], logger: logger());
+$agent = new Agent($platform, 'gpt-4o-mini', [$systemPromptProcessor, $memoryProcessor], logger: logger());
 $messages = new MessageBag(Message::ofUser('What do we do today?'));
-$result = $chain->call($messages);
+$result = $agent->call($messages);
 
 echo $result->getContent().\PHP_EOL;

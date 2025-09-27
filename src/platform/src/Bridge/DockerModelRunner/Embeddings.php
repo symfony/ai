@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\DockerModelRunner;
 
-use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -19,13 +18,4 @@ use Symfony\AI\Platform\Model;
  */
 class Embeddings extends Model
 {
-    public const NOMIC_EMBED_TEXT = 'ai/nomic-embed-text-v1.5';
-    public const MXBAI_EMBED_LARGE = 'ai/mxbai-embed-large';
-    public const EMBEDDING_GEMMA = 'ai/embeddinggemma';
-    public const GRANITE_EMBEDDING_MULTI = 'ai/granite-embedding-multilingual';
-
-    public function __construct(string $name, array $options = [])
-    {
-        parent::__construct($name, Capability::cases(), $options);
-    }
 }

@@ -25,19 +25,38 @@ use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
+use Symfony\AI\Platform\Bridge\AiMlApi\ModelCatalog as AiMlApiModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
+use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\TokenOutputProcessor as AnthropicTokenOutputProcessor;
+use Symfony\AI\Platform\Bridge\Azure\Meta\ModelCatalog as AzureMetaModelCatalog;
+use Symfony\AI\Platform\Bridge\Azure\OpenAi\ModelCatalog as AzureOpenAiModelCatalog;
+use Symfony\AI\Platform\Bridge\Cerebras\ModelCatalog as CerebrasModelCatalog;
+use Symfony\AI\Platform\Bridge\DockerModelRunner\ModelCatalog as DockerModelRunnerModelCatalog;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
+use Symfony\AI\Platform\Bridge\Gemini\ModelCatalog as GeminiModelCatalog;
 use Symfony\AI\Platform\Bridge\Gemini\TokenOutputProcessor as GeminiTokenOutputProcessor;
+use Symfony\AI\Platform\Bridge\HuggingFace\ModelCatalog as HuggingFaceModelCatalog;
+use Symfony\AI\Platform\Bridge\LmStudio\ModelCatalog as LmStudioModelCatalog;
+use Symfony\AI\Platform\Bridge\Mistral\ModelCatalog as MistralModelCatalog;
 use Symfony\AI\Platform\Bridge\Mistral\TokenOutputProcessor as MistralTokenOutputProcessor;
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
+use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog as OllamaModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
+use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog as OpenAiModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor as OpenAiTokenOutputProcessor;
+use Symfony\AI\Platform\Bridge\OpenRouter\ModelCatalog as OpenRouterModelCatalog;
 use Symfony\AI\Platform\Bridge\Perplexity\Contract\PerplexityContract;
+use Symfony\AI\Platform\Bridge\Perplexity\ModelCatalog as PerplexityModelCatalog;
 use Symfony\AI\Platform\Bridge\Perplexity\SearchResultProcessor as PerplexitySearchResultProcessor;
 use Symfony\AI\Platform\Bridge\Perplexity\TokenOutputProcessor as PerplexityTokenOutputProcessor;
+use Symfony\AI\Platform\Bridge\Replicate\ModelCatalog as ReplicateModelCatalog;
+use Symfony\AI\Platform\Bridge\Scaleway\ModelCatalog as ScalewayModelCatalog;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract as VertexAiGeminiContract;
+use Symfony\AI\Platform\Bridge\VertexAi\ModelCatalog as VertexAiModelCatalog;
 use Symfony\AI\Platform\Bridge\VertexAi\TokenOutputProcessor as VertexAiTokenOutputProcessor;
+use Symfony\AI\Platform\Bridge\Voyage\ModelCatalog as VoyageModelCatalog;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
@@ -47,6 +66,7 @@ use Symfony\AI\Store\Command\SetupStoreCommand;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
+        // contract
         ->set('ai.platform.contract.default', Contract::class)
             ->factory([Contract::class, 'create'])
         ->set('ai.platform.contract.openai', Contract::class)
@@ -61,6 +81,28 @@ return static function (ContainerConfigurator $container): void {
             ->factory([OllamaContract::class, 'create'])
         ->set('ai.platform.contract.perplexity', Contract::class)
             ->factory([PerplexityContract::class, 'create'])
+
+        // model catalog
+        ->set('ai.platform.model_catalog.aimlapi', AiMlApiModelCatalog::class)
+        ->set('ai.platform.model_catalog.anthropic', AnthropicModelCatalog::class)
+        ->set('ai.platform.model_catalog.azure.meta', AzureMetaModelCatalog::class)
+        ->set('ai.platform.model_catalog.azure.openai', AzureOpenAiModelCatalog::class)
+        ->set('ai.platform.model_catalog.cerebras', CerebrasModelCatalog::class)
+        ->set('ai.platform.model_catalog.dockermodelrunner', DockerModelRunnerModelCatalog::class)
+        ->set('ai.platform.model_catalog.elevenlabs', ElevenLabsModelCatalog::class)
+        ->set('ai.platform.model_catalog.gemini', GeminiModelCatalog::class)
+        ->set('ai.platform.model_catalog.huggingface', HuggingFaceModelCatalog::class)
+        ->set('ai.platform.model_catalog.lmstudio', LmStudioModelCatalog::class)
+        ->set('ai.platform.model_catalog.mistral', MistralModelCatalog::class)
+        ->set('ai.platform.model_catalog.ollama', OllamaModelCatalog::class)
+        ->set('ai.platform.model_catalog.openai', OpenAiModelCatalog::class)
+        ->set('ai.platform.model_catalog.openrouter', OpenRouterModelCatalog::class)
+        ->set('ai.platform.model_catalog.perplexity', PerplexityModelCatalog::class)
+        ->set('ai.platform.model_catalog.replicate', ReplicateModelCatalog::class)
+        ->set('ai.platform.model_catalog.scaleway', ScalewayModelCatalog::class)
+        ->set('ai.platform.model_catalog.vertexai.gemini', VertexAiModelCatalog::class)
+        ->set('ai.platform.model_catalog.voyage', VoyageModelCatalog::class)
+
         // structured output
         ->set('ai.agent.response_format_factory', ResponseFormatFactory::class)
             ->args([

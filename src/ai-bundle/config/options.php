@@ -15,10 +15,11 @@ use Codewithkyrian\ChromaDB\Client as ChromaDbClient;
 use MongoDB\Client as MongoDbClient;
 use Probots\Pinecone\Client as PineconeClient;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\StoreInterface;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 return static function (DefinitionConfigurator $configurator): void {
@@ -176,6 +177,32 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->end()
                 ->end()
             ->end()
+            ->arrayNode('model')
+                ->useAttributeAsKey('platform')
+                ->arrayPrototype()
+                    ->useAttributeAsKey('model_name')
+                    ->normalizeKeys(false)
+                    ->validate()
+                        ->ifEmpty()
+                        ->thenInvalid('Model name cannot be empty.')
+                    ->end()
+                    ->arrayPrototype()
+                        ->children()
+                            ->arrayNode('capabilities')
+                                ->info('Array of capabilities that this model supports')
+                                ->enumPrototype(Capability::class)
+                                    ->enumFqcn(Capability::class)
+                                ->end()
+                                ->defaultValue([])
+                                ->validate()
+                                    ->ifEmpty()
+                                    ->thenInvalid('At least one capability must be specified for each model.')
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end()
             ->arrayNode('agent')
                 ->useAttributeAsKey('name')
                 ->arrayPrototype()
@@ -188,27 +215,60 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Enable tracking of token usage for the agent')
                             ->defaultTrue()
                         ->end()
-                        ->arrayNode('model')
-                            ->children()
-                                ->stringNode('class')
-                                    ->isRequired()
-                                    ->validate()
-                                        ->ifTrue(function ($v) {
-                                            return !is_a($v, Model::class, true);
-                                        })
-                                        ->thenInvalid(\sprintf('The model class "%%s" must extend %s.', Model::class))
-                                    ->end()
-                                ->end()
-                                ->stringNode('name')->isRequired()->end()
-                                ->arrayNode('options')
-                                    ->variablePrototype()->end()
-                                ->end()
+                        ->variableNode('model')
+                            ->validate()
+                                ->ifTrue(function ($v) {
+                                    return !\is_string($v) && (!\is_array($v) || !isset($v['name']));
+                                })
+                                ->thenInvalid('Model must be a string or an array with a "name" key.')
                             ->end()
                             ->validate()
                                 ->ifTrue(function ($v) {
-                                    return isset($v['name']) && str_contains($v['name'], '?') && !empty($v['options']);
+                                    // Check if both query parameters and options array are provided
+                                    if (\is_array($v) && isset($v['name']) && isset($v['options']) && [] !== $v['options']) {
+                                        return str_contains($v['name'], '?');
+                                    }
+
+                                    return false;
                                 })
-                                ->thenInvalid('Cannot specify both query parameters in model name and options array. Use either "model.name" with query parameters (e.g., "gpt-4o-mini?temperature=0.5") or separate "model.name" and "model.options".')
+                                ->thenInvalid('Cannot use both query parameters in model name and options array.')
+                            ->end()
+                            ->beforeNormalization()
+                                ->always(function ($v) {
+                                    if (\is_string($v)) {
+                                        return $v;
+                                    }
+
+                                    // It's an array with 'name' and optionally 'options'
+                                    $model = $v['name'];
+                                    $options = $v['options'] ?? [];
+
+                                    // Parse query parameters from model name if present
+                                    if (str_contains($model, '?')) {
+                                        $parsed = parse_url($model);
+                                        $model = $parsed['path'] ?? '';
+
+                                        if ('' === $model) {
+                                            throw new InvalidConfigurationException('Model name cannot be empty.');
+                                        }
+
+                                        if (isset($parsed['query'])) {
+                                            // If options array is also provided, throw an error
+                                            if ([] !== $options) {
+                                                throw new InvalidConfigurationException('Cannot use both query parameters in model name and options array.');
+                                            }
+                                            parse_str($parsed['query'], $existingOptions);
+                                            $options = $existingOptions;
+                                        }
+                                    }
+
+                                    // Return model string with options as query parameters
+                                    if ([] === $options) {
+                                        return $model;
+                                    }
+
+                                    return $model.'?'.http_build_query($options);
+                                })
                             ->end()
                         ->end()
                         ->booleanNode('structured_output')->defaultTrue()->end()
@@ -535,27 +595,60 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Service name of platform')
                             ->defaultValue(PlatformInterface::class)
                         ->end()
-                        ->arrayNode('model')
-                            ->children()
-                                ->stringNode('class')
-                                    ->isRequired()
-                                    ->validate()
-                                        ->ifTrue(function ($v) {
-                                            return !is_a($v, Model::class, true);
-                                        })
-                                        ->thenInvalid(\sprintf('The model class "%%s" must extend %s.', Model::class))
-                                    ->end()
-                                ->end()
-                                ->stringNode('name')->isRequired()->end()
-                                ->arrayNode('options')
-                                    ->variablePrototype()->end()
-                                ->end()
+                        ->variableNode('model')
+                            ->validate()
+                                ->ifTrue(function ($v) {
+                                    return !\is_string($v) && (!\is_array($v) || !isset($v['name']));
+                                })
+                                ->thenInvalid('Model must be a string or an array with a "name" key.')
                             ->end()
                             ->validate()
                                 ->ifTrue(function ($v) {
-                                    return isset($v['name']) && str_contains($v['name'], '?') && !empty($v['options']);
+                                    // Check if both query parameters and options array are provided
+                                    if (\is_array($v) && isset($v['name']) && isset($v['options']) && [] !== $v['options']) {
+                                        return str_contains($v['name'], '?');
+                                    }
+
+                                    return false;
                                 })
-                                ->thenInvalid('Cannot specify both query parameters in model name and options array. Use either "model.name" with query parameters (e.g., "gpt-4o-mini?temperature=0.5") or separate "model.name" and "model.options".')
+                                ->thenInvalid('Cannot use both query parameters in model name and options array.')
+                            ->end()
+                            ->beforeNormalization()
+                                ->always(function ($v) {
+                                    if (\is_string($v)) {
+                                        return $v;
+                                    }
+
+                                    // It's an array with 'name' and optionally 'options'
+                                    $model = $v['name'];
+                                    $options = $v['options'] ?? [];
+
+                                    // Parse query parameters from model name if present
+                                    if (str_contains($model, '?')) {
+                                        $parsed = parse_url($model);
+                                        $model = $parsed['path'] ?? '';
+
+                                        if ('' === $model) {
+                                            throw new InvalidConfigurationException('Model name cannot be empty.');
+                                        }
+
+                                        if (isset($parsed['query'])) {
+                                            // If options array is also provided, throw an error
+                                            if ([] !== $options) {
+                                                throw new InvalidConfigurationException('Cannot use both query parameters in model name and options array.');
+                                            }
+                                            parse_str($parsed['query'], $existingOptions);
+                                            $options = $existingOptions;
+                                        }
+                                    }
+
+                                    // Return model string with options as query parameters
+                                    if ([] === $options) {
+                                        return $model;
+                                    }
+
+                                    return $model.'?'.http_build_query($options);
+                                })
                             ->end()
                         ->end()
                     ->end()

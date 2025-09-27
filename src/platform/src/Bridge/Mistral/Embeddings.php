@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\Mistral;
 
-use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -19,13 +18,4 @@ use Symfony\AI\Platform\Model;
  */
 final class Embeddings extends Model
 {
-    public const MISTRAL_EMBED = 'mistral-embed';
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    public function __construct(string $name, array $options = [])
-    {
-        parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
-    }
 }

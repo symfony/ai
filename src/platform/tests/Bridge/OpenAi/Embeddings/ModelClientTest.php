@@ -58,7 +58,7 @@ final class ModelClientTest extends TestCase
     {
         $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
 
-        $this->assertTrue($modelClient->supports(new Embeddings(Embeddings::TEXT_3_SMALL)));
+        $this->assertTrue($modelClient->supports(new Embeddings('text-embedding-3-small')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -73,7 +73,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new Embeddings(Embeddings::TEXT_3_SMALL), 'test text', []);
+        $modelClient->request(new Embeddings('text-embedding-3-small'), 'test text', []);
     }
 
     public function testItIsExecutingTheCorrectRequestWithCustomOptions()
@@ -88,7 +88,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new Embeddings(Embeddings::TEXT_3_LARGE), 'test text', ['dimensions' => 256]);
+        $modelClient->request(new Embeddings('text-embedding-3-large'), 'test text', ['dimensions' => 256]);
     }
 
     public function testItIsExecutingTheCorrectRequestWithArrayInput()
@@ -103,7 +103,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new Embeddings(Embeddings::TEXT_3_SMALL), ['text1', 'text2', 'text3'], []);
+        $modelClient->request(new Embeddings('text-embedding-3-small'), ['text1', 'text2', 'text3'], []);
     }
 
     #[TestWith(['EU', 'https://eu.api.openai.com/v1/embeddings'])]
@@ -120,6 +120,6 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key', $region);
-        $modelClient->request(new Embeddings(Embeddings::TEXT_3_SMALL), 'test input', []);
+        $modelClient->request(new Embeddings('text-embedding-3-small'), 'test input', []);
     }
 }

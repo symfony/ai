@@ -21,17 +21,17 @@ final class GptTest extends TestCase
 {
     public function testItCreatesGptWithDefaultSettings()
     {
-        $gpt = new Gpt(Gpt::GPT_4O);
+        $gpt = new Gpt('gpt-4o');
 
-        $this->assertSame(Gpt::GPT_4O, $gpt->getName());
+        $this->assertSame('gpt-4o', $gpt->getName());
         $this->assertSame([], $gpt->getOptions());
     }
 
     public function testItCreatesGptWithCustomSettings()
     {
-        $gpt = new Gpt(Gpt::GPT_4_TURBO, ['temperature' => 0.5, 'max_tokens' => 1000]);
+        $gpt = new Gpt('gpt-4-turbo', [], ['temperature' => 0.5, 'max_tokens' => 1000]);
 
-        $this->assertSame(Gpt::GPT_4_TURBO, $gpt->getName());
+        $this->assertSame('gpt-4-turbo', $gpt->getName());
         $this->assertSame(['temperature' => 0.5, 'max_tokens' => 1000], $gpt->getOptions());
     }
 }
