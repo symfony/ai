@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\ElevenLabs;
 
-use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 
 /**
