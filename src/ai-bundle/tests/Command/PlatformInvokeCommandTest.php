@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\AiBundle\Tests\Command;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -20,8 +18,6 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
-#[CoversClass(PlatformInvokeCommand::class)]
-#[UsesClass(InvalidArgumentException::class)]
 final class PlatformInvokeCommandTest extends TestCase
 {
     public function testExecuteWithNonExistentPlatform()
