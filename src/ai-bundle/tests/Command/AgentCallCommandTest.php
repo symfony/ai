@@ -256,5 +256,3 @@ final class AgentCallCommandTest extends TestCase
         return $application;
     }
 }
-
-

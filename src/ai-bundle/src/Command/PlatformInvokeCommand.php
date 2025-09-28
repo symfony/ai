@@ -164,5 +164,3 @@ final class PlatformInvokeCommand extends Command
         };
     }
 }
-
-
