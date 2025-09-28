@@ -1,0 +1,58 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-19T22:21:44Z
+
+@chr-hertel do we need the `$options` on the `Model`?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-26T12:22:26Z
+
+i am so torn 😆 i love the changes in the examples. i hate the arrays in the `ModelCatalog` - but we discussed that already. could be a yaml as a follow up.
+
+just one thing, that is personally value, is the code completion by the IDE, e.g. `Claude::SOMETHING` - i won't miss the classes, but will def miss the constants
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-26T12:27:14Z
+
+> i am so torn 😆 i love the changes in the examples. i hate the arrays in the ModelCatalog - but we discussed that already. could be a yaml as a follow up.
+
+Yes follow up is fine
+
+> just one thing, that is personally value, is the code completion by the IDE, e.g. Claude::SOMETHING - i won't miss the classes, but will def miss the constants
+
+we could for sure generate such things, but we need to provide BC for it and TBH how often do you need to write such things. Another idea could be Symfony IDE plugin or so, or can we generate something for phpdoc which helps autocomplete?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-27T05:13:26Z
+
+Not sure, why this was missing while I rebased the branch... 🤔
+
+https://github.com/symfony/ai/pull/640/commits/f888ee386092c4acebf6bab59fea55cc7aaec59a
+
+This should fix **Anthropic** and **Bedrock**, as they both are using the **Claude** class, which is not nice and I fixed in
+* https://github.com/symfony/ai/pull/687
+
+**ElevenLabs** should be fixed by
+* https://github.com/symfony/ai/pull/686
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-28T18:59:04Z
+
+replicate, anthropic, elevenlabs and azure look good now - only bedrock is failing:
+<img width="1473" height="410" alt="image" src="https://github.com/user-attachments/assets/73535bab-a460-4a0f-b703-f2b4cf583802" />
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-28T20:31:24Z
+
+Will have a look at bedrock, but cannot test it on my own 👍🏻
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-28T20:36:31Z
+
+just give me a ping and i'll rerun :+1:
