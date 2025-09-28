@@ -14,7 +14,6 @@ namespace Symfony\AI\AiBundle\Command;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -38,7 +37,7 @@ final class PlatformInvokeCommand extends Command
 {
     private string $message;
     private PlatformInterface $platform;
-    private Model $model;
+    private string $model;
 
     /**
      * @param ServiceLocator<PlatformInterface> $platforms
@@ -98,13 +97,11 @@ final class PlatformInvokeCommand extends Command
 
         $this->platform = $this->platforms->get($platformName);
 
-        $modelName = trim((string) $input->getArgument('model'));
+        $this->model = trim((string) $input->getArgument('model'));
 
-        if ('' === $modelName) {
+        if ('' === $this->model) {
             throw new InvalidArgumentException('Model is required.');
         }
-
-        $this->model = self::createModelForPlatform($platformName, $modelName);
 
         $this->message = trim((string) $input->getArgument('message'));
 
@@ -146,21 +143,5 @@ final class PlatformInvokeCommand extends Command
         }
 
         return Command::SUCCESS;
-    }
-
-    private static function createModelForPlatform(string $platformName, string $modelName): Model
-    {
-        return match ($platformName) {
-            'openai' => new \Symfony\AI\Platform\Bridge\OpenAi\Gpt($modelName),
-            'anthropic' => new \Symfony\AI\Platform\Bridge\Anthropic\Claude($modelName),
-            'gemini', 'google' => new \Symfony\AI\Platform\Bridge\Gemini\Gemini($modelName),
-            'vertexai' => new \Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model($modelName),
-            'ollama' => new \Symfony\AI\Platform\Bridge\Ollama\Ollama($modelName),
-            'mistral' => new \Symfony\AI\Platform\Bridge\Mistral\Mistral($modelName),
-            'lmstudio' => new \Symfony\AI\Platform\Bridge\LmStudio\Completions($modelName),
-            'cerebras' => new \Symfony\AI\Platform\Bridge\Cerebras\Model($modelName),
-            'perplexity' => new \Symfony\AI\Platform\Bridge\Perplexity\Perplexity($modelName),
-            default => throw new InvalidArgumentException(\sprintf('Platform "%s" is not supported by the ai:platform:invoke command', $platformName)),
-        };
     }
 }
