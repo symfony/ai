@@ -122,9 +122,7 @@ final class PlatformInvokeCommand extends Command
             $result = $resultPromise->getResult();
 
             if ($result instanceof TextResult) {
-                $platformName = trim((string) $input->getArgument('platform'));
-                $io->success(\sprintf('Response from %s:', $platformName));
-                $io->writeln($result->getContent());
+                $io->writeln('<info>Response:</info> '.$result->getContent());
             } else {
                 $io->error('Unexpected response type from platform');
 
