@@ -15,10 +15,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
-use Symfony\Component\HttpClient\Response\MockResponse;
-use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -28,7 +25,6 @@ final readonly class OllamaClient implements ModelClientInterface
     public function __construct(
         private HttpClientInterface $httpClient,
         private string $hostUrl,
-        private ?CacheInterface $cache = null,
     ) {
     }
 
@@ -72,40 +68,10 @@ final readonly class OllamaClient implements ModelClientInterface
             unset($options['response_format']);
         }
 
-        $requestCallback = fn ($options, $payload): ResponseInterface => $this->httpClient->request('POST', \sprintf('%s/api/chat', $this->hostUrl), [
-            'headers' => [
-                'Content-Type' => 'application/json',
-            ],
-            'json' => [
-                ...$options,
-                ...$payload,
-            ],
-        ]);
-
-        if ($this->cache instanceof CacheInterface && (\array_key_exists('prompt_cache_key', $options) && '' !== $options['prompt_cache_key'])) {
-            $cacheKey = \sprintf('%s_%s', $options['prompt_cache_key'], md5(\is_array($payload) ? json_encode($payload) : ['context' => $payload]));
-
-            unset($options['prompt_cache_key']);
-
-            $cachedResponse = $this->cache->get($cacheKey, static function () use ($requestCallback, $options, $payload): array {
-                $response = $requestCallback($options, $payload);
-
-                return [
-                    'content' => $response->getContent(),
-                    'headers' => $response->getHeaders(),
-                    'http_code' => $response->getStatusCode(),
-                ];
-            });
-
-            $mockedResponse = new MockResponse($cachedResponse['content'], [
-                'http_code' => $cachedResponse['http_code'],
-                'response_headers' => $cachedResponse['headers'],
-            ]);
-
-            return new RawHttpResult(MockResponse::fromRequest('POST', \sprintf('%s/api/chat', $this->hostUrl), $options, $mockedResponse));
-        }
-
-        return new RawHttpResult($requestCallback($options, $payload));
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/api/chat', $this->hostUrl), [
+            'headers' => ['Content-Type' => 'application/json'],
+            'json' => array_merge($options, $payload),
+        ]));
     }
 
     /**
