@@ -17,7 +17,7 @@ use Symfony\Component\Uid\Uuid;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class TextDocument implements Embeddable
+final readonly class TextDocument implements EmbeddableDocumentInterface
 {
     public function __construct(
         public Uuid $id,
@@ -37,5 +37,10 @@ final readonly class TextDocument implements Embeddable
     public function getContent(): string
     {
         return $this->content;
+    }
+
+    public function getMetadata(): Metadata
+    {
+        return $this->metadata;
     }
 }
