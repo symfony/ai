@@ -11,11 +11,11 @@
 
 namespace Symfony\AI\Store\Document\Loader;
 
+use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
 use Symfony\AI\Store\Document\LoaderInterface;
-use Symfony\AI\Store\Document\TextDocument;
 
 /**
- * Loader that returns pre-loaded TextDocuments from memory.
+ * Loader that returns preloaded documents from memory.
  * Useful for testing or when documents are already available as objects.
  *
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -23,7 +23,7 @@ use Symfony\AI\Store\Document\TextDocument;
 final readonly class InMemoryLoader implements LoaderInterface
 {
     /**
-     * @param TextDocument[] $documents
+     * @param EmbeddableDocumentInterface[] $documents
      */
     public function __construct(
         private array $documents = [],

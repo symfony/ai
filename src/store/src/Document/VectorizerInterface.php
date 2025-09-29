@@ -14,7 +14,7 @@ namespace Symfony\AI\Store\Document;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
- * Interface for converting a collection of TextDocuments into VectorDocuments
+ * Interface for converting a collection of Embeddable documents into VectorDocuments
  * and for vectorizing individual strings.
  *
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -22,12 +22,12 @@ use Symfony\AI\Platform\Vector\Vector;
 interface VectorizerInterface
 {
     /**
-     * @param TextDocument[]       $documents
-     * @param array<string, mixed> $options   Options to pass to the underlying platform
+     * @param EmbeddableDocumentInterface[] $documents
+     * @param array<string, mixed>          $options   Options to pass to the underlying platform
      *
      * @return VectorDocument[]
      */
-    public function vectorizeTextDocuments(array $documents, array $options = []): array;
+    public function vectorizeEmbeddableDocuments(array $documents, array $options = []): array;
 
     /**
      * Vectorizes a single string or Stringable object into a Vector.
