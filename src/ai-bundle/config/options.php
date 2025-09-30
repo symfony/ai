@@ -128,6 +128,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->defaultValue('http_client')
                                 ->info('Service ID of the HTTP client to use')
                             ->end()
+                            ->scalarNode('cache')->end()
                         ->end()
                     ->end()
                     ->arrayNode('cerebras')
