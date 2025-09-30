@@ -30,6 +30,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'llama3' => ['llama3', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'mistral' => ['mistral', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'qwen3' => ['qwen3', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'qwen3:32b' => ['qwen3:32b', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'qwen' => ['qwen', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'qwen2' => ['qwen2', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'qwen2.5' => ['qwen2.5', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
@@ -45,6 +46,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'nomic-embed-text' => ['nomic-embed-text', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::INPUT_MULTIPLE]];
         yield 'bge-m3' => ['bge-m3', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::INPUT_MULTIPLE]];
         yield 'all-minilm' => ['all-minilm', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::INPUT_MULTIPLE]];
+        yield 'all-minilm:33m' => ['all-minilm:33m', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::INPUT_MULTIPLE]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface
