@@ -23,7 +23,7 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: class-string<\Symfony\AI\Platform\Model>, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: class-string<Model>, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
