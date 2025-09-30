@@ -34,6 +34,11 @@ final readonly class TextDocument implements EmbeddableDocumentInterface
         return new self($this->id, $content, $this->metadata);
     }
 
+    public function getId(): Uuid|string|int
+    {
+        return $this->id;
+    }
+
     public function getContent(): string
     {
         return $this->content;
