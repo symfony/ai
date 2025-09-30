@@ -42,7 +42,7 @@ final readonly class Vectorizer implements VectorizerInterface
             $this->logger->debug('Using sequential vectorization for model without multiple input support');
             $results = [];
             foreach ($documents as $i => $document) {
-                $this->logger->debug('Vectorizing document', ['document_index' => $i, 'document_id' => $document->id]);
+                $this->logger->debug('Vectorizing document', ['document_index' => $i, 'document_id' => $document->getId()]);
                 $results[] = $this->platform->invoke($this->model, $document->getContent(), $options);
             }
 
