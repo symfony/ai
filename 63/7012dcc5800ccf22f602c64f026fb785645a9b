@@ -1,0 +1,70 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-26T19:25:45Z
+
+@chr-hertel WDYT about:
+
+```yaml
+$multiAgent = new MultiAgent(
+    orchestrator: $orchestrator,
+    handoffs: [
+        new Handoff(to: $technical, when: ['bug', 'problem', 'technical', 'error']),
+    ],
+    fallback/default: $general
+    logger: logger(),
+);
+```
+
+This way we can always fallback in any case, and when/triggers can be required.
+
+also not the `to:` and `when:` wording in the `Handoff`
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-26T21:46:52Z
+
+> @chr-hertel WDYT about:
+>
+> ```yaml
+> $multiAgent = new MultiAgent(
+>     orchestrator: $orchestrator,
+>     handoffs: [
+>         new Handoff(to: $technical, when: ['bug', 'problem', 'technical', 'error']),
+>     ],
+>     fallback/default: $general
+>     logger: logger(),
+> );
+> ```
+>
+> This way we can always fallback in any case, and when/triggers can be required.
+>
+> also not the `to:` and `when:` wording in the `Handoff`
+
+![giphy](https://github.com/user-attachments/assets/4172109d-eb97-4967-8a85-762de3b05230)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-29T20:48:20Z
+
+Alright, this is great, no doubt about it - i like that with handoffs we can share the context between agents - different to agents as tools where we basically isolate them.
+
+but one thing that still made me wonder - why do we differentiate between multi-agent and agent - a bit confusing even when we think of an agent that has other agents as tools, but is not called multi agent.
+
+this is why i ended up with one idea, why not combine?
+
+```yaml
+agents:
+    orchestrator:
+        model: 'gpt-4o-mini'
+        prompt: '...'
+        tools: [...]
+        handoffs: [...]
+```
+
+don't know how tho. just thinking it would be cool :D
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-01T10:57:01Z
+
+Its green, but lets keep it open for know, I will try to get into your idea @chr-hertel
