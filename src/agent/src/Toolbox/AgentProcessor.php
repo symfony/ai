@@ -91,6 +91,9 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         return array_reduce($tools, fn (bool $carry, mixed $item) => $carry && \is_string($item), true);
     }
 
+    /**
+     * @param array<mixed> $tools
+     */
     private function isToolsArray(array $tools): bool
     {
         return array_reduce($tools, fn (bool $carry, mixed $item) => $carry && $item instanceof Tool, true);
