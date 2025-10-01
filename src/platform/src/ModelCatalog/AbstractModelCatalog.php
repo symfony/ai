@@ -35,13 +35,12 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
         $parsed = self::parseModelName($modelName);
         $actualModelName = $parsed['name'];
         $options = $parsed['options'];
-        $modelBaseName = $parsed['baseName'];
 
-        if (!isset($this->models[$actualModelName]) && !isset($this->models[$modelBaseName])) {
+        if (!isset($this->models[$actualModelName])) {
             throw new ModelNotFoundException(\sprintf('Model "%s" not found.', $actualModelName));
         }
 
-        $modelConfig = $this->models[$modelName] ?? $this->models[$modelBaseName];
+        $modelConfig = $this->models[$actualModelName];
         $modelClass = $modelConfig['class'];
 
         if (!class_exists($modelClass)) {
@@ -65,11 +64,11 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
     }
 
     /**
-     * Extracts model name, base model name (without size suffix) and options from a model name string that may contain query parameters.
+     * Extracts model name and options from a model name string that may contain query parameters.
      *
-     * @param string $modelName The model name, potentially with size suffix and query parameters (e.g., "model-name:32b?param=value&other=123")
+     * @param string $modelName The model name, potentially with query parameters (e.g., "model-name?param=value&other=123")
      *
-     * @return array{name: string, baseName: string, options: array<string, mixed>} An array containing the model name and parsed options
+     * @return array{name: string, options: array<string, mixed>} An array containing the model name and parsed options
      */
     protected static function parseModelName(string $modelName): array
     {
@@ -90,7 +89,6 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
 
         return [
             'name' => $actualModelName,
-            'baseName' => explode(':', $actualModelName, 2)[0],
             'options' => $options,
         ];
     }

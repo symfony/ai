@@ -125,32 +125,6 @@ final class AbstractModelCatalogTest extends TestCase
         $this->assertIsInt($options['a']['e']);
     }
 
-    public function testGetModelWithSizeSuffixResolvesToBaseModel()
-    {
-        $catalog = $this->createTestCatalog();
-        $model = $catalog->getModel('test-model:32b');
-
-        $this->assertSame('test-model:32b', $model->getName());
-        $this->assertSame([], $model->getOptions());
-    }
-
-    public function testGetModelWithSizeSuffixAndQueryParameters()
-    {
-        $catalog = $this->createTestCatalog();
-        $model = $catalog->getModel('test-model:64m?max_tokens=100&temperature=0.5');
-
-        $this->assertSame('test-model:64m', $model->getName());
-
-        $options = $model->getOptions();
-        $this->assertArrayHasKey('max_tokens', $options);
-        $this->assertIsInt($options['max_tokens']);
-        $this->assertSame(100, $options['max_tokens']);
-
-        $this->assertArrayHasKey('temperature', $options);
-        $this->assertIsFloat($options['temperature']);
-        $this->assertSame(0.5, $options['temperature']);
-    }
-
     private function createTestCatalog(): AbstractModelCatalog
     {
         return new class extends AbstractModelCatalog {
