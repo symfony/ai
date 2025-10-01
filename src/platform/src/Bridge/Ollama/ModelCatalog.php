@@ -12,9 +12,6 @@
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Exception\ModelNotFoundException;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
@@ -23,7 +20,7 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: class-string<Model>, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: class-string<\Symfony\AI\Platform\Model>, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
@@ -212,36 +209,5 @@ final class ModelCatalog extends AbstractModelCatalog
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
-    }
-
-    public function getModel(string $modelName): Model
-    {
-        if ('' === $modelName) {
-            throw new InvalidArgumentException('Model name cannot be empty.');
-        }
-
-        $parsed = self::parseModelName($modelName);
-        $actualModelName = $parsed['name'];
-        $options = $parsed['options'];
-
-        $modelNameWithoutSize = explode(':', $actualModelName, 2)[0];
-
-        if (!isset($this->models[$modelNameWithoutSize])) {
-            throw new ModelNotFoundException(\sprintf('Model "%s" not found.', $modelNameWithoutSize));
-        }
-
-        $modelConfig = $this->models[$modelNameWithoutSize];
-        $modelClass = $modelConfig['class'];
-
-        if (!class_exists($modelClass)) {
-            throw new InvalidArgumentException(\sprintf('Model class "%s" does not exist.', $modelClass));
-        }
-
-        $model = new $modelClass($actualModelName, $modelConfig['capabilities'], $options);
-        if (!$model instanceof Model) {
-            throw new InvalidArgumentException(\sprintf('Model class "%s" must extend "%s".', $modelClass, Model::class));
-        }
-
-        return $model;
     }
 }
