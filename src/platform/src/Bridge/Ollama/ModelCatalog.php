@@ -227,7 +227,7 @@ final class ModelCatalog extends AbstractModelCatalog
         $baseModelName = explode(':', $actualModelName, 2)[0];
 
         if (!isset($this->models[$actualModelName]) && !isset($this->models[$baseModelName])) {
-            throw new ModelNotFoundException(\sprintf('Model "%s" not found.', $baseModelName));
+            throw new ModelNotFoundException(\sprintf('Model "%s" not found.', $actualModelName));
         }
 
         $modelConfig = $this->models[$actualModelName] ?? $this->models[$baseModelName];
