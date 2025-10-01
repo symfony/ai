@@ -23,7 +23,7 @@ use Symfony\AI\Platform\Result\StreamResult;
  * @author Christopher Hertel <mail@christopher-hertel.de>
  *
  * @phpstan-type PlatformCallData array{
- *     model: Model,
+ *     model: string,
  *     input: array<mixed>|string|object,
  *     options: array<string, mixed>,
  *     result: ResultPromise,

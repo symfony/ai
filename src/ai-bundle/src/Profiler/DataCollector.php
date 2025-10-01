@@ -95,7 +95,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
 
     /**
      * @return array{
-     *     model: Model,
+     *     model: string,
      *     input: array<mixed>|string|object,
      *     options: array<string, mixed>,
      *     result: string|iterable<mixed>|object|null

@@ -200,7 +200,7 @@
                                 <ul>
                                     {% for name, parameter in tool.parameters.properties %}
                                         <li>
-                                            <strong>{{ name }} ({{ parameter.type }})</strong><br />
+                                            <strong>{{ name }} ({{ parameter.type is iterable ? parameter.type|join(', ') : parameter.type }})</strong><br />
                                             <i>{{ parameter.description|default() }}</i>
                                         </li>
                                     {% endfor %}

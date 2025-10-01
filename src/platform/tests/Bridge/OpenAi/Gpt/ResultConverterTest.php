@@ -226,4 +226,23 @@ class ResultConverterTest extends TestCase
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
+
+    public function testThrowsDetailedErrorException()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'error' => [
+                'code' => 'invalid_request_error',
+                'type' => 'invalid_request',
+                'param' => 'model',
+                'message' => 'The model `gpt-5` does not exist',
+            ],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Error "invalid_request_error"-invalid_request (model): "The model `gpt-5` does not exist".');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
 }

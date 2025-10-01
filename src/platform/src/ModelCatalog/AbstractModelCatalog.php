@@ -83,11 +83,34 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
             }
 
             parse_str($queryString, $options);
+
+            $options = self::convertNumericStrings($options);
         }
 
         return [
             'name' => $actualModelName,
             'options' => $options,
         ];
+    }
+
+    /**
+     * Recursively converts numeric strings to integers or floats in an array.
+     *
+     * @param array<string, mixed> $data The array to process
+     *
+     * @return array<string, mixed> The array with numeric strings converted to appropriate numeric types
+     */
+    private static function convertNumericStrings(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (\is_array($value)) {
+                $data[$key] = self::convertNumericStrings($value);
+            } elseif (is_numeric($value) && \is_string($value)) {
+                // Convert to int if it's a whole number, otherwise to float
+                $data[$key] = str_contains($value, '.') ? (float) $value : (int) $value;
+            }
+        }
+
+        return $data;
     }
 }

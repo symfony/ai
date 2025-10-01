@@ -56,6 +56,10 @@ final readonly class ResultConverter implements ResultConverterInterface
         $data = $result->getData();
 
         if (!isset($data['candidates'][0]['content']['parts'][0])) {
+            if (isset($data['error'])) {
+                throw new RuntimeException(\sprintf('Error "%s" - "%s": "%s".', $data['error']['code'], $data['error']['status'], $data['error']['message']));
+            }
+
             throw new RuntimeException('Response does not contain any content.');
         }
 
