@@ -11,7 +11,7 @@
 
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
-use Symfony\AI\Agent\Toolbox\Tool\Platform;
+use Symfony\AI\Agent\Toolbox\Tool\Platform as PlatformTool;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
@@ -34,7 +34,7 @@ $elevenLabsPlatform = ElevenLabsPlatformFactory::create(
 );
 
 // Wrap ElevenLabs platform as a tool
-$speechToText = new Platform($elevenLabsPlatform, 'scribe_v1');
+$speechToText = new PlatformTool($elevenLabsPlatform, 'scribe_v1');
 
 // Use MemoryToolFactory to register the tool with metadata
 $memoryFactory = new MemoryToolFactory();
