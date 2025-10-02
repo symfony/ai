@@ -47,7 +47,8 @@ $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor], logger: logger());
 
 // Ask a question that could benefit from advanced analysis
-$messages = new MessageBag(Message::ofUser('Analyze the philosophical implications of artificial consciousness and whether current AI systems exhibit any form of genuine understanding. Provide a detailed analysis.'));
-$result = $agent->call($messages);
+$result = $agent->call(new MessageBag(Message::ofUser(
+    'Analyze the philosophical implications of artificial consciousness and whether current AI systems exhibit any form of genuine understanding. Provide a detailed analysis.'
+)));
 
 echo $result->getContent().\PHP_EOL;
