@@ -40,7 +40,7 @@ final readonly class Platform
     {
         return $this->platform->invoke(
             $this->model,
-            $input,
+            $message,
             $this->options,
         )->asText();
     }
