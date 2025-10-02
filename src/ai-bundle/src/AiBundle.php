@@ -27,6 +27,7 @@ use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
+use Symfony\AI\Agent\Toolbox\Tool\Platform as PlatformTool;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
@@ -637,6 +638,17 @@ final class AiBundle extends AbstractBundle
                     if (isset($tool['agent'])) {
                         $tool['name'] ??= $tool['agent'];
                         $tool['service'] = \sprintf('ai.agent.%s', $tool['agent']);
+                    } elseif (isset($tool['platform'])) {
+                        $tool['name'] ??= $tool['platform'].'_'.$tool['model'];
+                        $platformReference = new Reference(\sprintf('ai.platform.%s', $tool['platform']));
+                        $platformWrapperDefinition = new Definition(PlatformTool::class, [
+                            $platformReference,
+                            $tool['model'],
+                            $tool['options'] ?? [],
+                        ]);
+                        $wrapperServiceId = 'ai.toolbox.'.$name.'.platform_wrapper.'.$tool['name'];
+                        $container->setDefinition($wrapperServiceId, $platformWrapperDefinition);
+                        $tool['service'] = $wrapperServiceId;
                     }
                     $reference = new Reference($tool['service']);
                     // We use the memory factory in case method, description and name are set
