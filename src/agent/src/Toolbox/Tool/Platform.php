@@ -16,8 +16,8 @@ use Symfony\AI\Platform\PlatformInterface;
 /**
  * Wraps a Platform instance as a tool, allowing agents to use specialized platforms for specific tasks.
  *
- * This enables scenarios where an agent using one platform (e.g., OpenAI) can leverage
- * another platform (e.g., ElevenLabs for speech-to-text) as a tool.
+ * This enables scenarios where an agent can leverage different models or platforms
+ * as tools (e.g., using gpt-4o for complex calculations while using gpt-4o-mini for the main agent).
  *
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
@@ -34,13 +34,13 @@ final readonly class Platform
     }
 
     /**
-     * @param string $message the message to pass to the chain
+     * @param array<mixed>|string|object $input the input to pass to the platform
      */
-    public function __invoke(string $message): string
+    public function __invoke(array|string|object $input): string
     {
         return $this->platform->invoke(
             $this->model,
-            $message,
+            $input,
             $this->options,
         )->asText();
     }
