@@ -2,8 +2,6 @@ ai:
     platform:
         openai:
             api_key: '%env(OPENAI_API_KEY)%'
-        elevenlabs:
-            api_key: '%env(ELEVEN_LABS_API_KEY)%'
     agent:
         blog:
             model: 'gpt-4o-mini'
@@ -52,15 +50,6 @@ ai:
             model: 'gpt-4o-mini'
             prompt: 'You are a helpful general assistant. Assist users with any questions or tasks they may have.'
             tools: false
-        elevenlabs_audio:
-            model: 'gpt-4o-mini'
-            prompt: 'You are a helpful assistant with access to speech-to-text capabilities via ElevenLabs.'
-            tools:
-                # Platform as tool 🚀
-                - platform: 'elevenlabs'
-                  model: 'scribe_v1'
-                  name: 'transcribe_audio'
-                  description: 'Transcribes audio files to text using ElevenLabs.'
     multi_agent:
         support:
             orchestrator: 'orchestrator'
@@ -101,16 +90,7 @@ services:
 
     Symfony\AI\Store\Document\Loader\RssFeedLoader: ~
     Symfony\AI\Store\Document\Transformer\TextTrimTransformer: ~
-
-    # Example: Using a Platform as a Tool
-    # This demonstrates how to wrap any platform as a tool that can be used by agents
-    app.tool.elevenlabs_transcription:
-        class: 'Symfony\AI\Agent\Toolbox\Tool\Platform'
-        arguments:
-            $platform: '@ai.platform.elevenlabs'
-            $model: 'scribe_v1'
-            $options: []
-
+    
     app.filter.week_of_symfony:
         class: 'Symfony\AI\Store\Document\Filter\TextContainsFilter'
         arguments:
