@@ -562,12 +562,10 @@ The ``fallback`` parameter (required) specifies an agent to handle requests that
                     product_info: ['features', 'how to', 'tutorial', 'guide', 'documentation']
                 fallback: 'general_support'  # Fallback for general inquiries
 
-Usage
------
+Commands
+--------
 
-**Console Commands**
-
-The AI Bundle provides several console commands for interacting with AI platforms and agents:
+The AI Bundle provides several console commands for interacting with AI platforms and agents.
 
 ``ai:platform:invoke``
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -593,10 +591,10 @@ This is useful for testing platform configurations and quick interactions with A
 
     # Using OpenAI
     $ php bin/console ai:platform:invoke openai gpt-4o-mini "Hello, world!"
-    
+
     # Using Anthropic
     $ php bin/console ai:platform:invoke anthropic claude-3-5-sonnet-20241022 "Explain quantum physics"
-    
+
     # Using Google Gemini
     $ php bin/console ai:platform:invoke gemini gemini-1.5-flash "Write a haiku about coding"
 
@@ -611,12 +609,15 @@ The command displays the response from the AI platform directly in the console:
 
 **Available Platforms**
 
-The available platforms depend on your configuration in ``config/packages/ai.yaml``. 
+The available platforms depend on your configuration in ``config/packages/ai.yaml``.
 Use tab completion to see the list of configured platforms:
 
 .. code-block:: terminal
 
     $ php bin/console ai:platform:invoke <TAB>
+
+Usage
+-----
 
 **Agent Service**
 
