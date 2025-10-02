@@ -43,10 +43,8 @@ $agent = new Agent($openAiPlatform, 'gpt-4o-mini', [$processor], [$processor], l
 // The agent can now use ElevenLabs for speech-to-text while using OpenAI for reasoning
 $audioPath = dirname(__DIR__, 2).'/fixtures/audio.mp3';
 $messages = new MessageBag(
-    Message::ofUser(sprintf(
-        'I have an audio file. Please transcribe it and tell me what it says. Audio: %s',
-        Audio::fromFile($audioPath)
-    ))
+    Message::ofUser('I have an audio file. Please transcribe it and tell me what it says.'),
+    Message::ofUser(Audio::fromFile($audioPath)),
 );
 
 $result = $agent->call($messages);
