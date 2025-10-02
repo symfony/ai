@@ -12,9 +12,6 @@
 namespace Symfony\AI\Agent\Toolbox\Tool;
 
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\Result\AudioResult;
-use Symfony\AI\Platform\Result\ImageResult;
-use Symfony\AI\Platform\Result\TextResult;
 
 /**
  * Wraps a Platform instance as a tool, allowing agents to use specialized platforms for specific tasks.
@@ -41,17 +38,10 @@ final readonly class Platform
      */
     public function __invoke(array|string|object $input): string
     {
-        $result = $this->platform->invoke(
+        return $this->platform->invoke(
             $this->model,
             $input,
             $this->options,
-        )->await();
-
-        return match (true) {
-            $result instanceof TextResult => $result->getContent(),
-            $result instanceof AudioResult => $result->getText() ?? base64_encode($result->getAudio()),
-            $result instanceof ImageResult => $result->getText() ?? base64_encode($result->getImage()),
-            default => throw new \LogicException(\sprintf('Unsupported result type "%s".', $result::class)),
-        };
+        )->asText();
     }
 }
