@@ -177,8 +177,4 @@ final class PlatformInvokeCommandTest extends TestCase
             'message' => 'Test message',
         ]);
     }
-
 }
-
-
-

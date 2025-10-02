@@ -143,6 +143,3 @@ final class PlatformInvokeCommand extends Command
         return Command::SUCCESS;
     }
 }
-
-
-
