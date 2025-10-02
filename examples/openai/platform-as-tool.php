@@ -13,6 +13,9 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Tool\Platform;
 use Symfony\AI\Agent\Toolbox\Toolbox;
+use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
+use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
+use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Content\Audio;
@@ -33,8 +36,22 @@ $elevenLabsPlatform = ElevenLabsPlatformFactory::create(
 // Wrap ElevenLabs platform as a tool
 $speechToText = new Platform($elevenLabsPlatform, 'scribe_v1');
 
+// Use MemoryToolFactory to register the tool with metadata
+$memoryFactory = new MemoryToolFactory();
+$memoryFactory->addTool(
+    $speechToText,
+    'transcribe_audio',
+    'Transcribes audio files to text using ElevenLabs speech-to-text. Accepts audio file content.',
+);
+
+// Combine with ReflectionToolFactory using ChainFactory
+$chainFactory = new ChainFactory([
+    $memoryFactory,
+    new ReflectionToolFactory(),
+]);
+
 // Create toolbox with the platform tool
-$toolbox = new Toolbox([$speechToText], logger: logger());
+$toolbox = new Toolbox([$speechToText], toolFactory: $chainFactory, logger: logger());
 $processor = new AgentProcessor($toolbox);
 
 // Create agent with OpenAI platform but with ElevenLabs tool available
