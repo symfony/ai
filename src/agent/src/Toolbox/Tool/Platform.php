@@ -34,9 +34,9 @@ final readonly class Platform
     }
 
     /**
-     * @param array<mixed>|string|object $input the input to pass to the platform
+     * @param string $message the message to pass to the chain
      */
-    public function __invoke(array|string|object $input): string
+    public function __invoke(string $message): string
     {
         return $this->platform->invoke(
             $this->model,
