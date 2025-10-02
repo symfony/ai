@@ -17,8 +17,32 @@ use Symfony\AI\Platform\Capability;
 
 /**
  * OpenAI Model Definitions
- * 
- * @return array<string, array{class: string, capabilities: list<Capability>}>
+ *
+ * This file returns an array of model configurations for OpenAI models.
+ * Each model is keyed by its identifier and contains:
+ * - class: The fully qualified class name handling this model type
+ * - capabilities: An array of Capability enum values defining what the model can do
+ *
+ * Available model classes:
+ * - Gpt::class: For chat/completion models (GPT-3.5, GPT-4, GPT-5, O1, O3)
+ * - Embeddings::class: For embedding models
+ * - Whisper::class: For speech-to-text models
+ * - DallE::class: For image generation models
+ *
+ * Available capabilities:
+ * - Capability::INPUT_MESSAGES: Can process message input
+ * - Capability::INPUT_TEXT: Can process text input
+ * - Capability::INPUT_IMAGE: Can process image input
+ * - Capability::INPUT_AUDIO: Can process audio input
+ * - Capability::OUTPUT_TEXT: Can generate text output
+ * - Capability::OUTPUT_IMAGE: Can generate image output
+ * - Capability::OUTPUT_STREAMING: Supports streaming responses
+ * - Capability::OUTPUT_STRUCTURED: Supports structured output
+ * - Capability::TOOL_CALLING: Supports function/tool calling
+ *
+ * @see models.schema.json JSON Schema for validation and IDE support
+ *
+ * @return array<string, array{class: class-string, capabilities: list<Capability>}>
  */
 return [
     'gpt-3.5-turbo' => [

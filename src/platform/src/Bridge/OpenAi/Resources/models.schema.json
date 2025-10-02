@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://symfony.com/schema/ai/openai-models.json",
+  "title": "OpenAI Model Catalog Schema",
+  "description": "JSON Schema for OpenAI model definitions in models.php",
+  "type": "object",
+  "patternProperties": {
+    "^[a-z0-9-]+$": {
+      "$ref": "#/definitions/model"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "model": {
+      "type": "object",
+      "required": ["class", "capabilities"],
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": [
+            "Symfony\\AI\\Platform\\Bridge\\OpenAi\\Gpt",
+            "Symfony\\AI\\Platform\\Bridge\\OpenAi\\Embeddings",
+            "Symfony\\AI\\Platform\\Bridge\\OpenAi\\Whisper",
+            "Symfony\\AI\\Platform\\Bridge\\OpenAi\\DallE"
+          ],
+          "description": "The fully qualified class name that handles this model type"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/capability"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Array of capabilities supported by this model"
+        }
+      },
+      "additionalProperties": false
+    },
+    "capability": {
+      "type": "string",
+      "enum": [
+        "INPUT_MESSAGES",
+        "INPUT_TEXT",
+        "INPUT_IMAGE",
+        "INPUT_AUDIO",
+        "OUTPUT_TEXT",
+        "OUTPUT_IMAGE",
+        "OUTPUT_STREAMING",
+        "OUTPUT_STRUCTURED",
+        "TOOL_CALLING"
+      ],
+      "description": "A capability that the model supports"
+    }
+  },
+  "examples": [
+    {
+      "gpt-4o": {
+        "class": "Symfony\\AI\\Platform\\Bridge\\OpenAi\\Gpt",
+        "capabilities": [
+          "INPUT_MESSAGES",
+          "OUTPUT_TEXT",
+          "OUTPUT_STREAMING",
+          "TOOL_CALLING",
+          "INPUT_IMAGE",
+          "OUTPUT_STRUCTURED"
+        ]
+      },
+      "text-embedding-3-large": {
+        "class": "Symfony\\AI\\Platform\\Bridge\\OpenAi\\Embeddings",
+        "capabilities": [
+          "INPUT_TEXT"
+        ]
+      }
+    }
+  ]
+}
