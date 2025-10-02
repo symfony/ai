@@ -12,36 +12,27 @@
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Tool\Platform as PlatformTool;
-use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
-use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
+use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-// Create the main OpenAI platform
-$openAiPlatform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
-// Create ElevenLabs platform as a tool for speech-to-text
-$elevenLabsPlatform = ElevenLabsPlatformFactory::create(
-    apiKey: env('ELEVEN_LABS_API_KEY'),
-    httpClient: http_client()
-);
-
-// Wrap ElevenLabs platform as a tool
-$speechToText = new PlatformTool($elevenLabsPlatform, 'scribe_v1');
+// Create a specialized OpenAI platform tool using gpt-4o for complex analysis
+$analysisTool = new PlatformTool($platform, 'gpt-4o');
 
 // Use MemoryToolFactory to register the tool with metadata
 $memoryFactory = new MemoryToolFactory();
 $memoryFactory->addTool(
-    $speechToText,
-    'transcribe_audio',
-    'Transcribes audio files to text using ElevenLabs speech-to-text. Accepts audio file content.',
+    $analysisTool,
+    'advanced_analysis',
+    'Performs deep analysis and complex reasoning tasks using GPT-4o. Use this for tasks requiring sophisticated understanding.',
 );
 
 // Combine with ReflectionToolFactory using ChainFactory
@@ -50,20 +41,13 @@ $chainFactory = new ChainFactory([
     new ReflectionToolFactory(),
 ]);
 
-// Create toolbox with the platform tool
-$toolbox = new Toolbox([$speechToText], toolFactory: $chainFactory, logger: logger());
+// Create the main agent with gpt-4o-mini but with gpt-4o available as a tool
+$toolbox = new Toolbox([$analysisTool], toolFactory: $chainFactory, logger: logger());
 $processor = new AgentProcessor($toolbox);
+$agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor], logger: logger());
 
-// Create agent with OpenAI platform but with ElevenLabs tool available
-$agent = new Agent($openAiPlatform, 'gpt-4o-mini', [$processor], [$processor], logger: logger());
-
-// The agent can now use ElevenLabs for speech-to-text while using OpenAI for reasoning
-$audioPath = dirname(__DIR__, 2).'/fixtures/audio.mp3';
-$messages = new MessageBag(
-    Message::ofUser('I have an audio file. Please transcribe it and tell me what it says.'),
-    Message::ofUser(Audio::fromFile($audioPath)),
-);
-
+// Ask a question that could benefit from advanced analysis
+$messages = new MessageBag(Message::ofUser('Analyze the philosophical implications of artificial consciousness and whether current AI systems exhibit any form of genuine understanding. Provide a detailed analysis.'));
 $result = $agent->call($messages);
 
 echo $result->getContent().\PHP_EOL;
