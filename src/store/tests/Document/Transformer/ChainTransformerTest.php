@@ -25,7 +25,7 @@ final class ChainTransformerTest extends TestCase
             public function transform(iterable $documents, array $options = []): iterable
             {
                 foreach ($documents as $document) {
-                    yield new TextDocument($document->id, $document->content.'-A');
+                    yield new TextDocument($document->getId(), $document->getContent().'-A');
                 }
             }
         };
@@ -34,7 +34,7 @@ final class ChainTransformerTest extends TestCase
             public function transform(iterable $documents, array $options = []): iterable
             {
                 foreach ($documents as $document) {
-                    yield new TextDocument($document->id, $document->content.'-B');
+                    yield new TextDocument($document->getId(), $document->getContent().'-B');
                 }
             }
         };
@@ -47,8 +47,8 @@ final class ChainTransformerTest extends TestCase
 
         $result = iterator_to_array($chain->transform($documents));
 
-        $this->assertSame('foo-A-B', $result[0]->content);
-        $this->assertSame('bar-A-B', $result[1]->content);
+        $this->assertSame('foo-A-B', $result[0]->getContent());
+        $this->assertSame('bar-A-B', $result[1]->getContent());
     }
 
     public function testChainTransformerWithNoTransformersReturnsInput()
@@ -58,6 +58,6 @@ final class ChainTransformerTest extends TestCase
 
         $result = iterator_to_array($chain->transform($documents));
 
-        $this->assertSame('baz', $result[0]->content);
+        $this->assertSame('baz', $result[0]->getContent());
     }
 }

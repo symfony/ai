@@ -47,9 +47,9 @@ final class TextFileLoaderTest extends TestCase
 
         $this->assertCount(1, $documents);
         $this->assertInstanceOf(TextDocument::class, $document = $documents[0]);
-        $this->assertStringStartsWith('Lorem ipsum', $document->content);
-        $this->assertStringEndsWith('nonummy id, met', $document->content);
-        $this->assertSame(1500, \strlen($document->content));
+        $this->assertStringStartsWith('Lorem ipsum', $document->getContent());
+        $this->assertStringEndsWith('nonummy id, met', $document->getContent());
+        $this->assertSame(1500, \strlen($document->getContent()));
     }
 
     public function testSourceIsPresentInMetadata()
@@ -61,7 +61,7 @@ final class TextFileLoaderTest extends TestCase
 
         $this->assertCount(1, $documents);
         $this->assertInstanceOf(TextDocument::class, $document = $documents[0]);
-        $this->assertSame($source, $document->metadata['_source']);
-        $this->assertSame($source, $document->metadata->getSource());
+        $this->assertSame($source, $document->getMetadata()['_source']);
+        $this->assertSame($source, $document->getMetadata()->getSource());
     }
 }

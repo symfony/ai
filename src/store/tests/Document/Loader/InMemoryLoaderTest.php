@@ -39,7 +39,7 @@ final class InMemoryLoaderTest extends TestCase
 
         $this->assertCount(1, $documents);
         $this->assertSame($document, $documents[0]);
-        $this->assertSame('This is test content', $documents[0]->content);
+        $this->assertSame('This is test content', $documents[0]->getContent());
     }
 
     public function testLoadWithMultipleDocuments()
@@ -53,9 +53,9 @@ final class InMemoryLoaderTest extends TestCase
         $this->assertCount(2, $documents);
         $this->assertSame($document1, $documents[0]);
         $this->assertSame($document2, $documents[1]);
-        $this->assertSame('First document', $documents[0]->content);
-        $this->assertSame('Second document', $documents[1]->content);
-        $this->assertSame('test', $documents[1]->metadata['type']);
+        $this->assertSame('First document', $documents[0]->getContent());
+        $this->assertSame('Second document', $documents[1]->getContent());
+        $this->assertSame('test', $documents[1]->getMetadata()['type']);
     }
 
     public function testLoadIgnoresSourceParameter()

@@ -39,7 +39,7 @@ final class TextTrimTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(1, $result);
-        $this->assertSame($expected, $result[0]->content);
+        $this->assertSame($expected, $result[0]->getContent());
     }
 
     public function testTrimHandlesOnlyWhitespace()
@@ -64,9 +64,9 @@ final class TextTrimTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform($documents));
 
         $this->assertCount(3, $result);
-        $this->assertSame('first', $result[0]->content);
-        $this->assertSame('second', $result[1]->content);
-        $this->assertSame('third', $result[2]->content);
+        $this->assertSame('first', $result[0]->getContent());
+        $this->assertSame('second', $result[1]->getContent());
+        $this->assertSame('third', $result[2]->getContent());
     }
 
     public function testTrimPreservesMetadata()
@@ -78,8 +78,8 @@ final class TextTrimTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(1, $result);
-        $this->assertSame('text', $result[0]->content);
-        $this->assertSame($metadata, $result[0]->metadata);
+        $this->assertSame('text', $result[0]->getContent());
+        $this->assertSame($metadata, $result[0]->getMetadata());
     }
 
     public function testTrimPreservesDocumentId()
@@ -91,6 +91,6 @@ final class TextTrimTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(1, $result);
-        $this->assertSame($id, $result[0]->id);
+        $this->assertSame($id, $result[0]->getId());
     }
 }

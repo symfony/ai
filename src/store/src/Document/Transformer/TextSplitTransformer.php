@@ -51,13 +51,13 @@ final readonly class TextSplitTransformer implements TransformerInterface
         }
 
         foreach ($documents as $document) {
-            if (mb_strlen($document->content) <= $chunkSize) {
+            if (mb_strlen($document->getContent()) <= $chunkSize) {
                 yield $document;
 
                 continue;
             }
 
-            $text = $document->content;
+            $text = $document->getContent();
             $length = mb_strlen($text);
             $start = 0;
 
@@ -66,9 +66,9 @@ final readonly class TextSplitTransformer implements TransformerInterface
                 $chunkText = mb_substr($text, $start, $end - $start);
 
                 yield new TextDocument(Uuid::v4(), $chunkText, new Metadata([
-                    Metadata::KEY_PARENT_ID => $document->id,
+                    Metadata::KEY_PARENT_ID => $document->getId(),
                     Metadata::KEY_TEXT => $chunkText,
-                    ...$document->metadata,
+                    ...$document->getMetadata(),
                 ]));
 
                 $start += ($chunkSize - $overlap);

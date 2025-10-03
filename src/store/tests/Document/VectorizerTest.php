@@ -71,9 +71,9 @@ final class VectorizerTest extends TestCase
 
         foreach ($vectorDocuments as $i => $vectorDoc) {
             $this->assertInstanceOf(VectorDocument::class, $vectorDoc);
-            $this->assertSame($documents[$i]->id, $vectorDoc->id);
+            $this->assertSame($documents[$i]->getId(), $vectorDoc->id);
             $this->assertEquals($vectors[$i], $vectorDoc->vector);
-            $this->assertSame($documents[$i]->metadata, $vectorDoc->metadata);
+            $this->assertSame($documents[$i]->getMetadata(), $vectorDoc->metadata);
         }
     }
 
@@ -88,9 +88,9 @@ final class VectorizerTest extends TestCase
 
         $this->assertCount(1, $vectorDocuments);
         $this->assertInstanceOf(VectorDocument::class, $vectorDocuments[0]);
-        $this->assertSame($document->id, $vectorDocuments[0]->id);
+        $this->assertSame($document->getId(), $vectorDocuments[0]->id);
         $this->assertEquals($vector, $vectorDocuments[0]->vector);
-        $this->assertSame($document->metadata, $vectorDocuments[0]->metadata);
+        $this->assertSame($document->getMetadata(), $vectorDocuments[0]->metadata);
     }
 
     public function testVectorizeEmptyDocumentsArray()
@@ -181,9 +181,9 @@ final class VectorizerTest extends TestCase
 
         foreach ($vectorDocuments as $i => $vectorDoc) {
             $this->assertInstanceOf(VectorDocument::class, $vectorDoc);
-            $this->assertSame($documents[$i]->id, $vectorDoc->id);
+            $this->assertSame($documents[$i]->getId(), $vectorDoc->id);
             $this->assertEquals($vectors[$i], $vectorDoc->vector);
-            $this->assertSame($documents[$i]->metadata, $vectorDoc->metadata);
+            $this->assertSame($documents[$i]->getMetadata(), $vectorDoc->metadata);
             $this->assertSame(['index' => $i], $vectorDoc->metadata->getArrayCopy());
         }
     }
@@ -239,7 +239,7 @@ final class VectorizerTest extends TestCase
         $this->assertCount(3, $vectorDocuments);
 
         foreach ($vectorDocuments as $i => $vectorDoc) {
-            $this->assertSame($documents[$i]->id, $vectorDoc->id);
+            $this->assertSame($documents[$i]->getId(), $vectorDoc->id);
             $this->assertEquals($vectors[$i], $vectorDoc->vector);
         }
     }

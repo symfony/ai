@@ -31,7 +31,7 @@ final class TextReplaceTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(1, $result);
-        $this->assertSame('bar is bar', $result[0]->content);
+        $this->assertSame('bar is bar', $result[0]->getContent());
     }
 
     public function testReplaceWithOptions()
@@ -45,7 +45,7 @@ final class TextReplaceTransformerTest extends TestCase
         ]));
 
         $this->assertCount(1, $result);
-        $this->assertSame('goodbye world', $result[0]->content);
+        $this->assertSame('goodbye world', $result[0]->getContent());
     }
 
     public function testOptionsOverrideConstructorParameters()
@@ -59,7 +59,7 @@ final class TextReplaceTransformerTest extends TestCase
         ]));
 
         $this->assertCount(1, $result);
-        $this->assertSame('foo world', $result[0]->content);
+        $this->assertSame('foo world', $result[0]->getContent());
     }
 
     public function testReplaceMultipleOccurrences()
@@ -70,7 +70,7 @@ final class TextReplaceTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(1, $result);
-        $this->assertSame('b b b', $result[0]->content);
+        $this->assertSame('b b b', $result[0]->getContent());
     }
 
     public function testReplaceWithEmptyString()
@@ -81,7 +81,7 @@ final class TextReplaceTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(1, $result);
-        $this->assertSame(' this word', $result[0]->content);
+        $this->assertSame(' this word', $result[0]->getContent());
     }
 
     public function testReplacePreservesMetadata()
@@ -93,8 +93,8 @@ final class TextReplaceTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(1, $result);
-        $this->assertSame('new text', $result[0]->content);
-        $this->assertSame($metadata, $result[0]->metadata);
+        $this->assertSame('new text', $result[0]->getContent());
+        $this->assertSame($metadata, $result[0]->getMetadata());
     }
 
     public function testReplacePreservesDocumentId()
@@ -106,7 +106,7 @@ final class TextReplaceTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(1, $result);
-        $this->assertSame($id, $result[0]->id);
+        $this->assertSame($id, $result[0]->getId());
     }
 
     public function testReplaceProcessesMultipleDocuments()
@@ -121,9 +121,9 @@ final class TextReplaceTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform($documents));
 
         $this->assertCount(3, $result);
-        $this->assertSame('y marks the spot', $result[0]->content);
-        $this->assertSame('find y here', $result[1]->content);
-        $this->assertSame('no match', $result[2]->content);
+        $this->assertSame('y marks the spot', $result[0]->getContent());
+        $this->assertSame('find y here', $result[1]->getContent());
+        $this->assertSame('no match', $result[2]->getContent());
     }
 
     public function testReplaceCaseSensitive()
@@ -134,7 +134,7 @@ final class TextReplaceTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(1, $result);
-        $this->assertSame('Goodbye hello HELLO', $result[0]->content);
+        $this->assertSame('Goodbye hello HELLO', $result[0]->getContent());
     }
 
     public function testReplaceHandlesNoMatch()
@@ -145,7 +145,7 @@ final class TextReplaceTransformerTest extends TestCase
         $result = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(1, $result);
-        $this->assertSame('original text', $result[0]->content);
+        $this->assertSame('original text', $result[0]->getContent());
     }
 
     public function testConstructorThrowsExceptionWhenSearchEqualsReplace()
@@ -189,6 +189,6 @@ final class TextReplaceTransformerTest extends TestCase
         ]));
 
         $this->assertCount(1, $result);
-        $this->assertSame('default replacement', $result[0]->content);
+        $this->assertSame('default replacement', $result[0]->getContent());
     }
 }
