@@ -1,0 +1,50 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-26T10:26:58Z
+
+I like having a new component for this
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-26T22:08:18Z
+
+alright, let's go - will add some comments on #254 as well - building on top of this i guess.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-09-27T16:18:24Z
+
+@chr-hertel Yes, the idea is to start by splitting the chat, from that point, we can work on the storage part then handle the final implementation 🙂
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-02T17:18:58Z
+
+@OskarStark @chr-hertel Regarding this PR, I can't fix the tests / quality as the `ai-chat` repository is required, is there any solution to fix/validate them before merging or should we wait until its merged? 🤔
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-02T17:47:31Z
+
+I had the same problem for a new package in the brave tool PR.
+I am fine merging as is and taking care of the CI afterwards, but immediately 👌🏻😝
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-02T17:51:28Z
+
+Ok, no problem 😅
+
+Let me know when you have time to review the PR and merging it, on my side, most of the work is done, I can work on other PRs until you merge it.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-02T17:57:09Z
+
+@fabpot we would need a new package here please
+
+---------------------------------------------------------------------------
+
+by fabpot at 2025-10-03T08:24:13Z
+
+@OskarStark We need to merge the PR first :) Ping me when done.
