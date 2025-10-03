@@ -13,9 +13,9 @@ namespace Symfony\AI\Store;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
 use Symfony\AI\Store\Document\FilterInterface;
 use Symfony\AI\Store\Document\LoaderInterface;
-use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\TransformerInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
 
@@ -87,20 +87,20 @@ class Indexer implements IndexerInterface
             ++$counter;
 
             if ($chunkSize === \count($chunk)) {
-                $this->store->add(...$this->vectorizer->vectorizeTextDocuments($chunk));
+                $this->store->add(...$this->vectorizer->vectorizeEmbeddableDocuments($chunk));
                 $chunk = [];
             }
         }
 
         if ([] !== $chunk) {
-            $this->store->add(...$this->vectorizer->vectorizeTextDocuments($chunk));
+            $this->store->add(...$this->vectorizer->vectorizeEmbeddableDocuments($chunk));
         }
 
         $this->logger->debug('Document processing completed', ['total_documents' => $counter]);
     }
 
     /**
-     * @return TextDocument[]
+     * @return EmbeddableDocumentInterface[]
      */
     private function loadSource(?string $source): array
     {

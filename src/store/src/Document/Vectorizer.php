@@ -27,14 +27,14 @@ final readonly class Vectorizer implements VectorizerInterface
     ) {
     }
 
-    public function vectorizeTextDocuments(array $documents, array $options = []): array
+    public function vectorizeEmbeddableDocuments(array $documents, array $options = []): array
     {
         $documentCount = \count($documents);
         $this->logger->info('Starting vectorization process', ['document_count' => $documentCount]);
 
         if ($this->platform->getModelCatalog()->getModel($this->model)->supports(Capability::INPUT_MULTIPLE)) {
             $this->logger->debug('Using batch vectorization with model that supports multiple inputs');
-            $result = $this->platform->invoke($this->model, array_map(fn (TextDocument $document) => $document->content, $documents), $options);
+            $result = $this->platform->invoke($this->model, array_map(fn (EmbeddableDocumentInterface $document) => $document->getContent(), $documents), $options);
 
             $vectors = $result->asVectors();
             $this->logger->debug('Batch vectorization completed', ['vector_count' => \count($vectors)]);
@@ -42,8 +42,8 @@ final readonly class Vectorizer implements VectorizerInterface
             $this->logger->debug('Using sequential vectorization for model without multiple input support');
             $results = [];
             foreach ($documents as $i => $document) {
-                $this->logger->debug('Vectorizing document', ['document_index' => $i, 'document_id' => $document->id]);
-                $results[] = $this->platform->invoke($this->model, $document->content, $options);
+                $this->logger->debug('Vectorizing document', ['document_index' => $i, 'document_id' => $document->getId()]);
+                $results[] = $this->platform->invoke($this->model, $document->getContent(), $options);
             }
 
             $vectors = [];
@@ -55,7 +55,7 @@ final readonly class Vectorizer implements VectorizerInterface
 
         $vectorDocuments = [];
         foreach ($documents as $i => $document) {
-            $vectorDocuments[] = new VectorDocument($document->id, $vectors[$i], $document->metadata);
+            $vectorDocuments[] = new VectorDocument($document->getId(), $vectors[$i], $document->getMetadata());
         }
 
         $this->logger->info('Vectorization process completed', [

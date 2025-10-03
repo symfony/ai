@@ -12,7 +12,7 @@
 namespace Symfony\AI\Store\Document;
 
 /**
- * A Transformer is designed to mutate a stream of TextDocuments with the purpose of preparing them for indexing.
+ * A Transformer is designed to mutate a stream of embeddable with the purpose of preparing them for indexing.
  * It can reduce or expand the number of documents, modify their content or metadata.
  * It should not act blocking, but is expected to iterate over incoming documents and yield prepared ones.
  *
@@ -21,10 +21,10 @@ namespace Symfony\AI\Store\Document;
 interface TransformerInterface
 {
     /**
-     * @param iterable<TextDocument> $documents
-     * @param array<string, mixed>   $options
+     * @param iterable<EmbeddableDocumentInterface> $documents
+     * @param array<string, mixed>                  $options
      *
-     * @return iterable<TextDocument>
+     * @return iterable<EmbeddableDocumentInterface>
      */
     public function transform(iterable $documents, array $options = []): iterable;
 }

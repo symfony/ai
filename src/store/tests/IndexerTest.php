@@ -41,7 +41,7 @@ final class IndexerTest extends TestCase
 
         $this->assertCount(1, $store->documents);
         $this->assertInstanceOf(VectorDocument::class, $store->documents[0]);
-        $this->assertSame($id, $store->documents[0]->id);
+        $this->assertSame($id, $store->documents[0]->getId());
         $this->assertSame($vector, $store->documents[0]->vector);
     }
 
@@ -199,10 +199,10 @@ final class IndexerTest extends TestCase
             public function transform(iterable $documents, array $options = []): iterable
             {
                 foreach ($documents as $document) {
-                    $metadata = new Metadata($document->metadata->getArrayCopy());
+                    $metadata = new Metadata($document->getMetadata()->getArrayCopy());
                     $metadata['transformed'] = true;
-                    $metadata['original_content'] = $document->content;
-                    yield new TextDocument($document->id, strtoupper($document->content), $metadata);
+                    $metadata['original_content'] = $document->getContent();
+                    yield new TextDocument($document->getId(), strtoupper($document->getContent()), $metadata);
                 }
             }
         };
@@ -235,7 +235,7 @@ final class IndexerTest extends TestCase
             public function filter(iterable $documents, array $options = []): iterable
             {
                 foreach ($documents as $document) {
-                    if (!str_contains($document->content, 'Remove')) {
+                    if (!str_contains($document->getContent(), 'Remove')) {
                         yield $document;
                     }
                 }
@@ -246,9 +246,9 @@ final class IndexerTest extends TestCase
             public function transform(iterable $documents, array $options = []): iterable
             {
                 foreach ($documents as $document) {
-                    $metadata = new Metadata($document->metadata->getArrayCopy());
+                    $metadata = new Metadata($document->getMetadata()->getArrayCopy());
                     $metadata['transformed'] = true;
-                    yield new TextDocument($document->id, $document->content, $metadata);
+                    yield new TextDocument($document->getId(), $document->getContent(), $metadata);
                 }
             }
         };

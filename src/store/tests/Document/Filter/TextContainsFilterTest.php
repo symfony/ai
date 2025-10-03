@@ -36,8 +36,8 @@ final class TextContainsFilterTest extends TestCase
         $result = iterator_to_array($filter->filter($documents));
 
         $this->assertCount(2, $result);
-        $this->assertSame('This is a regular blog post', $result[0]->content);
-        $this->assertSame('Another regular post', $result[1]->content);
+        $this->assertSame('This is a regular blog post', $result[0]->getContent());
+        $this->assertSame('Another regular post', $result[1]->getContent());
     }
 
     public function testFilterWithOptions()
@@ -54,8 +54,8 @@ final class TextContainsFilterTest extends TestCase
         ]));
 
         $this->assertCount(2, $result);
-        $this->assertSame('Keep this document', $result[0]->content);
-        $this->assertSame('Another good document', $result[1]->content);
+        $this->assertSame('Keep this document', $result[0]->getContent());
+        $this->assertSame('Another good document', $result[1]->getContent());
     }
 
     public function testOptionsOverrideConstructorParameters()
@@ -72,8 +72,8 @@ final class TextContainsFilterTest extends TestCase
         ]));
 
         $this->assertCount(2, $result);
-        $this->assertSame('Regular post', $result[0]->content);
-        $this->assertSame('Week of Symfony news', $result[1]->content);
+        $this->assertSame('Regular post', $result[0]->getContent());
+        $this->assertSame('Week of Symfony news', $result[1]->getContent());
     }
 
     public function testFilterCaseInsensitive()
@@ -89,7 +89,7 @@ final class TextContainsFilterTest extends TestCase
         $result = iterator_to_array($filter->filter($documents));
 
         $this->assertCount(1, $result);
-        $this->assertSame('Clean content', $result[0]->content);
+        $this->assertSame('Clean content', $result[0]->getContent());
     }
 
     public function testFilterCaseSensitive()
@@ -105,9 +105,9 @@ final class TextContainsFilterTest extends TestCase
         $result = iterator_to_array($filter->filter($documents));
 
         $this->assertCount(3, $result);
-        $this->assertSame('This contains spam', $result[0]->content);
-        $this->assertSame('This contains Spam', $result[1]->content);
-        $this->assertSame('Clean content', $result[2]->content);
+        $this->assertSame('This contains spam', $result[0]->getContent());
+        $this->assertSame('This contains Spam', $result[1]->getContent());
+        $this->assertSame('Clean content', $result[2]->getContent());
     }
 
     public function testFilterWithCaseSensitivityOption()
@@ -123,8 +123,8 @@ final class TextContainsFilterTest extends TestCase
         ]));
 
         $this->assertCount(2, $result); // With case sensitivity, 'Test' != 'test'
-        $this->assertSame('This has Test', $result[0]->content);
-        $this->assertSame('Clean content', $result[1]->content);
+        $this->assertSame('This has Test', $result[0]->getContent());
+        $this->assertSame('Clean content', $result[1]->getContent());
     }
 
     public function testFilterPreservesMetadata()
@@ -139,8 +139,8 @@ final class TextContainsFilterTest extends TestCase
         $result = iterator_to_array($filter->filter($documents));
 
         $this->assertCount(1, $result);
-        $this->assertSame('keep this', $result[0]->content);
-        $this->assertSame($metadata, $result[0]->metadata);
+        $this->assertSame('keep this', $result[0]->getContent());
+        $this->assertSame($metadata, $result[0]->getMetadata());
     }
 
     public function testFilterPreservesDocumentId()
@@ -155,7 +155,7 @@ final class TextContainsFilterTest extends TestCase
         $result = iterator_to_array($filter->filter($documents));
 
         $this->assertCount(1, $result);
-        $this->assertSame($id, $result[0]->id);
+        $this->assertSame($id, $result[0]->getId());
     }
 
     public function testFilterWithEmptyDocuments()
@@ -179,8 +179,8 @@ final class TextContainsFilterTest extends TestCase
         $result = iterator_to_array($filter->filter($documents));
 
         $this->assertCount(2, $result); // All documents should pass through
-        $this->assertSame('First document', $result[0]->content);
-        $this->assertSame('Second document', $result[1]->content);
+        $this->assertSame('First document', $result[0]->getContent());
+        $this->assertSame('Second document', $result[1]->getContent());
     }
 
     public function testFilterWithAllMatches()
@@ -208,7 +208,7 @@ final class TextContainsFilterTest extends TestCase
         $result = iterator_to_array($filter->filter($documents));
 
         $this->assertCount(1, $result);
-        $this->assertSame('Clean content', $result[0]->content);
+        $this->assertSame('Clean content', $result[0]->getContent());
     }
 
     public function testPartialOptionsUseConstructorDefaults()
@@ -225,7 +225,7 @@ final class TextContainsFilterTest extends TestCase
         ]));
 
         $this->assertCount(1, $result); // Case sensitive, 'test' found in first document, so it's filtered out
-        $this->assertSame('Clean content', $result[0]->content);
+        $this->assertSame('Clean content', $result[0]->getContent());
     }
 
     #[TestWith([''])]

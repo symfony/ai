@@ -65,15 +65,15 @@ final class VectorizerTest extends TestCase
         $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors), $modelCatalog);
 
         $vectorizer = new Vectorizer($platform, 'test-embedding-with-batch');
-        $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
+        $vectorDocuments = $vectorizer->vectorizeEmbeddableDocuments($documents);
 
         $this->assertCount(3, $vectorDocuments);
 
         foreach ($vectorDocuments as $i => $vectorDoc) {
             $this->assertInstanceOf(VectorDocument::class, $vectorDoc);
-            $this->assertSame($documents[$i]->id, $vectorDoc->id);
+            $this->assertSame($documents[$i]->getId(), $vectorDoc->id);
             $this->assertEquals($vectors[$i], $vectorDoc->vector);
-            $this->assertSame($documents[$i]->metadata, $vectorDoc->metadata);
+            $this->assertSame($documents[$i]->getMetadata(), $vectorDoc->metadata);
         }
     }
 
@@ -84,20 +84,20 @@ final class VectorizerTest extends TestCase
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
-        $vectorDocuments = $vectorizer->vectorizeTextDocuments([$document]);
+        $vectorDocuments = $vectorizer->vectorizeEmbeddableDocuments([$document]);
 
         $this->assertCount(1, $vectorDocuments);
         $this->assertInstanceOf(VectorDocument::class, $vectorDocuments[0]);
-        $this->assertSame($document->id, $vectorDocuments[0]->id);
+        $this->assertSame($document->getId(), $vectorDocuments[0]->id);
         $this->assertEquals($vector, $vectorDocuments[0]->vector);
-        $this->assertSame($document->metadata, $vectorDocuments[0]->metadata);
+        $this->assertSame($document->getMetadata(), $vectorDocuments[0]->metadata);
     }
 
     public function testVectorizeEmptyDocumentsArray()
     {
         $platform = PlatformTestHandler::createPlatform(new VectorResult());
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
-        $vectorDocuments = $vectorizer->vectorizeTextDocuments([]);
+        $vectorDocuments = $vectorizer->vectorizeEmbeddableDocuments([]);
 
         $this->assertSame([], $vectorDocuments);
     }
@@ -119,7 +119,7 @@ final class VectorizerTest extends TestCase
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
-        $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
+        $vectorDocuments = $vectorizer->vectorizeEmbeddableDocuments($documents);
 
         $this->assertCount(2, $vectorDocuments);
         $this->assertSame($metadata1, $vectorDocuments[0]->metadata);
@@ -148,7 +148,7 @@ final class VectorizerTest extends TestCase
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
-        $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
+        $vectorDocuments = $vectorizer->vectorizeEmbeddableDocuments($documents);
 
         $this->assertCount(3, $vectorDocuments);
         $this->assertSame($id1, $vectorDocuments[0]->id);
@@ -175,15 +175,15 @@ final class VectorizerTest extends TestCase
             $count > 0 ? new VectorResult(...$vectors) : new VectorResult()
         );
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
-        $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
+        $vectorDocuments = $vectorizer->vectorizeEmbeddableDocuments($documents);
 
         $this->assertCount($count, $vectorDocuments);
 
         foreach ($vectorDocuments as $i => $vectorDoc) {
             $this->assertInstanceOf(VectorDocument::class, $vectorDoc);
-            $this->assertSame($documents[$i]->id, $vectorDoc->id);
+            $this->assertSame($documents[$i]->getId(), $vectorDoc->id);
             $this->assertEquals($vectors[$i], $vectorDoc->vector);
-            $this->assertSame($documents[$i]->metadata, $vectorDoc->metadata);
+            $this->assertSame($documents[$i]->getMetadata(), $vectorDoc->metadata);
             $this->assertSame(['index' => $i], $vectorDoc->metadata->getArrayCopy());
         }
     }
@@ -212,7 +212,7 @@ final class VectorizerTest extends TestCase
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
-        $vectorDocuments = $vectorizer->vectorizeTextDocuments([$document]);
+        $vectorDocuments = $vectorizer->vectorizeEmbeddableDocuments([$document]);
 
         $this->assertCount(1, $vectorDocuments);
         $this->assertEquals($vector, $vectorDocuments[0]->vector);
@@ -234,12 +234,12 @@ final class VectorizerTest extends TestCase
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
-        $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
+        $vectorDocuments = $vectorizer->vectorizeEmbeddableDocuments($documents);
 
         $this->assertCount(3, $vectorDocuments);
 
         foreach ($vectorDocuments as $i => $vectorDoc) {
-            $this->assertSame($documents[$i]->id, $vectorDoc->id);
+            $this->assertSame($documents[$i]->getId(), $vectorDoc->id);
             $this->assertEquals($vectors[$i], $vectorDoc->vector);
         }
     }
@@ -272,7 +272,7 @@ final class VectorizerTest extends TestCase
         $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors), $modelCatalog);
 
         $vectorizer = new Vectorizer($platform, 'test-embedding-no-batch');
-        $vectorDocuments = $vectorizer->vectorizeTextDocuments($documents);
+        $vectorDocuments = $vectorizer->vectorizeEmbeddableDocuments($documents);
 
         $this->assertCount(2, $vectorDocuments);
         $this->assertEquals($vectors[0], $vectorDocuments[0]->vector);
@@ -344,7 +344,7 @@ final class VectorizerTest extends TestCase
         // This ensures batch mode is used and the test expectation matches the behavior
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
         $vectorizer = new Vectorizer($platform, 'test-embedding-with-batch');
-        $result = $vectorizer->vectorizeTextDocuments($documents, $options);
+        $result = $vectorizer->vectorizeEmbeddableDocuments($documents, $options);
 
         $this->assertCount(1, $result);
         $this->assertEquals($vector, $result[0]->vector);
@@ -362,7 +362,7 @@ final class VectorizerTest extends TestCase
         // This ensures batch mode is used and the test expectation matches the behavior
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
         $vectorizer = new Vectorizer($platform, 'test-embedding-with-batch');
-        $result = $vectorizer->vectorizeTextDocuments($documents);
+        $result = $vectorizer->vectorizeEmbeddableDocuments($documents);
 
         $this->assertCount(1, $result);
         $this->assertEquals($vector, $result[0]->vector);
@@ -441,7 +441,7 @@ final class VectorizerTest extends TestCase
         $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors), $modelCatalog);
 
         $vectorizer = new Vectorizer($platform, 'test-embedding-no-batch-with-options');
-        $result = $vectorizer->vectorizeTextDocuments($documents, $options);
+        $result = $vectorizer->vectorizeEmbeddableDocuments($documents, $options);
 
         $this->assertCount(2, $result);
         $this->assertEquals($vectors[0], $result[0]->vector);

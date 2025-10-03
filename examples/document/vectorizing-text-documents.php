@@ -26,6 +26,6 @@ $textDocuments = [
 ];
 
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-large');
-$vectorDocuments = $vectorizer->vectorizeTextDocuments($textDocuments);
+$vectorDocuments = $vectorizer->vectorizeEmbeddableDocuments($textDocuments);
 
 dump(array_map(fn (VectorDocument $document) => $document->vector->getDimensions(), $vectorDocuments));

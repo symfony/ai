@@ -49,7 +49,7 @@ class TextContainsFilter implements FilterInterface
         $caseSensitive = $options[self::OPTION_CASE_SENSITIVE] ?? $this->caseSensitive;
 
         foreach ($documents as $document) {
-            $content = $document->content;
+            $content = $document->getContent();
 
             if ($caseSensitive) {
                 $contains = str_contains($content, $needle);

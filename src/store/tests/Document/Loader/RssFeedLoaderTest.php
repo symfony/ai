@@ -46,11 +46,11 @@ final class RssFeedLoaderTest extends TestCase
 
         $firstDocument = $documents[0];
         $this->assertInstanceOf(TextDocument::class, $firstDocument);
-        $this->assertStringStartsWith('Title: Save the date, SymfonyDay Montreal 2026!', $firstDocument->content);
-        $this->assertStringContainsString('Date: 2025-09-11 14:30', $firstDocument->content);
-        $this->assertStringContainsString('SymfonyDay Montreal is happening on', $firstDocument->content);
+        $this->assertStringStartsWith('Title: Save the date, SymfonyDay Montreal 2026!', $firstDocument->getContent());
+        $this->assertStringContainsString('Date: 2025-09-11 14:30', $firstDocument->getContent());
+        $this->assertStringContainsString('SymfonyDay Montreal is happening on', $firstDocument->getContent());
 
-        $firstMetadata = $firstDocument->metadata;
+        $firstMetadata = $firstDocument->getMetadata();
         $this->assertSame('Save the date, SymfonyDay Montreal 2026!', $firstMetadata['title']);
         $this->assertSame('https://symfony.com/blog/save-the-date-symfonyday-montreal-2026?utm_source=Symfony%20Blog%20Feed&utm_medium=feed', $firstMetadata['link']);
         $this->assertSame('Paola Suárez', $firstMetadata['author']);
@@ -125,8 +125,8 @@ XML;
 
         foreach ($result as $document) {
             $this->assertInstanceOf(TextDocument::class, $document);
-            $this->assertInstanceOf(Uuid::class, $document->id);
-            $this->assertNotEmpty($document->content);
+            $this->assertInstanceOf(Uuid::class, $document->getId());
+            $this->assertNotEmpty($document->getContent());
         }
     }
 
@@ -145,7 +145,7 @@ XML;
         $this->assertCount(10, $documents2);
 
         // UUIDs should be identical for same content
-        $this->assertEquals($documents1[0]->id, $documents2[0]->id);
-        $this->assertEquals($documents1[1]->id, $documents2[1]->id);
+        $this->assertEquals($documents1[0]->getId(), $documents2[0]->getId());
+        $this->assertEquals($documents1[1]->getId(), $documents2[1]->getId());
     }
 }
