@@ -1,0 +1,71 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-07T20:25:39Z
+
+Could you bring in a rag example as well, please? redis cloud or docker compose maybe
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-07T21:02:02Z
+
+docker compose if possible please 🙏
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-08-12T13:47:37Z
+
+I added a rag example, with docker compose. I also updated the PR description
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-14T22:32:12Z
+
+Needs a rebase after #317
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-30T11:23:42Z
+
+Open to finish this PR?
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-09-01T12:48:20Z
+
+Oupsy, I forgot this one. I'll finish it ASAP
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-09-18T12:22:11Z
+
+Here we go!
+
+* I have rebased the PR, fixed conflict, and adapted code to new interfaces
+* Fixed the bundle configuration, add more validation
+* Fixed tests and examples
+* Updated the PR description to configure how to use with the framework bundle
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-02T12:15:10Z
+
+Lets finish this one @lyrixx 🚀 👏
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-10-03T14:41:21Z
+
+Here we go 🚀 !
+
+I hope and think I addressed all comments.
+Tests are all green 🎉
+
+Thanks for the review, and sorry for the slow tempo on this one!
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-03T16:36:28Z
+
+Thank you, works great:
+
+<img width="2350" height="534" alt="CleanShot 2025-10-03 at 18 35 44@2x" src="https://github.com/user-attachments/assets/3413841d-ac48-47bc-af22-2886ae8f6fcd" />
