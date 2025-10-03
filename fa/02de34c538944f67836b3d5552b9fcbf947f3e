@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-01T07:40:18Z
+
+Thanks for tackling this topic, can you please add some docs?
+
+---------------------------------------------------------------------------
+
+by franzwilding at 2025-10-03T10:54:30Z
+
+@chr-hertel I renamed the success event and dropped ExecuteToolCall.
