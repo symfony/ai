@@ -37,7 +37,7 @@ final class ChunkDelayTransformerTest extends TestCase
 
         $this->assertCount(30, $result);
         for ($i = 0; $i < 30; ++$i) {
-            $this->assertSame('content-'.$i, $result[$i]->content);
+            $this->assertSame('content-'.$i, $result[$i]->getContent());
         }
     }
 
@@ -122,9 +122,9 @@ final class ChunkDelayTransformerTest extends TestCase
             ChunkDelayTransformer::OPTION_DELAY => 1,
         ]));
 
-        $this->assertSame('first', $result[0]->content);
-        $this->assertSame('second', $result[1]->content);
-        $this->assertSame('third', $result[2]->content);
+        $this->assertSame('first', $result[0]->getContent());
+        $this->assertSame('second', $result[1]->getContent());
+        $this->assertSame('third', $result[2]->getContent());
     }
 
     public function testHandlesEmptyIterable()
@@ -157,7 +157,7 @@ final class ChunkDelayTransformerTest extends TestCase
         ]));
 
         $this->assertCount(1, $result);
-        $this->assertSame('single', $result[0]->content);
+        $this->assertSame('single', $result[0]->getContent());
     }
 
     public function testExactlyChunkSizeDocuments()

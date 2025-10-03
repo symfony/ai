@@ -20,9 +20,9 @@ use Symfony\Component\Uid\Uuid;
 final readonly class TextDocument implements EmbeddableDocumentInterface
 {
     public function __construct(
-        public Uuid $id,
-        public string $content,
-        public Metadata $metadata = new Metadata(),
+        private Uuid $id,
+        private string $content,
+        private Metadata $metadata = new Metadata(),
     ) {
         if ('' === trim($this->content)) {
             throw new InvalidArgumentException('The content shall not be an empty string.');

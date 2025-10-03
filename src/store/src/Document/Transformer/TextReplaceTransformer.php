@@ -42,7 +42,7 @@ final readonly class TextReplaceTransformer implements TransformerInterface
         self::validate($search, $replace);
 
         foreach ($documents as $document) {
-            yield $document->withContent(str_replace($search, $replace, $document->content));
+            yield $document->withContent(str_replace($search, $replace, $document->getContent()));
         }
     }
 

@@ -23,7 +23,7 @@ final readonly class TextTrimTransformer implements TransformerInterface
     public function transform(iterable $documents, array $options = []): iterable
     {
         foreach ($documents as $document) {
-            yield $document->withContent(trim($document->content));
+            yield $document->withContent(trim($document->getContent()));
         }
     }
 }

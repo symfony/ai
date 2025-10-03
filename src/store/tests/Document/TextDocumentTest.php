@@ -31,9 +31,9 @@ final class TextDocumentTest extends TestCase
 
         $document = new TextDocument($id, $content, $metadata);
 
-        $this->assertSame($id, $document->id);
-        $this->assertSame($content, $document->content);
-        $this->assertSame($metadata, $document->metadata);
+        $this->assertSame($id, $document->getId());
+        $this->assertSame($content, $document->getContent());
+        $this->assertSame($metadata, $document->getMetadata());
     }
 
     #[TestDox('Creates document with default empty metadata when not provided')]
@@ -44,10 +44,10 @@ final class TextDocumentTest extends TestCase
 
         $document = new TextDocument($id, $content);
 
-        $this->assertSame($id, $document->id);
-        $this->assertSame($content, $document->content);
-        $this->assertInstanceOf(Metadata::class, $document->metadata);
-        $this->assertCount(0, $document->metadata);
+        $this->assertSame($id, $document->getId());
+        $this->assertSame($content, $document->getContent());
+        $this->assertInstanceOf(Metadata::class, $document->getMetadata());
+        $this->assertCount(0, $document->getMetadata());
     }
 
     #[TestWith([''])]
@@ -85,8 +85,8 @@ final class TextDocumentTest extends TestCase
 
         $document = new TextDocument($id, $content);
 
-        $this->assertSame($id, $document->id);
-        $this->assertSame($content, $document->content);
+        $this->assertSame($id, $document->getId());
+        $this->assertSame($content, $document->getContent());
     }
 
     #[TestDox('Accepts very long text content')]
@@ -97,8 +97,8 @@ final class TextDocumentTest extends TestCase
 
         $document = new TextDocument($id, $content);
 
-        $this->assertSame($id, $document->id);
-        $this->assertSame($content, $document->content);
+        $this->assertSame($id, $document->getId());
+        $this->assertSame($content, $document->getContent());
     }
 
     #[TestDox('Properties are publicly accessible and readonly')]
@@ -110,9 +110,9 @@ final class TextDocumentTest extends TestCase
 
         $document = new TextDocument($id, $content, $metadata);
 
-        $this->assertSame($id, $document->id);
-        $this->assertSame($content, $document->content);
-        $this->assertSame($metadata, $document->metadata);
+        $this->assertSame($id, $document->getId());
+        $this->assertSame($content, $document->getContent());
+        $this->assertSame($metadata, $document->getMetadata());
     }
 
     #[TestDox('Metadata contents can be modified even though the property is readonly')]
@@ -128,8 +128,8 @@ final class TextDocumentTest extends TestCase
         $metadata['key'] = 'value';
         $metadata->setSource('test.txt');
 
-        $this->assertSame('value', $document->metadata['key']);
-        $this->assertSame('test.txt', $document->metadata->getSource());
+        $this->assertSame('value', $document->getMetadata()['key']);
+        $this->assertSame('test.txt', $document->getMetadata()->getSource());
     }
 
     #[DataProvider('uuidVersionProvider')]
@@ -140,8 +140,8 @@ final class TextDocumentTest extends TestCase
 
         $document = new TextDocument($uuid, $content);
 
-        $this->assertSame($uuid, $document->id);
-        $this->assertSame($content, $document->content);
+        $this->assertSame($uuid, $document->getId());
+        $this->assertSame($content, $document->getContent());
     }
 
     /**
@@ -191,7 +191,7 @@ final class TextDocumentTest extends TestCase
             '_source' => 'source.pdf',
         ];
 
-        $this->assertSame($expected, $document->metadata->getArrayCopy());
+        $this->assertSame($expected, $document->getMetadata()->getArrayCopy());
     }
 
     #[TestDox('Multiple documents can share the same content with different IDs and metadata')]
@@ -204,10 +204,10 @@ final class TextDocumentTest extends TestCase
         $document1 = new TextDocument(Uuid::v4(), $content, $metadata1);
         $document2 = new TextDocument(Uuid::v4(), $content, $metadata2);
 
-        $this->assertSame($content, $document1->content);
-        $this->assertSame($content, $document2->content);
-        $this->assertNotSame($document1->id, $document2->id);
-        $this->assertNotSame($document1->metadata, $document2->metadata);
+        $this->assertSame($content, $document1->getContent());
+        $this->assertSame($content, $document2->getContent());
+        $this->assertNotSame($document1->getId(), $document2->getId());
+        $this->assertNotSame($document1->getMetadata(), $document2->getMetadata());
     }
 
     #[TestDox('Documents can have the same ID but different content')]
@@ -218,9 +218,9 @@ final class TextDocumentTest extends TestCase
         $document1 = new TextDocument($id, 'Content 1');
         $document2 = new TextDocument($id, 'Content 2');
 
-        $this->assertSame($id, $document1->id);
-        $this->assertSame($id, $document2->id);
-        $this->assertNotSame($document1->content, $document2->content);
+        $this->assertSame($id, $document1->getId());
+        $this->assertSame($id, $document2->getId());
+        $this->assertNotSame($document1->getContent(), $document2->getContent());
     }
 
     #[TestDox('Content with whitespace is stored as-is without trimming')]
@@ -233,7 +233,7 @@ final class TextDocumentTest extends TestCase
         $document = new TextDocument($id, $contentWithWhitespace);
 
         // The content is stored as-is, not trimmed
-        $this->assertSame($contentWithWhitespace, $document->content);
+        $this->assertSame($contentWithWhitespace, $document->getContent());
     }
 
     #[TestDox('Exception message is correct for empty content')]
@@ -257,10 +257,10 @@ final class TextDocumentTest extends TestCase
         $updatedDocument = $originalDocument->withContent($newContent);
 
         $this->assertNotSame($originalDocument, $updatedDocument);
-        $this->assertSame($id, $updatedDocument->id);
-        $this->assertSame($newContent, $updatedDocument->content);
-        $this->assertSame($metadata, $updatedDocument->metadata);
-        $this->assertSame($originalContent, $originalDocument->content);
+        $this->assertSame($id, $updatedDocument->getId());
+        $this->assertSame($newContent, $updatedDocument->getContent());
+        $this->assertSame($metadata, $updatedDocument->getMetadata());
+        $this->assertSame($originalContent, $originalDocument->getContent());
     }
 
     #[TestDox('withContent validates new content')]
