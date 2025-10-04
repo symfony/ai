@@ -610,6 +610,60 @@ Example: Customer Service Bot
                     product_info: ['features', 'how to', 'tutorial', 'guide', 'documentation']
                 fallback: 'general_support'  # Fallback for general inquiries
 
+Commands
+--------
+
+The AI Bundle provides several console commands for interacting with AI platforms and agents.
+
+``ai:platform:invoke``
+~~~~~~~~~~~~~~~~~~~~~~
+
+The ``ai:platform:invoke`` command allows you to directly invoke any configured AI platform with a message.
+This is useful for testing platform configurations and quick interactions with AI models.
+
+**Basic Usage**
+
+.. code-block:: terminal
+
+    $ php bin/console ai:platform:invoke <platform> <model> "<message>"
+
+**Parameters**
+
+* ``platform``: The name of the configured platform (e.g., ``openai``, ``anthropic``, ``gemini``)
+* ``model``: The model to use (e.g., ``gpt-4o-mini``, ``claude-3-5-sonnet-20241022``)
+* ``message``: The message to send to the AI platform (enclosed in quotes)
+
+**Examples**
+
+.. code-block:: terminal
+
+    # Using OpenAI
+    $ php bin/console ai:platform:invoke openai gpt-4o-mini "Hello, world!"
+
+    # Using Anthropic
+    $ php bin/console ai:platform:invoke anthropic claude-3-5-sonnet-20241022 "Explain quantum physics"
+
+    # Using Google Gemini
+    $ php bin/console ai:platform:invoke gemini gemini-1.5-flash "Write a haiku about coding"
+
+**Output**
+
+The command displays the response from the AI platform directly in the console:
+
+.. code-block:: terminal
+
+    $ php bin/console ai:platform:invoke openai gpt-4o-mini "Hello!"
+    Response: Hello! How can I assist you today?
+
+**Available Platforms**
+
+The available platforms depend on your configuration in ``config/packages/ai.yaml``.
+Use tab completion to see the list of configured platforms:
+
+.. code-block:: terminal
+
+    $ php bin/console ai:platform:invoke <TAB>
+
 Usage
 -----
 
@@ -881,3 +935,4 @@ The profiler panel provides insights into the agent's execution:
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
 .. _`Symfony AI Platform`: https://github.com/symfony/ai-platform
 .. _`Symfony AI Store`: https://github.com/symfony/ai-store
+

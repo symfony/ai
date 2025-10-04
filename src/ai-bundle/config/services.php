@@ -22,6 +22,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\AbstractToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
+use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
@@ -214,6 +215,11 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.command.index', IndexCommand::class)
             ->args([
                 tagged_locator('ai.indexer', 'name'),
+            ])
+            ->tag('console.command')
+        ->set('ai.command.platform_invoke', PlatformInvokeCommand::class)
+            ->args([
+                tagged_locator('ai.platform', 'name'),
             ])
             ->tag('console.command')
     ;
