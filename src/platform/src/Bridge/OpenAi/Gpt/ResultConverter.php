@@ -27,6 +27,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\ResultConverterStatusExceptionTrait;
 use Symfony\Component\HttpClient\Chunk\ServerSentEvent;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -37,6 +38,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use ResultConverterStatusExceptionTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof Gpt;
@@ -46,10 +49,7 @@ final class ResultConverter implements ResultConverterInterface
     {
         $response = $result->getObject();
 
-        if (401 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'];
-            throw new AuthenticationException($errorMessage);
-        }
+        $this->validateStatusCode($response);
 
         if (400 === $response->getStatusCode()) {
             $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Bad Request';
