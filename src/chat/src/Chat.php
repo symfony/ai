@@ -25,13 +25,13 @@ final readonly class Chat implements ChatInterface
 {
     public function __construct(
         private AgentInterface $agent,
-        private MessageStoreInterface $store,
+        private MessageStoreInterface&ManagedStoreInterface $store,
     ) {
     }
 
     public function initiate(MessageBag $messages): void
     {
-        $this->store->clear();
+        $this->store->drop();
         $this->store->save($messages);
     }
 

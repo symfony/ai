@@ -11,15 +11,21 @@
 
 namespace Symfony\AI\Chat\Bridge\Local;
 
+use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class InMemoryStore implements MessageStoreInterface
+final class InMemoryStore implements ManagedStoreInterface, MessageStoreInterface
 {
     private MessageBag $messages;
+
+    public function setup(array $options = []): void
+    {
+        $this->messages = new MessageBag();
+    }
 
     public function save(MessageBag $messages): void
     {
@@ -31,7 +37,7 @@ final class InMemoryStore implements MessageStoreInterface
         return $this->messages ?? new MessageBag();
     }
 
-    public function clear(): void
+    public function drop(): void
     {
         $this->messages = new MessageBag();
     }

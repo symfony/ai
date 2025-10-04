@@ -12,6 +12,7 @@ Library for building chats with agents using messages. Built on Platform and Age
 - **Chat** (`src/Chat.php`): Main orchestration class
 - **ChatInterface**: Contract for implementations
 - **MessageStoreInterface** High-level conversation storage interface
+- **ManagedStoreInterface** High-level store management interface
 
 ### Key Features
 - **Bridge** (`src/Bridge/`): Storage capacity for messages and conversations
