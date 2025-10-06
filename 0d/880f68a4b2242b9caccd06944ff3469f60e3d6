@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by paulinevos at 2025-09-30T13:23:52Z
+
+Not sure why PHPStan fails on 8.4 -- is it a linking issue? The argument it's complaining about seems fine to me.
+
+How do we feel about the rest? < 8.4 is going to fail because of the interface properties. Should we support 8.4 or should I solve this with getter methods on the interface instead of interface properties to accommodate for the earlier versions?
