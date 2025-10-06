@@ -24,6 +24,4 @@ interface RawResultInterface
      * @return array<string, mixed>
      */
     public function getData(): array;
-
-    public function getObject(): object;
 }
