@@ -254,6 +254,53 @@ You can create event listeners to respond to capability changes::
 
 The events are simple marker events that notify when lists have changed, but don't contain specific details about what was added or modified.
 
+Usage as a remote MCP server
+----------------------------
+
+If your local project runs in docker, it may be easier to run the server as a remote server, thanks to the node package ``mcp-remote``. Node is required.
+
+Configuration for claude desktop:
+
+.. code-block:: json
+
+    {
+      "mcpServers": {
+        "symfony": {
+          "command": "npx",
+          "args": [
+            "mcp-remote",
+            "https://127.0.0.1:8080"
+          ]
+        }
+      }
+    }
+
+Quick tips
+..........
+
+Self Signed certificates
+~~~~~~~~~~~~~~~~~~~~~~~~
+Add the following section:
+
+.. code-block:: json
+
+    "env": {
+      "NODE_EXTRA_CA_CERTS": "full/path/to/cert_root.pem"
+    }
+
+Allow http
+~~~~~~~~~~
+Add the argument ``--allow-http``:
+
+.. code-block:: json
+
+    "args": [
+      "mcp-remote",
+      "https://127.0.0.1:8080",
+      "--allow-http"
+    ]
+
+
 .. _`Model Context Protocol`: https://modelcontextprotocol.io/
 .. _`mcp/sdk`: https://github.com/modelcontextprotocol/php-sdk
 .. _`Claude Desktop`: https://claude.ai/download
