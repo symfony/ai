@@ -274,7 +274,7 @@ The standalone usage results in an ``Vector`` instance::
 
     // Initialize Platform
 
-    $embeddings = new Embeddings($platform, Embeddings::TEXT_3_SMALL);
+    $embeddings = new Embeddings($platform, Embeddings::TEXT_3_SMALL); hi
 
     $vectors = $platform->invoke($embeddings, $textInput)->asVectors();
 
