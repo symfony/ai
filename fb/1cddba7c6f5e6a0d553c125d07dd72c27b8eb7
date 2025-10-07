@@ -1,0 +1,14 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-06T19:21:33Z
+
+I feel like this is coming in early - is it motivated by an actual need of yours or rather a hypothesis?
+(just a curious question :laughing: )
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-07T07:10:57Z
+
+It's the continuation of the `Chat` migration process, as stores can be initialized/dropped, we need to have commands to handle the booting phase of them, I also integrated the configuration to ease the usage of stores in current applications (until we merge the `Chat` refactoring), IMHO, merging commands before having "external" bridges is not an issue (Meilisearch should be ready later this week BTW).
+
+And yes, I'm currently hitting a wall in a project that requires a message store 😅
