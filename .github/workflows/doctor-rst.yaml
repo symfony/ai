@@ -34,4 +34,4 @@ jobs:
             - name: DOCtor-RST
               uses: docker://oskarstark/doctor-rst
               with:
-                  args: docs/ --short --error-format=github --cache-file=/github/workspace/.cache/doctor-rst.cache
+                  args: docs/ --config-file=.doctor-rst.yaml --short --error-format=github --cache-file=/github/workspace/.cache/doctor-rst.cache
