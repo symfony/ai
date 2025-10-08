@@ -13,10 +13,10 @@ namespace App\Mcp\Resources;
 
 use Mcp\Capability\Attribute\McpResource;
 
+#[McpResource(uri: 'time://current', name: 'current-time-resource')]
 class CurrentTimeResource
 {
-    #[McpResource(uri: 'time://current', name: 'current-time-resource')]
-    public function getCurrentTimeResource(): array
+    public function __invoke(): array
     {
         return [
             'uri' => 'time://current',

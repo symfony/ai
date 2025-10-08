@@ -14,6 +14,7 @@ namespace Symfony\AI\McpBundle\DependencyInjection;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Reference;
 
 final class McpPass implements CompilerPassInterface
 {
@@ -35,7 +36,12 @@ final class McpPass implements CompilerPassInterface
             return;
         }
 
-        $serviceLocatorRef = ServiceLocatorTagPass::register($container, $allMcpServices);
+        $serviceReferences = [];
+        foreach (array_keys($allMcpServices) as $serviceId) {
+            $serviceReferences[$serviceId] = new Reference($serviceId);
+        }
+
+        $serviceLocatorRef = ServiceLocatorTagPass::register($container, $serviceReferences);
 
         $container->getDefinition('mcp.server.builder')
             ->addMethodCall('setContainer', [$serviceLocatorRef]);

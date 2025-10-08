@@ -13,10 +13,10 @@ namespace App\Mcp\ResourceTemplates;
 
 use Mcp\Capability\Attribute\McpResourceTemplate;
 
+#[McpResourceTemplate(uriTemplate: 'time://{timezone}', name: 'time-by-timezone')]
 class CurrentTimeResourceTemplate
 {
-    #[McpResourceTemplate(uriTemplate: 'time://{timezone}', name: 'time-by-timezone')]
-    public function getTimeByTimezone(string $timezone): array
+    public function __invoke(string $timezone): array
     {
         try {
             $time = (new \DateTime('now', new \DateTimeZone($timezone)))->format('Y-m-d H:i:s T');
