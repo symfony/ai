@@ -18,11 +18,11 @@ use Symfony\Bundle\FrameworkBundle\DataCollector\AbstractDataCollector;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
+use Symfony\Component\VarDumper\Cloner\Data;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  *
- * @phpstan-import-type PlatformCallData from TraceablePlatform
  * @phpstan-import-type ToolCallData from TraceableToolbox
  */
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
@@ -36,6 +36,11 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
      * @var TraceableToolbox[]
      */
     private readonly array $toolboxes;
+
+    /**
+     * @var list<array{method: string, duration: float, input: mixed, result: mixed, error: ?\Throwable}>
+     */
+    private array $collectedCalls = [];
 
     /**
      * @param TraceablePlatform[] $platforms
@@ -52,15 +57,55 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
-        $this->lateCollect();
     }
 
     public function lateCollect(): void
     {
+        $platformCalls = [];
+        foreach ($this->platforms as $platform) {
+            $calls = $platform->calls;
+            foreach ($calls as $call) {
+                $result = $call['result']->await();
+                if (isset($platform->resultCache[$result])) {
+                    $call['result'] = $platform->resultCache[$result];
+                } else {
+                    $call['result'] = $result->getContent();
+                }
+
+                $call['model'] = $this->cloneVar($call['model']);
+                $call['input'] = $this->cloneVar($call['input']);
+                $call['options'] = $this->cloneVar($call['options']);
+                $call['result'] = $this->cloneVar($call['result']);
+
+                $platformCalls[] = $call;
+            }
+        }
+
+        $toolCalls = [];
+        foreach ($this->toolboxes as $toolbox) {
+            foreach ($toolbox->calls as $call) {
+                $call['call'] = $this->cloneVar($call['call']);
+                $call['result'] = $this->cloneVar($call['result']);
+                $toolCalls[] = $call;
+            }
+        }
+
         $this->data = [
             'tools' => $this->defaultToolBox->getTools(),
-            'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
-            'tool_calls' => array_merge(...array_map(fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
+            'platform_calls' => $platformCalls,
+            'tool_calls' => $toolCalls,
+            'agent_calls' => $this->collectedCalls,
+        ];
+    }
+
+    public function collectAgentCall(string $method, float $duration, mixed $input, mixed $result, ?\Throwable $error): void
+    {
+        $this->collectedCalls[] = [
+            'method' => $method,
+            'duration' => $duration,
+            'input' => $this->cloneVar($input),
+            'result' => $this->cloneVar($result),
+            'error' => $this->cloneVar($error),
         ];
     }
 
@@ -70,7 +115,12 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     }
 
     /**
-     * @return PlatformCallData[]
+     * @return array{
+     *     model: Data,
+     *     input: Data,
+     *     options: Data,
+     *     result: Data
+     * }[]
      */
     public function getPlatformCalls(): array
     {
@@ -94,28 +144,16 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     }
 
     /**
-     * @return array{
-     *     model: string,
-     *     input: array<mixed>|string|object,
-     *     options: array<string, mixed>,
-     *     result: string|iterable<mixed>|object|null
-     * }[]
+     * @return list<array{method: string, duration: float, input: mixed, result: mixed, error: ?\Throwable}>
      */
-    private function awaitCallResults(TraceablePlatform $platform): array
+    public function getAgentCalls(): array
     {
-        $calls = $platform->calls;
-        foreach ($calls as $key => $call) {
-            $result = $call['result']->getResult();
+        return $this->data['agent_calls'] ?? [];
+    }
 
-            if (isset($platform->resultCache[$result])) {
-                $call['result'] = $platform->resultCache[$result];
-            } else {
-                $call['result'] = $result->getContent();
-            }
-
-            $calls[$key] = $call;
-        }
-
-        return $calls;
+    public function reset(): void
+    {
+        $this->data = [];
+        $this->collectedCalls = [];
     }
 }
