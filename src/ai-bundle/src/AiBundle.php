@@ -31,12 +31,16 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
+use Symfony\AI\AiBundle\Profiler\TraceableChat;
+use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\HttpFoundation\SessionStore;
 use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore as MeilisearchMessageStore;
 use Symfony\AI\Chat\Bridge\Pogocache\MessageStore as PogocacheMessageStore;
+use Symfony\AI\Chat\Chat;
+use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAiPlatformFactory;
@@ -179,9 +183,47 @@ final class AiBundle extends AbstractBundle
             $builder->setAlias(MessageStoreInterface::class, reset($messageStores));
         }
 
+        if ($builder->getParameter('kernel.debug')) {
+            foreach ($messageStores as $messageStore) {
+                $traceableMessageStoreDefinition = (new Definition(TraceableMessageStore::class))
+                    ->setDecoratedService($messageStore)
+                    ->setArguments([
+                        new Reference('.inner'),
+                        new Reference(ClockInterface::class),
+                    ])
+                    ->addTag('ai.traceable_message_store');
+                $suffix = u($messageStore)->afterLast('.')->toString();
+                $builder->setDefinition('ai.traceable_message_store.'.$suffix, $traceableMessageStoreDefinition);
+            }
+        }
+
         if ([] === $messageStores) {
             $builder->removeDefinition('ai.command.setup_message_store');
             $builder->removeDefinition('ai.command.drop_message_store');
+        }
+
+        foreach ($config['chat'] ?? [] as $name => $chat) {
+            $this->processChatConfig($name, $chat, $builder);
+        }
+
+        $chats = array_keys($builder->findTaggedServiceIds('ai.chat'));
+
+        if (1 === \count($chats)) {
+            $builder->setAlias(ChatInterface::class, reset($chats));
+        }
+
+        if ($builder->getParameter('kernel.debug')) {
+            foreach ($chats as $chat) {
+                $traceableChatDefinition = (new Definition(TraceableChat::class))
+                    ->setDecoratedService($chat)
+                    ->setArguments([
+                        new Reference('.inner'),
+                        new Reference(ClockInterface::class),
+                    ])
+                    ->addTag('ai.traceable_chat');
+                $suffix = u($chat)->afterLast('.')->toString();
+                $builder->setDefinition('ai.traceable_chat.'.$suffix, $traceableChatDefinition);
+            }
         }
 
         foreach ($config['vectorizer'] ?? [] as $vectorizerName => $vectorizer) {
@@ -1385,6 +1427,26 @@ final class AiBundle extends AbstractBundle
                 $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $type.'_'.$name);
             }
         }
+    }
+
+    /**
+     * @param array{
+     *     agent: string,
+     *     message_store: string,
+     * } $configuration
+     */
+    private function processChatConfig(string $name, array $configuration, ContainerBuilder $container): void
+    {
+        $definition = new Definition(Chat::class);
+        $definition
+            ->setArguments([
+                new Reference($configuration['agent']),
+                new Reference($configuration['message_store']),
+            ])
+            ->addTag('ai.chat');
+
+        $container->setDefinition('ai.chat.'.$name, $definition);
+        $container->registerAliasForArgument('ai.chat.'.$name, ChatInterface::class, $name);
     }
 
     /**
