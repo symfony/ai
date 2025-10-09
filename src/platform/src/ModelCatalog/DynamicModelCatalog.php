@@ -25,9 +25,8 @@ use Symfony\AI\Platform\Model;
 
 class DynamicModelCatalog extends AbstractModelCatalog
 {
-    public function __construct(
-        private readonly ?string $expectedModel = Model::class,
-    ) {
+    public function __construct()
+    {
         $this->models = [];
     }
 
@@ -35,6 +34,6 @@ class DynamicModelCatalog extends AbstractModelCatalog
     {
         $parsed = self::parseModelName($modelName);
 
-        return new $this->expectedModel($parsed['name'], Capability::cases(), $parsed['options']);
+        return new Model($parsed['name'], Capability::cases(), $parsed['options']);
     }
 }
