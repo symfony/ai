@@ -1,0 +1,8 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-09T01:58:18Z
+
+not yet happy how sources are transported to the surface.
+i like the slim API on tool level, but the other side is not that great with `keepToolMessages` and double-foreach
+
+thinking of shifting the addition of `AssistantMessage` to the `MessageBag` into the `Agent` instead of user land code
