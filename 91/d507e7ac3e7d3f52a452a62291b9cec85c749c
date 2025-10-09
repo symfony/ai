@@ -1,0 +1,30 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-08T23:40:31Z
+
+@OskarStark need your help here with the conditional return on the vectorizer - breaks my head or maybe just too late
+
+this code:
+https://github.com/symfony/ai/blob/a4747cbd664da1925a8a764b24547f03f74418fd/demo/src/Blog/Command/QueryCommand.php#L44-L52
+
+with this return:
+https://github.com/symfony/ai/blob/a4747cbd664da1925a8a764b24547f03f74418fd/src/store/src/Document/VectorizerInterface.php#L29-L37
+
+leads to:
+```
+------ ---------------------------------------------------------------------------------------------------------------
+  Line   src/Blog/Command/QueryCommand.php
+ ------ ---------------------------------------------------------------------------------------------------------------
+  50     Cannot call method getData() on array<Symfony\AI\Platform\Vector\Vector|Symfony\AI\Store\Document\VectorDocum
+         ent>|Symfony\AI\Platform\Vector\Vector|Symfony\AI\Store\Document\VectorDocument.
+         🪪  method.nonObject
+ ------ ---------------------------------------------------------------------------------------------------------------
+```
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-09T22:01:38Z
+
+Used `@phpstan-ignore-line` for now to get the demo green again and phpstan integration going there.
+
+Follow up with #768
