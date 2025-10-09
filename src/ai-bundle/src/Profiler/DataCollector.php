@@ -12,7 +12,6 @@
 namespace Symfony\AI\AiBundle\Profiler;
 
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Bundle\FrameworkBundle\DataCollector\AbstractDataCollector;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,6 +23,7 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  *
  * @phpstan-import-type PlatformCallData from TraceablePlatform
  * @phpstan-import-type ToolCallData from TraceableToolbox
+ * @phpstan-import-type MessageStoreData from TraceableMessageStore
  */
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
 {
@@ -38,16 +38,32 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     private readonly array $toolboxes;
 
     /**
+     * @var TraceableMessageStore[]
+     */
+    private readonly array $messageStores;
+
+    /**
+     * @var TraceableChat[]
+     */
+    private readonly array $chats;
+
+    /**
      * @param TraceablePlatform[] $platforms
      * @param TraceableToolbox[]  $toolboxes
+     * @param TraceableMessageStore[] $messageStores
+     * @param TraceableChat[] $chats
      */
     public function __construct(
         iterable $platforms,
         private readonly ToolboxInterface $defaultToolBox,
         iterable $toolboxes,
+        iterable $messageStores,
+        iterable $chats,
     ) {
         $this->platforms = $platforms instanceof \Traversable ? iterator_to_array($platforms) : $platforms;
         $this->toolboxes = $toolboxes instanceof \Traversable ? iterator_to_array($toolboxes) : $toolboxes;
+        $this->messageStores = $messageStores instanceof \Traversable ? iterator_to_array($messageStores) : $messageStores;
+        $this->chats = $chats instanceof \Traversable ? iterator_to_array($chats) : $chats;
     }
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
@@ -61,6 +77,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
             'tools' => $this->defaultToolBox->getTools(),
             'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
             'tool_calls' => array_merge(...array_map(fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
+            'messages' => array_merge(...array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->calls, $this->messageStores)),
         ];
     }
 
@@ -91,6 +108,14 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function getToolCalls(): array
     {
         return $this->data['tool_calls'] ?? [];
+    }
+
+    /**
+     * @return MessageStoreData[]
+     */
+    public function getMessages(): array
+    {
+        return $this->data['messages'] ?? [];
     }
 
     /**

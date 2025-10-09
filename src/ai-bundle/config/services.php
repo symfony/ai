@@ -24,6 +24,8 @@ use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
+use Symfony\AI\AiBundle\Profiler\TraceableChat;
+use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\Chat\Command\DropStoreCommand as DropMessageStoreCommand;
@@ -180,6 +182,8 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('ai.traceable_platform'),
                 service('ai.toolbox'),
                 tagged_iterator('ai.traceable_toolbox'),
+                tagged_iterator('ai.traceable_message_store'),
+                tagged_iterator('ai.traceable_chat'),
             ])
             ->tag('data_collector')
         ->set('ai.traceable_toolbox', TraceableToolbox::class)
@@ -188,6 +192,18 @@ return static function (ContainerConfigurator $container): void {
                 service('.inner'),
             ])
             ->tag('ai.traceable_toolbox')
+        ->set('ai.traceable_message_store', TraceableMessageStore::class)
+            ->decorate('ai.message_store')
+            ->args([
+                service('.inner'),
+            ])
+            ->tag('ai.traceable_message_store')
+        ->set('ai.traceable_chat', TraceableChat::class)
+            ->decorate('ai.chat')
+            ->args([
+                service('.inner'),
+            ])
+            ->tag('ai.traceable_chat')
 
         // token usage processors
         ->set('ai.platform.token_usage_processor.anthropic', AnthropicTokenOutputProcessor::class)

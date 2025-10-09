@@ -31,6 +31,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
+use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
@@ -173,6 +174,17 @@ final class AiBundle extends AbstractBundle
 
         if (1 === \count($messageStores)) {
             $builder->setAlias(MessageStoreInterface::class, reset($messageStores));
+        }
+
+        if ($builder->getParameter('kernel.debug')) {
+            foreach ($messageStores as $messageStore) {
+                $traceablePlatformDefinition = (new Definition(TraceableMessageStore::class))
+                    ->setDecoratedService($messageStore)
+                    ->setArguments([new Reference('.inner')])
+                    ->addTag('ai.traceable_message_store');
+                $suffix = u($messageStore)->afterLast('.')->toString();
+                $builder->setDefinition('ai.traceable_message_store.'.$suffix, $traceablePlatformDefinition);
+            }
         }
 
         if ([] === $messageStores) {
