@@ -19,6 +19,7 @@
         "symfony/ai-chat": "@dev",
         "symfony/ai-platform": "@dev",
         "symfony/ai-store": "@dev",
+        "symfony/clock": "^7.3|^8.0",
         "symfony/config": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
         "symfony/dependency-injection": "^7.3|^8.0",
@@ -30,7 +31,6 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5",
-        "symfony/clock": "^7.3|^8.0",
         "symfony/expression-language": "^7.3|^8.0",
         "symfony/security-core": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0"

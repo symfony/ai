@@ -950,6 +950,48 @@ The profiler panel provides insights into the agent's execution:
 .. image:: profiler.png
    :alt: Profiler Panel
 
+Message stores
+--------------
+
+Message stores are critical to store messages sent to agents in the short / long term, they can be configured
+and reused in multiple chats, providing the capacity to agents to keep previous interactions.
+
+Configuring message stores
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Message stores are defined in the ``message_store`` section of your configuration:
+
+.. code-block:: yaml
+
+    ai:
+        # ...
+        message_store:
+            youtube:
+                cache:
+                    service: 'cache.app'
+                    key: 'youtube'
+
+Chats
+-----
+
+Chats are the entrypoint when it comes to sending messages to agents and retrieving content (mostly text)
+that contains the response from the agent.
+
+Each chat requires to define an agent and a message store.
+
+Configuring Chats
+~~~~~~~~~~~~~~~~~
+
+Chats are defined in the ``chat`` section of your configuration:
+
+.. code-block:: yaml
+
+    ai:
+        # ...
+        chat:
+            youtube:
+                agent: 'ai.agent.youtube'
+                message_store: 'ai.message_store.cache.youtube'
 
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
 .. _`Symfony AI Chat`: https://github.com/symfony/ai-chat

@@ -21,6 +21,7 @@ use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\AiBundle\AiBundle;
+use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
 use Symfony\AI\Store\Document\Loader\InMemoryLoader;
@@ -190,6 +191,41 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.MessageStoreInterface::class.' $memory_main'));
         $this->assertTrue($container->hasAlias(MessageStoreInterface::class.' $session'));
         $this->assertTrue($container->hasAlias('.'.MessageStoreInterface::class.' $session_session'));
+    }
+
+    public function testInjectionChatAliasIsRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                    ],
+                ],
+                'message_store' => [
+                    'memory' => [
+                        'main' => [
+                            'identifier' => '_memory',
+                        ],
+                    ],
+                ],
+                'chat' => [
+                    'main' => [
+                        'agent' => 'ai.agent.my_agent',
+                        'message_store' => 'ai.message_store.memory.main',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertCount(1, $container->findTaggedServiceIds('ai.chat'));
+
+        $this->assertTrue($container->hasAlias(ChatInterface::class.' $main'));
+
+        $chatDefinition = $container->getDefinition('ai.chat.main');
+        $this->assertCount(2, $chatDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $chatDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $chatDefinition->getArgument(1));
     }
 
     public function testAgentHasTag()
@@ -3036,6 +3072,12 @@ class AiBundleTest extends TestCase
                         'my_session_message_store' => [
                             'identifier' => 'session',
                         ],
+                    ],
+                ],
+                'chat' => [
+                    'main' => [
+                        'agent' => 'my_chat_agent',
+                        'message_store' => 'cache',
                     ],
                 ],
                 'vectorizer' => [
