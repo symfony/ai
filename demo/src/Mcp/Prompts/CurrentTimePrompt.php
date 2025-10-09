@@ -13,10 +13,10 @@ namespace App\Mcp\Prompts;
 
 use Mcp\Capability\Attribute\McpPrompt;
 
+#[McpPrompt(name: 'time-analysis')]
 class CurrentTimePrompt
 {
-    #[McpPrompt(name: 'time-analysis')]
-    public function getTimeAnalysisPrompt(): array
+    public function __invoke(): array
     {
         return [
             [

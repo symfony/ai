@@ -36,10 +36,10 @@ Actions that can be executed::
 
     use Mcp\Capability\Attribute\McpTool;
 
+    #[McpTool(name: 'current-time')]
     class CurrentTimeTool
     {
-        #[McpTool(name: 'current-time')]
-        public function getCurrentTime(string $format = 'Y-m-d H:i:s'): string
+        public function __invoke(string $format = 'Y-m-d H:i:s'): string
         {
             return (new \DateTime('now', new \DateTimeZone('UTC')))->format($format);
         }
@@ -52,10 +52,10 @@ System instructions for AI context::
 
     use Mcp\Capability\Attribute\McpPrompt;
 
+    #[McpPrompt(name: 'time-analysis')]
     class TimePrompts
     {
-        #[McpPrompt(name: 'time-analysis')]
-        public function getTimeAnalysisPrompt(): array
+        public function __invoke(): array
         {
             return [
                 ['role' => 'user', 'content' => 'You are a time management expert.']
@@ -70,10 +70,10 @@ Static data that can be read::
 
     use Mcp\Capability\Attribute\McpResource;
 
+    #[McpResource(uri: 'time://current', name: 'current-time')]
     class TimeResource
     {
-        #[McpResource(uri: 'time://current', name: 'current-time')]
-        public function getCurrentTimeResource(): array
+        public function __invoke(): array
         {
             return [
                 'uri' => 'time://current',
@@ -97,10 +97,10 @@ Dynamic resources with parameters:
 
     use Mcp\Capability\Attribute\McpResourceTemplate;
 
+    #[McpResourceTemplate(uriTemplate: 'time://{timezone}', name: 'time-by-timezone')]
     class TimeResourceTemplate
     {
-        #[McpResourceTemplate(uriTemplate: 'time://{timezone}', name: 'time-by-timezone')]
-        public function getTimeByTimezone(string $timezone): array
+        public function __invoke(string $timezone): array
         {
             $time = (new \DateTime('now', new \DateTimeZone($timezone)))->format('Y-m-d H:i:s T');
             return [

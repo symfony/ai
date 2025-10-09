@@ -12,7 +12,7 @@
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Mcp\Server;
-use Mcp\Server\Builder;
+use Mcp\Server\ServerBuilder;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
@@ -21,8 +21,8 @@ return static function (ContainerConfigurator $container): void {
             ->args(['mcp'])
             ->tag('monolog.logger', ['channel' => 'mcp'])
 
-        ->set('mcp.server.builder', Builder::class)
-            ->factory([Server::class, 'builder'])
+        ->set('mcp.server.builder', ServerBuilder::class)
+            ->factory([Server::class, 'make'])
             ->call('setServerInfo', [param('mcp.app'), param('mcp.version')])
             ->call('setPaginationLimit', [param('mcp.pagination_limit')])
             ->call('setInstructions', [param('mcp.instructions')])
