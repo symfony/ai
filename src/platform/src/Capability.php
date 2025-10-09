@@ -35,11 +35,16 @@ enum Capability: string
     case OUTPUT_STREAMING = 'output-streaming';
     case OUTPUT_STRUCTURED = 'output-structured';
     case OUTPUT_TEXT = 'output-text';
+    case COMPLETION = 'completion';
 
     // FUNCTIONALITY
     case TOOL_CALLING = 'tool-calling';
+    case TOOLS = 'tools';
 
     // VOICE
     case TEXT_TO_SPEECH = 'text-to-speech';
     case SPEECH_TO_TEXT = 'speech-to-text';
+
+    // EMBEDDINGS
+    case EMBEDDINGS = 'embeddings';
 }

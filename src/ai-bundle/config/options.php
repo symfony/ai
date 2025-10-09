@@ -160,6 +160,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->defaultValue('http_client')
                                 ->info('Service ID of the HTTP client to use')
                             ->end()
+                            ->booleanNode('use_api_as_catalog')->end()
                         ->end()
                     ->end()
                     ->arrayNode('cerebras')

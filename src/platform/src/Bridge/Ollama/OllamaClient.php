@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -35,21 +36,9 @@ final class OllamaClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        $response = $this->httpClient->request('POST', \sprintf('%s/api/show', $this->hostUrl), [
-            'json' => [
-                'model' => $model->getName(),
-            ],
-        ]);
-
-        $capabilities = $response->toArray()['capabilities'] ?? null;
-
-        if (null === $capabilities) {
-            throw new InvalidArgumentException('The model information could not be retrieved from the Ollama API. Your Ollama server might be too old. Try upgrade it.');
-        }
-
         return match (true) {
-            \in_array('completion', $capabilities, true) => $this->doCompletionRequest($payload, $options),
-            \in_array('embedding', $capabilities, true) => $this->doEmbeddingsRequest($model, $payload, $options),
+            \in_array(Capability::COMPLETION, $model->getCapabilities(), true) => $this->doCompletionRequest($payload, $options),
+            \in_array(Capability::EMBEDDINGS, $model->getCapabilities(), true) => $this->doEmbeddingsRequest($model, $payload, $options),
             default => throw new InvalidArgumentException(\sprintf('Unsupported model "%s": "%s".', $model::class, $model->getName())),
         };
     }
