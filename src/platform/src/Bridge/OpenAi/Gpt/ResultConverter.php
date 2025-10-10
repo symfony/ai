@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Metadata\TokenUsage;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -104,6 +105,16 @@ final class ResultConverter implements ResultConverterInterface
 
             if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
                 yield new ToolCallResult(...array_map($this->convertToolCall(...), $toolCalls));
+            }
+
+            if ($usage = $data['usage'] ?? null) {
+                yield new TokenUsage(
+                    promptTokens: $usage['prompt_tokens'] ?? null,
+                    completionTokens: $usage['completion_tokens'] ?? null,
+                    thinkingTokens: $usage['completion_tokens_details']['reasoning_tokens'] ?? null,
+                    cachedTokens: $usage['prompt_tokens_details']['cached_tokens'] ?? null,
+                    totalTokens: $usage['total_tokens'] ?? null,
+                );
             }
 
             if (!isset($data['choices'][0]['delta']['content'])) {

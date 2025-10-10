@@ -33,7 +33,13 @@ final class StreamResult extends BaseResult
             if ($value instanceof ToolCallResult) {
                 yield from ($this->handleToolCallsCallback)($value, Message::ofAssistant($streamedResult))->getContent();
 
-                break;
+                continue;
+            }
+
+            if (!\is_string($value)) {
+                yield $value;
+
+                continue;
             }
 
             $streamedResult .= $value;
