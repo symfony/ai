@@ -391,6 +391,12 @@ return static function (DefinitionConfigurator $configurator): void {
                                         ->children()
                                             ->stringNode('service')->cannotBeEmpty()->end()
                                             ->stringNode('agent')->cannotBeEmpty()->end()
+                                            ->stringNode('platform')->cannotBeEmpty()->end()
+                                            ->stringNode('model')->cannotBeEmpty()->end()
+                                            ->arrayNode('options')
+                                                ->info('Options to pass to the platform')
+                                                ->scalarPrototype()->end()
+                                            ->end()
                                             ->stringNode('name')->end()
                                             ->stringNode('description')->end()
                                             ->stringNode('method')->end()
@@ -402,8 +408,27 @@ return static function (DefinitionConfigurator $configurator): void {
                                             })
                                         ->end()
                                         ->validate()
-                                            ->ifTrue(static fn ($v) => !(empty($v['agent']) xor empty($v['service'])))
-                                            ->thenInvalid('Either "agent" or "service" must be configured, and never both.')
+                                            ->ifTrue(static function ($v) {
+                                                $count = 0;
+                                                if (!empty($v['agent'])) {
+                                                    ++$count;
+                                                }
+                                                if (!empty($v['service'])) {
+                                                    ++$count;
+                                                }
+                                                if (!empty($v['platform'])) {
+                                                    ++$count;
+                                                }
+
+                                                return 1 !== $count;
+                                            })
+                                            ->thenInvalid('Exactly one of "agent", "service", or "platform" must be configured.')
+                                        ->end()
+                                        ->validate()
+                                            ->ifTrue(static function ($v) {
+                                                return !empty($v['platform']) && empty($v['model']);
+                                            })
+                                            ->thenInvalid('When "platform" is configured, "model" must also be provided.')
                                         ->end()
                                     ->end()
                                 ->end()
