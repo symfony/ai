@@ -33,9 +33,9 @@ with a ``Symfony\AI\Agent\AgentInterface`` and a ``Symfony\AI\Chat\MessageStoreI
 
 You can find more advanced usage in combination with an Agent using the store for long-term context:
 
-* `Long-term context with Cache`_
-* `Long-term context with HttpFoundation session`_
-* `Long-term context with InMemory`_
+* `External services storage with Cache`_
+* `Current session context storage with HttpFoundation session`_
+* `Current process context storage with InMemory`_
 * `Long-term context with Meilisearch`_
 
 Supported Message stores
@@ -120,9 +120,9 @@ store and ``bin/console ai:message-store:drop`` to clean up the message store:
     $ php bin/console ai:message-store:setup symfonycon
     $ php bin/console ai:message-store:drop symfonycon
 
-.. _`Long-term context with Cache`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-cache.php
-.. _`Long-term context with HttpFoundation session`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-session.php
-.. _`Long-term context with InMemory`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat.php
+.. _`External services storage with Cache`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-cache.php
+.. _`Current session context storage with HttpFoundation session`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-session.php
+.. _`Current process context storage with InMemory`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat.php
 .. _`Long-term context with Meilisearch`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-meilisearch.php
 .. _`Cache`: https://symfony.com/doc/current/components/cache.html
 .. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
