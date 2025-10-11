@@ -1,0 +1,20 @@
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-09-17T17:55:33Z
+
+Addressed the review.
+However, I'd like to mention that many of the comments I've seen in this and a few other PRs seem to be nitty-gritty IMO, and especially come at a later stage in the PR, unless there is a particular doc on coding standards in the said repo that I have missed so far.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-09-17T19:48:03Z
+
+We try to keep the code a little bit in sync. What coding standards do you mean?
+
+---------------------------------------------------------------------------
+
+by junaidbinfarooq at 2025-09-22T13:36:24Z
+
+> We try to keep the code a little bit in sync. What coding standards do you mean?
+
+Something like a contributing guide or PSR that specifically details the coding standards to be followed when contributing to the repo. This will ensure we have a consistent coding style throughout the codebase without having the maintainers worry much about it IMO.
