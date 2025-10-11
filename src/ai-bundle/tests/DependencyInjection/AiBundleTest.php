@@ -3035,6 +3035,13 @@ class AiBundleTest extends TestCase
                             'identifier' => '_memory',
                         ],
                     ],
+                    'meilisearch' => [
+                        'my_meilisearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:7700',
+                            'api_key' => 'foo',
+                            'index_name' => 'test',
+                        ],
+                    ],
                     'session' => [
                         'my_session_message_store' => [
                             'identifier' => 'session',
