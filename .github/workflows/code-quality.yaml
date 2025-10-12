@@ -68,10 +68,6 @@ jobs:
               run: |
                   cd demo/ && $COMPOSER_UP && ../link && $PHPSTAN
 
-            - name: Run PHPStan on demo
-              run: |
-                  cd demo/ && $COMPOSER_UP && ../link && $PHPSTAN
-
             - name: Run PHPStan on packages
               run: |
                   source .github/workflows/.utils.sh
