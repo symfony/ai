@@ -3,13 +3,7 @@
     "description": "Brave Search AI tool bridge for Symfony applications.",
     "license": "MIT",
     "type": "library",
-    "keywords": [
-        "ai",
-        "bridge",
-        "brave",
-        "agent",
-        "tool"
-    ],
+    "keywords": ["ai", "bridge", "brave", "agent", "tool"],
     "authors": [
         {
             "name": "Christopher Hertel",
