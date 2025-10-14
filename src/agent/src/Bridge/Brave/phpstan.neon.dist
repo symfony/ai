@@ -6,7 +6,7 @@ parameters:
     paths:
         - .
     excludePaths:
-        - vendor/
+        - */vendor/*
         - Tests/fixtures/
     ignoreErrors:
         -
