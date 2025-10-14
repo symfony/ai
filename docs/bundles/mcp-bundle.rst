@@ -113,6 +113,33 @@ Dynamic resources with parameters:
 
 All capabilities are automatically discovered in the ``src/`` directory when the server starts.
 
+.. warning::
+
+    The MCP Bundle also ** supports the invokable pattern** where attributes are placed on classes
+    with an ``__invoke()`` method.
+
+    ** Invokable ** :
+
+        #[McpTool(name: 'my-tool')]
+        class MyTool
+        {
+            public function __invoke(string $param): string
+            {
+                // Implementation
+            }
+        }
+
+    ** Method Based ** :
+
+        class MyTools
+        {
+            #[McpTool(name: 'tool-one')]
+            public function toolOne(): string { }
+
+            #[McpTool(name: 'tool-two')]
+            public function toolTwo(): string { }
+        }
+
 Transport Types
 ...............
 

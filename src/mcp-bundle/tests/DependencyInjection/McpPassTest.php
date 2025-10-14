@@ -13,8 +13,10 @@ namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
+use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * @covers \Symfony\AI\McpBundle\DependencyInjection\McpPass
@@ -53,6 +55,18 @@ final class McpPassTest extends TestCase
         $this->assertArrayHasKey('prompt_service', $services);
         $this->assertArrayHasKey('resource_service', $services);
         $this->assertArrayHasKey('template_service', $services);
+
+        // Verify services are ServiceClosureArguments wrapping References
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['tool_service']);
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['prompt_service']);
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['resource_service']);
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['template_service']);
+
+        // Verify the underlying values are References
+        $this->assertInstanceOf(Reference::class, $services['tool_service']->getValues()[0]);
+        $this->assertInstanceOf(Reference::class, $services['prompt_service']->getValues()[0]);
+        $this->assertInstanceOf(Reference::class, $services['resource_service']->getValues()[0]);
+        $this->assertInstanceOf(Reference::class, $services['template_service']->getValues()[0]);
     }
 
     public function testDoesNothingWhenNoMcpServicesTagged()
@@ -115,5 +129,13 @@ final class McpPassTest extends TestCase
         $this->assertArrayHasKey('prompt_service', $services);
         $this->assertArrayNotHasKey('resource_service', $services);
         $this->assertArrayNotHasKey('template_service', $services);
+
+        // Verify services are ServiceClosureArguments wrapping References
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['tool_service']);
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['prompt_service']);
+
+        // Verify the underlying values are References
+        $this->assertInstanceOf(Reference::class, $services['tool_service']->getValues()[0]);
+        $this->assertInstanceOf(Reference::class, $services['prompt_service']->getValues()[0]);
     }
 }
