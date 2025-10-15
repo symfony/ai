@@ -114,7 +114,7 @@ Dynamic resources with parameters:
 All capabilities are automatically discovered in the ``src/`` directory when the server starts.
 
 Attribute Placement Patterns
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The MCP SDK, and therefore the MCP Bundle, supports two patterns for placing attributes on your capabilities:
 
