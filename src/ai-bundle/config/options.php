@@ -539,7 +539,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->stringNode('vector_field')->end()
                                 ->integerNode('dimensions')->end()
                                 ->floatNode('semantic_ratio')
-                                    ->info('The ratio between semantic (vector) and keyword (BM25) search (0.0 to 1.0). Default: 1.0 (100% semantic)')
+                                    ->info('The ratio between semantic (vector) and full-text search (0.0 to 1.0). Default: 1.0 (100% semantic)')
                                     ->defaultValue(1.0)
                                     ->validate()
                                         ->ifTrue(fn ($v) => $v < 0.0 || $v > 1.0)
