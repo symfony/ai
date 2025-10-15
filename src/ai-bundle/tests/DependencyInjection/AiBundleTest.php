@@ -2904,6 +2904,7 @@ class AiBundleTest extends TestCase
                             'embedder' => 'default',
                             'vector_field' => '_vectors',
                             'dimensions' => 768,
+                            'semantic_ratio' => 0.5,
                         ],
                     ],
                     'memory' => [
@@ -3059,5 +3060,29 @@ class AiBundleTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    #[TestDox('Meilisearch store with custom semantic_ratio can be configured')]
+    public function testMeilisearchStoreWithCustomSemanticRatioCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'meilisearch' => [
+                        'test_store' => [
+                            'endpoint' => 'http://127.0.0.1:7700',
+                            'api_key' => 'test_key',
+                            'index_name' => 'test_index',
+                            'semantic_ratio' => 0.5,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.meilisearch.test_store'));
+        $definition = $container->getDefinition('ai.store.meilisearch.test_store');
+        $arguments = $definition->getArguments();
+        $this->assertSame(0.5, $arguments[7]);
     }
 }
