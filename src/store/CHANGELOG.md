@@ -59,9 +59,6 @@ CHANGELOG
    - Minimum score filtering
    - Result limiting
    - Distance/similarity scoring
- * Add Meilisearch hybrid search support:
-   - Configurable `semanticRatio` parameter to control the balance between semantic (vector) and keyword (BM25) search
-   - Default ratio of 1.0 (100% semantic search) for backward compatibility
-   - Per-query override support via query options
+ * Add Meilisearch hybrid search support with a configurable `semanticRatio` parameter to control the balance between semantic (vector) and full-text search.
  * Add custom exception hierarchy with `ExceptionInterface`
  * Add support for specific exceptions for invalid arguments and runtime errors

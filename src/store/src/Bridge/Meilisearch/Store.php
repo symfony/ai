@@ -29,8 +29,8 @@ final readonly class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param string $embedder        The name of the embedder where vectors are stored
      * @param string $vectorFieldName The name of the field in the index that contains the vector
-     * @param float  $semanticRatio   The ratio between semantic (vector) and keyword (BM25) search (0.0 to 1.0)
-     *                                - 0.0 = 100% keyword search (BM25)
+     * @param float  $semanticRatio   The ratio between semantic (vector) and full-text search (0.0 to 1.0)
+     *                                - 0.0 = 100% full-text search
      *                                - 0.5 = balanced hybrid search
      *                                - 1.0 = 100% semantic search (vector only)
      */
