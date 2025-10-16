@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by franzwilding at 2025-10-16T17:48:32Z
+
+@OskarStark I removed the dedicated mistral contract. Once https://github.com/symfony/ai/pull/789 is merged, this PR can also be merged and the new imageUrlNormalizer gets added directly in the platform factory.
