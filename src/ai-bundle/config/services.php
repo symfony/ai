@@ -44,7 +44,6 @@ use Symfony\AI\Platform\Bridge\LmStudio\ModelCatalog as LmStudioModelCatalog;
 use Symfony\AI\Platform\Bridge\Mistral\ModelCatalog as MistralModelCatalog;
 use Symfony\AI\Platform\Bridge\Mistral\TokenOutputProcessor as MistralTokenOutputProcessor;
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
-use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog as OllamaModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog as OpenAiModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor as OpenAiTokenOutputProcessor;
@@ -65,6 +64,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
+use Symfony\Component\DependencyInjection\Reference;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
@@ -95,7 +95,6 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.huggingface', HuggingFaceModelCatalog::class)
         ->set('ai.platform.model_catalog.lmstudio', LmStudioModelCatalog::class)
         ->set('ai.platform.model_catalog.mistral', MistralModelCatalog::class)
-        ->set('ai.platform.model_catalog.ollama', OllamaModelCatalog::class)
         ->set('ai.platform.model_catalog.openai', OpenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.openrouter', OpenRouterModelCatalog::class)
         ->set('ai.platform.model_catalog.perplexity', PerplexityModelCatalog::class)

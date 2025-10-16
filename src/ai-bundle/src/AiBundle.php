@@ -45,6 +45,7 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformF
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory as LmStudioPlatformFactory;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory as MistralPlatformFactory;
+use Symfony\AI\Platform\Bridge\Ollama\OllamaCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
@@ -439,7 +440,14 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('ollama' === $type) {
-            $platformId = 'ai.platform.ollama';
+            $catalogDefinition = (new Definition(OllamaCatalog::class))
+                ->setArguments([
+                    $platform['host_url'],
+                    new Reference('http_client'),
+                ]);
+
+            $container->setDefinition('ai.platform.model_catalog.ollama', $catalogDefinition);
+
             $definition = (new Definition(Platform::class))
                 ->setFactory(OllamaPlatformFactory::class.'::create')
                 ->setLazy(true)
@@ -452,7 +460,7 @@ final class AiBundle extends AbstractBundle
                 ])
                 ->addTag('ai.platform', ['name' => 'ollama']);
 
-            $container->setDefinition($platformId, $definition);
+            $container->setDefinition('ai.platform.ollama', $definition);
 
             return;
         }
