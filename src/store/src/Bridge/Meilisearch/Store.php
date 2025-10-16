@@ -85,10 +85,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $semanticRatio));
         }
 
-        $queryText = $options['q'] ?? '';
-
         $result = $this->request('POST', \sprintf('indexes/%s/search', $this->indexName), [
-            'q' => $queryText,
+            'q' => $options['q'] ?? '',
             'vector' => $vector->getData(),
             'showRankingScore' => true,
             'retrieveVectors' => true,
