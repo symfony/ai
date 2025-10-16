@@ -529,7 +529,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                     ->info('The ratio between semantic (vector) and full-text search (0.0 to 1.0). Default: 1.0 (100% semantic)')
                                     ->defaultValue(1.0)
                                     ->validate()
-                                        ->ifTrue(fn ($v) => $v < 0.0 || $v > 1.0)
+                                        ->ifTrue(static fn ($v) => $v < 0.0 || $v > 1.0)
                                         ->thenInvalid('The semantic ratio must be between 0.0 and 1.0.')
                                     ->end()
                                 ->end()
