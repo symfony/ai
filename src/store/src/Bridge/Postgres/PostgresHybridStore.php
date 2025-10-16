@@ -160,7 +160,7 @@ final readonly class PostgresHybridStore implements ManagedStoreInterface, Store
      *   semanticRatio?: float,
      *   limit?: int,
      *   where?: string,
-     *   params?: array,
+     *   params?: array<string, mixed>,
      *   maxScore?: float
      * } $options
      */
@@ -196,14 +196,14 @@ final readonly class PostgresHybridStore implements ManagedStoreInterface, Store
             }
         }
 
-        if ($options['where'] ?? false) {
+        if (isset($options['where']) && '' !== $options['where']) {
             $where[] = '('.$options['where'].')';
         }
 
         $whereClause = $where ? 'WHERE '.implode(' AND ', $where) : '';
 
         // Choose query strategy based on semanticRatio and query text
-        if (1.0 === $semanticRatio || empty($queryText)) {
+        if (1.0 === $semanticRatio || '' === $queryText) {
             // Pure vector search
             $sql = $this->buildVectorOnlyQuery($whereClause, $limit);
         } elseif (0.0 === $semanticRatio) {
@@ -255,7 +255,7 @@ final readonly class PostgresHybridStore implements ManagedStoreInterface, Store
         // Add FTS match filter to ensure only relevant documents are returned
         $ftsFilter = \sprintf("content_tsv @@ websearch_to_tsquery('%s', :query)", $this->language);
 
-        if ($whereClause) {
+        if ('' !== $whereClause) {
             // Combine existing WHERE clause with FTS filter
             $whereClause = str_replace('WHERE ', "WHERE $ftsFilter AND ", $whereClause);
         } else {
@@ -284,7 +284,7 @@ final readonly class PostgresHybridStore implements ManagedStoreInterface, Store
         $ftsWhereClause = $whereClause;
         $ftsFilter = \sprintf("content_tsv @@ websearch_to_tsquery('%s', :query)", $this->language);
 
-        if ($whereClause) {
+        if ('' !== $whereClause) {
             $ftsWhereClause = str_replace('WHERE ', "WHERE $ftsFilter AND ", $whereClause);
         } else {
             $ftsWhereClause = "WHERE $ftsFilter";
