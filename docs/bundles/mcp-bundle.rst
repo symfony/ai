@@ -113,6 +113,33 @@ Dynamic resources with parameters:
 
 All capabilities are automatically discovered in the ``src/`` directory when the server starts.
 
+Attribute Placement Patterns
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The MCP SDK, and therefore the MCP Bundle, supports two patterns for placing attributes on your capabilities:
+
+**Invokable Pattern** - Attribute on a class with ``__invoke()`` method::
+
+    #[McpTool(name: 'my-tool')]
+    class MyTool
+    {
+        public function __invoke(string $param): string
+        {
+            // Implementation
+        }
+    }
+
+**Method-Based Pattern** - Multiple attributes on individual methods::
+
+    class MyTools
+    {
+        #[McpTool(name: 'tool-one')]
+        public function toolOne(): string { }
+
+        #[McpTool(name: 'tool-two')]
+        public function toolTwo(): string { }
+    }
+
 Transport Types
 ...............
 

@@ -75,7 +75,7 @@ final class McpBundle extends AbstractBundle
         foreach ($mcpAttributes as $attributeClass => $tag) {
             $builder->registerAttributeForAutoconfiguration(
                 $attributeClass,
-                static function (ChildDefinition $definition) use ($tag): void {
+                static function (ChildDefinition $definition, object $attribute, \Reflector $reflector) use ($tag): void {
                     $definition->addTag($tag);
                 }
             );
