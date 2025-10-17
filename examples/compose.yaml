@@ -110,6 +110,12 @@ services:
             - '7474:7474'
             - '7687:7687'
 
+    pogocache:
+        image: pogocache/pogocache
+        command: [ 'pogocache', '--auth', 'symfony' ]
+        ports:
+            - '9401:9401'
+
     postgres:
         image: pgvector/pgvector:0.8.0-pg17
         environment:

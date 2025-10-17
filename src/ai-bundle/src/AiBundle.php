@@ -35,6 +35,7 @@ use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\HttpFoundation\SessionStore;
+use Symfony\AI\Chat\Bridge\Pogocache\MessageStore as PogocacheMessageStore;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAiPlatformFactory;
@@ -1323,6 +1324,24 @@ final class AiBundle extends AbstractBundle
                 $definition = new Definition(CacheStore::class);
                 $definition
                     ->setArguments($arguments)
+                    ->addTag('ai.message_store');
+
+                $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('pogocache' === $type) {
+            foreach ($messageStores as $name => $messageStore) {
+                $definition = new Definition(PogocacheMessageStore::class);
+                $definition
+                    ->setArguments([
+                        new Reference('http_client'),
+                        $messageStore['endpoint'],
+                        $messageStore['password'],
+                        $messageStore['key'],
+                    ])
                     ->addTag('ai.message_store');
 
                 $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
