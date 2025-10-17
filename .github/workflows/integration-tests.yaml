@@ -65,18 +65,18 @@ jobs:
             - name: Install root dependencies
               uses: ramsey/composer-install@v3
 
-            - name: Install examples dependencies
+            - name: Build root packages
+              run: php .github/build-packages.php
+
+            - name: Install root dependencies
               uses: ramsey/composer-install@v3
               with:
                   working-directory: examples
 
-            - name: Link examples
-              working-directory: examples
-              run: ../link
-
             - name: Run commands examples
+              working-directory: examples
               run: |
-                php examples/commands/stores.php
+                php commands/stores.php
                 php examples/commands/message-stores.php
 
     demo:
