@@ -14,9 +14,11 @@ require_once dirname(__DIR__).'/bootstrap.php';
 use Symfony\AI\Chat\Bridge\HttpFoundation\SessionStore;
 use Symfony\AI\Chat\Bridge\Local\CacheStore;
 use Symfony\AI\Chat\Bridge\Local\InMemoryStore;
+use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore as MeilisearchMessageStore;
 use Symfony\AI\Chat\Command\DropStoreCommand;
 use Symfony\AI\Chat\Command\SetupStoreCommand;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -28,6 +30,13 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 $factories = [
     'cache' => static fn (): CacheStore => new CacheStore(new ArrayAdapter(), cacheKey: 'symfony'),
+    'meilisearch' => static fn (): MeilisearchMessageStore => new MeilisearchMessageStore(
+        http_client(),
+        env('MEILISEARCH_HOST'),
+        env('MEILISEARCH_API_KEY'),
+        new MonotonicClock(),
+        'symfony',
+    ),
     'memory' => static fn (): InMemoryStore => new InMemoryStore('symfony'),
     'session' => static function (): SessionStore {
         $request = Request::create('/');
