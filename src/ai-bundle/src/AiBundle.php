@@ -910,6 +910,10 @@ final class AiBundle extends AbstractBundle
                     $arguments[6] = $store['dimensions'];
                 }
 
+                if (\array_key_exists('semantic_ratio', $store)) {
+                    $arguments[7] = $store['semantic_ratio'];
+                }
+
                 $definition = new Definition(MeilisearchStore::class);
                 $definition
                     ->addTag('ai.store')
