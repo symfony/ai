@@ -33,8 +33,6 @@ $store = new Store(
     endpointUrl: env('MEILISEARCH_HOST'),
     apiKey: env('MEILISEARCH_API_KEY'),
     indexName: 'movies',
-    // Optional: configure hybrid search ratio (0.0 = keyword, 1.0 = semantic)
-    // semanticRatio: 0.5, // 50/50 hybrid search
 );
 
 // create embeddings and documents

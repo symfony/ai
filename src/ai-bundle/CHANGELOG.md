@@ -21,7 +21,6 @@ CHANGELOG
    - Platform credentials (API keys, endpoints)
    - Model configurations per agent
    - Vector store configurations
-   - Meilisearch `semantic_ratio` option for configuring hybrid search balance
  * Add dependency injection integration:
    - Autoconfiguration for tools and processors
    - Service aliases for default agent and platform
