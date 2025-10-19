@@ -1,0 +1,13 @@
+parameters:
+    level: max
+    paths:
+        - .
+    excludePaths:
+        - */vendor/*
+        - Tests/fixtures/
+    ignoreErrors:
+        -
+            message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
+        -
+            identifier: missingType.iterableValue
+            path: Tests/*

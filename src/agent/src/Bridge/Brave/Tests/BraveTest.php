@@ -9,19 +9,18 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Tests\Toolbox\Tool;
+namespace Symfony\AI\Agent\Bridge\Brave\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Toolbox\Tool\Brave;
+use Symfony\AI\Agent\Bridge\Brave\Brave;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
-use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class BraveTest extends TestCase
 {
     public function testReturnsSearchResults()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/brave.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/search-results.json');
         $httpClient = new MockHttpClient($result);
         $brave = new Brave($httpClient, 'test-api-key');
 
@@ -38,7 +37,7 @@ final class BraveTest extends TestCase
 
     public function testPassesCorrectParametersToApi()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/brave.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/search-results.json');
         $httpClient = new MockHttpClient($result);
         $brave = new Brave($httpClient, 'test-api-key', ['extra' => 'option']);
 
@@ -52,13 +51,13 @@ final class BraveTest extends TestCase
 
         $requestOptions = $result->getRequestOptions();
         $this->assertArrayHasKey('headers', $requestOptions);
+        $this->assertIsArray($requestOptions['headers']);
         $this->assertContains('X-Subscription-Token: test-api-key', $requestOptions['headers']);
     }
 
     public function testHandlesEmptyResults()
     {
-        $result = new MockResponse(json_encode(['web' => ['results' => []]]));
-        $httpClient = new MockHttpClient($result);
+        $httpClient = new MockHttpClient(new JsonMockResponse(['web' => ['results' => []]]));
         $brave = new Brave($httpClient, 'test-api-key');
 
         $results = $brave('this should return nothing');

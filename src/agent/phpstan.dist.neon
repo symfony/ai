@@ -6,6 +6,8 @@ parameters:
     paths:
         - src/
         - tests/
+    excludePaths:
+        - src/Bridge/*/vendor/
     ignoreErrors:
         -
             message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
