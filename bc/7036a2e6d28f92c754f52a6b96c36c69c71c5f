@@ -1,0 +1,74 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-10T22:08:05Z
+
+Hi @camilleislasse,
+
+thanks for working on this - is the best next step! :+1:
+
+Can you add your findings about when `#[Mcp*]` work on methods vs. classes with the bundle to the docs? i think for now that should be a warning there.
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-10-13T04:01:25Z
+
+> Hi @camilleislasse,
+>
+> thanks for working on this - is the best next step! 👍
+>
+> Can you add your findings about when `#[Mcp*]` work on methods vs. classes with the bundle to the docs? i think for now that should be a warning there.
+
+https://github.com/symfony/ai/pull/757/commits/80da7cbb3e6a2e28b01282b34e8569c5369edada
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-13T04:38:59Z
+
+I get the note, but couldn't we make it work to support both?
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-10-14T16:07:34Z
+
+> I get the note, but couldn't we make it work to support both?
+
+I have find a way :
+
+By changing the closure signature from:
+```
+static function (ChildDefinition $definition) use ($tag): void {
+```
+To:
+```
+static function (ChildDefinition $definition, object $attribute, \Reflector $reflector) use ($tag): void {
+```
+Symfony now scans both class-level attributes (invokable pattern) and method-level attributes (method-based pattern). The `\Reflector` parameter tells Symfony to also check  methods, properties, and parameters - not just classes.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-14T18:15:09Z
+
+That's great news - thanks @camilleislasse!
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-14T18:21:20Z
+
+does it work for you though?
+i currently get this error while running the branch locally with inspector:
+<img width="1669" height="1246" alt="image" src="https://github.com/user-attachments/assets/7ae77b83-de78-466f-af20-69d0509dd7da" />
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-10-15T08:13:23Z
+
+> i currently get this error while running the branch locally with inspector:
+
+> does it work for you though? i currently get this error while running the branch locally with inspector: <img alt="image" width="1669" height="1246" src="https://private-user-images.githubusercontent.com/2852185/501094090-7ae77b83-de78-466f-af20-69d0509dd7da.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjA1MTYxNzMsIm5iZiI6MTc2MDUxNTg3MywicGF0aCI6Ii8yODUyMTg1LzUwMTA5NDA5MC03YWU3N2I4My1kZTc4LTQ2NmYtYWYyMC02OWQwNTA5ZGQ3ZGEucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MTAxNSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTEwMTVUMDgxMTEzWiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9NjhmYzRlZDIzNGVkNjVmOWE4NTllNDQ5NTQ3MmVkZDE1NzAxNjQxZTcxMGE1NDI5N2MwNGRkNTFkZWJhYzc0OSZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.ks-0JaRUCEZe3inqe20HONJc9QduxGm2LWC3wdDHbLI">
+
+Yes working, I look
+
+<img width="1466" height="549" alt="Capture d’écran 2025-10-15 à 10 04 46" src="https://github.com/user-attachments/assets/86ac416e-2033-4b94-8f30-4551efdd977d" />
+
+1. Do you have the MonologBundle installed?
+2. Did you run composer install and cache:clear after pulling the branch?
