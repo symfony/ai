@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-20T18:17:02Z
+
+Hi @Wiltzsu, thanks for fixing that and solving the issue!
+
+I have a conceptual question here, more about #749 and the other restructurings by @OskarStark - what was your idea with the subtree split here? We're running in an inconsistency with the README links here now - or is that still to solve?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-20T18:23:13Z
+
+My plan is to focus on the subtree split and go with the rest files as primary doc source
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-20T18:59:22Z
+
+What I meant is that with the change here the readme of the splitted component would be broken, e.g. https://github.com/symfony/ai-chat
