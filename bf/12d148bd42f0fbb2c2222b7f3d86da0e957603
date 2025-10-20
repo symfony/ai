@@ -1,0 +1,101 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-07-31T17:10:34Z
+
+Wouldn't it be more related to Chat and the MessageStore?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-07-31T17:17:24Z
+
+Ah yes, I wasn't sure about the interface to use, I'll check the store one.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-01T07:00:17Z
+
+Yes, I need to finish the test in the same time, I'll push the updated version once it's done 🙂
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-01T09:36:55Z
+
+@chr-hertel I agree, the `Store` component should contains everything related to storing messages, vectors and more, this way, we can easily "update" the API without forcing the release of `Agent`, plus, we can easily share the API thanks to interfaces.
+
+Maybe we can move the classes/interfaces after this PR to prevent any bloating of it?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-01T09:38:30Z
+
+> Maybe we can move the classes/interfaces after this PR to prevent any bloating of it?
+
+Agreed :+1:
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-08-01T09:40:22Z
+
+What about a dedicated MessageStore component? or too much?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-01T11:38:54Z
+
+@OskarStark Well, here's my humble opinion (I don't know how this package was initially designed and what are the "rules" that it must follow to comply with Symfony approach):
+
+The `Store` package is enough, its description along with the documentation must be updated to inform that it "store" more than just vectors and is not "only designed" for RAG, this approach would allow to keep the current packages and add new features (like graph databases and more) without compromising the overall developer experience (too much packages tend to complicate the developer experience, you're using X namespaces, you don't know which one do what, etc)
+
+Maybe we could find a new "way" to split the `Store` package (new sub namespaces and more, let's say `Bridge` then two namespaces `VectorStore` then `MessageStore`, simple examples to gave the idea) to keep it coherent and "open" for future modifications but IMO, it's enough for the "storage" part of the AI initiative.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-08-02T21:21:06Z
+
+One thing I wonder is about having multiple conversations happening in parallel. Let's say per user. How would that work with this implementation? separate index?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-08-03T06:33:07Z
+
+Actually, yes, multiple index.
+
+Another solution might be to use a "session" per agent, the session is initiated by the agent (constructor call, maybe an UUID?) then sent to the message store to "lock" messages per agent.
+
+I don't see a big technical bottleneck but IMO, this refactoring must be brought via another PR (I can work on it if you want).
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-28T21:13:22Z
+
+Hi @Guikingone, i guess this one got lost - still want to wrap this up?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-09-29T07:25:31Z
+
+Hi @chr-hertel, yes, of course, shouldn't we wait until #675 is merged? This way we can directly move the class into the correct directory 🤔
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-06T07:45:07Z
+
+Needs a rebase now
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-07T18:42:36Z
+
+Needs a rebase again
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-07T18:53:37Z
+
+@OskarStark Yes, I'm facing a small issue during tests, might need a day or two to fix it and ensure that everything is working as expecting, I'll take a look at your suggestions ASAP.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-07T19:09:52Z
+
+No worries
