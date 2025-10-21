@@ -37,6 +37,7 @@ You can find more advanced usage in combination with an Agent using the store fo
 * `Current session context storage with HttpFoundation session`_
 * `Current process context storage with InMemory`_
 * `Long-term context with Meilisearch`_
+* `Long-term context with Redis`_
 
 Supported Message stores
 ------------------------
@@ -45,6 +46,7 @@ Supported Message stores
 * `HttpFoundation session`_
 * `InMemory`_
 * `Meilisearch`_
+* `Redis`_
 
 Implementing a Bridge
 ---------------------
@@ -124,7 +126,9 @@ store and ``bin/console ai:message-store:drop`` to clean up the message store:
 .. _`Current session context storage with HttpFoundation session`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-session.php
 .. _`Current process context storage with InMemory`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat.php
 .. _`Long-term context with Meilisearch`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-meilisearch.php
+.. _`Long-term context with Redis`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-redis.php
 .. _`Cache`: https://symfony.com/doc/current/components/cache.html
 .. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
 .. _`HttpFoundation session`: https://developers.cloudflare.com/vectorize/
 .. _`Meilisearch`: https://www.meilisearch.com/
+.. _`Redis`: https://redis.io/
