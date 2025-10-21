@@ -25,14 +25,16 @@
         "symfony/ai-platform": "@dev"
     },
     "require-dev": {
+        "ext-redis": "*",
         "phpstan/phpstan": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.13",
+        "psr/cache": "^3.0",
         "symfony/dependency-injection": "^7.3|^8.0",
         "symfony/clock": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
         "symfony/http-foundation": "^7.3|^8.0",
-        "psr/cache": "^3.0"
+        "symfony/serializer": "^7.3|^8.0"
     },
     "suggest": {
         "symfony/clock": "To use stores that requires waiting for actions like Meilisearch"

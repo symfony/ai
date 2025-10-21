@@ -89,13 +89,10 @@ $factories = [
         env('QDRANT_SERVICE_API_KEY'),
         'symfony',
     ),
-    'redis' => static fn (): RedisStore => new RedisStore(
-        new Redis([
-            'host' => env('REDIS_HOST'),
-            'port' => 6379,
-        ]),
-        'symfony'
-    ),
+    'redis' => static fn (): RedisStore => new RedisStore(new Redis([
+        'host' => env('REDIS_HOST'),
+        'port' => 6379,
+    ]), 'symfony'),
     'surrealdb' => static fn (): SurrealDbStore => new SurrealDbStore(
         httpClient: http_client(),
         endpointUrl: env('SURREALDB_HOST'),

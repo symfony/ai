@@ -37,6 +37,7 @@ use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\HttpFoundation\SessionStore;
 use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore as MeilisearchMessageStore;
 use Symfony\AI\Chat\Bridge\Pogocache\MessageStore as PogocacheMessageStore;
+use Symfony\AI\Chat\Bridge\Redis\MessageStore as RedisMessageStore;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAiPlatformFactory;
@@ -1370,6 +1371,30 @@ final class AiBundle extends AbstractBundle
                         $messageStore['endpoint'],
                         $messageStore['password'],
                         $messageStore['key'],
+                    ])
+                    ->addTag('ai.message_store');
+
+                $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('redis' === $type) {
+            foreach ($messageStores as $name => $messageStore) {
+                if (isset($messageStore['client'])) {
+                    $redisClient = new Reference($messageStore['client']);
+                } else {
+                    $redisClient = new Definition(\Redis::class);
+                    $redisClient->setArguments([$messageStore['connection_parameters']]);
+                }
+
+                $definition = new Definition(RedisMessageStore::class);
+                $definition
+                    ->setArguments([
+                        $redisClient,
+                        $messageStore['index_name'],
+                        new Reference('serializer'),
                     ])
                     ->addTag('ai.message_store');
 

@@ -120,6 +120,13 @@ class AiBundleTest extends TestCase
         $this->assertArrayHasKey('console.command', $dropStoreCommandDefinition->getTags());
     }
 
+    public function testMessageBagNormalizerIsRegistered()
+    {
+        $container = $this->buildContainer($this->getFullConfig());
+
+        $this->assertTrue($container->hasDefinition('ai.chat.message_bag.normalizer'));
+    }
+
     public function testInjectionAgentAliasIsRegistered()
     {
         $container = $this->buildContainer([
@@ -3030,6 +3037,15 @@ class AiBundleTest extends TestCase
                             'endpoint' => 'http://127.0.0.1:9401',
                             'password' => 'foo',
                             'key' => 'bar',
+                        ],
+                    ],
+                    'redis' => [
+                        'my_redis_store' => [
+                            'connection_parameters' => [
+                                'host' => '1.2.3.4',
+                                'port' => 6379,
+                            ],
+                            'index_name' => 'my_message_store',
                         ],
                     ],
                     'session' => [
