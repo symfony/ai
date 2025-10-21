@@ -16,19 +16,15 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentAwareInterface;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
-use Symfony\AI\Agent\Exception\MissingModelSupportException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
-use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -223,43 +219,6 @@ final class AgentTest extends TestCase
         $actualResult = $agent->call($messages, $options);
 
         $this->assertSame($result, $actualResult);
-    }
-
-    public function testCallThrowsExceptionForMissingStructuredOutputSupport()
-    {
-        $modelName = 'model-without-structured-output';
-
-        $modelMock = $this->createMock(Model::class);
-        $modelMock->method('getCapabilities')->willReturn([
-            Capability::INPUT_MESSAGES,
-            Capability::OUTPUT_TEXT,
-        ]);
-        $modelMock->method('getName')->willReturn($modelName);
-
-        $modelCatalogMock = $this->createMock(ModelCatalogInterface::class);
-        $modelCatalogMock
-            ->expects($this->once())
-            ->method('getModel')
-            ->with($modelName)
-            ->willReturn($modelMock);
-
-        $platformMock = $this->createMock(PlatformInterface::class);
-        $platformMock
-            ->expects($this->once())
-            ->method('getModelCatalog')
-            ->willReturn($modelCatalogMock);
-        $platformMock
-            ->expects($this->never())
-            ->method('invoke');
-
-        $agent = new Agent($platformMock, $modelName);
-        $messages = new MessageBag(new UserMessage(new Text('Hello')));
-        $options = ['output_structure' => 'App\Dto\MyStructure'];
-
-        $this->expectException(MissingModelSupportException::class);
-        $this->expectExceptionMessage(\sprintf('Model "%s" does not support "structured output".', $modelName));
-
-        $agent->call($messages, $options);
     }
 
     public function testConstructorAcceptsTraversableProcessors()

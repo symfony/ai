@@ -118,8 +118,9 @@ return static function (ContainerConfigurator $container): void {
         ->alias(ResponseFormatFactoryInterface::class, 'ai.agent.response_format_factory')
         ->set('ai.agent.structured_output_processor', StructureOutputProcessor::class)
             ->args([
+                service('ai.platform'),
                 service('ai.agent.response_format_factory'),
-                service('serializer'),
+                service('serializer')->nullOnInvalid(),
             ])
 
         // tools

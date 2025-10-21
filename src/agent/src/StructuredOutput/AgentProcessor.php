@@ -17,6 +17,8 @@ use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
@@ -39,6 +41,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
     private string $outputStructure;
 
     public function __construct(
+        private PlatformInterface $platform,
         private readonly ResponseFormatFactoryInterface $responseFormatFactory = new ResponseFormatFactory(),
         private ?SerializerInterface $serializer = null,
     ) {
@@ -75,6 +78,11 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
 
         if (true === ($options['stream'] ?? false)) {
             throw new InvalidArgumentException('Streamed responses are not supported for structured output.');
+        }
+
+        $modelObject = $this->platform->getModelCatalog()->getModel($input->getModel());
+        if (!\in_array(Capability::OUTPUT_STRUCTURED, $modelObject->getCapabilities(), true)) {
+            throw MissingModelSupportException::forStructuredOutput($modelObject->getName());
         }
 
         $options['response_format'] = $this->responseFormatFactory->create($options['output_structure']);
