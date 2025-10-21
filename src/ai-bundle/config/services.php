@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\StructuredOutput\AgentProcessor as StructureOutputProcessor;
 use Symfony\AI\Agent\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Agent\StructuredOutput\ResponseFormatFactoryInterface;
@@ -23,6 +24,8 @@ use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
+use Symfony\AI\AiBundle\Profiler\TraceableAgent;
+use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\Chat\Command\DropStoreCommand as DropMessageStoreCommand;
 use Symfony\AI\Chat\Command\SetupStoreCommand as SetupMessageStoreCommand;
@@ -165,10 +168,18 @@ return static function (ContainerConfigurator $container): void {
             ->tag('kernel.event_listener')
 
         // profiler
+        ->set('ai.traceable_agent', TraceableAgent::class)
+            ->decorate(AgentInterface::class, priority: 5)
+            ->args([
+                service('.inner'),
+                service('ai.data_collector'),
+                service('request_stack'),
+            ])
         ->set('ai.data_collector', DataCollector::class)
             ->args([
-                tagged_iterator('ai.traceable_platform'),
-                tagged_iterator('ai.traceable_toolbox'),
+                tagged_iterator('ai.platform'),
+                service('ai.toolbox.default'),
+                tagged_iterator('ai.toolbox'),
             ])
             ->tag('data_collector')
 
