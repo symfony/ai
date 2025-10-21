@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MissingModelSupportException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
@@ -76,6 +77,13 @@ final readonly class Agent implements AgentInterface
         $model = $input->getModel();
         $messages = $input->getMessageBag();
         $options = $input->getOptions();
+
+        if (isset($options['output_structure'])) {
+            $modelObject = $this->platform->getModelCatalog()->getModel($model);
+            if (!\in_array(Capability::OUTPUT_STRUCTURED, $modelObject->getCapabilities(), true)) {
+                throw MissingModelSupportException::forStructuredOutput($modelObject->getName());
+            }
+        }
 
         $result = $this->platform->invoke($model, $messages, $options)->getResult();
 
