@@ -31,6 +31,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'voyage-law-2' => ['voyage-law-2', Voyage::class, [Capability::INPUT_MULTIPLE]];
         yield 'voyage-code-3' => ['voyage-code-3', Voyage::class, [Capability::INPUT_MULTIPLE]];
         yield 'voyage-code-2' => ['voyage-code-2', Voyage::class, [Capability::INPUT_MULTIPLE]];
+        yield 'voyage-multimodal-3' => ['voyage-multimodal-3', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::INPUT_MULTIMODAL]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

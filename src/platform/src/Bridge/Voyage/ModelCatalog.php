@@ -62,6 +62,13 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Voyage::class,
                 'capabilities' => [Capability::INPUT_MULTIPLE],
             ],
+            'voyage-multimodal-3' => [
+                'class' => Voyage::class,
+                'capabilities' => [
+                    Capability::INPUT_MULTIPLE,
+                    Capability::INPUT_MULTIMODAL,
+                ],
+            ],
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
