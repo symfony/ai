@@ -35,9 +35,10 @@ final class ChatTest extends TestCase
 
     public function testItInitiatesChatByClearingAndSavingMessages()
     {
-        $messages = $this->createMock(MessageBag::class);
+        $store = new InMemoryStore();
 
-        $this->chat->initiate($messages);
+        $chat = new Chat(new MockAgent(), $store);
+        $chat->initiate(new MessageBag());
 
         $this->assertCount(0, $this->store->load());
 
@@ -68,6 +69,8 @@ final class ChatTest extends TestCase
 
     public function testItAppendsMessagesToExistingConversation()
     {
+        $store = new InMemoryStore();
+
         $existingUserMessage = Message::ofUser('What is the weather?');
         $existingAssistantMessage = Message::ofAssistant('I cannot provide weather information.');
 
@@ -107,5 +110,25 @@ final class ChatTest extends TestCase
 
         $this->agent->assertCallCount(1);
         $this->agent->assertCalledWith($userPrompt);
+    }
+
+    public function testItCanBeForked()
+    {
+        $store = new InMemoryStore();
+
+        $chat = new Chat(new MockAgent([
+            'hello world' => new MockResponse('Hello there'),
+            'Second hello world' => new MockResponse('Hello there'),
+        ]), $store);
+
+        $chat->submit(Message::ofUser('hello world'));
+
+        $this->assertCount(2, $store->load('_chat'));
+
+        $newChat = $chat->branch('foo');
+
+        $newChat->submit(Message::ofUser('Second hello world'));
+
+        $this->assertCount(4, $store->load('foo'));
     }
 }

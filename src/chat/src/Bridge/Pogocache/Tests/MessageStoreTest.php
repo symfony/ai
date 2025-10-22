@@ -13,6 +13,8 @@ namespace Symfony\AI\Chat\Bridge\Pogocache\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\Pogocache\MessageStore;
+use Symfony\AI\Chat\Exception\InvalidArgumentException;
+use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -40,6 +42,24 @@ final class MessageStoreTest extends TestCase
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:9401/test?auth=test".');
         $this->expectExceptionCode(400);
         $store->setup();
+    }
+
+    public function testStoreCannotSetupWithExtraOptions()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 400,
+            ]),
+        ], 'http://127.0.0.1:9401');
+
+        $store = new MessageStore($httpClient, 'http://127.0.0.1:9401', 'test', 'test');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No supported options.');
+        $this->expectExceptionCode(400);
+        $store->setup([
+            'foo' => 'bar',
+        ]);
     }
 
     public function testStoreCanSetup()
@@ -139,13 +159,16 @@ final class MessageStoreTest extends TestCase
     {
         $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
         ], [new JsonEncoder()]);
 
-        $payload = $serializer->normalize(Message::ofUser('Hello World'));
+        $payload = $serializer->normalize(new MessageBag(
+            Message::ofUser('Hello World'),
+        ));
 
         $httpClient = new MockHttpClient([
-            new JsonMockResponse([$payload], [
+            new JsonMockResponse($payload, [
                 'http_code' => 200,
             ]),
         ], 'http://127.0.0.1:9401');

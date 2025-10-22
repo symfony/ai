@@ -14,10 +14,10 @@ namespace Symfony\AI\Chat\Bridge\SurrealDb;
 use Symfony\AI\Chat\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\Exception\RuntimeException;
 use Symfony\AI\Chat\ManagedStoreInterface;
+use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -42,6 +42,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         private readonly string $database,
         private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
         ], [new JsonEncoder()]),
         private readonly string $table = '_message_store_surrealdb',
@@ -61,21 +62,16 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         $this->request('DELETE', \sprintf('key/%s', $this->table));
     }
 
-    public function save(MessageBag $messages): void
+    public function save(MessageBag $messages, ?string $identifier = null): void
     {
-        foreach ($messages->getMessages() as $message) {
-            $this->request('POST', \sprintf('key/%s', $this->table), $this->serializer->normalize($message));
-        }
+        $this->request('POST', \sprintf('key/%s', $identifier ?? $this->table), $this->serializer->normalize($messages));
     }
 
-    public function load(): MessageBag
+    public function load(?string $identifier = null): MessageBag
     {
-        $messages = $this->request('GET', \sprintf('key/%s', $this->table), []);
+        $messages = $this->request('GET', \sprintf('key/%s', $identifier ?? $this->table));
 
-        return new MessageBag(...array_map(
-            fn (array $message): MessageInterface => $this->serializer->denormalize($message, MessageInterface::class),
-            $messages[0]['result'],
-        ));
+        return $this->serializer->denormalize($messages[0]['result'][0] ?? [], MessageBag::class);
     }
 
     /**

@@ -13,10 +13,10 @@ namespace Symfony\AI\Chat\Bridge\MongoDb;
 
 use MongoDB\Client;
 use Symfony\AI\Chat\ManagedStoreInterface;
+use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -32,9 +32,10 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
     public function __construct(
         private readonly Client $client,
         private readonly string $databaseName,
-        private readonly string $collectionName,
+        private readonly string $collectionName = '_message_store_mongodb',
         private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
         ], [new JsonEncoder()]),
     ) {
@@ -42,9 +43,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
 
     public function setup(array $options = []): void
     {
-        $database = $this->client->getDatabase($this->databaseName);
-
-        $database->createCollection($this->collectionName, $options);
+        $this->createCollection($this->collectionName, $options);
     }
 
     public function drop(): void
@@ -54,23 +53,32 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         ]);
     }
 
-    public function save(MessageBag $messages): void
+    public function save(MessageBag $messages, ?string $identifier = null): void
     {
-        $currentCollection = $this->client->getCollection($this->databaseName, $this->collectionName);
+        if (null !== $identifier) {
+            $this->createCollection($identifier);
+        }
 
-        $currentCollection->insertMany(array_map(
-            fn (MessageInterface $message): array => $this->serializer->normalize($message, context: [
-                'identifier' => '_id',
-            ]),
-            $messages->getMessages(),
-        ));
+        $currentCollection = $this->client->getCollection($this->databaseName, $identifier ?? $this->collectionName);
+
+        $payload = $this->serializer->normalize($messages, context: [
+            'identifier' => '_id',
+        ]);
+
+        $documentExist = $currentCollection->findOne([
+            '_id' => $payload['_id'],
+        ]);
+
+        null === $documentExist ? $currentCollection->insertOne($payload) : $currentCollection->replaceOne([
+            '_id' => $payload['_id'],
+        ], $payload);
     }
 
-    public function load(): MessageBag
+    public function load(?string $identifier = null): MessageBag
     {
-        $currentCollection = $this->client->getCollection($this->databaseName, $this->collectionName);
+        $currentCollection = $this->client->getCollection($this->databaseName, $identifier ?? $this->collectionName);
 
-        $cursor = $currentCollection->find([], [
+        $cursor = $currentCollection->findOne([], [
             'typeMap' => [
                 'root' => 'array',
                 'document' => 'array',
@@ -78,11 +86,24 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
             ],
         ]);
 
-        return new MessageBag(...array_map(
-            fn (array $message): MessageInterface => $this->serializer->denormalize($message, MessageInterface::class, context: [
-                'identifier' => '_id',
-            ]),
-            $cursor->toArray(),
-        ));
+        return $this->serializer->denormalize($cursor, MessageBag::class, context: [
+            'identifier' => '_id',
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function createCollection(string $collectionName, array $options = []): void
+    {
+        $database = $this->client->getDatabase($this->databaseName);
+
+        foreach ($database->listCollectionNames() as $collection) {
+            if ($collection === $collectionName) {
+                return;
+            }
+        }
+
+        $database->createCollection($collectionName, $options);
     }
 }

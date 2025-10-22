@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+* Add `Chat::branch` for separated conversations
+* Add support for "multi-session" conversations
+
 0.4
 ---
 
