@@ -60,6 +60,7 @@ EOF
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
+        /** @var string $storeName */
         $storeName = $input->getArgument('store');
         if (!$this->stores->has($storeName)) {
             throw new RuntimeException(\sprintf('The "%s" message store does not exist.', $storeName));
@@ -75,6 +76,7 @@ EOF
     {
         $io = new SymfonyStyle($input, $output);
 
+        /** @var string $storeName */
         $storeName = $input->getArgument('store');
 
         $store = $this->stores->get($storeName);

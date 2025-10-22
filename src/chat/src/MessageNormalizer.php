@@ -21,11 +21,14 @@ use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\Video;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -38,52 +41,85 @@ use Symfony\Component\Uid\Uuid;
  */
 final class MessageNormalizer implements NormalizerInterface, DenormalizerInterface
 {
+    private const CONTENT_TYPES_FROM_DATA_URL = [
+        File::class,
+        Image::class,
+        Audio::class,
+        Document::class,
+        Video::class,
+    ];
+
+    private const CONTENT_TYPES_FROM_CONSTRUCTOR = [
+        Text::class,
+        ImageUrl::class,
+        DocumentUrl::class,
+    ];
+
+    public function __construct(
+        private readonly ClockInterface $clock = new MonotonicClock(),
+    ) {
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
-        if ([] === $data) {
+        if (!\is_array($data) || [] === $data) {
             throw new InvalidArgumentException('The current message bag data are not coherent.');
         }
 
+        if (!\is_string($data['type'] ?? null)) {
+            throw new InvalidArgumentException('The message type must be a string.');
+        }
+
         $type = $data['type'];
-        $content = $data['content'] ?? '';
-        $contentAsBase64 = $data['contentAsBase64'] ?? [];
+        $content = \is_string($data['content'] ?? null) ? $data['content'] : '';
+
+        /** @var list<array{type: class-string<ContentInterface>, content: string}> $contentAsBase64 */
+        $contentAsBase64 = \is_array($data['contentAsBase64'] ?? null) ? $data['contentAsBase64'] : [];
 
         $message = match ($type) {
             SystemMessage::class => new SystemMessage($content),
-            AssistantMessage::class => new AssistantMessage($content, array_map(
-                static fn (array $toolsCall): ToolCall => new ToolCall(
-                    $toolsCall['id'],
-                    $toolsCall['function']['name'],
-                    json_decode($toolsCall['function']['arguments'], true)
-                ),
-                $data['toolsCalls'],
-            )),
+            AssistantMessage::class => new AssistantMessage($content, self::denormalizeToolCallsList($data)),
             UserMessage::class => new UserMessage(...array_map(
-                static fn (array $contentAsBase64): ContentInterface => \in_array($contentAsBase64['type'], [File::class, Image::class, Audio::class], true)
-                    ? $contentAsBase64['type']::fromDataUrl($contentAsBase64['content'])
-                    : new $contentAsBase64['type']($contentAsBase64['content']),
+                static function (array $contentAsBase64): ContentInterface {
+                    if (\in_array($contentAsBase64['type'], self::CONTENT_TYPES_FROM_DATA_URL, true)) {
+                        return $contentAsBase64['type']::fromDataUrl($contentAsBase64['content']);
+                    }
+
+                    if (\in_array($contentAsBase64['type'], self::CONTENT_TYPES_FROM_CONSTRUCTOR, true)) {
+                        return new ($contentAsBase64['type'])($contentAsBase64['content']);
+                    }
+
+                    throw new LogicException(\sprintf('Unknown content type "%s".', $contentAsBase64['type']));
+                },
                 $contentAsBase64,
             )),
             ToolCallMessage::class => new ToolCallMessage(
-                new ToolCall(
-                    $data['toolsCalls']['id'],
-                    $data['toolsCalls']['function']['name'],
-                    json_decode($data['toolsCalls']['function']['arguments'], true)
-                ),
+                self::denormalizeToolCall($data),
                 $content
             ),
             default => throw new LogicException(\sprintf('Unknown message type "%s".', $type)),
         };
 
-        $identifier = $context['identifier'] ?? 'id';
+        $idKey = \is_string($context['identifier'] ?? null) ? $context['identifier'] : 'id';
+
+        if (!\is_string($data[$idKey] ?? null)) {
+            throw new InvalidArgumentException(\sprintf('The message identifier key "%s" must contain a string value.', $idKey));
+        }
+
         /** @var AbstractUid&TimeBasedUidInterface&Uuid $existingUuid */
-        $existingUuid = Uuid::fromString($data[$identifier]);
+        $existingUuid = Uuid::fromString($data[$idKey]);
 
         $messageWithExistingUuid = $message->withId($existingUuid);
 
+        /** @var array<string, mixed> $metadata */
+        $metadata = \is_array($data['metadata'] ?? null) ? $data['metadata'] : [];
+
         $messageWithExistingUuid->getMetadata()->set([
-            ...$data['metadata'],
-            'addedAt' => $data['addedAt'],
+            ...$metadata,
+            'addedAt' => $data['addedAt'] ?? null,
         ]);
 
         return $messageWithExistingUuid;
@@ -108,7 +144,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
         if ($data instanceof AssistantMessage && $data->hasToolCalls()) {
             $toolsCalls = array_map(
                 static fn (ToolCall $toolCall): array => $toolCall->jsonSerialize(),
-                $data->getToolCalls(),
+                $data->getToolCalls() ?? [],
             );
         }
 
@@ -116,8 +152,10 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             $toolsCalls = $data->getToolCall()->jsonSerialize();
         }
 
+        $idKey = \is_string($context['identifier'] ?? null) ? $context['identifier'] : 'id';
+
         return [
-            $context['identifier'] ?? 'id' => $data->getId()->toRfc4122(),
+            $idKey => $data->getId()->toRfc4122(),
             'type' => $data::class,
             'content' => ($data instanceof SystemMessage || $data instanceof AssistantMessage || $data instanceof ToolCallMessage) ? $data->getContent() : '',
             'contentAsBase64' => ($data instanceof UserMessage && [] !== $data->getContent()) ? array_map(
@@ -128,7 +166,8 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                         File::class,
                         Document::class,
                         Image::class,
-                        Audio::class => $content->asBase64(),
+                        Audio::class,
+                        Video::class => $content->asBase64(),
                         ImageUrl::class,
                         DocumentUrl::class => $content->getUrl(),
                         default => throw new LogicException(\sprintf('Unknown content type "%s".', $content::class)),
@@ -138,7 +177,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             ) : [],
             'toolsCalls' => $toolsCalls,
             'metadata' => $data->getMetadata()->all(),
-            'addedAt' => (new \DateTimeImmutable())->getTimestamp(),
+            'addedAt' => $this->clock->now()->getTimestamp(),
         ];
     }
 
@@ -152,5 +191,40 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
         return [
             MessageInterface::class => true,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return list<ToolCall>
+     */
+    private static function denormalizeToolCallsList(array $data): array
+    {
+        /** @var list<array{id: string, function: array{name: string, arguments: string}}> $toolsCalls */
+        $toolsCalls = \is_array($data['toolsCalls'] ?? null) ? $data['toolsCalls'] : [];
+
+        return array_map(
+            static function (array $toolsCall): ToolCall {
+                /** @var array<string, mixed> $arguments */
+                $arguments = json_decode($toolsCall['function']['arguments'], true);
+
+                return new ToolCall($toolsCall['id'], $toolsCall['function']['name'], $arguments);
+            },
+            $toolsCalls,
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function denormalizeToolCall(array $data): ToolCall
+    {
+        /** @var array{id: string, function: array{name: string, arguments: string}} $toolsCall */
+        $toolsCall = \is_array($data['toolsCalls'] ?? null) ? $data['toolsCalls'] : [];
+
+        /** @var array<string, mixed> $arguments */
+        $arguments = json_decode($toolsCall['function']['arguments'], true);
+
+        return new ToolCall($toolsCall['id'], $toolsCall['function']['name'], $arguments);
     }
 }
