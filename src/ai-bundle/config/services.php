@@ -23,6 +23,7 @@ use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\Chat\Command\DropStoreCommand as DropMessageStoreCommand;
 use Symfony\AI\Chat\Command\SetupStoreCommand as SetupMessageStoreCommand;
+use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Bridge\AiMlApi\ModelCatalog as AiMlApiModelCatalog;
 use Symfony\AI\Platform\Bridge\Albert\ModelCatalog as AlbertModelCatalog;
@@ -73,6 +74,7 @@ use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
 use Symfony\AI\Store\Command\RetrieveCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
+use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 return static function (ContainerConfigurator $container): void {
@@ -219,7 +221,16 @@ return static function (ContainerConfigurator $container): void {
             ->tag('data_collector')
 
         // serializer
-        ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
+        ->set('ai.chat.message.normalizer', MessageNormalizer::class)
+            ->args([
+                service(ClockInterface::class),
+            ])
+            ->tag('serializer.normalizer')
+        ->set('ai.chat.message_bag.normalizer', MessageBagNormalizer::class)
+            ->args([
+                service('ai.chat.message.normalizer'),
+                service(ClockInterface::class),
+            ])
             ->tag('serializer.normalizer')
 
         ->set('ai.platform.cache.result_normalizer', ResultNormalizer::class)

@@ -14,6 +14,7 @@ namespace Symfony\AI\Chat\Bridge\SurrealDb\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\SurrealDb\MessageStore;
 use Symfony\AI\Chat\Exception\InvalidArgumentException;
+use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -117,6 +118,7 @@ final class MessageStoreTest extends TestCase
     {
         $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
         ], [new JsonEncoder()]);
 
@@ -131,7 +133,7 @@ final class MessageStoreTest extends TestCase
             new JsonMockResponse([
                 [
                     'result' => [
-                        $serializer->normalize(Message::ofUser('Hello world')),
+                        $serializer->normalize(new MessageBag(Message::ofUser('Hello world'))),
                     ],
                     'status' => 'OK',
                     'time' => '263.208µs',
@@ -175,6 +177,7 @@ final class MessageStoreTest extends TestCase
     {
         $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
         ], [new JsonEncoder()]);
 
@@ -188,9 +191,9 @@ final class MessageStoreTest extends TestCase
             ]),
             new JsonMockResponse([
                 [
-                    'result' => [
-                        $serializer->normalize(Message::ofUser('Hello World')),
-                    ],
+                    'result' => $serializer->normalize(new MessageBag(
+                        Message::ofUser('Hello World'),
+                    )),
                     'status' => 'OK',
                     'time' => '263.208µs',
                 ],

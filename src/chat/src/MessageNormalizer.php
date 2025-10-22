@@ -26,6 +26,8 @@ use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -38,6 +40,11 @@ use Symfony\Component\Uid\Uuid;
  */
 final class MessageNormalizer implements NormalizerInterface, DenormalizerInterface
 {
+    public function __construct(
+        private readonly ClockInterface $clock = new MonotonicClock(),
+    ) {
+    }
+
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
         if ([] === $data) {
@@ -75,15 +82,15 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             default => throw new LogicException(\sprintf('Unknown message type "%s".', $type)),
         };
 
-        $identifier = $context['identifier'] ?? 'id';
         /** @var AbstractUid&TimeBasedUidInterface&Uuid $existingUuid */
-        $existingUuid = Uuid::fromString($data[$identifier]);
+        $existingUuid = Uuid::fromString($data[$context['identifier'] ?? 'id']);
 
         $messageWithExistingUuid = $message->withId($existingUuid);
 
         $messageWithExistingUuid->getMetadata()->set([
             ...$data['metadata'],
             'addedAt' => $data['addedAt'],
+            'bag' => $data['bag'] ?? null,
         ]);
 
         return $messageWithExistingUuid;
@@ -138,7 +145,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             ) : [],
             'toolsCalls' => $toolsCalls,
             'metadata' => $data->getMetadata()->all(),
-            'addedAt' => (new \DateTimeImmutable())->getTimestamp(),
+            'addedAt' => $this->clock->now()->getTimestamp(),
         ];
     }
 

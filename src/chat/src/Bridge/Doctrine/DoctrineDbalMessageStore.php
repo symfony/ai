@@ -21,6 +21,7 @@ use Doctrine\DBAL\Types\Types;
 use Psr\Clock\ClockInterface;
 use Symfony\AI\Chat\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ManagedStoreInterface;
+use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -41,6 +42,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         private readonly DBALConnection $dbalConnection,
         private readonly SerializerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
         ], [new JsonEncoder()]),
         private readonly ClockInterface $clock = new MonotonicClock(),
@@ -76,10 +78,10 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         $this->dbalConnection->executeStatement($queryBuilder->getSQL());
     }
 
-    public function save(MessageBag $messages): void
+    public function save(MessageBag $messages, ?string $identifier = null): void
     {
         $queryBuilder = $this->dbalConnection->createQueryBuilder()
-            ->insert($this->tableName)
+            ->insert($identifier ?? $this->tableName)
             ->values([
                 'messages' => '?',
                 'added_at' => '?',
@@ -91,11 +93,11 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         ]);
     }
 
-    public function load(): MessageBag
+    public function load(?string $identifier = null): MessageBag
     {
         $queryBuilder = $this->dbalConnection->createQueryBuilder()
             ->select('messages')
-            ->from($this->tableName)
+            ->from($identifier ?? $this->tableName)
             ->orderBy('added_at', 'ASC')
         ;
 

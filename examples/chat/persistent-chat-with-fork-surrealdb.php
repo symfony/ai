@@ -10,7 +10,7 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore;
+use Symfony\AI\Chat\Bridge\SurrealDb\MessageStore;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -20,18 +20,30 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
-$store = new MessageStore(http_client(), env('MEILISEARCH_HOST'), env('MEILISEARCH_API_KEY'));
-$store->setup();
+// SurrealDb does not require to call the `setup()` method as the table is created during insertion
+$store = new MessageStore(
+    http_client(),
+    'http://127.0.0.1:8000',
+    env('SURREALDB_USER'),
+    env('SURREALDB_PASS'),
+    'default',
+    'chat',
+    table: 'chat',
+);
 
 $agent = new Agent($platform, 'gpt-4o-mini');
 $chat = new Chat($agent, $store);
 
-$messages = new MessageBag(
+$chat->initiate(new MessageBag(
     Message::forSystem('You are a helpful assistant. You only answer with short sentences.'),
-);
-
-$chat->initiate($messages);
+));
 $chat->submit(Message::ofUser('My name is Christopher.'));
-$message = $chat->submit(Message::ofUser('What is my name?'));
 
-echo $message->getContent().\PHP_EOL;
+$forkedChat = $chat->branch('_forked_for_oskar');
+$forkedChat->submit(Message::ofUser('Made a mistake about my name, my name is Oskar'));
+
+$firstMessage = $chat->submit(Message::ofUser('What is my name?'));
+$forkedMessage = $forkedChat->submit(Message::ofUser('What is my name?'));
+
+echo sprintf('First chat: "%s"', $firstMessage->getContent()).\PHP_EOL;
+echo sprintf('Forked chat: "%s"', $forkedMessage->getContent()).\PHP_EOL;

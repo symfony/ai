@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Message\MessageBag;
  */
 interface MessageStoreInterface
 {
-    public function save(MessageBag $messages): void;
+    public function save(MessageBag $messages, ?string $identifier = null): void;
 
-    public function load(): MessageBag;
+    public function load(?string $identifier = null): MessageBag;
 }

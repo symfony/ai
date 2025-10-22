@@ -66,4 +66,15 @@ final class TraceableChat implements ChatInterface
 
         return $this->chat->submit($message);
     }
+
+    public function branch(string $name): ChatInterface
+    {
+        $this->calls[] = [
+            'action' => __FUNCTION__,
+            'name' => $name,
+            'branched_at' => $this->clock->now(),
+        ];
+
+        return $this->chat->branch($name);
+    }
 }
