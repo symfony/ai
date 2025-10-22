@@ -25,7 +25,7 @@ final readonly class Chat implements ChatInterface
 {
     public function __construct(
         private AgentInterface $agent,
-        private MessageStoreInterface&ManagedStoreInterface $store,
+        private MessageStoreInterface&ManagedStoreInterface&ForkedMessageStoreInterface $store,
     ) {
     }
 
@@ -50,5 +50,17 @@ final readonly class Chat implements ChatInterface
         $this->store->save($messages);
 
         return $assistantMessage;
+    }
+
+    public function fork(string $id): self
+    {
+        $existingMessages = $this->store->load();
+
+        $forkedStore = $this->store->fork($id, $existingMessages);
+
+        return new self(
+            $this->agent,
+            $forkedStore,
+        );
     }
 }

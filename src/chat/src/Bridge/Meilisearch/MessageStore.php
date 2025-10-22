@@ -14,6 +14,7 @@ namespace Symfony\AI\Chat\Bridge\Meilisearch;
 use Symfony\AI\Chat\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\Exception\LogicException;
 use Symfony\AI\Chat\Exception\RuntimeException;
+use Symfony\AI\Chat\ForkedMessageStoreInterface;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
@@ -37,7 +38,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final readonly class MessageStore implements ManagedStoreInterface, MessageStoreInterface
+final readonly class MessageStore implements ManagedStoreInterface, MessageStoreInterface, ForkedMessageStoreInterface
 {
     public function __construct(
         private HttpClientInterface $httpClient,
@@ -79,9 +80,9 @@ final readonly class MessageStore implements ManagedStoreInterface, MessageStore
         ));
     }
 
-    public function load(): MessageBag
+    public function load(?string $id = null): MessageBag
     {
-        $messages = $this->request('POST', \sprintf('indexes/%s/documents/fetch', $this->indexName), [
+        $messages = $this->request('POST', \sprintf('indexes/%s/documents/fetch', $id ?? $this->indexName), [
             'sort' => ['addedAt:asc'],
         ]);
 
@@ -91,6 +92,16 @@ final readonly class MessageStore implements ManagedStoreInterface, MessageStore
     public function drop(): void
     {
         $this->request('DELETE', \sprintf('indexes/%s/documents', $this->indexName));
+    }
+
+    public function fork(string $id, MessageBag $existingMessages): ForkedMessageStoreInterface
+    {
+        $fork = new self($this->httpClient, $this->endpointUrl, $this->apiKey, $this->clock, $id);
+
+        $fork->setup();
+        $fork->save($existingMessages);
+
+        return $fork;
     }
 
     /**

@@ -14,11 +14,9 @@ namespace Symfony\AI\Chat;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**
- * @author Christopher Hertel <mail@christopher-hertel.de>
+ * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-interface MessageStoreInterface
+interface ForkedMessageStoreInterface
 {
-    public function save(MessageBag $messages): void;
-
-    public function load(?string $id = null): MessageBag;
+    public function fork(string $id, MessageBag $existingMessages): self;
 }

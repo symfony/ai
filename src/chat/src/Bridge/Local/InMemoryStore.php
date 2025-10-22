@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Chat\Bridge\Local;
 
+use Symfony\AI\Chat\ForkedMessageStoreInterface;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -18,7 +19,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class InMemoryStore implements ManagedStoreInterface, MessageStoreInterface
+final class InMemoryStore implements ManagedStoreInterface, MessageStoreInterface, ForkedMessageStoreInterface
 {
     /**
      * @var MessageBag[]
@@ -40,13 +41,23 @@ final class InMemoryStore implements ManagedStoreInterface, MessageStoreInterfac
         $this->messages[$this->identifier] = $messages;
     }
 
-    public function load(): MessageBag
+    public function load(?string $id = null): MessageBag
     {
-        return $this->messages[$this->identifier] ?? new MessageBag();
+        return $this->messages[$id ?? $this->identifier] ?? new MessageBag();
     }
 
     public function drop(): void
     {
         $this->messages[$this->identifier] = new MessageBag();
+    }
+
+    public function fork(string $id, MessageBag $existingMessages): ForkedMessageStoreInterface
+    {
+        $fork = new self($id);
+
+        $fork->setup();
+        $fork->save($existingMessages);
+
+        return $fork;
     }
 }
