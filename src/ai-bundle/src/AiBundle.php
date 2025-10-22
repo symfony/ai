@@ -1936,19 +1936,15 @@ final class AiBundle extends AbstractBundle
     {
         if ('cache' === $type) {
             foreach ($messageStores as $name => $messageStore) {
-                $arguments = [
-                    new Reference($messageStore['service']),
-                    $messageStore['key'] ?? $name,
-                ];
-
-                if (\array_key_exists('ttl', $messageStore)) {
-                    $arguments[2] = $messageStore['ttl'];
-                }
-
                 $definition = new Definition(CacheMessageStore::class);
                 $definition
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        new Reference($messageStore['service']),
+                        $messageStore['key'] ?? $name,
+                        $messageStore['ttl'],
+                        new Reference('serializer'),
+                    ])
                     ->addTag('proxy', ['interface' => MessageStoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedMessageStoreInterface::class])
                     ->addTag('ai.message_store');
@@ -1963,7 +1959,7 @@ final class AiBundle extends AbstractBundle
             foreach ($messageStores as $name => $messageStore) {
                 $arguments = [
                     new Reference('http_client'),
-                    $messageStore['namespace'],
+                    $messageStore['namespace'] ?? $name,
                     $messageStore['account_id'],
                     $messageStore['api_key'],
                     new Reference('serializer'),
@@ -2016,7 +2012,7 @@ final class AiBundle extends AbstractBundle
                         $messageStore['endpoint'],
                         $messageStore['api_key'],
                         new Reference(ClockInterface::class),
-                        $messageStore['index_name'],
+                        $messageStore['index_name'] ?? $name,
                         new Reference('serializer'),
                     ])
                     ->addTag('proxy', ['interface' => MessageStoreInterface::class])
@@ -2034,7 +2030,10 @@ final class AiBundle extends AbstractBundle
                 $definition = new Definition(InMemoryMessageStore::class);
                 $definition
                     ->setLazy(true)
-                    ->setArgument(0, $messageStore['identifier'])
+                    ->setArguments([
+                        $messageStore['identifier'] ?? $name,
+                        new Reference('serializer'),
+                    ])
                     ->addTag('proxy', ['interface' => MessageStoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedMessageStoreInterface::class])
                     ->addTag('ai.message_store');
@@ -2053,7 +2052,7 @@ final class AiBundle extends AbstractBundle
                     ->setArguments([
                         new Reference($messageStore['client']),
                         $messageStore['database'],
-                        $messageStore['collection'],
+                        $messageStore['collection'] ?? $name,
                         new Reference('serializer'),
                     ])
                     ->addTag('proxy', ['interface' => MessageStoreInterface::class])
@@ -2075,7 +2074,7 @@ final class AiBundle extends AbstractBundle
                         new Reference('http_client'),
                         $messageStore['endpoint'],
                         $messageStore['password'],
-                        $messageStore['key'],
+                        $messageStore['key'] ?? $name,
                         new Reference('serializer'),
                     ])
                     ->addTag('proxy', ['interface' => MessageStoreInterface::class])
@@ -2102,7 +2101,7 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->setArguments([
                         $redisClient,
-                        $messageStore['index_name'],
+                        $messageStore['index_name'] ?? $name,
                         new Reference('serializer'),
                     ])
                     ->addTag('proxy', ['interface' => MessageStoreInterface::class])
@@ -2122,7 +2121,8 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->setArguments([
                         new Reference('request_stack'),
-                        $messageStore['identifier'],
+                        $messageStore['identifier'] ?? $name,
+                        new Reference('serializer'),
                     ])
                     ->addTag('proxy', ['interface' => MessageStoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedMessageStoreInterface::class])
@@ -2180,6 +2180,7 @@ final class AiBundle extends AbstractBundle
             ->setArguments([
                 new Reference($configuration['agent']),
                 new Reference($configuration['message_store']),
+                $name,
             ])
             ->addTag('proxy', ['interface' => ChatInterface::class])
             ->addTag('ai.chat');

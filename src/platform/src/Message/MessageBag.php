@@ -11,9 +11,8 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\AI\Platform\Metadata\ChatAwareTrait;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
-use Symfony\Component\Uid\AbstractUid;
-use Symfony\Component\Uid\TimeBasedUidInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -23,9 +22,9 @@ use Symfony\Component\Uid\Uuid;
  */
 class MessageBag implements \Countable, \IteratorAggregate
 {
+    use ChatAwareTrait;
+    use IdentifierAwareTrait;
     use MetadataAwareTrait;
-
-    private AbstractUid&TimeBasedUidInterface $id;
 
     /**
      * @var list<MessageInterface>
@@ -36,11 +35,6 @@ class MessageBag implements \Countable, \IteratorAggregate
     {
         $this->messages = array_values($messages);
         $this->id = Uuid::v7();
-    }
-
-    public function getId(): AbstractUid&TimeBasedUidInterface
-    {
-        return $this->id;
     }
 
     public function add(MessageInterface $message): void
@@ -99,7 +93,7 @@ class MessageBag implements \Countable, \IteratorAggregate
         $messages = clone $this;
         $messages->messages = array_values(array_filter(
             $messages->messages,
-            static fn (MessageInterface $message) => !$message instanceof SystemMessage,
+            static fn (MessageInterface $message): bool => !$message instanceof SystemMessage,
         ));
 
         return $messages;
