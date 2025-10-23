@@ -5,3 +5,6 @@ CHANGELOG
 ---
 
  * Introduce the component
+ * Add support for external message stores:
+   - Redis
+   - Meilisearch
