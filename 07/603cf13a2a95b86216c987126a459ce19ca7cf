@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-23T14:35:18Z
+
+Needs tests and an example in `examples/` folder please
+
+---------------------------------------------------------------------------
+
+by Dominic-Wagner at 2025-10-23T17:58:40Z
+
+@OskarStark
+I've added an example to the example folder.
+But i'm unable to provide tests for the convertStream()-function.
+The current tests for streaming for ollama only support a check for the first convert()-function, which returns a StreamResult.
+
+The convertStream function only gets testet when we try to get the chunks:
+
+```
+foreach ($result->getContent() as $chunk) {
+     $chunks[] = $chunk;
+}
+```
+I suspect because of the created EventSourceHttpClient we get the following error.
+
+TypeError: Symfony\Component\HttpClient\Response\AsyncResponse::stream(): Argument #1 ($responses) must be of type Traversable|array, Symfony\Component\HttpClient\Response\MockResponse given, called in /home/dominic/ai/src/platform/vendor/symfony/http-client/AsyncDecoratorTrait.php on line 39
+
+I can't find an example for this type of Mocking neither within the existing tests for other ResultConverter which support ToolCalls in Streams as DeepSeek, Mistral or Anthropic nor in the MockHttpClient docs.
