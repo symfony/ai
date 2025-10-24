@@ -11,18 +11,20 @@
 
 namespace Symfony\AI\AiBundle\Profiler;
 
-use Symfony\AI\Agent\Toolbox\ToolResult;
-use Symfony\AI\Platform\Metadata\Metadata;
+use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Bundle\FrameworkBundle\DataCollector\AbstractDataCollector;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
+use Symfony\Component\VarDumper\Cloner\Data;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  *
  * @phpstan-import-type PlatformCallData from TraceablePlatform
+ * @phpstan-import-type ToolCallData from TraceableToolbox
  */
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
 {
@@ -37,11 +39,17 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     private readonly array $toolboxes;
 
     /**
-     * @param TraceablePlatform[] $platforms
-     * @param TraceableToolbox[]  $toolboxes
+     * @var list<array{method: string, duration: float, input: mixed, result: mixed, error: ?\Throwable}>
+     */
+    private array $collectedChatCalls = [];
+
+    /**
+     * @param iterable<TraceablePlatform> $platforms
+     * @param iterable<TraceableToolbox>  $toolboxes
      */
     public function __construct(
         iterable $platforms,
+        private readonly ToolboxInterface $defaultToolBox,
         iterable $toolboxes,
     ) {
         $this->platforms = $platforms instanceof \Traversable ? iterator_to_array($platforms) : $platforms;
@@ -50,15 +58,26 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
-        $this->lateCollect();
     }
 
     public function lateCollect(): void
     {
         $this->data = [
-            'tools' => $this->getAllTools(),
+            'tools' => $this->defaultToolBox->getTools(),
             'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
             'tool_calls' => array_merge(...array_map(fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
+            'chat_calls' => $this->cloneVar($this->collectedChatCalls),
+        ];
+    }
+
+    public function collectChatCall(string $method, float $duration, mixed $input, mixed $result, ?\Throwable $error): void
+    {
+        $this->collectedChatCalls[] = [
+            'method' => $method,
+            'duration' => $duration,
+            'input' => $input,
+            'result' => $result,
+            'error' => $error,
         ];
     }
 
@@ -84,7 +103,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     }
 
     /**
-     * @return ToolResult[]
+     * @return ToolCallData[]
      */
     public function getToolCalls(): array
     {
@@ -92,35 +111,45 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     }
 
     /**
-     * @return Tool[]
+     * @return list<array{method: string, duration: float, input: mixed, result: mixed, error: ?\Throwable}>
      */
-    private function getAllTools(): array
+    public function getChatCalls(): array
     {
-        return array_merge(...array_map(fn (TraceableToolbox $toolbox) => $toolbox->getTools(), $this->toolboxes));
+        if (!isset($this->data['chat_calls'])) {
+            return [];
+        }
+
+        $chatCalls = $this->data['chat_calls']->getValue(true);
+
+        /** @var list<array{method: string, duration: float, input: mixed, result: mixed, error: ?\Throwable}> $chatCalls */
+        return $chatCalls;
+    }
+
+    public function reset(): void
+    {
+        $this->data = [];
+        $this->collectedChatCalls = [];
     }
 
     /**
      * @return array{
-     *     model: string,
-     *     input: array<mixed>|string|object,
-     *     options: array<string, mixed>,
-     *     result: string|iterable<mixed>|object|null,
-     *     metadata: Metadata,
+     * model: Model,
+     * input: array<mixed>|string|object,
+     * options: array<string, mixed>,
+     * result: string|iterable<mixed>|object|null
      * }[]
      */
     private function awaitCallResults(TraceablePlatform $platform): array
     {
         $calls = $platform->calls;
         foreach ($calls as $key => $call) {
-            $result = $call['result']->getResult();
+            $result = $call['result'];
 
             if (isset($platform->resultCache[$result])) {
                 $call['result'] = $platform->resultCache[$result];
             } else {
-                $call['result'] = $result->getContent();
+                $call['result'] = $result->asText();
             }
-
-            $call['metadata'] = $result->getMetadata();
 
             $calls[$key] = $call;
         }
