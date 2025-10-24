@@ -13,6 +13,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
+use Symfony\AI\Platform\Exception\ResultException;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Metadata\TokenUsage;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -190,7 +191,11 @@ set_exception_handler(function ($exception) {
     if ($exception instanceof AgentException || $exception instanceof PlatformException || $exception instanceof StoreException) {
         output()->writeln(sprintf('<error>%s</error>', $exception->getMessage()));
 
-        if (output()->isVerbose()) {
+        if ($exception instanceof ResultException && output()->isVerbose()) {
+            dump($exception->getDetails());
+        }
+
+        if (output()->isVeryVerbose()) {
             output()->writeln($exception->getTraceAsString());
         }
 

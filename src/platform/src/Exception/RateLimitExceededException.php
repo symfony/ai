@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Exception;
 /**
  * @author Floran Pagliai <floran.pagliai@gmail.com>
  */
-final class RateLimitExceededException extends RuntimeException
+final class RateLimitExceededException extends ResultException
 {
     public function __construct(
         private readonly ?int $retryAfter = null,

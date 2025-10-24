@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Scaleway\Llm;
 
 use Symfony\AI\Platform\Bridge\Scaleway\Scaleway;
-use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ResultException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -45,8 +45,8 @@ final class ResultConverter implements ResultConverterInterface
         }
         $data = $result->getData();
 
-        if (isset($data['error']['code']) && 'content_filter' === $data['error']['code']) {
-            throw new ContentFilterException($data['error']['message']);
+        if (isset($data['error'])) {
+            throw new ResultException($data['error']['message'], $data['error']);
         }
 
         if (!isset($data['choices'])) {
