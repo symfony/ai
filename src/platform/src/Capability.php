@@ -27,6 +27,7 @@ enum Capability: string
     case INPUT_MULTIPLE = 'input-multiple';
     case INPUT_PDF = 'input-pdf';
     case INPUT_TEXT = 'input-text';
+    case INPUT_MULTIMODAL = 'input-multimodal';
 
     // OUTPUT
     case OUTPUT_AUDIO = 'output-audio';
