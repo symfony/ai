@@ -27,7 +27,7 @@ final class PlatformFactory
     public static function create(
         string $hostUrl = 'http://localhost:11434',
         ?HttpClientInterface $httpClient = null,
-        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
+        ?ModelCatalogInterface $modelCatalog = null,
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
@@ -36,7 +36,7 @@ final class PlatformFactory
         return new Platform(
             [new OllamaClient($httpClient, $hostUrl)],
             [new OllamaResultConverter()],
-            $modelCatalog,
+            $modelCatalog ?? new OllamaCatalog($hostUrl, $httpClient),
             $contract ?? OllamaContract::create(),
             $eventDispatcher,
         );
