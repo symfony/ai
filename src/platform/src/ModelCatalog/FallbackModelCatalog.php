@@ -25,8 +25,9 @@ use Symfony\AI\Platform\Model;
  */
 class FallbackModelCatalog extends AbstractModelCatalog
 {
-    public function __construct()
-    {
+    public function __construct(
+        private readonly ?string $expectedModel = Model::class,
+    ) {
         $this->models = [];
     }
 
@@ -34,6 +35,6 @@ class FallbackModelCatalog extends AbstractModelCatalog
     {
         $parsed = self::parseModelName($modelName);
 
-        return new Model($parsed['name'], Capability::cases(), $parsed['options']);
+        return new $this->expectedModel($parsed['name'], Capability::cases(), $parsed['options']);
     }
 }
