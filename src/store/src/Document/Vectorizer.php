@@ -14,16 +14,17 @@ namespace Symfony\AI\Store\Document;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Exception\RuntimeException;
 
-final readonly class Vectorizer implements VectorizerInterface
+final class Vectorizer implements VectorizerInterface
 {
     public function __construct(
-        private PlatformInterface $platform,
-        private string $model,
-        private LoggerInterface $logger = new NullLogger(),
+        private readonly PlatformInterface $platform,
+        private readonly string $model,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -75,6 +76,8 @@ final readonly class Vectorizer implements VectorizerInterface
 
     /**
      * @param array<string, mixed> $options
+     *
+     * @throws ExceptionInterface
      */
     private function vectorizeString(string|\Stringable $string, array $options = []): Vector
     {
@@ -93,14 +96,20 @@ final readonly class Vectorizer implements VectorizerInterface
 
     /**
      * @param array<string, mixed> $options
+     *
+     * @throws ExceptionInterface
      */
     private function vectorizeEmbeddableDocument(EmbeddableDocumentInterface $document, array $options = []): VectorDocument
     {
         $this->logger->debug('Vectorizing embeddable document', ['document_id' => $document->getId()]);
+        $result = $this->platform->invoke($this->model, $document->getContent(), $options);
+        $vectors = $result->asVectors();
 
-        $vector = $this->vectorizeString($document->getContent(), $options);
+        if (!isset($vectors[0])) {
+            throw new RuntimeException('No vector returned for vectorization.');
+        }
 
-        return new VectorDocument($document->getId(), $vector, $document->getMetadata());
+        return new VectorDocument($document->getId(), $vectors[0], $document->getMetadata());
     }
 
     /**

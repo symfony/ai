@@ -15,7 +15,7 @@ interface EmbeddableDocumentInterface
 {
     public function getId(): mixed;
 
-    public function getContent(): string;
+    public function getContent(): mixed;
 
     public function getMetadata(): Metadata;
 }
