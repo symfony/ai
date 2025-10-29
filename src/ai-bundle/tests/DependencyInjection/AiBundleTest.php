@@ -2763,6 +2763,11 @@ class AiBundleTest extends TestCase
                             'api_version' => '2024-02-15-preview',
                         ],
                     ],
+                    'cartesia' => [
+                        'host' => 'https://api.cartesia.ai',
+                        'api_key' => 'cartesia_key_full',
+                        'version' => '2025-04-16',
+                    ],
                     'eleven_labs' => [
                         'host' => 'https://api.elevenlabs.io/v1',
                         'api_key' => 'eleven_labs_key_full',
