@@ -13,13 +13,13 @@ namespace Symfony\AI\Store\Tests\Bridge\Postgres;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
-use Symfony\AI\Store\Bridge\Postgres\PostgresHybridStore;
+use Symfony\AI\Store\Bridge\Postgres\HybridStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\Uid\Uuid;
 
-final class PostgresHybridStoreTest extends TestCase
+final class HybridStoreTest extends TestCase
 {
     public function testConstructorValidatesSemanticRatio()
     {
@@ -27,7 +27,7 @@ final class PostgresHybridStoreTest extends TestCase
         $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
 
         $pdo = $this->createMock(\PDO::class);
-        new PostgresHybridStore($pdo, 'test_table', semanticRatio: 1.5);
+        new HybridStore($pdo, 'test_table', semanticRatio: 1.5);
     }
 
     public function testConstructorValidatesNegativeSemanticRatio()
@@ -36,13 +36,13 @@ final class PostgresHybridStoreTest extends TestCase
         $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
 
         $pdo = $this->createMock(\PDO::class);
-        new PostgresHybridStore($pdo, 'test_table', semanticRatio: -0.5);
+        new HybridStore($pdo, 'test_table', semanticRatio: -0.5);
     }
 
     public function testSetupCreatesTableWithFullTextSearchSupport()
     {
         $pdo = $this->createMock(\PDO::class);
-        $store = new PostgresHybridStore($pdo, 'hybrid_table');
+        $store = new HybridStore($pdo, 'hybrid_table');
 
         $pdo->expects($this->exactly(4))
             ->method('exec')
@@ -75,7 +75,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore($pdo, 'hybrid_table');
+        $store = new HybridStore($pdo, 'hybrid_table');
 
         $expectedSql = 'INSERT INTO hybrid_table (id, metadata, content, embedding)
                 VALUES (:id, :metadata, :content, :vector)
@@ -112,7 +112,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore($pdo, 'hybrid_table', semanticRatio: 1.0);
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 1.0);
 
         $expectedSql = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
             FROM hybrid_table
@@ -157,7 +157,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore($pdo, 'hybrid_table', semanticRatio: 0.0);
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.0);
 
         $expectedSql = "SELECT id, embedding AS embedding, metadata,
                    (1.0 / (1.0 + ts_rank_cd(content_tsv, websearch_to_tsquery('simple', :query)))) AS score
@@ -204,7 +204,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore($pdo, 'hybrid_table', semanticRatio: 0.5, rrfK: 60);
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.5, rrfK: 60);
 
         $pdo->expects($this->once())
             ->method('prepare')
@@ -252,7 +252,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore(
+        $store = new HybridStore(
             $pdo,
             'hybrid_table',
             semanticRatio: 1.0,
@@ -291,7 +291,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore(
+        $store = new HybridStore(
             $pdo,
             'hybrid_table',
             semanticRatio: 1.0,
@@ -324,7 +324,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore($pdo, 'hybrid_table', semanticRatio: 0.0, language: 'french');
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.0, language: 'french');
 
         $pdo->expects($this->once())
             ->method('prepare')
@@ -351,7 +351,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore($pdo, 'hybrid_table', semanticRatio: 0.5, rrfK: 100);
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.5, rrfK: 100);
 
         $pdo->expects($this->once())
             ->method('prepare')
@@ -377,7 +377,7 @@ final class PostgresHybridStoreTest extends TestCase
     public function testQueryInvalidSemanticRatioInOptions()
     {
         $pdo = $this->createMock(\PDO::class);
-        $store = new PostgresHybridStore($pdo, 'hybrid_table');
+        $store = new HybridStore($pdo, 'hybrid_table');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
@@ -388,7 +388,7 @@ final class PostgresHybridStoreTest extends TestCase
     public function testDrop()
     {
         $pdo = $this->createMock(\PDO::class);
-        $store = new PostgresHybridStore($pdo, 'hybrid_table');
+        $store = new HybridStore($pdo, 'hybrid_table');
 
         $pdo->expects($this->once())
             ->method('exec')
@@ -402,7 +402,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore($pdo, 'hybrid_table', semanticRatio: 1.0);
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 1.0);
 
         $pdo->expects($this->once())
             ->method('prepare')
@@ -429,7 +429,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore($pdo, 'hybrid_table');
+        $store = new HybridStore($pdo, 'hybrid_table');
 
         $pdo->expects($this->once())
             ->method('prepare')
@@ -469,7 +469,7 @@ final class PostgresHybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new PostgresHybridStore($pdo, 'hybrid_table', semanticRatio: 0.0);
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.0);
 
         $pdo->expects($this->once())
             ->method('prepare')
