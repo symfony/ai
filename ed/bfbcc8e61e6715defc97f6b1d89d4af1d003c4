@@ -1,0 +1,37 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-22T21:09:48Z
+
+Let's please put this to hold - most likely gonna be replaced with #802
+
+Thanks anyways @Griffon-Weglot - also for second the necessity to bring back the validation!
+
+---------------------------------------------------------------------------
+
+by VincentLanglet at 2025-10-22T21:36:41Z
+
+> Let's please put this to hold - most likely gonna be replaced with #802
+>
+> Thanks anyways @Griffon-Weglot - also for second the necessity to bring back the validation!
+
+Am I wrong or @Griffon-Weglot could/should still open a PR after #802 in order to update/fix the supported capabilities of Gemini ?  (And this can be done already since it shouldn't conflict with your work @chr-hertel)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-22T21:47:45Z
+
+@VincentLanglet that is correct
+
+---------------------------------------------------------------------------
+
+by Griffon-Weglot at 2025-10-27T08:17:44Z
+
+> Hey @Griffon-Weglot, i just merged #802 - can you please rebase and reduce the scope of this PR to fix the capabilities in the Gemini and VertexAI model catalog?
+
+Sure !
+
+---------------------------------------------------------------------------
+
+by Griffon-Weglot at 2025-10-28T08:47:33Z
+
+@chr-hertel Done, sorry for the delay !
