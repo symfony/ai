@@ -14,9 +14,11 @@ namespace Symfony\AI\Agent;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-interface VoiceProviderInterface
+final readonly class Voice
 {
-    public function addVoice(Output $output): void;
-
-    public function getName(): string;
+    public function __construct(
+        private string $input,
+        private string $provider,
+    ) {
+    }
 }

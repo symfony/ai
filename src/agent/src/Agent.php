@@ -77,7 +77,7 @@ final readonly class Agent implements AgentInterface
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
         $input = new Input($this->getModel(), $messages, $options);
-        array_map(fn (InputProcessorInterface $processor) => $processor->processInput($input), $this->inputProcessors);
+        array_map(static fn (InputProcessorInterface $processor) => $processor->processInput($input), $this->inputProcessors);
 
         $model = $input->getModel();
         $messages = $input->getMessageBag();
@@ -86,7 +86,7 @@ final readonly class Agent implements AgentInterface
         $result = $this->platform->invoke($model, $messages, $options)->getResult();
 
         $output = new Output($model, $result, $messages, $options);
-        array_map(fn (OutputProcessorInterface $processor) => $processor->processOutput($output), $this->outputProcessors);
+        array_map(static fn (OutputProcessorInterface $processor) => $processor->processOutput($output), $this->outputProcessors);
         array_map(static fn (VoiceProviderInterface $provider) => $provider->addVoice($output), $this->voiceProviders);
 
         return $output->getResult();
@@ -116,13 +116,17 @@ final readonly class Agent implements AgentInterface
     /**
      * @param VoiceProviderInterface[] $providers
      *
-     * @return InputProcessorInterface[]|OutputProcessorInterface[]
+     * @return VoiceProviderInterface[]
      */
     private function initializeVoiceProviders(iterable $providers): array
     {
         foreach ($providers as $provider) {
             if (!$provider instanceof VoiceProviderInterface) {
                 throw new InvalidArgumentException(\sprintf('Voice provider "%s" must implement "%s".', $provider::class, VoiceProviderInterface::class));
+            }
+
+            if ($provider instanceof AgentAwareInterface) {
+                $provider->setAgent($this);
             }
         }
 

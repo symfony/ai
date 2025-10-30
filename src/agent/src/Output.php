@@ -27,6 +27,7 @@ final class Output
         private ResultInterface $result,
         private readonly MessageBag $messageBag,
         private readonly array $options = [],
+        private ?Voice $voice = null,
     ) {
     }
 
@@ -56,5 +57,15 @@ final class Output
     public function getOptions(): array
     {
         return $this->options;
+    }
+
+    public function setVoice(?Voice $voice): void
+    {
+        $this->voice = $voice;
+    }
+
+    public function getVoice(): ?Voice
+    {
+        return $this->voice;
     }
 }
