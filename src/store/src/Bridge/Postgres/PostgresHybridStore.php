@@ -33,7 +33,7 @@ use Symfony\Component\Uid\Uuid;
  *
  * @see https://supabase.com/docs/guides/ai/hybrid-search
  *
- * @author Ahmed EBEN HASSINE <ahmedbhs123@æmail.com>
+ * @author Ahmed EBEN HASSINE <ahmedbhs123@gmail.com>
  */
 final readonly class PostgresHybridStore implements ManagedStoreInterface, StoreInterface
 {
@@ -179,21 +179,17 @@ final readonly class PostgresHybridStore implements ManagedStoreInterface, Store
         $where = [];
         $params = [];
 
-        // Only add embedding param if we're doing vector search
-        if ($semanticRatio > 0.0) {
-            $params['embedding'] = $this->toPgvector($vector);
-        }
-
         // Use maxScore from options, or defaultMaxScore if configured
         $maxScore = $options['maxScore'] ?? $this->defaultMaxScore;
+
+        // Ensure embedding param is set if maxScore is used (regardless of semanticRatio)
+        if ($semanticRatio > 0.0 || null !== $maxScore) {
+            $params['embedding'] = $this->toPgvector($vector);
+        }
 
         if (null !== $maxScore) {
             $where[] = "({$this->vectorFieldName} {$this->distance->getComparisonSign()} :embedding) <= :maxScore";
             $params['maxScore'] = $maxScore;
-            // Ensure embedding is available if maxScore is used
-            if (!isset($params['embedding'])) {
-                $params['embedding'] = $this->toPgvector($vector);
-            }
         }
 
         if (isset($options['where']) && '' !== $options['where']) {
@@ -254,13 +250,7 @@ final readonly class PostgresHybridStore implements ManagedStoreInterface, Store
     {
         // Add FTS match filter to ensure only relevant documents are returned
         $ftsFilter = \sprintf("content_tsv @@ websearch_to_tsquery('%s', :query)", $this->language);
-
-        if ('' !== $whereClause) {
-            // Combine existing WHERE clause with FTS filter
-            $whereClause = str_replace('WHERE ', "WHERE $ftsFilter AND ", $whereClause);
-        } else {
-            $whereClause = "WHERE $ftsFilter";
-        }
+        $whereClause = $this->addFilterToWhereClause($whereClause, $ftsFilter);
 
         return \sprintf(<<<SQL
             SELECT id, %s AS embedding, metadata,
@@ -281,14 +271,8 @@ final readonly class PostgresHybridStore implements ManagedStoreInterface, Store
     private function buildHybridQuery(string $whereClause, int $limit, float $semanticRatio): string
     {
         // Add FTS filter for the fts_scores CTE
-        $ftsWhereClause = $whereClause;
         $ftsFilter = \sprintf("content_tsv @@ websearch_to_tsquery('%s', :query)", $this->language);
-
-        if ('' !== $whereClause) {
-            $ftsWhereClause = str_replace('WHERE ', "WHERE $ftsFilter AND ", $whereClause);
-        } else {
-            $ftsWhereClause = "WHERE $ftsFilter";
-        }
+        $ftsWhereClause = $this->addFilterToWhereClause($whereClause, $ftsFilter);
 
         // RRF (Reciprocal Rank Fusion) - Same approach as Supabase
         // Formula: COALESCE(1.0 / (k + rank), 0.0) * weight
@@ -331,6 +315,30 @@ final readonly class PostgresHybridStore implements ManagedStoreInterface, Store
             1.0 - $semanticRatio,
             $limit,
         );
+    }
+
+    /**
+     * Adds a filter condition to an existing WHERE clause using AND logic.
+     *
+     * @param string $whereClause Existing WHERE clause (may be empty or start with 'WHERE ')
+     * @param string $filter      Filter condition to add (without 'WHERE ')
+     *
+     * @return string Combined WHERE clause
+     */
+    private function addFilterToWhereClause(string $whereClause, string $filter): string
+    {
+        if ('' === $whereClause) {
+            return "WHERE $filter";
+        }
+
+        $whereClause = rtrim($whereClause);
+
+        if (str_starts_with($whereClause, 'WHERE ')) {
+            return "$whereClause AND $filter";
+        }
+
+        // Unexpected format, prepend WHERE
+        return "WHERE $filter AND ".ltrim($whereClause);
     }
 
     private function toPgvector(VectorInterface $vector): string
