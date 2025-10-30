@@ -52,7 +52,7 @@ final class ChatTest extends TestCase
 
         $this->agent->expects($this->once())
             ->method('call')
-            ->with($this->callback(function (MessageBag $messages) use ($userMessage) {
+            ->with($this->callback(static function (MessageBag $messages) use ($userMessage): bool {
                 $messagesArray = $messages->getMessages();
 
                 return end($messagesArray) === $userMessage;
@@ -100,7 +100,7 @@ final class ChatTest extends TestCase
 
         $this->agent->expects($this->once())
             ->method('call')
-            ->with($this->callback(function (MessageBag $messages) {
+            ->with($this->callback(static function (MessageBag $messages): bool {
                 $messagesArray = $messages->getMessages();
 
                 return 1 === \count($messagesArray);
@@ -112,5 +112,22 @@ final class ChatTest extends TestCase
         $this->assertInstanceOf(AssistantMessage::class, $result);
         $this->assertSame($assistantContent, $result->getContent());
         $this->assertCount(2, $this->store->load());
+    }
+
+    public function testItCanBeForked()
+    {
+        $agent = $this->createMock(AgentInterface::class);
+
+        $store = new InMemoryStore();
+
+        $chat = new Chat($agent, $store);
+        $chat->submit(Message::ofUser('hello world'));
+
+        $this->assertCount(1, $store->load());
+
+        $forkedChat = $chat->fork('foo');
+        $forkedChat->submit(Message::ofUser('Second hello world'));
+
+        $this->assertCount(2, $store->load('foo'));
     }
 }

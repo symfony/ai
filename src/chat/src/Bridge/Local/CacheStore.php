@@ -13,6 +13,7 @@ namespace Symfony\AI\Chat\Bridge\Local;
 
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Chat\ForkedMessageStoreInterface;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -20,7 +21,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class CacheStore implements ManagedStoreInterface, MessageStoreInterface
+final readonly class CacheStore implements ManagedStoreInterface, MessageStoreInterface, ForkedMessageStoreInterface
 {
     public function __construct(
         private CacheItemPoolInterface $cache,
@@ -52,9 +53,9 @@ final readonly class CacheStore implements ManagedStoreInterface, MessageStoreIn
         $this->cache->save($item);
     }
 
-    public function load(): MessageBag
+    public function load(?string $id = null): MessageBag
     {
-        $item = $this->cache->getItem($this->cacheKey);
+        $item = $this->cache->getItem($id ?? $this->cacheKey);
 
         return $item->isHit() ? $item->get() : new MessageBag();
     }
@@ -62,5 +63,15 @@ final readonly class CacheStore implements ManagedStoreInterface, MessageStoreIn
     public function drop(): void
     {
         $this->cache->deleteItem($this->cacheKey);
+    }
+
+    public function fork(string $id, MessageBag $existingMessages): ForkedMessageStoreInterface
+    {
+        $fork = new self($this->cache, $id, $this->ttl);
+
+        $fork->setup();
+        $fork->save($existingMessages);
+
+        return $fork;
     }
 }
