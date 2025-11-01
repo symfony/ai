@@ -133,7 +133,7 @@ services:
             - '6333:6333'
 
     redis:
-        image: redis:8.0.3
+        image: redis:8.2.2-alpine
         ports:
             - '6379:6379'
 

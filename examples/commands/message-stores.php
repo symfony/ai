@@ -16,8 +16,10 @@ use Symfony\AI\Chat\Bridge\Local\CacheStore;
 use Symfony\AI\Chat\Bridge\Local\InMemoryStore;
 use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore as MeilisearchMessageStore;
 use Symfony\AI\Chat\Bridge\Pogocache\MessageStore as PogocacheMessageStore;
+use Symfony\AI\Chat\Bridge\Redis\MessageStore as RedisMessageStore;
 use Symfony\AI\Chat\Command\DropStoreCommand;
 use Symfony\AI\Chat\Command\SetupStoreCommand;
+use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Console\Application;
@@ -28,6 +30,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 $factories = [
     'cache' => static fn (): CacheStore => new CacheStore(new ArrayAdapter(), cacheKey: 'symfony'),
@@ -45,6 +50,15 @@ $factories = [
         env('POGOCACHE_PASSWORD'),
         'symfony',
     ),
+    'redis' => static fn (): RedisMessageStore => new RedisMessageStore(new Redis([
+        'host' => env('REDIS_HOST'),
+        'port' => 6379,
+    ]), 'symfony', new Serializer([
+        new ArrayDenormalizer(),
+        new MessageNormalizer(),
+    ], [
+        new JsonEncoder(),
+    ])),
     'session' => static function (): SessionStore {
         $request = Request::create('/');
         $request->setSession(new Session(new MockArraySessionStorage()));
