@@ -27,6 +27,7 @@ CHANGELOG
    - AI/ML API (language models and embeddings)
    - Docker Model Runner (local model hosting)
    - Scaleway (language models like OpenAI OSS, Llama 4, Qwen 3, and more)
+   - Cartesia (voice model that supports both text-to-speech and speech-to-text)
  * Add comprehensive message system with role-based messaging:
    - `UserMessage` for user inputs with multi-modal content
    - `SystemMessage` for system instructions
