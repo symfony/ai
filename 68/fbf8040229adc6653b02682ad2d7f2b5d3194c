@@ -1,0 +1,38 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-04T21:22:11Z
+
+But it still makes sense to have that async capabilities as well? sounds like usually one wouldn't want that?
+cc @Guikingone do you have an opinion here?
+
+---------------------------------------------------------------------------
+
+by natewiebe13 at 2025-11-04T21:28:00Z
+
+@chr-hertel I took the approach of keeping the existing functionality working as-is. But if you're suggesting to always make the PUT synchronous, I'm happy to update the PR. I do find it slightly odd that Qdrant chose to make operations async by default.
+
+Here's a related issue: https://github.com/qdrant/qdrant/issues/2557 which is actually the exact issue I originally ran into when first using Qdrant. But now I'm hitting other issues related to inserts. So now waiting for a response makes way more sense for my situation.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-04T22:20:52Z
+
+lets use async default `false`, its more the standard case I would say
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-05T07:29:43Z
+
+Yes, think so too 👍
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-05T08:39:54Z
+
+Agree with @OskarStark on this one, let use `false` as the default case.
+
+---------------------------------------------------------------------------
+
+by natewiebe13 at 2025-11-05T14:18:05Z
+
+Updated the default behavior to synchronously add documents
