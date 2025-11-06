@@ -26,6 +26,7 @@ use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\StreamResult as GenericStreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
@@ -228,6 +229,54 @@ class AgentProcessorTest extends TestCase
 
         $processor->processOutput($output);
 
+        $metadata = $output->getResult()->getMetadata();
+        $this->assertTrue($metadata->has('sources'));
+        $this->assertCount(2, $metadata->get('sources'));
+        $this->assertSame([$source1, $source2], $metadata->get('sources'));
+    }
+
+    public function testSourcesEndUpInResultMetadataWithStreaming()
+    {
+        $toolCall = new ToolCall('call_1234', 'tool_sources', ['arg1' => 'value1']);
+        $source1 = new Source('Relevant Article 1', 'http://example.com/article1', 'Content of article about the topic');
+        $source2 = new Source('Relevant Article 2', 'http://example.com/article2', 'More content of article about the topic');
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', [$source1, $source2]));
+
+        $messageBag = new MessageBag();
+
+        // Create a generator that yields chunks and then a ToolCallResult
+        $generator = (function () use ($toolCall) {
+            yield 'chunk1';
+            yield 'chunk2';
+            yield new ToolCallResult($toolCall);
+        })();
+
+        $result = new GenericStreamResult($generator);
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturn(new TextResult('Final response based on the two articles.'));
+
+        $processor = new AgentProcessor($toolbox, includeSources: true);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        // Consume the stream
+        $content = '';
+        foreach ($output->getResult()->getContent() as $chunk) {
+            $content .= $chunk;
+        }
+
+        // After consuming the stream, metadata should be available
         $metadata = $output->getResult()->getMetadata();
         $this->assertTrue($metadata->has('sources'));
         $this->assertCount(2, $metadata->get('sources'));
