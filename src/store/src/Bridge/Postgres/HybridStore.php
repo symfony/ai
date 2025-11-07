@@ -35,7 +35,7 @@ use Symfony\Component\Uid\Uuid;
  *
  * @author Ahmed EBEN HASSINE <ahmedbhs123@gmail.com>
  */
-final readonly class HybridStore implements ManagedStoreInterface, StoreInterface
+final class HybridStore implements ManagedStoreInterface, StoreInterface
 {
     /**
      * @param string     $vectorFieldName  Name of the vector field

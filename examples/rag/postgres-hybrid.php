@@ -18,6 +18,7 @@ use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Indexer;
 use Symfony\Component\Uid\Uuid;
 
@@ -32,7 +33,7 @@ $connection = DriverManager::getConnection((new DsnParser())->parse(env('POSTGRE
 $pdo = $connection->getNativeConnection();
 
 if (!$pdo instanceof PDO) {
-    throw new RuntimeException('Unable to get native PDO connection from Doctrine DBAL');
+    throw new RuntimeException('Unable to get native PDO connection from Doctrine DBAL.');
 }
 
 $store = new HybridStore(
