@@ -1,0 +1,29 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-29T10:23:48Z
+
+Unpopular opinion to discuss @OskarStark @chr-hertel but IMHO, the CI should not fail if we're using `readonly` classes.
+
+Small example with the `Symfony\AI\Platform\Contract` defined as `readonly`, if I remove the `readonly` from sub-classes, PHP will throw an error.
+
+Using `readonly` is not a bad approach IMHO, what's the goal behind this restriction? 🤔
+
+PS: There's little to no chance that one day, we store informations in the `*Client` classes.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-01T00:16:35Z
+
+I don't think that this is an unpopular opinion, it's just something that is not easy to have while having to keep up with the BC promise, see https://github.com/symfony/symfony/pull/62168#issuecomment-3450307615 for reasoning.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-07T14:21:25Z
+
+Pipeline still open @Guikingone
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-07T16:01:20Z
+
+Fixed @chr-hertel, sorry for the delay, small issue with HttpClient.
