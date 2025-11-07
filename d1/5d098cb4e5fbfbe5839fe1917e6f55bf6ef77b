@@ -1,0 +1,50 @@
+---------------------------------------------------------------------------
+
+by gundesli at 2025-11-07T22:25:59Z
+
+Hi @chr-hertel,
+
+When I run the command:
+
+```bash
+php albert/embeddings.php
+```
+
+I get the same error.
+
+I can see where the problem lies:
+
+- there is an initial issue with Albert's EmbeddingsModelClient
+- in the ModelCatalog, the class is incorrect for embeddings-small model
+
+I can create a PR to fix this
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-07T22:33:36Z
+
+@gundesli you are very much welcome - should we merge this here already as a first step or do you want to take over completely?
+
+---------------------------------------------------------------------------
+
+by gundesli at 2025-11-07T22:45:40Z
+
+We can merge this one first, which concerns the examples, and I can start from the main branch in a second step, if that's okay for you.
+
+I just noticed a small issue with the php command `php albert/_model-listing.php`, I get an error:
+
+```
+PHP Fatal error:  Uncaught Error: Class "Symfony\AI\Platform\Bridge\Albert\ApiClient" not found in /ai/examples/albert/_model-listing.php:28
+Stack trace:
+#0 [internal function]: Closure->{closure}()
+```
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-07T23:55:30Z
+
+that'll be fixed if you execute this:
+```
+../link
+```
+it links the vendors of the examples to the local components of the branch
