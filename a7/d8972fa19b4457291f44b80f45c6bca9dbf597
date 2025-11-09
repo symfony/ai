@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by jvancoillie at 2025-11-07T07:53:19Z
+
+Quick update: I added support for providing a custom ModelCatalog in the factory, so the Albert platform configuration is now consistent with the other platforms.
+
+Also, regarding the model list: I saw that the alignment work was already merged, so that part is resolved (#839).
+
+One open point from the original description: Albert currently uses `base_url` while some platforms use `host`. Do we want to standardize on one naming style across platforms, or keep it platform-specific for now?
+
+Related to that: should we provide a default `base_url` for Albert (e.g. https://albert.api.etalab.gouv.fr/v1), or do we prefer requiring it explicitly in configuration?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-07T12:18:58Z
+
+See #839 and #840 for other items - i think base_url vs host or default is fine like this
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-07T12:19:49Z
+
+could you please squash the two commits?
