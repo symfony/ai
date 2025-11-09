@@ -15,12 +15,16 @@ use Mcp\Server;
 use Mcp\Server\Builder;
 
 return static function (ContainerConfigurator $container): void {
-    $container->services()
-        ->set('monolog.logger.mcp')
+    if (class_exists(\Symfony\Bundle\MonologBundle\MonologBundle::class)) {
+        $container->services()
+            ->set('monolog.logger.mcp')
             ->parent('monolog.logger_prototype')
             ->args(['mcp'])
             ->tag('monolog.logger', ['channel' => 'mcp'])
+        ;
+    }
 
+    $container->services()
         ->set('mcp.server.builder', Builder::class)
             ->factory([Server::class, 'builder'])
             ->call('setServerInfo', [param('mcp.app'), param('mcp.version')])
