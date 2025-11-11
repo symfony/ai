@@ -16,6 +16,8 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
+ *
+ * @phpstan-type OpenAiModelName 'gpt-3.5-turbo'|'gpt-3.5-turbo-instruct'|'gpt-4'|'gpt-4-turbo'|'gpt-4o'|'gpt-4o-mini'|'gpt-4o-audio-preview'|'o1-mini'|'o1-preview'|'o3-mini'|'o3-mini-high'|'gpt-4.5-preview'|'gpt-4.1'|'gpt-4.1-mini'|'gpt-4.1-nano'|'gpt-5'|'gpt-5-chat-latest'|'gpt-5-mini'|'gpt-5-nano'|'text-embedding-ada-002'|'text-embedding-3-large'|'text-embedding-3-small'|'whisper-1'|'dall-e-2'|'dall-e-3'
  */
 final class ModelCatalog extends AbstractModelCatalog
 {
@@ -24,239 +26,22 @@ final class ModelCatalog extends AbstractModelCatalog
      */
     public function __construct(array $additionalModels = [])
     {
-        $defaultModels = [
-            'gpt-3.5-turbo' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'gpt-3.5-turbo-instruct' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'gpt-4' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'gpt-4-turbo' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                ],
-            ],
-            'gpt-4o' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'gpt-4o-mini' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'gpt-4o-audio-preview' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'o1-mini' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                ],
-            ],
-            'o1-preview' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                ],
-            ],
-            'o3-mini' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'o3-mini-high' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'gpt-4.5-preview' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'gpt-4.1' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'gpt-4.1-mini' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'gpt-4.1-nano' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'gpt-5' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'gpt-5-chat-latest' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::INPUT_IMAGE,
-                ],
-            ],
-            'gpt-5-mini' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'gpt-5-nano' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'text-embedding-ada-002' => [
-                'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_TEXT],
-            ],
-            'text-embedding-3-large' => [
-                'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_TEXT],
-            ],
-            'text-embedding-3-small' => [
-                'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_TEXT],
-            ],
-            'whisper-1' => [
-                'class' => Whisper::class,
-                'capabilities' => [
-                    Capability::INPUT_AUDIO,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'dall-e-2' => [
-                'class' => DallE::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_IMAGE,
-                ],
-            ],
-            'dall-e-3' => [
-                'class' => DallE::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_IMAGE,
-                ],
-            ],
-        ];
+        $defaultModels = require __DIR__.'/Resources/models.php';
 
         $this->models = array_merge($defaultModels, $additionalModels);
+    }
+
+    /**
+     * Get an OpenAI model by name.
+     *
+     * For better IDE autocompletion, use the Model class constants:
+     *
+     *     $model = $catalog->getModel(Model::GPT_4O);
+     *
+     * @param OpenAiModelName $modelName The model identifier (e.g., 'gpt-4o', 'gpt-4o-mini')
+     */
+    public function getModel(string $modelName): \Symfony\AI\Platform\Model
+    {
+        return parent::getModel($modelName);
     }
 }
