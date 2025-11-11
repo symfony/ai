@@ -91,9 +91,12 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
-                    Capability::INPUT_AUDIO,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_STRUCTURED,
+                    // Audio is unsupported temporarily due to migration to Responses API;
+                    // Capability will be reintroduced when Responses API supports audio ("coming soon")
+                    // See: https://platform.openai.com/docs/guides/migrate-to-responses#responses-benefits
+                    // Capability::INPUT_AUDIO,
                 ],
             ],
             'o3' => [
