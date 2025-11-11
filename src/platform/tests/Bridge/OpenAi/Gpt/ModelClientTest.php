@@ -82,7 +82,7 @@ final class ModelClientTest extends TestCase
     {
         $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
             self::assertSame('POST', $method);
-            self::assertSame('https://api.openai.com/v1/chat/completions', $url);
+            self::assertSame('https://api.openai.com/v1/responses', $url);
             self::assertSame('Authorization: Bearer sk-api-key', $options['normalized_headers']['authorization'][0]);
             self::assertSame('{"temperature":1,"model":"gpt-4o","messages":[{"role":"user","content":"test message"}]}', $options['body']);
 
@@ -97,20 +97,31 @@ final class ModelClientTest extends TestCase
     {
         $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
             self::assertSame('POST', $method);
-            self::assertSame('https://api.openai.com/v1/chat/completions', $url);
+            self::assertSame('https://api.openai.com/v1/responses', $url);
             self::assertSame('Authorization: Bearer sk-api-key', $options['normalized_headers']['authorization'][0]);
-            self::assertSame('{"temperature":0.7,"model":"gpt-4o","messages":[{"role":"user","content":"Hello"}]}', $options['body']);
+            self::assertSame('{"temperature":0.7,"text":{"format":{"name":"foo","schema":[],"type":"json"}},"model":"gpt-4o","messages":[{"role":"user","content":"Hello"}]}', $options['body']);
 
             return new MockResponse();
         };
+
+        $options = [
+            'temperature' => 0.7,
+            'response_format' => [
+                'type' => 'json',
+                'json_schema' => [
+                    'name' => 'foo',
+                    'schema' => []],
+            ],
+        ];
+
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new Gpt('gpt-4o'), ['model' => 'gpt-4o', 'messages' => [['role' => 'user', 'content' => 'Hello']]], ['temperature' => 0.7]);
+        $modelClient->request(new Gpt('gpt-4o'), ['model' => 'gpt-4o', 'messages' => [['role' => 'user', 'content' => 'Hello']]], $options);
     }
 
-    #[TestWith(['EU', 'https://eu.api.openai.com/v1/chat/completions'])]
-    #[TestWith(['US', 'https://us.api.openai.com/v1/chat/completions'])]
-    #[TestWith([null, 'https://api.openai.com/v1/chat/completions'])]
+    #[TestWith(['EU', 'https://eu.api.openai.com/v1/responses'])]
+    #[TestWith(['US', 'https://us.api.openai.com/v1/responses'])]
+    #[TestWith([null, 'https://api.openai.com/v1/responses'])]
     public function testItUsesCorrectBaseUrl(?string $region, string $expectedUrl)
     {
         $resultCallback = static function (string $method, string $url, array $options) use ($expectedUrl): HttpResponse {

@@ -9,10 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Platform\Message\Content\Audio;
-use Symfony\AI\Platform\Message\Message;
-use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Exception\RuntimeException;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 

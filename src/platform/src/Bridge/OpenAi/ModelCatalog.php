@@ -95,6 +95,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                     Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
                     Capability::OUTPUT_STRUCTURED,
                     // Audio is unsupported temporarily due to migration to Responses API;
                     // Capability will be reintroduced when Responses API supports audio ("coming soon")
@@ -120,6 +121,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                     Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
