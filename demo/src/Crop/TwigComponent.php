@@ -11,16 +11,23 @@
 
 namespace App\Crop;
 
+use App\Crop\Image\CroppingTarget;
+use App\Crop\Image\Ratio;
+use App\Crop\Preset\PresetImage;
+use App\Crop\Preset\PresetImageRegistry;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormView;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
+use Symfony\UX\LiveComponent\Attribute\LiveArg;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
+use Symfony\UX\LiveComponent\ComponentToolsTrait;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
 #[AsLiveComponent('crop')]
 final class TwigComponent
 {
+    use ComponentToolsTrait;
     use DefaultActionTrait;
 
     #[LiveProp(writable: true)]
@@ -30,7 +37,10 @@ final class TwigComponent
     public ?string $imageData = null;
 
     #[LiveProp(writable: true)]
-    public string $format = '1:1';
+    public ?string $presetId = null;
+
+    #[LiveProp(writable: true)]
+    public Ratio $ratio = Ratio::SQUARE;
 
     #[LiveProp(writable: true)]
     public int $width = 800;
@@ -41,6 +51,7 @@ final class TwigComponent
     public function __construct(
         private readonly FormFactoryInterface $formFactory,
         private readonly ImageCropper $imageCropper,
+        private readonly PresetImageRegistry $presetRegistry,
     ) {
     }
 
@@ -48,20 +59,54 @@ final class TwigComponent
     {
         return $this->formFactory
             ->create(CropForm::class, [
-                'format' => $this->format,
+                'ratio' => $this->ratio,
                 'width' => $this->width,
             ])
             ->createView();
     }
 
+    /**
+     * @return array<string, PresetImage>
+     */
+    public function getPresets(): array
+    {
+        return $this->presetRegistry->all();
+    }
+
+    public function getSelectedPreset(): ?PresetImage
+    {
+        return null !== $this->presetId ? $this->presetRegistry->get($this->presetId) : null;
+    }
+
+    public function hasImage(): bool
+    {
+        return null !== $this->imageData || null !== $this->presetId;
+    }
+
+    #[LiveAction]
+    public function selectPreset(#[LiveArg] string $id): void
+    {
+        $this->presetRegistry->get($id);
+
+        $this->presetId = $id;
+        $this->imageData = null;
+        $this->originalImage = null;
+        $this->croppedImage = null;
+        $this->dispatchBrowserEvent('crop:upload-cleared');
+    }
+
     #[LiveAction]
     public function crop(): void
     {
-        if (null === $this->imageData) {
+        $imageDataUrl = null !== $this->presetId
+            ? $this->presetRegistry->loadAsDataUrl($this->presetId)
+            : $this->imageData;
+
+        if (null === $imageDataUrl) {
             throw new \RuntimeException('No image data to crop.');
         }
 
-        $this->croppedImage = $this->imageCropper->crop($this->imageData, $this->format, $this->width);
+        $this->croppedImage = $this->imageCropper->crop($imageDataUrl, new CroppingTarget($this->ratio, $this->width));
     }
 
     #[LiveAction]
@@ -69,8 +114,10 @@ final class TwigComponent
     {
         $this->originalImage = null;
         $this->imageData = null;
-        $this->format = '1:1';
+        $this->presetId = null;
+        $this->ratio = Ratio::SQUARE;
         $this->width = 800;
         $this->croppedImage = null;
+        $this->dispatchBrowserEvent('crop:upload-cleared');
     }
 }
