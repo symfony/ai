@@ -9,30 +9,31 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\OpenAi\Contract\Gpt;
+namespace Symfony\AI\Platform\Tests\Bridge\OpenAi\Contract\Gpt\Message;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
-use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\ToolCallNormalizer;
+use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\Message\ToolCallMessageNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
 
-class ToolCallNormalizerTest extends TestCase
+class ToolCallMessageNormalizerTest extends TestCase
 {
     public function testNormalize()
     {
         $toolCall = new ToolCall('some-id', 'roll-die', ['sides' => 24]);
+        $toolCallMessage = new ToolCallMessage($toolCall, 'Critical hit!');
 
-        $actual = (new ToolCallNormalizer())->normalize($toolCall, null, [Contract::CONTEXT_MODEL => new Gpt('o3')]);
+        $actual = (new ToolCallMessageNormalizer())->normalize($toolCallMessage, null, [Contract::CONTEXT_MODEL => new Gpt('o3')]);
         $this->assertEquals([
-            'arguments' => json_encode($toolCall->getArguments()),
+            'type' => 'function_call_output',
             'call_id' => $toolCall->getId(),
-            'name' => $toolCall->getName(),
-            'type' => 'function_call',
+            'output' => $toolCallMessage->getContent(),
         ], $actual);
     }
 
@@ -41,17 +42,20 @@ class ToolCallNormalizerTest extends TestCase
     {
         $this->assertSame(
             $expected,
-            (new ToolCallNormalizer())->supportsNormalization($data, null, [Contract::CONTEXT_MODEL => $model])
+            (new ToolCallMessageNormalizer())->supportsNormalization($data, null, [Contract::CONTEXT_MODEL => $model])
         );
     }
 
     public static function supportsNormalizationProvider(): \Generator
     {
-        $toolCall = new ToolCall('some-id', 'roll-die', ['sides' => 24]);
+        $toolCallMessage = new ToolCallMessage(
+            new ToolCall('some-id', 'roll-die', ['sides' => 24]),
+            'Critical hit!'
+        );
         $gpt = new Gpt('o3');
 
-        yield 'supported' => [$toolCall, $gpt, true];
-        yield 'unsupported model' => [$toolCall, new Gemini('foo'), false];
+        yield 'supported' => [$toolCallMessage, $gpt, true];
+        yield 'unsupported model' => [$toolCallMessage, new Gemini('foo'), false];
         yield 'unsupported data' => [new Text('foo'), $gpt, false];
     }
 }

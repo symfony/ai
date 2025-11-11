@@ -41,7 +41,17 @@ class ToolNormalizerTest extends TestCase
             'description' => $tool->getDescription(),
         ];
 
-        $parameters = ['foo' => 'bar'];
+        $parameters = [
+            'type' => 'object',
+            'properties' => [
+                'text' => [
+                    'type' => 'string',
+                    'description' => 'The text given to the tool',
+                ],
+            ],
+            'required' => ['text'],
+            'additionalProperties' => false,
+        ];
 
         yield 'no parameters' => [$expected, $tool];
         yield 'with parameters' => [

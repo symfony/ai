@@ -67,6 +67,16 @@ class MessageBag implements \Countable, \IteratorAggregate
         return null;
     }
 
+    /**
+     * @return AssistantMessage[]
+     */
+    public function getAssistantMessages(): array
+    {
+        return array_filter($this->messages, function (MessageInterface $message) {
+            return $message instanceof AssistantMessage;
+        });
+    }
+
     public function getUserMessage(): ?UserMessage
     {
         foreach ($this->messages as $message) {
@@ -100,6 +110,39 @@ class MessageBag implements \Countable, \IteratorAggregate
         $messages->messages = array_values(array_filter(
             $messages->messages,
             static fn (MessageInterface $message) => !$message instanceof SystemMessage,
+        ));
+
+        return $messages;
+    }
+
+    /**
+     * @return ToolCallMessage[]
+     */
+    public function getToolCallMessages(): array
+    {
+        return array_filter(
+            $this->messages,
+            static fn (MessageInterface $message) => $message instanceof ToolCallMessage,
+        );
+    }
+
+    public function withoutToolCallMessages(): self
+    {
+        $messages = clone $this;
+        $messages->messages = array_values(array_filter(
+            $messages->messages,
+            static fn (MessageInterface $message) => !$message instanceof ToolCallMessage,
+        ));
+
+        return $messages;
+    }
+
+    public function withoutAssistantMessages(): self
+    {
+        $messages = clone $this;
+        $messages->messages = array_values(array_filter(
+            $messages->messages,
+            static fn (MessageInterface $message) => !$message instanceof AssistantMessage,
         ));
 
         return $messages;
