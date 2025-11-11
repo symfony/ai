@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 
 /**
  * @see https://platform.openai.com/docs/api-reference/images/create
@@ -40,7 +41,7 @@ final readonly class ResultConverter implements ResultConverterInterface
 
         $images = [];
         foreach ($result['data'] as $image) {
-            if ('url' === $options['response_format']) {
+            if ('url' === $options[PlatformSubscriber::KEY_OUTPUT_STRUCTURE]) {
                 $images[] = new UrlImage($image['url']);
 
                 continue;

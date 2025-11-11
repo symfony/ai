@@ -36,6 +36,7 @@ use Symfony\Component\Serializer\SerializerInterface;
  */
 final class PlatformSubscriber implements EventSubscriberInterface
 {
+    public const KEY_OUTPUT_STRUCTURE = 'response_format';
     private string $outputStructure;
 
     public function __construct(
@@ -91,7 +92,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
             throw new InvalidArgumentException('Streamed responses are not supported for structured output.');
         }
 
-        $options['response_format'] = $this->responseFormatFactory->create($options['output_structure']);
+        $options[self::KEY_OUTPUT_STRUCTURE] = $this->responseFormatFactory->create($options['output_structure']);
 
         $this->outputStructure = $options['output_structure'];
         unset($options['output_structure']);
@@ -103,7 +104,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
     {
         $options = $event->getOptions();
 
-        if (!isset($options['response_format'])) {
+        if (!isset($options[self::KEY_OUTPUT_STRUCTURE])) {
             return;
         }
 
