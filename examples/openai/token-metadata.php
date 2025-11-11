@@ -25,7 +25,7 @@ $messages = new MessageBag(
     Message::ofUser('What is the Symfony framework?'),
 );
 $result = $agent->call($messages, [
-    'max_tokens' => 500, // specific options just for this call
+    'max_output_tokens' => 500, // specific options just for this call
 ]);
 
 print_token_usage($result->getMetadata());

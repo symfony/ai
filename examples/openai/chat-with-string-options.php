@@ -21,6 +21,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $platform->invoke('gpt-4o-mini?max_tokens=7', $messages);
+$result = $platform->invoke('gpt-4o-mini?max_output_tokens=16', $messages);
 
 echo $result->asText().\PHP_EOL;
