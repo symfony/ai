@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by lochmueller at 2025-11-08T18:16:43Z
+
+@OskarStark thanks for the reviews. What is exactly the problem of the Fabbot pipeline? I have to change the PR header or description.... but in which way? https://symfony.com/doc/current/contributing/code/pull_requests.html#make-a-pull-request Do you have a hint for me? I don't get it...
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-09T23:00:16Z
+
+I think it's about the actual comment of the PR
+<img width="656" height="314" alt="image" src="https://github.com/user-attachments/assets/0d460bd7-e58a-4936-898b-c96d2c31e932" />
+
+fixed it, but Fabbot still not happy :man_shrugging:
+
+---------------------------------------------------------------------------
+
+by lochmueller at 2025-11-10T08:23:13Z
+
+Hey @chr-hertel
+just changing the PR do not retrigger the action. I add some error code handling, retrigger the action and it looks right now. Thank you...
+Regards,
+Tim
