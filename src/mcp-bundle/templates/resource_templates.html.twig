@@ -1,0 +1,35 @@
+{% if collector.resourceTemplates|length %}
+    <div class="sf-tabs">
+        {% for template in collector.resourceTemplates %}
+            <div class="tab">
+                <h3 class="tab-title">{{ template.name }}</h3>
+                <div class="tab-content">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th>URI Template</th>
+                                <td><code>{{ template.uriTemplate }}</code></td>
+                            </tr>
+                            {% if template.description %}
+                                <tr>
+                                    <th>Description</th>
+                                    <td>{{ template.description }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if template.mimeType %}
+                                <tr>
+                                    <th>MIME Type</th>
+                                    <td><code>{{ template.mimeType }}</code></td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty">
+        <p>No resource templates were registered.</p>
+    </div>
+{% endif %}

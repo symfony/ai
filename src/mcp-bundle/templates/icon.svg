@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+    <text x="12" y="{{ y }}" font-family="system-ui, -apple-system, sans-serif" font-size="10px" font-weight="bold" fill="currentColor" text-anchor="middle">MCP</text>
+</svg>

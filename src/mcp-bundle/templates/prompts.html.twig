@@ -1,0 +1,50 @@
+{% if collector.prompts|length %}
+    <div class="sf-tabs">
+        {% for prompt in collector.prompts %}
+            <div class="tab">
+                <h3 class="tab-title">{{ prompt.name }}</h3>
+                <div class="tab-content">
+                    {% if prompt.description %}
+                        <p><strong>Description:</strong> {{ prompt.description }}</p>
+                    {% endif %}
+
+                    {% if prompt.arguments|length %}
+                        <h4>Arguments</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Required</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for arg in prompt.arguments %}
+                                    <tr>
+                                        <td><code>{{ arg.name }}</code></td>
+                                        <td>
+                                            {% if arg.required %}
+                                                <span class="label status-error">Yes</span>
+                                            {% else %}
+                                                <span class="label">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ arg.description ?? '-' }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty">
+                            <p>This prompt has no arguments.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty">
+        <p>No prompts were registered.</p>
+    </div>
+{% endif %}
