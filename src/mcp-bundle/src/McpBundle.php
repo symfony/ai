@@ -114,7 +114,7 @@ final class McpBundle extends AbstractBundle
             $container->register('mcp.server.command', McpCommand::class)
                 ->setArguments([
                     new Reference('mcp.server'),
-                    new Reference('logger'),
+                    new Reference('monolog.logger.mcp', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])
                 ->addTag('console.command');
         }
