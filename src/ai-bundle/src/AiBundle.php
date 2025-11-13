@@ -90,6 +90,7 @@ use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Indexer;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\AI\Store\StoreInterface;
@@ -1613,6 +1614,8 @@ final class AiBundle extends AbstractBundle
         ]);
         $vectorizerDefinition->addTag('ai.vectorizer', ['name' => $name]);
         $container->setDefinition('ai.vectorizer.'.$name, $vectorizerDefinition);
+
+        $container->registerAliasForArgument('ai.vectorizer.'.$name, VectorizerInterface::class, $name);
     }
 
     /**

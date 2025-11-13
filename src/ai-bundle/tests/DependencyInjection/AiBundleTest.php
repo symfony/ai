@@ -27,6 +27,7 @@ use Symfony\AI\Store\Document\Filter\TextContainsFilter;
 use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -223,6 +224,21 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.MessageStoreInterface::class.' $memory_main'));
         $this->assertTrue($container->hasAlias(MessageStoreInterface::class.' $session'));
         $this->assertTrue($container->hasAlias('.'.MessageStoreInterface::class.' $session_session'));
+    }
+
+    public function testInjectionVectorizerAliasIsRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'vectorizer' => [
+                    'test' => [
+                        'model' => 'text-embedding-3-small?dimensions=512',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasAlias(VectorizerInterface::class.' $test'));
     }
 
     public function testInjectionChatAliasIsRegistered()
