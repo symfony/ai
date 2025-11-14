@@ -168,7 +168,7 @@ class Store implements ManagedStoreInterface, StoreInterface
             }
 
             $documents[] = new VectorDocument(
-                id: Uuid::fromString($data['$.id']),
+                id: $data['$.id'],
                 vector: new Vector($data['$.embedding'] ?? []),
                 metadata: new Metadata($data['$.metadata'] ?? []),
                 score: $score,

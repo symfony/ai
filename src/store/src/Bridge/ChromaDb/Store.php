@@ -68,7 +68,7 @@ final class Store implements StoreInterface
         $documents = [];
         for ($i = 0; $i < \count($queryResponse->metadatas[0]); ++$i) {
             $documents[] = new VectorDocument(
-                id: Uuid::fromString($queryResponse->ids[0][$i]),
+                id: $queryResponse->ids[0][$i],
                 vector: new Vector($queryResponse->embeddings[0][$i]),
                 metadata: new Metadata($queryResponse->metadatas[0][$i]),
             );
