@@ -565,13 +565,12 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('ollama' === $type) {
-            if (\array_key_exists('use_api_as_catalog', $platform)) {
+            if (\array_key_exists('api_catalog', $platform)) {
                 $catalogDefinition = (new Definition(OllamaApiCatalog::class))
-                    ->setDecoratedService('ai.platform.model_catalog.ollama')
+                    ->setLazy(true)
                     ->setArguments([
                         $platform['host_url'],
                         new Reference('http_client'),
-                        new Reference('.inner'),
                     ]);
 
                 $container->setDefinition('ai.platform.model_catalog.ollama', $catalogDefinition);

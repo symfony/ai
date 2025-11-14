@@ -218,6 +218,9 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
         ];
 
-        $this->models = array_merge($defaultModels, $additionalModels);
+        $this->models = [
+            ...$defaultModels,
+            ...$additionalModels,
+        ];
     }
 }

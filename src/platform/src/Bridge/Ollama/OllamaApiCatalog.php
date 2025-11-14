@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -25,12 +24,11 @@ final class OllamaApiCatalog extends FallbackModelCatalog
     public function __construct(
         private readonly string $host,
         private readonly HttpClientInterface $httpClient,
-        private readonly ModelCatalog $inner,
     ) {
         parent::__construct();
     }
 
-    public function getModel(string $modelName): Model
+    public function getModel(string $modelName): Ollama
     {
         $model = parent::getModel($modelName);
 
@@ -44,40 +42,37 @@ final class OllamaApiCatalog extends FallbackModelCatalog
             );
         }
 
-        try {
-            $response = $this->httpClient->request('POST', \sprintf('%s/api/show', $this->host), [
-                'json' => [
-                    'model' => $model->getName(),
-                ],
-            ]);
+        $response = $this->httpClient->request('POST', \sprintf('%s/api/show', $this->host), [
+            'json' => [
+                'model' => $model->getName(),
+            ],
+        ]);
 
-            $payload = $response->toArray();
+        $payload = $response->toArray();
 
-            if ([] === $payload['capabilities'] ?? []) {
-                throw new InvalidArgumentException('The model information could not be retrieved from the Ollama API. Your Ollama server might be too old. Try upgrade it.');
-            }
-
-            $capabilities = array_map(
-                static fn (string $capability): Capability => match ($capability) {
-                    'embeddings' => Capability::EMBEDDINGS,
-                    'completion' => Capability::INPUT_TEXT,
-                    'tools' => Capability::TOOLS,
-                    'vision' => Capability::INPUT_IMAGE,
-                    default => throw new InvalidArgumentException(\sprintf('The "%s" capability is not supported', $capability)),
-                },
-                $payload['capabilities'],
-            );
-
-            $finalModel = new Ollama($model->getName(), $capabilities, $model->getOptions());
-
-            $this->models[$finalModel->getName()] = [
-                'class' => Ollama::class,
-                'capabilities' => $finalModel->getCapabilities(),
-            ];
-
-            return $finalModel;
-        } catch (\Throwable) {
-            return $this->inner->getModel($modelName);
+        if ([] === $payload['capabilities'] ?? []) {
+            throw new InvalidArgumentException('The model information could not be retrieved from the Ollama API. Your Ollama server might be too old. Try upgrade it.');
         }
+
+        $capabilities = array_map(
+            static fn (string $capability): Capability => match ($capability) {
+                'embedding' => Capability::EMBEDDINGS,
+                'completion' => Capability::INPUT_TEXT,
+                'tools' => Capability::TOOL_CALLING,
+                'thinking' => Capability::THINKING,
+                'vision' => Capability::INPUT_IMAGE,
+                default => throw new InvalidArgumentException(\sprintf('The "%s" capability is not supported', $capability)),
+            },
+            $payload['capabilities'],
+        );
+
+        $finalModel = new Ollama($model->getName(), $capabilities, $model->getOptions());
+
+        $this->models[$finalModel->getName()] = [
+            'class' => Ollama::class,
+            'capabilities' => $finalModel->getCapabilities(),
+        ];
+
+        return $finalModel;
     }
 }

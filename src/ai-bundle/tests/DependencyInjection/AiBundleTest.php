@@ -597,6 +597,7 @@ class AiBundleTest extends TestCase
 
         $ollamaDefinition = $container->getDefinition('ai.platform.ollama');
 
+        $this->assertTrue($ollamaDefinition->isLazy());
         $this->assertCount(4, $ollamaDefinition->getArguments());
         $this->assertSame('http://127.0.0.1:11434', $ollamaDefinition->getArgument(0));
         $this->assertInstanceOf(Reference::class, $ollamaDefinition->getArgument(1));
@@ -606,10 +607,9 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $ollamaDefinition->getArgument(3));
         $this->assertSame('ai.platform.contract.ollama', (string) $ollamaDefinition->getArgument(3));
 
-        $this->assertTrue($ollamaDefinition->isLazy());
-
         $ollamaCatalogDefinition = $container->getDefinition('ai.platform.model_catalog.ollama');
 
+        $this->assertTrue($ollamaCatalogDefinition->isLazy());
         $this->assertSame(OllamaApiCatalog::class, $ollamaCatalogDefinition->getClass());
         $this->assertCount(3, $ollamaCatalogDefinition->getArguments());
         $this->assertSame('http://127.0.0.1:11434', $ollamaCatalogDefinition->getArgument(0));

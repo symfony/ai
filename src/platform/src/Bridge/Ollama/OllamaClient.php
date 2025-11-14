@@ -37,7 +37,7 @@ final class OllamaClient implements ModelClientInterface
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
         return match (true) {
-            \in_array(Capability::COMPLETION, $model->getCapabilities(), true) => $this->doCompletionRequest($payload, $options),
+            \in_array(Capability::INPUT_TEXT, $model->getCapabilities(), true) => $this->doCompletionRequest($payload, $options),
             \in_array(Capability::EMBEDDINGS, $model->getCapabilities(), true) => $this->doEmbeddingsRequest($model, $payload, $options),
             default => throw new InvalidArgumentException(\sprintf('Unsupported model "%s": "%s".', $model::class, $model->getName())),
         };
