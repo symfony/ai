@@ -19,12 +19,19 @@ use Symfony\Component\Uid\Uuid;
  */
 final class VectorDocument
 {
+    public readonly int|string|Uuid $id;
+
     public function __construct(
-        public readonly Uuid $id,
+        int|string|Uuid $id,
         public readonly VectorInterface $vector,
         public readonly Metadata $metadata = new Metadata(),
         public readonly ?float $score = null,
     ) {
+        if (\is_string($id) && Uuid::isValid($id)) {
+            $this->id = Uuid::fromString($id);
+        } else {
+            $this->id = $id;
+        }
     }
 
     /**
