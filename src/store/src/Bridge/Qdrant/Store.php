@@ -157,7 +157,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             : new Vector($data['vector']);
 
         return new VectorDocument(
-            id: Uuid::fromString($id),
+            id: $id,
             vector: $vector,
             metadata: new Metadata($data['payload']),
             score: $data['score'] ?? null

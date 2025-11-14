@@ -95,7 +95,7 @@ final class SearchStore implements StoreInterface
     private function convertToVectorDocument(array $data): VectorDocument
     {
         return new VectorDocument(
-            id: Uuid::fromString($data['id']),
+            id: $data['id'],
             vector: !\array_key_exists($this->vectorFieldName, $data) || null === $data[$this->vectorFieldName]
                 ? new NullVector()
                 : new Vector($data[$this->vectorFieldName]),

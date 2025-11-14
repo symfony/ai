@@ -19,7 +19,6 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -97,7 +96,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         foreach ($result->json()['matches'] as $match) {
             yield new VectorDocument(
-                id: Uuid::fromString($match['id']),
+                id: $match['id'],
                 vector: new Vector($match['values']),
                 metadata: new Metadata($match['metadata']),
                 score: $match['score'],

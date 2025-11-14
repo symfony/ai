@@ -87,7 +87,7 @@ final class Store implements StoreInterface
             }
 
             yield new VectorDocument(
-                id: Uuid::fromString($queryResponse->ids[0][$i]),
+                id: $queryResponse->ids[0][$i],
                 vector: new Vector($queryResponse->embeddings[0][$i]),
                 metadata: $metaData,
                 score: $queryResponse->distances[0][$i] ?? null,
