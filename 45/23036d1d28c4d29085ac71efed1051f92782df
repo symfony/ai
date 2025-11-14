@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-14T16:46:27Z
+
+> Weird that the clock is used as source, isn't? 🤔
+
+it makes sense since the model doesn't know what date it is and needs that for getting an of "latest".
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-14T23:23:38Z
+
+this example def proofs that there is still an issue:
+<img width="1900" height="944" alt="image" src="https://github.com/user-attachments/assets/f5a50e95-47b2-4e50-ac2e-f26d07d29f77" />
+
+but that's not the fault of this PR
