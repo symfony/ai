@@ -25,17 +25,21 @@ return static function (ContainerConfigurator $container): void {
         ;
     }
 
-    $container->services()
+    $builderDefinition = $container->services()
         ->set('mcp.server.builder', Builder::class)
             ->factory([Server::class, 'builder'])
             ->call('setServerInfo', [param('mcp.app'), param('mcp.version')])
             ->call('setPaginationLimit', [param('mcp.pagination_limit')])
             ->call('setInstructions', [param('mcp.instructions')])
-            ->call('setLogger', [service('monolog.logger.mcp')->nullOnInvalid()])
             ->call('setEventDispatcher', [service('event_dispatcher')])
             ->call('setSession', [service('mcp.session.store')])
-            ->call('setDiscovery', [param('kernel.project_dir'), param('mcp.discovery.scan_dirs'), param('mcp.discovery.exclude_dirs')])
+            ->call('setDiscovery', [param('kernel.project_dir'), param('mcp.discovery.scan_dirs'), param('mcp.discovery.exclude_dirs')]);
 
+    if (class_exists(MonologBundle::class)) {
+        $builderDefinition->call('setLogger', [service('monolog.logger.mcp')]);
+    }
+
+    $container->services()
         ->set('mcp.server', Server::class)
             ->factory([service('mcp.server.builder'), 'build'])
 
