@@ -20,7 +20,7 @@ use Symfony\Component\Uid\Uuid;
 final class VectorDocument
 {
     public function __construct(
-        public readonly Uuid $id,
+        public readonly int|string|Uuid $id,
         public readonly VectorInterface $vector,
         public readonly Metadata $metadata = new Metadata(),
         public readonly ?float $score = null,

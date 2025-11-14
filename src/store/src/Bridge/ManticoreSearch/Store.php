@@ -18,7 +18,6 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -154,7 +153,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             : new Vector($payload[$this->field]);
 
         return new VectorDocument(
-            id: Uuid::fromString($payload['uuid']),
+            id: $payload['uuid'],
             vector: $vector,
             metadata: new Metadata($payload['metadata'] ?? []),
             score: $data['_knn_dist'] ?? null
