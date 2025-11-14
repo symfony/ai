@@ -19,7 +19,6 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Cache\CacheInterface;
 
 /**
