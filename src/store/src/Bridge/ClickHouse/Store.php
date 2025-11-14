@@ -99,7 +99,7 @@ class Store implements ManagedStoreInterface, StoreInterface
 
         foreach ($results as $result) {
             yield new VectorDocument(
-                id: Uuid::fromString($result['id']),
+                id: $result['id'],
                 vector: new Vector($result['embedding']),
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],

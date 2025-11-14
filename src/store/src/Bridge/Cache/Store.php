@@ -83,7 +83,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $documents = $this->cache->get($this->cacheKey, static fn (): array => []);
 
         $vectorDocuments = array_map(static fn (array $document): VectorDocument => new VectorDocument(
-            id: Uuid::fromString($document['id']),
+            id: $document['id'],
             vector: new Vector($document['vector']),
             metadata: new Metadata($document['metadata']),
         ), $documents);
