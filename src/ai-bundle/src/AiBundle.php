@@ -91,6 +91,7 @@ use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Indexer;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\AI\Store\StoreInterface;
@@ -1626,7 +1627,9 @@ final class AiBundle extends AbstractBundle
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
         $vectorizerDefinition->addTag('ai.vectorizer', ['name' => $name]);
-        $container->setDefinition('ai.vectorizer.'.$name, $vectorizerDefinition);
+        $serviceId = 'ai.vectorizer.'.$name;
+        $container->setDefinition($serviceId, $vectorizerDefinition);
+        $container->registerAliasForArgument($serviceId, VectorizerInterface::class, (new Target((string) $name))->getParsedName());
     }
 
     /**
@@ -1655,7 +1658,9 @@ final class AiBundle extends AbstractBundle
         ]);
         $definition->addTag('ai.indexer', ['name' => $name]);
 
-        $container->setDefinition('ai.indexer.'.$name, $definition);
+        $serviceId = 'ai.indexer.'.$name;
+        $container->setDefinition($serviceId, $definition);
+        $container->registerAliasForArgument($serviceId, IndexerInterface::class, (new Target((string) $name))->getParsedName());
     }
 
     /**
