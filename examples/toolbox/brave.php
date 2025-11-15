@@ -11,13 +11,13 @@
 
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
-use Symfony\AI\Agent\Toolbox\Tool\Brave;
-use Symfony\AI\Agent\Toolbox\Tool\Clock;
-use Symfony\AI\Agent\Toolbox\Tool\Scraper;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Tools\Brave;
+use Symfony\AI\Tools\Clock;
+use Symfony\AI\Tools\Scraper;
 use Symfony\Component\Clock\Clock as SymfonyClock;
 
 require_once dirname(__DIR__).'/bootstrap.php';

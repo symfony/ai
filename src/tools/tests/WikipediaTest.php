@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Tests\Toolbox\Tool;
+namespace Symfony\AI\Tools\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Toolbox\Tool\Wikipedia;
+use Symfony\AI\Tools\Wikipedia;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -20,7 +20,7 @@ final class WikipediaTest extends TestCase
 {
     public function testSearchWithResults()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/wikipedia-search-result.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/wikipedia-search-result.json');
         $httpClient = new MockHttpClient($result);
 
         $wikipedia = new Wikipedia($httpClient);
@@ -47,7 +47,7 @@ final class WikipediaTest extends TestCase
 
     public function testSearchWithoutResults()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/wikipedia-search-empty.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/wikipedia-search-empty.json');
         $httpClient = new MockHttpClient($result);
 
         $wikipedia = new Wikipedia($httpClient);
@@ -60,7 +60,7 @@ final class WikipediaTest extends TestCase
 
     public function testArticleWithResult()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/wikipedia-article.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/wikipedia-article.json');
         $httpClient = new MockHttpClient($result);
 
         $wikipedia = new Wikipedia($httpClient);
@@ -76,7 +76,7 @@ final class WikipediaTest extends TestCase
 
     public function testArticleWithRedirect()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/wikipedia-article-redirect.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/wikipedia-article-redirect.json');
         $httpClient = new MockHttpClient($result);
 
         $wikipedia = new Wikipedia($httpClient);
@@ -94,7 +94,7 @@ final class WikipediaTest extends TestCase
 
     public function testArticleMissing()
     {
-        $result = JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/wikipedia-article-missing.json');
+        $result = JsonMockResponse::fromFile(__DIR__.'/fixtures/wikipedia-article-missing.json');
         $httpClient = new MockHttpClient($result);
 
         $wikipedia = new Wikipedia($httpClient);

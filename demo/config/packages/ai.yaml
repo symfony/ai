@@ -98,11 +98,6 @@ services:
         autowire: true
         autoconfigure: true
 
-    # Symfony\AI\Agent\Toolbox\Tool\Clock: ~
-    # Symfony\AI\Agent\Toolbox\Tool\OpenMeteo: ~
-    # Symfony\AI\Agent\Toolbox\Tool\SerpApi:
-    #     $apiKey: '%env(SERP_API_KEY)%'
-    Symfony\AI\Agent\Toolbox\Tool\Wikipedia: ~
     Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch:
         $vectorizer: '@ai.vectorizer.openai'
         $store: '@ai.store.chroma_db.symfonycon'
@@ -110,6 +105,12 @@ services:
     Symfony\AI\Store\Document\Loader\RssFeedLoader: ~
     Symfony\AI\Store\Document\Transformer\TextSplitTransformer: ~
     Symfony\AI\Store\Document\Transformer\TextTrimTransformer: ~
+
+    # Symfony\AI\Tools\Clock: ~
+    # Symfony\AI\Tools\OpenMeteo: ~
+    # Symfony\AI\Tools\SerpApi:
+    #     $apiKey: '%env(SERP_API_KEY)%'
+    Symfony\AI\Tools\Wikipedia: ~
 
     app.filter.week_of_symfony:
         class: 'Symfony\AI\Store\Document\Filter\TextContainsFilter'
