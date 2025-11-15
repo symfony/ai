@@ -18,7 +18,6 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -70,7 +69,7 @@ final class Store implements StoreInterface
         $documents = [];
         foreach ($result->json()['matches'] as $match) {
             $documents[] = new VectorDocument(
-                id: Uuid::fromString($match['id']),
+                id: $match['id'],
                 vector: new Vector($match['values']),
                 metadata: new Metadata($match['metadata']),
                 score: $match['score'],

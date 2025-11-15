@@ -22,6 +22,29 @@ use Symfony\Component\Uid\Uuid;
 
 final class TextDocumentTest extends TestCase
 {
+    #[TestWith([1])]
+    #[TestWith(['id'])]
+    #[TestWith(['uuid'])]
+    public function testConstructorIdSupportsManyTypes(int|string $id)
+    {
+        if ('uuid' === $id) {
+            $id = Uuid::v4();
+        }
+
+        $document = new TextDocument($id, 'content');
+
+        $this->assertSame($id, $document->getId());
+    }
+
+    #[TestDox('Automatically convert strings in UUID format to Uuid instances')]
+    public function testConstructorConvertIdToUuid()
+    {
+        $id = Uuid::v4()->toString();
+        $document = new TextDocument($id, 'content');
+
+        $this->assertInstanceOf(Uuid::class, $document->getId());
+    }
+
     #[TestDox('Creates document with valid content and metadata')]
     public function testConstructorWithValidContent()
     {

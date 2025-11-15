@@ -18,7 +18,6 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Grégoire Pineau <lyrixx@lyrixx.info>
@@ -168,7 +167,7 @@ class Store implements ManagedStoreInterface, StoreInterface
             }
 
             $documents[] = new VectorDocument(
-                id: Uuid::fromString($data['$.id']),
+                id: $data['$.id'],
                 vector: new Vector($data['$.embedding'] ?? []),
                 metadata: new Metadata($data['$.metadata'] ?? []),
                 score: $score,
