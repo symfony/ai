@@ -188,6 +188,16 @@ services:
             - '8080:8080'
             - '50051:50051'
 
+    litellm:
+        image: ghcr.io/berriai/litellm:v1.79.1-stable
+        ports:
+            - "4000:4000"
+        volumes:
+            - ./litellm/config.yaml:/app/config.yaml
+        env_file:
+            - .env
+        command: [ "--config", "/app/config.yaml", "--port", "4000", "--num_workers", "8" ]
+
 volumes:
     typesense_data:
     etcd_vlm:

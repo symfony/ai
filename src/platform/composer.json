@@ -16,6 +16,7 @@
         "gemini",
         "huggingface",
         "inference",
+        "litellm",
         "llama",
         "lmstudio",
         "meta",
