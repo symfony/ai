@@ -1005,8 +1005,8 @@ final class AiBundle extends AbstractBundle
                     $arguments[5] = $store['metric'];
                 }
 
-                if (\array_key_exists('endpoint', $store)) {
-                    $arguments[6] = $store['endpoint'];
+                if (\array_key_exists('endpoint_url', $store)) {
+                    $arguments[6] = $store['endpoint_url'];
                 }
 
                 $definition = new Definition(CloudflareStore::class);
