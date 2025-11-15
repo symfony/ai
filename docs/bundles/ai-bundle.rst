@@ -947,7 +947,7 @@ Profiler
 
 The profiler panel provides insights into the agent's execution:
 
-.. image:: profiler.png
+.. image:: images/profiler-ai.png
    :alt: Profiler Panel
 
 Message stores
