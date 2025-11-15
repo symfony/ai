@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -63,9 +64,9 @@ final class OllamaClient implements ModelClientInterface
         // Revert Ollama's default streaming behavior
         $options['stream'] ??= false;
 
-        if (\array_key_exists('response_format', $options) && \array_key_exists('json_schema', $options['response_format'])) {
-            $options['format'] = $options['response_format']['json_schema']['schema'];
-            unset($options['response_format']);
+        if (\array_key_exists(PlatformSubscriber::KEY_OUTPUT_STRUCTURE, $options) && \array_key_exists('json_schema', $options[PlatformSubscriber::KEY_OUTPUT_STRUCTURE])) {
+            $options['format'] = $options[PlatformSubscriber::KEY_OUTPUT_STRUCTURE]['json_schema']['schema'];
+            unset($options[PlatformSubscriber::KEY_OUTPUT_STRUCTURE]);
         }
 
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/api/chat', $this->hostUrl), [

@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\VertexAi\Gemini;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -51,11 +52,11 @@ final class ModelClient implements ModelClientInterface
             $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent',
         );
 
-        if (isset($options['response_format']['json_schema']['schema'])) {
+        if (isset($options[PlatformSubscriber::KEY_OUTPUT_STRUCTURE]['json_schema']['schema'])) {
             $options['generationConfig']['responseMimeType'] = 'application/json';
-            $options['generationConfig']['responseSchema'] = $options['response_format']['json_schema']['schema'];
+            $options['generationConfig']['responseSchema'] = $options[PlatformSubscriber::KEY_OUTPUT_STRUCTURE]['json_schema']['schema'];
 
-            unset($options['response_format']);
+            unset($options[PlatformSubscriber::KEY_OUTPUT_STRUCTURE]);
         }
 
         if (isset($options['generationConfig'])) {

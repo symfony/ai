@@ -60,6 +60,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                     Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
                 ],
             ],
             'gpt-4o' => [
@@ -69,6 +70,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
+                    Capability::INPUT_PDF,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_STRUCTURED,
                 ],
@@ -81,6 +83,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                     Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
@@ -91,12 +94,15 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
-                    Capability::INPUT_AUDIO,
+                    // Audio is unsupported temporarily due to migration to Responses API;
+                    // Capability will be reintroduced when Responses API supports audio ("coming soon")
+                    // See: https://platform.openai.com/docs/guides/migrate-to-responses#responses-benefits
+                    // Capability::INPUT_AUDIO,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
-            'o1-mini' => [
+            'o3' => [
                 'class' => Gpt::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -104,16 +110,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                     Capability::INPUT_IMAGE,
-                ],
-            ],
-            'o1-preview' => [
-                'class' => Gpt::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_STRUCTURED,
                 ],
             ],
             'o3-mini' => [
@@ -143,6 +140,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
+                    Capability::INPUT_PDF,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_STRUCTURED,
                 ],
@@ -155,6 +153,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                     Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
@@ -166,6 +165,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                     Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
@@ -177,6 +177,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                     Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
@@ -188,6 +189,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                     Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
@@ -198,12 +200,14 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
                 ],
             ],
             'gpt-5-mini' => [
                 'class' => Gpt::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::INPUT_PDF,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
@@ -215,6 +219,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Gpt::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::INPUT_PDF,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
