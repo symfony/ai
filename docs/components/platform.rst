@@ -77,6 +77,34 @@ You can also combine size variants with query parameters::
     // Get model with size variant and query parameters
     $model = $catalog->getModel('qwen3:32b?temperature=0.5&top_p=0.9');
 
+Custom models
+~~~~~~~~~~~~~
+
+For providers like Ollama, you can use custom models (built on top of ``Modelfile``), as those models are not listed in
+the default catalog, you can use the built-in ``OllamaApiCatalog`` to query the model informations from the API rather
+than the default catalog::
+
+    use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
+    use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    $platform = PlatformFactory::create('http://127.0.0.11434', HttpClient::create(), new OllamaApiCatalog(
+        'http://127.0.0.11434',
+        HttpClient::create(),
+    ));
+
+    $platform->invoke('your_custom_model_name', new MessageBag(
+        Message::ofUser(...)
+    ));
+
+When using the bundle, the usage of ``OllamaApiCatalog`` is available via the ``api_catalog`` option::
+
+    ai:
+        platform:
+            ollama:
+                api_catalog: true
+
 Supported Models & Platforms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

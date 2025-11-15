@@ -42,4 +42,10 @@ enum Capability: string
     // VOICE
     case TEXT_TO_SPEECH = 'text-to-speech';
     case SPEECH_TO_TEXT = 'speech-to-text';
+
+    // EMBEDDINGS
+    case EMBEDDINGS = 'embeddings';
+
+    // Thinking
+    case THINKING = 'thinking';
 }

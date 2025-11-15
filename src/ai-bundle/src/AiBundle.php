@@ -56,6 +56,7 @@ use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory as HuggingFacePlatformFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory as LmStudioPlatformFactory;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory as MistralPlatformFactory;
+use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
@@ -565,11 +566,20 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('ollama' === $type) {
-            $platformId = 'ai.platform.ollama';
+            if (\array_key_exists('api_catalog', $platform)) {
+                $catalogDefinition = (new Definition(OllamaApiCatalog::class))
+                    ->setLazy(true)
+                    ->setArguments([
+                        $platform['host_url'],
+                        new Reference('http_client'),
+                    ]);
+
+                $container->setDefinition('ai.platform.model_catalog.ollama', $catalogDefinition);
+            }
+
             $definition = (new Definition(Platform::class))
                 ->setFactory(OllamaPlatformFactory::class.'::create')
                 ->setLazy(true)
-                ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['host_url'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
@@ -577,9 +587,10 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.ollama'),
                     new Reference('event_dispatcher'),
                 ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform', ['name' => 'ollama']);
 
-            $container->setDefinition($platformId, $definition);
+            $container->setDefinition('ai.platform.ollama', $definition);
 
             return;
         }
