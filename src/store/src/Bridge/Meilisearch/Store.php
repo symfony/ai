@@ -28,17 +28,25 @@ final class Store implements ManagedStoreInterface, StoreInterface
 {
     /**
      * @param string $embedder        The name of the embedder where vectors are stored
-     * @param string $vectorFieldName The name of the field int the index that contains the vector
+     * @param string $vectorFieldName The name of the field in the index that contains the vector
+     * @param float  $semanticRatio   The ratio between semantic (vector) and full-text search (0.0 to 1.0)
+     *                                - 0.0 = 100% full-text search
+     *                                - 0.5 = balanced hybrid search
+     *                                - 1.0 = 100% semantic search (vector only)
      */
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
-        private readonly string $endpointUrl,
-        #[\SensitiveParameter] private readonly string $apiKey,
-        private readonly string $indexName,
-        private readonly string $embedder = 'default',
-        private readonly string $vectorFieldName = '_vectors',
-        private readonly int $embeddingsDimension = 1536,
+        private HttpClientInterface $httpClient,
+        private string $endpointUrl,
+        #[\SensitiveParameter] private string $apiKey,
+        private string $indexName,
+        private string $embedder = 'default',
+        private string $vectorFieldName = '_vectors',
+        private int $embeddingsDimension = 1536,
+        private float $semanticRatio = 1.0,
     ) {
+        if ($semanticRatio < 0.0 || $semanticRatio > 1.0) {
+            throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $semanticRatio));
+        }
     }
 
     public function setup(array $options = []): void
@@ -71,13 +79,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function query(Vector $vector, array $options = []): array
     {
+        $semanticRatio = $options['semanticRatio'] ?? $this->semanticRatio;
+
+        if ($semanticRatio < 0.0 || $semanticRatio > 1.0) {
+            throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $semanticRatio));
+        }
+
         $result = $this->request('POST', \sprintf('indexes/%s/search', $this->indexName), [
+            'q' => $options['q'] ?? '',
             'vector' => $vector->getData(),
             'showRankingScore' => true,
             'retrieveVectors' => true,
             'hybrid' => [
                 'embedder' => $this->embedder,
-                'semanticRatio' => 1.0,
+                'semanticRatio' => $semanticRatio,
             ],
         ]);
 

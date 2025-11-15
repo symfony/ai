@@ -60,5 +60,6 @@ CHANGELOG
    - Minimum score filtering
    - Result limiting
    - Distance/similarity scoring
+ * Add Meilisearch hybrid search support with a configurable `semanticRatio` parameter to control the balance between semantic (vector) and full-text search.
  * Add custom exception hierarchy with `ExceptionInterface`
  * Add support for specific exceptions for invalid arguments and runtime errors

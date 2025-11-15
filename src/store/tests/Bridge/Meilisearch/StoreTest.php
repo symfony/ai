@@ -15,9 +15,11 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Meilisearch\Store;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
@@ -274,5 +276,149 @@ final class StoreTest extends TestCase
         ];
 
         $this->assertSame($expected, $vectors[0]->metadata->getArrayCopy());
+    }
+
+    public function testConstructorWithValidSemanticRatio()
+    {
+        $httpClient = new MockHttpClient();
+
+        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.5);
+
+        $this->assertInstanceOf(Store::class, $store);
+    }
+
+    public function testConstructorThrowsExceptionForInvalidSemanticRatio()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
+
+        $httpClient = new MockHttpClient();
+        new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 1.5);
+    }
+
+    public function testConstructorThrowsExceptionForNegativeSemanticRatio()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
+
+        $httpClient = new MockHttpClient();
+        new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: -0.1);
+    }
+
+    public function testQueryUsesDefaultSemanticRatio()
+    {
+        $responses = [
+            new MockResponse(json_encode([
+                'hits' => [
+                    [
+                        'id' => '550e8400-e29b-41d4-a716-446655440000',
+                        '_vectors' => [
+                            'default' => [
+                                'embeddings' => [0.1, 0.2, 0.3],
+                            ],
+                        ],
+                        '_rankingScore' => 0.95,
+                        'content' => 'Test document',
+                    ],
+                ],
+            ])),
+        ];
+
+        $httpClient = new MockHttpClient($responses);
+        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.7);
+
+        $vector = new Vector([0.1, 0.2, 0.3]);
+        $store->query($vector);
+
+        $request = $httpClient->getRequestsCount() > 0 ? $responses[0]->getRequestOptions() : null;
+        $this->assertNotNull($request);
+
+        $body = json_decode($request['body'], true);
+        $this->assertSame(0.7, $body['hybrid']['semanticRatio']);
+    }
+
+    public function testQueryCanOverrideSemanticRatio()
+    {
+        $responses = [
+            new MockResponse(json_encode([
+                'hits' => [],
+            ])),
+        ];
+
+        $httpClient = new MockHttpClient($responses);
+        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.5);
+
+        $vector = new Vector([0.1, 0.2, 0.3]);
+        $store->query($vector, ['semanticRatio' => 0.2]);
+
+        $request = $responses[0]->getRequestOptions();
+        $body = json_decode($request['body'], true);
+
+        $this->assertSame(0.2, $body['hybrid']['semanticRatio']);
+    }
+
+    public function testQueryThrowsExceptionForInvalidSemanticRatioOption()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
+
+        $httpClient = new MockHttpClient();
+        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index');
+
+        $vector = new Vector([0.1, 0.2, 0.3]);
+        $store->query($vector, ['semanticRatio' => 2.0]);
+    }
+
+    public function testQueryWithPureKeywordSearch()
+    {
+        $responses = [
+            new MockResponse(json_encode([
+                'hits' => [
+                    [
+                        'id' => '550e8400-e29b-41d4-a716-446655440000',
+                        '_vectors' => [
+                            'default' => [
+                                'embeddings' => [0.1, 0.2, 0.3],
+                            ],
+                        ],
+                        '_rankingScore' => 0.85,
+                        'title' => 'Symfony Framework',
+                    ],
+                ],
+            ])),
+        ];
+
+        $httpClient = new MockHttpClient($responses);
+        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index');
+
+        $vector = new Vector([0.1, 0.2, 0.3]);
+        $results = $store->query($vector, ['semanticRatio' => 0.0]);
+
+        $this->assertCount(1, $results);
+        $this->assertInstanceOf(VectorDocument::class, $results[0]);
+
+        $request = $responses[0]->getRequestOptions();
+        $body = json_decode($request['body'], true);
+        $this->assertSame(0.0, $body['hybrid']['semanticRatio']);
+    }
+
+    public function testQueryWithBalancedHybridSearch()
+    {
+        $responses = [
+            new MockResponse(json_encode([
+                'hits' => [],
+            ])),
+        ];
+
+        $httpClient = new MockHttpClient($responses);
+        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.5);
+
+        $vector = new Vector([0.1, 0.2, 0.3]);
+        $store->query($vector);
+
+        $request = $responses[0]->getRequestOptions();
+        $body = json_decode($request['body'], true);
+
+        $this->assertSame(0.5, $body['hybrid']['semanticRatio']);
     }
 }
