@@ -72,8 +72,10 @@ final class CacheStore implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int
-     * } $options If maxItems is provided, only the top N results will be returned
+     *     maxItems?: positive-int,
+     *     filter?: callable(VectorDocument): bool
+     * } $options If maxItems is provided, only the top N results will be returned.
+     *            If filter is provided, only documents matching the filter will be considered.
      */
     public function query(Vector $vector, array $options = []): array
     {
@@ -84,6 +86,10 @@ final class CacheStore implements ManagedStoreInterface, StoreInterface
             vector: new Vector($document['vector']),
             metadata: new Metadata($document['metadata']),
         ), $documents);
+
+        if (isset($options['filter'])) {
+            $vectorDocuments = array_values(array_filter($vectorDocuments, $options['filter']));
+        }
 
         return $this->distanceCalculator->calculate($vectorDocuments, $vector, $options['maxItems'] ?? null);
     }

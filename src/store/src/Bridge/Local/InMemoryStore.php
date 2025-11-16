@@ -48,12 +48,20 @@ class InMemoryStore implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int
-     * } $options If maxItems is provided, only the top N results will be returned
+     *     maxItems?: positive-int,
+     *     filter?: callable(VectorDocument): bool
+     * } $options If maxItems is provided, only the top N results will be returned.
+     *            If filter is provided, only documents matching the filter will be considered.
      */
     public function query(Vector $vector, array $options = []): array
     {
-        return $this->distanceCalculator->calculate($this->documents, $vector, $options['maxItems'] ?? null);
+        $documents = $this->documents;
+
+        if (isset($options['filter'])) {
+            $documents = array_values(array_filter($documents, $options['filter']));
+        }
+
+        return $this->distanceCalculator->calculate($documents, $vector, $options['maxItems'] ?? null);
     }
 
     public function drop(): void
