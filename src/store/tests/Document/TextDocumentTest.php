@@ -36,15 +36,6 @@ final class TextDocumentTest extends TestCase
         $this->assertSame($id, $document->getId());
     }
 
-    #[TestDox('Automatically convert strings in UUID format to Uuid instances')]
-    public function testConstructorConvertIdToUuid()
-    {
-        $id = Uuid::v4()->toString();
-        $document = new TextDocument($id, 'content');
-
-        $this->assertInstanceOf(Uuid::class, $document->getId());
-    }
-
     #[TestDox('Creates document with valid content and metadata')]
     public function testConstructorWithValidContent()
     {

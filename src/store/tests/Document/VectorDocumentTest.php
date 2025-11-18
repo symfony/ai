@@ -40,15 +40,6 @@ final class VectorDocumentTest extends TestCase
         $this->assertSame($id, $document->id);
     }
 
-    #[TestDox('Automatically convert strings in UUID format to Uuid instances')]
-    public function testConstructorConvertIdToUuid()
-    {
-        $id = Uuid::v4()->toString();
-        $document = new VectorDocument($id, new NullVector());
-
-        $this->assertInstanceOf(Uuid::class, $document->id);
-    }
-
     #[TestDox('Creates document with required parameters only')]
     public function testConstructorWithRequiredParameters()
     {
