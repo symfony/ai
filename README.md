@@ -1,10 +1,6 @@
-<p align="center"><a href="https://symfony.com" target="_blank">
-    <img src="https://symfony.com/logos/symfony_dynamic_01.svg" alt="Symfony Logo">
+<p align="center"><a href="https://ai.symfony.com" target="_blank">
+    <img src="logo.svg" alt="Symfony AI Logo" width="300">
 </a></p>
-
-<h3 align="center">
-    Symfony AI
-</h3>
 
 Symfony AI is a set of components that integrate AI capabilities into PHP applications.
 
@@ -26,6 +22,11 @@ Symfony AI consists of several lower and higher level **components** and the res
 To get started with Symfony AI, you can either check out the [examples](./examples) to see how to use the
 components in smaller snippets, or you can run the [demo application](./demo) to see the components work together in a
 full Symfony web application.
+
+## Resources
+
+* [Documentation](https://symfony.com/doc/current/ai/index.html)
+* [Website](https://ai.symfony.com)
 
 ## Sponsor
 
