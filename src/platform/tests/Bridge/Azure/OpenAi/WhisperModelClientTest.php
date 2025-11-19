@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Azure\OpenAi;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\WhisperModelClient;
@@ -22,8 +20,6 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
-#[CoversClass(WhisperModelClient::class)]
-#[Small]
 final class WhisperModelClientTest extends TestCase
 {
     #[TestWith(['http://test.azure.com', 'The base URL must not contain the protocol.'])]
@@ -78,7 +74,7 @@ final class WhisperModelClientTest extends TestCase
             '2023-12-01-preview',
             'test-key'
         );
-        $model = new Whisper();
+        $model = new Whisper('whisper-1');
 
         $this->assertTrue($client->supports($model));
     }
@@ -95,10 +91,7 @@ final class WhisperModelClientTest extends TestCase
         ]);
 
         $client = new WhisperModelClient($httpClient, 'test.azure.com', 'whspr', '2023-12', 'test-key');
-        $model = new Whisper();
-        $payload = ['file' => 'audio-data'];
-
-        $client->request($model, $payload);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data']);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -115,11 +108,7 @@ final class WhisperModelClientTest extends TestCase
         ]);
 
         $client = new WhisperModelClient($httpClient, 'test.azure.com', 'whspr', '2023-12', 'test-key');
-        $model = new Whisper();
-        $payload = ['file' => 'audio-data'];
-        $options = ['task' => Task::TRANSCRIPTION];
-
-        $client->request($model, $payload, $options);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['task' => Task::TRANSCRIPTION]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -136,11 +125,7 @@ final class WhisperModelClientTest extends TestCase
         ]);
 
         $client = new WhisperModelClient($httpClient, 'test.azure.com', 'whspr', '2023-12', 'test-key');
-        $model = new Whisper();
-        $payload = ['file' => 'audio-data'];
-        $options = ['task' => Task::TRANSLATION];
-
-        $client->request($model, $payload, $options);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

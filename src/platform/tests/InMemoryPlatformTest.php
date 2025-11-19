@@ -9,20 +9,18 @@
  * file that was distributed with this source code.
  */
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\InMemoryPlatform;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\VectorResult;
+use Symfony\AI\Platform\Test\InMemoryPlatform;
 use Symfony\AI\Platform\Vector\Vector;
 
-#[CoversClass(InMemoryPlatform::class)]
 class InMemoryPlatformTest extends TestCase
 {
     public function testPlatformInvokeWithFixedResult()
     {
         $platform = new InMemoryPlatform('Mocked result');
-        $result = $platform->invoke(new Model('test'), 'input');
+        $result = $platform->invoke('test', 'input');
 
         $this->assertSame('Mocked result', $result->asText());
         $this->assertSame('Mocked result', $result->getResult()->getContent());
@@ -35,7 +33,7 @@ class InMemoryPlatformTest extends TestCase
             return strtoupper((string) $input);
         });
 
-        $result = $platform->invoke(new Model('test'), 'dynamic text');
+        $result = $platform->invoke('test', 'dynamic text');
 
         $this->assertSame('DYNAMIC TEXT', $result->asText());
     }
@@ -46,7 +44,7 @@ class InMemoryPlatformTest extends TestCase
             fn () => new VectorResult(new Vector([0.1, 0.1, 0.5]))
         );
 
-        $result = $platform->invoke(new Model('test'), 'dynamic text');
+        $result = $platform->invoke('test', 'dynamic text');
 
         $this->assertEquals([0.1, 0.1, 0.5], $result->asVectors()[0]->getData());
     }

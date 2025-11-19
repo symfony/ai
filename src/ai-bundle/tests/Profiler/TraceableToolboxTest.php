@@ -11,17 +11,14 @@
 
 namespace Symfony\AI\AiBundle\Tests\Profiler;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
-#[CoversClass(TraceableToolbox::class)]
-#[Small]
 final class TraceableToolboxTest extends TestCase
 {
     public function testGetMap()
@@ -44,10 +41,10 @@ final class TraceableToolboxTest extends TestCase
 
         $result = $traceableToolbox->execute($toolCall);
 
-        $this->assertSame('tool_result', $result);
+        $this->assertSame('tool_result', $result->getResult());
         $this->assertCount(1, $traceableToolbox->calls);
-        $this->assertSame($toolCall, $traceableToolbox->calls[0]['call']);
-        $this->assertSame('tool_result', $traceableToolbox->calls[0]['result']);
+        $this->assertSame($toolCall, $traceableToolbox->calls[0]->getToolCall());
+        $this->assertSame('tool_result', $traceableToolbox->calls[0]->getResult());
     }
 
     /**
@@ -66,9 +63,9 @@ final class TraceableToolboxTest extends TestCase
                 return $this->tools;
             }
 
-            public function execute(ToolCall $toolCall): string
+            public function execute(ToolCall $toolCall): ToolResult
             {
-                return 'tool_result';
+                return new ToolResult($toolCall, 'tool_result');
             }
         };
     }

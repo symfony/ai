@@ -11,17 +11,11 @@
 
 namespace Symfony\AI\Platform\Tests\Contract\Normalizer\Message\Content;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\Normalizer\Message\Content\AudioNormalizer;
 use Symfony\AI\Platform\Message\Content\Audio;
-use Symfony\AI\Platform\Message\Content\File;
 
-#[CoversClass(AudioNormalizer::class)]
-#[UsesClass(Audio::class)]
-#[UsesClass(File::class)]
 final class AudioNormalizerTest extends TestCase
 {
     private AudioNormalizer $normalizer;

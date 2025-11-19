@@ -23,18 +23,18 @@ use Symfony\AI\Store\StoreInterface;
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-final readonly class EmbeddingProvider implements MemoryProviderInterface
+final class EmbeddingProvider implements MemoryProviderInterface
 {
     public function __construct(
-        private PlatformInterface $platform,
-        private Model $model,
-        private StoreInterface $vectorStore,
+        private readonly PlatformInterface $platform,
+        private readonly Model $model,
+        private readonly StoreInterface $vectorStore,
     ) {
     }
 
-    public function loadMemory(Input $input): array
+    public function load(Input $input): array
     {
-        $messages = $input->messages->getMessages();
+        $messages = $input->getMessageBag()->getMessages();
         /** @var MessageInterface|null $userMessage */
         $userMessage = $messages[array_key_last($messages)] ?? null;
 
@@ -43,7 +43,7 @@ final readonly class EmbeddingProvider implements MemoryProviderInterface
         }
 
         $userMessageTextContent = array_filter(
-            $userMessage->content,
+            $userMessage->getContent(),
             static fn (ContentInterface $content): bool => $content instanceof Text,
         );
 
@@ -53,7 +53,7 @@ final readonly class EmbeddingProvider implements MemoryProviderInterface
 
         $userMessageTextContent = array_shift($userMessageTextContent);
 
-        $vectors = $this->platform->invoke($this->model, $userMessageTextContent->text)->asVectors();
+        $vectors = $this->platform->invoke($this->model->getName(), $userMessageTextContent->getText())->asVectors();
         $foundEmbeddingContent = $this->vectorStore->query($vectors[0]);
         if (0 === \count($foundEmbeddingContent)) {
             return [];

@@ -14,6 +14,6 @@ namespace Symfony\AI\Platform\Message\Content;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class Audio extends File
+final class Audio extends File
 {
 }

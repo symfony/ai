@@ -12,9 +12,7 @@
 namespace Symfony\AI\AiBundle\Tests\Security;
 
 use PHPUnit\Framework\Attributes\Before;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
@@ -25,17 +23,9 @@ use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
-#[CoversClass(IsGrantedToolAttributeListener::class)]
-#[UsesClass(EventDispatcher::class)]
-#[UsesClass(ToolCallArgumentsResolved::class)]
-#[UsesClass(Expression::class)]
-#[UsesClass(AccessDeniedException::class)]
-#[UsesClass(Tool::class)]
-#[UsesClass(ExecutionReference::class)]
 class IsGrantedToolAttributeListenerTest extends TestCase
 {
     private EventDispatcherInterface $dispatcher;
@@ -49,7 +39,7 @@ class IsGrantedToolAttributeListenerTest extends TestCase
         $this->authChecker->expects($this->once())->method('isGranted')->willReturn(false);
 
         $this->expectException(AccessDeniedException::class);
-        $this->expectExceptionMessage(\sprintf('No access to %s tool.', $metadata->name));
+        $this->expectExceptionMessage(\sprintf('No access to %s tool.', $metadata->getName()));
         $this->dispatcher->dispatch(new ToolCallArgumentsResolved($tool, $metadata, []));
     }
 

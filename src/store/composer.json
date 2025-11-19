@@ -1,20 +1,27 @@
 {
     "name": "symfony/ai-store",
-    "type": "library",
     "description": "Low-level abstraction for storing and retrieving documents in a vector store.",
+    "license": "MIT",
+    "type": "library",
     "keywords": [
         "ai",
-        "mongodb",
-        "pinecone",
+        "azure",
         "chromadb",
+        "clickhouse",
+        "cloudflare",
         "mariadb",
-        "postgres",
         "meilisearch",
-        "surrealdb",
+        "milvus",
+        "mongodb",
+        "neo4j",
+        "pinecone",
+        "postgres",
         "qdrant",
-        "neo4j"
+        "supabase",
+        "surrealdb",
+        "typesense",
+        "weaviate"
     ],
-    "license": "MIT",
     "authors": [
         {
             "name": "Christopher Hertel",
@@ -30,30 +37,26 @@
         "ext-fileinfo": "*",
         "psr/log": "^3.0",
         "symfony/ai-platform": "@dev",
-        "symfony/clock": "^6.4 || ^7.1",
-        "symfony/http-client": "^6.4 || ^7.1",
-        "symfony/uid": "^6.4 || ^7.1"
+        "symfony/clock": "^7.3|^8.0",
+        "symfony/http-client": "^7.3|^8.0",
+        "symfony/polyfill-php83": "^1.32",
+        "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
         "codewithkyrian/chromadb-php": "^0.2.1 || ^0.3 || ^0.4",
         "doctrine/dbal": "^3.3 || ^4.0",
         "mongodb/mongodb": "^1.21 || ^2.0",
         "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5",
         "probots-io/pinecone-php": "^1.0",
-        "symfony/cache": "^7.3"
-    },
-    "config": {
-        "sort-packages": true
+        "symfony/cache": "^6.4 || ^7.1",
+        "symfony/console": "^6.4 || ^7.1",
+        "symfony/dependency-injection": "^6.4 || ^7.1",
+        "symfony/dom-crawler": "^6.4 || ^7.1"
     },
     "conflict": {
         "mongodb/mongodb": "<1.21"
-    },
-    "extra": {
-        "thanks": {
-            "name": "symfony/ai",
-            "url": "https://github.com/symfony/ai"
-        }
     },
     "autoload": {
         "psr-4": {
@@ -62,8 +65,18 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Symfony\\AI\\Store\\Tests\\": "tests/",
-            "Symfony\\AI\\PHPStan\\": "../../.phpstan/"
+            "Symfony\\AI\\PHPStan\\": "../../.phpstan/",
+            "Symfony\\AI\\Store\\Tests\\": "tests/"
         }
-    }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    },
+    "minimum-stability": "dev"
 }

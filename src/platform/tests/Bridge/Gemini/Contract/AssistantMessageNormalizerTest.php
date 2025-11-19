@@ -11,24 +11,14 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Gemini\Contract;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
 
-#[Small]
-#[CoversClass(AssistantMessageNormalizer::class)]
-#[UsesClass(Gemini::class)]
-#[UsesClass(AssistantMessage::class)]
-#[UsesClass(Model::class)]
-#[UsesClass(ToolCall::class)]
 final class AssistantMessageNormalizerTest extends TestCase
 {
     public function testSupportsNormalization()
@@ -36,7 +26,7 @@ final class AssistantMessageNormalizerTest extends TestCase
         $normalizer = new AssistantMessageNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
-            Contract::CONTEXT_MODEL => new Gemini(),
+            Contract::CONTEXT_MODEL => new Gemini('gemini-2.0-flash'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not an assistant message'));
     }

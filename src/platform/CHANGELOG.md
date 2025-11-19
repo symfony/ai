@@ -4,12 +4,13 @@ CHANGELOG
 0.1
 ---
 
+ * Add nullables as required in structured outputs
  * Add support for Albert API for French/EU data sovereignty
  * Add unified abstraction layer for interacting with various AI models and providers
- * Add support for 13+ AI providers:
+ * Add support for 16+ AI providers:
    - OpenAI (GPT-4, GPT-3.5, DALL·E, Whisper)
    - Anthropic (Claude models via native API and AWS Bedrock)
-   - Google (Gemini models with server-side tools support)
+   - Google (VertexAi and Gemini models with server-side tools support)
    - Azure (OpenAI and Meta Llama models)
    - AWS Bedrock (Anthropic Claude, Meta Llama, Amazon Nova)
    - Mistral AI (language models and embeddings)
@@ -22,6 +23,11 @@ CHANGELOG
    - TransformersPHP (local PHP-based transformer models)
    - LM Studio (local model hosting)
    - Cerebras (language models like Llama 4, Qwen 3, and more)
+   - Perplexity (Sonar models, supporting search results)
+   - AI/ML API (language models and embeddings)
+   - Docker Model Runner (local model hosting)
+   - Scaleway (language models like OpenAI OSS, Llama 4, Qwen 3, and more)
+   - Cartesia (voice model that supports both text-to-speech and speech-to-text)
  * Add comprehensive message system with role-based messaging:
    - `UserMessage` for user inputs with multi-modal content
    - `SystemMessage` for system instructions
@@ -60,5 +66,5 @@ CHANGELOG
  * Add InMemoryPlatform and InMemoryRawResult for testing Platform without external Providers calls
  * Add tool calling support for Ollama platform
  * Allow beta feature flags to be passed into Anthropic model options
-
-
+ * Add Ollama streaming output support
+ * Add multimodal embedding support for Voyage AI

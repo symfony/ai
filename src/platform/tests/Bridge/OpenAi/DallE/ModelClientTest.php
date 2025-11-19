@@ -11,10 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\OpenAi\DallE;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\TestWith;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\DallE;
 use Symfony\AI\Platform\Bridge\OpenAi\DallE\ModelClient;
@@ -23,9 +20,6 @@ use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 
-#[CoversClass(ModelClient::class)]
-#[UsesClass(DallE::class)]
-#[Small]
 final class ModelClientTest extends TestCase
 {
     public function testItThrowsExceptionWhenApiKeyIsEmpty()
@@ -61,7 +55,7 @@ final class ModelClientTest extends TestCase
     {
         $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
 
-        $this->assertTrue($modelClient->supports(new DallE()));
+        $this->assertTrue($modelClient->supports(new DallE('dall-e-2')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -76,6 +70,23 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new DallE(), 'foo', ['n' => 1, 'response_format' => 'url']);
+        $modelClient->request(new DallE('dall-e-2'), 'foo', ['n' => 1, 'response_format' => 'url']);
+    }
+
+    #[TestWith(['EU', 'https://eu.api.openai.com/v1/images/generations'])]
+    #[TestWith(['US', 'https://us.api.openai.com/v1/images/generations'])]
+    #[TestWith([null, 'https://api.openai.com/v1/images/generations'])]
+    public function testItUsesCorrectBaseUrl(?string $region, string $expectedUrl)
+    {
+        $resultCallback = static function (string $method, string $url, array $options) use ($expectedUrl): HttpResponse {
+            self::assertSame('POST', $method);
+            self::assertSame($expectedUrl, $url);
+            self::assertSame('Authorization: Bearer sk-api-key', $options['normalized_headers']['authorization'][0]);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key', $region);
+        $modelClient->request(new DallE('dall-e-2'), 'foo', ['n' => 1, 'response_format' => 'url']);
     }
 }

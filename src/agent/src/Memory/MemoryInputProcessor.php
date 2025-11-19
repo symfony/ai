@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Message\Message;
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-final readonly class MemoryInputProcessor implements InputProcessorInterface
+final class MemoryInputProcessor implements InputProcessorInterface
 {
     private const MEMORY_PROMPT_MESSAGE = <<<MARKDOWN
         # Conversation Memory
@@ -31,7 +31,7 @@ final readonly class MemoryInputProcessor implements InputProcessorInterface
     /**
      * @var MemoryProviderInterface[]
      */
-    private array $memoryProviders;
+    private readonly array $memoryProviders;
 
     public function __construct(
         MemoryProviderInterface ...$memoryProviders,
@@ -52,7 +52,7 @@ final readonly class MemoryInputProcessor implements InputProcessorInterface
 
         $memory = '';
         foreach ($this->memoryProviders as $provider) {
-            $memoryMessages = $provider->loadMemory($input);
+            $memoryMessages = $provider->load($input);
 
             if (0 === \count($memoryMessages)) {
                 continue;
@@ -61,7 +61,7 @@ final readonly class MemoryInputProcessor implements InputProcessorInterface
             $memory .= \PHP_EOL.\PHP_EOL;
             $memory .= implode(
                 \PHP_EOL,
-                array_map(static fn (Memory $memory): string => $memory->content, $memoryMessages),
+                array_map(static fn (Memory $memory): string => $memory->getContent(), $memoryMessages),
             );
         }
 
@@ -69,15 +69,17 @@ final readonly class MemoryInputProcessor implements InputProcessorInterface
             return;
         }
 
-        $systemMessage = $input->messages->getSystemMessage()->content ?? '';
+        $systemMessage = $input->getMessageBag()->getSystemMessage()?->getContent() ?? '';
+
+        $combinedMessage = self::MEMORY_PROMPT_MESSAGE.$memory;
         if ('' !== $systemMessage) {
-            $systemMessage .= \PHP_EOL.\PHP_EOL;
+            $combinedMessage .= \PHP_EOL.\PHP_EOL.'# System Prompt'.\PHP_EOL.\PHP_EOL.$systemMessage;
         }
 
-        $messages = $input->messages
+        $messages = $input->getMessageBag()
             ->withoutSystemMessage()
-            ->prepend(Message::forSystem($systemMessage.self::MEMORY_PROMPT_MESSAGE.$memory));
+            ->prepend(Message::forSystem($combinedMessage));
 
-        $input->messages = $messages;
+        $input->setMessageBag($messages);
     }
 }

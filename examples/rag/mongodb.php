@@ -15,12 +15,11 @@ use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Fixtures\Movies;
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Bridge\MongoDb\Store;
+use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -39,6 +38,7 @@ $store = new Store(
 );
 
 // create embeddings and documents
+$documents = [];
 foreach (Movies::all() as $movie) {
     $documents[] = new TextDocument(
         id: Uuid::v4(),
@@ -49,19 +49,17 @@ foreach (Movies::all() as $movie) {
 
 // create embeddings for documents
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'));
-$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
-$indexer = new Indexer($vectorizer, $store, logger());
+$vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
+$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
 
 // initialize the index
 $store->setup();
 
-$model = new Gpt(Gpt::GPT_4O_MINI);
-
-$similaritySearch = new SimilaritySearch($platform, $embeddings, $store);
+$similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor]);
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),

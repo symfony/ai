@@ -17,7 +17,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 /**
  * @author Joshua Behrens <code@joshua-behrens.de>
  */
-final readonly class OllamaContract extends Contract
+final class OllamaContract extends Contract
 {
     public static function create(NormalizerInterface ...$normalizer): Contract
     {

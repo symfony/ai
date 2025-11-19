@@ -12,27 +12,24 @@
 namespace App\Blog\Command;
 
 use Codewithkyrian\ChromaDB\Client;
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCommand('app:blog:query', description: 'Test command for querying the blog collection in Chroma DB.')]
-final class QueryCommand extends Command
+final readonly class QueryCommand
 {
     public function __construct(
-        private readonly Client $chromaClient,
-        private readonly PlatformInterface $platform,
+        private Client $chromaClient,
+        #[Autowire(service: 'ai.vectorizer.openai')]
+        private VectorizerInterface $vectorizer,
     ) {
-        parent::__construct();
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    public function __invoke(SymfonyStyle $io): int
     {
-        $io = new SymfonyStyle($input, $output);
         $io->title('Testing Chroma DB Connection');
 
         $io->comment('Connecting to Chroma DB ...');
@@ -48,9 +45,9 @@ final class QueryCommand extends Command
         $io->comment(\sprintf('Converting "%s" to vector & searching in Chroma DB ...', $search));
         $io->comment('Results are limited to 4 most similar documents.');
 
-        $platformResponse = $this->platform->invoke(new Embeddings(), $search);
+        $vector = $this->vectorizer->vectorize((string) $search);
         $queryResponse = $collection->query(
-            queryEmbeddings: [$platformResponse->asVectors()[0]->getData()],
+            queryEmbeddings: [$vector->getData()],
             nResults: 4,
         );
 

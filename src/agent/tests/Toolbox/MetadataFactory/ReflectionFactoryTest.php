@@ -11,29 +11,15 @@
 
 namespace Symfony\AI\Agent\Tests\Toolbox\MetadataFactory;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Fixtures\Tool\ToolMultiple;
 use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Fixtures\Tool\ToolWrong;
-use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
-use Symfony\AI\Platform\Contract\JsonSchema\Factory;
-use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
-#[CoversClass(ReflectionToolFactory::class)]
-#[UsesClass(AsTool::class)]
-#[UsesClass(Tool::class)]
-#[UsesClass(ExecutionReference::class)]
-#[UsesClass(Factory::class)]
-#[UsesClass(DescriptionParser::class)]
-#[UsesClass(ToolConfigurationException::class)]
-#[UsesClass(ToolException::class)]
 final class ReflectionFactoryTest extends TestCase
 {
     private ReflectionToolFactory $factory;
@@ -64,7 +50,7 @@ final class ReflectionFactoryTest extends TestCase
         /** @var Tool[] $metadatas */
         $metadatas = iterator_to_array($this->factory->getTool(ToolRequiredParams::class));
 
-        self::assertToolConfiguration(
+        $this->assertToolConfiguration(
             metadata: $metadatas[0],
             className: ToolRequiredParams::class,
             name: 'tool_required_params',
@@ -96,7 +82,7 @@ final class ReflectionFactoryTest extends TestCase
 
         [$first, $second] = $metadatas;
 
-        self::assertToolConfiguration(
+        $this->assertToolConfiguration(
             metadata: $first,
             className: ToolMultiple::class,
             name: 'tool_hello_world',
@@ -115,7 +101,7 @@ final class ReflectionFactoryTest extends TestCase
             ],
         );
 
-        self::assertToolConfiguration(
+        $this->assertToolConfiguration(
             metadata: $second,
             className: ToolMultiple::class,
             name: 'tool_required_params',
@@ -141,10 +127,10 @@ final class ReflectionFactoryTest extends TestCase
 
     private function assertToolConfiguration(Tool $metadata, string $className, string $name, string $description, string $method, array $parameters): void
     {
-        $this->assertSame($className, $metadata->reference->class);
-        $this->assertSame($method, $metadata->reference->method);
-        $this->assertSame($name, $metadata->name);
-        $this->assertSame($description, $metadata->description);
-        $this->assertSame($parameters, $metadata->parameters);
+        $this->assertSame($className, $metadata->getReference()->getClass());
+        $this->assertSame($method, $metadata->getReference()->getMethod());
+        $this->assertSame($name, $metadata->getName());
+        $this->assertSame($description, $metadata->getDescription());
+        $this->assertSame($parameters, $metadata->getParameters());
     }
 }

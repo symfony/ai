@@ -9,24 +9,21 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENROUTER_KEY'), http_client());
-// In case free is running into 429 rate limit errors, you can use the paid model:
-// $model = new Model('google/gemini-2.0-flash-lite-001');
-$model = new Model('google/gemini-2.0-flash-exp:free');
+$model = 'google/gemini-2.0-flash-exp:free';
+// In case free is running into 404 errors, you can use the paid model:
+// $model = 'google/gemini-2.0-flash-lite-001';
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
 );
-$result = $agent->call($messages);
+$result = $platform->invoke($model, $messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

@@ -22,14 +22,14 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-final readonly class GptModelClient implements ModelClientInterface
+final class GptModelClient implements ModelClientInterface
 {
-    private EventSourceHttpClient $httpClient;
+    private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
         HttpClientInterface $httpClient,
-        #[\SensitiveParameter] private string $apiKey,
-        private string $baseUrl,
+        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly string $baseUrl,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }

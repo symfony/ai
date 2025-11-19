@@ -14,13 +14,13 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class MaskFill
+final class MaskFill
 {
     public function __construct(
-        public int $token,
-        public string $tokenStr,
-        public string $sequence,
-        public float $score,
+        public readonly int $token,
+        public readonly string $tokenStr,
+        public readonly string $sequence,
+        public readonly float $score,
     ) {
     }
 }

@@ -20,12 +20,12 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class LlamaModelClient implements ModelClientInterface
+final class LlamaModelClient implements ModelClientInterface
 {
     public function __construct(
-        private HttpClientInterface $httpClient,
-        private string $baseUrl,
-        #[\SensitiveParameter] private string $apiKey,
+        private readonly HttpClientInterface $httpClient,
+        private readonly string $baseUrl,
+        #[\SensitiveParameter] private readonly string $apiKey,
     ) {
     }
 

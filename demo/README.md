@@ -74,7 +74,7 @@ The [Chroma DB](https://www.trychroma.com/) is a vector store that is used to st
 To initialize the Chroma DB, you need to run the following command:
 
 ```shell
-symfony console app:blog:embed -vv
+symfony console ai:store:index blog -vv
 ```
 
 Now you should be able to run the test command and get some results:
@@ -119,4 +119,26 @@ You can test the MCP server by running the following command to start the MCP cl
 symfony console mcp:server
 ```
 
-Then, paste `{"method":"tools/list","jsonrpc":"2.0","id":1}` to list the tools available on the MCP server.
+**With plain JSON RPC requests**
+
+Then, you can initialize the MCP session with the following JSON RPC request:
+
+```json
+{ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": { "protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": { "name": "demo-client", "version": "dev" } } }
+```
+
+And, to request the list of available tools:
+
+```json
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
+```
+
+**With MCP Inspector**
+
+For testing, you can also use the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector):
+
+```shell
+npx @modelcontextprotocol/inspector php bin/console mcp:server
+```
+
+Which opens a web UI to interactively test the MCP server.

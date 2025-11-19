@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="canonical" href="{{ absolute_url(path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params'))) }}">
+        <title>{% block title %}Symfony AI{% endblock %}</title>
+        <link rel="shortcut icon" type="image/svg+xml" href="{{ asset('images/favicons/favicon.svg') }}">
+        <link rel="alternate icon" type="image/png" sizes="180x180" href="{{ asset('images/favicons/favicon-180x180.png') }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/favicons/apple-touch-icon.png') }}">
+
+        {% block stylesheets %}
+        {% endblock %}
+
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body>
+        <script>
+            (function() {
+                const getStoredTheme = () => localStorage.getItem('theme') || 'auto';
+                const theme = getStoredTheme();
+                const themeToApply = 'auto' === theme
+                    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                    : theme;
+                document.documentElement.setAttribute('data-bs-theme', themeToApply);
+            })();
+        </script>
+
+        {% block body %}{% endblock %}
+
+        <footer class="border-top py-3 py-lg-4">
+            <div class="container">
+                <div class="row align-items-center justify-content-between gy-3">
+                    <div class="col-md-4">
+                        <span class="footer-meta d-block">&copy; 2025 Symfony. All rights reserved.</span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-md-end gap-3 align-items-center">
+                            <a href="https://symfony.com/doc/current/ai/index.html" class="footer-meta text-decoration-none">Docs</a>
+                            <a href="https://github.com/symfony/ai/commits/main/" target="_blank" class="footer-meta text-decoration-none">Changelog</a>
+                            <a href="https://github.com/symfony/ai/issues" target="_blank" class="footer-meta text-decoration-none">Support</a>
+                            <div class="d-flex gap-2">
+                                <a href="https://symfony.com" target="_blank" class="footer-meta text-decoration-none">
+                                    {{ ux_icon('simple-icons:symfony', {width: 16, height: 16, class: 'ms-1'}) }}
+                                </a>
+                                <a href="https://x.com/symfony" target="_blank" class="footer-meta text-decoration-none">
+                                    {{ ux_icon('simple-icons:x', {width: 16, height: 16, class: 'ms-1'}) }}
+                                </a>
+                                <a href="ttps://github.com/symfony/ai" target="_blank" class="footer-meta text-decoration-none">
+                                    {{ ux_icon('simple-icons:github', {width: 16, height: 16, class: 'ms-1'}) }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </body>
+</html>

@@ -14,6 +14,6 @@ namespace Symfony\AI\Platform\Message\Content;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class Document extends File
+final class Document extends File
 {
 }

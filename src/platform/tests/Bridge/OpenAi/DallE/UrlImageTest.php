@@ -11,13 +11,9 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\OpenAi\DallE;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\DallE\UrlImage;
 
-#[CoversClass(UrlImage::class)]
-#[Small]
 final class UrlImageTest extends TestCase
 {
     public function testItCreatesUrlImage()

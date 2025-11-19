@@ -49,12 +49,12 @@ class ToolNormalizer implements NormalizerInterface
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $function = [
-            'name' => $data->name,
-            'description' => $data->description,
+            'name' => $data->getName(),
+            'description' => $data->getDescription(),
         ];
 
-        if (isset($data->parameters)) {
-            $function['parameters'] = $data->parameters;
+        if (null !== $data->getParameters()) {
+            $function['parameters'] = $data->getParameters();
         }
 
         return [

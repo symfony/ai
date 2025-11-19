@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Store\Tests\Bridge\Meilisearch;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Meilisearch\Store;
@@ -22,9 +20,6 @@ use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(Store::class)]
-#[UsesClass(VectorDocument::class)]
-#[UsesClass(Vector::class)]
 final class StoreTest extends TestCase
 {
     public function testStoreCannotSetupOnInvalidResponse()

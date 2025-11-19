@@ -36,9 +36,9 @@ final class ToolNormalizer extends ModelContractNormalizer
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         return [
-            'description' => $data->description,
-            'name' => $data->name,
-            'parameters' => $data->parameters ? $this->removeAdditionalProperties($data->parameters) : null,
+            'description' => $data->getDescription(),
+            'name' => $data->getName(),
+            'parameters' => $data->getParameters() ? $this->removeAdditionalProperties($data->getParameters()) : null,
         ];
     }
 

@@ -19,10 +19,10 @@ use Symfony\AI\Platform\Result\TextResult;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class Agent
+final class Agent
 {
     public function __construct(
-        private AgentInterface $agent,
+        private readonly AgentInterface $agent,
     ) {
     }
 

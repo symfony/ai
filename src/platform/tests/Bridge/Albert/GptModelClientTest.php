@@ -11,9 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Albert;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Albert\GptModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
@@ -22,8 +20,6 @@ use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
-#[CoversClass(GptModelClient::class)]
-#[Small]
 final class GptModelClientTest extends TestCase
 {
     public function testConstructorWrapsHttpClientInEventSourceHttpClient()

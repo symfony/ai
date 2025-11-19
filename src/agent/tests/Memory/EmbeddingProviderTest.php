@@ -11,9 +11,6 @@
 
 namespace Symfony\AI\Agent\Tests\Memory;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Memory\EmbeddingProvider;
@@ -23,22 +20,13 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
-use Symfony\AI\Platform\Result\ResultPromise;
 use Symfony\AI\Platform\Result\VectorResult;
+use Symfony\AI\Platform\Test\PlainConverter;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\StoreInterface;
 
-#[UsesClass(Text::class)]
-#[UsesClass(ImageUrl::class)]
-#[UsesClass(Message::class)]
-#[UsesClass(Input::class)]
-#[UsesClass(MessageBag::class)]
-#[UsesClass(StoreInterface::class)]
-#[UsesClass(Model::class)]
-#[UsesClass(PlatformInterface::class)]
-#[CoversClass(EmbeddingProvider::class)]
-#[Small]
 final class EmbeddingProviderTest extends TestCase
 {
     public function testItIsDoingNothingWithEmptyMessageBag()
@@ -49,17 +37,9 @@ final class EmbeddingProviderTest extends TestCase
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->never())->method('query');
 
-        $embeddingProvider = new EmbeddingProvider(
-            $platform,
-            $this->createStub(Model::class),
-            $store,
-        );
+        $embeddingProvider = new EmbeddingProvider($platform, new Model('embedding-001'), $store);
 
-        $embeddingProvider->loadMemory(new Input(
-            $this->createStub(Model::class),
-            new MessageBag(),
-            [],
-        ));
+        $embeddingProvider->load(new Input('embedding-001', new MessageBag(), []));
     }
 
     public function testItIsDoingNothingWithoutUserMessageInBag()
@@ -70,14 +50,10 @@ final class EmbeddingProviderTest extends TestCase
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->never())->method('query');
 
-        $embeddingProvider = new EmbeddingProvider(
-            $platform,
-            $this->createStub(Model::class),
-            $store,
-        );
+        $embeddingProvider = new EmbeddingProvider($platform, new Model('embedding-001'), $store);
 
-        $embeddingProvider->loadMemory(new Input(
-            $this->createStub(Model::class),
+        $embeddingProvider->load(new Input(
+            'embedding-001',
             new MessageBag(Message::forSystem('This is a system message')),
             [],
         ));
@@ -91,14 +67,10 @@ final class EmbeddingProviderTest extends TestCase
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->never())->method('query');
 
-        $embeddingProvider = new EmbeddingProvider(
-            $platform,
-            $this->createStub(Model::class),
-            $store,
-        );
+        $embeddingProvider = new EmbeddingProvider($platform, new Model('embedding-001'), $store);
 
-        $embeddingProvider->loadMemory(new Input(
-            $this->createStub(Model::class),
+        $embeddingProvider->load(new Input(
+            'embedding-001',
             new MessageBag(Message::ofUser(new ImageUrl('foo.jpg'))),
             [],
         ));
@@ -107,15 +79,16 @@ final class EmbeddingProviderTest extends TestCase
     public function testItIsNotCreatingMemoryWhenNoVectorsFound()
     {
         $vectorResult = new VectorResult($vector = new Vector([0.1, 0.2], 2));
-        $resultPromise = new ResultPromise(
-            static fn () => $vectorResult,
+        $deferredResult = new DeferredResult(
+            new PlainConverter($vectorResult),
             $this->createStub(RawResultInterface::class),
         );
 
         $platform = $this->createMock(PlatformInterface::class);
         $platform->expects($this->once())
             ->method('invoke')
-            ->willReturn($resultPromise);
+            ->with('text-embedding-3-small', 'Have we talked about the weather?')
+            ->willReturn($deferredResult);
 
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->once())
@@ -123,14 +96,10 @@ final class EmbeddingProviderTest extends TestCase
             ->with($vector)
             ->willReturn([]);
 
-        $embeddingProvider = new EmbeddingProvider(
-            $platform,
-            $this->createStub(Model::class),
-            $store,
-        );
+        $embeddingProvider = new EmbeddingProvider($platform, new Model('text-embedding-3-small'), $store);
 
-        $memory = $embeddingProvider->loadMemory(new Input(
-            $this->createStub(Model::class),
+        $memory = $embeddingProvider->load(new Input(
+            'text-embedding-3-small',
             new MessageBag(Message::ofUser(new Text('Have we talked about the weather?'))),
             [],
         ));
@@ -141,15 +110,16 @@ final class EmbeddingProviderTest extends TestCase
     public function testItIsCreatingMemoryWithFoundVectors()
     {
         $vectorResult = new VectorResult($vector = new Vector([0.1, 0.2], 2));
-        $resultPromise = new ResultPromise(
-            static fn () => $vectorResult,
+        $deferredResult = new DeferredResult(
+            new PlainConverter($vectorResult),
             $this->createStub(RawResultInterface::class),
         );
 
         $platform = $this->createMock(PlatformInterface::class);
         $platform->expects($this->once())
             ->method('invoke')
-            ->willReturn($resultPromise);
+            ->with('text-embedding-3-small', 'Have we talked about the weather?')
+            ->willReturn($deferredResult);
 
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->once())
@@ -160,14 +130,10 @@ final class EmbeddingProviderTest extends TestCase
                 (object) ['metadata' => ['fact' => 'Water is wet']],
             ]);
 
-        $embeddingProvider = new EmbeddingProvider(
-            $platform,
-            $this->createStub(Model::class),
-            $store,
-        );
+        $embeddingProvider = new EmbeddingProvider($platform, new Model('text-embedding-3-small'), $store);
 
-        $memory = $embeddingProvider->loadMemory(new Input(
-            $this->createStub(Model::class),
+        $memory = $embeddingProvider->load(new Input(
+            'text-embedding-3-small',
             new MessageBag(Message::ofUser(new Text('Have we talked about the weather?'))),
             [],
         ));
@@ -179,7 +145,7 @@ final class EmbeddingProviderTest extends TestCase
 
                 {"fact":"The sky is blue"}{"fact":"Water is wet"}
                 MARKDOWN,
-            $memory[0]->content,
+            $memory[0]->getContent(),
         );
     }
 }

@@ -1,124 +1,197 @@
 services:
-  mariadb:
-    image: mariadb:11.7
-    environment:
-      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 1
-      MARIADB_DATABASE: my_database
-    ports:
-      - '3309:3306'
+    chromadb:
+        image: chromadb/chroma:0.5.23
+        environment:
+            IS_PERSISTENT: TRUE
+            PERSIST_DIRECTORY: /chroma/chroma # this is the default path, change it as needed
+            ANONYMIZED_TELEMETRY: false
+        volumes:
+            - chroma_vlm:/chroma/chroma
+        ports:
+            - '8001:8000'
 
-  postgres:
-    image: pgvector/pgvector:0.8.0-pg17
-    environment:
-        POSTGRES_DB: my_database
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-    ports:
-        - '5432:5432'
+    clickhouse:
+        image: clickhouse/clickhouse-server
+        environment:
+            CLICKHOUSE_DB: 'symfony'
+            CLICKHOUSE_USER: 'symfony'
+            CLICKHOUSE_PASSWORD: 'symfony'
+        ports:
+            - '8123:8123'
 
-  meilisearch:
-      image: getmeili/meilisearch:v1.15
-      environment:
-          MEILI_MASTER_KEY: '${MEILISEARCH_MASTER_KEY:-changeMe}'
-      ports:
-          - '7700:7700'
+    manticore:
+        image: manticoresearch/manticore
+        ulimits:
+            nproc: 65535
+            nofile:
+                soft: 65535
+                hard: 65535
+            memlock:
+                soft: -1
+                hard: -1
+        ports:
+            - '9306:9306'
+            - '9308:9308'
 
-  qdrant:
-      image: qdrant/qdrant
-      environment:
-          QDRANT__SERVICE__API_KEY: '${QDRAT_SERVICE_API_KEY:-changeMe}'
-      ports:
-          - '6333:6333'
+    mariadb:
+        image: mariadb:11.7
+        environment:
+            MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 1
+            MARIADB_DATABASE: my_database
+        ports:
+            - '3309:3306'
 
-  surrealdb:
-      image: surrealdb/surrealdb:v2
-      command: ['start', '--user', 'symfony', '--pass', 'symfony']
-      environment:
-          SURREAL_HTTP_MAX_KEY_BODY_SIZE: 49152
-      ports:
-          - '8000:8000'
+    meilisearch:
+        image: getmeili/meilisearch:v1.19
+        environment:
+            MEILI_MASTER_KEY: '${MEILISEARCH_MASTER_KEY:-changeMe}'
+        ports:
+            - '7700:7700'
 
-  neo4j:
-      image: neo4j
-      environment:
-          NEO4J_AUTH: 'neo4j/${NEO4J_PASSWORD:-symfonyai}'
-      ports:
-          - '7474:7474'
-          - '7687:7687'
+    mongodb:
+        image: mongodb/mongodb-atlas-local
+        environment:
+            MONGODB_INITDB_ROOT_USERNAME: symfony
+            MONGODB_INITDB_ROOT_PASSWORD: symfony
+        ports:
+            - '27017:27017'
 
-  typesense:
-      image: typesense/typesense:29.0
-      environment:
-          TYPESENSE_API_KEY: '${TYPESENSE_API_KEY:-changeMe}'
-          TYPESENSE_DATA_DIR: '/data'
-      volumes:
-          - typesense_data:/data
-      ports:
-          - '8108:8108'
+    # Milvus services
+    etcd:
+        container_name: milvus-etcd
+        image: quay.io/coreos/etcd:v3.5.18
+        environment:
+            ETCD_AUTO_COMPACTION_MODE: revision
+            ETCD_AUTO_COMPACTION_RETENTION: 1000
+            ETCD_QUOTA_BACKEND_BYTES: 4294967296
+            ETCD_SNAPSHOT_COUNT: 50000
+        volumes:
+            - etcd_vlm:/etcd
+        command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+        healthcheck:
+            test: [ "CMD", "etcdctl", "endpoint", "health" ]
+            interval: 30s
+            timeout: 20s
+            retries: 3
 
-  # Milvus services
-  etcd:
-      container_name: milvus-etcd
-      image: quay.io/coreos/etcd:v3.5.18
-      environment:
-          - ETCD_AUTO_COMPACTION_MODE=revision
-          - ETCD_AUTO_COMPACTION_RETENTION=1000
-          - ETCD_QUOTA_BACKEND_BYTES=4294967296
-          - ETCD_SNAPSHOT_COUNT=50000
-      volumes:
-          - etcd_vlm:/etcd
-      command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
-      healthcheck:
-          test: [ "CMD", "etcdctl", "endpoint", "health" ]
-          interval: 30s
-          timeout: 20s
-          retries: 3
+    minio:
+        container_name: milvus-minio
+        image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+        environment:
+            MINIO_ACCESS_KEY: minioadmin
+            MINIO_SECRET_KEY: minioadmin
+        ports:
+            - '9001:9001'
+        volumes:
+            - minio_vlm:/minio_data
+        command: minio server /minio_data --console-address ":9001"
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+            interval: 30s
+            timeout: 20s
+            retries: 3
 
-  minio:
-      container_name: milvus-minio
-      image: minio/minio:RELEASE.2024-12-18T13-15-44Z
-      environment:
-          MINIO_ACCESS_KEY: minioadmin
-          MINIO_SECRET_KEY: minioadmin
-      ports:
-          - '9001:9001'
-          - '9000:9000'
-      volumes:
-          - minio_vlm:/minio_data
-      command: minio server /minio_data --console-address ":9001"
-      healthcheck:
-          test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
-          interval: 30s
-          timeout: 20s
-          retries: 3
+    milvus:
+        container_name: milvus-standalone
+        image: milvusdb/milvus:v2.6.0
+        command: [ "milvus", "run", "standalone" ]
+        security_opt:
+            - seccomp:unconfined
+        environment:
+            ETCD_ENDPOINTS: etcd:2379
+            MINIO_ADDRESS: minio:9000
+            MQ_TYPE: woodpecker
+        volumes:
+            - milvus_vlm:/var/lib/milvus
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:9091/healthz" ]
+            interval: 30s
+            start_period: 90s
+            timeout: 20s
+            retries: 3
+        ports:
+            - '19530:19530'
+            - '9091:9091'
+        depends_on:
+            - 'etcd'
+            - 'minio'
 
-  milvus:
-      container_name: milvus-standalone
-      image: milvusdb/milvus:v2.6.0
-      command: ["milvus", "run", "standalone"]
-      security_opt:
-          - seccomp:unconfined
-      environment:
-          ETCD_ENDPOINTS: etcd:2379
-          MINIO_ADDRESS: minio:9000
-          MQ_TYPE: woodpecker
-      volumes:
-          - milvus_vlm:/var/lib/milvus
-      healthcheck:
-          test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
-          interval: 30s
-          start_period: 90s
-          timeout: 20s
-          retries: 3
-      ports:
-          - '19530:19530'
-          - '9091:9091'
-      depends_on:
-          - 'etcd'
-          - 'minio'
+    neo4j:
+        image: neo4j
+        environment:
+            NEO4J_AUTH: 'neo4j/${NEO4J_PASSWORD:-symfonyai}'
+        ports:
+            - '7474:7474'
+            - '7687:7687'
+
+    pogocache:
+        image: pogocache/pogocache
+        command: [ 'pogocache', '--auth', 'symfony' ]
+        ports:
+            - '9401:9401'
+
+    postgres:
+        image: pgvector/pgvector:0.8.0-pg17
+        environment:
+            POSTGRES_DB: my_database
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        ports:
+            - '5432:5432'
+
+    qdrant:
+        image: qdrant/qdrant
+        environment:
+            QDRANT__SERVICE__API_KEY: '${QDRAT_SERVICE_API_KEY:-changeMe}'
+        ports:
+            - '6333:6333'
+
+    redis:
+        image: redis:8.2.2-alpine
+        ports:
+            - '6379:6379'
+
+    surrealdb:
+        image: surrealdb/surrealdb:v2
+        command: [ 'start', '--user', 'symfony', '--pass', 'symfony' ]
+        environment:
+            SURREAL_HTTP_MAX_KEY_BODY_SIZE: 49152
+        ports:
+            - '8000:8000'
+
+    typesense:
+        image: typesense/typesense:29.0
+        environment:
+            TYPESENSE_API_KEY: '${TYPESENSE_API_KEY:-changeMe}'
+            TYPESENSE_DATA_DIR: '/data'
+        volumes:
+            - typesense_data:/data
+        ports:
+            - '8108:8108'
+
+    weaviate:
+        image: cr.weaviate.io/semitechnologies/weaviate:1.32.4
+        command: ['--host', '0.0.0.0', '--port', '8080', '--scheme', 'http']
+        environment:
+            QUERY_DEFAULTS_LIMIT: 25
+            AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'false'
+            AUTHENTICATION_APIKEY_ENABLED: 'true'
+            AUTHENTICATION_APIKEY_ALLOWED_KEYS: 'symfony'
+            AUTHENTICATION_APIKEY_USERS: 'symfony'
+            PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+            ENABLE_API_BASED_MODULES: 'true'
+            CLUSTER_HOSTNAME: 'node1'
+            RAFT_ENABLE_ONE_NODE_RECOVERY: 'true' # See https://github.com/weaviate/weaviate/issues/5491#issuecomment-2416929309
+        volumes:
+            - weaviate_data:/var/lib/weaviate
+        ports:
+            - '8080:8080'
+            - '50051:50051'
 
 volumes:
     typesense_data:
     etcd_vlm:
     minio_vlm:
     milvus_vlm:
+    chroma_vlm:
+    weaviate_data:

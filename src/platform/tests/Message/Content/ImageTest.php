@@ -11,11 +11,9 @@
 
 namespace Symfony\AI\Platform\Tests\Message\Content;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Message\Content\Image;
 
-#[CoversClass(Image::class)]
 final class ImageTest extends TestCase
 {
     public function testConstructWithValidDataUrl()

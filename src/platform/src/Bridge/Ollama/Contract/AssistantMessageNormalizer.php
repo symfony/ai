@@ -46,17 +46,17 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     {
         return [
             'role' => Role::Assistant,
-            'content' => $data->content ?? '',
+            'content' => $data->getContent() ?? '',
             'tool_calls' => array_values(array_map(function (ToolCall $message): array {
                 return [
                     'type' => 'function',
                     'function' => [
-                        'name' => $message->name,
+                        'name' => $message->getName(),
                         // stdClass forces empty object
-                        'arguments' => [] === $message->arguments ? new \stdClass() : $message->arguments,
+                        'arguments' => [] === $message->getArguments() ? new \stdClass() : $message->getArguments(),
                     ],
                 ];
-            }, $data->toolCalls ?? [])),
+            }, $data->getToolCalls() ?? [])),
         ];
     }
 

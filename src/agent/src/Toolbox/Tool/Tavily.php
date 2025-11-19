@@ -12,6 +12,9 @@
 namespace Symfony\AI\Agent\Toolbox\Tool;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait;
+use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -21,15 +24,17 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 #[AsTool('tavily_search', description: 'search for information on the internet', method: 'search')]
 #[AsTool('tavily_extract', description: 'fetch content from websites', method: 'extract')]
-final readonly class Tavily
+final class Tavily implements HasSourcesInterface
 {
+    use HasSourcesTrait;
+
     /**
      * @param array<string, string|string[]|int|bool> $options
      */
     public function __construct(
-        private HttpClientInterface $httpClient,
-        private string $apiKey,
-        private array $options = ['include_images' => false],
+        private readonly HttpClientInterface $httpClient,
+        private readonly string $apiKey,
+        private readonly array $options = ['include_images' => false],
     ) {
     }
 
@@ -45,6 +50,14 @@ final readonly class Tavily
             ]),
         ]);
 
+        $data = $result->toArray();
+
+        foreach ($data['results'] ?? [] as $item) {
+            $this->addSource(
+                new Source($item['title'] ?? '', $item['url'] ?? '', $item['raw_content'] ?? '')
+            );
+        }
+
         return $result->getContent();
     }
 
@@ -59,6 +72,14 @@ final readonly class Tavily
                 'api_key' => $this->apiKey,
             ],
         ]);
+
+        $data = $result->toArray();
+
+        foreach ($data['results'] ?? [] as $item) {
+            $this->addSource(
+                new Source($item['title'] ?? '', $item['url'] ?? '', $item['raw_content'] ?? '')
+            );
+        }
 
         return $result->getContent();
     }

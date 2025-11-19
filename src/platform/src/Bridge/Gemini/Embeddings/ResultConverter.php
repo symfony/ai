@@ -22,7 +22,7 @@ use Symfony\AI\Platform\Vector\Vector;
 /**
  * @author Valtteri R <valtzu@gmail.com>
  */
-final readonly class ResultConverter implements ResultConverterInterface
+final class ResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {

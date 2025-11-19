@@ -11,14 +11,12 @@
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('facebook/mbart-large-50-many-to-many-mmt');
 
-$result = $platform->invoke($model, 'Меня зовут Вольфганг и я живу в Берлине', [
+$result = $platform->invoke('facebook/mbart-large-50-many-to-many-mmt', 'Меня зовут Вольфганг и я живу в Берлине', [
     'task' => Task::TRANSLATION,
     'src_lang' => 'ru',
     'tgt_lang' => 'en',

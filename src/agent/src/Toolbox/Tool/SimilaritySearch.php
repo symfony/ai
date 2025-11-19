@@ -12,9 +12,8 @@
 namespace Symfony\AI\Agent\Toolbox\Tool;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -29,8 +28,7 @@ final class SimilaritySearch
     public array $usedDocuments = [];
 
     public function __construct(
-        private readonly PlatformInterface $platform,
-        private readonly Model $model,
+        private readonly VectorizerInterface $vectorizer,
         private readonly StoreInterface $store,
     ) {
     }
@@ -40,8 +38,8 @@ final class SimilaritySearch
      */
     public function __invoke(string $searchTerm): string
     {
-        $vectors = $this->platform->invoke($this->model, $searchTerm)->asVectors();
-        $this->usedDocuments = $this->store->query($vectors[0]);
+        $vector = $this->vectorizer->vectorize($searchTerm);
+        $this->usedDocuments = $this->store->query($vector);
 
         if ([] === $this->usedDocuments) {
             return 'No results found';

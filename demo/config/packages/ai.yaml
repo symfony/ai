@@ -2,12 +2,12 @@ ai:
     platform:
         openai:
             api_key: '%env(OPENAI_API_KEY)%'
+        huggingface:
+            api_key: '%env(HUGGINGFACE_API_KEY)%'
     agent:
         blog:
-            # platform: 'ai.platform.anthropic'
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
             tools:
                 - 'Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch'
                 - service: 'clock'
@@ -15,49 +15,83 @@ ai:
                   description: 'Provides the current date and time.'
                   method: 'now'
         stream:
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
-            system_prompt: |
-                You are an example chat application where messages from the LLM are streamed to the user using
-                Server-Sent Events via `symfony/ux-turbo` / Turbo Streams. This example does not use any custom
-                javascript and solely relies on the built-in `live` & `turbo_stream` Stimulus controllers.
-                Whatever the user asks, tell them about the application & used technologies.
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
+            prompt:
+                file: '%kernel.project_dir%/prompts/stream-chat.txt'
             tools: false
         youtube:
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
             tools: false
         wikipedia:
+            platform: 'ai.platform.openai'
             model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
+                name: 'gpt-4o-mini'
                 options:
                     temperature: 0.5
-            system_prompt: 'Please answer the users question based on Wikipedia and provide a link to the article.'
-            include_tools: true
+            prompt:
+                text: 'Please answer the users question based on Wikipedia, only use information provided in the messages.'
+                include_tools: true
             tools:
                 - 'Symfony\AI\Agent\Toolbox\Tool\Wikipedia'
+            include_sources: true
         audio:
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Gpt'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Gpt::GPT_4O_MINI
-            system_prompt: 'You are a friendly chatbot that likes to have a conversation with users and asks them some questions.'
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini?temperature=1.0'
+            prompt: |
+                You are a friendly, positive and energetic voice assistant. You can engage in light discussions, ask
+                questions, and do general small-talk. If asked about the Symfony Framework or their community events,
+                you delegate to your subagent "symfony_blog" and use their answer for answering user's questions.
+                If you don't know the answer, say so. Keep in mind that you are in a spoken conversation, so keep your
+                answers concise and to the point. They will be read out loud to the user.
             tools:
                 # Agent in agent 🤯
                 - agent: 'blog'
                   name: 'symfony_blog'
-                  description: 'Can answer questions based on the Symfony blog.'
+                  description: |
+                      Subagent, that can answer questions about latest news around the Symfony Framework, like latest
+                      features, events or community news.
+        orchestrator:
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
+            prompt: 'You are an intelligent agent orchestrator that routes user questions to specialized agents.'
+            tools: false
+        technical:
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
+            prompt: 'You are a technical support specialist. Help users resolve bugs, problems, and technical errors.'
+            tools: false
+        fallback:
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
+            prompt: 'You are a helpful general assistant. Assist users with any questions or tasks they may have.'
+            tools: false
+    multi_agent:
+        support:
+            orchestrator: 'orchestrator'
+            handoffs:
+                technical: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
+            fallback: 'fallback'
     store:
         chroma_db:
             symfonycon:
                 collection: 'symfony_blog'
+    vectorizer:
+        openai:
+            platform: 'ai.platform.openai'
+            model: 'text-embedding-ada-002'
     indexer:
-        default:
-            model:
-                class: 'Symfony\AI\Platform\Bridge\OpenAi\Embeddings'
-                name: !php/const Symfony\AI\Platform\Bridge\OpenAi\Embeddings::TEXT_ADA_002
+        blog:
+            loader: 'Symfony\AI\Store\Document\Loader\RssFeedLoader'
+            source: 'https://feeds.feedburner.com/symfony/blog'
+            filters:
+                - 'app.filter.week_of_symfony'
+            transformers:
+                - 'Symfony\AI\Store\Document\Transformer\TextSplitTransformer'
+                - 'Symfony\AI\Store\Document\Transformer\TextTrimTransformer'
+            vectorizer: 'ai.vectorizer.openai'
+            store: 'ai.store.chroma_db.symfonycon'
 
 services:
     _defaults:
@@ -70,4 +104,15 @@ services:
     #     $apiKey: '%env(SERP_API_KEY)%'
     Symfony\AI\Agent\Toolbox\Tool\Wikipedia: ~
     Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch:
-        $model: '@ai.indexer.default.model'
+        $vectorizer: '@ai.vectorizer.openai'
+        $store: '@ai.store.chroma_db.symfonycon'
+
+    Symfony\AI\Store\Document\Loader\RssFeedLoader: ~
+    Symfony\AI\Store\Document\Transformer\TextSplitTransformer: ~
+    Symfony\AI\Store\Document\Transformer\TextTrimTransformer: ~
+
+    app.filter.week_of_symfony:
+        class: 'Symfony\AI\Store\Document\Filter\TextContainsFilter'
+        arguments:
+            $needle: 'Week of Symfony'
+            $caseSensitive: false

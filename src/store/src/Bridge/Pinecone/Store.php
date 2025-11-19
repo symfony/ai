@@ -23,16 +23,16 @@ use Symfony\Component\Uid\Uuid;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class Store implements StoreInterface
+final class Store implements StoreInterface
 {
     /**
      * @param array<string, mixed> $filter
      */
     public function __construct(
-        private Client $pinecone,
-        private ?string $namespace = null,
-        private array $filter = [],
-        private int $topK = 3,
+        private readonly Client $pinecone,
+        private readonly ?string $namespace = null,
+        private readonly array $filter = [],
+        private readonly int $topK = 3,
     ) {
         if (!class_exists(Client::class)) {
             throw new RuntimeException('For using the Pinecone as retrieval vector store, the probots-io/pinecone-php package is required. Try running "composer require probots-io/pinecone-php".');

@@ -11,21 +11,22 @@
 
 namespace Symfony\AI\Agent\Tests\Toolbox;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Fixtures\StructuredOutput\UserWithConstructor;
+use Symfony\AI\Platform\Result\ToolCall;
 
-#[CoversClass(ToolResultConverter::class)]
 final class ToolResultConverterTest extends TestCase
 {
     #[DataProvider('provideResults')]
     public function testConvert(mixed $result, ?string $expected)
     {
+        $toolResult = new ToolResult(new ToolCall('123456789', 'tool_name'), $result);
         $converter = new ToolResultConverter();
 
-        $this->assertSame($expected, $converter->convert($result));
+        $this->assertSame($expected, $converter->convert($toolResult));
     }
 
     public static function provideResults(): \Generator

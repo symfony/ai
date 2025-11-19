@@ -12,24 +12,31 @@
 namespace Symfony\AI\Agent\Toolbox\Tool;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait;
+use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 #[AsTool(name: 'serpapi', description: 'search for information on the internet')]
-final readonly class SerpApi
+final class SerpApi implements HasSourcesInterface
 {
+    use HasSourcesTrait;
+
     public function __construct(
-        private HttpClientInterface $httpClient,
-        private string $apiKey,
+        private readonly HttpClientInterface $httpClient,
+        private readonly string $apiKey,
     ) {
     }
 
     /**
      * @param string $query The search query to use
+     *
+     * @return array{title: string, link: string, content: string}[]
      */
-    public function __invoke(string $query): string
+    public function __invoke(string $query): array
     {
         $result = $this->httpClient->request('GET', 'https://serpapi.com/search', [
             'query' => [
@@ -38,14 +45,19 @@ final readonly class SerpApi
             ],
         ]);
 
-        return \sprintf('Results for "%s" are "%s".', $query, $this->extractBestResponse($result->toArray()));
-    }
+        $data = $result->toArray();
 
-    /**
-     * @param array<string, mixed> $results
-     */
-    private function extractBestResponse(array $results): string
-    {
-        return implode('. ', array_map(fn ($story) => $story['title'], $results['organic_results']));
+        $results = [];
+        foreach ($data['organic_results'] as $result) {
+            $results[] = [
+                'title' => $result['title'],
+                'link' => $result['link'],
+                'content' => $result['snippet'],
+            ];
+
+            $this->addSource(new Source($result['title'], $result['link'], $result['snippet']));
+        }
+
+        return $results;
     }
 }

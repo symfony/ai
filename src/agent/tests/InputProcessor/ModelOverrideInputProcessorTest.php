@@ -11,58 +11,40 @@
 
 namespace Symfony\AI\Agent\Tests\InputProcessor;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessor\ModelOverrideInputProcessor;
-use Symfony\AI\Platform\Bridge\Anthropic\Claude;
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Message\MessageBag;
 
-#[CoversClass(ModelOverrideInputProcessor::class)]
-#[UsesClass(Gpt::class)]
-#[UsesClass(Claude::class)]
-#[UsesClass(Input::class)]
-#[UsesClass(MessageBag::class)]
-#[UsesClass(Embeddings::class)]
-#[Small]
 final class ModelOverrideInputProcessorTest extends TestCase
 {
     public function testProcessInputWithValidModelOption()
     {
-        $gpt = new Gpt();
-        $claude = new Claude();
-        $input = new Input($gpt, new MessageBag(), ['model' => $claude]);
+        $input = new Input('gpt-4o-mini', new MessageBag(), ['model' => 'gpt-4o']);
 
         $processor = new ModelOverrideInputProcessor();
         $processor->processInput($input);
 
-        $this->assertSame($claude, $input->model);
+        $this->assertSame('gpt-4o', $input->getModel());
     }
 
     public function testProcessInputWithoutModelOption()
     {
-        $gpt = new Gpt();
-        $input = new Input($gpt, new MessageBag(), []);
+        $input = new Input('gpt-4o-mini', new MessageBag());
 
         $processor = new ModelOverrideInputProcessor();
         $processor->processInput($input);
 
-        $this->assertSame($gpt, $input->model);
+        $this->assertSame('gpt-4o-mini', $input->getModel());
     }
 
     public function testProcessInputWithInvalidModelOption()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Option "model" must be an instance of "Symfony\AI\Platform\Model".');
+        $this->expectExceptionMessage('Option "model" must be a string.');
 
-        $gpt = new Gpt();
-        $model = new MessageBag();
-        $input = new Input($gpt, new MessageBag(), ['model' => $model]);
+        $input = new Input('gpt-4o-mini', new MessageBag(), ['model' => new MessageBag()]);
 
         $processor = new ModelOverrideInputProcessor();
         $processor->processInput($input);

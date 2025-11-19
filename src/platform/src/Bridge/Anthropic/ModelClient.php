@@ -20,14 +20,13 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class ModelClient implements ModelClientInterface
+final class ModelClient implements ModelClientInterface
 {
-    private EventSourceHttpClient $httpClient;
+    private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
         HttpClientInterface $httpClient,
-        #[\SensitiveParameter] private string $apiKey,
-        private string $version = '2023-06-01',
+        #[\SensitiveParameter] private readonly string $apiKey,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
@@ -41,18 +40,14 @@ final readonly class ModelClient implements ModelClientInterface
     {
         $headers = [
             'x-api-key' => $this->apiKey,
-            'anthropic-version' => $this->version,
+            'anthropic-version' => '2023-06-01',
         ];
 
         if (isset($options['tools'])) {
             $options['tool_choice'] = ['type' => 'auto'];
         }
 
-        if (
-            isset($options['beta_features'])
-            && \is_array($options['beta_features'])
-            && !empty($options['beta_features'])
-        ) {
+        if (isset($options['beta_features']) && \is_array($options['beta_features']) && \count($options['beta_features']) > 0) {
             $headers['anthropic-beta'] = implode(',', $options['beta_features']);
             unset($options['beta_features']);
         }

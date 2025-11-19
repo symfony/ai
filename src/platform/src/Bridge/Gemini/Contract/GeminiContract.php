@@ -17,7 +17,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-final readonly class GeminiContract extends Contract
+final class GeminiContract extends Contract
 {
     public static function create(NormalizerInterface ...$normalizer): Contract
     {

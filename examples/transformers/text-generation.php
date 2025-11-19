@@ -11,7 +11,6 @@
 
 use Codewithkyrian\Transformers\Pipelines\Task;
 use Symfony\AI\Platform\Bridge\TransformersPhp\PlatformFactory;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -26,9 +25,8 @@ if (!is_dir(dirname(__DIR__).'/.transformers-cache/Xenova/LaMini-Flan-T5-783M'))
 }
 
 $platform = PlatformFactory::create();
-$model = new Model('Xenova/LaMini-Flan-T5-783M');
 
-$result = $platform->invoke($model, 'How many continents are there in the world?', [
+$result = $platform->invoke('Xenova/LaMini-Flan-T5-783M', 'How many continents are there in the world?', [
     'task' => Task::Text2TextGeneration,
 ]);
 

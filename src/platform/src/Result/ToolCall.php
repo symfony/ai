@@ -14,16 +14,34 @@ namespace Symfony\AI\Platform\Result;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class ToolCall implements \JsonSerializable
+final class ToolCall implements \JsonSerializable
 {
     /**
      * @param array<string, mixed> $arguments
      */
     public function __construct(
-        public string $id,
-        public string $name,
-        public array $arguments = [],
+        private readonly string $id,
+        private readonly string $name,
+        private readonly array $arguments = [],
     ) {
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getArguments(): array
+    {
+        return $this->arguments;
     }
 
     /**

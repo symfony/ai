@@ -11,9 +11,6 @@
 
 namespace Symfony\AI\Platform\Tests\Message;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
@@ -25,12 +22,6 @@ use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
 use Symfony\Component\Uid\UuidV7;
 
-#[CoversClass(UserMessage::class)]
-#[UsesClass(Text::class)]
-#[UsesClass(Audio::class)]
-#[UsesClass(ImageUrl::class)]
-#[UsesClass(Role::class)]
-#[Small]
 final class UserMessageTest extends TestCase
 {
     use UuidAssertionTrait;
@@ -40,16 +31,16 @@ final class UserMessageTest extends TestCase
         $obj = new UserMessage(new Text('foo'));
 
         $this->assertSame(Role::User, $obj->getRole());
-        $this->assertCount(1, $obj->content);
-        $this->assertInstanceOf(Text::class, $obj->content[0]);
-        $this->assertSame('foo', $obj->content[0]->text);
+        $this->assertCount(1, $obj->getContent());
+        $this->assertInstanceOf(Text::class, $obj->getContent()[0]);
+        $this->assertSame('foo', $obj->getContent()[0]->getText());
     }
 
     public function testConstructionIsPossibleWithMultipleContent()
     {
         $message = new UserMessage(new Text('foo'), new ImageUrl('https://foo.com/bar.jpg'));
 
-        $this->assertCount(2, $message->content);
+        $this->assertCount(2, $message->getContent());
     }
 
     public function testHasAudioContentWithoutAudio()
@@ -84,9 +75,7 @@ final class UserMessageTest extends TestCase
     {
         $message = new UserMessage(new Text('foo'));
 
-        $this->assertInstanceOf(UuidV7::class, $message->id);
         $this->assertInstanceOf(UuidV7::class, $message->getId());
-        $this->assertSame($message->id, $message->getId());
     }
 
     public function testDifferentMessagesHaveDifferentUids()
@@ -95,8 +84,8 @@ final class UserMessageTest extends TestCase
         $message2 = new UserMessage(new Text('bar'));
 
         $this->assertNotSame($message1->getId()->toRfc4122(), $message2->getId()->toRfc4122());
-        self::assertIsUuidV7($message1->getId()->toRfc4122());
-        self::assertIsUuidV7($message2->getId()->toRfc4122());
+        $this->assertIsUuidV7($message1->getId()->toRfc4122());
+        $this->assertIsUuidV7($message2->getId()->toRfc4122());
     }
 
     public function testSameMessagesHaveDifferentUids()
@@ -105,8 +94,8 @@ final class UserMessageTest extends TestCase
         $message2 = new UserMessage(new Text('foo'));
 
         $this->assertNotSame($message1->getId()->toRfc4122(), $message2->getId()->toRfc4122());
-        self::assertIsUuidV7($message1->getId()->toRfc4122());
-        self::assertIsUuidV7($message2->getId()->toRfc4122());
+        $this->assertIsUuidV7($message1->getId()->toRfc4122());
+        $this->assertIsUuidV7($message2->getId()->toRfc4122());
     }
 
     public function testMessageIdImplementsRequiredInterfaces()
@@ -116,5 +105,47 @@ final class UserMessageTest extends TestCase
         $this->assertInstanceOf(AbstractUid::class, $message->getId());
         $this->assertInstanceOf(TimeBasedUidInterface::class, $message->getId());
         $this->assertInstanceOf(UuidV7::class, $message->getId());
+    }
+
+    public function testAsTextWithSingleTextContent()
+    {
+        $message = new UserMessage(new Text('Hello, world!'));
+
+        $this->assertSame('Hello, world!', $message->asText());
+    }
+
+    public function testAsTextWithMultipleTextParts()
+    {
+        $message = new UserMessage(new Text('Part one'), new Text('Part two'), new Text('Part three'));
+
+        $this->assertSame('Part one Part two Part three', $message->asText());
+    }
+
+    public function testAsTextIgnoresNonTextContent()
+    {
+        $message = new UserMessage(
+            new Text('Text content'),
+            new ImageUrl('http://example.com/image.png'),
+            new Text('More text')
+        );
+
+        $this->assertSame('Text content More text', $message->asText());
+    }
+
+    public function testAsTextWithoutTextContent()
+    {
+        $message = new UserMessage(new ImageUrl('http://example.com/image.png'));
+
+        $this->assertNull($message->asText());
+    }
+
+    public function testAsTextWithAudioAndImage()
+    {
+        $message = new UserMessage(
+            Audio::fromFile(\dirname(__DIR__, 4).'/fixtures/audio.mp3'),
+            new ImageUrl('http://example.com/image.png')
+        );
+
+        $this->assertNull($message->asText());
     }
 }

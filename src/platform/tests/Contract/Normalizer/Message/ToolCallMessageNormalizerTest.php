@@ -11,17 +11,12 @@
 
 namespace Symfony\AI\Platform\Tests\Contract\Normalizer\Message;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\Normalizer\Message\ToolCallMessageNormalizer;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-#[CoversClass(ToolCallMessageNormalizer::class)]
-#[UsesClass(ToolCallMessage::class)]
-#[UsesClass(ToolCall::class)]
 final class ToolCallMessageNormalizerTest extends TestCase
 {
     private ToolCallMessageNormalizer $normalizer;
@@ -53,7 +48,7 @@ final class ToolCallMessageNormalizerTest extends TestCase
         $innerNormalizer = $this->createMock(NormalizerInterface::class);
         $innerNormalizer->expects($this->once())
             ->method('normalize')
-            ->with($message->content, null, [])
+            ->with($message->getContent(), null, [])
             ->willReturn($expectedContent);
 
         $this->normalizer->setNormalizer($innerNormalizer);

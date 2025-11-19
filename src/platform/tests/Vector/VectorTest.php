@@ -11,12 +11,10 @@
 
 namespace Symfony\AI\Platform\Tests\Vector;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 
-#[CoversClass(Vector::class)]
 final class VectorTest extends TestCase
 {
     public function testImplementsInterface()

@@ -14,7 +14,6 @@ namespace Symfony\AI\Agent\InputProcessor;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
-use Symfony\AI\Platform\Model;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -29,10 +28,10 @@ final class ModelOverrideInputProcessor implements InputProcessorInterface
             return;
         }
 
-        if (!$options['model'] instanceof Model) {
-            throw new InvalidArgumentException(\sprintf('Option "model" must be an instance of "%s".', Model::class));
+        if (!\is_string($options['model'])) {
+            throw new InvalidArgumentException('Option "model" must be a string.');
         }
 
-        $input->model = $options['model'];
+        $input->setModel($options['model']);
     }
 }

@@ -24,15 +24,15 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final readonly class Store implements ManagedStoreInterface, StoreInterface
+final class Store implements ManagedStoreInterface, StoreInterface
 {
     public function __construct(
-        private HttpClientInterface $httpClient,
-        private string $endpointUrl,
-        #[\SensitiveParameter] private string $apiKey,
-        #[\SensitiveParameter] private string $collection,
-        private string $vectorFieldName = '_vectors',
-        private int $embeddingsDimension = 1536,
+        private readonly HttpClientInterface $httpClient,
+        private readonly string $endpointUrl,
+        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly string $collection,
+        private readonly string $vectorFieldName = '_vectors',
+        private readonly int $embeddingsDimension = 1536,
     ) {
     }
 
@@ -129,7 +129,8 @@ final readonly class Store implements ManagedStoreInterface, StoreInterface
         $id = $document['id'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
 
         $vector = !\array_key_exists($this->vectorFieldName, $document) || null === $document[$this->vectorFieldName]
-            ? new NullVector() : new Vector($document[$this->vectorFieldName]);
+            ? new NullVector()
+            : new Vector($document[$this->vectorFieldName]);
 
         $score = $data['vector_distance'] ?? null;
 

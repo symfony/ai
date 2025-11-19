@@ -11,41 +11,39 @@
 
 namespace Symfony\AI\McpBundle\Controller;
 
-use Symfony\AI\McpSdk\Server;
-use Symfony\AI\McpSdk\Server\Transport\Sse\Store\CachePoolStore;
-use Symfony\AI\McpSdk\Server\Transport\Sse\StreamTransport;
+use Mcp\Server;
+use Mcp\Server\Transport\StreamableHttpTransport;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Bridge\PsrHttpMessage\HttpFoundationFactoryInterface;
+use Symfony\Bridge\PsrHttpMessage\HttpMessageFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Uid\Uuid;
 
-final readonly class McpController
+final class McpController
 {
     public function __construct(
-        private Server $server,
-        private CachePoolStore $store,
-        private UrlGeneratorInterface $urlGenerator,
+        private readonly Server $server,
+        private readonly HttpMessageFactoryInterface $httpMessageFactory,
+        private readonly HttpFoundationFactoryInterface $httpFoundationFactory,
+        private readonly ResponseFactoryInterface $responseFactory,
+        private readonly StreamFactoryInterface $streamFactory,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
-    public function sse(): StreamedResponse
+    public function handle(Request $request): Response
     {
-        $id = Uuid::v4();
-        $endpoint = $this->urlGenerator->generate('_mcp_messages', ['id' => $id], UrlGeneratorInterface::ABSOLUTE_URL);
-        $transport = new StreamTransport($endpoint, $this->store, $id);
+        $transport = new StreamableHttpTransport(
+            $this->httpMessageFactory->createRequest($request),
+            $this->responseFactory,
+            $this->streamFactory,
+            logger: $this->logger,
+        );
 
-        return new StreamedResponse(fn () => $this->server->connect($transport), headers: [
-            'Content-Type' => 'text/event-stream',
-            'Cache-Control' => 'no-cache',
-            'X-Accel-Buffering' => 'no',
-        ]);
-    }
-
-    public function messages(Request $request, Uuid $id): Response
-    {
-        $this->store->push($id, $request->getContent());
-
-        return new Response();
+        return $this->httpFoundationFactory->createResponse(
+            $this->server->run($transport),
+        );
     }
 }

@@ -11,24 +11,14 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Gemini\Contract;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\ToolCallMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\ToolCallMessage;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
 
-#[Small]
-#[CoversClass(ToolCallMessageNormalizer::class)]
-#[UsesClass(Model::class)]
-#[UsesClass(Gemini::class)]
-#[UsesClass(ToolCallMessage::class)]
-#[UsesClass(ToolCall::class)]
 final class ToolCallMessageNormalizerTest extends TestCase
 {
     public function testSupportsNormalization()
@@ -36,7 +26,7 @@ final class ToolCallMessageNormalizerTest extends TestCase
         $normalizer = new ToolCallMessageNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new ToolCallMessage(new ToolCall('', '', []), ''), context: [
-            Contract::CONTEXT_MODEL => new Gemini(),
+            Contract::CONTEXT_MODEL => new Gemini('gemini-2.0-flash'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a tool call'));
     }

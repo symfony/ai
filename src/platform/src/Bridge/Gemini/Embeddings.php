@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Bridge\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings\TaskType;
-use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -20,18 +19,11 @@ use Symfony\AI\Platform\Model;
  */
 class Embeddings extends Model
 {
-    /** Supported dimensions: 3072, 1536, or 768 */
-    public const GEMINI_EMBEDDING_EXP_03_07 = 'gemini-embedding-exp-03-07';
-    /** Fixed 768 dimensions */
-    public const TEXT_EMBEDDING_004 = 'text-embedding-004';
-    /** Fixed 768 dimensions */
-    public const EMBEDDING_001 = 'embedding-001';
-
     /**
      * @param array{dimensions?: int, task_type?: TaskType|string} $options
      */
-    public function __construct(string $name = self::GEMINI_EMBEDDING_EXP_03_07, array $options = [])
+    public function __construct(string $name, array $capabilities = [], array $options = [])
     {
-        parent::__construct($name, [Capability::INPUT_MULTIPLE], $options);
+        parent::__construct($name, $capabilities, $options);
     }
 }

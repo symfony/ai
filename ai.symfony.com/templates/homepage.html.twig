@@ -1,0 +1,380 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="hero-wrapper text-white">
+        {{ include('_header.html.twig') }}
+
+        <section class="hero-section">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-xl-6 pe-5">
+                        <h1 class="ff-title text-balance display-5 fw-bold mb-3">
+                            Build <span class="text-warning">AI capable</span>
+                            applications with PHP
+                        </h1>
+                        <p class="text-balance fs-5 mb-4">
+                            A set of components that integrate AI capabilities into PHP applications.
+                        </p>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="btn btn-light btn-lg px-4 d-flex align-items-center">
+                                <span>Add AI to your Symfony app</span>
+                                {{ ux_icon('tabler:arrow-up-right', {width: 24, height: 24, class: 'ms-2'}) }}
+                            </a>
+                            <a href="https://symfony.com/doc/current/ai/bundles/mcp-bundle.html" class="mt-3 mt-sm-0 ms-lg-4 btn btn-outline-light btn-lg px-4 d-flex align-items-center">
+                                Build MCP Servers
+                                {{ ux_icon('tabler:arrow-up-right', {width: 24, height: 24, class: 'ms-2'}) }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-6 mt-5 mt-xl-0">
+                        {% set model_typed = stimulus_controller('typed', {
+                            loop: true,
+                            cursorChar: '|',
+                            strings: ['gpt-5.1', 'mistral-large-latest', 'gemini-3-pro-preview', 'claude-sonnet-4-5'],
+                        }) %}
+                        <pre class="terminal"><code><span class="variable">$platform</span> = <span class="title class_">PlatformFactory</span>::<span class="title function_ invoke__">create</span>(...);
+<span class="variable">$agent</span> = <span class="keyword">new</span> <span class="title class_">Agent</span>(<span class="variable">$platform</span>, <span class="string">'</span><span class="string" {{ model_typed|raw }}></span><span class="string">'</span>)
+
+<span class="variable">$messages</span> = <span class="keyword">new</span> <span class="title class_">MessageBag</span>(
+    <span class="title class_">Message</span>::<span class="title function_ invoke__">forSystem</span>(<span class="string">'You are a pirate and you write funny.'</span>),
+    <span class="title class_">Message</span>::<span class="title function_ invoke__">ofUser</span>(<span class="string">'What is the Symfony framework?'</span>),
+);
+<span class="variable">$response</span> = <span class="variable">$agent</span>-&gt;<span class="title function_ invoke__">call</span>(<span class="variable">$messages</span>, [
+    <span class="string">'temperature'</span> =&gt; 1.0, // specific options just for this call
+]);
+
+<span class="keyword">echo</span> <span class="variable">$response</span>-&gt;<span class="title function_ invoke__">getContent</span>();</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <main>
+        <section class="py-5 py-lg-5">
+            <div class="container">
+                <div class="row g-4 gy-5 gy-sm-0">
+                    <div class="col-md-6 col-lg-3">
+                        <h2 class="ff-title fw-bold h4 mb-4 text-center">Models</h2>
+                        <article class="sf-ai-card sf-ai-card-hover sf-ai-card-hover-dark p-3 p-lg-4">
+                            <div class="sf-ai-card-body sf-ai-logo-grid">
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:openai') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:google-gemini') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:mistral') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:claude') }}
+                                </span>
+                            </div>
+
+                            <a href="https://symfony.com/doc/current/ai/components/platform.html#supported-models-platforms" class="mt-5 fw-semibold small text-decoration-none d-flex align-items-center justify-content-end">
+                                <span>See all models</span>
+                                {{ ux_icon('tabler:arrow-right', {width: 18, height: 18, class: 'ms-1'}) }}
+                            </a>
+                        </article>
+                    </div>
+
+                    <div class="col-md-6 col-lg-3">
+                        <h2 class="ff-title fw-bold h4 mb-4 mt-5 mt-lg-0 text-center">Platforms</h2>
+                        <article class="sf-ai-card sf-ai-card-hover sf-ai-card-hover-dark p-3 p-lg-4">
+                            <div class="sf-ai-card-body sf-ai-logo-grid">
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:hugging-face') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:azure') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:ollama') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:docker') }}
+                                </span>
+                            </div>
+
+                            <a href="https://symfony.com/doc/current/ai/components/platform.html#supported-models-platforms" class="mt-5 fw-semibold small text-decoration-none d-flex align-items-center justify-content-end">
+                                <span>See all platforms</span>
+                                {{ ux_icon('tabler:arrow-right', {width: 18, height: 18, class: 'ms-1'}) }}
+                            </a>
+                        </article>
+                    </div>
+
+                    <div class="col-md-6 col-lg-3">
+                        <h2 class="ff-title fw-bold h4 mb-4 mt-5 mt-lg-0 text-center">Stores</h2>
+                        <article class="sf-ai-card sf-ai-card-hover sf-ai-card-hover-dark p-3 p-lg-4">
+                            <div class="sf-ai-card-body sf-ai-logo-grid">
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:pinecone') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:postgresql') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:mariadb') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:chroma') }}
+                                </span>
+                            </div>
+
+                            <a href="https://symfony.com/doc/current/ai/components/store.html#supported-stores" class="mt-5 fw-semibold small text-decoration-none d-flex align-items-center justify-content-end">
+                                <span>See all stores</span>
+                                {{ ux_icon('tabler:arrow-right', {width: 18, height: 18, class: 'ms-1'}) }}
+                            </a>
+                        </article>
+                    </div>
+
+                    <div class="col-md-6 col-lg-3">
+                        <h2 class="ff-title fw-bold h4 mb-4 mt-5 mt-lg-0 text-center">Built-in Tools</h2>
+                        <article class="sf-ai-card sf-ai-card-hover sf-ai-card-hover-dark p-3 p-lg-4">
+                            <div class="sf-ai-card-body sf-ai-logo-grid">
+                                <span class="logo-pill">
+                                    Similarity Search (RAG)
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:wikipedia') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:youtube') }}
+                                </span>
+                                <span class="logo-pill">
+                                    {{ ux_icon('logos:brave') }}
+                                </span>
+                            </div>
+
+                            <a href="https://symfony.com/doc/current/ai/components/agent.html#code-examples-with-built-in-tools" class="mt-5 fw-semibold small text-decoration-none d-flex align-items-center justify-content-end">
+                                <span>See all tools</span>
+                                {{ ux_icon('tabler:arrow-right', {width: 18, height: 18, class: 'ms-1'}) }}
+                            </a>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pb-5 mt-5">
+            <div class="container">
+                <div class="row mb-4">
+                    <div class="col-lg-8">
+                        <h2 class="ff-title fw-bold h3 mt-3 mb-1">Explore and try our demos</h2>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <article class="demo-blog sf-ai-card sf-ai-card-hover h-100">
+                            <div class="position-relative card-body p-3 p-lg-4 d-flex gap-3 align-items-start">
+                                <div class="demo-icon bg-primary bg-opacity-10 text-primary flex-shrink-0">
+                                    {{ ux_icon('logos:symfony-letters', {width: 36, height: 36}) }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-start gap-2 mb-1">
+                                        <h3 class="h5 ff-title fw-bold mb-0">
+                                            <a href="https://github.com/symfony/ai-demo" class="stretched-link">Symfony Blog Bot</a>
+                                        </h3>
+                                        {{ ux_icon('tabler:arrow-right', {width: 24, height: 24, class: 'ms-1'}) }}
+                                    </div>
+                                    <p class="text-balance mb-0 text-muted small">
+                                        Retrieval Augmented Generation (RAG) based on Symfony's blog dumped to a
+                                        vector store.
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="col-md-6">
+                        <article class="demo-youtube sf-ai-card sf-ai-card-hover h-100">
+                            <div class="position-relative card-body p-3 p-lg-4 d-flex gap-3 align-items-start">
+                                <div class="demo-icon bg-warning bg-opacity-10 text-warning flex-shrink-0">
+                                    {{ ux_icon('tabler:brand-youtube', {width: 42, height: 42}) }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-start gap-2 mb-1">
+                                        <h3 class="h5 ff-title fw-bold mb-0">
+                                            <a href="https://github.com/symfony/ai-demo" class="stretched-link">Youtube Transcript Bot</a>
+                                        </h3>
+                                        {{ ux_icon('tabler:arrow-right', {width: 24, height: 24, class: 'ms-1'}) }}
+                                    </div>
+                                    <p class="text-balance mb-0 text-muted small">
+                                        Question answering started with a YouTube video ID which gets converted
+                                        into a transcript.
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="col-md-6">
+                        <article class="demo-wikipedia sf-ai-card sf-ai-card-hover h-100">
+                            <div class="position-relative card-body p-3 p-lg-4 d-flex gap-3 align-items-start">
+                                <div class="demo-icon bg-success bg-opacity-10 text-success flex-shrink-0">
+                                    {{ ux_icon('simple-icons:wikipedia', {width: 42, height: 42}) }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-start gap-2 mb-1">
+                                        <h3 class="h5 ff-title fw-bold mb-0">
+                                            <a href="https://github.com/symfony/ai-demo" class="stretched-link">Wikipedia research Bot</a>
+                                        </h3>
+                                        {{ ux_icon('tabler:arrow-right', {width: 24, height: 24, class: 'ms-1'}) }}
+                                    </div>
+                                    <p class="text-balance mb-0 text-muted small">
+                                        A chatbot equipped with tools to search and read on Wikipedia about
+                                        topics the users ask for.
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="col-md-6">
+                        <article class="demo-crop sf-ai-card sf-ai-card-hover h-100">
+                            <div class="position-relative card-body p-3 p-lg-4 d-flex gap-3 align-items-start">
+                                <div class="demo-icon bg-success bg-opacity-10 text-success flex-shrink-0">
+                                    {{ ux_icon('tabler:crop', {width: 42, height: 42}) }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-start gap-2 mb-1">
+                                        <h3 class="h5 ff-title fw-bold mb-0">
+                                            <a href="https://github.com/symfony/ai-demo" class="stretched-link">Smart Cropping</a>
+                                        </h3>
+                                        {{ ux_icon('tabler:arrow-right', {width: 24, height: 24, class: 'ms-1'}) }}
+                                    </div>
+                                    <p class="text-balance mb-0 text-muted small">
+                                        AI-assisted image cropping to focus on key elements on the image while resizing.
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="col-md-6">
+                        <article class="demo-audio sf-ai-card sf-ai-card-hover h-100">
+                            <div class="position-relative card-body p-3 p-lg-4 d-flex gap-3 align-items-start">
+                                <div class="demo-icon bg-success bg-opacity-10 text-success flex-shrink-0">
+                                    {{ ux_icon('tabler:microphone', {width: 42, height: 42}) }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-start gap-2 mb-1">
+                                        <h3 class="h5 ff-title fw-bold mb-0">
+                                            <a href="https://github.com/symfony/ai-demo" class="stretched-link">Audio Bot</a>
+                                        </h3>
+                                        {{ ux_icon('tabler:arrow-right', {width: 24, height: 24, class: 'ms-1'}) }}
+                                    </div>
+                                    <p class="text-balance mb-0 text-muted small">
+                                        Simple demonstration of speech to text with Whisper in combination with
+                                        GPT.
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="col-md-6">
+                        <article class="demo-video sf-ai-card sf-ai-card-hover h-100">
+                            <div class="position-relative card-body p-3 p-lg-4 d-flex gap-3 align-items-start">
+                                <div class="demo-icon bg-info bg-opacity-10 text-info flex-shrink-0">
+                                    {{ ux_icon('tabler:video', {width: 42, height: 42}) }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-start gap-2 mb-1">
+                                        <h3 class="h5 ff-title fw-bold mb-0">
+                                            <a href="https://github.com/symfony/ai-demo" class="stretched-link">Video Bot</a>
+                                        </h3>
+                                        {{ ux_icon('tabler:arrow-right', {width: 24, height: 24, class: 'ms-1'}) }}
+                                    </div>
+                                    <p class="text-balance mb-0 text-muted small">
+                                        Simple demonstration of vision capabilities of GPT in combination with
+                                        your webcam.
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="col-md-6">
+                        <article class="demo-turbo sf-ai-card sf-ai-card-hover h-100">
+                            <div class="position-relative card-body p-3 p-lg-4 d-flex gap-3 align-items-start">
+                                <div class="demo-icon bg-primary bg-opacity-10 text-primary flex-shrink-0">
+                                    {{ ux_icon('logos:symfony-letters', {width: 36, height: 36}) }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-start gap-2 mb-1">
+                                        <h3 class="h5 ff-title fw-bold mb-0">
+                                            <a href="https://github.com/symfony/ai-demo" class="stretched-link">Turbo stream Bot</a>
+                                        </h3>
+                                        {{ ux_icon('tabler:arrow-right', {width: 24, height: 24, class: 'ms-1'}) }}
+                                    </div>
+                                    <p class="text-balance mb-0 text-muted small">
+                                        Simple demonstration of text streaming capabilities.
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-secondary mt-5 py-5">
+            <div class="container">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <article class="sf-ai-card sf-ai-card-hover h-100">
+                            <div class="card-body p-3 p-lg-4 position-relative">
+                                <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                                    <h3 class="h5 ff-title fw-bold mb-3">
+                                        <a class="stretched-link" href="https://symfony.com/doc/current/ai/index.html" target="_blank">Documentation</a>
+                                    </h3>
+                                    {{ ux_icon('tabler:book', {width: 24, height: 24, class: 'ms-1 text-muted'}) }}
+                                </div>
+                                <p class="text-muted small mb-0">
+                                    Get going with the official Symfony AI docs
+                                </p>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="col-md-4">
+                        <article class="sf-ai-card sf-ai-card-hover h-100">
+                            <div class="card-body p-3 p-lg-4 position-relative d-flex flex-column">
+                                <div class="flex-grow-1 d-flex align-items-start justify-content-between gap-2 mb-1">
+                                    <h3 class="h5 ff-title fw-bold mb-3">
+                                        <a class="stretched-link" href="https://github.com/symfony/ai/issues" target="_blank">Community</a>
+                                    </h3>
+                                    {{ ux_icon('simple-icons:github', {width: 24, height: 24, class: 'ms-1 text-muted'}) }}
+                                </div>
+                                <p class="text-muted small mb-0">
+                                    Feedback, ideas, contribution
+                                </p>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="col-md-4">
+                        <article class="sf-ai-card sf-ai-card-hover h-100">
+                            <div class="card-body p-3 p-lg-4 position-relative">
+                                <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                                    <h3 class="h5 ff-title fw-bold mb-3">
+                                        <a class="stretched-link" href="https://symfony-devs.slack.com/archives/C09BAPA9BJP" target="_blank">Support in Slack</a>
+                                    </h3>
+                                    {{ ux_icon('tabler:brand-slack', {width: 24, height: 24, class: 'ms-1 text-muted'}) }}
+                                </div>
+                                <p class="text-muted small mb-0">
+                                    Ask questions in Slack channel <strong>#ai-initiative</strong>
+                                </p>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}

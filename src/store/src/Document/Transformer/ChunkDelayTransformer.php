@@ -20,20 +20,20 @@ use Symfony\Component\Clock\ClockInterface;
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class ChunkDelayTransformer implements TransformerInterface
+final class ChunkDelayTransformer implements TransformerInterface
 {
     public const OPTION_CHUNK_SIZE = 'chunk_size';
     public const OPTION_DELAY = 'delay';
 
     public function __construct(
-        private ClockInterface $clock,
+        private readonly ClockInterface $clock,
     ) {
     }
 
     /**
      * @param array{chunk_size?: int, delay?: int} $options
      */
-    public function __invoke(iterable $documents, array $options = []): iterable
+    public function transform(iterable $documents, array $options = []): iterable
     {
         $chunkSize = $options[self::OPTION_CHUNK_SIZE] ?? 50;
         $delay = $options[self::OPTION_DELAY] ?? 10;

@@ -11,29 +11,16 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Meta;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Meta\LlamaPromptConverter;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
-use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\UserMessage;
 
-#[CoversClass(LlamaPromptConverter::class)]
-#[Small]
-#[UsesClass(AssistantMessage::class)]
-#[UsesClass(ImageUrl::class)]
-#[UsesClass(Text::class)]
-#[UsesClass(Message::class)]
-#[UsesClass(MessageBag::class)]
-#[UsesClass(SystemMessage::class)]
-#[UsesClass(UserMessage::class)]
 final class LlamaPromptConverterTest extends TestCase
 {
     public function testConvertMessages()

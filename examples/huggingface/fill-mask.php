@@ -11,14 +11,12 @@
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('FacebookAI/xlm-roberta-base');
 
-$result = $platform->invoke($model, 'Hello I\'m a <mask> model.', [
+$result = $platform->invoke('FacebookAI/xlm-roberta-base', 'Hello I\'m a <mask> model.', [
     'task' => Task::FILL_MASK,
 ]);
 

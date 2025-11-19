@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Store\Tests\Bridge\Azure;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
@@ -24,9 +22,6 @@ use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(SearchStore::class)]
-#[UsesClass(VectorDocument::class)]
-#[UsesClass(Vector::class)]
 final class SearchStoreTest extends TestCase
 {
     public function testAddDocumentsSuccessfully()

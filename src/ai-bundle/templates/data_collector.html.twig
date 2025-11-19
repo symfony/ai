@@ -25,6 +25,10 @@
                     <span class="sf-toolbar-status">{{ collector.tools|length }}</span>
                 </div>
                 <div class="sf-toolbar-info-piece">
+                    <b class="label">Messages stored</b>
+                    <span class="sf-toolbar-status">{{ collector.messages|length }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
                     <b class="label">Tool Calls</b>
                     <span class="sf-toolbar-status">{{ collector.toolCalls|length }}</span>
                 </div>
@@ -96,7 +100,7 @@
                             <tbody>
                                 <tr>
                                     <th>Model</th>
-                                    <td><strong>{{ constant('class', call.model) }}</strong> (Version: {{ call.model.name }})</td>
+                                    <td><strong>{{ call.model }}</strong></td>
                                 </tr>
                                 <tr>
                                     <th>Input</th>
@@ -162,7 +166,16 @@
                                                 {% endfor %}
                                             </ol>
                                         {% else %}
-                                            {{ call.result }}
+                                            {{ dump(call.result) }}
+                                        {% endif %}
+                                        {% if call.metadata|length > 0 %}
+                                            <br />
+                                            <strong>Metadata</strong>
+                                            <ul>
+                                                {% for key, value in call.metadata.all %}
+                                                    <li>{{ key }}:<br />{{ dump(value) }}</li>
+                                                {% endfor %}
+                                            </ul>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -200,7 +213,7 @@
                                 <ul>
                                     {% for name, parameter in tool.parameters.properties %}
                                         <li>
-                                            <strong>{{ name }} ({{ parameter.type }})</strong><br />
+                                            <strong>{{ name }} ({{ parameter.type is iterable ? parameter.type|join(', ') : parameter.type }})</strong><br />
                                             <i>{{ parameter.description|default() }}</i>
                                         </li>
                                     {% endfor %}
@@ -221,25 +234,25 @@
 
     <h3>Tool Calls</h3>
     {% if collector.toolCalls|length %}
-        {% for call in collector.toolCalls %}
+        {% for toolResult in collector.toolCalls %}
             <table class="table">
                 <thead>
                     <tr>
-                        <th colspan="2">{{ call.call.name }}</th>
+                        <th colspan="2">{{ toolResult.toolCall.name }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <th>ID</th>
-                        <td>{{ call.call.id }}</td>
+                        <td>{{ toolResult.toolCall.id }}</td>
                     </tr>
                     <tr>
                         <th>Arguments</th>
-                        <td>{{ dump(call.call.arguments) }}</td>
+                        <td>{{ dump(toolResult.toolCall.arguments) }}</td>
                     </tr>
                     <tr>
                         <th>Result</th>
-                        <td>{{ dump(call.result) }}</td>
+                        <td>{{ dump(toolResult.result) }}</td>
                     </tr>
                 </tbody>
             </table>

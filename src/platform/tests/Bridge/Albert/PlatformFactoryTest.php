@@ -11,16 +11,12 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Albert;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Albert\PlatformFactory;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Platform;
 
-#[CoversClass(PlatformFactory::class)]
-#[Small]
 final class PlatformFactoryTest extends TestCase
 {
     public function testCreatesPlatformWithCorrectBaseUrl()

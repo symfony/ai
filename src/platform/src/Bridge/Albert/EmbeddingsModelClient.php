@@ -21,12 +21,12 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-final readonly class EmbeddingsModelClient implements ModelClientInterface
+final class EmbeddingsModelClient implements ModelClientInterface
 {
     public function __construct(
-        private HttpClientInterface $httpClient,
-        #[\SensitiveParameter] private string $apiKey,
-        private string $baseUrl,
+        private readonly HttpClientInterface $httpClient,
+        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly string $baseUrl,
     ) {
     }
 
@@ -39,7 +39,10 @@ final readonly class EmbeddingsModelClient implements ModelClientInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/embeddings', $this->baseUrl), [
             'auth_bearer' => $this->apiKey,
-            'json' => \is_array($payload) ? array_merge($payload, $options) : $payload,
+            'json' => array_merge($options, [
+                'model' => $model->getName(),
+                'input' => $payload,
+            ]),
         ]));
     }
 }

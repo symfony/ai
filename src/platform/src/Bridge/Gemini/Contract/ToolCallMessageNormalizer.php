@@ -34,12 +34,13 @@ final class ToolCallMessageNormalizer extends ModelContractNormalizer
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        $resultContent = json_validate($data->content) ? json_decode($data->content, true) : $data->content;
+        $resultContent = json_validate($data->getContent())
+            ? json_decode($data->getContent(), true) : $data->getContent();
 
         return [[
             'functionResponse' => array_filter([
-                'id' => $data->toolCall->id,
-                'name' => $data->toolCall->name,
+                'id' => $data->getToolCall()->getId(),
+                'name' => $data->getToolCall()->getName(),
                 'response' => \is_array($resultContent) ? $resultContent : [
                     'rawResponse' => $resultContent, // Gemini expects the response to be an object, but not everyone uses objects as their responses.
                 ],

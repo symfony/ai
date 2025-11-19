@@ -11,21 +11,15 @@
 
 namespace Symfony\AI\Agent\Tests\Toolbox\Tool;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch;
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\Result\RawResultInterface;
-use Symfony\AI\Platform\Result\ResultPromise;
-use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(SimilaritySearch::class)]
 final class SimilaritySearchTest extends TestCase
 {
     public function testSearchWithResults()
@@ -44,18 +38,11 @@ final class SimilaritySearchTest extends TestCase
             new Metadata(['title' => 'Document 2', 'content' => 'Second document content']),
         );
 
-        $rawResult = $this->createMock(RawResultInterface::class);
-        $vectorResult = new VectorResult($vector);
-        $resultPromise = new ResultPromise(
-            fn () => $vectorResult,
-            $rawResult
-        );
-
-        $platform = $this->createMock(PlatformInterface::class);
-        $platform->expects($this->once())
-            ->method('invoke')
-            ->with($this->isInstanceOf(Model::class), $searchTerm)
-            ->willReturn($resultPromise);
+        $vectorizer = $this->createMock(VectorizerInterface::class);
+        $vectorizer->expects($this->once())
+            ->method('vectorize')
+            ->with($searchTerm)
+            ->willReturn($vector);
 
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->once())
@@ -63,8 +50,7 @@ final class SimilaritySearchTest extends TestCase
             ->with($vector)
             ->willReturn([$document1, $document2]);
 
-        $model = new Model('test-model');
-        $similaritySearch = new SimilaritySearch($platform, $model, $store);
+        $similaritySearch = new SimilaritySearch($vectorizer, $store);
 
         $result = $similaritySearch($searchTerm);
 
@@ -77,18 +63,11 @@ final class SimilaritySearchTest extends TestCase
         $searchTerm = 'find nothing';
         $vector = new Vector([0.1, 0.2, 0.3]);
 
-        $rawResult = $this->createMock(RawResultInterface::class);
-        $vectorResult = new VectorResult($vector);
-        $resultPromise = new ResultPromise(
-            fn () => $vectorResult,
-            $rawResult
-        );
-
-        $platform = $this->createMock(PlatformInterface::class);
-        $platform->expects($this->once())
-            ->method('invoke')
-            ->with($this->isInstanceOf(Model::class), $searchTerm)
-            ->willReturn($resultPromise);
+        $vectorizer = $this->createMock(VectorizerInterface::class);
+        $vectorizer->expects($this->once())
+            ->method('vectorize')
+            ->with($searchTerm)
+            ->willReturn($vector);
 
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->once())
@@ -96,8 +75,7 @@ final class SimilaritySearchTest extends TestCase
             ->with($vector)
             ->willReturn([]);
 
-        $model = new Model('test-model');
-        $similaritySearch = new SimilaritySearch($platform, $model, $store);
+        $similaritySearch = new SimilaritySearch($vectorizer, $store);
 
         $result = $similaritySearch($searchTerm);
 
@@ -116,18 +94,11 @@ final class SimilaritySearchTest extends TestCase
             new Metadata(['title' => 'Single Document', 'description' => 'Only one match']),
         );
 
-        $rawResult = $this->createMock(RawResultInterface::class);
-        $vectorResult = new VectorResult($vector);
-        $resultPromise = new ResultPromise(
-            fn () => $vectorResult,
-            $rawResult
-        );
-
-        $platform = $this->createMock(PlatformInterface::class);
-        $platform->expects($this->once())
-            ->method('invoke')
-            ->with($this->isInstanceOf(Model::class), $searchTerm)
-            ->willReturn($resultPromise);
+        $vectorizer = $this->createMock(VectorizerInterface::class);
+        $vectorizer->expects($this->once())
+            ->method('vectorize')
+            ->with($searchTerm)
+            ->willReturn($vector);
 
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->once())
@@ -135,8 +106,7 @@ final class SimilaritySearchTest extends TestCase
             ->with($vector)
             ->willReturn([$document]);
 
-        $model = new Model('test-model');
-        $similaritySearch = new SimilaritySearch($platform, $model, $store);
+        $similaritySearch = new SimilaritySearch($vectorizer, $store);
 
         $result = $similaritySearch($searchTerm);
 

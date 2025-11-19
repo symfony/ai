@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Tests\Contract\JsonSchema;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Fixtures\StructuredOutput\User;
@@ -20,7 +19,6 @@ use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Fixtures\Tool\ToolWithoutDocs;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
 
-#[CoversClass(DescriptionParser::class)]
 final class DescriptionParserTest extends TestCase
 {
     public function testFromPropertyWithoutDocBlock()

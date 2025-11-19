@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Store\Tests\Bridge\Qdrant;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Qdrant\Store;
@@ -22,9 +20,6 @@ use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(Store::class)]
-#[UsesClass(VectorDocument::class)]
-#[UsesClass(Vector::class)]
 final class StoreTest extends TestCase
 {
     public function testStoreCannotSetupOnInvalidResponse()
@@ -150,15 +145,52 @@ final class StoreTest extends TestCase
         $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points".');
+        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points?wait=true".');
         $this->expectExceptionCode(400);
         $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
     }
 
     public function testStoreCanAdd()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
+        $document = new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]));
+
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($document): JsonMockResponse {
+            self::assertArrayHasKey('wait', $options['query']);
+            self::assertEquals('true', $options['query']['wait']);
+
+            return new JsonMockResponse([
+                'time' => 0.002,
+                'status' => 'ok',
+                'result' => [
+                    'points' => [
+                        [
+                            'id' => (string) $document->id,
+                            'payload' => (array) $document->metadata,
+                            'vector' => $document->vector->getData(),
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+
+        $store->add($document);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanAddAsynchronously()
+    {
+        $document = new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]));
+
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options): JsonMockResponse {
+            self::assertArrayHasKey('wait', $options['query']);
+            self::assertEquals('false', $options['query']['wait']);
+
+            return new JsonMockResponse([
                 'time' => 0.002,
                 'status' => 'ok',
                 'result' => [
@@ -167,12 +199,12 @@ final class StoreTest extends TestCase
                 ],
             ], [
                 'http_code' => 200,
-            ]),
-        ], 'http://127.0.0.1:6333');
+            ]);
+        }, 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test', async: true);
 
-        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+        $store->add($document);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -227,5 +259,50 @@ final class StoreTest extends TestCase
 
         $this->assertSame(1, $httpClient->getRequestsCount());
         $this->assertCount(2, $results);
+    }
+
+    public function testStoreCanQueryWithFilters()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'result' => [
+                    'points' => [
+                        [
+                            'id' => Uuid::v4()->toRfc4122(),
+                            'vector' => [0.1, 0.2, 0.3],
+                            'payload' => ['foo' => 'bar'],
+                        ],
+                        [
+                            'id' => Uuid::v4()->toRfc4122(),
+                            'vector' => [0.2, 0.1, 0.3],
+                            'payload' => ['foo' => ['bar', 'baz']],
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+
+        $results = $store->query(new Vector([0.1, 0.2, 0.3]), [
+            'filter' => [
+                'must' => [
+                    ['key' => 'foo', 'match' => ['value' => 'bar']],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+        $this->assertCount(2, $results);
+
+        foreach ($results as $result) {
+            $this->assertArrayHasKey('foo', $result->metadata);
+            $this->assertTrue(
+                'bar' === $result->metadata['foo'] || (\is_array($result->metadata['foo']) && \in_array('bar', $result->metadata['foo'], true)),
+                "Value should be 'bar' or an array containing 'bar'"
+            );
+        }
     }
 }

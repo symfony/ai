@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Platform\Tests\Message;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\SystemMessage;
@@ -21,8 +19,6 @@ use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
 use Symfony\Component\Uid\UuidV7;
 
-#[CoversClass(SystemMessage::class)]
-#[Small]
 final class SystemMessageTest extends TestCase
 {
     use UuidAssertionTrait;
@@ -32,16 +28,14 @@ final class SystemMessageTest extends TestCase
         $message = new SystemMessage('foo');
 
         $this->assertSame(Role::System, $message->getRole());
-        $this->assertSame('foo', $message->content);
+        $this->assertSame('foo', $message->getContent());
     }
 
     public function testMessageHasUid()
     {
         $message = new SystemMessage('foo');
 
-        $this->assertInstanceOf(UuidV7::class, $message->id);
         $this->assertInstanceOf(UuidV7::class, $message->getId());
-        $this->assertSame($message->id, $message->getId());
     }
 
     public function testDifferentMessagesHaveDifferentUids()
@@ -50,8 +44,8 @@ final class SystemMessageTest extends TestCase
         $message2 = new SystemMessage('bar');
 
         $this->assertNotSame($message1->getId()->toRfc4122(), $message2->getId()->toRfc4122());
-        self::assertIsUuidV7($message1->getId()->toRfc4122());
-        self::assertIsUuidV7($message2->getId()->toRfc4122());
+        $this->assertIsUuidV7($message1->getId()->toRfc4122());
+        $this->assertIsUuidV7($message2->getId()->toRfc4122());
     }
 
     public function testSameMessagesHaveDifferentUids()
@@ -60,8 +54,8 @@ final class SystemMessageTest extends TestCase
         $message2 = new SystemMessage('foo');
 
         $this->assertNotSame($message1->getId()->toRfc4122(), $message2->getId()->toRfc4122());
-        self::assertIsUuidV7($message1->getId()->toRfc4122());
-        self::assertIsUuidV7($message2->getId()->toRfc4122());
+        $this->assertIsUuidV7($message1->getId()->toRfc4122());
+        $this->assertIsUuidV7($message2->getId()->toRfc4122());
     }
 
     public function testMessageIdImplementsRequiredInterfaces()

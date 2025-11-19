@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\ElevenLabs;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabs;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsResultConverter;
@@ -20,29 +18,24 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\Component\HttpClient\MockHttpClient;
 
-#[CoversClass(ElevenLabsResultConverter::class)]
-#[UsesClass(ElevenLabs::class)]
-#[UsesClass(Model::class)]
-#[UsesClass(TextResult::class)]
-#[UsesClass(BinaryResult::class)]
-#[UsesClass(InMemoryRawResult::class)]
 final class ElevenLabsConverterTest extends TestCase
 {
     public function testSupportsModel()
     {
-        $converter = new ElevenLabsResultConverter();
+        $converter = new ElevenLabsResultConverter(new MockHttpClient());
 
-        $this->assertTrue($converter->supports(new ElevenLabs()));
+        $this->assertTrue($converter->supports(new ElevenLabs('eleven_multilingual_v2')));
         $this->assertFalse($converter->supports(new Model('any-model')));
     }
 
     public function testConvertSpeechToTextResponse()
     {
-        $converter = new ElevenLabsResultConverter();
+        $converter = new ElevenLabsResultConverter(new MockHttpClient());
         $rawResult = new InMemoryRawResult([
             'text' => 'Hello there',
-        ], new class {
+        ], [], new class {
             public function getInfo(): string
             {
                 return 'speech-to-text';
@@ -57,8 +50,8 @@ final class ElevenLabsConverterTest extends TestCase
 
     public function testConvertTextToSpeechResponse()
     {
-        $converter = new ElevenLabsResultConverter();
-        $rawResult = new InMemoryRawResult([], new class {
+        $converter = new ElevenLabsResultConverter(new MockHttpClient());
+        $rawResult = new InMemoryRawResult([], [], new class {
             public function getInfo(): string
             {
                 return 'text-to-speech';
@@ -73,6 +66,6 @@ final class ElevenLabsConverterTest extends TestCase
         $result = $converter->convert($rawResult);
 
         $this->assertInstanceOf(BinaryResult::class, $result);
-        $this->assertSame('audio/mpeg', $result->mimeType);
+        $this->assertSame('audio/mpeg', $result->getMimeType());
     }
 }

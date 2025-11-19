@@ -13,19 +13,21 @@ namespace Symfony\AI\AiBundle\Profiler;
 
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\Result\ResultPromise;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Test\PlainConverter;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  *
  * @phpstan-type PlatformCallData array{
- *     model: Model,
+ *     model: string,
  *     input: array<mixed>|string|object,
  *     options: array<string, mixed>,
- *     result: ResultPromise,
+ *     result: DeferredResult,
  * }
  */
 final class TraceablePlatform implements PlatformInterface
@@ -45,27 +47,32 @@ final class TraceablePlatform implements PlatformInterface
         $this->resultCache = new \WeakMap();
     }
 
-    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise
+    public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
     {
-        $resultPromise = $this->platform->invoke($model, $input, $options);
+        $deferredResult = $this->platform->invoke($model, $input, $options);
 
         if ($input instanceof File) {
             $input = $input::class.': '.$input->getFormat();
         }
 
         if ($options['stream'] ?? false) {
-            $originalStream = $resultPromise->asStream();
-            $resultPromise = new ResultPromise(fn () => $this->createTraceableStreamResult($originalStream), $resultPromise->getRawResult(), $options);
+            $originalStream = $deferredResult->asStream();
+            $deferredResult = new DeferredResult(new PlainConverter($this->createTraceableStreamResult($originalStream)), $deferredResult->getRawResult(), $options);
         }
 
         $this->calls[] = [
             'model' => $model,
             'input' => \is_object($input) ? clone $input : $input,
             'options' => $options,
-            'result' => $resultPromise,
+            'result' => $deferredResult,
         ];
 
-        return $resultPromise;
+        return $deferredResult;
+    }
+
+    public function getModelCatalog(): ModelCatalogInterface
+    {
+        return $this->platform->getModelCatalog();
     }
 
     private function createTraceableStreamResult(\Generator $originalStream): StreamResult

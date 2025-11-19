@@ -11,32 +11,30 @@
 
 namespace Symfony\AI\Store\Tests\Document\Transformer;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\ChainTransformer;
 use Symfony\AI\Store\Document\TransformerInterface;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(TransformerInterface::class)]
 final class ChainTransformerTest extends TestCase
 {
     public function testChainTransformerAppliesAllTransformersInOrder()
     {
         $transformerA = new class implements TransformerInterface {
-            public function __invoke(iterable $documents, array $options = []): iterable
+            public function transform(iterable $documents, array $options = []): iterable
             {
                 foreach ($documents as $document) {
-                    yield new TextDocument($document->id, $document->content.'-A');
+                    yield new TextDocument($document->getId(), $document->getContent().'-A');
                 }
             }
         };
 
         $transformerB = new class implements TransformerInterface {
-            public function __invoke(iterable $documents, array $options = []): iterable
+            public function transform(iterable $documents, array $options = []): iterable
             {
                 foreach ($documents as $document) {
-                    yield new TextDocument($document->id, $document->content.'-B');
+                    yield new TextDocument($document->getId(), $document->getContent().'-B');
                 }
             }
         };
@@ -47,10 +45,10 @@ final class ChainTransformerTest extends TestCase
             new TextDocument(Uuid::v4(), 'bar'),
         ];
 
-        $result = iterator_to_array($chain->__invoke($documents));
+        $result = iterator_to_array($chain->transform($documents));
 
-        $this->assertSame('foo-A-B', $result[0]->content);
-        $this->assertSame('bar-A-B', $result[1]->content);
+        $this->assertSame('foo-A-B', $result[0]->getContent());
+        $this->assertSame('bar-A-B', $result[1]->getContent());
     }
 
     public function testChainTransformerWithNoTransformersReturnsInput()
@@ -58,8 +56,8 @@ final class ChainTransformerTest extends TestCase
         $chain = new ChainTransformer([]);
         $documents = [new TextDocument(Uuid::v4(), 'baz')];
 
-        $result = iterator_to_array($chain->__invoke($documents));
+        $result = iterator_to_array($chain->transform($documents));
 
-        $this->assertSame('baz', $result[0]->content);
+        $this->assertSame('baz', $result[0]->getContent());
     }
 }

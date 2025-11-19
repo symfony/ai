@@ -11,11 +11,15 @@
 
 namespace Symfony\AI\Platform;
 
+use OskarStark\Enum\Trait\Comparable;
+
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 enum Capability: string
 {
+    use Comparable;
+
     // INPUT
     case INPUT_AUDIO = 'input-audio';
     case INPUT_IMAGE = 'input-image';
@@ -23,6 +27,7 @@ enum Capability: string
     case INPUT_MULTIPLE = 'input-multiple';
     case INPUT_PDF = 'input-pdf';
     case INPUT_TEXT = 'input-text';
+    case INPUT_MULTIMODAL = 'input-multimodal';
 
     // OUTPUT
     case OUTPUT_AUDIO = 'output-audio';

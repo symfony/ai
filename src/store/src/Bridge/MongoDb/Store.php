@@ -49,7 +49,7 @@ use Symfony\Component\Uid\Uuid;
  *
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-final readonly class Store implements ManagedStoreInterface, StoreInterface
+final class Store implements ManagedStoreInterface, StoreInterface
 {
     /**
      * @param string $databaseName    The name of the database
@@ -59,13 +59,13 @@ final readonly class Store implements ManagedStoreInterface, StoreInterface
      * @param bool   $bulkWrite       Use bulk write operations
      */
     public function __construct(
-        private Client $client,
-        private string $databaseName,
-        private string $collectionName,
-        private string $indexName,
-        private string $vectorFieldName = 'vector',
-        private bool $bulkWrite = false,
-        private LoggerInterface $logger = new NullLogger(),
+        private readonly Client $client,
+        private readonly string $databaseName,
+        private readonly string $collectionName,
+        private readonly string $indexName,
+        private readonly string $vectorFieldName = 'vector',
+        private readonly bool $bulkWrite = false,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
         if (!class_exists(Client::class)) {
             throw new RuntimeException('For using MongoDB Atlas as retrieval vector store, the mongodb/mongodb package is required. Try running "composer require mongodb/mongodb".');

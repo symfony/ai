@@ -1,43 +1,56 @@
 {
     "name": "symfony/ai-demo",
-    "type": "project",
     "description": "Symfony AI Demo Application",
     "license": "MIT",
-    "minimum-stability": "dev",
-    "prefer-stable": true,
+    "type": "project",
     "require": {
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-gd": "*",
         "codewithkyrian/chromadb-php": "^0.4.0",
         "league/commonmark": "^2.7",
+        "mcp/sdk": "@dev",
         "mrmysql/youtube-transcript": "^0.0.5",
         "php-http/discovery": "^1.20",
         "runtime/frankenphp-symfony": "^0.2.0",
         "symfony/ai-bundle": "@dev",
-        "symfony/asset": "7.3.*",
-        "symfony/asset-mapper": "7.3.*",
-        "symfony/clock": "7.3.*",
-        "symfony/console": "7.3.*",
-        "symfony/css-selector": "7.3.*",
-        "symfony/dom-crawler": "7.3.*",
-        "symfony/dotenv": "7.3.*",
+        "symfony/asset": "~7.3.0",
+        "symfony/asset-mapper": "~7.3.0",
+        "symfony/clock": "~7.3.0",
+        "symfony/console": "~7.3.0",
+        "symfony/css-selector": "~7.3.0",
+        "symfony/dom-crawler": "~7.3.0",
+        "symfony/dotenv": "~7.3.0",
         "symfony/flex": "^2.5",
-        "symfony/framework-bundle": "7.3.*",
-        "symfony/http-client": "7.3.*",
+        "symfony/form": "~7.3.0",
+        "symfony/framework-bundle": "~7.3.0",
+        "symfony/http-client": "~7.3.0",
         "symfony/mcp-bundle": "@dev",
+        "symfony/mime": "~7.3.0",
         "symfony/monolog-bundle": "^3.10",
-        "symfony/runtime": "7.3.*",
-        "symfony/twig-bundle": "7.3.*",
-        "symfony/uid": "7.3.*",
+        "symfony/runtime": "~7.3.0",
+        "symfony/twig-bundle": "~7.3.0",
+        "symfony/uid": "~7.3.0",
+        "symfony/ux-dropzone": "^2.31",
         "symfony/ux-icons": "^2.25",
         "symfony/ux-live-component": "^2.25",
         "symfony/ux-turbo": "^2.25",
         "symfony/ux-typed": "^2.25",
-        "symfony/yaml": "7.3.*",
+        "symfony/yaml": "~7.3.0",
         "twig/extra-bundle": "^3.21",
         "twig/markdown-extra": "^3.21",
         "twig/twig": "^3.21"
+    },
+    "require-dev": {
+        "php-cs-fixer/shim": "^3.75",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5",
+        "symfony/browser-kit": "~7.3.0",
+        "symfony/debug-bundle": "~7.3.0",
+        "symfony/stopwatch": "~7.3.0",
+        "symfony/web-profiler-bundle": "~7.3.0"
     },
     "replace": {
         "symfony/polyfill-ctype": "*",
@@ -55,15 +68,17 @@
     "conflict": {
         "symfony/symfony": "*"
     },
-    "require-dev": {
-        "nyholm/nsa": "^1.3",
-        "php-cs-fixer/shim": "^3.75",
-        "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^11.5",
-        "symfony/browser-kit": "7.3.*",
-        "symfony/debug-bundle": "7.3.*",
-        "symfony/stopwatch": "7.3.*",
-        "symfony/web-profiler-bundle": "7.3.*"
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
     },
     "config": {
         "allow-plugins": {
@@ -77,16 +92,6 @@
         "symfony": {
             "allow-contrib": false,
             "require": "7.3.*"
-        }
-    },
-    "autoload": {
-        "psr-4": {
-            "App\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "App\\Tests\\": "tests/"
         }
     },
     "scripts": {

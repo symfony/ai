@@ -11,13 +11,11 @@
 
 namespace Symfony\AI\Platform\Tests\Vector;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 
-#[CoversClass(NullVector::class)]
 final class NullVectorTest extends TestCase
 {
     public function testImplementsInterface()

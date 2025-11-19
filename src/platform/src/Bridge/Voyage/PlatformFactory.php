@@ -11,7 +11,10 @@
 
 namespace Symfony\AI\Platform\Bridge\Voyage;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\AI\Platform\Bridge\Voyage\Contract\VoyageContract;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -22,13 +25,20 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class PlatformFactory
 {
     public static function create(
-        #[\SensitiveParameter]
-        string $apiKey,
+        #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform([new ModelClient($httpClient, $apiKey)], [new ResultConverter()], $contract);
+        return new Platform(
+            [new ModelClient($httpClient, $apiKey)],
+            [new ResultConverter()],
+            $modelCatalog,
+            $contract ?? VoyageContract::create(),
+            $eventDispatcher,
+        );
     }
 }

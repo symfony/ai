@@ -17,12 +17,12 @@ use Symfony\AI\Agent\Toolbox\ToolFactoryInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class ChainFactory implements ToolFactoryInterface
+final class ChainFactory implements ToolFactoryInterface
 {
     /**
      * @var list<ToolFactoryInterface>
      */
-    private array $factories;
+    private readonly array $factories;
 
     /**
      * @param iterable<ToolFactoryInterface> $factories

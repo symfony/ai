@@ -11,10 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Ollama\Contract;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Ollama\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
@@ -24,12 +21,6 @@ use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
 
-#[Small]
-#[CoversClass(AssistantMessageNormalizer::class)]
-#[UsesClass(Ollama::class)]
-#[UsesClass(AssistantMessage::class)]
-#[UsesClass(Model::class)]
-#[UsesClass(ToolCall::class)]
 final class AssistantMessageNormalizerTest extends TestCase
 {
     private AssistantMessageNormalizer $normalizer;
@@ -42,7 +33,7 @@ final class AssistantMessageNormalizerTest extends TestCase
     public function testSupportsNormalization()
     {
         $this->assertTrue($this->normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
-            Contract::CONTEXT_MODEL => new Ollama(),
+            Contract::CONTEXT_MODEL => new Ollama('llama3.2'),
         ]));
         $this->assertFalse($this->normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
             Contract::CONTEXT_MODEL => new Model('any-model'),

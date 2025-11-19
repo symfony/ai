@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\HuggingFace\Contract;
 
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
-use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
@@ -25,7 +25,7 @@ class MessageBagNormalizer extends ModelContractNormalizer implements Normalizer
     use NormalizerAwareTrait;
 
     /**
-     * @param MessageBagInterface $data
+     * @param MessageBag $data
      *
      * @return array{
      *     headers: array<'Content-Type', 'application/json'>,
@@ -44,7 +44,7 @@ class MessageBagNormalizer extends ModelContractNormalizer implements Normalizer
 
     protected function supportedDataClass(): string
     {
-        return MessageBagInterface::class;
+        return MessageBag::class;
     }
 
     protected function supportsModel(Model $model): bool

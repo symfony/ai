@@ -14,10 +14,15 @@ namespace Symfony\AI\Platform\Message\Content;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class DocumentUrl implements ContentInterface
+final class DocumentUrl implements ContentInterface
 {
     public function __construct(
-        public string $url,
+        private readonly string $url,
     ) {
+    }
+
+    public function getUrl(): string
+    {
+        return $this->url;
     }
 }

@@ -14,13 +14,13 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class SentenceSimilarityResult
+final class SentenceSimilarityResult
 {
     /**
      * @param array<float> $similarities
      */
     public function __construct(
-        public array $similarities,
+        public readonly array $similarities,
     ) {
     }
 

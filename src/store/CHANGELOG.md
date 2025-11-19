@@ -37,6 +37,8 @@ CHANGELOG
    - Azure AI Search
    - ChromaDB
    - ClickHouse
+   - Cloudflare
+   - Manticore
    - MariaDB
    - Meilisearch
    - MongoDB
@@ -44,8 +46,11 @@ CHANGELOG
    - Pinecone
    - PostgreSQL with pgvector extension
    - Qdrant
+   - Redis
+   - Supabase
    - SurrealDB
    - Typesense
+   - Weaviate
  * Add Retrieval Augmented Generation (RAG) support:
    - Document embedding storage
    - Similarity search for relevant documents

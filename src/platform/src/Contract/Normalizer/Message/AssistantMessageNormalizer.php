@@ -46,12 +46,12 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
             'role' => $data->getRole()->value,
         ];
 
-        if (null !== $data->content) {
-            $array['content'] = $data->content;
+        if (null !== $data->getContent()) {
+            $array['content'] = $data->getContent();
         }
 
         if ($data->hasToolCalls()) {
-            $array['tool_calls'] = $this->normalizer->normalize($data->toolCalls, $format, $context);
+            $array['tool_calls'] = $this->normalizer->normalize($data->getToolCalls(), $format, $context);
         }
 
         return $array;

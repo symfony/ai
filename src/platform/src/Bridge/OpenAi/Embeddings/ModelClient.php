@@ -11,25 +11,24 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 
+use Symfony\AI\Platform\Bridge\OpenAi\AbstractModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelClientInterface as PlatformResponseFactory;
+use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class ModelClient implements PlatformResponseFactory
+final class ModelClient extends AbstractModelClient implements ModelClientInterface
 {
     public function __construct(
-        private HttpClientInterface $httpClient,
-        #[\SensitiveParameter]
-        private string $apiKey,
+        private readonly HttpClientInterface $httpClient,
+        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly ?string $region = null,
     ) {
-        '' !== $apiKey || throw new InvalidArgumentException('The API key must not be empty.');
-        str_starts_with($apiKey, 'sk-') || throw new InvalidArgumentException('The API key must start with "sk-".');
+        self::validateApiKey($apiKey);
     }
 
     public function supports(Model $model): bool
@@ -39,7 +38,7 @@ final readonly class ModelClient implements PlatformResponseFactory
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        return new RawHttpResult($this->httpClient->request('POST', 'https://api.openai.com/v1/embeddings', [
+        return new RawHttpResult($this->httpClient->request('POST', self::getBaseUrl($this->region).'/v1/embeddings', [
             'auth_bearer' => $this->apiKey,
             'json' => array_merge($options, [
                 'model' => $model->getName(),

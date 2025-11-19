@@ -17,10 +17,10 @@ namespace Symfony\AI\Store\Document;
 interface LoaderInterface
 {
     /**
-     * @param string               $source  Identifier for the loader to load the documents from, e.g. file path, folder, or URL.
+     * @param string|null          $source  Identifier for the loader to load the documents from, e.g. file path, folder, or URL. Can be null for InMemoryLoader.
      * @param array<string, mixed> $options loader specific set of options to control the loading process
      *
-     * @return iterable<TextDocument> iterable of TextDocuments loaded from the source
+     * @return iterable<EmbeddableDocumentInterface> iterable of embeddable documents loaded from the source
      */
-    public function __invoke(string $source, array $options = []): iterable;
+    public function load(?string $source, array $options = []): iterable;
 }

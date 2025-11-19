@@ -17,8 +17,18 @@ namespace Symfony\AI\Platform\Tool;
 final class ExecutionReference
 {
     public function __construct(
-        public string $class,
-        public string $method = '__invoke',
+        private string $class,
+        private string $method = '__invoke',
     ) {
+    }
+
+    public function getClass(): string
+    {
+        return $this->class;
+    }
+
+    public function getMethod(): string
+    {
+        return $this->method;
     }
 }

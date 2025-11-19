@@ -12,8 +12,10 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -23,14 +25,16 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\Component\HttpClient\EventSourceHttpClient;
-use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 
 /**
  * @author Roy Garrido
  */
-final readonly class ResultConverter implements ResultConverterInterface
+final class ResultConverter implements ResultConverterInterface
 {
+    public const OUTCOME_OK = 'OUTCOME_OK';
+    public const OUTCOME_FAILED = 'OUTCOME_FAILED';
+    public const OUTCOME_DEADLINE_EXCEEDED = 'OUTCOME_DEADLINE_EXCEEDED';
+
     public function supports(Model $model): bool
     {
         return $model instanceof Gemini;
@@ -38,13 +42,23 @@ final readonly class ResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
+        $response = $result->getObject();
+
+        if (429 === $response->getStatusCode()) {
+            throw new RateLimitExceededException();
+        }
+
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result->getObject()));
+            return new StreamResult($this->convertStream($result));
         }
 
         $data = $result->getData();
 
         if (!isset($data['candidates'][0]['content']['parts'][0])) {
+            if (isset($data['error'])) {
+                throw new RuntimeException(\sprintf('Error "%s" - "%s": "%s".', $data['error']['code'], $data['error']['status'], $data['error']['message']));
+            }
+
             throw new RuntimeException('Response does not contain any content.');
         }
 
@@ -53,50 +67,21 @@ final readonly class ResultConverter implements ResultConverterInterface
         return 1 === \count($choices) ? $choices[0] : new ChoiceResult(...$choices);
     }
 
-    private function convertStream(HttpResponse $result): \Generator
+    private function convertStream(RawResultInterface $result): \Generator
     {
-        foreach ((new EventSourceHttpClient())->stream($result) as $chunk) {
-            if ($chunk->isFirst() || $chunk->isLast()) {
+        foreach ($result->getDataStream() as $data) {
+            $choices = array_map($this->convertChoice(...), $data['candidates'] ?? []);
+
+            if (!$choices) {
                 continue;
             }
 
-            $jsonDelta = trim($chunk->getContent());
-
-            // Remove leading/trailing brackets
-            if (str_starts_with($jsonDelta, '[') || str_starts_with($jsonDelta, ',')) {
-                $jsonDelta = substr($jsonDelta, 1);
-            }
-            if (str_ends_with($jsonDelta, ']')) {
-                $jsonDelta = substr($jsonDelta, 0, -1);
+            if (1 !== \count($choices)) {
+                yield new ChoiceResult(...$choices);
+                continue;
             }
 
-            // Split in case of multiple JSON objects
-            $deltas = explode(",\r\n", $jsonDelta);
-
-            foreach ($deltas as $delta) {
-                if ('' === $delta) {
-                    continue;
-                }
-
-                try {
-                    $data = json_decode($delta, true, 512, \JSON_THROW_ON_ERROR);
-                } catch (\JsonException $e) {
-                    throw new RuntimeException('Failed to decode JSON response.', 0, $e);
-                }
-
-                $choices = array_map($this->convertChoice(...), $data['candidates'] ?? []);
-
-                if (!$choices) {
-                    continue;
-                }
-
-                if (1 !== \count($choices)) {
-                    yield new ChoiceResult(...$choices);
-                    continue;
-                }
-
-                yield $choices[0]->getContent();
-            }
+            yield $choices[0]->getContent();
         }
     }
 
@@ -110,24 +95,62 @@ final readonly class ResultConverter implements ResultConverterInterface
      *                 name: string,
      *                 args: mixed[]
      *             },
-     *             text?: string
+     *             text?: string,
+     *             executableCode?: array{
+     *                 language?: string,
+     *                 code?: string
+     *             },
+     *             codeExecutionResult?: array{
+     *                 outcome: self::OUTCOME_*,
+     *                 output: string
+     *             }
      *         }[]
      *     }
      * } $choice
      */
-    private function convertChoice(array $choice): ToolCallResult|TextResult
+    private function convertChoice(array $choice): ToolCallResult|TextResult|BinaryResult
     {
-        $contentPart = $choice['content']['parts'][0] ?? [];
+        $contentParts = $choice['content']['parts'];
 
-        if (isset($contentPart['functionCall'])) {
-            return new ToolCallResult($this->convertToolCall($contentPart['functionCall']));
+        // If any part is a function call, return it immediately and ignore all other parts.
+        foreach ($contentParts as $contentPart) {
+            if (isset($contentPart['functionCall'])) {
+                return new ToolCallResult($this->convertToolCall($contentPart['functionCall']));
+            }
         }
 
-        if (isset($contentPart['text'])) {
-            return new TextResult($contentPart['text']);
+        if (1 === \count($contentParts)) {
+            $contentPart = $contentParts[0];
+
+            if (isset($contentPart['text'])) {
+                return new TextResult($contentPart['text']);
+            }
+
+            if (isset($contentPart['inlineData'])) {
+                return new BinaryResult($contentPart['inlineData']['data'], $contentPart['inlineData']['mimeType'] ?? null);
+            }
+
+            throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finishReason']));
         }
 
-        throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finishReason']));
+        $content = '';
+        $successfulCodeExecutionDetected = false;
+        foreach ($contentParts as $contentPart) {
+            if ($this->isSuccessfulCodeExecution($contentPart)) {
+                $successfulCodeExecutionDetected = true;
+                continue;
+            }
+
+            if ($successfulCodeExecutionDetected) {
+                $content .= $contentPart['text'];
+            }
+        }
+
+        if ('' !== $content) {
+            return new TextResult($content);
+        }
+
+        throw new RuntimeException('Code execution failed.');
     }
 
     /**
@@ -140,5 +163,24 @@ final readonly class ResultConverter implements ResultConverterInterface
     private function convertToolCall(array $toolCall): ToolCall
     {
         return new ToolCall($toolCall['id'] ?? '', $toolCall['name'], $toolCall['args']);
+    }
+
+    /**
+     * @param array{
+     *     codeExecutionResult?: array{
+     *         outcome: self::OUTCOME_*,
+     *         output: string
+     *     }
+     * } $contentPart
+     */
+    private function isSuccessfulCodeExecution(array $contentPart): bool
+    {
+        if (!isset($contentPart['codeExecutionResult'])) {
+            return false;
+        }
+
+        $result = $contentPart['codeExecutionResult'];
+
+        return self::OUTCOME_OK === $result['outcome'];
     }
 }

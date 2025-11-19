@@ -11,13 +11,9 @@
 
 namespace Symfony\AI\Platform\Tests\Result;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\TextResult;
 
-#[CoversClass(TextResult::class)]
-#[Small]
 final class TextResultTest extends TestCase
 {
     public function testGetContent()

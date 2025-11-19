@@ -14,11 +14,11 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class Classification
+final class Classification
 {
     public function __construct(
-        public string $label,
-        public float $score,
+        public readonly string $label,
+        public readonly float $score,
     ) {
     }
 }

@@ -19,9 +19,14 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 final class BinaryResult extends BaseResult
 {
     public function __construct(
-        public string $data,
-        public ?string $mimeType = null,
+        private string $data,
+        private ?string $mimeType = null,
     ) {
+    }
+
+    public function getMimeType(): ?string
+    {
+        return $this->mimeType;
     }
 
     public function getContent(): string
@@ -34,12 +39,12 @@ final class BinaryResult extends BaseResult
         return base64_encode($this->data);
     }
 
-    public function toDataUri(): string
+    public function toDataUri(?string $mimeType = null): string
     {
-        if (null === $this->mimeType) {
+        if (null === ($mimeType ?? $this->mimeType)) {
             throw new RuntimeException('Mime type is not set.');
         }
 
-        return 'data:'.$this->mimeType.';base64,'.$this->toBase64();
+        return 'data:'.($mimeType ?? $this->mimeType).';base64,'.$this->toBase64();
     }
 }

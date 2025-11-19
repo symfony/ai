@@ -5,8 +5,6 @@
          bootstrap="tests/bootstrap.php"
          cacheDirectory=".phpunit.cache"
          colors="true"
-         requireCoverageMetadata="true"
-         beStrictAboutCoverageMetadata="true"
          beStrictAboutOutputDuringTests="true"
          failOnRisky="true"
          failOnWarning="true">

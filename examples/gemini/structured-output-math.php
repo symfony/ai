@@ -9,25 +9,24 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\StructuredOutput\AgentProcessor;
 use Symfony\AI\Fixtures\StructuredOutput\MathReasoning;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
-$model = new Gemini(Gemini::GEMINI_1_5_FLASH);
+$dispatcher = new EventDispatcher();
+$dispatcher->addSubscriber(new PlatformSubscriber());
 
-$processor = new AgentProcessor();
-$agent = new Agent($platform, $model, [$processor], [$processor], logger());
+$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client(), eventDispatcher: $dispatcher);
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),
 );
-$result = $agent->call($messages, ['output_structure' => MathReasoning::class]);
 
-dump($result->getContent());
+$result = $platform->invoke('gemini-2.5-flash', $messages, ['response_format' => MathReasoning::class]);
+
+dump($result->asObject());

@@ -41,10 +41,10 @@ class ToolNormalizer extends ModelContractNormalizer
     {
         return [
             'toolSpec' => [
-                'name' => $data->name,
-                'description' => $data->description,
+                'name' => $data->getName(),
+                'description' => $data->getDescription(),
                 'inputSchema' => [
-                    'json' => $data->parameters ?? new \stdClass(),
+                    'json' => $data->getParameters() ?? new \stdClass(),
                 ],
             ],
         ];

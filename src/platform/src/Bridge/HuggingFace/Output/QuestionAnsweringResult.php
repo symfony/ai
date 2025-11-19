@@ -14,13 +14,13 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class QuestionAnsweringResult
+final class QuestionAnsweringResult
 {
     public function __construct(
-        public string $answer,
-        public int $startIndex,
-        public int $endIndex,
-        public float $score,
+        public readonly string $answer,
+        public readonly int $startIndex,
+        public readonly int $endIndex,
+        public readonly float $score,
     ) {
     }
 

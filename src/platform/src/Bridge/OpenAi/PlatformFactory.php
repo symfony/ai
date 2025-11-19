@@ -11,10 +11,10 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi;
 
-use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
-use Symfony\AI\Platform\Bridge\OpenAi\Whisper\ModelClient as WhisperModelClient;
-use Symfony\AI\Platform\Bridge\OpenAi\Whisper\ResultConverter as WhisperResponseConverter;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -22,30 +22,39 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class PlatformFactory
+final class PlatformFactory
 {
+    public const REGION_EU = 'EU';
+    public const REGION_US = 'US';
+
     public static function create(
-        #[\SensitiveParameter]
-        string $apiKey,
+        #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        ?string $region = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
             [
-                new Gpt\ModelClient($httpClient, $apiKey),
-                new Embeddings\ModelClient($httpClient, $apiKey),
-                new DallE\ModelClient($httpClient, $apiKey),
-                new WhisperModelClient($httpClient, $apiKey),
+                new Gpt\ModelClient($httpClient, $apiKey, $region),
+                new Embeddings\ModelClient($httpClient, $apiKey, $region),
+                new DallE\ModelClient($httpClient, $apiKey, $region),
+                new TextToSpeech\ModelClient($httpClient, $apiKey, $region),
+                new Whisper\ModelClient($httpClient, $apiKey, $region),
             ],
             [
                 new Gpt\ResultConverter(),
                 new Embeddings\ResultConverter(),
                 new DallE\ResultConverter(),
-                new WhisperResponseConverter(),
+                new TextToSpeech\ResultConverter(),
+                new Whisper\ResultConverter(),
             ],
-            $contract ?? Contract::create(new AudioNormalizer()),
+            $modelCatalog,
+            $contract ?? OpenAiContract::create(),
+            $eventDispatcher,
         );
     }
 }

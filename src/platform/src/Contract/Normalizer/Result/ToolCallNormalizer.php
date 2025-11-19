@@ -46,11 +46,11 @@ final class ToolCallNormalizer implements NormalizerInterface
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         return [
-            'id' => $data->id,
+            'id' => $data->getId(),
             'type' => 'function',
             'function' => [
-                'name' => $data->name,
-                'arguments' => json_encode($data->arguments),
+                'name' => $data->getName(),
+                'arguments' => json_encode($data->getArguments()),
             ],
         ];
     }

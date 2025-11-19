@@ -31,9 +31,9 @@ final class UserMessageNormalizer extends ModelContractNormalizer
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $parts = [];
-        foreach ($data->content as $content) {
+        foreach ($data->getContent() as $content) {
             if ($content instanceof Text) {
-                $parts[] = ['text' => $content->text];
+                $parts[] = ['text' => $content->getText()];
             }
             if ($content instanceof File) {
                 $parts[] = ['inline_data' => [

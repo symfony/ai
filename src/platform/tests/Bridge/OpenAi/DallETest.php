@@ -11,28 +11,24 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\OpenAi;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\DallE;
 
-#[CoversClass(DallE::class)]
-#[Small]
 final class DallETest extends TestCase
 {
     public function testItCreatesDallEWithDefaultSettings()
     {
-        $dallE = new DallE();
+        $dallE = new DallE('dall-e-2');
 
-        $this->assertSame(DallE::DALL_E_2, $dallE->getName());
+        $this->assertSame('dall-e-2', $dallE->getName());
         $this->assertSame([], $dallE->getOptions());
     }
 
     public function testItCreatesDallEWithCustomSettings()
     {
-        $dallE = new DallE(DallE::DALL_E_3, ['response_format' => 'base64', 'n' => 2]);
+        $dallE = new DallE('dall-e-3', options: ['response_format' => 'base64', 'n' => 2]);
 
-        $this->assertSame(DallE::DALL_E_3, $dallE->getName());
+        $this->assertSame('dall-e-3', $dallE->getName());
         $this->assertSame(['response_format' => 'base64', 'n' => 2], $dallE->getOptions());
     }
 }

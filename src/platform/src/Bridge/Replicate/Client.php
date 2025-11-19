@@ -18,12 +18,12 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class Client
+final class Client
 {
     public function __construct(
-        private HttpClientInterface $httpClient,
-        private ClockInterface $clock,
-        #[\SensitiveParameter] private string $apiKey,
+        private readonly HttpClientInterface $httpClient,
+        private readonly ClockInterface $clock,
+        #[\SensitiveParameter] private readonly string $apiKey,
     ) {
     }
 

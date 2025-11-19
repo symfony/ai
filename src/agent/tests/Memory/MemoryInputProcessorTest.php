@@ -11,9 +11,6 @@
 
 namespace Symfony\AI\Agent\Tests\Memory;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Memory\Memory;
@@ -21,16 +18,7 @@ use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\MemoryProviderInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Model;
 
-#[CoversClass(MemoryInputProcessor::class)]
-#[UsesClass(MemoryProviderInterface::class)]
-#[UsesClass(Input::class)]
-#[UsesClass(MessageBag::class)]
-#[UsesClass(Model::class)]
-#[UsesClass(Memory::class)]
-#[UsesClass(Message::class)]
-#[Small]
 final class MemoryInputProcessorTest extends TestCase
 {
     public function testItIsDoingNothingOnInactiveMemory()
@@ -39,11 +27,9 @@ final class MemoryInputProcessorTest extends TestCase
         $memoryProvider->expects($this->never())->method($this->anything());
 
         $memoryInputProcessor = new MemoryInputProcessor($memoryProvider);
-        $memoryInputProcessor->processInput($input = new Input(
-            $this->createStub(Model::class),
-            new MessageBag(),
-            ['use_memory' => false]
-        ));
+        $memoryInputProcessor->processInput(
+            $input = new Input('gpt-4', new MessageBag(), ['use_memory' => false]),
+        );
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
     }
@@ -51,11 +37,9 @@ final class MemoryInputProcessorTest extends TestCase
     public function testItIsDoingNothingWhenThereAreNoProviders()
     {
         $memoryInputProcessor = new MemoryInputProcessor();
-        $memoryInputProcessor->processInput($input = new Input(
-            $this->createStub(Model::class),
-            new MessageBag(),
-            ['use_memory' => true]
-        ));
+        $memoryInputProcessor->processInput(
+            $input = new Input('gpt-4', new MessageBag(), ['use_memory' => true]),
+        );
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
     }
@@ -64,12 +48,12 @@ final class MemoryInputProcessorTest extends TestCase
     {
         $firstMemoryProvider = $this->createMock(MemoryProviderInterface::class);
         $firstMemoryProvider->expects($this->once())
-            ->method('loadMemory')
+            ->method('load')
             ->willReturn([new Memory('First memory content')]);
 
         $secondMemoryProvider = $this->createMock(MemoryProviderInterface::class);
         $secondMemoryProvider->expects($this->once())
-            ->method('loadMemory')
+            ->method('load')
             ->willReturn([]);
 
         $memoryInputProcessor = new MemoryInputProcessor(
@@ -78,16 +62,14 @@ final class MemoryInputProcessorTest extends TestCase
         );
 
         $memoryInputProcessor->processInput($input = new Input(
-            $this->createStub(Model::class),
+            'gpt-4',
             new MessageBag(Message::forSystem('You are a helpful and kind assistant.')),
-            []
+            [],
         ));
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
         $this->assertSame(
             <<<MARKDOWN
-                You are a helpful and kind assistant.
-
                 # Conversation Memory
                 This is the memory I have found for this conversation. The memory has more weight to answer user input,
                 so try to answer utilizing the memory as much as possible. Your answer must be changed to fit the given
@@ -95,8 +77,12 @@ final class MemoryInputProcessorTest extends TestCase
                 reference it as this is just for your reference.
 
                 First memory content
+
+                # System Prompt
+
+                You are a helpful and kind assistant.
                 MARKDOWN,
-            $input->messages->getSystemMessage()->content,
+            $input->getMessageBag()->getSystemMessage()->getContent(),
         );
     }
 
@@ -104,16 +90,12 @@ final class MemoryInputProcessorTest extends TestCase
     {
         $firstMemoryProvider = $this->createMock(MemoryProviderInterface::class);
         $firstMemoryProvider->expects($this->once())
-            ->method('loadMemory')
+            ->method('load')
             ->willReturn([new Memory('First memory content')]);
 
         $memoryInputProcessor = new MemoryInputProcessor($firstMemoryProvider);
 
-        $memoryInputProcessor->processInput($input = new Input(
-            $this->createStub(Model::class),
-            new MessageBag(),
-            []
-        ));
+        $memoryInputProcessor->processInput($input = new Input('gpt-4', new MessageBag(), []));
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
         $this->assertSame(
@@ -126,7 +108,7 @@ final class MemoryInputProcessorTest extends TestCase
 
                 First memory content
                 MARKDOWN,
-            $input->messages->getSystemMessage()->content,
+            $input->getMessageBag()->getSystemMessage()->getContent(),
         );
     }
 
@@ -134,16 +116,12 @@ final class MemoryInputProcessorTest extends TestCase
     {
         $firstMemoryProvider = $this->createMock(MemoryProviderInterface::class);
         $firstMemoryProvider->expects($this->once())
-            ->method('loadMemory')
+            ->method('load')
             ->willReturn([new Memory('First memory content'), new Memory('Second memory content')]);
 
         $memoryInputProcessor = new MemoryInputProcessor($firstMemoryProvider);
 
-        $memoryInputProcessor->processInput($input = new Input(
-            $this->createStub(Model::class),
-            new MessageBag(),
-            []
-        ));
+        $memoryInputProcessor->processInput($input = new Input('gpt-4', new MessageBag(), []));
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
         $this->assertSame(
@@ -157,7 +135,7 @@ final class MemoryInputProcessorTest extends TestCase
                 First memory content
                 Second memory content
                 MARKDOWN,
-            $input->messages->getSystemMessage()->content,
+            $input->getMessageBag()->getSystemMessage()->getContent(),
         );
     }
 
@@ -165,18 +143,14 @@ final class MemoryInputProcessorTest extends TestCase
     {
         $firstMemoryProvider = $this->createMock(MemoryProviderInterface::class);
         $firstMemoryProvider->expects($this->once())
-            ->method('loadMemory')
+            ->method('load')
             ->willReturn([]);
 
         $memoryInputProcessor = new MemoryInputProcessor($firstMemoryProvider);
 
-        $memoryInputProcessor->processInput($input = new Input(
-            $this->createStub(Model::class),
-            new MessageBag(),
-            []
-        ));
+        $memoryInputProcessor->processInput($input = new Input('gpt-4', new MessageBag(), []));
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
-        $this->assertNull($input->messages->getSystemMessage()?->content);
+        $this->assertNull($input->getMessageBag()->getSystemMessage()?->getContent());
     }
 }

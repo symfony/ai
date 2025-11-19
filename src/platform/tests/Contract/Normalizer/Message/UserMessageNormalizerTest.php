@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Platform\Tests\Contract\Normalizer\Message;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\Normalizer\Message\UserMessageNormalizer;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
@@ -20,10 +18,6 @@ use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-#[CoversClass(UserMessageNormalizer::class)]
-#[UsesClass(UserMessage::class)]
-#[UsesClass(Text::class)]
-#[UsesClass(ImageUrl::class)]
 final class UserMessageNormalizerTest extends TestCase
 {
     private UserMessageNormalizer $normalizer;
@@ -71,7 +65,7 @@ final class UserMessageNormalizerTest extends TestCase
         $innerNormalizer = $this->createMock(NormalizerInterface::class);
         $innerNormalizer->expects($this->once())
             ->method('normalize')
-            ->with($message->content, null, [])
+            ->with($message->getContent(), null, [])
             ->willReturn($expectedContent);
 
         $this->normalizer->setNormalizer($innerNormalizer);

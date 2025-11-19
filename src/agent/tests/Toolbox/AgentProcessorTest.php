@@ -11,35 +11,29 @@
 
 namespace Symfony\AI\Agent\Tests\Toolbox;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Agent\Exception\MissingModelSupportException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
+use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
-use Symfony\AI\Platform\Capability;
+use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\ToolCallMessage;
-use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\StreamResult as GenericStreamResult;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Test\PlainConverter;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
-#[CoversClass(AgentProcessor::class)]
-#[UsesClass(Input::class)]
-#[UsesClass(Output::class)]
-#[UsesClass(Tool::class)]
-#[UsesClass(ToolCall::class)]
-#[UsesClass(ToolCallResult::class)]
-#[UsesClass(ExecutionReference::class)]
-#[UsesClass(MessageBag::class)]
-#[UsesClass(MissingModelSupportException::class)]
-#[UsesClass(Model::class)]
 class AgentProcessorTest extends TestCase
 {
     public function testProcessInputWithoutRegisteredToolsWillResultInNoOptionChange()
@@ -47,9 +41,8 @@ class AgentProcessorTest extends TestCase
         $toolbox = $this->createStub(ToolboxInterface::class);
         $toolbox->method('getTools')->willReturn([]);
 
-        $model = new Model('gpt-4', [Capability::TOOL_CALLING]);
         $processor = new AgentProcessor($toolbox);
-        $input = new Input($model, new MessageBag(), []);
+        $input = new Input('gpt-4', new MessageBag());
 
         $processor->processInput($input);
 
@@ -63,9 +56,8 @@ class AgentProcessorTest extends TestCase
         $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
         $toolbox->method('getTools')->willReturn([$tool1, $tool2]);
 
-        $model = new Model('gpt-4', [Capability::TOOL_CALLING]);
         $processor = new AgentProcessor($toolbox);
-        $input = new Input($model, new MessageBag(), []);
+        $input = new Input('gpt-4', new MessageBag());
 
         $processor->processInput($input);
 
@@ -79,43 +71,32 @@ class AgentProcessorTest extends TestCase
         $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
         $toolbox->method('getTools')->willReturn([$tool1, $tool2]);
 
-        $model = new Model('gpt-4', [Capability::TOOL_CALLING]);
         $processor = new AgentProcessor($toolbox);
-        $input = new Input($model, new MessageBag(), ['tools' => ['tool2']]);
+        $input = new Input('gpt-4', new MessageBag(), ['tools' => ['tool2']]);
 
         $processor->processInput($input);
 
         $this->assertSame(['tools' => [$tool2]], $input->getOptions());
     }
 
-    public function testProcessInputWithUnsupportedToolCallingWillThrowException()
-    {
-        $this->expectException(MissingModelSupportException::class);
-
-        $model = new Model('gpt-3');
-        $processor = new AgentProcessor($this->createStub(ToolboxInterface::class));
-        $input = new Input($model, new MessageBag(), []);
-
-        $processor->processInput($input);
-    }
-
     public function testProcessOutputWithToolCallResponseKeepingMessages()
     {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
         $toolbox = $this->createMock(ToolboxInterface::class);
-        $toolbox->expects($this->once())->method('execute')->willReturn('Test response');
-
-        $model = new Model('gpt-4', [Capability::TOOL_CALLING]);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Test response'));
 
         $messageBag = new MessageBag();
-
-        $result = new ToolCallResult(new ToolCall('id1', 'tool1', ['arg1' => 'value1']));
+        $result = new ToolCallResult($toolCall);
 
         $agent = $this->createStub(AgentInterface::class);
 
         $processor = new AgentProcessor($toolbox, keepToolMessages: true);
         $processor->setAgent($agent);
 
-        $output = new Output($model, $result, $messageBag, []);
+        $output = new Output('gpt-4', $result, $messageBag);
 
         $processor->processOutput($output);
 
@@ -126,24 +107,179 @@ class AgentProcessorTest extends TestCase
 
     public function testProcessOutputWithToolCallResponseForgettingMessages()
     {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
         $toolbox = $this->createMock(ToolboxInterface::class);
-        $toolbox->expects($this->once())->method('execute')->willReturn('Test response');
-
-        $model = new Model('gpt-4', [Capability::TOOL_CALLING]);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Test response'));
 
         $messageBag = new MessageBag();
-
-        $result = new ToolCallResult(new ToolCall('id1', 'tool1', ['arg1' => 'value1']));
+        $result = new ToolCallResult($toolCall);
 
         $agent = $this->createStub(AgentInterface::class);
 
         $processor = new AgentProcessor($toolbox, keepToolMessages: false);
         $processor->setAgent($agent);
 
-        $output = new Output($model, $result, $messageBag, []);
+        $output = new Output('gpt-4', $result, $messageBag);
 
         $processor->processOutput($output);
 
         $this->assertCount(0, $messageBag);
+    }
+
+    public function testSourcesEndUpInResultMetadataWithSettingOn()
+    {
+        $toolCall = new ToolCall('call_1234', 'tool_sources', ['arg1' => 'value1']);
+        $source1 = new Source('Relevant Article 1', 'http://example.com/article1', 'Content of article about the topic');
+        $source2 = new Source('Relevant Article 2', 'http://example.com/article2', 'More content of article about the topic');
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', [$source1, $source2]));
+
+        $messageBag = new MessageBag();
+        $result = new ToolCallResult($toolCall);
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturn(new TextResult('Final response based on the two articles.'));
+
+        $processor = new AgentProcessor($toolbox, includeSources: true);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        $metadata = $output->getResult()->getMetadata();
+        $this->assertTrue($metadata->has('sources'));
+        $this->assertCount(2, $metadata->get('sources'));
+        $this->assertSame([$source1, $source2], $metadata->get('sources'));
+    }
+
+    public function testSourcesDoNotEndUpInResultMetadataWithSettingOff()
+    {
+        $toolCall = new ToolCall('call_1234', 'tool_sources', ['arg1' => 'value1']);
+        $source1 = new Source('Relevant Article 1', 'http://example.com/article1', 'Content of article about the topic');
+        $source2 = new Source('Relevant Article 2', 'http://example.com/article2', 'More content of article about the topic');
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', [$source1, $source2]));
+
+        $messageBag = new MessageBag();
+        $result = new ToolCallResult($toolCall);
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturn(new TextResult('Final response based on the two articles.'));
+
+        $processor = new AgentProcessor($toolbox, includeSources: false);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        $metadata = $output->getResult()->getMetadata();
+        $this->assertFalse($metadata->has('sources'));
+    }
+
+    public function testSourcesGetCollectedAcrossConsecutiveToolCalls()
+    {
+        $toolCall1 = new ToolCall('call_1234', 'tool_sources', ['arg1' => 'value1']);
+        $source1 = new Source('Relevant Article 1', 'http://example.com/article1', 'Content of article about the topic');
+        $toolCall2 = new ToolCall('call_5678', 'tool_sources', ['arg1' => 'value2']);
+        $source2 = new Source('Relevant Article 2', 'http://example.com/article2', 'More content of article about the topic');
+
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnOnConsecutiveCalls(
+                new ToolResult($toolCall1, 'Response based on the first article.', [$source1]),
+                new ToolResult($toolCall2, 'Response based on the second article.', [$source2])
+            );
+
+        $messageBag = new MessageBag();
+        $result = new ToolCallResult($toolCall1);
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform
+            ->expects($this->exactly(2))
+            ->method('invoke')
+            ->willReturnOnConsecutiveCalls(
+                new DeferredResult(new PlainConverter(new ToolCallResult($toolCall2)), new InMemoryRawResult()),
+                new DeferredResult(new PlainConverter(new TextResult('Final response based on both articles.')), new InMemoryRawResult())
+            );
+
+        $processor = new AgentProcessor($toolbox, includeSources: true);
+        $agent = new Agent($platform, 'foo-bar', [$processor], [$processor]);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        $metadata = $output->getResult()->getMetadata();
+        $this->assertTrue($metadata->has('sources'));
+        $this->assertCount(2, $metadata->get('sources'));
+        $this->assertSame([$source1, $source2], $metadata->get('sources'));
+    }
+
+    public function testSourcesEndUpInResultMetadataWithStreaming()
+    {
+        $toolCall = new ToolCall('call_1234', 'tool_sources', ['arg1' => 'value1']);
+        $source1 = new Source('Relevant Article 1', 'http://example.com/article1', 'Content of article about the topic');
+        $source2 = new Source('Relevant Article 2', 'http://example.com/article2', 'More content of article about the topic');
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', [$source1, $source2]));
+
+        $messageBag = new MessageBag();
+
+        // Create a generator that yields chunks and then a ToolCallResult
+        $generator = (function () use ($toolCall) {
+            yield 'chunk1';
+            yield 'chunk2';
+            yield new ToolCallResult($toolCall);
+        })();
+
+        $result = new GenericStreamResult($generator);
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturn(new TextResult('Final response based on the two articles.'));
+
+        $processor = new AgentProcessor($toolbox, includeSources: true);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        // Consume the stream
+        $content = '';
+        foreach ($output->getResult()->getContent() as $chunk) {
+            $content .= $chunk;
+        }
+
+        // After consuming the stream, metadata should be available
+        $metadata = $output->getResult()->getMetadata();
+        $this->assertTrue($metadata->has('sources'));
+        $this->assertCount(2, $metadata->get('sources'));
+        $this->assertSame([$source1, $source2], $metadata->get('sources'));
     }
 }

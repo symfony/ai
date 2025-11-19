@@ -10,21 +10,16 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\Metadata\TokenUsage;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$model = new Gpt(Gpt::GPT_4O_MINI, [
-    'temperature' => 0.5, // default options for the model
-]);
 
-$agent = new Agent($platform, $model, outputProcessors: [new TokenOutputProcessor()], logger: logger());
+$agent = new Agent($platform, 'gpt-4o-mini', outputProcessors: [new TokenOutputProcessor()]);
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
@@ -33,12 +28,4 @@ $result = $agent->call($messages, [
     'max_tokens' => 500, // specific options just for this call
 ]);
 
-$metadata = $result->getMetadata();
-$tokenUsage = $metadata->get('token_usage');
-
-assert($tokenUsage instanceof TokenUsage);
-
-echo 'Utilized Tokens: '.$tokenUsage->totalTokens.\PHP_EOL;
-echo '-- Prompt Tokens: '.$tokenUsage->promptTokens.\PHP_EOL;
-echo '-- Completion Tokens: '.$tokenUsage->completionTokens.\PHP_EOL;
-echo 'Remaining Tokens: '.$tokenUsage->remainingTokens.\PHP_EOL;
+print_token_usage($result->getMetadata());

@@ -11,9 +11,6 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\LmStudio\Completions;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions\ModelClient;
@@ -21,10 +18,6 @@ use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
-#[CoversClass(ModelClient::class)]
-#[UsesClass(Completions::class)]
-#[UsesClass(EventSourceHttpClient::class)]
-#[Small]
 class ModelClientTest extends TestCase
 {
     public function testItIsSupportingTheCorrectModel()
@@ -92,7 +85,6 @@ class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'http://localhost:1234');
 
         $reflection = new \ReflectionProperty($client, 'httpClient');
-        $reflection->setAccessible(true);
 
         $this->assertInstanceOf(EventSourceHttpClient::class, $reflection->getValue($client));
     }
@@ -103,7 +95,6 @@ class ModelClientTest extends TestCase
         $client = new ModelClient($eventSourceHttpClient, 'http://localhost:1234');
 
         $reflection = new \ReflectionProperty($client, 'httpClient');
-        $reflection->setAccessible(true);
 
         $this->assertSame($eventSourceHttpClient, $reflection->getValue($client));
     }

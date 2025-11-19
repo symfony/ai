@@ -11,9 +11,13 @@
 
 namespace Symfony\AI\Platform;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\AI\Platform\Event\InvocationEvent;
+use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
-use Symfony\AI\Platform\Result\ResultPromise;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -37,25 +41,40 @@ final class Platform implements PlatformInterface
     public function __construct(
         iterable $modelClients,
         iterable $resultConverters,
+        private readonly ModelCatalogInterface $modelCatalog,
         private ?Contract $contract = null,
+        private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
         $this->contract = $contract ?? Contract::create();
         $this->modelClients = $modelClients instanceof \Traversable ? iterator_to_array($modelClients) : $modelClients;
         $this->resultConverters = $resultConverters instanceof \Traversable ? iterator_to_array($resultConverters) : $resultConverters;
     }
 
-    public function invoke(Model $model, array|string|object $input, array $options = []): ResultPromise
+    public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
     {
-        $payload = $this->contract->createRequestPayload($model, $input);
-        $options = array_merge($model->getOptions(), $options);
+        $model = $this->modelCatalog->getModel($model);
+
+        $event = new InvocationEvent($model, $input, $options);
+        $this->eventDispatcher?->dispatch($event);
+
+        $payload = $this->contract->createRequestPayload($event->getModel(), $event->getInput());
+        $options = array_merge($model->getOptions(), $event->getOptions());
 
         if (isset($options['tools'])) {
             $options['tools'] = $this->contract->createToolOption($options['tools'], $model);
         }
 
-        $result = $this->doInvoke($model, $payload, $options);
+        $result = $this->convertResult($model, $this->doInvoke($model, $payload, $options), $options);
 
-        return $this->convertResult($model, $result, $options);
+        $event = new ResultEvent($model, $result, $options);
+        $this->eventDispatcher?->dispatch($event);
+
+        return $event->getDeferredResult();
+    }
+
+    public function getModelCatalog(): ModelCatalogInterface
+    {
+        return $this->modelCatalog;
     }
 
     /**
@@ -76,11 +95,11 @@ final class Platform implements PlatformInterface
     /**
      * @param array<string, mixed> $options
      */
-    private function convertResult(Model $model, RawResultInterface $result, array $options): ResultPromise
+    private function convertResult(Model $model, RawResultInterface $result, array $options): DeferredResult
     {
         foreach ($this->resultConverters as $resultConverter) {
             if ($resultConverter->supports($model)) {
-                return new ResultPromise($resultConverter->convert(...), $result, $options);
+                return new DeferredResult($resultConverter, $result, $options);
             }
         }
 

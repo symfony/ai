@@ -1,0 +1,62 @@
+<div id="crop-component" class="card mx-auto shadow-lg" {{ attributes }}>
+    <div class="card-header p-2">
+        {{ ux_icon('material-symbols:crop', { height: '32px', width: '32px' }) }}
+        <strong class="ms-1 pt-1 d-inline-block">Smart Image Cropping</strong>
+    </div>
+    <div id="chat-body" class="card-body p-4">
+        <h5>Upload</h5>
+            {% set form = this.form %}
+            {{ form_start(form, {
+                attr: {
+                    'data-action': 'live#action:prevent',
+                    'data-live-action-param': 'crop',
+                    'data-model': 'norender|*'
+                }
+            }) }}
+                <div class="row">
+                    <div class="col-md-8">
+                        {{ form_row(form.originalImage) }}
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        {{ form_row(form.format) }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form_row(form.width) }}
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-primary">
+                        {{ ux_icon('material-symbols:crop', { height: '20px', width: '20px' }) }}
+                        Crop My Image!
+                    </button>
+                </div>
+            {{ form_end(form) }}
+        <hr class="mt-4" />
+        <div class="row text-start">
+            <div class="col-md-6">
+                <h5>Original Image</h5>
+                <div class="bg-body-secondary rounded text-center p-3">
+                    {% if imageData %}
+                        <div class="mt-2">
+                            <img src="{{ imageData }}" alt="Original Image" class="img-fluid" />
+                        </div>
+                    {% else %}
+                        <p class="text-muted m-0">No image uploaded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5>Cropped Image</h5>
+                <div class="bg-body-secondary rounded text-center p-3">
+                    {% if croppedImage %}
+                        <div class="mt-2">
+                            <img src="{{ croppedImage }}" alt="Cropped Image" class="img-fluid" />
+                        </div>
+                    {% else %}
+                        <p class="text-muted m-0">No cropped image available yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

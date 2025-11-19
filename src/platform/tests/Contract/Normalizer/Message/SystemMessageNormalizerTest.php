@@ -11,14 +11,10 @@
 
 namespace Symfony\AI\Platform\Tests\Contract\Normalizer\Message;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\Normalizer\Message\SystemMessageNormalizer;
 use Symfony\AI\Platform\Message\SystemMessage;
 
-#[CoversClass(SystemMessageNormalizer::class)]
-#[UsesClass(SystemMessage::class)]
 final class SystemMessageNormalizerTest extends TestCase
 {
     private SystemMessageNormalizer $normalizer;

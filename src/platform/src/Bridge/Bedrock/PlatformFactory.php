@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Bedrock;
 
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract as AnthropicContract;
 use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeModelClient;
 use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeResultConverter;
@@ -23,16 +24,19 @@ use Symfony\AI\Platform\Bridge\Bedrock\Nova\NovaResultConverter;
 use Symfony\AI\Platform\Bridge\Meta\Contract as LlamaContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 
 /**
  * @author Björn Altmann
  */
-final readonly class PlatformFactory
+final class PlatformFactory
 {
     public static function create(
         BedrockRuntimeClient $bedrockRuntimeClient = new BedrockRuntimeClient(),
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         if (!class_exists(BedrockRuntimeClient::class)) {
             throw new RuntimeException('For using the Bedrock platform, the async-aws/bedrock-runtime package is required. Try running "composer require async-aws/bedrock-runtime".');
@@ -49,6 +53,7 @@ final readonly class PlatformFactory
                 new LlamaResultConverter(),
                 new NovaResultConverter(),
             ],
+            $modelCatalog,
             $contract ?? Contract::create(
                 new AnthropicContract\AssistantMessageNormalizer(),
                 new AnthropicContract\DocumentNormalizer(),
@@ -64,7 +69,8 @@ final readonly class PlatformFactory
                 new NovaContract\ToolCallMessageNormalizer(),
                 new NovaContract\ToolNormalizer(),
                 new NovaContract\UserMessageNormalizer(),
-            )
+            ),
+            $eventDispatcher,
         );
     }
 }

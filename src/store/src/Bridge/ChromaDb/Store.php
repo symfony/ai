@@ -22,11 +22,11 @@ use Symfony\Component\Uid\Uuid;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class Store implements StoreInterface
+final class Store implements StoreInterface
 {
     public function __construct(
-        private Client $client,
-        private string $collectionName,
+        private readonly Client $client,
+        private readonly string $collectionName,
     ) {
         if (!class_exists(Client::class)) {
             throw new RuntimeException('For using the ChromaDB as retrieval vector store, the codewithkyrian/chromadb-php package is required. Try running "composer require codewithkyrian/chromadb-php".');

@@ -16,8 +16,6 @@ use MongoDB\Client;
 use MongoDB\Collection;
 use MongoDB\Driver\CursorInterface;
 use MongoDB\Driver\Exception\CommandException;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Vector\Vector;
@@ -27,9 +25,6 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(Store::class)]
-#[UsesClass(VectorDocument::class)]
-#[UsesClass(Vector::class)]
 final class StoreTest extends TestCase
 {
     public function testAddSingleDocument()

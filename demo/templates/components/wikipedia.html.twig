@@ -1,4 +1,4 @@
-{% import "_message.html.twig" as message %}
+{% import "_message.html.twig" as msg %}
 
 <div class="card mx-auto shadow-lg" {{ attributes.defaults(stimulus_controller('wikipedia')) }}>
     <div class="card-header p-2">
@@ -9,6 +9,16 @@
     <div id="chat-body" class="card-body p-4 overflow-auto">
         {% for message in this.messages %}
             {% include '_message.html.twig' with { message, latest: loop.last } %}
+            {% if message.metadata.has('sources') and 0 != message.metadata.get('sources')|length %}
+                <div class="ms-5 ps-4" style="margin-top: -1.5em;">
+                    <span class="text-muted">Sources:</span>
+                    {% for source in message.metadata.get('sources') %}
+                        <a class="text-black-50" href="{{ source.reference }}" target="_blank" rel="noopener">
+                            <span class="badge text-bg-secondary">{{ source.name }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
         {% else %}
             <div id="welcome" class="text-center mt-5 py-5 bg-white rounded-5 shadow-sm w-75 mx-auto">
                 {{ ux_icon('mdi:wikipedia', { height: '200px', width: '200px' }) }}
@@ -17,8 +27,8 @@
             </div>
         {% endfor %}
         <div id="loading-message" class="d-none">
-            {{ message.user([{text:''}]) }}
-            {{ message.bot('The Wikipedia Bot is doing some research ...', true) }}
+            {{ msg.user([{text:''}]) }}
+            {{ msg.bot('The Wikipedia Bot is doing some research ...', true) }}
         </div>
     </div>
     <div class="card-footer p-2">

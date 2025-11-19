@@ -23,12 +23,12 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 #[AsTool('firecrawl_scrape', description: 'Allow to scrape website using url', method: 'scrape')]
 #[AsTool('firecrawl_crawl', description: 'Allow to crawl website using url', method: 'crawl')]
 #[AsTool('firecrawl_map', description: 'Allow to retrieve all urls from a website using url', method: 'map')]
-final readonly class Firecrawl
+final class Firecrawl
 {
     public function __construct(
-        private HttpClientInterface $httpClient,
-        #[\SensitiveParameter] private string $apiKey,
-        private string $endpoint,
+        private readonly HttpClientInterface $httpClient,
+        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly string $endpoint,
     ) {
     }
 

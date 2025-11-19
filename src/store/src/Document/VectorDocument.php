@@ -17,13 +17,26 @@ use Symfony\Component\Uid\Uuid;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class VectorDocument
+final class VectorDocument
 {
     public function __construct(
-        public Uuid $id,
-        public VectorInterface $vector,
-        public Metadata $metadata = new Metadata(),
-        public ?float $score = null,
+        public readonly Uuid $id,
+        public readonly VectorInterface $vector,
+        public readonly Metadata $metadata = new Metadata(),
+        public readonly ?float $score = null,
     ) {
+    }
+
+    /**
+     * Returns a new instance with the given score.
+     */
+    public function withScore(float $score): self
+    {
+        return new self(
+            id: $this->id,
+            vector: $this->vector,
+            metadata: $this->metadata,
+            score: $score,
+        );
     }
 }

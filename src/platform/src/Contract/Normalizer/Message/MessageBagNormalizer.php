@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Contract\Normalizer\Message;
 
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
@@ -27,18 +27,18 @@ final class MessageBagNormalizer implements NormalizerInterface, NormalizerAware
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        return $data instanceof MessageBagInterface;
+        return $data instanceof MessageBag;
     }
 
     public function getSupportedTypes(?string $format): array
     {
         return [
-            MessageBagInterface::class => true,
+            MessageBag::class => true,
         ];
     }
 
     /**
-     * @param MessageBagInterface $data
+     * @param MessageBag $data
      *
      * @return array{
      *     messages: array<string, mixed>,

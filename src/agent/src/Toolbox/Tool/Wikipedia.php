@@ -12,6 +12,9 @@
 namespace Symfony\AI\Agent\Toolbox\Tool;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait;
+use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -19,8 +22,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 #[AsTool('wikipedia_search', description: 'Searches Wikipedia for a given query', method: 'search')]
 #[AsTool('wikipedia_article', description: 'Retrieves a Wikipedia article by its title', method: 'article')]
-final readonly class Wikipedia
+final class Wikipedia implements HasSourcesInterface
 {
+    use HasSourcesTrait;
+
     public function __construct(
         private HttpClientInterface $httpClient,
         private string $locale = 'en',
@@ -81,6 +86,10 @@ final readonly class Wikipedia
             $result .= \PHP_EOL;
         }
 
+        $this->addSource(
+            new Source($article['title'], $this->getUrl($article['title']), $article['extract'])
+        );
+
         return $result.'This is the content of article "'.$article['title'].'":'.\PHP_EOL.$article['extract'];
     }
 
@@ -95,5 +104,10 @@ final readonly class Wikipedia
         $response = $this->httpClient->request('GET', $url, ['query' => $query]);
 
         return $response->toArray();
+    }
+
+    private function getUrl(string $title): string
+    {
+        return \sprintf('https://%s.wikipedia.org/wiki/%s', $this->locale, str_replace(' ', '_', $title));
     }
 }

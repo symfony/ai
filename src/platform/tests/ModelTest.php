@@ -11,16 +11,10 @@
 
 namespace Symfony\AI\Platform\Tests;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 
-#[CoversClass(Model::class)]
-#[Small]
-#[UsesClass(Capability::class)]
 final class ModelTest extends TestCase
 {
     public function testReturnsName()

@@ -14,8 +14,13 @@ namespace Symfony\AI\Agent\Toolbox;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
+use Symfony\AI\Agent\Toolbox\Event\ToolCallFailed;
+use Symfony\AI\Agent\Toolbox\Event\ToolCallSucceeded;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
+use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
+use Symfony\AI\Agent\Toolbox\Source\SourceMap;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
@@ -69,20 +74,34 @@ final class Toolbox implements ToolboxInterface
         return $this->map = $map;
     }
 
-    public function execute(ToolCall $toolCall): mixed
+    public function execute(ToolCall $toolCall): ToolResult
     {
         $metadata = $this->getMetadata($toolCall);
         $tool = $this->getExecutable($metadata);
 
         try {
-            $this->logger->debug(\sprintf('Executing tool "%s".', $toolCall->name), $toolCall->arguments);
+            $this->logger->debug(\sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall->getArguments());
 
             $arguments = $this->argumentResolver->resolveArguments($metadata, $toolCall);
             $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metadata, $arguments));
 
-            $result = $tool->{$metadata->reference->method}(...$arguments);
+            if ($tool instanceof HasSourcesInterface) {
+                $tool->setSourceMap($sourceMap = new SourceMap());
+            }
+
+            $result = new ToolResult(
+                $toolCall,
+                $tool->{$metadata->getReference()->getMethod()}(...$arguments),
+                $tool instanceof HasSourcesInterface ? $sourceMap->getSources() : [],
+            );
+
+            $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metadata, $arguments, $result));
+        } catch (ToolExecutionExceptionInterface $e) {
+            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments ?? [], $e));
+            throw $e;
         } catch (\Throwable $e) {
-            $this->logger->warning(\sprintf('Failed to execute tool "%s".', $toolCall->name), ['exception' => $e]);
+            $this->logger->warning(\sprintf('Failed to execute tool "%s".', $toolCall->getName()), ['exception' => $e]);
+            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments ?? [], $e));
             throw ToolExecutionException::executionFailed($toolCall, $e);
         }
 
@@ -92,7 +111,7 @@ final class Toolbox implements ToolboxInterface
     private function getMetadata(ToolCall $toolCall): Tool
     {
         foreach ($this->getTools() as $metadata) {
-            if ($metadata->name === $toolCall->name) {
+            if ($metadata->getName() === $toolCall->getName()) {
                 return $metadata;
             }
         }
@@ -102,12 +121,13 @@ final class Toolbox implements ToolboxInterface
 
     private function getExecutable(Tool $metadata): object
     {
+        $className = $metadata->getReference()->getClass();
         foreach ($this->tools as $tool) {
-            if ($tool instanceof $metadata->reference->class) {
+            if ($tool instanceof $className) {
                 return $tool;
             }
         }
 
-        throw ToolNotFoundException::notFoundForReference($metadata->reference);
+        throw ToolNotFoundException::notFoundForReference($metadata->getReference());
     }
 }

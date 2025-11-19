@@ -11,10 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Bedrock\Nova;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Medium;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\MessageBagNormalizer;
@@ -23,25 +20,10 @@ use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\ToolNormalizer;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\UserMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\SystemMessage;
-use Symfony\AI\Platform\Message\ToolCallMessage;
-use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
 
-#[Medium]
-#[CoversClass(AssistantMessageNormalizer::class)]
-#[CoversClass(MessageBagNormalizer::class)]
-#[CoversClass(ToolCallMessageNormalizer::class)]
-#[CoversClass(ToolNormalizer::class)]
-#[CoversClass(UserMessageNormalizer::class)]
-#[UsesClass(UserMessage::class)]
-#[UsesClass(AssistantMessage::class)]
-#[UsesClass(ToolCallMessage::class)]
-#[UsesClass(SystemMessage::class)]
-#[UsesClass(MessageBag::class)]
 final class ContractTest extends TestCase
 {
     #[DataProvider('provideMessageBag')]
@@ -55,7 +37,7 @@ final class ContractTest extends TestCase
             new UserMessageNormalizer(),
         );
 
-        $this->assertEquals($expected, $contract->createRequestPayload(new Nova(), $bag));
+        $this->assertEquals($expected, $contract->createRequestPayload(new Nova('nova-pro'), $bag));
     }
 
     /**

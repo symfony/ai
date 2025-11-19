@@ -40,7 +40,7 @@ final class SystemMessageNormalizer implements NormalizerInterface
     {
         return [
             'role' => $data->getRole()->value,
-            'content' => $data->content,
+            'content' => $data->getContent(),
         ];
     }
 }

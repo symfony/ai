@@ -25,5 +25,10 @@ interface RawResultInterface
      */
     public function getData(): array;
 
+    /**
+     * @return iterable<array<string, mixed>>
+     */
+    public function getDataStream(): iterable;
+
     public function getObject(): object;
 }

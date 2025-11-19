@@ -44,10 +44,10 @@ final class UserMessageNormalizer extends ModelContractNormalizer
     {
         $array = ['role' => $data->getRole()->value];
 
-        foreach ($data->content as $value) {
+        foreach ($data->getContent() as $value) {
             $contentPart = [];
             if ($value instanceof Text) {
-                $contentPart['text'] = $value->text;
+                $contentPart['text'] = $value->getText();
             } elseif ($value instanceof Image) {
                 $contentPart['image']['format'] = u($value->getFormat())->replace('image/', '')->replace('jpg', 'jpeg')->toString();
                 $contentPart['image']['source']['bytes'] = $value->asBase64();

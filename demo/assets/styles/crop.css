@@ -1,0 +1,18 @@
+.crop {
+    body&, .card-img-top {
+        background: rgb(34,34,34);
+        background: linear-gradient(0deg, rgb(209, 14, 205) 0%, rgb(120, 21, 135) 100%);
+    }
+
+    .card-img-top {
+        color: #ffffff;
+    }
+
+    & footer {
+        color: #ffffff;
+
+        a {
+            color: #ffffff;
+        }
+    }
+}

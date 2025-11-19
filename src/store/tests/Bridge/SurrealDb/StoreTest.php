@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Store\Tests\Bridge\SurrealDb;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\SurrealDb\Store;
@@ -22,9 +20,6 @@ use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(Store::class)]
-#[UsesClass(VectorDocument::class)]
-#[UsesClass(Vector::class)]
 final class StoreTest extends TestCase
 {
     public function testStoreCannotSetupOnInvalidResponse()
@@ -97,6 +92,13 @@ final class StoreTest extends TestCase
     public function testStoreCannotDropOnInvalidResponse()
     {
         $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'code' => 200,
+                'details' => 'Authentication succeeded.',
+                'token' => 'bar',
+            ], [
+                'http_code' => 200,
+            ]),
             new JsonMockResponse([], [
                 'http_code' => 400,
             ]),
@@ -126,6 +128,13 @@ final class StoreTest extends TestCase
                     'status' => 'OK',
                     'time' => '263.208µs',
                 ],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                'code' => 200,
+                'details' => 'Authentication succeeded.',
+                'token' => 'bar',
             ], [
                 'http_code' => 200,
             ]),

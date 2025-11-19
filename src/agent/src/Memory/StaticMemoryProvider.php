@@ -16,19 +16,19 @@ use Symfony\AI\Agent\Input;
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-final readonly class StaticMemoryProvider implements MemoryProviderInterface
+final class StaticMemoryProvider implements MemoryProviderInterface
 {
     /**
      * @var array<string>
      */
-    private array $memory;
+    private readonly array $memory;
 
     public function __construct(string ...$memory)
     {
         $this->memory = $memory;
     }
 
-    public function loadMemory(Input $input): array
+    public function load(Input $input): array
     {
         if (0 === \count($this->memory)) {
             return [];

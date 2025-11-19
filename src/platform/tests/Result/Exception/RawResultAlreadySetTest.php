@@ -11,13 +11,9 @@
 
 namespace Symfony\AI\Platform\Tests\Result\Exception;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\Exception\RawResultAlreadySetException;
 
-#[CoversClass(RawResultAlreadySetException::class)]
-#[Small]
 final class RawResultAlreadySetTest extends TestCase
 {
     public function testItHasCorrectExceptionMessage()

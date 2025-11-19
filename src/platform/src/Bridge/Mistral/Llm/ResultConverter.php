@@ -23,15 +23,11 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\Component\HttpClient\Chunk\ServerSentEvent;
-use Symfony\Component\HttpClient\EventSourceHttpClient;
-use Symfony\Component\HttpClient\Exception\JsonException;
-use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class ResultConverter implements ResultConverterInterface
+final class ResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
@@ -46,7 +42,7 @@ final readonly class ResultConverter implements ResultConverterInterface
         $httpResponse = $result->getObject();
 
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($httpResponse));
+            return new StreamResult($this->convertStream($result));
         }
 
         if (200 !== $code = $httpResponse->getStatusCode()) {
@@ -64,21 +60,10 @@ final readonly class ResultConverter implements ResultConverterInterface
         return 1 === \count($choices) ? $choices[0] : new ChoiceResult(...$choices);
     }
 
-    private function convertStream(HttpResponse $result): \Generator
+    private function convertStream(RawResultInterface $result): \Generator
     {
         $toolCalls = [];
-        foreach ((new EventSourceHttpClient())->stream($result) as $chunk) {
-            if (!$chunk instanceof ServerSentEvent || '[DONE]' === $chunk->getData()) {
-                continue;
-            }
-
-            try {
-                $data = $chunk->getArrayData();
-            } catch (JsonException) {
-                // try catch only needed for Symfony 6.4
-                continue;
-            }
-
+        foreach ($result->getDataStream() as $data) {
             if ($this->streamIsToolCall($data)) {
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
@@ -185,7 +170,7 @@ final readonly class ResultConverter implements ResultConverterInterface
      */
     private function convertToolCall(array $toolCall): ToolCall
     {
-        $arguments = json_decode((string) $toolCall['function']['arguments'], true, \JSON_THROW_ON_ERROR);
+        $arguments = json_decode((string) $toolCall['function']['arguments'], true, flags: \JSON_THROW_ON_ERROR);
 
         return new ToolCall($toolCall['id'], $toolCall['function']['name'], $arguments);
     }

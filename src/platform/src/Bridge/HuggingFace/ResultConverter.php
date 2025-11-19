@@ -30,13 +30,13 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\VectorResult;
-use Symfony\AI\Platform\ResultConverterInterface as PlatformResponseConverter;
+use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class ResultConverter implements PlatformResponseConverter
+final class ResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
@@ -56,7 +56,7 @@ final readonly class ResultConverter implements PlatformResponseConverter
 
         $headers = $httpResponse->getHeaders(false);
         $contentType = $headers['content-type'][0] ?? null;
-        $content = 'application/json' === $contentType ? $httpResponse->toArray(false) : $httpResponse->getContent(false);
+        $content = str_contains($contentType, 'application/json') ? $httpResponse->toArray(false) : $httpResponse->getContent(false);
 
         if (str_starts_with((string) $httpResponse->getStatusCode(), '4')) {
             $message = match (true) {

@@ -11,11 +11,11 @@
 
 namespace App\Video;
 
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
@@ -31,6 +31,7 @@ final class TwigComponent
     public string $caption = 'Please define an instruction and hit submit.';
 
     public function __construct(
+        #[Autowire(service: 'ai.platform.openai')]
         private readonly PlatformInterface $platform,
     ) {
     }
@@ -47,7 +48,7 @@ final class TwigComponent
             Message::ofUser($instruction, Image::fromDataUrl($image))
         );
 
-        $result = $this->platform->invoke(new Gpt(Gpt::GPT_4O_MINI), $messageBag, [
+        $result = $this->platform->invoke('gpt-4o-mini', $messageBag, [
             'max_tokens' => 100,
         ]);
 

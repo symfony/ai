@@ -21,14 +21,13 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class ModelClient implements ModelClientInterface
+final class ModelClient implements ModelClientInterface
 {
-    private EventSourceHttpClient $httpClient;
+    private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
         HttpClientInterface $httpClient,
-        #[\SensitiveParameter]
-        private string $apiKey,
+        #[\SensitiveParameter] private readonly string $apiKey,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }

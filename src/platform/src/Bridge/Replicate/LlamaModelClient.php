@@ -20,10 +20,10 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class LlamaModelClient implements ModelClientInterface
+final class LlamaModelClient implements ModelClientInterface
 {
     public function __construct(
-        private Client $client,
+        private readonly Client $client,
     ) {
     }
 
@@ -34,7 +34,9 @@ final readonly class LlamaModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        $model instanceof Llama || throw new InvalidArgumentException(\sprintf('The model must be an instance of "%s".', Llama::class));
+        if (!$model instanceof Llama) {
+            throw new InvalidArgumentException(\sprintf('The model must be an instance of "%s".', Llama::class));
+        }
 
         return new RawHttpResult(
             $this->client->request(\sprintf('meta/meta-%s', $model->getName()), 'predictions', $payload)

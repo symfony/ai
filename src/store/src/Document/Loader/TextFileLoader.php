@@ -14,16 +14,21 @@ namespace Symfony\AI\Store\Document\Loader;
 use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class TextFileLoader implements LoaderInterface
+final class TextFileLoader implements LoaderInterface
 {
-    public function __invoke(string $source, array $options = []): iterable
+    public function load(?string $source, array $options = []): iterable
     {
+        if (null === $source) {
+            throw new InvalidArgumentException('TextFileLoader requires a file path as source, null given.');
+        }
+
         if (!is_file($source)) {
             throw new RuntimeException(\sprintf('File "%s" does not exist.', $source));
         }

@@ -11,17 +11,11 @@
 
 namespace Symfony\AI\Platform\Tests\Result;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 
-#[CoversClass(ToolCallResult::class)]
-#[UsesClass(ToolCall::class)]
-#[Small]
 final class TollCallResultTest extends TestCase
 {
     public function testThrowsIfNoToolCall()

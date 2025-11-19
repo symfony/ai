@@ -12,6 +12,9 @@
 namespace Symfony\AI\Agent\Toolbox\Tool;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait;
+use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -19,16 +22,17 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 #[AsTool('brave_search', 'Tool that searches the web using Brave Search')]
-final readonly class Brave
+final class Brave implements HasSourcesInterface
 {
+    use HasSourcesTrait;
+
     /**
      * @param array<string, mixed> $options See https://api-dashboard.search.brave.com/app/documentation/web-search/query#WebSearchAPIQueryParameters
      */
     public function __construct(
-        private HttpClientInterface $httpClient,
-        #[\SensitiveParameter]
-        private string $apiKey,
-        private array $options = [],
+        private readonly HttpClientInterface $httpClient,
+        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly array $options = [],
     ) {
     }
 
@@ -46,7 +50,7 @@ final readonly class Brave
      * }>
      */
     public function __invoke(
-        #[With(maximum: 500)]
+        #[With(maxLength: 500)]
         string $query,
         int $count = 20,
         #[With(minimum: 0, maximum: 9)]
@@ -62,6 +66,13 @@ final readonly class Brave
         ]);
 
         $data = $result->toArray();
+        $results = $data['web']['results'] ?? [];
+
+        foreach ($results as $result) {
+            $this->addSource(
+                new Source($result['title'] ?? '', $result['url'] ?? '', $result['description'] ?? '')
+            );
+        }
 
         return array_map(static function (array $result) {
             return ['title' => $result['title'], 'description' => $result['description'], 'url' => $result['url']];

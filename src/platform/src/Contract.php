@@ -31,12 +31,12 @@ use Symfony\Component\Serializer\Serializer;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-readonly class Contract
+class Contract
 {
     public const CONTEXT_MODEL = 'model';
 
     final public function __construct(
-        protected NormalizerInterface $normalizer,
+        protected readonly NormalizerInterface $normalizer,
     ) {
     }
 

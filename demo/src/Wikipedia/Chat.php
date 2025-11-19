@@ -43,7 +43,9 @@ final class Chat
 
         \assert($result instanceof TextResult);
 
-        $messages->add(Message::ofAssistant($result->getContent()));
+        $response = Message::ofAssistant($result->getContent());
+        $response->getMetadata()->add('sources', $result->getMetadata()->get('sources', []));
+        $messages->add($response);
 
         $this->saveMessages($messages);
     }

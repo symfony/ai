@@ -38,6 +38,6 @@ final class TextNormalizer implements NormalizerInterface
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        return ['type' => 'text', 'text' => $data->text];
+        return ['type' => 'text', 'text' => $data->getText()];
     }
 }

@@ -11,9 +11,6 @@
 
 namespace Symfony\AI\Platform\Tests\Message;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -22,9 +19,6 @@ use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
 use Symfony\Component\Uid\UuidV7;
 
-#[CoversClass(ToolCallMessage::class)]
-#[UsesClass(ToolCall::class)]
-#[Small]
 final class ToolCallMessageTest extends TestCase
 {
     use UuidAssertionTrait;
@@ -34,8 +28,8 @@ final class ToolCallMessageTest extends TestCase
         $toolCall = new ToolCall('foo', 'bar');
         $obj = new ToolCallMessage($toolCall, 'bar');
 
-        $this->assertSame($toolCall, $obj->toolCall);
-        $this->assertSame('bar', $obj->content);
+        $this->assertSame($toolCall, $obj->getToolCall());
+        $this->assertSame('bar', $obj->getContent());
     }
 
     public function testMessageHasUid()
@@ -43,9 +37,7 @@ final class ToolCallMessageTest extends TestCase
         $toolCall = new ToolCall('foo', 'bar');
         $message = new ToolCallMessage($toolCall, 'bar');
 
-        $this->assertInstanceOf(UuidV7::class, $message->id);
         $this->assertInstanceOf(UuidV7::class, $message->getId());
-        $this->assertSame($message->id, $message->getId());
     }
 
     public function testDifferentMessagesHaveDifferentUids()
@@ -55,8 +47,8 @@ final class ToolCallMessageTest extends TestCase
         $message2 = new ToolCallMessage($toolCall, 'baz');
 
         $this->assertNotSame($message1->getId()->toRfc4122(), $message2->getId()->toRfc4122());
-        self::assertIsUuidV7($message1->getId()->toRfc4122());
-        self::assertIsUuidV7($message2->getId()->toRfc4122());
+        $this->assertIsUuidV7($message1->getId()->toRfc4122());
+        $this->assertIsUuidV7($message2->getId()->toRfc4122());
     }
 
     public function testSameMessagesHaveDifferentUids()
@@ -66,8 +58,8 @@ final class ToolCallMessageTest extends TestCase
         $message2 = new ToolCallMessage($toolCall, 'bar');
 
         $this->assertNotSame($message1->getId()->toRfc4122(), $message2->getId()->toRfc4122());
-        self::assertIsUuidV7($message1->getId()->toRfc4122());
-        self::assertIsUuidV7($message2->getId()->toRfc4122());
+        $this->assertIsUuidV7($message1->getId()->toRfc4122());
+        $this->assertIsUuidV7($message2->getId()->toRfc4122());
     }
 
     public function testMessageIdImplementsRequiredInterfaces()

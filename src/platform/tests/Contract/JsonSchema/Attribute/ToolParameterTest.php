@@ -11,12 +11,10 @@
 
 namespace Symfony\AI\Platform\Tests\Contract\JsonSchema\Attribute;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 
-#[CoversClass(With::class)]
 final class ToolParameterTest extends TestCase
 {
     public function testValidEnum()
@@ -26,11 +24,11 @@ final class ToolParameterTest extends TestCase
         $this->assertSame($enum, $toolParameter->enum);
     }
 
-    public function testInvalidEnumContainsNonString()
+    public function testInvalidEnumContainsInvalidType()
     {
         $this->expectException(InvalidArgumentException::class);
-        $enum = ['value1', 2];
-        new With(enum: $enum);
+        $enum = ['value1', new \stdClass()];
+        new With(enum: $enum); /* @phpstan-ignore-line argument.type */
     }
 
     public function testValidConstString()

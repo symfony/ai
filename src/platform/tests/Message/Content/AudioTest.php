@@ -11,13 +11,9 @@
 
 namespace Symfony\AI\Platform\Tests\Message\Content;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Message\Content\Audio;
 
-#[CoversClass(Audio::class)]
-#[Small]
 final class AudioTest extends TestCase
 {
     public function testConstructWithValidData()

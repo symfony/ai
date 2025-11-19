@@ -1,0 +1,52 @@
+<header class="border-bottom border-white border-opacity-10">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container py-3">
+            <a class="navbar-brand" href="{{ path('homepage') }}">
+                {{ ux_icon('logos:symfony-ai', {width: 225, height: 64}) }}
+            </a>
+
+            <button
+                class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#mainNavbar"
+                aria-controls="mainNavbar"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+            >
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2 mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://symfony.com/doc/current/ai/index.html">Documentation</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/symfony/ai-demo">Demos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://symfony.com/doc/current/ai/cookbook/index.html">Cookbook</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/symfony/ai/issues">Support</a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="nav-link" href="https://github.com/symfony/ai">
+                            {{ ux_icon('simple-icons:github', {width: 24, height: 24}) }}
+                        </a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <template id="icon-theme-auto">{{ ux_icon('tabler:contrast-filled', {width: 24, height: 24}) }}</template>
+                        <template id="icon-theme-light">{{ ux_icon('tabler:sun-filled', {width: 24, height: 24}) }}</template>
+                        <template id="icon-theme-dark">{{ ux_icon('tabler:moon', {width: 24, height: 24}) }}</template>
+
+                        <button type="button" id="themeToggle" class="btn btn-link p-0 border-0" aria-label="Toggle theme">
+                            <span id="themeIcon">{{ ux_icon('tabler:contrast-filled', {width: 24, height: 24}) }}</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>

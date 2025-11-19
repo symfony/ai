@@ -13,12 +13,12 @@ namespace Symfony\AI\Store\Document\Transformer;
 
 use Symfony\AI\Store\Document\TransformerInterface;
 
-final readonly class ChainTransformer implements TransformerInterface
+final class ChainTransformer implements TransformerInterface
 {
     /**
      * @var TransformerInterface[]
      */
-    private array $transformers;
+    private readonly array $transformers;
 
     /**
      * @param iterable<TransformerInterface> $transformers
@@ -28,10 +28,10 @@ final readonly class ChainTransformer implements TransformerInterface
         $this->transformers = $transformers instanceof \Traversable ? iterator_to_array($transformers) : $transformers;
     }
 
-    public function __invoke(iterable $documents, array $options = []): iterable
+    public function transform(iterable $documents, array $options = []): iterable
     {
         foreach ($this->transformers as $transformer) {
-            $documents = $transformer($documents, $options);
+            $documents = $transformer->transform($documents, $options);
         }
 
         return $documents;

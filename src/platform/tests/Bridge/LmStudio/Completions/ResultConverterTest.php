@@ -11,18 +11,10 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\LmStudio\Completions;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions\ResultConverter;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter as OpenAiResultConverter;
 
-#[CoversClass(ResultConverter::class)]
-#[UsesClass(Completions::class)]
-#[UsesClass(OpenAiResultConverter::class)]
-#[Small]
 class ResultConverterTest extends TestCase
 {
     public function testItSupportsCompletionsModel()

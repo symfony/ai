@@ -45,13 +45,13 @@ final class UserMessageNormalizer implements NormalizerInterface, NormalizerAwar
     {
         $array = ['role' => $data->getRole()->value];
 
-        if (1 === \count($data->content) && $data->content[0] instanceof Text) {
-            $array['content'] = $data->content[0]->text;
+        if (1 === \count($data->getContent()) && $data->getContent()[0] instanceof Text) {
+            $array['content'] = $data->getContent()[0]->getText();
 
             return $array;
         }
 
-        $array['content'] = $this->normalizer->normalize($data->content, $format, $context);
+        $array['content'] = $this->normalizer->normalize($data->getContent(), $format, $context);
 
         return $array;
     }

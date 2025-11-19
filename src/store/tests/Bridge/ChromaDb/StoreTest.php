@@ -14,9 +14,7 @@ namespace Symfony\AI\Store\Tests\Bridge\ChromaDb;
 use Codewithkyrian\ChromaDB\Client;
 use Codewithkyrian\ChromaDB\Generated\Responses\QueryItemsResponse;
 use Codewithkyrian\ChromaDB\Resources\CollectionResource;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\ChromaDb\Store;
@@ -24,9 +22,6 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(Store::class)]
-#[UsesClass(VectorDocument::class)]
-#[UsesClass(Vector::class)]
 final class StoreTest extends TestCase
 {
     /**

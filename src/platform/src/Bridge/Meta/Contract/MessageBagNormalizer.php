@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Meta\Contract;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Bridge\Meta\LlamaPromptConverter;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
-use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -28,7 +28,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer
     }
 
     /**
-     * @param MessageBagInterface $data
+     * @param MessageBag $data
      *
      * @return array{prompt: string}
      */
@@ -41,7 +41,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer
 
     protected function supportedDataClass(): string
     {
-        return MessageBagInterface::class;
+        return MessageBag::class;
     }
 
     protected function supportsModel(Model $model): bool

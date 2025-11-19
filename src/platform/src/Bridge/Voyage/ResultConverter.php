@@ -22,7 +22,7 @@ use Symfony\AI\Platform\Vector\Vector;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class ResultConverter implements ResultConverterInterface
+final class ResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
@@ -37,8 +37,11 @@ final readonly class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain embedding data.');
         }
 
-        $vectors = array_map(fn (array $data) => new Vector($data['embedding']), $result['data']);
-
-        return new VectorResult($vectors[0]);
+        return new VectorResult(
+            ...array_map(
+                static fn (array $data) => new Vector($data['embedding']),
+                $result['data'],
+            ),
+        );
     }
 }

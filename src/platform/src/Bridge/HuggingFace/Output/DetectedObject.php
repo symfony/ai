@@ -14,15 +14,15 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class DetectedObject
+final class DetectedObject
 {
     public function __construct(
-        public string $label,
-        public float $score,
-        public float $xmin,
-        public float $ymin,
-        public float $xmax,
-        public float $ymax,
+        public readonly string $label,
+        public readonly float $score,
+        public readonly float $xmin,
+        public readonly float $ymin,
+        public readonly float $xmax,
+        public readonly float $ymax,
     ) {
     }
 }

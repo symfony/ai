@@ -18,7 +18,7 @@ https://github.com/symfony/ai to create issues or submit pull requests.
 
 ## Resources
 
-- [Documentation](doc/index.rst)
+- [Documentation](../../docs/index.rst)
 - [Report issues](https://github.com/symfony/ai/issues) and
   [send Pull Requests](https://github.com/symfony/ai/pulls)
   in the [main Symfony AI repository](https://github.com/symfony/ai)

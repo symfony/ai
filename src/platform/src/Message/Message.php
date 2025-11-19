@@ -19,7 +19,7 @@ use Symfony\AI\Platform\Result\ToolCall;
  * @author Christopher Hertel <mail@christopher-hertel.de>
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-final readonly class Message
+final class Message
 {
     // Disabled by default, just a bridge to the specific messages
     private function __construct()

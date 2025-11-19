@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -21,10 +22,6 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\Component\HttpClient\Chunk\ServerSentEvent;
-use Symfony\Component\HttpClient\EventSourceHttpClient;
-use Symfony\Component\HttpClient\Exception\JsonException;
-use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -38,8 +35,16 @@ class ResultConverter implements ResultConverterInterface
 
     public function convert(RawHttpResult|RawResultInterface $result, array $options = []): ResultInterface
     {
+        $response = $result->getObject();
+
+        if (429 === $response->getStatusCode()) {
+            $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
+            $retryAfterValue = $retryAfter ? (int) $retryAfter : null;
+            throw new RateLimitExceededException($retryAfterValue);
+        }
+
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result->getObject()));
+            return new StreamResult($this->convertStream($result));
         }
 
         $data = $result->getData();
@@ -66,20 +71,9 @@ class ResultConverter implements ResultConverterInterface
         return new TextResult($data['content'][0]['text']);
     }
 
-    private function convertStream(HttpResponse $result): \Generator
+    private function convertStream(RawResultInterface $result): \Generator
     {
-        foreach ((new EventSourceHttpClient())->stream($result) as $chunk) {
-            if (!$chunk instanceof ServerSentEvent || '[DONE]' === $chunk->getData()) {
-                continue;
-            }
-
-            try {
-                $data = $chunk->getArrayData();
-            } catch (JsonException) {
-                // try catch only needed for Symfony 6.4
-                continue;
-            }
-
+        foreach ($result->getDataStream() as $data) {
             if ('content_block_delta' != $data['type'] || !isset($data['delta']['text'])) {
                 continue;
             }

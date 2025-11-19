@@ -11,27 +11,19 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\OpenAi\Gpt;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
+use Symfony\AI\Platform\Exception\AuthenticationException;
+use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-#[CoversClass(ResultConverter::class)]
-#[Small]
-#[UsesClass(ChoiceResult::class)]
-#[UsesClass(TextResult::class)]
-#[UsesClass(ToolCall::class)]
-#[UsesClass(ToolCallResult::class)]
 class ResultConverterTest extends TestCase
 {
     public function testConvertTextResult()
@@ -87,9 +79,9 @@ class ResultConverterTest extends TestCase
         $this->assertInstanceOf(ToolCallResult::class, $result);
         $toolCalls = $result->getContent();
         $this->assertCount(1, $toolCalls);
-        $this->assertSame('call_123', $toolCalls[0]->id);
-        $this->assertSame('test_function', $toolCalls[0]->name);
-        $this->assertSame(['arg1' => 'value1'], $toolCalls[0]->arguments);
+        $this->assertSame('call_123', $toolCalls[0]->getId());
+        $this->assertSame('test_function', $toolCalls[0]->getName());
+        $this->assertSame(['arg1' => 'value1'], $toolCalls[0]->getArguments());
     }
 
     public function testConvertMultipleChoices()
@@ -155,6 +147,23 @@ class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
+    public function testThrowsAuthenticationExceptionOnInvalidApiKey()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(401);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'error' => [
+                'message' => 'Invalid API key provided: sk-invalid',
+            ],
+        ]));
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('Invalid API key provided: sk-invalid');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
     public function testThrowsExceptionWhenNoChoices()
     {
         $converter = new ResultConverter();
@@ -185,6 +194,54 @@ class ResultConverterTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unsupported finish reason "unsupported_reason"');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsBadRequestExceptionOnBadRequestResponse()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'error' => [
+                'message' => 'Bad Request: invalid parameters',
+            ],
+        ]));
+
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('Bad Request: invalid parameters');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsBadRequestExceptionOnBadRequestResponseWithNoResponseBody()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('Bad Request');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsDetailedErrorException()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'error' => [
+                'code' => 'invalid_request_error',
+                'type' => 'invalid_request',
+                'param' => 'model',
+                'message' => 'The model `gpt-5` does not exist',
+            ],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Error "invalid_request_error"-invalid_request (model): "The model `gpt-5` does not exist".');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }

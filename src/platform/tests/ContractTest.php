@@ -11,57 +11,28 @@
 
 namespace Symfony\AI\Platform\Tests;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Large;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\Contract\Normalizer\Message\AssistantMessageNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ImageNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ImageUrlNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Message\Content\TextNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Message\MessageBagNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Message\SystemMessageNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Message\ToolCallMessageNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Message\UserMessageNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\Role;
-use Symfony\AI\Platform\Message\SystemMessage;
-use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
 use Symfony\Component\Uid\Uuid;
 
-#[Large]
-#[CoversClass(Contract::class)]
-#[CoversClass(AssistantMessageNormalizer::class)]
-#[CoversClass(AudioNormalizer::class)]
-#[CoversClass(ImageNormalizer::class)]
-#[CoversClass(ImageUrlNormalizer::class)]
-#[CoversClass(TextNormalizer::class)]
-#[CoversClass(MessageBagNormalizer::class)]
-#[CoversClass(SystemMessageNormalizer::class)]
-#[CoversClass(ToolCallMessageNormalizer::class)]
-#[CoversClass(UserMessageNormalizer::class)]
-#[CoversClass(ToolCallNormalizer::class)]
-#[UsesClass(AssistantMessage::class)]
-#[UsesClass(MessageBag::class)]
-#[UsesClass(SystemMessage::class)]
-#[UsesClass(UserMessage::class)]
-#[UsesClass(Model::class)]
 final class ContractTest extends TestCase
 {
     #[DataProvider('providePayloadTestCases')]
@@ -83,7 +54,7 @@ final class ContractTest extends TestCase
     public static function providePayloadTestCases(): iterable
     {
         yield 'MessageBag with Gpt' => [
-            'model' => new Gpt(),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag(
                 Message::forSystem('System message'),
                 Message::ofUser('User message'),
@@ -101,7 +72,7 @@ final class ContractTest extends TestCase
 
         $audio = Audio::fromFile(\dirname(__DIR__, 3).'/fixtures/audio.mp3');
         yield 'Audio within MessageBag with Gpt' => [
-            'model' => new Gpt(),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag(Message::ofUser('What is this recording about?', $audio)),
             'expected' => [
                 'messages' => [
@@ -125,7 +96,7 @@ final class ContractTest extends TestCase
 
         $image = Image::fromFile(\dirname(__DIR__, 3).'/fixtures/image.jpg');
         yield 'Image within MessageBag with Gpt' => [
-            'model' => new Gpt(),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag(
                 Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
                 Message::ofUser('Describe the image as a comedian would do it.', $image),
@@ -149,7 +120,7 @@ final class ContractTest extends TestCase
         ];
 
         yield 'ImageUrl within MessageBag with Gpt' => [
-            'model' => new Gpt(),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag(
                 Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
                 Message::ofUser('Describe the image as a comedian would do it.', new ImageUrl('https://example.com/image.jpg')),
@@ -173,13 +144,13 @@ final class ContractTest extends TestCase
         ];
 
         yield 'Text Input with Embeddings' => [
-            'model' => new Embeddings(),
+            'model' => new Embeddings('text-embedding-3-small'),
             'input' => 'This is a test input.',
             'expected' => 'This is a test input.',
         ];
 
         yield 'Longer Conversation with Gpt' => [
-            'model' => new Gpt(),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag(
                 Message::forSystem('My amazing system prompt.'),
                 Message::ofAssistant('It is time to sleep.'),
@@ -203,6 +174,8 @@ final class ContractTest extends TestCase
         ];
 
         $customSerializableMessage = new class implements MessageInterface, \JsonSerializable {
+            use MetadataAwareTrait;
+
             public function getRole(): Role
             {
                 return Role::User;
@@ -211,6 +184,11 @@ final class ContractTest extends TestCase
             public function getId(): AbstractUid&TimeBasedUidInterface
             {
                 return Uuid::v7();
+            }
+
+            public function getContent(): array
+            {
+                return [new Text('This is a custom serializable message.')];
             }
 
             public function jsonSerialize(): array
@@ -223,7 +201,7 @@ final class ContractTest extends TestCase
         };
 
         yield 'MessageBag with custom message from Gpt' => [
-            'model' => new Gpt(),
+            'model' => new Gpt('gpt-4o'),
             'input' => new MessageBag($customSerializableMessage),
             'expected' => [
                 'messages' => [
@@ -240,7 +218,7 @@ final class ContractTest extends TestCase
 
         $audio = Audio::fromFile(\dirname(__DIR__, 3).'/fixtures/audio.mp3');
 
-        $actual = $contract->createRequestPayload(new Whisper(), $audio);
+        $actual = $contract->createRequestPayload(new Whisper('whisper-1'), $audio);
 
         $this->assertArrayHasKey('model', $actual);
         $this->assertSame('whisper-1', $actual['model']);

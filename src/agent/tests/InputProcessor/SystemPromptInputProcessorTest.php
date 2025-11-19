@@ -11,17 +11,14 @@
 
 namespace Symfony\AI\Agent\Tests\InputProcessor;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
-use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\SystemMessage;
@@ -29,32 +26,23 @@ use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Component\Translation\TranslatableMessage;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[CoversClass(SystemPromptInputProcessor::class)]
-#[UsesClass(Gpt::class)]
-#[UsesClass(Message::class)]
-#[UsesClass(MessageBag::class)]
-#[UsesClass(Input::class)]
-#[UsesClass(SystemMessage::class)]
-#[UsesClass(UserMessage::class)]
-#[UsesClass(Text::class)]
-#[UsesClass(Tool::class)]
-#[UsesClass(ExecutionReference::class)]
-#[Small]
 final class SystemPromptInputProcessorTest extends TestCase
 {
     public function testProcessInputAddsSystemMessageWhenNoneExists()
     {
         $processor = new SystemPromptInputProcessor('This is a system prompt');
 
-        $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')), []);
+        $input = new Input('gpt-4o', new MessageBag(Message::ofUser('This is a user message')));
         $processor->processInput($input);
 
-        $messages = $input->messages->getMessages();
+        $messages = $input->getMessageBag()->getMessages();
         $this->assertCount(2, $messages);
         $this->assertInstanceOf(SystemMessage::class, $messages[0]);
         $this->assertInstanceOf(UserMessage::class, $messages[1]);
-        $this->assertSame('This is a system prompt', $messages[0]->content);
+        $this->assertSame('This is a system prompt', $messages[0]->getContent());
     }
 
     public function testProcessInputDoesNotAddSystemMessageWhenOneExists()
@@ -65,14 +53,14 @@ final class SystemPromptInputProcessorTest extends TestCase
             Message::forSystem('This is already a system prompt'),
             Message::ofUser('This is a user message'),
         );
-        $input = new Input(new Gpt(), $messages, []);
+        $input = new Input('gpt-4o', $messages);
         $processor->processInput($input);
 
-        $messages = $input->messages->getMessages();
+        $messages = $input->getMessageBag()->getMessages();
         $this->assertCount(2, $messages);
         $this->assertInstanceOf(SystemMessage::class, $messages[0]);
         $this->assertInstanceOf(UserMessage::class, $messages[1]);
-        $this->assertSame('This is already a system prompt', $messages[0]->content);
+        $this->assertSame('This is already a system prompt', $messages[0]->getContent());
     }
 
     public function testDoesNotIncludeToolsIfToolboxIsEmpty()
@@ -85,27 +73,27 @@ final class SystemPromptInputProcessorTest extends TestCase
                     return [];
                 }
 
-                public function execute(ToolCall $toolCall): mixed
+                public function execute(ToolCall $toolCall): ToolResult
                 {
-                    return null;
+                    return new ToolResult($toolCall, null);
                 }
-            }
+            },
         );
 
-        $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')), []);
+        $input = new Input('gpt-4o', new MessageBag(Message::ofUser('This is a user message')));
         $processor->processInput($input);
 
-        $messages = $input->messages->getMessages();
+        $messages = $input->getMessageBag()->getMessages();
         $this->assertCount(2, $messages);
         $this->assertInstanceOf(SystemMessage::class, $messages[0]);
         $this->assertInstanceOf(UserMessage::class, $messages[1]);
-        $this->assertSame('This is a system prompt', $messages[0]->content);
+        $this->assertSame('This is a system prompt', $messages[0]->getContent());
     }
 
     public function testIncludeToolDefinitions()
     {
         $processor = new SystemPromptInputProcessor(
-            'This is a system prompt',
+            new TranslatableMessage('This is a'),
             new class implements ToolboxInterface {
                 public function getTools(): array
                 {
@@ -123,24 +111,27 @@ final class SystemPromptInputProcessorTest extends TestCase
                     ];
                 }
 
-                public function execute(ToolCall $toolCall): mixed
+                public function execute(ToolCall $toolCall): ToolResult
                 {
-                    return null;
+                    return new ToolResult($toolCall, null);
                 }
-            }
+            },
+            $this->getTranslator(),
         );
 
-        $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')), []);
+        $input = new Input('gpt-4o', new MessageBag(Message::ofUser('This is a user message')));
         $processor->processInput($input);
 
-        $messages = $input->messages->getMessages();
+        $messages = $input->getMessageBag()->getMessages();
         $this->assertCount(2, $messages);
         $this->assertInstanceOf(SystemMessage::class, $messages[0]);
         $this->assertInstanceOf(UserMessage::class, $messages[1]);
         $this->assertSame(<<<PROMPT
-            This is a system prompt
+            This is a cool translated system prompt
 
-            # Available tools
+            # Tools
+
+            The following tools are available to assist you in completing the user's request:
 
             ## tool_no_params
             A tool without parameters
@@ -148,7 +139,7 @@ final class SystemPromptInputProcessorTest extends TestCase
             ## tool_required_params
             A tool with required parameters
             or not
-            PROMPT, $messages[0]->content);
+            PROMPT, $messages[0]->getContent());
     }
 
     public function testWithStringableSystemPrompt()
@@ -163,27 +154,131 @@ final class SystemPromptInputProcessorTest extends TestCase
                     ];
                 }
 
-                public function execute(ToolCall $toolCall): mixed
+                public function execute(ToolCall $toolCall): ToolResult
                 {
-                    return null;
+                    return new ToolResult($toolCall, null);
                 }
-            }
+            },
         );
 
-        $input = new Input(new Gpt(), new MessageBag(Message::ofUser('This is a user message')), []);
+        $input = new Input('gpt-4o', new MessageBag(Message::ofUser('This is a user message')));
         $processor->processInput($input);
 
-        $messages = $input->messages->getMessages();
+        $messages = $input->getMessageBag()->getMessages();
         $this->assertCount(2, $messages);
         $this->assertInstanceOf(SystemMessage::class, $messages[0]);
         $this->assertInstanceOf(UserMessage::class, $messages[1]);
         $this->assertSame(<<<PROMPT
             My dynamic system prompt.
 
-            # Available tools
+            # Tools
+
+            The following tools are available to assist you in completing the user's request:
 
             ## tool_no_params
             A tool without parameters
-            PROMPT, $messages[0]->content);
+            PROMPT, $messages[0]->getContent());
+    }
+
+    public function testWithTranslatedSystemPrompt()
+    {
+        $processor = new SystemPromptInputProcessor(new TranslatableMessage('This is a'), null, $this->getTranslator());
+
+        $input = new Input('gpt-4o', new MessageBag(Message::ofUser('This is a user message')), []);
+        $processor->processInput($input);
+
+        $messages = $input->getMessageBag()->getMessages();
+        $this->assertCount(2, $messages);
+        $this->assertInstanceOf(SystemMessage::class, $messages[0]);
+        $this->assertInstanceOf(UserMessage::class, $messages[1]);
+        $this->assertSame('This is a cool translated system prompt', $messages[0]->getContent());
+    }
+
+    public function testWithTranslationDomainSystemPrompt()
+    {
+        $processor = new SystemPromptInputProcessor(
+            new TranslatableMessage('This is a', domain: 'prompts'),
+            null,
+            $this->getTranslator(),
+        );
+
+        $input = new Input('gpt-4o', new MessageBag(), []);
+        $processor->processInput($input);
+
+        $messages = $input->getMessageBag()->getMessages();
+        $this->assertCount(1, $messages);
+        $this->assertInstanceOf(SystemMessage::class, $messages[0]);
+        $this->assertSame('This is a cool translated system prompt with a translation domain', $messages[0]->getContent());
+    }
+
+    public function testWithMissingTranslator()
+    {
+        $this->expectExceptionMessage('Translatable system prompt is not supported when no translator is provided.');
+
+        new SystemPromptInputProcessor(
+            new TranslatableMessage('This is a'),
+            null,
+            null,
+        );
+    }
+
+    public function testProcessInputWithFile()
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'prompt_');
+        file_put_contents($tempFile, 'This is a system prompt from a file');
+
+        try {
+            $file = File::fromFile($tempFile);
+            $processor = new SystemPromptInputProcessor($file);
+
+            $input = new Input('gpt-4o', new MessageBag(Message::ofUser('This is a user message')));
+            $processor->processInput($input);
+
+            $messages = $input->getMessageBag()->getMessages();
+            $this->assertCount(2, $messages);
+            $this->assertInstanceOf(SystemMessage::class, $messages[0]);
+            $this->assertInstanceOf(UserMessage::class, $messages[1]);
+            $this->assertSame('This is a system prompt from a file', $messages[0]->getContent());
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    public function testProcessInputWithMultilineFile()
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'prompt_');
+        file_put_contents($tempFile, "Line 1\nLine 2\nLine 3");
+
+        try {
+            $file = File::fromFile($tempFile);
+            $processor = new SystemPromptInputProcessor($file);
+
+            $input = new Input('gpt-4o', new MessageBag(Message::ofUser('This is a user message')));
+            $processor->processInput($input);
+
+            $messages = $input->getMessageBag()->getMessages();
+            $this->assertCount(2, $messages);
+            $this->assertInstanceOf(SystemMessage::class, $messages[0]);
+            $this->assertSame("Line 1\nLine 2\nLine 3", $messages[0]->getContent());
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    private function getTranslator(): TranslatorInterface
+    {
+        return new class implements TranslatorInterface {
+            public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
+            {
+                $translated = \sprintf('%s cool translated system prompt', $id);
+
+                return $domain ? $translated.' with a translation domain' : $translated;
+            }
+
+            public function getLocale(): string
+            {
+                return 'en';
+            }
+        };
     }
 }

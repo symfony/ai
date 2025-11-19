@@ -1,4 +1,4 @@
-{% import "_message.html.twig" as message %}
+{% import "_message.html.twig" as msg %}
 
 <div class="card mx-auto shadow-lg" {{ attributes.defaults(stimulus_controller('audio')) }}>
     <div class="card-header p-2">
@@ -8,7 +8,18 @@
     </div>
     <div id="chat-body" class="card-body p-4 overflow-auto">
         {% for message in this.messages %}
-            {% include '_message.html.twig' with { message, latest: loop.last } %}
+            {% if 'user' == message.role.value %}
+                {% include '_message.html.twig' with { message, latest: loop.last } %}
+            {% else %}
+                <div class="d-flex align-items-baseline mb-4">
+                    <div class="bot avatar rounded-3 shadow-sm">
+                        {{ ux_icon('fluent:bot-24-filled', { height: '45px', width: '45px' }) }}
+                    </div>
+                    <div class="ps-2">
+                        <audio class="pt-3" controls {{ loop.last ? 'autoplay' }} src="{{ message.metadata.get('audio') }}"></audio>
+                    </div>
+                </div>
+            {% endif %}
         {% else %}
             <div id="welcome" class="text-center mt-5 py-5 bg-white rounded-5 shadow-sm w-75 mx-auto">
                 {{ ux_icon('iconoir:microphone-solid', { height: '200px', width: '200px' }) }}
@@ -17,8 +28,8 @@
             </div>
         {% endfor %}
         <div id="loading-message" class="d-none">
-            {{ message.user([{text:'Converting your speech to text ...'}], true) }}
-            {{ message.bot('The Bot is looking for an answer ...', true) }}
+            {{ msg.user([{text:'Converting your speech to text ...'}], true) }}
+            {{ msg.bot('The Bot is looking for an answer ...', true) }}
         </div>
     </div>
     <div class="card-footer p-2 text-center">

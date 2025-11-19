@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Store\Tests\Bridge\Local;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Local\CacheStore;
@@ -22,9 +20,6 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(CacheStore::class)]
-#[UsesClass(VectorDocument::class)]
-#[UsesClass(Vector::class)]
 final class CacheStoreTest extends TestCase
 {
     public function testStoreCannotSetup()

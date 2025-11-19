@@ -15,12 +15,12 @@ namespace Symfony\AI\Agent\Toolbox\Attribute;
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
-final readonly class AsTool
+final class AsTool
 {
     public function __construct(
-        public string $name,
-        public string $description,
-        public string $method = '__invoke',
+        public readonly string $name,
+        public readonly string $description,
+        public readonly string $method = '__invoke',
     ) {
     }
 }

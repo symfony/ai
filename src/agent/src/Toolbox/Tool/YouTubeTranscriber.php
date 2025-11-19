@@ -21,10 +21,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 #[AsTool('youtube_transcript', 'Fetches the transcript of a YouTube video')]
-final readonly class YouTubeTranscriber
+final class YouTubeTranscriber
 {
     public function __construct(
-        private HttpClientInterface $client,
+        private readonly HttpClientInterface $client,
     ) {
         if (!class_exists(TranscriptListFetcher::class)) {
             throw new LogicException('For using the YouTube transcription tool, the mrmysql/youtube-transcript package is required. Try running "composer require mrmysql/youtube-transcript".');

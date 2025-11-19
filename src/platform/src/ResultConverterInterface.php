@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform;
 
+use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 
@@ -23,6 +24,8 @@ interface ResultConverterInterface
 
     /**
      * @param array<string, mixed> $options
+     *
+     * @throws ExceptionInterface
      */
     public function convert(RawResultInterface $result, array $options = []): ResultInterface;
 }

@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Contract;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
-use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Model;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
@@ -27,7 +27,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
     use NormalizerAwareTrait;
 
     /**
-     * @param MessageBagInterface $data
+     * @param MessageBag $data
      *
      * @return array{
      *      contents: list<array{
@@ -43,7 +43,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
 
         if (null !== $systemMessage = $data->getSystemMessage()) {
             $array['system_instruction'] = [
-                'parts' => [['text' => $systemMessage->content]],
+                'parts' => [['text' => $systemMessage->getContent()]],
             ];
         }
 
@@ -59,7 +59,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
 
     protected function supportedDataClass(): string
     {
-        return MessageBagInterface::class;
+        return MessageBag::class;
     }
 
     protected function supportsModel(Model $model): bool

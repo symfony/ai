@@ -11,18 +11,15 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Albert;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Albert\EmbeddingsModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 
-#[CoversClass(EmbeddingsModelClient::class)]
-#[Small]
 final class EmbeddingsModelClientTest extends TestCase
 {
     public function testSupportsEmbeddingsModel()
@@ -33,7 +30,7 @@ final class EmbeddingsModelClientTest extends TestCase
             'https://albert.example.com/'
         );
 
-        $embeddingsModel = new Embeddings('text-embedding-ada-002');
+        $embeddingsModel = new Embeddings('embedding-small');
         $this->assertTrue($client->supports($embeddingsModel));
     }
 
@@ -49,66 +46,49 @@ final class EmbeddingsModelClientTest extends TestCase
         $this->assertFalse($client->supports($gptModel));
     }
 
-    #[DataProvider('providePayloadToJson')]
-    public function testRequestSendsCorrectHttpRequest(array|string $payload, array $options, array|string $expectedJson)
+    public function testItIsExecutingTheCorrectRequest()
     {
-        $capturedRequest = null;
-        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$capturedRequest) {
-            $capturedRequest = ['method' => $method, 'url' => $url, 'options' => $options];
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('POST', $method);
+            self::assertSame('https://albert.example.com/v1/embeddings', $url);
+            self::assertSame('Authorization: Bearer api-key', $options['normalized_headers']['authorization'][0]);
+            self::assertSame('{"model":"embedding-small","input":"test text"}', $options['body']);
 
-            return new JsonMockResponse(['data' => []]);
-        });
-
-        $client = new EmbeddingsModelClient(
-            $httpClient,
-            'test-api-key',
-            'https://albert.example.com/v1'
-        );
-
-        $model = new Embeddings('text-embedding-ada-002');
-        $result = $client->request($model, $payload, $options);
-
-        $this->assertNotNull($capturedRequest);
-        $this->assertSame('POST', $capturedRequest['method']);
-        $this->assertSame('https://albert.example.com/v1/embeddings', $capturedRequest['url']);
-        $this->assertArrayHasKey('normalized_headers', $capturedRequest['options']);
-        $this->assertArrayHasKey('authorization', $capturedRequest['options']['normalized_headers']);
-        $this->assertStringContainsString('Bearer test-api-key', (string) $capturedRequest['options']['normalized_headers']['authorization'][0]);
-
-        // Check JSON body - it might be in 'body' after processing
-        if (isset($capturedRequest['options']['body'])) {
-            $actualJson = json_decode($capturedRequest['options']['body'], true);
-            $this->assertEquals($expectedJson, $actualJson);
-        } else {
-            $this->assertSame($expectedJson, $capturedRequest['options']['json']);
-        }
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new EmbeddingsModelClient($httpClient, 'api-key', 'https://albert.example.com/v1');
+        $modelClient->request(new Embeddings('embedding-small'), 'test text', []);
     }
 
-    public static function providePayloadToJson(): iterable
+    public function testItIsExecutingTheCorrectRequestWithCustomOptions()
     {
-        yield 'with array payload and no options' => [
-            ['input' => 'test text', 'model' => 'text-embedding-ada-002'],
-            [],
-            ['input' => 'test text', 'model' => 'text-embedding-ada-002'],
-        ];
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('POST', $method);
+            self::assertSame('https://albert.example.com/v1/embeddings', $url);
+            self::assertSame('Authorization: Bearer api-key', $options['normalized_headers']['authorization'][0]);
+            self::assertSame('{"dimensions":256,"model":"embedding-small","input":"test text"}', $options['body']);
 
-        yield 'with string payload and no options' => [
-            'test text',
-            [],
-            'test text',
-        ];
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new EmbeddingsModelClient($httpClient, 'api-key', 'https://albert.example.com/v1');
+        $modelClient->request(new Embeddings('embedding-small'), 'test text', ['dimensions' => 256]);
+    }
 
-        yield 'with array payload and options' => [
-            ['input' => 'test text', 'model' => 'text-embedding-ada-002'],
-            ['dimensions' => 1536],
-            ['dimensions' => 1536, 'input' => 'test text', 'model' => 'text-embedding-ada-002'],
-        ];
+    public function testItIsExecutingTheCorrectRequestWithArrayInput()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('POST', $method);
+            self::assertSame('https://albert.example.com/v1/embeddings', $url);
+            self::assertSame('Authorization: Bearer api-key', $options['normalized_headers']['authorization'][0]);
+            self::assertSame('{"model":"embedding-small","input":["text1","text2","text3"]}', $options['body']);
 
-        yield 'options override payload values' => [
-            ['input' => 'test text', 'model' => 'text-embedding-ada-002'],
-            ['model' => 'text-embedding-3-small'],
-            ['model' => 'text-embedding-3-small', 'input' => 'test text'],
-        ];
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new EmbeddingsModelClient($httpClient, 'api-key', 'https://albert.example.com/v1');
+        $modelClient->request(new Embeddings('embedding-small'), ['text1', 'text2', 'text3'], []);
     }
 
     public function testRequestHandlesBaseUrlWithoutTrailingSlash()
@@ -126,7 +106,7 @@ final class EmbeddingsModelClientTest extends TestCase
             'https://albert.example.com/v1'
         );
 
-        $model = new Embeddings('text-embedding-ada-002');
+        $model = new Embeddings('embedding-small');
         $client->request($model, ['input' => 'test']);
 
         $this->assertSame('https://albert.example.com/v1/embeddings', $capturedUrl);
@@ -147,7 +127,7 @@ final class EmbeddingsModelClientTest extends TestCase
             'https://albert.example.com/v1'
         );
 
-        $model = new Embeddings('text-embedding-ada-002');
+        $model = new Embeddings('embedding-small');
         $client->request($model, ['input' => 'test']);
 
         $this->assertSame('https://albert.example.com/v1/embeddings', $capturedUrl);

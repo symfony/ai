@@ -11,8 +11,7 @@
 
 namespace Symfony\AI\Agent;
 
-use Symfony\AI\Platform\Message\MessageBagInterface;
-use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
@@ -24,10 +23,38 @@ final class Output
      * @param array<string, mixed> $options
      */
     public function __construct(
-        public readonly Model $model,
-        public ResultInterface $result,
-        public readonly MessageBagInterface $messages,
-        public readonly array $options,
+        private readonly string $model,
+        private ResultInterface $result,
+        private readonly MessageBag $messageBag,
+        private readonly array $options = [],
     ) {
+    }
+
+    public function getModel(): string
+    {
+        return $this->model;
+    }
+
+    public function getResult(): ResultInterface
+    {
+        return $this->result;
+    }
+
+    public function setResult(ResultInterface $result): void
+    {
+        $this->result = $result;
+    }
+
+    public function getMessageBag(): MessageBag
+    {
+        return $this->messageBag;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getOptions(): array
+    {
+        return $this->options;
     }
 }

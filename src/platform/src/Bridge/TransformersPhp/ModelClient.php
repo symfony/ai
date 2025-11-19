@@ -17,7 +17,7 @@ use Symfony\AI\Platform\ModelClientInterface;
 
 use function Codewithkyrian\Transformers\Pipelines\pipeline;
 
-final readonly class ModelClient implements ModelClientInterface
+final class ModelClient implements ModelClientInterface
 {
     public function supports(Model $model): bool
     {

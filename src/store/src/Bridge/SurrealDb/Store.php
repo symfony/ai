@@ -25,17 +25,17 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class Store implements ManagedStoreInterface, StoreInterface
+class Store implements ManagedStoreInterface, StoreInterface
 {
     private string $authenticationToken = '';
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $endpointUrl,
-        #[\SensitiveParameter] private readonly string $user,
+        private readonly string $user,
         #[\SensitiveParameter] private readonly string $password,
-        #[\SensitiveParameter] private readonly string $namespace,
-        #[\SensitiveParameter] private readonly string $database,
+        private readonly string $namespace,
+        private readonly string $database,
         private readonly string $table = 'vectors',
         private readonly string $vectorFieldName = '_vectors',
         private readonly string $strategy = 'cosine',
@@ -75,6 +75,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(): void
     {
+        $this->authenticate();
+
         $this->request('DELETE', \sprintf('key/%s', $this->table), []);
     }
 
@@ -87,9 +89,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
     {
         $url = \sprintf('%s/%s', $this->endpointUrl, $endpoint);
 
-        $finalPayload = [
-            'json' => $payload,
-        ];
+        $finalPayload = [];
+
+        if (\is_array($payload) && [] !== $payload) {
+            $finalPayload = [
+                'body' => $payload,
+            ];
+        }
 
         if (\is_string($payload)) {
             $finalPayload = [
@@ -97,15 +103,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ];
         }
 
-        $response = $this->httpClient->request($method, $url, array_merge($finalPayload, [
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Surreal-NS' => $this->namespace,
-                'Surreal-DB' => $this->database,
-                'Authorization' => \sprintf('Bearer %s', $this->authenticationToken),
+        $response = $this->httpClient->request($method, $url, [
+            ...$finalPayload,
+            ...[
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                    'Surreal-NS' => $this->namespace,
+                    'Surreal-DB' => $this->database,
+                    'Authorization' => \sprintf('Bearer %s', $this->authenticationToken),
+                ],
             ],
-        ]));
+        ]);
 
         return $response->toArray();
     }

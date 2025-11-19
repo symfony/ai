@@ -32,7 +32,7 @@ final class DocumentUrlNormalizer extends ModelContractNormalizer
             'type' => 'document',
             'source' => [
                 'type' => 'url',
-                'url' => $data->url,
+                'url' => $data->getUrl(),
             ],
         ];
     }

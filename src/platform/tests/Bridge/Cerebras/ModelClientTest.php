@@ -11,10 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Cerebras;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\TestWith;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cerebras\Model;
 use Symfony\AI\Platform\Bridge\Cerebras\ModelClient;
@@ -25,9 +22,6 @@ use Symfony\Component\HttpClient\Response\JsonMockResponse;
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
  */
-#[CoversClass(ModelClient::class)]
-#[UsesClass(Model::class)]
-#[Small]
 class ModelClientTest extends TestCase
 {
     public function testItDoesNotAllowAnEmptyKey()
@@ -56,7 +50,7 @@ class ModelClientTest extends TestCase
     {
         $client = new ModelClient(new MockHttpClient(), 'csk-1234567890abcdef');
 
-        $this->assertTrue($client->supports(new Model(Model::GPT_OSS_120B)));
+        $this->assertTrue($client->supports(new Model('llama3.1-8b')));
     }
 
     public function testItSuccessfullyInvokesTheModel()
@@ -82,7 +76,7 @@ class ModelClientTest extends TestCase
             ],
         ];
 
-        $result = $client->request(new Model(Model::LLAMA_3_3_70B), $payload);
+        $result = $client->request(new Model('llama-3.3-70b'), $payload);
         $data = $result->getData();
         $info = $result->getObject()->getInfo();
 

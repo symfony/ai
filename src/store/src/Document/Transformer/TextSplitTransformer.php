@@ -24,31 +24,40 @@ use Symfony\Component\Uid\Uuid;
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class TextSplitTransformer implements TransformerInterface
+final class TextSplitTransformer implements TransformerInterface
 {
     public const OPTION_CHUNK_SIZE = 'chunk_size';
     public const OPTION_OVERLAP = 'overlap';
 
+    public function __construct(
+        private readonly int $chunkSize = 1000,
+        private readonly int $overlap = 200,
+    ) {
+        if ($this->overlap < 0 || $this->overlap >= $this->chunkSize) {
+            throw new InvalidArgumentException(\sprintf('Overlap must be non-negative and less than chunk size. Got chunk size: %d, overlap: %d.', $this->chunkSize, $this->overlap));
+        }
+    }
+
     /**
      * @param array{chunk_size?: int, overlap?: int} $options
      */
-    public function __invoke(iterable $documents, array $options = []): iterable
+    public function transform(iterable $documents, array $options = []): iterable
     {
-        $chunkSize = $options[self::OPTION_CHUNK_SIZE] ?? 1000;
-        $overlap = $options[self::OPTION_OVERLAP] ?? 200;
+        $chunkSize = $options[self::OPTION_CHUNK_SIZE] ?? $this->chunkSize;
+        $overlap = $options[self::OPTION_OVERLAP] ?? $this->overlap;
 
         if ($overlap < 0 || $overlap >= $chunkSize) {
             throw new InvalidArgumentException('Overlap must be non-negative and less than chunk size.');
         }
 
         foreach ($documents as $document) {
-            if (mb_strlen($document->content) <= $chunkSize) {
+            if (mb_strlen($document->getContent()) <= $chunkSize) {
                 yield $document;
 
                 continue;
             }
 
-            $text = $document->content;
+            $text = $document->getContent();
             $length = mb_strlen($text);
             $start = 0;
 
@@ -57,9 +66,9 @@ final readonly class TextSplitTransformer implements TransformerInterface
                 $chunkText = mb_substr($text, $start, $end - $start);
 
                 yield new TextDocument(Uuid::v4(), $chunkText, new Metadata([
-                    Metadata::KEY_PARENT_ID => $document->id,
+                    Metadata::KEY_PARENT_ID => $document->getId(),
                     Metadata::KEY_TEXT => $chunkText,
-                    ...$document->metadata,
+                    ...$document->getMetadata(),
                 ]));
 
                 $start += ($chunkSize - $overlap);

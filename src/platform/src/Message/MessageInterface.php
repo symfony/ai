@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
 
@@ -22,4 +24,11 @@ interface MessageInterface
     public function getRole(): Role;
 
     public function getId(): AbstractUid&TimeBasedUidInterface;
+
+    /**
+     * @return string|ContentInterface[]|null
+     */
+    public function getContent(): string|array|null;
+
+    public function getMetadata(): Metadata;
 }

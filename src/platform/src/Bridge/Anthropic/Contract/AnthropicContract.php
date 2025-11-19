@@ -17,7 +17,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-final readonly class AnthropicContract extends Contract
+final class AnthropicContract extends Contract
 {
     public static function create(NormalizerInterface ...$normalizer): Contract
     {

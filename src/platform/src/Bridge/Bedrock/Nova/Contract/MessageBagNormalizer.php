@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract;
 
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
-use Symfony\AI\Platform\Message\MessageBagInterface;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
@@ -26,7 +26,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
     use NormalizerAwareTrait;
 
     /**
-     * @param MessageBagInterface $data
+     * @param MessageBag $data
      *
      * @return array{
      *     messages: array<array<string, mixed>>,
@@ -38,7 +38,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
         $array = [];
 
         if ($data->getSystemMessage()) {
-            $array['system'][]['text'] = $data->getSystemMessage()->content;
+            $array['system'][]['text'] = $data->getSystemMessage()->getContent();
         }
 
         $array['messages'] = $this->normalizer->normalize($data->withoutSystemMessage()->getMessages(), $format, $context);
@@ -48,7 +48,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
 
     protected function supportedDataClass(): string
     {
-        return MessageBagInterface::class;
+        return MessageBag::class;
     }
 
     protected function supportsModel(Model $model): bool

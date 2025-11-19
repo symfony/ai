@@ -11,11 +11,9 @@
 
 namespace Symfony\AI\Agent\Tests\Toolbox\Attribute;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
-#[CoversClass(AsTool::class)]
 final class AsToolTest extends TestCase
 {
     public function testCanBeConstructed()

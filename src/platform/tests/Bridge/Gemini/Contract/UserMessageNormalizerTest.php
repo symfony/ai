@@ -11,10 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Gemini\Contract;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\UserMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
@@ -26,15 +23,6 @@ use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\UserMessage;
 
-#[Small]
-#[CoversClass(UserMessageNormalizer::class)]
-#[UsesClass(Gemini::class)]
-#[UsesClass(UserMessage::class)]
-#[UsesClass(Text::class)]
-#[UsesClass(File::class)]
-#[UsesClass(Image::class)]
-#[UsesClass(Document::class)]
-#[UsesClass(Audio::class)]
 final class UserMessageNormalizerTest extends TestCase
 {
     public function testSupportsNormalization()
@@ -42,7 +30,7 @@ final class UserMessageNormalizerTest extends TestCase
         $normalizer = new UserMessageNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new UserMessage(new Text('Hello')), context: [
-            Contract::CONTEXT_MODEL => new Gemini(),
+            Contract::CONTEXT_MODEL => new Gemini('gemini-2.0-flash'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a user message'));
     }

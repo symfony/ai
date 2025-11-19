@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\LmStudio\Embeddings;
 
 use Symfony\AI\Platform\Bridge\LmStudio\Embeddings;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelClientInterface as PlatformResponseFactory;
+use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -21,11 +21,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * @author Christopher Hertel <mail@christopher-hertel.de>
  * @author André Lubian <lubiana123@gmail.com>
  */
-final readonly class ModelClient implements PlatformResponseFactory
+final class ModelClient implements ModelClientInterface
 {
     public function __construct(
-        private HttpClientInterface $httpClient,
-        private string $hostUrl,
+        private readonly HttpClientInterface $httpClient,
+        private readonly string $hostUrl,
     ) {
     }
 

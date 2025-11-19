@@ -11,21 +11,13 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Anthropic;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
 use Symfony\AI\Platform\Result\RawHttpResult;
-use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
-#[CoversClass(ResultConverter::class)]
-#[Small]
-#[UsesClass(ToolCall::class)]
-#[UsesClass(ToolCallResult::class)]
 final class ResultConverterTest extends TestCase
 {
     public function testConvertThrowsExceptionWhenContentIsToolUseAndLacksText()
@@ -46,8 +38,8 @@ final class ResultConverterTest extends TestCase
         $result = $handler->convert(new RawHttpResult($httpResponse));
         $this->assertInstanceOf(ToolCallResult::class, $result);
         $this->assertCount(1, $result->getContent());
-        $this->assertSame('toolu_01UM4PcTjC1UDiorSXVHSVFM', $result->getContent()[0]->id);
-        $this->assertSame('xxx_tool', $result->getContent()[0]->name);
-        $this->assertSame(['action' => 'get_data'], $result->getContent()[0]->arguments);
+        $this->assertSame('toolu_01UM4PcTjC1UDiorSXVHSVFM', $result->getContent()[0]->getId());
+        $this->assertSame('xxx_tool', $result->getContent()[0]->getName());
+        $this->assertSame(['action' => 'get_data'], $result->getContent()[0]->getArguments());
     }
 }

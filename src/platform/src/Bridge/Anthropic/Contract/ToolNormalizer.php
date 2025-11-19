@@ -36,9 +36,9 @@ class ToolNormalizer extends ModelContractNormalizer
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         return [
-            'name' => $data->name,
-            'description' => $data->description,
-            'input_schema' => $data->parameters ?? ['type' => 'object'],
+            'name' => $data->getName(),
+            'description' => $data->getDescription(),
+            'input_schema' => $data->getParameters() ?? ['type' => 'object'],
         ];
     }
 

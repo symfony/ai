@@ -9,8 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -18,13 +16,11 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
-$model = new Gemini(Gemini::GEMINI_2_FLASH);
 
-$agent = new Agent($platform, $model, logger: logger());
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $agent->call($messages);
+$result = $platform->invoke('gemini-2.0-flash', $messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

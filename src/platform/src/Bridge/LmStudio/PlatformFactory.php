@@ -11,8 +11,10 @@
 
 namespace Symfony\AI\Platform\Bridge\LmStudio;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\LmStudio\Embeddings\ModelClient;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -25,7 +27,9 @@ class PlatformFactory
     public static function create(
         string $hostUrl = 'http://localhost:1234',
         ?HttpClientInterface $httpClient = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
@@ -37,6 +41,10 @@ class PlatformFactory
             [
                 new Embeddings\ResultConverter(),
                 new Completions\ResultConverter(),
-            ], $contract);
+            ],
+            $modelCatalog,
+            $contract,
+            $eventDispatcher,
+        );
     }
 }

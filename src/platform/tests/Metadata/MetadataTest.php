@@ -11,13 +11,9 @@
 
 namespace Symfony\AI\Platform\Tests\Metadata;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Metadata\Metadata;
 
-#[CoversClass(Metadata::class)]
-#[Small]
 final class MetadataTest extends TestCase
 {
     public function testItCanBeCreatedEmpty()

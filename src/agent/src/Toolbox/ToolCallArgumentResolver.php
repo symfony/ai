@@ -25,12 +25,12 @@ use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 /**
  * @author Valtteri R <valtzu@gmail.com>
  */
-final readonly class ToolCallArgumentResolver
+final class ToolCallArgumentResolver
 {
-    private TypeResolver $typeResolver;
+    private readonly TypeResolver $typeResolver;
 
     public function __construct(
-        private DenormalizerInterface $denormalizer = new Serializer([new DateTimeNormalizer(), new ObjectNormalizer(), new ArrayDenormalizer()]),
+        private readonly DenormalizerInterface $denormalizer = new Serializer([new DateTimeNormalizer(), new ObjectNormalizer(), new ArrayDenormalizer()]),
         ?TypeResolver $typeResolver = null,
     ) {
         $this->typeResolver = $typeResolver ?? TypeResolver::create();
@@ -43,21 +43,21 @@ final readonly class ToolCallArgumentResolver
      */
     public function resolveArguments(Tool $metadata, ToolCall $toolCall): array
     {
-        $method = new \ReflectionMethod($metadata->reference->class, $metadata->reference->method);
+        $method = new \ReflectionMethod($metadata->getReference()->getClass(), $metadata->getReference()->getMethod());
 
         /** @var array<string, \ReflectionParameter> $parameters */
         $parameters = array_column($method->getParameters(), null, 'name');
         $arguments = [];
 
         foreach ($parameters as $name => $reflectionParameter) {
-            if (!\array_key_exists($name, $toolCall->arguments)) {
+            if (!\array_key_exists($name, $toolCall->getArguments())) {
                 if (!$reflectionParameter->isOptional()) {
-                    throw new ToolException(\sprintf('Parameter "%s" is mandatory for tool "%s".', $name, $toolCall->name));
+                    throw new ToolException(\sprintf('Parameter "%s" is mandatory for tool "%s".', $name, $toolCall->getName()));
                 }
                 continue;
             }
 
-            $value = $toolCall->arguments[$name];
+            $value = $toolCall->getArguments()[$name];
             $parameterType = $this->typeResolver->resolve($reflectionParameter);
             $dimensions = '';
             while ($parameterType instanceof CollectionType) {

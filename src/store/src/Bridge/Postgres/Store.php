@@ -28,13 +28,13 @@ use Symfony\Component\Uid\Uuid;
  *
  * @see https://github.com/pgvector/pgvector
  */
-final readonly class Store implements ManagedStoreInterface, StoreInterface
+final class Store implements ManagedStoreInterface, StoreInterface
 {
     public function __construct(
-        private \PDO $connection,
-        private string $tableName,
-        private string $vectorFieldName = 'embedding',
-        private Distance $distance = Distance::L2,
+        private readonly \PDO $connection,
+        private readonly string $tableName,
+        private readonly string $vectorFieldName = 'embedding',
+        private readonly Distance $distance = Distance::L2,
     ) {
     }
 
@@ -127,11 +127,6 @@ final readonly class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
-    /**
-     * @param array<string, mixed> $options
-     *
-     * @return VectorDocument[]
-     */
     public function query(Vector $vector, array $options = []): array
     {
         $where = null;

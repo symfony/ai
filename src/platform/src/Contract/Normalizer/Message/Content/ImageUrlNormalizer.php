@@ -40,7 +40,7 @@ final class ImageUrlNormalizer implements NormalizerInterface
     {
         return [
             'type' => 'image_url',
-            'image_url' => ['url' => $data->url],
+            'image_url' => ['url' => $data->getUrl()],
         ];
     }
 }

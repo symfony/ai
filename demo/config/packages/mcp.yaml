@@ -1,5 +1,15 @@
 mcp:
     app: demo-app
     version: 0.0.1
+    pagination_limit: 10
+    instructions: |
+        This demo MCP server provides time management capabilities for developers.
+
+        Use this server when you need to work with timestamps, time zones, or time-based calculations.
+
     client_transports:
         stdio: true
+        http: true
+    http:
+        session:
+            store: file

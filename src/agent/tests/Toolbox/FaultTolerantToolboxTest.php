@@ -11,25 +11,19 @@
 
 namespace Symfony\AI\Agent\Tests\Toolbox;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
+use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
-#[CoversClass(FaultTolerantToolbox::class)]
-#[UsesClass(ToolCall::class)]
-#[UsesClass(Tool::class)]
-#[UsesClass(ExecutionReference::class)]
-#[UsesClass(ToolNotFoundException::class)]
-#[UsesClass(ToolExecutionException::class)]
 final class FaultTolerantToolboxTest extends TestCase
 {
     public function testFaultyToolExecution()
@@ -44,7 +38,7 @@ final class FaultTolerantToolboxTest extends TestCase
         $toolCall = new ToolCall('987654321', 'tool_foo');
         $actual = $faultTolerantToolbox->execute($toolCall);
 
-        $this->assertSame($expected, $actual);
+        $this->assertSame($expected, $actual->getResult());
     }
 
     public function testFaultyToolCall()
@@ -59,7 +53,27 @@ final class FaultTolerantToolboxTest extends TestCase
         $toolCall = new ToolCall('123456789', 'tool_xyz');
         $actual = $faultTolerantToolbox->execute($toolCall);
 
-        $this->assertSame($expected, $actual);
+        $this->assertSame($expected, $actual->getResult());
+    }
+
+    public function testCustomToolExecutionException()
+    {
+        $faultyToolbox = $this->createFaultyToolbox(
+            static fn () => new class extends \RuntimeException implements ToolExecutionExceptionInterface {
+                public function getToolCallResult(): array
+                {
+                    return ['error' => 'custom'];
+                }
+            },
+        );
+
+        $faultTolerantToolbox = new FaultTolerantToolbox($faultyToolbox);
+        $expected = ['error' => 'custom'];
+
+        $toolCall = new ToolCall('123456789', 'tool_xyz');
+        $actual = $faultTolerantToolbox->execute($toolCall);
+
+        $this->assertSame($expected, $actual->getResult());
     }
 
     private function createFaultyToolbox(\Closure $exceptionFactory): ToolboxInterface
@@ -80,7 +94,7 @@ final class FaultTolerantToolboxTest extends TestCase
                 ];
             }
 
-            public function execute(ToolCall $toolCall): mixed
+            public function execute(ToolCall $toolCall): ToolResult
             {
                 throw ($this->exceptionFactory)($toolCall);
             }

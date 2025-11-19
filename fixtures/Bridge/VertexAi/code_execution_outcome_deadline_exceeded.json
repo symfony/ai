@@ -1,0 +1,31 @@
+{
+    "candidates": [
+        {
+            "content": {
+                "parts": [
+                    {
+                        "text": "First text"
+                    },
+                    {
+                        "executableCode": {
+                            "language": "PYTHON",
+                            "code": "print('Hello, World!')"
+                        }
+                    },
+                    {
+                        "codeExecutionResult": {
+                            "outcome": "OUTCOME_DEADLINE_EXCEEDED",
+                            "output": "An error occurred during code execution."
+                        }
+                    },
+                    {
+                        "text": "Last text"
+                    }
+                ],
+                "role": "model"
+            },
+            "finishReason": "STOP",
+            "index": 0
+        }
+    ]
+}

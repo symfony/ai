@@ -11,19 +11,17 @@
 
 namespace Symfony\AI\Agent\Tests\Toolbox\Tool;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\Tool\Firecrawl;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
-#[CoversClass(Firecrawl::class)]
 final class FirecrawlTest extends TestCase
 {
     public function testScrape()
     {
         $httpClient = new MockHttpClient([
-            new JsonMockResponse(json_decode(file_get_contents(__DIR__.'/fixtures/firecrawl-scrape.json'), true)),
+            JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/firecrawl-scrape.json'),
         ]);
 
         $firecrawl = new Firecrawl($httpClient, 'test', 'https://127.0.0.1:3002');
@@ -39,10 +37,10 @@ final class FirecrawlTest extends TestCase
     public function testCrawl()
     {
         $httpClient = new MockHttpClient([
-            new JsonMockResponse(json_decode(file_get_contents(__DIR__.'/fixtures/firecrawl-crawl-wait.json'), true)),
-            new JsonMockResponse(json_decode(file_get_contents(__DIR__.'/fixtures/firecrawl-crawl-status.json'), true)),
-            new JsonMockResponse(json_decode(file_get_contents(__DIR__.'/fixtures/firecrawl-crawl-status-done.json'), true)),
-            new JsonMockResponse(json_decode(file_get_contents(__DIR__.'/fixtures/firecrawl-crawl.json'), true)),
+            JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/firecrawl-crawl-wait.json'),
+            JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/firecrawl-crawl-status.json'),
+            JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/firecrawl-crawl-status-done.json'),
+            JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/firecrawl-crawl.json'),
         ]);
 
         $firecrawl = new Firecrawl($httpClient, 'test', 'https://127.0.0.1:3002');
@@ -62,7 +60,7 @@ final class FirecrawlTest extends TestCase
     public function testMap()
     {
         $httpClient = new MockHttpClient([
-            new JsonMockResponse(json_decode(file_get_contents(__DIR__.'/fixtures/firecrawl-map.json'), true)),
+            JsonMockResponse::fromFile(__DIR__.'/../../fixtures/Tool/firecrawl-map.json'),
         ]);
 
         $firecrawl = new Firecrawl($httpClient, 'test', 'https://127.0.0.1:3002');

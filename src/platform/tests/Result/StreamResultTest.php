@@ -11,13 +11,9 @@
 
 namespace Symfony\AI\Platform\Tests\Result;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\StreamResult;
 
-#[CoversClass(StreamResultTest::class)]
-#[Small]
 final class StreamResultTest extends TestCase
 {
     public function testGetContent()

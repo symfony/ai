@@ -11,12 +11,10 @@
 
 namespace Symfony\AI\Store\Tests\Document;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Document\Metadata;
 
-#[CoversClass(Metadata::class)]
 final class MetadataTest extends TestCase
 {
     public function testMetadataExtendsArrayObject()
@@ -48,11 +46,9 @@ final class MetadataTest extends TestCase
     {
         $metadata = new Metadata();
 
-        // Initially should not have parent ID
         $this->assertFalse($metadata->hasParentId());
         $this->assertNull($metadata->getParentId());
 
-        // Set parent ID
         $metadata->setParentId($parentId);
 
         $this->assertTrue($metadata->hasParentId());
@@ -78,11 +74,9 @@ final class MetadataTest extends TestCase
     {
         $metadata = new Metadata();
 
-        // Initially should not have text
         $this->assertFalse($metadata->hasText());
         $this->assertNull($metadata->getText());
 
-        // Set text
         $metadata->setText($text);
 
         $this->assertTrue($metadata->hasText());
@@ -108,11 +102,9 @@ final class MetadataTest extends TestCase
     {
         $metadata = new Metadata();
 
-        // Initially should not have source
         $this->assertFalse($metadata->hasSource());
         $this->assertNull($metadata->getSource());
 
-        // Set source
         $metadata->setSource($source);
 
         $this->assertTrue($metadata->hasSource());
@@ -144,19 +136,15 @@ final class MetadataTest extends TestCase
 
         $metadata = new Metadata($data);
 
-        // Test parent ID
         $this->assertTrue($metadata->hasParentId());
         $this->assertSame('parent-123', $metadata->getParentId());
 
-        // Test text
         $this->assertTrue($metadata->hasText());
         $this->assertSame('This is the text content', $metadata->getText());
 
-        // Test source
         $this->assertTrue($metadata->hasSource());
         $this->assertSame('document.pdf', $metadata->getSource());
 
-        // Test regular metadata
         $this->assertSame('Test Document', $metadata['title']);
     }
 
@@ -164,22 +152,18 @@ final class MetadataTest extends TestCase
     {
         $metadata = new Metadata();
 
-        // Test setting and getting values
         $metadata['title'] = 'Test Document';
         $metadata['category'] = 'test';
 
         $this->assertSame('Test Document', $metadata['title']);
         $this->assertSame('test', $metadata['category']);
 
-        // Test isset
         $this->assertTrue(isset($metadata['title']));
         $this->assertFalse(isset($metadata['nonexistent']));
 
-        // Test unset
         unset($metadata['category']);
         $this->assertFalse(isset($metadata['category']));
 
-        // Test count
         $this->assertCount(1, $metadata);
     }
 
@@ -218,12 +202,10 @@ final class MetadataTest extends TestCase
     {
         $metadata = new Metadata();
 
-        // Set initial values
         $metadata->setParentId('parent-1');
         $metadata->setText('initial text');
         $metadata->setSource('initial.pdf');
 
-        // Overwrite values
         $metadata->setParentId('parent-2');
         $metadata->setText('updated text');
         $metadata->setSource('updated.pdf');

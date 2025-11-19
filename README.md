@@ -13,13 +13,13 @@ Symfony AI is a set of components that integrate AI capabilities into PHP applic
 Symfony AI consists of several lower and higher level **components** and the respective integration **bundles**:
 
 * **Components**
-  * **[Platform](src/platform/README.md)**: A unified interface to various AI platforms like OpenAI, Anthropic, Azure, Gemini, and more.
+  * **[Platform](src/platform/README.md)**: A unified interface to various AI platforms like OpenAI, Anthropic, Azure, Gemini, VertexAI, and more.
   * **[Agent](src/agent/README.md)**: Framework for building AI agents that can interact with users and perform tasks.
+  * **[Chat](src/chat/README.md)**: An unified interface to send messages to agents and store long-term context.
   * **[Store](src/store/README.md)**: Data storage abstraction with indexing and retrieval for AI applications.
-  * **[MCP SDK](src/mcp-sdk/README.md)**: SDK for [Model Context Protocol](https://modelcontextprotocol.io) enabling communication between AI agents and tools.
 * **Bundles**
   * **[AI Bundle](src/ai-bundle/README.md)**: Symfony integration for AI Platform, Store and Agent components.
-  * **[MCP Bundle](src/mcp-bundle/README.md)**: Symfony integration for MCP SDK, allowing them to act as MCP servers or clients.
+  * **[MCP Bundle](src/mcp-bundle/README.md)**: Symfony integration for official MCP SDK, allowing them to act as MCP servers or clients.
 
 ## Examples & Demo
 
@@ -34,11 +34,3 @@ Help Symfony by [sponsoring](https://symfony.com/sponsor) its development!
 ## Contributing
 
 Thank you for considering contributing to Symfony AI! You can find the [contribution guide here](CONTRIBUTING.md).
-
-## Fixture Licenses
-
-For testing multi-modal features, the repository contains binary media content, with the following owners and licenses:
-
-* `tests/Fixture/image.jpg`: Chris F., Creative Commons, see [pexels.com](https://www.pexels.com/photo/blauer-und-gruner-elefant-mit-licht-1680755/)
-* `tests/Fixture/audio.mp3`: davidbain, Creative Commons, see [freesound.org](https://freesound.org/people/davidbain/sounds/136777/)
-* `tests/Fixture/document.pdf`: Chem8240ja, Public Domain, see [Wikipedia](https://en.m.wikipedia.org/wiki/File:Re_example.pdf)

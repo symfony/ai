@@ -14,6 +14,6 @@ namespace Symfony\AI\Platform\Message\Content;
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-final readonly class Image extends File
+final class Image extends File
 {
 }

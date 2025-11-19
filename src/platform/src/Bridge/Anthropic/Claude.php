@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
-use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -34,17 +33,11 @@ class Claude extends Model
     /**
      * @param array<string, mixed> $options The default options for the model usage
      */
-    public function __construct(
-        string $name = self::SONNET_37,
-        array $options = ['temperature' => 1.0, 'max_tokens' => 1000],
-    ) {
-        $capabilities = [
-            Capability::INPUT_MESSAGES,
-            Capability::INPUT_IMAGE,
-            Capability::OUTPUT_TEXT,
-            Capability::OUTPUT_STREAMING,
-            Capability::TOOL_CALLING,
-        ];
+    public function __construct(string $name, array $capabilities = [], array $options = [])
+    {
+        if (!isset($options['max_tokens'])) {
+            $options['max_tokens'] = 1000;
+        }
 
         parent::__construct($name, $capabilities, $options);
     }

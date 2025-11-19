@@ -12,11 +12,9 @@
 namespace App\Tests\Blog;
 
 use App\Blog\Post;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(Post::class)]
 final class PostTest extends TestCase
 {
     public function testPostToString()

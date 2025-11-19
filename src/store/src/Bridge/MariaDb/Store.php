@@ -29,7 +29,7 @@ use Symfony\Component\Uid\Uuid;
  *
  * @author Valtteri R <valtzu@gmail.com>
  */
-final readonly class Store implements ManagedStoreInterface, StoreInterface
+final class Store implements ManagedStoreInterface, StoreInterface
 {
     /**
      * @param string $tableName       The name of the table
@@ -37,10 +37,10 @@ final readonly class Store implements ManagedStoreInterface, StoreInterface
      * @param string $vectorFieldName The name of the field in the index that contains the vector
      */
     public function __construct(
-        private \PDO $connection,
-        private string $tableName,
-        private string $indexName,
-        private string $vectorFieldName,
+        private readonly \PDO $connection,
+        private readonly string $tableName,
+        private readonly string $indexName,
+        private readonly string $vectorFieldName,
     ) {
         if (!\extension_loaded('pdo')) {
             throw new RuntimeException('For using MariaDB as retrieval vector store, the PDO extension needs to be enabled.');

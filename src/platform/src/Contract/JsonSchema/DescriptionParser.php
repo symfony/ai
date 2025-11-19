@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Contract\JsonSchema;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class DescriptionParser
+final class DescriptionParser
 {
     public function getDescription(\ReflectionProperty|\ReflectionParameter $reflector): string
     {

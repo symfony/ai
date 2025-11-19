@@ -17,10 +17,10 @@ use Symfony\AI\Store\Document\VectorDocument;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final readonly class DistanceCalculator
+final class DistanceCalculator
 {
     public function __construct(
-        private DistanceStrategy $strategy = DistanceStrategy::COSINE_DISTANCE,
+        private readonly DistanceStrategy $strategy = DistanceStrategy::COSINE_DISTANCE,
     ) {
     }
 
@@ -58,7 +58,7 @@ final readonly class DistanceCalculator
         }
 
         return array_map(
-            static fn (array $embedding): VectorDocument => $embedding['document'],
+            static fn (array $embedding): VectorDocument => $embedding['document']->withScore($embedding['distance']),
             $currentEmbeddings,
         );
     }

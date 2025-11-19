@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Voyage;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -19,11 +20,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class ModelClient implements ModelClientInterface
+final class ModelClient implements ModelClientInterface
 {
     public function __construct(
-        private HttpClientInterface $httpClient,
-        #[\SensitiveParameter] private string $apiKey,
+        private readonly HttpClientInterface $httpClient,
+        #[\SensitiveParameter] private readonly string $apiKey,
     ) {
     }
 
@@ -34,12 +35,27 @@ final readonly class ModelClient implements ModelClientInterface
 
     public function request(Model $model, object|string|array $payload, array $options = []): RawHttpResult
     {
-        return new RawHttpResult($this->httpClient->request('POST', 'https://api.voyageai.com/v1/embeddings', [
+        [$inputKey, $endpoint] = $model->supports(Capability::INPUT_MULTIMODAL)
+            ? ['inputs', 'multimodalembeddings']
+            : ['input', 'embeddings'];
+
+        $body = [
             'auth_bearer' => $this->apiKey,
             'json' => [
                 'model' => $model->getName(),
-                'input' => $payload,
+                $inputKey => $payload,
+                'input_type' => $options['input_type'] ?? null,
+                'truncation' => $options['truncation'] ?? true,
             ],
-        ]));
+        ];
+
+        if ($model->supports(Capability::INPUT_MULTIMODAL)) {
+            $body['json']['output_encoding'] = $options['encoding'] ?? null;
+        } else {
+            $body['json']['output_dimension'] = $options['dimensions'] ?? null;
+            $body['json']['encoding_format'] = $options['encoding'] ?? null;
+        }
+
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('https://api.voyageai.com/v1/%s', $endpoint), $body));
     }
 }

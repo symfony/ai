@@ -36,6 +36,8 @@ final class ToolCallMessageNormalizer implements NormalizerInterface, Normalizer
     }
 
     /**
+     * @param ToolCallMessage $data
+     *
      * @return array{
      *     role: 'tool',
      *     content: string,
@@ -46,8 +48,8 @@ final class ToolCallMessageNormalizer implements NormalizerInterface, Normalizer
     {
         return [
             'role' => $data->getRole()->value,
-            'content' => $this->normalizer->normalize($data->content, $format, $context),
-            'tool_call_id' => $data->toolCall->id,
+            'content' => $this->normalizer->normalize($data->getContent(), $format, $context),
+            'tool_call_id' => $data->getToolCall()->getId(),
         ];
     }
 }

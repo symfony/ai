@@ -11,13 +11,9 @@
 
 namespace Symfony\AI\Platform\Tests\Message;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Message\Role;
 
-#[CoversClass(Role::class)]
-#[Small]
 final class RoleTest extends TestCase
 {
     public function testValues()

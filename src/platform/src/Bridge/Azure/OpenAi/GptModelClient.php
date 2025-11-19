@@ -22,23 +22,33 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class GptModelClient implements ModelClientInterface
+final class GptModelClient implements ModelClientInterface
 {
-    private EventSourceHttpClient $httpClient;
+    private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
         HttpClientInterface $httpClient,
-        private string $baseUrl,
-        private string $deployment,
-        private string $apiVersion,
-        #[\SensitiveParameter] private string $apiKey,
+        private readonly string $baseUrl,
+        private readonly string $deployment,
+        private readonly string $apiVersion,
+        #[\SensitiveParameter] private readonly string $apiKey,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
-        !str_starts_with($this->baseUrl, 'http://') || throw new InvalidArgumentException('The base URL must not contain the protocol.');
-        !str_starts_with($this->baseUrl, 'https://') || throw new InvalidArgumentException('The base URL must not contain the protocol.');
-        '' !== $deployment || throw new InvalidArgumentException('The deployment must not be empty.');
-        '' !== $apiVersion || throw new InvalidArgumentException('The API version must not be empty.');
-        '' !== $apiKey || throw new InvalidArgumentException('The API key must not be empty.');
+        if (str_starts_with($this->baseUrl, 'http://')) {
+            throw new InvalidArgumentException('The base URL must not contain the protocol.');
+        }
+        if (str_starts_with($this->baseUrl, 'https://')) {
+            throw new InvalidArgumentException('The base URL must not contain the protocol.');
+        }
+        if ('' === $deployment) {
+            throw new InvalidArgumentException('The deployment must not be empty.');
+        }
+        if ('' === $apiVersion) {
+            throw new InvalidArgumentException('The API version must not be empty.');
+        }
+        if ('' === $apiKey) {
+            throw new InvalidArgumentException('The API key must not be empty.');
+        }
     }
 
     public function supports(Model $model): bool

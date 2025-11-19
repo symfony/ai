@@ -11,16 +11,10 @@
 
 namespace Symfony\AI\Platform\Tests\Contract\Normalizer\Message\Content;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ImageNormalizer;
-use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Content\Image;
 
-#[CoversClass(ImageNormalizer::class)]
-#[UsesClass(Image::class)]
-#[UsesClass(File::class)]
 final class ImageNormalizerTest extends TestCase
 {
     private ImageNormalizer $normalizer;

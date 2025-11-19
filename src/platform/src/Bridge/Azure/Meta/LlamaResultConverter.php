@@ -21,7 +21,7 @@ use Symfony\AI\Platform\ResultConverterInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class LlamaResultConverter implements ResultConverterInterface
+final class LlamaResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {

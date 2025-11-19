@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Agent\Toolbox;
 
-use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
+use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
@@ -21,10 +21,10 @@ use Symfony\AI\Platform\Tool\Tool;
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class FaultTolerantToolbox implements ToolboxInterface
+final class FaultTolerantToolbox implements ToolboxInterface
 {
     public function __construct(
-        private ToolboxInterface $innerToolbox,
+        private readonly ToolboxInterface $innerToolbox,
     ) {
     }
 
@@ -33,16 +33,19 @@ final readonly class FaultTolerantToolbox implements ToolboxInterface
         return $this->innerToolbox->getTools();
     }
 
-    public function execute(ToolCall $toolCall): mixed
+    public function execute(ToolCall $toolCall): ToolResult
     {
         try {
             return $this->innerToolbox->execute($toolCall);
-        } catch (ToolExecutionException $e) {
-            return \sprintf('An error occurred while executing tool "%s".', $e->toolCall->name);
+        } catch (ToolExecutionExceptionInterface $e) {
+            return new ToolResult($toolCall, $e->getToolCallResult());
         } catch (ToolNotFoundException) {
-            $names = array_map(fn (Tool $metadata) => $metadata->name, $this->getTools());
+            $names = array_map(fn (Tool $metadata) => $metadata->getName(), $this->getTools());
 
-            return \sprintf('Tool "%s" was not found, please use one of these: %s', $toolCall->name, implode(', ', $names));
+            return new ToolResult(
+                $toolCall,
+                \sprintf('Tool "%s" was not found, please use one of these: %s', $toolCall->getName(), implode(', ', $names))
+            );
         }
     }
 }

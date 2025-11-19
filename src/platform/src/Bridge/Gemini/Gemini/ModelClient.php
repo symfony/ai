@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -22,13 +23,13 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Roy Garrido
  */
-final readonly class ModelClient implements ModelClientInterface
+final class ModelClient implements ModelClientInterface
 {
-    private EventSourceHttpClient $httpClient;
+    private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
         HttpClientInterface $httpClient,
-        #[\SensitiveParameter] private string $apiKey,
+        #[\SensitiveParameter] private readonly string $apiKey,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
@@ -49,16 +50,20 @@ final readonly class ModelClient implements ModelClientInterface
             $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent',
         );
 
-        if (isset($options['response_format']['json_schema']['schema'])) {
+        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
             $options['responseMimeType'] = 'application/json';
-            $options['responseJsonSchema'] = $options['response_format']['json_schema']['schema'];
-            unset($options['response_format']);
+            $options['responseJsonSchema'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'];
+            unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
         }
 
         $generationConfig = ['generationConfig' => $options];
         unset($generationConfig['generationConfig']['stream']);
         unset($generationConfig['generationConfig']['tools']);
         unset($generationConfig['generationConfig']['server_tools']);
+
+        if ([] === $generationConfig['generationConfig']) {
+            $generationConfig = [];
+        }
 
         if (isset($options['tools'])) {
             $generationConfig['tools'][] = ['functionDeclarations' => $options['tools']];

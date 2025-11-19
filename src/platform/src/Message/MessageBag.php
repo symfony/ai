@@ -14,11 +14,9 @@ namespace Symfony\AI\Platform\Message;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 
 /**
- * @final
- *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class MessageBag implements MessageBagInterface
+class MessageBag implements \Countable
 {
     use MetadataAwareTrait;
 
@@ -56,6 +54,17 @@ class MessageBag implements MessageBagInterface
         return null;
     }
 
+    public function getUserMessage(): ?UserMessage
+    {
+        foreach ($this->messages as $message) {
+            if ($message instanceof UserMessage) {
+                return $message;
+            }
+        }
+
+        return null;
+    }
+
     public function with(MessageInterface $message): self
     {
         $messages = clone $this;
@@ -64,7 +73,7 @@ class MessageBag implements MessageBagInterface
         return $messages;
     }
 
-    public function merge(MessageBagInterface $messageBag): self
+    public function merge(self $messageBag): self
     {
         $messages = clone $this;
         $messages->messages = array_merge($messages->messages, $messageBag->getMessages());

@@ -35,9 +35,9 @@ class IsGrantedToolAttributeListener
 
     public function __invoke(ToolCallArgumentsResolved $event): void
     {
-        $tool = $event->tool;
+        $tool = $event->getTool();
         $class = new \ReflectionClass($tool);
-        $method = $class->getMethod($event->metadata->reference->method);
+        $method = $class->getMethod($event->getMetadata()->getReference()->getMethod());
         $classAttributes = $class->getAttributes(IsGrantedTool::class);
         $methodAttributes = $method->getAttributes(IsGrantedTool::class);
 
@@ -45,7 +45,7 @@ class IsGrantedToolAttributeListener
             return;
         }
 
-        $arguments = $event->arguments;
+        $arguments = $event->getArguments();
 
         foreach (array_merge($classAttributes, $methodAttributes) as $attr) {
             /** @var IsGrantedTool $attribute */

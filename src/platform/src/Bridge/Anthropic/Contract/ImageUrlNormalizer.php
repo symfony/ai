@@ -33,7 +33,7 @@ final class ImageUrlNormalizer extends ModelContractNormalizer
             'type' => 'image',
             'source' => [
                 'type' => 'url',
-                'url' => $data->url,
+                'url' => $data->getUrl(),
             ],
         ];
     }

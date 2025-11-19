@@ -11,26 +11,13 @@
 
 namespace Symfony\AI\Agent\Tests\Toolbox\MetadataFactory;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Fixtures\Tool\ToolNoAttribute1;
 use Symfony\AI\Fixtures\Tool\ToolNoAttribute2;
-use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
-use Symfony\AI\Platform\Contract\JsonSchema\Factory;
-use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
-#[CoversClass(MemoryToolFactory::class)]
-#[UsesClass(AsTool::class)]
-#[UsesClass(Tool::class)]
-#[UsesClass(ExecutionReference::class)]
-#[UsesClass(ToolException::class)]
-#[UsesClass(Factory::class)]
-#[UsesClass(DescriptionParser::class)]
 final class MemoryFactoryTest extends TestCase
 {
     public function testGetMetadataWithoutTools()
@@ -52,9 +39,9 @@ final class MemoryFactoryTest extends TestCase
 
         $this->assertCount(1, $metadata);
         $this->assertInstanceOf(Tool::class, $metadata[0]);
-        $this->assertSame('happy_birthday', $metadata[0]->name);
-        $this->assertSame('Generates birthday message', $metadata[0]->description);
-        $this->assertSame('__invoke', $metadata[0]->reference->method);
+        $this->assertSame('happy_birthday', $metadata[0]->getName());
+        $this->assertSame('Generates birthday message', $metadata[0]->getDescription());
+        $this->assertSame('__invoke', $metadata[0]->getReference()->getMethod());
 
         $expectedParams = [
             'type' => 'object',
@@ -66,7 +53,7 @@ final class MemoryFactoryTest extends TestCase
             'additionalProperties' => false,
         ];
 
-        $this->assertSame($expectedParams, $metadata[0]->parameters);
+        $this->assertSame($expectedParams, $metadata[0]->getParameters());
     }
 
     public function testGetMetadataWithMultipleToolsInClass()
@@ -79,9 +66,9 @@ final class MemoryFactoryTest extends TestCase
 
         $this->assertCount(2, $metadata);
         $this->assertInstanceOf(Tool::class, $metadata[0]);
-        $this->assertSame('checkout', $metadata[0]->name);
-        $this->assertSame('Buys a number of items per product', $metadata[0]->description);
-        $this->assertSame('buy', $metadata[0]->reference->method);
+        $this->assertSame('checkout', $metadata[0]->getName());
+        $this->assertSame('Buys a number of items per product', $metadata[0]->getDescription());
+        $this->assertSame('buy', $metadata[0]->getReference()->getMethod());
 
         $expectedParams = [
             'type' => 'object',
@@ -92,12 +79,12 @@ final class MemoryFactoryTest extends TestCase
             'required' => ['id', 'amount'],
             'additionalProperties' => false,
         ];
-        $this->assertSame($expectedParams, $metadata[0]->parameters);
+        $this->assertSame($expectedParams, $metadata[0]->getParameters());
 
         $this->assertInstanceOf(Tool::class, $metadata[1]);
-        $this->assertSame('cancel', $metadata[1]->name);
-        $this->assertSame('Cancels an order', $metadata[1]->description);
-        $this->assertSame('cancel', $metadata[1]->reference->method);
+        $this->assertSame('cancel', $metadata[1]->getName());
+        $this->assertSame('Cancels an order', $metadata[1]->getDescription());
+        $this->assertSame('cancel', $metadata[1]->getReference()->getMethod());
 
         $expectedParams = [
             'type' => 'object',
@@ -107,6 +94,6 @@ final class MemoryFactoryTest extends TestCase
             'required' => ['orderId'],
             'additionalProperties' => false,
         ];
-        $this->assertSame($expectedParams, $metadata[1]->parameters);
+        $this->assertSame($expectedParams, $metadata[1]->getParameters());
     }
 }

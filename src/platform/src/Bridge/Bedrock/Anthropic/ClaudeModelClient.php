@@ -26,11 +26,11 @@ use Symfony\AI\Platform\Result\ToolCallResult;
 /**
  * @author Björn Altmann
  */
-final readonly class ClaudeModelClient implements ModelClientInterface
+final class ClaudeModelClient implements ModelClientInterface
 {
     public function __construct(
-        private BedrockRuntimeClient $bedrockRuntimeClient,
-        private string $version = '2023-05-31',
+        private readonly BedrockRuntimeClient $bedrockRuntimeClient,
+        private readonly string $version = '2023-05-31',
     ) {
     }
 

@@ -12,15 +12,13 @@
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Content\Image;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('Salesforce/blip-image-captioning-base');
 
 $image = Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg');
-$result = $platform->invoke($model, $image, [
+$result = $platform->invoke('Salesforce/blip-image-captioning-base', $image, [
     'task' => Task::IMAGE_TO_TEXT,
 ]);
 

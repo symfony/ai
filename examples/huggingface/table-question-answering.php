@@ -11,22 +11,20 @@
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
-use Symfony\AI\Platform\Model;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$model = new Model('microsoft/tapex-base');
 
 $input = [
     'query' => 'select year where city = beijing',
     'table' => [
-        'year' => [1896, 1900, 1904, 2004, 2008, 2012],
+        'year' => ['1896', '1900', '1904', '2004', '2008', '2012'],
         'city' => ['athens', 'paris', 'st. louis', 'athens', 'beijing', 'london'],
     ],
 ];
 
-$result = $platform->invoke($model, $input, [
+$result = $platform->invoke('google/tapas-base-finetuned-wtq', $input, [
     'task' => Task::TABLE_QUESTION_ANSWERING,
 ]);
 

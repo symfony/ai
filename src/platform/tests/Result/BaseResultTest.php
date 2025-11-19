@@ -11,24 +11,16 @@
 
 namespace Symfony\AI\Platform\Tests\Result;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\Attributes\UsesTrait;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\BaseResult;
 use Symfony\AI\Platform\Result\Exception\RawResultAlreadySetException;
 use Symfony\AI\Platform\Result\RawResultAwareTrait;
 use Symfony\AI\Platform\Result\RawResultInterface;
 
-#[CoversClass(BaseResult::class)]
 #[UsesTrait(MetadataAwareTrait::class)]
 #[UsesTrait(RawResultAwareTrait::class)]
-#[UsesClass(Metadata::class)]
-#[UsesClass(RawResultAlreadySetException::class)]
-#[Small]
 final class BaseResultTest extends TestCase
 {
     public function testItCanHandleMetadata()
@@ -70,6 +62,11 @@ final class BaseResultTest extends TestCase
             public function getData(): array
             {
                 return ['key' => 'value'];
+            }
+
+            public function getDataStream(): iterable
+            {
+                return $this->getData();
             }
 
             public function getObject(): object

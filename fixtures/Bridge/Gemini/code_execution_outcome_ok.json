@@ -1,0 +1,37 @@
+{
+    "candidates": [
+        {
+            "content": {
+                "parts": [
+                    {
+                        "text": "First text"
+                    },
+                    {
+                        "executableCode": {
+                            "language": "PYTHON",
+                            "code": "print('Hello, World!')"
+                        }
+                    },
+                    {
+                        "codeExecutionResult": {
+                            "outcome": "OUTCOME_OK",
+                            "output": "Hello, World!"
+                        }
+                    },
+                    {
+                        "text": "Second text\n"
+                    },
+                    {
+                        "text": "Third text\n"
+                    },
+                    {
+                        "text": "Fourth text"
+                    }
+                ],
+                "role": "model"
+            },
+            "finishReason": "STOP",
+            "index": 0
+        }
+    ]
+}

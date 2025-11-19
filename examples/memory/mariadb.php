@@ -14,12 +14,11 @@ use Doctrine\DBAL\Tools\DsnParser;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Memory\EmbeddingProvider;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Bridge\MariaDb\Store;
+use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -33,7 +32,6 @@ $store = Store::fromDbal(
     connection: DriverManager::getConnection((new DsnParser())->parse($_ENV['MARIADB_URI'])),
     tableName: 'my_table_memory',
     indexName: 'my_index',
-    vectorFieldName: 'embedding',
 );
 
 // our data
@@ -58,15 +56,16 @@ $store->setup();
 
 // create embeddings for documents as preparation of the chain memory
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$vectorizer = new Vectorizer($platform, $embeddings = new Embeddings());
-$indexer = new Indexer($vectorizer, $store, logger());
+$vectorizer = new Vectorizer($platform, $embeddings = 'text-embedding-3-small');
+$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
 
 // Execute a chat call that is utilizing the memory
-$embeddingsMemory = new EmbeddingProvider($platform, $embeddings, $store);
+$embeddingsModel = $platform->getModelCatalog()->getModel($embeddings);
+$embeddingsMemory = new EmbeddingProvider($platform, $embeddingsModel, $store);
 $memoryProcessor = new MemoryInputProcessor($embeddingsMemory);
 
-$agent = new Agent($platform, new Gpt(Gpt::GPT_4O_MINI), [$memoryProcessor], logger: logger());
+$agent = new Agent($platform, 'gpt-4o-mini', [$memoryProcessor]);
 $messages = new MessageBag(Message::ofUser('Have we discussed about my friend John in the past? If yes, what did we talk about?'));
 $result = $agent->call($messages);
 

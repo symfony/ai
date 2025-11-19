@@ -4,13 +4,6 @@ index:
     defaults:
         template:  'index.html.twig'
 
-blog:
-    path: '/blog'
-    controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
-    defaults:
-        template:  'chat.html.twig'
-        context: { chat: 'blog' }
-
 audio:
     path: '/audio'
     controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
@@ -18,12 +11,29 @@ audio:
         template:  'chat.html.twig'
         context: { chat: 'audio' }
 
-youtube:
-    path: '/youtube'
+blog:
+    path: '/blog'
     controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
     defaults:
         template:  'chat.html.twig'
-        context: { chat: 'youtube' }
+        context: { chat: 'blog' }
+
+crop:
+    path: '/crop'
+    controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
+    defaults:
+        template:  'crop.html.twig'
+
+stream:
+    path: '/stream'
+    controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
+    defaults:
+        template:  'chat.html.twig'
+        context: { chat: 'stream' }
+
+stream_assistant_reply:
+    path: '/stream/assistant-reply'
+    controller: 'App\Stream\TwigComponent::streamContent'
 
 video:
     path: '/video'
@@ -39,13 +49,14 @@ wikipedia:
         template:  'chat.html.twig'
         context: { chat: 'wikipedia' }
 
-stream:
-    path: '/stream'
+youtube:
+    path: '/youtube'
     controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
     defaults:
         template:  'chat.html.twig'
-        context: { chat: 'stream' }
+        context: { chat: 'youtube' }
 
-stream_assistant_reply:
-    path: '/stream/assistant-reply'
-    controller: 'App\Stream\TwigComponent::streamContent'
+# Load MCP routes conditionally based on configuration
+_mcp:
+    resource: .
+    type: mcp

@@ -11,22 +11,12 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Gemini\Embeddings;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings\ModelClient;
-use Symfony\AI\Platform\Result\VectorResult;
-use Symfony\AI\Platform\Vector\Vector;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-#[CoversClass(ModelClient::class)]
-#[Small]
-#[UsesClass(Vector::class)]
-#[UsesClass(VectorResult::class)]
-#[UsesClass(Embeddings::class)]
 final class ModelClientTest extends TestCase
 {
     public function testItMakesARequestWithCorrectPayload()
@@ -64,7 +54,7 @@ final class ModelClientTest extends TestCase
             )
             ->willReturn($result);
 
-        $model = new Embeddings(Embeddings::GEMINI_EMBEDDING_EXP_03_07, ['dimensions' => 1536, 'task_type' => 'CLASSIFICATION']);
+        $model = new Embeddings('gemini-embedding-exp-03-07', options: ['dimensions' => 1536, 'task_type' => 'CLASSIFICATION']);
 
         $result = (new ModelClient($httpClient, 'test'))->request($model, ['payload1', 'payload2']);
         $this->assertSame(json_decode($this->getEmbeddingStub(), true), $result->getData());

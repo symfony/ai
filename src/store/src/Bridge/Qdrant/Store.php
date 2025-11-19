@@ -24,15 +24,16 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final readonly class Store implements ManagedStoreInterface, StoreInterface
+final class Store implements ManagedStoreInterface, StoreInterface
 {
     public function __construct(
-        private HttpClientInterface $httpClient,
-        private string $endpointUrl,
-        #[\SensitiveParameter] private string $apiKey,
-        private string $collectionName,
-        private int $embeddingsDimension = 1536,
-        private string $embeddingsDistance = 'Cosine',
+        private readonly HttpClientInterface $httpClient,
+        private readonly string $endpointUrl,
+        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly string $collectionName,
+        private readonly int $embeddingsDimension = 1536,
+        private readonly string $embeddingsDistance = 'Cosine',
+        private readonly bool $async = false,
     ) {
     }
 
@@ -58,13 +59,19 @@ final readonly class Store implements ManagedStoreInterface, StoreInterface
 
     public function add(VectorDocument ...$documents): void
     {
-        $this->request('PUT', \sprintf('collections/%s/points', $this->collectionName), [
-            'points' => array_map($this->convertToIndexableArray(...), $documents),
-        ]);
+        $this->request(
+            'PUT',
+            \sprintf('collections/%s/points', $this->collectionName),
+            [
+                'points' => array_map($this->convertToIndexableArray(...), $documents),
+            ],
+            ['wait' => $this->async ? 'false' : 'true'],
+        );
     }
 
     /**
      * @param array{
+     *     filter?: array<string, mixed>,
      *     limit?: positive-int,
      *     offset?: positive-int
      * } $options
@@ -76,6 +83,10 @@ final readonly class Store implements ManagedStoreInterface, StoreInterface
             'with_payload' => true,
             'with_vector' => true,
         ];
+
+        if (\array_key_exists('filter', $options)) {
+            $payload['filter'] = $options['filter'];
+        }
 
         if (\array_key_exists('limit', $options)) {
             $payload['limit'] = $options['limit'];
@@ -97,10 +108,11 @@ final readonly class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array<string, mixed> $payload
+     * @param array<string, mixed> $queryParameters
      *
      * @return array<string, mixed>
      */
-    private function request(string $method, string $endpoint, array $payload = []): array
+    private function request(string $method, string $endpoint, array $payload = [], array $queryParameters = []): array
     {
         $url = \sprintf('%s/%s', $this->endpointUrl, $endpoint);
 
@@ -108,6 +120,7 @@ final readonly class Store implements ManagedStoreInterface, StoreInterface
             'headers' => [
                 'api-key' => $this->apiKey,
             ],
+            'query' => $queryParameters,
             'json' => $payload,
         ]);
 

@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\SingleCommandApplication;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Finder\Finder;
@@ -22,6 +23,7 @@ $app = (new SingleCommandApplication('Symfony AI Example Runner'))
     ->setDescription('Runs all Symfony AI examples in folder examples/')
     ->addArgument('subdirectories', InputArgument::OPTIONAL | InputArgument::IS_ARRAY, 'List of subdirectories to run examples from, e.g. "anthropic" or "huggingface".')
     ->addOption('filter', 'f', InputOption::VALUE_REQUIRED, 'Filter examples by name, e.g. "audio" or "toolcall".')
+    ->addOption('chunk', 'c', InputOption::VALUE_REQUIRED, 'Number of examples to run in parallel per chunk.', 30)
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $io = new SymfonyStyle($input, $output);
         $io->title('Symfony AI Examples');
@@ -51,63 +53,103 @@ $app = (new SingleCommandApplication('Symfony AI Example Runner'))
             ->name($filter)
             ->exclude('vendor')
             ->sortByName()
-            ->notName('bootstrap.php')
+            ->notName(['bootstrap.php', '_[a-z\-]*.php'])
             ->files();
 
-        $io->comment(sprintf('Found %d example(s) to run.', count($examples)));
+        $chunkSize = (int) $input->getOption('chunk');
+        $examplesArray = iterator_to_array($examples);
+        $chunks = array_chunk($examplesArray, $chunkSize);
+
+        $io->comment(sprintf('Found %d example(s) to run in %d chunk(s) of max %d examples.', count($examplesArray), count($chunks), $chunkSize));
 
         /** @var array{example: SplFileInfo, process: Process} $exampleRuns */
         $exampleRuns = [];
-        foreach ($examples as $example) {
-            $exampleRuns[] = [
-                'example' => $example,
-                'process' => $process = new Process(['php', $example->getRealPath()]),
-            ];
-            $process->start();
-        }
 
-        $section = $output->section();
-        $renderTable = function () use ($exampleRuns, $section) {
-            $section->clear();
-            $table = new Table($section);
-            $table->setHeaders(['Example', 'State', 'Output']);
-            foreach ($exampleRuns as $run) {
-                /** @var SplFileInfo $example */
-                /** @var Process $process */
-                ['example' => $example, 'process' => $process] = $run;
+        foreach ($chunks as $chunkIndex => $chunk) {
+            $io->section(sprintf('Running chunk %d/%d (%d examples)', $chunkIndex + 1, count($chunks), count($chunk)));
 
-                $output = str_replace(PHP_EOL, ' ', $process->getOutput());
-                $output = strlen($output) <= 100 ? $output : substr($output, 0, 100).'...';
-                $emptyOutput = 0 === strlen(trim($output));
-
-                $state = 'Running';
-                if ($process->isTerminated()) {
-                    $success = $process->isSuccessful() && !$emptyOutput;
-                    $state = $success ? '<info>Finished</info>'
-                        : (1 === $run['process']->getExitCode() || $emptyOutput ? '<error>Failed</error>' : '<comment>Skipped</comment>');
-                }
-
-                $table->addRow([$example->getRelativePathname(), $state, $output]);
+            $chunkRuns = [];
+            foreach ($chunk as $example) {
+                $run = [
+                    'example' => $example,
+                    'process' => $process = new Process(['php', $example->getRealPath()]),
+                ];
+                $chunkRuns[] = $run;
+                $exampleRuns[] = $run;
+                $process->start();
             }
-            $table->render();
-        };
 
-        $examplesRunning = fn () => array_reduce($exampleRuns, fn ($running, $example) => $running || $example['process']->isRunning(), false);
-        while ($examplesRunning()) {
+            $section = $output->section();
+            $renderTable = function () use ($chunkRuns, $section) {
+                $section->clear();
+                $table = new Table($section);
+                $table->setHeaders(['Example', 'State', 'Output']);
+                foreach ($chunkRuns as $run) {
+                    /** @var SplFileInfo $example */
+                    /** @var Process $process */
+                    ['example' => $example, 'process' => $process] = $run;
+
+                    $output = str_replace(PHP_EOL, ' ', $process->getOutput());
+                    $output = strlen($output) <= 100 ? $output : substr($output, 0, 100).'...';
+                    $emptyOutput = 0 === strlen(trim($output));
+
+                    $state = 'Running';
+                    if ($process->isTerminated()) {
+                        $success = $process->isSuccessful() && !$emptyOutput;
+                        $state = $success ? '<info>Finished</info>'
+                            : (1 === $run['process']->getExitCode() || $emptyOutput ? '<error>Failed</error>' : '<comment>Skipped</comment>');
+                    }
+
+                    $table->addRow([$example->getRelativePathname(), $state, $output]);
+                }
+                $table->render();
+            };
+
+            $chunkRunning = fn () => array_reduce($chunkRuns, fn ($running, $example) => $running || $example['process']->isRunning(), false);
+            while ($chunkRunning()) {
+                $renderTable();
+                sleep(1);
+            }
+
             $renderTable();
-            sleep(1);
+            $io->newLine();
         }
 
-        $renderTable();
+        // Group results by directory
+        $resultsByDirectory = [];
+        foreach ($exampleRuns as $run) {
+            $directory = trim(str_replace(__DIR__, '', $run['example']->getPath()), '/');
+            if (!isset($resultsByDirectory[$directory])) {
+                $resultsByDirectory[$directory] = ['successful' => 0, 'skipped' => 0, 'failed' => 0];
+            }
+
+            $emptyOutput = 0 === strlen(trim($run['process']->getOutput()));
+            if ($run['process']->isSuccessful() && !$emptyOutput) {
+                $resultsByDirectory[$directory]['successful']++;
+            } elseif (1 === $run['process']->getExitCode() || $emptyOutput) {
+                $resultsByDirectory[$directory]['failed']++;
+            } else {
+                $resultsByDirectory[$directory]['skipped']++;
+            }
+        }
+
+        ksort($resultsByDirectory);
+
+        $io->section('Results by Directory');
+        $resultsTable = new Table($output);
+        $resultsTable->setHeaders(['Directory', 'Successful', 'Skipped', 'Failed']);
+        foreach ($resultsByDirectory as $directory => $stats) {
+            $resultsTable->addRow([
+                $directory ?: '.',
+                sprintf('<info>%d</info>', $stats['successful']),
+                sprintf('<comment>%d</comment>', $stats['skipped']),
+                sprintf('<error>%d</error>', $stats['failed']),
+            ]);
+        }
+        $resultsTable->render();
         $io->newLine();
 
-        $successCount = array_reduce($exampleRuns, function ($count, $example) {
-            if ($example['process']->isSuccessful() && strlen(trim($example['process']->getOutput())) > 0) {
-                return $count + 1;
-            }
-            return $count;
-        }, 0);
-
+        $successCount = array_sum(array_column($resultsByDirectory, 'successful'));
         $totalCount = count($exampleRuns);
 
         if ($successCount < $totalCount) {
@@ -116,11 +158,60 @@ $app = (new SingleCommandApplication('Symfony AI Example Runner'))
             $io->success(sprintf('All %d examples ran successfully!', $totalCount));
         }
 
-        foreach ($exampleRuns as $run) {
-            if (!$run['process']->isSuccessful()) {
-                $io->section('Error in ' . $run['example']->getRelativePathname());
-                $io->text($run['process']->getOutput());
-                $io->text($run['process']->getErrorOutput());
+        if ($output->isVerbose()) {
+            foreach ($exampleRuns as $run) {
+                if (!$run['process']->isSuccessful()) {
+                    $io->section('Error in ' . $run['example']->getRelativePathname());
+                    $output = $run['process']->getErrorOutput();
+                    $io->text('' !== $output ? $output : $run['process']->getOutput());
+                }
+            }
+        }
+
+        // Interactive retry for failed examples
+        if ($input->isInteractive()) {
+            $failedRuns = array_filter($exampleRuns, fn ($run) => !$run['process']->isSuccessful());
+
+            while (count($failedRuns) > 0) {
+                $io->newLine();
+                $choices = [];
+                $choiceMap = [];
+                foreach ($failedRuns as $key => $run) {
+                    $choice = $run['example']->getRelativePathname();
+                    $choices[] = $choice;
+                    $choiceMap[$choice] = $key;
+                }
+                $choices[] = 'Exit';
+
+                $question = new ChoiceQuestion(
+                    sprintf('Select a failed example to re-run (%d remaining)', count($failedRuns)),
+                    $choices,
+                    count($choices) - 1
+                );
+                $question->setErrorMessage('Choice %s is invalid.');
+
+                $selected = $io->askQuestion($question);
+
+                if ('Exit' === $selected) {
+                    break;
+                }
+
+                $runKey = $choiceMap[$selected];
+                $run = $failedRuns[$runKey];
+
+                $io->section(sprintf('Re-running: %s', $run['example']->getRelativePathname()));
+                $process = new Process(['php', $run['example']->getRealPath()]);
+                $process->run(function ($type, $buffer) use ($output) {
+                    $output->write($buffer);
+                });
+
+                if ($process->isSuccessful()) {
+                    unset($failedRuns[$runKey]);
+                }
+            }
+
+            if ($successCount !== $totalCount && count($failedRuns) === 0) {
+                $io->success('All previously failed examples now pass!');
             }
         }
 

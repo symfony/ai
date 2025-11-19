@@ -16,11 +16,13 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-final readonly class UrlImage
+final class UrlImage
 {
     public function __construct(
-        public string $url,
+        public readonly string $url,
     ) {
-        '' !== $url || throw new InvalidArgumentException('The image url must be given.');
+        if ('' === $url) {
+            throw new InvalidArgumentException('The image url must be given.');
+        }
     }
 }

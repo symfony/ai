@@ -20,7 +20,7 @@ use Symfony\AI\Store\StoreInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class InMemoryStore implements ManagedStoreInterface, StoreInterface
+class InMemoryStore implements ManagedStoreInterface, StoreInterface
 {
     /**
      * @var VectorDocument[]

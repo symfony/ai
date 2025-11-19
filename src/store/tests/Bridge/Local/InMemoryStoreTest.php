@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Store\Tests\Bridge\Local;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Local\DistanceCalculator;
@@ -21,9 +19,6 @@ use Symfony\AI\Store\Bridge\Local\InMemoryStore;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(InMemoryStore::class)]
-#[UsesClass(VectorDocument::class)]
-#[UsesClass(Vector::class)]
 final class InMemoryStoreTest extends TestCase
 {
     public function testStoreCannotSetup()

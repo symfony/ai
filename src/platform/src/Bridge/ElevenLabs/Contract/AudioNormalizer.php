@@ -17,7 +17,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final readonly class AudioNormalizer implements NormalizerInterface
+final class AudioNormalizer implements NormalizerInterface
 {
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {

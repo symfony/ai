@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Fixtures\StructuredOutput;
 
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+
 final class MathReasoning
 {
     /**
@@ -18,6 +20,8 @@ final class MathReasoning
      */
     public function __construct(
         public array $steps,
+        #[With(minimum: 0, maximum: 100)]
+        public int $confidence,
         public string $finalAnswer,
     ) {
     }

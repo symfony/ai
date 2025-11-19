@@ -11,23 +11,20 @@
 
 namespace Symfony\AI\Platform\Tests\Contract\JsonSchema;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Fixtures\StructuredOutput\MathReasoning;
+use Symfony\AI\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
 use Symfony\AI\Fixtures\StructuredOutput\Step;
+use Symfony\AI\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
 use Symfony\AI\Fixtures\StructuredOutput\User;
 use Symfony\AI\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Fixtures\Tool\ToolOptionalParam;
 use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
+use Symfony\AI\Fixtures\Tool\ToolWithBackedEnums;
 use Symfony\AI\Fixtures\Tool\ToolWithToolParameterAttribute;
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
-use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 
-#[CoversClass(Factory::class)]
-#[UsesClass(With::class)]
-#[UsesClass(DescriptionParser::class)]
 final class FactoryTest extends TestCase
 {
     private Factory $factory;
@@ -186,7 +183,7 @@ final class FactoryTest extends TestCase
                 'isActive' => ['type' => 'boolean'],
                 'age' => ['type' => ['integer', 'null']],
             ],
-            'required' => ['id', 'name', 'createdAt', 'isActive'],
+            'required' => ['id', 'name', 'createdAt', 'isActive', 'age'],
             'additionalProperties' => false,
         ];
 
@@ -212,15 +209,110 @@ final class FactoryTest extends TestCase
                         'additionalProperties' => false,
                     ],
                 ],
+                'confidence' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 100],
                 'finalAnswer' => ['type' => 'string'],
             ],
-            'required' => ['steps', 'finalAnswer'],
+            'required' => ['steps', 'confidence', 'finalAnswer'],
             'additionalProperties' => false,
         ];
 
         $actual = $this->factory->buildProperties(MathReasoning::class);
 
         $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesForListOfPolymorphicTypesDto()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'items' => [
+                    'type' => 'array',
+                    'items' => [
+                        'anyOf' => [
+                            [
+                                'type' => 'object',
+                                'properties' => [
+                                    'name' => ['type' => 'string'],
+                                    'type' => [
+                                        'type' => 'string',
+                                        'pattern' => '^name$',
+                                    ],
+                                ],
+                                'required' => [
+                                    'name',
+                                    'type',
+                                ],
+                                'additionalProperties' => false,
+                            ],
+                            [
+                                'type' => 'object',
+                                'properties' => [
+                                    'age' => ['type' => 'integer'],
+                                    'type' => [
+                                        'type' => 'string',
+                                        'pattern' => '^age$',
+                                    ],
+                                ],
+                                'required' => [
+                                    'age',
+                                    'type',
+                                ],
+                                'additionalProperties' => false,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'required' => ['items'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(ListOfPolymorphicTypesDto::class);
+
+        $this->assertSame($expected, $actual);
+        $this->assertSame($expected['type'], $actual['type']);
+        $this->assertSame($expected['required'], $actual['required']);
+    }
+
+    public function testBuildPropertiesForUnionTypeDto()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'time' => [
+                    'anyOf' => [
+                        [
+                            'type' => 'object',
+                            'properties' => [
+                                'readableTime' => ['type' => 'string'],
+                            ],
+                            'required' => ['readableTime'],
+                            'additionalProperties' => false,
+                        ],
+                        [
+                            'type' => 'object',
+                            'properties' => [
+                                'timestamp' => ['type' => 'integer'],
+                            ],
+                            'required' => ['timestamp'],
+                            'additionalProperties' => false,
+                        ],
+                        [
+                            'type' => 'null',
+                        ],
+                    ],
+                ],
+            ],
+            'required' => ['time'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(UnionTypeDto::class);
+
+        $this->assertSame($expected, $actual);
+        $this->assertSame($expected['type'], $actual['type']);
+        $this->assertSame($expected['required'], $actual['required']);
     }
 
     public function testBuildPropertiesForStepClass()
@@ -236,6 +328,64 @@ final class FactoryTest extends TestCase
         ];
 
         $actual = $this->factory->buildProperties(Step::class);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesForExampleDto()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'name' => ['type' => 'string'],
+                'taxRate' => [
+                    'type' => 'integer',
+                    'enum' => [7, 19],
+                ],
+                'category' => [
+                    'type' => ['string', 'null'],
+                    'enum' => ['Foo', 'Bar', null],
+                ],
+            ],
+            'required' => ['name', 'taxRate', 'category'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(ExampleDto::class);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildParametersWithBackedEnums()
+    {
+        $actual = $this->factory->buildParameters(ToolWithBackedEnums::class, '__invoke');
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'searchTerms' => [
+                    'type' => 'array',
+                    'items' => ['type' => 'string'],
+                    'description' => 'The search terms',
+                ],
+                'mode' => [
+                    'type' => 'string',
+                    'enum' => ['and', 'or', 'not'],
+                    'description' => 'The search mode',
+                ],
+                'priority' => [
+                    'type' => 'integer',
+                    'enum' => [1, 5, 10],
+                    'description' => 'The search priority',
+                ],
+                'fallback' => [
+                    'type' => ['string', 'null'],
+                    'enum' => ['and', 'or', 'not'],
+                    'description' => 'Optional fallback mode',
+                ],
+            ],
+            'required' => ['searchTerms', 'mode', 'priority'],
+            'additionalProperties' => false,
+        ];
 
         $this->assertSame($expected, $actual);
     }

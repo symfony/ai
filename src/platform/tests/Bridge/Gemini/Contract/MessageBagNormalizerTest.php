@@ -11,10 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Bridge\Gemini\Contract;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Medium;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\MessageBagNormalizer;
@@ -25,20 +22,9 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageBagInterface;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Model;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-#[Medium]
-#[CoversClass(MessageBagNormalizer::class)]
-#[CoversClass(UserMessageNormalizer::class)]
-#[CoversClass(AssistantMessageNormalizer::class)]
-#[UsesClass(Model::class)]
-#[UsesClass(Gemini::class)]
-#[UsesClass(MessageBag::class)]
-#[UsesClass(UserMessage::class)]
-#[UsesClass(AssistantMessage::class)]
 final class MessageBagNormalizerTest extends TestCase
 {
     public function testSupportsNormalization()
@@ -46,7 +32,7 @@ final class MessageBagNormalizerTest extends TestCase
         $normalizer = new MessageBagNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new MessageBag(), context: [
-            Contract::CONTEXT_MODEL => new Gemini(),
+            Contract::CONTEXT_MODEL => new Gemini('gemini-2.0-flash'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a message bag'));
     }
@@ -56,7 +42,7 @@ final class MessageBagNormalizerTest extends TestCase
         $normalizer = new MessageBagNormalizer();
 
         $expected = [
-            MessageBagInterface::class => true,
+            MessageBag::class => true,
         ];
 
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
@@ -67,11 +53,9 @@ final class MessageBagNormalizerTest extends TestCase
     {
         $normalizer = new MessageBagNormalizer();
 
-        // Set up the inner normalizers
         $userMessageNormalizer = new UserMessageNormalizer();
         $assistantMessageNormalizer = new AssistantMessageNormalizer();
 
-        // Mock a normalizer that delegates to the appropriate concrete normalizer
         $mockNormalizer = $this->createMock(NormalizerInterface::class);
         $mockNormalizer->method('normalize')
             ->willReturnCallback(function ($message) use ($userMessageNormalizer, $assistantMessageNormalizer): ?array {

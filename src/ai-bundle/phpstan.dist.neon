@@ -20,3 +20,6 @@ parameters:
             message: '#method_exists\(\) with Symfony\\Component\\Security\\Core\\Exception\\AccessDeniedException and ''setAccessDecision'' will always evaluate to true#'
             path: src/*
             reportUnmatched: false # only needed for Symfony < 7.3 versions
+        -
+            identifier: empty.notAllowed
+            path: config/options.php

@@ -13,31 +13,26 @@ namespace Symfony\AI\Platform\Bridge\Cerebras;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model as BaseModel;
-use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\Component\HttpClient\Chunk\ServerSentEvent;
-use Symfony\Component\HttpClient\EventSourceHttpClient;
-use Symfony\Component\HttpClient\Exception\JsonException;
-use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
 
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
  */
-final readonly class ResultConverter implements ResultConverterInterface
+final class ResultConverter implements ResultConverterInterface
 {
     public function supports(BaseModel $model): bool
     {
         return $model instanceof Model;
     }
 
-    public function convert(RawHttpResult|RawResultInterface $result, array $options = []): ResultInterface
+    public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result->getObject()));
+            return new StreamResult($this->convertStream($result));
         }
 
         $data = $result->getData();
@@ -53,19 +48,9 @@ final readonly class ResultConverter implements ResultConverterInterface
         return new TextResult($data['choices'][0]['message']['content']);
     }
 
-    private function convertStream(HttpResponse $result): \Generator
+    private function convertStream(RawResultInterface $result): \Generator
     {
-        foreach ((new EventSourceHttpClient())->stream($result) as $chunk) {
-            if (!$chunk instanceof ServerSentEvent || '[DONE]' === $chunk->getData()) {
-                continue;
-            }
-
-            try {
-                $data = $chunk->getArrayData();
-            } catch (JsonException) {
-                continue;
-            }
-
+        foreach ($result->getDataStream() as $data) {
             if (!isset($data['choices'][0]['delta']['content'])) {
                 continue;
             }

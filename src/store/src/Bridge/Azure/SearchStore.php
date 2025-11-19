@@ -22,18 +22,18 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class SearchStore implements StoreInterface
+final class SearchStore implements StoreInterface
 {
     /**
      * @param string $vectorFieldName The name of the field int the index that contains the vector
      */
     public function __construct(
-        private HttpClientInterface $httpClient,
-        private string $endpointUrl,
-        #[\SensitiveParameter] private string $apiKey,
-        private string $indexName,
-        private string $apiVersion,
-        private string $vectorFieldName = 'vector',
+        private readonly HttpClientInterface $httpClient,
+        private readonly string $endpointUrl,
+        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly string $indexName,
+        private readonly string $apiVersion,
+        private readonly string $vectorFieldName = 'vector',
     ) {
     }
 
