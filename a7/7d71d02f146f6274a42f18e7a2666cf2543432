@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-15T15:22:26Z
+
+Don't forget to add the support for the option in `AiBundle.php`, as you can configure it in the constructor, end users must be in capacity of configuring it via the semantic configuration 🙂
