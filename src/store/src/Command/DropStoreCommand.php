@@ -64,7 +64,7 @@ EOF
         ;
     }
 
-    protected function initialize(InputInterface $input, OutputInterface $output): void
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $storeName = $input->getArgument('store');
         if (!$this->stores->has($storeName)) {
@@ -75,10 +75,7 @@ EOF
         if (!$store instanceof ManagedStoreInterface) {
             throw new RuntimeException(\sprintf('The "%s" store does not support to be dropped.', $storeName));
         }
-    }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
         $io = new SymfonyStyle($input, $output);
 
         if (!$input->getOption('force')) {
