@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="WEB_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/demo/src" isTestSource="false" packagePrefix="App\" />
+      <sourceFolder url="file://$MODULE_DIR$/demo/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/demo/tests" isTestSource="true" packagePrefix="App\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/../fixtures" isTestSource="false" packagePrefix="Symfony\AI\Fixtures\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/agent/../../.phpstan" isTestSource="true" packagePrefix="Symfony\AI\PHPStan\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/agent/../../fixtures" isTestSource="true" packagePrefix="Symfony\AI\Fixtures\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/agent/src" isTestSource="false" packagePrefix="Symfony\AI\Agent\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/agent/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/agent/tests" isTestSource="true" packagePrefix="Symfony\AI\Agent\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/ai-bundle/../../.phpstan" isTestSource="true" packagePrefix="Symfony\AI\PHPStan\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/ai-bundle/src" isTestSource="false" packagePrefix="Symfony\AI\AiBundle\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/ai-bundle/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/ai-bundle/tests" isTestSource="true" packagePrefix="Symfony\AI\AiBundle\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/mcp-bundle/../../.phpstan" isTestSource="true" packagePrefix="Symfony\AI\PHPStan\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/mcp-bundle/src" isTestSource="false" packagePrefix="Symfony\AI\McpBundle\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/mcp-bundle/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/mcp-sdk/../../.phpstan" isTestSource="true" packagePrefix="Symfony\AI\PHPStan\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/mcp-sdk/examples/cli/src" isTestSource="false" packagePrefix="App\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/mcp-sdk/src" isTestSource="false" packagePrefix="Symfony\AI\McpSdk\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/mcp-sdk/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/mcp-sdk/tests" isTestSource="true" packagePrefix="Symfony\AI\McpSdk\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/platform/../../.phpstan" isTestSource="true" packagePrefix="Symfony\AI\PHPStan\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/platform/../../fixtures" isTestSource="true" packagePrefix="Symfony\AI\Fixtures\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/platform/src" isTestSource="false" packagePrefix="Symfony\AI\Platform\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/platform/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/platform/tests" isTestSource="true" packagePrefix="Symfony\AI\Platform\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/store/../../.phpstan" isTestSource="true" packagePrefix="Symfony\AI\PHPStan\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/store/src" isTestSource="false" packagePrefix="Symfony\AI\Store\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/store/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/store/tests" isTestSource="true" packagePrefix="Symfony\AI\Store\Tests\" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
