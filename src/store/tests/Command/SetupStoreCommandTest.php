@@ -90,11 +90,16 @@ final class SetupStoreCommandTest extends TestCase
     public function testCommandCanSetupDefinedStore()
     {
         $store = $this->createMock(ManagedStoreInterface::class);
-        $store->expects($this->once())->method('setup');
+        $store->expects($this->once())->method('setup')->with(['some_option' => 'some_value']);
 
-        $command = new SetupStoreCommand(new ServiceLocator([
-            'foo' => static fn (): object => $store,
-        ]));
+        $command = new SetupStoreCommand(
+            new ServiceLocator([
+                'foo' => static fn (): object => $store,
+            ]),
+            [
+                'foo' => ['some_option' => 'some_value'],
+            ]
+        );
 
         $tester = new CommandTester($command);
 

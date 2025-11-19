@@ -169,9 +169,11 @@ final class AiBundle extends AbstractBundle
             $this->processMultiAgentConfig($multiAgentName, $multiAgent, $builder);
         }
 
+        $setupStoresOptions = [];
         foreach ($config['store'] ?? [] as $type => $store) {
-            $this->processStoreConfig($type, $store, $builder);
+            $this->processStoreConfig($type, $store, $builder, $setupStoresOptions);
         }
+        $builder->getDefinition('ai.command.setup_store')->setArgument(1, $setupStoresOptions);
 
         $stores = array_keys($builder->findTaggedServiceIds('ai.store'));
 
@@ -898,8 +900,9 @@ final class AiBundle extends AbstractBundle
 
     /**
      * @param array<string, mixed> $stores
+     * @param array<string, mixed> $setupStoresOptions
      */
-    private function processStoreConfig(string $type, array $stores, ContainerBuilder $container): void
+    private function processStoreConfig(string $type, array $stores, ContainerBuilder $container, &$setupStoresOptions): void
     {
         if ('azure_search' === $type) {
             foreach ($stores as $name => $store) {
@@ -1093,6 +1096,8 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition($serviceId, $definition);
                 $container->registerAliasForArgument($serviceId, StoreInterface::class, $name);
                 $container->registerAliasForArgument($serviceId, StoreInterface::class, $type.'_'.$name);
+
+                $setupStoresOptions[$serviceId] = $store['setup_options'] ?? [];
             }
         }
 

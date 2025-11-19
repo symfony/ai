@@ -123,7 +123,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.command.setup_store'));
 
         $setupStoreCommandDefinition = $container->getDefinition('ai.command.setup_store');
-        $this->assertCount(1, $setupStoreCommandDefinition->getArguments());
+        $this->assertCount(2, $setupStoreCommandDefinition->getArguments());
+        $this->assertSame(['ai.store.mariadb.my_mariadb_store' => ['dimensions' => 1024]], $setupStoreCommandDefinition->getArgument(1));
         $this->assertArrayHasKey('console.command', $setupStoreCommandDefinition->getTags());
 
         $this->assertTrue($container->hasDefinition('ai.command.drop_store'));
@@ -3502,6 +3503,9 @@ class AiBundleTest extends TestCase
                             'table_name' => 'vector_table',
                             'index_name' => 'vector_idx',
                             'vector_field_name' => 'vector',
+                            'setup_options' => [
+                                'dimensions' => 1024,
+                            ],
                         ],
                     ],
                     'meilisearch' => [

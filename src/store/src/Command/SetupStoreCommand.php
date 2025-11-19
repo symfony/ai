@@ -31,9 +31,11 @@ final class SetupStoreCommand extends Command
 {
     /**
      * @param ServiceLocator<ManagedStoreInterface> $stores
+     * @param array<string, mixed>                  $setupStoresOptions
      */
     public function __construct(
         private readonly ServiceLocator $stores,
+        private readonly array $setupStoresOptions = [],
     ) {
         parent::__construct();
     }
@@ -84,7 +86,7 @@ EOF
         $store = $this->stores->get($storeName);
 
         try {
-            $store->setup();
+            $store->setup($this->setupStoresOptions[$storeName] ?? []);
             $io->success(\sprintf('The "%s" store was set up successfully.', $storeName));
         } catch (\Exception $e) {
             throw new RuntimeException(\sprintf('An error occurred while setting up the "%s" store: ', $storeName).$e->getMessage(), previous: $e);
