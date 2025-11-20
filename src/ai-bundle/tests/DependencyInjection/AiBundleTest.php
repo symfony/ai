@@ -24,6 +24,8 @@ use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
+use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
 use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
@@ -3379,6 +3381,76 @@ class AiBundleTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    #[TestDox('Model configuration is passed to ModelCatalog services')]
+    public function testModelConfigurationIsPassedToModelCatalogServices()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'model' => [
+                    'openai' => [
+                        'my-custom-model' => [
+                            'class' => Model::class,
+                            'capabilities' => ['input-text', 'output-text'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.model_catalog.openai');
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(1, $arguments);
+        $this->assertArrayHasKey('my-custom-model', $arguments[0]);
+        $this->assertSame(Model::class, $arguments[0]['my-custom-model']['class']);
+        $this->assertEquals([Capability::INPUT_TEXT, Capability::OUTPUT_TEXT], $arguments[0]['my-custom-model']['capabilities']);
+    }
+
+    #[TestDox('Model configuration for vertexai uses correct catalog service id')]
+    public function testModelConfigurationForVertexAiUsesCorrectCatalogServiceId()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'model' => [
+                    'vertexai' => [
+                        'my-custom-vertex-model' => [
+                            'class' => Model::class,
+                            'capabilities' => ['input-text', 'output-text'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.model_catalog.vertexai.gemini');
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(1, $arguments);
+        $this->assertArrayHasKey('my-custom-vertex-model', $arguments[0]);
+    }
+
+    #[TestDox('Model configuration is ignored for unknown platform')]
+    public function testModelConfigurationIsIgnoredForUnknownPlatform()
+    {
+        // Should not throw - unknown platforms are silently ignored
+        $container = $this->buildContainer([
+            'ai' => [
+                'model' => [
+                    'unknown_platform' => [
+                        'my-custom-model' => [
+                            'class' => Model::class,
+                            'capabilities' => ['input-text', 'output-text'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        // The model catalog for openai should not have been modified
+        $definition = $container->getDefinition('ai.platform.model_catalog.openai');
+        $this->assertSame([], $definition->getArguments());
     }
 
     private function buildContainer(array $configuration): ContainerBuilder

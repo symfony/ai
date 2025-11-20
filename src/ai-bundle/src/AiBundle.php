@@ -66,6 +66,7 @@ use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory as PerplexityPlatformF
 use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory as ScalewayPlatformFactory;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -143,6 +144,12 @@ final class AiBundle extends AbstractBundle
         foreach ($config['platform'] ?? [] as $type => $platform) {
             $this->processPlatformConfig($type, $platform, $builder);
         }
+
+        // Process model configuration and pass to ModelCatalog services
+        foreach ($config['model'] ?? [] as $platformName => $models) {
+            $this->processModelConfig($platformName, $models, $builder);
+        }
+
         $platforms = array_keys($builder->findTaggedServiceIds('ai.platform'));
         if (1 === \count($platforms)) {
             $builder->setAlias(PlatformInterface::class, reset($platforms));
@@ -1803,5 +1810,39 @@ final class AiBundle extends AbstractBundle
     private static function normalizeAgentServiceId(string $agentName): string
     {
         return str_starts_with($agentName, 'ai.agent.') ? $agentName : 'ai.agent.'.$agentName;
+    }
+
+    /**
+     * Process model configuration and pass it to ModelCatalog services.
+     *
+     * @param array<string, array{class: class-string, capabilities: list<Capability|string>}> $models
+     */
+    private function processModelConfig(string $platformName, array $models, ContainerBuilder $builder): void
+    {
+        $modelCatalogId = 'ai.platform.model_catalog.'.$platformName;
+
+        // Handle special cases for platform name mapping
+        if ('vertexai' === $platformName) {
+            $modelCatalogId = 'ai.platform.model_catalog.vertexai.gemini';
+        }
+
+        if (!$builder->hasDefinition($modelCatalogId)) {
+            return;
+        }
+
+        $additionalModels = [];
+        foreach ($models as $modelName => $modelConfig) {
+            $additionalModels[$modelName] = [
+                'class' => $modelConfig['class'],
+                'capabilities' => $modelConfig['capabilities'],
+            ];
+        }
+
+        if ([] === $additionalModels) {
+            return;
+        }
+
+        $definition = $builder->getDefinition($modelCatalogId);
+        $definition->setArguments([$additionalModels]);
     }
 }
