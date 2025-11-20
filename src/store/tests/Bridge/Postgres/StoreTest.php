@@ -30,14 +30,16 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedSql = 'INSERT INTO embeddings_table (id, metadata, embedding)
+        $expectedQuery = 'INSERT INTO embeddings_table (id, metadata, embedding)
                 VALUES (:id, :metadata, :vector)
                 ON CONFLICT (id) DO UPDATE SET metadata = EXCLUDED.metadata, embedding = EXCLUDED.embedding';
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -102,7 +104,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedSql = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
+        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
              FROM embeddings_table
 
              ORDER BY score ASC
@@ -110,8 +112,10 @@ final class StoreTest extends TestCase
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -149,7 +153,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding', Distance::Cosine);
 
-        $expectedSql = 'SELECT id, embedding AS embedding, metadata, (embedding <=> :embedding) AS score
+        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <=> :embedding) AS score
              FROM embeddings_table
 
              ORDER BY score ASC
@@ -157,8 +161,10 @@ final class StoreTest extends TestCase
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -196,7 +202,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedSql = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
+        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
              FROM embeddings_table
              WHERE (embedding <-> :embedding) <= :maxScore
              ORDER BY score ASC
@@ -204,8 +210,10 @@ final class StoreTest extends TestCase
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -233,7 +241,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding', Distance::Cosine);
 
-        $expectedSql = 'SELECT id, embedding AS embedding, metadata, (embedding <=> :embedding) AS score
+        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <=> :embedding) AS score
              FROM embeddings_table
              WHERE (embedding <=> :embedding) <= :maxScore
              ORDER BY score ASC
@@ -241,8 +249,10 @@ final class StoreTest extends TestCase
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -270,7 +280,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedSql = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
+        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
              FROM embeddings_table
 
              ORDER BY score ASC
@@ -278,8 +288,10 @@ final class StoreTest extends TestCase
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -304,7 +316,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'custom_vector');
 
-        $expectedSql = 'SELECT id, custom_vector AS embedding, metadata, (custom_vector <-> :embedding) AS score
+        $expectedQuery = 'SELECT id, custom_vector AS embedding, metadata, (custom_vector <-> :embedding) AS score
              FROM embeddings_table
 
              ORDER BY score ASC
@@ -312,8 +324,10 @@ final class StoreTest extends TestCase
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -475,7 +489,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedSql = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
+        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
              FROM embeddings_table
              WHERE metadata->>\'category\' = \'products\'
              ORDER BY score ASC
@@ -483,8 +497,10 @@ final class StoreTest extends TestCase
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -509,7 +525,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedSql = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
+        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
              FROM embeddings_table
              WHERE (embedding <-> :embedding) <= :maxScore AND (metadata->>\'active\' = \'true\')
              ORDER BY score ASC
@@ -517,8 +533,10 @@ final class StoreTest extends TestCase
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -549,7 +567,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedSql = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
+        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
              FROM embeddings_table
              WHERE metadata->>\'crawlId\' = :crawlId AND id != :currentId
              ORDER BY score ASC
@@ -557,8 +575,10 @@ final class StoreTest extends TestCase
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -601,10 +621,6 @@ final class StoreTest extends TestCase
 
     private function normalizeQuery(string $query): string
     {
-        // Remove extra spaces, tabs and newlines
-        $normalized = preg_replace('/\s+/', ' ', $query);
-
-        // Trim the result
-        return trim($normalized);
+        return trim(preg_replace('/\s+/', ' ', $query));
     }
 }

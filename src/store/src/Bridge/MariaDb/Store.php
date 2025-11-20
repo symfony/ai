@@ -143,7 +143,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     public function query(Vector $vector, array $options = []): array
     {
+        $where = null;
+
         $maxScore = $options['maxScore'] ?? null;
+        if ($maxScore) {
+            $where = \sprintf('WHERE VEC_DISTANCE_EUCLIDEAN(`%1$s`, VEC_FromText(:embedding)) <= :maxScore', $this->vectorFieldName);
+        }
+
+        if ($options['where'] ?? false) {
+            if ($where) {
+                $where .= ' AND ('.$options['where'].')';
+            } else {
+                $where = 'WHERE '.$options['where'];
+            }
+        }
 
         $statement = $this->connection->prepare(
             \sprintf(
@@ -156,12 +169,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     SQL,
                 $this->vectorFieldName,
                 $this->tableName,
-                null !== $maxScore ? \sprintf('WHERE VEC_DISTANCE_EUCLIDEAN(%1$s, VEC_FromText(:embedding)) <= :maxScore', $this->vectorFieldName) : '',
+                $where ?? '',
                 $options['limit'] ?? 5,
             ),
         );
 
-        $params = ['embedding' => json_encode($vector->getData())];
+        $params = [
+            'embedding' => json_encode($vector->getData()),
+            ...$options['params'] ?? [],
+        ];
 
         if (null !== $maxScore) {
             $params['maxScore'] = $maxScore;
