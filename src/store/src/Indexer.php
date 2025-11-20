@@ -26,12 +26,18 @@ use Symfony\AI\Store\Document\VectorizerInterface;
 class Indexer implements IndexerInterface
 {
     /**
-     * @var array<string|null>
+     * @var array<string>
      */
     private array $sources = [];
 
     /**
+     * @var array<EmbeddableDocumentInterface>
+     */
+    private array $documents = [];
+
+    /**
      * @param string|array<string>|null $source       Source identifier(s) for data loading (file paths, URLs, etc.)
+     * @param EmbeddableDocumentInterface|array<EmbeddableDocumentInterface>|null $document       Document or array of documents to process directly, bypassing the loading step
      * @param FilterInterface[]         $filters      Filters to apply after loading documents to remove unwanted content
      * @param TransformerInterface[]    $transformers Transformers to mutate documents after filtering (chunking, cleaning, etc.)
      */
@@ -40,32 +46,47 @@ class Indexer implements IndexerInterface
         private VectorizerInterface $vectorizer,
         private StoreInterface $store,
         string|array|null $source = null,
+        EmbeddableDocumentInterface|array|null $document = [],
         private array $filters = [],
         private array $transformers = [],
         private LoggerInterface $logger = new NullLogger(),
     ) {
         $this->sources = null === $source ? [] : (array) $source;
+        if (null === $document) {
+            $this->documents = [];
+        } elseif ($document instanceof EmbeddableDocumentInterface) {
+            $this->documents = [$document];
+        } else {
+            $this->documents = $document;
+        }
     }
 
-    public function withSource(string|array $source): self
+    public function withSource(EmbeddableDocumentInterface|string|array $source): self
     {
-        return new self($this->loader, $this->vectorizer, $this->store, $source, $this->filters, $this->transformers, $this->logger);
+        return new self($this->loader, $this->vectorizer, $this->store, $source, [], $this->filters, $this->transformers, $this->logger);
+    }
+
+    public function withDocument(EmbeddableDocumentInterface|array $document): self
+    {
+        return new self($this->loader, $this->vectorizer, $this->store, null, $document, $this->filters, $this->transformers, $this->logger);
     }
 
     public function index(array $options = []): void
     {
         $this->logger->debug('Starting document processing', ['sources' => $this->sources, 'options' => $options]);
 
-        $documents = [];
-        if ([] === $this->sources) {
-            $documents = $this->loadSource(null);
-        } else {
-            foreach ($this->sources as $singleSource) {
-                $documents = array_merge($documents, $this->loadSource($singleSource));
+        $documents = $this->documents;
+        if (!$documents) {
+            if (!$this->sources) {
+                $documents = $this->loadSource(null);
+            } else {
+                foreach ($this->sources as $singleSource) {
+                    $documents = array_merge($documents, $this->loadSource($singleSource));
+                }
             }
         }
 
-        if ([] === $documents) {
+        if (!$documents) {
             $this->logger->debug('No documents to process', ['sources' => $this->sources]);
 
             return;
