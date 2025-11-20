@@ -1,0 +1,35 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-18T08:34:00Z
+
+Lets rename it to `DoctrineOrmMessageStore`?
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-11-18T09:32:36Z
+
+I would say even `DoctrineDbalMessageStore` as `doctrine/dbal` is used and not `doctrine/orm`
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-18T09:51:25Z
+
+Agree with @welcoMattic, I would prefer `DoctrineDbalMessageStore` as we also need to support the `ODM`.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-18T18:40:05Z
+
+@OskarStark @chr-hertel
+
+Looks like fabbot is not totally operational:
+
+<img width="1205" height="509" alt="Capture d’écran 2025-11-18 à 19 39 25" src="https://github.com/user-attachments/assets/40ba2c3c-ea56-4fdb-b7e4-72d7a49c15c8" />
+
+The `hashTable` method does not exist 😅
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-19T17:32:47Z
+
+@derrabus I don't know if I can ask the question and/or if Doctrine project is using `codespell` but I'm facing a weird error in CI (see https://github.com/symfony/ai/pull/884#issuecomment-3549074071), could this be related to any internal API from Doctrine? 🤔
