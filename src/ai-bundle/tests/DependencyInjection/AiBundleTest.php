@@ -3322,6 +3322,206 @@ class AiBundleTest extends TestCase
         $this->assertTrue($surrealDbMessageStoreDefinition->hasTag('ai.message_store'));
     }
 
+    #[TestDox('Model configuration is processed and passed to ModelCatalog services')]
+    public function testModelConfigurationIsProcessed()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'anthropic' => [
+                        'api_key' => 'test-key',
+                    ],
+                    'openai' => [
+                        'api_key' => 'test-key',
+                    ],
+                ],
+                'model' => [
+                    'anthropic' => [
+                        'custom-claude-model' => [
+                            'capabilities' => [
+                                'input-messages',
+                                'output-text',
+                                'tool-calling',
+                            ],
+                        ],
+                    ],
+                    'openai' => [
+                        'custom-gpt-model' => [
+                            'capabilities' => [
+                                'input-messages',
+                                'output-text',
+                                'output-streaming',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $anthropicCatalog = $container->getDefinition('ai.platform.model_catalog.anthropic');
+        $anthropicModels = $anthropicCatalog->getArgument(0);
+        $this->assertIsArray($anthropicModels);
+        $this->assertArrayHasKey('custom-claude-model', $anthropicModels);
+        $this->assertSame('Symfony\AI\Platform\Bridge\Anthropic\Claude', $anthropicModels['custom-claude-model']['class']);
+        $this->assertCount(3, $anthropicModels['custom-claude-model']['capabilities']);
+
+        $openaiCatalog = $container->getDefinition('ai.platform.model_catalog.openai');
+        $openaiModels = $openaiCatalog->getArgument(0);
+        $this->assertIsArray($openaiModels);
+        $this->assertArrayHasKey('custom-gpt-model', $openaiModels);
+        $this->assertSame('Symfony\AI\Platform\Bridge\OpenAi\Gpt', $openaiModels['custom-gpt-model']['class']);
+        $this->assertCount(3, $openaiModels['custom-gpt-model']['capabilities']);
+    }
+
+    #[TestDox('Model configuration for unsupported platforms is gracefully skipped')]
+    public function testModelConfigurationForUnsupportedPlatformIsSkipped()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'model' => [
+                    'unsupported_platform' => [
+                        'some-model' => [
+                            'capabilities' => ['input-messages'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.platform.model_catalog.unsupported_platform'));
+    }
+
+    #[TestDox('Model configuration for vertexai uses correct ModelCatalog service ID')]
+    public function testModelConfigurationForVertexAi()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'vertexai' => [
+                        'location' => 'us-central1',
+                        'project_id' => 'test-project',
+                    ],
+                ],
+                'model' => [
+                    'vertexai' => [
+                        'custom-gemini-model' => [
+                            'capabilities' => [
+                                'input-messages',
+                                'output-text',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $vertexaiCatalog = $container->getDefinition('ai.platform.model_catalog.vertexai.gemini');
+        $vertexaiModels = $vertexaiCatalog->getArgument(0);
+        $this->assertIsArray($vertexaiModels);
+        $this->assertArrayHasKey('custom-gemini-model', $vertexaiModels);
+        $this->assertSame('Symfony\AI\Platform\Bridge\Gemini\Gemini', $vertexaiModels['custom-gemini-model']['class']);
+    }
+
+    #[TestDox('Model configuration for eleven_labs uses correct ModelCatalog service ID')]
+    public function testModelConfigurationForElevenLabs()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'eleven_labs' => [
+                        'api_key' => 'test-key',
+                        'host' => 'https://api.elevenlabs.io/v1',
+                    ],
+                ],
+                'model' => [
+                    'eleven_labs' => [
+                        'custom-elevenlabs-model' => [
+                            'capabilities' => [
+                                'input-text',
+                                'output-audio',
+                                'text-to-speech',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $elevenlabsCatalog = $container->getDefinition('ai.platform.model_catalog.elevenlabs');
+        $elevenlabsModels = $elevenlabsCatalog->getArgument(0);
+        $this->assertIsArray($elevenlabsModels);
+        $this->assertArrayHasKey('custom-elevenlabs-model', $elevenlabsModels);
+        $this->assertSame('Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabs', $elevenlabsModels['custom-elevenlabs-model']['class']);
+        $this->assertCount(3, $elevenlabsModels['custom-elevenlabs-model']['capabilities']);
+    }
+
+    #[TestDox('Model configuration for newly added platforms (dockermodelrunner, aimlapi, replicate, albert) is processed correctly')]
+    public function testModelConfigurationForNewlyAddedPlatforms()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'model' => [
+                    'dockermodelrunner' => [
+                        'custom-docker-model' => [
+                            'capabilities' => [
+                                'input-messages',
+                                'output-text',
+                            ],
+                        ],
+                    ],
+                    'aimlapi' => [
+                        'custom-aimlapi-model' => [
+                            'capabilities' => [
+                                'input-messages',
+                                'output-text',
+                            ],
+                        ],
+                    ],
+                    'replicate' => [
+                        'custom-replicate-model' => [
+                            'capabilities' => [
+                                'input-messages',
+                                'output-text',
+                            ],
+                        ],
+                    ],
+                    'albert' => [
+                        'custom-albert-model' => [
+                            'capabilities' => [
+                                'input-messages',
+                                'output-text',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $dockermodelrunnerCatalog = $container->getDefinition('ai.platform.model_catalog.dockermodelrunner');
+        $dockermodelrunnerModels = $dockermodelrunnerCatalog->getArgument(0);
+        $this->assertIsArray($dockermodelrunnerModels);
+        $this->assertArrayHasKey('custom-docker-model', $dockermodelrunnerModels);
+        $this->assertSame('Symfony\AI\Platform\Model', $dockermodelrunnerModels['custom-docker-model']['class']);
+
+        $aimlapiCatalog = $container->getDefinition('ai.platform.model_catalog.aimlapi');
+        $aimlapiModels = $aimlapiCatalog->getArgument(0);
+        $this->assertIsArray($aimlapiModels);
+        $this->assertArrayHasKey('custom-aimlapi-model', $aimlapiModels);
+        $this->assertSame('Symfony\AI\Platform\Model', $aimlapiModels['custom-aimlapi-model']['class']);
+
+        $replicateCatalog = $container->getDefinition('ai.platform.model_catalog.replicate');
+        $replicateModels = $replicateCatalog->getArgument(0);
+        $this->assertIsArray($replicateModels);
+        $this->assertArrayHasKey('custom-replicate-model', $replicateModels);
+        $this->assertSame('Symfony\AI\Platform\Bridge\Meta\Llama', $replicateModels['custom-replicate-model']['class']);
+
+        $albertCatalog = $container->getDefinition('ai.platform.model_catalog.albert');
+        $albertModels = $albertCatalog->getArgument(0);
+        $this->assertIsArray($albertModels);
+        $this->assertArrayHasKey('custom-albert-model', $albertModels);
+        $this->assertSame('Symfony\AI\Platform\Bridge\OpenAi\Gpt', $albertModels['custom-albert-model']['class']);
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();
@@ -3743,205 +3943,5 @@ class AiBundleTest extends TestCase
                 ],
             ],
         ];
-    }
-
-    #[TestDox('Model configuration is processed and passed to ModelCatalog services')]
-    public function testModelConfigurationIsProcessed()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'platform' => [
-                    'anthropic' => [
-                        'api_key' => 'test-key',
-                    ],
-                    'openai' => [
-                        'api_key' => 'test-key',
-                    ],
-                ],
-                'model' => [
-                    'anthropic' => [
-                        'custom-claude-model' => [
-                            'capabilities' => [
-                                'input-messages',
-                                'output-text',
-                                'tool-calling',
-                            ],
-                        ],
-                    ],
-                    'openai' => [
-                        'custom-gpt-model' => [
-                            'capabilities' => [
-                                'input-messages',
-                                'output-text',
-                                'output-streaming',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $anthropicCatalog = $container->getDefinition('ai.platform.model_catalog.anthropic');
-        $anthropicModels = $anthropicCatalog->getArgument(0);
-        $this->assertIsArray($anthropicModels);
-        $this->assertArrayHasKey('custom-claude-model', $anthropicModels);
-        $this->assertSame('Symfony\AI\Platform\Bridge\Anthropic\Claude', $anthropicModels['custom-claude-model']['class']);
-        $this->assertCount(3, $anthropicModels['custom-claude-model']['capabilities']);
-
-        $openaiCatalog = $container->getDefinition('ai.platform.model_catalog.openai');
-        $openaiModels = $openaiCatalog->getArgument(0);
-        $this->assertIsArray($openaiModels);
-        $this->assertArrayHasKey('custom-gpt-model', $openaiModels);
-        $this->assertSame('Symfony\AI\Platform\Bridge\OpenAi\Gpt', $openaiModels['custom-gpt-model']['class']);
-        $this->assertCount(3, $openaiModels['custom-gpt-model']['capabilities']);
-    }
-
-    #[TestDox('Model configuration for unsupported platforms is gracefully skipped')]
-    public function testModelConfigurationForUnsupportedPlatformIsSkipped()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'unsupported_platform' => [
-                        'some-model' => [
-                            'capabilities' => ['input-messages'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertFalse($container->hasDefinition('ai.platform.model_catalog.unsupported_platform'));
-    }
-
-    #[TestDox('Model configuration for vertexai uses correct ModelCatalog service ID')]
-    public function testModelConfigurationForVertexAi()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'platform' => [
-                    'vertexai' => [
-                        'location' => 'us-central1',
-                        'project_id' => 'test-project',
-                    ],
-                ],
-                'model' => [
-                    'vertexai' => [
-                        'custom-gemini-model' => [
-                            'capabilities' => [
-                                'input-messages',
-                                'output-text',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $vertexaiCatalog = $container->getDefinition('ai.platform.model_catalog.vertexai.gemini');
-        $vertexaiModels = $vertexaiCatalog->getArgument(0);
-        $this->assertIsArray($vertexaiModels);
-        $this->assertArrayHasKey('custom-gemini-model', $vertexaiModels);
-        $this->assertSame('Symfony\AI\Platform\Bridge\Gemini\Gemini', $vertexaiModels['custom-gemini-model']['class']);
-    }
-
-    #[TestDox('Model configuration for eleven_labs uses correct ModelCatalog service ID')]
-    public function testModelConfigurationForElevenLabs()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'platform' => [
-                    'eleven_labs' => [
-                        'api_key' => 'test-key',
-                        'host' => 'https://api.elevenlabs.io/v1',
-                    ],
-                ],
-                'model' => [
-                    'eleven_labs' => [
-                        'custom-elevenlabs-model' => [
-                            'capabilities' => [
-                                'input-text',
-                                'output-audio',
-                                'text-to-speech',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $elevenlabsCatalog = $container->getDefinition('ai.platform.model_catalog.elevenlabs');
-        $elevenlabsModels = $elevenlabsCatalog->getArgument(0);
-        $this->assertIsArray($elevenlabsModels);
-        $this->assertArrayHasKey('custom-elevenlabs-model', $elevenlabsModels);
-        $this->assertSame('Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabs', $elevenlabsModels['custom-elevenlabs-model']['class']);
-        $this->assertCount(3, $elevenlabsModels['custom-elevenlabs-model']['capabilities']);
-    }
-
-    #[TestDox('Model configuration for newly added platforms (dockermodelrunner, aimlapi, replicate, albert) is processed correctly')]
-    public function testModelConfigurationForNewlyAddedPlatforms()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'dockermodelrunner' => [
-                        'custom-docker-model' => [
-                            'capabilities' => [
-                                'input-messages',
-                                'output-text',
-                            ],
-                        ],
-                    ],
-                    'aimlapi' => [
-                        'custom-aimlapi-model' => [
-                            'capabilities' => [
-                                'input-messages',
-                                'output-text',
-                            ],
-                        ],
-                    ],
-                    'replicate' => [
-                        'custom-replicate-model' => [
-                            'capabilities' => [
-                                'input-messages',
-                                'output-text',
-                            ],
-                        ],
-                    ],
-                    'albert' => [
-                        'custom-albert-model' => [
-                            'capabilities' => [
-                                'input-messages',
-                                'output-text',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $dockermodelrunnerCatalog = $container->getDefinition('ai.platform.model_catalog.dockermodelrunner');
-        $dockermodelrunnerModels = $dockermodelrunnerCatalog->getArgument(0);
-        $this->assertIsArray($dockermodelrunnerModels);
-        $this->assertArrayHasKey('custom-docker-model', $dockermodelrunnerModels);
-        $this->assertSame('Symfony\AI\Platform\Model', $dockermodelrunnerModels['custom-docker-model']['class']);
-
-        $aimlapiCatalog = $container->getDefinition('ai.platform.model_catalog.aimlapi');
-        $aimlapiModels = $aimlapiCatalog->getArgument(0);
-        $this->assertIsArray($aimlapiModels);
-        $this->assertArrayHasKey('custom-aimlapi-model', $aimlapiModels);
-        $this->assertSame('Symfony\AI\Platform\Model', $aimlapiModels['custom-aimlapi-model']['class']);
-
-        $replicateCatalog = $container->getDefinition('ai.platform.model_catalog.replicate');
-        $replicateModels = $replicateCatalog->getArgument(0);
-        $this->assertIsArray($replicateModels);
-        $this->assertArrayHasKey('custom-replicate-model', $replicateModels);
-        $this->assertSame('Symfony\AI\Platform\Bridge\Meta\Llama', $replicateModels['custom-replicate-model']['class']);
-
-        $albertCatalog = $container->getDefinition('ai.platform.model_catalog.albert');
-        $albertModels = $albertCatalog->getArgument(0);
-        $this->assertIsArray($albertModels);
-        $this->assertArrayHasKey('custom-albert-model', $albertModels);
-        $this->assertSame('Symfony\AI\Platform\Bridge\OpenAi\Gpt', $albertModels['custom-albert-model']['class']);
     }
 }
