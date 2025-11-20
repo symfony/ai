@@ -16,7 +16,7 @@
         "symfony/framework-bundle": "^7.3|^8.0",
         "symfony/http-foundation": "^7.3|^8.0",
         "symfony/http-kernel": "^7.3|^8.0",
-        "mcp/sdk": "@dev",
+        "mcp/sdk": "^0.1",
         "symfony/routing": "^7.3|^8.0",
         "symfony/psr-http-message-bridge": "^7.3|^8.0",
         "php-http/discovery": "^1.20"

@@ -10,7 +10,6 @@
         "ext-gd": "*",
         "codewithkyrian/chromadb-php": "^0.4.0",
         "league/commonmark": "^2.7",
-        "mcp/sdk": "@dev",
         "mrmysql/youtube-transcript": "^0.0.5",
         "php-http/discovery": "^1.20",
         "runtime/frankenphp-symfony": "^0.2.0",
