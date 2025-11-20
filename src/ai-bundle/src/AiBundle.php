@@ -66,6 +66,20 @@ use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory as PerplexityPlatformF
 use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory as ScalewayPlatformFactory;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
+use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Bridge\Cartesia\Cartesia;
+use Symfony\AI\Platform\Bridge\DeepSeek\DeepSeek;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabs;
+use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Bridge\Meta\Llama;
+use Symfony\AI\Platform\Bridge\Mistral\Mistral;
+use Symfony\AI\Platform\Bridge\Ollama\Ollama;
+use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Bridge\Perplexity\Perplexity;
+use Symfony\AI\Platform\Bridge\Scaleway\Scaleway;
+use Symfony\AI\Platform\Bridge\Voyage\Voyage;
+use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -291,6 +305,11 @@ final class AiBundle extends AbstractBundle
         if (false === $builder->getParameter('kernel.debug')) {
             $builder->removeDefinition('ai.data_collector');
             $builder->removeDefinition('ai.traceable_toolbox');
+        }
+
+        // Process model configuration and pass to ModelCatalog services
+        foreach ($config['model'] ?? [] as $platformName => $models) {
+            $this->processModelConfig($platformName, $models, $builder);
         }
     }
 
@@ -1798,5 +1817,84 @@ final class AiBundle extends AbstractBundle
     private static function normalizeAgentServiceId(string $agentName): string
     {
         return str_starts_with($agentName, 'ai.agent.') ? $agentName : 'ai.agent.'.$agentName;
+    }
+
+    /**
+     * @param array<string, mixed> $models
+     */
+    private function processModelConfig(string $platformName, array $models, ContainerBuilder $builder): void
+    {
+        $modelCatalogServiceId = $this->getModelCatalogServiceId($platformName);
+
+        if (!$builder->hasDefinition($modelCatalogServiceId)) {
+            return;
+        }
+
+        $modelCatalogDefinition = $builder->getDefinition($modelCatalogServiceId);
+        $additionalModels = [];
+
+        foreach ($models as $modelName => $modelConfig) {
+            $modelClass = $this->getModelClassForPlatform($platformName);
+
+            if (null === $modelClass) {
+                continue;
+            }
+
+            $capabilities = [];
+            foreach ($modelConfig['capabilities'] as $capability) {
+                if ($capability instanceof Capability) {
+                    $capabilities[] = $capability;
+                } else {
+                    $capabilities[] = Capability::from($capability);
+                }
+            }
+
+            $additionalModels[$modelName] = [
+                'class' => $modelClass,
+                'capabilities' => $capabilities,
+            ];
+        }
+
+        $modelCatalogDefinition->setArgument(0, $additionalModels);
+    }
+
+    private function getModelCatalogServiceId(string $platformName): string
+    {
+        if ('vertexai' === $platformName) {
+            return 'ai.platform.model_catalog.vertexai.gemini';
+        }
+
+        if ('eleven_labs' === $platformName) {
+            return 'ai.platform.model_catalog.elevenlabs';
+        }
+
+        return 'ai.platform.model_catalog.'.$platformName;
+    }
+
+    private function getModelClassForPlatform(string $platformName): ?string
+    {
+        return match ($platformName) {
+            'anthropic' => Claude::class,
+            'openai' => Gpt::class,
+            'gemini' => Gemini::class,
+            'mistral' => Mistral::class,
+            'ollama' => Ollama::class,
+            'deepseek' => DeepSeek::class,
+            'perplexity' => Perplexity::class,
+            'cartesia' => Cartesia::class,
+            'voyage' => Voyage::class,
+            'scaleway' => Scaleway::class,
+            'meta' => Llama::class,
+            'vertexai' => Gemini::class,
+            'eleven_labs' => ElevenLabs::class,
+            'cerebras' => Model::class,
+            'openrouter' => Model::class,
+            'dockermodelrunner' => Model::class,
+            'aimlapi' => Model::class,
+            'replicate' => Llama::class,
+            'bedrock' => Model::class,
+            'albert' => Gpt::class,
+            default => null,
+        };
     }
 }
