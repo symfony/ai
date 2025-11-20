@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Tests\Bridge\Ollama;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -36,5 +37,37 @@ final class OllamaApiCatalogTest extends TestCase
             Capability::INPUT_TEXT,
         ], $model->getCapabilities());
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testModelCatalogCanReturnModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'models' => [
+                    [
+                        'name' => 'gemma3',
+                        'details' => [],
+                    ],
+                ],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['completion'],
+            ]),
+        ]);
+
+        $modelCatalog = new OllamaApiCatalog('http://127.0.0.1:11434', $httpClient);
+
+        $models = $modelCatalog->getModels();
+
+        $this->assertCount(1, $models);
+        $this->assertArrayHasKey('gemma3', $models);
+
+        $model = $models['gemma3'];
+        $this->assertSame(Ollama::class, $model['class']);
+        $this->assertCount(1, $model['capabilities']);
+        $this->assertSame([
+            Capability::INPUT_TEXT,
+        ], $model['capabilities']);
+        $this->assertSame(2, $httpClient->getRequestsCount());
     }
 }

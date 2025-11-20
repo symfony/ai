@@ -13,38 +13,25 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class OllamaApiCatalog extends FallbackModelCatalog
+final class OllamaApiCatalog implements ModelCatalogInterface
 {
     public function __construct(
         private readonly string $host,
         private readonly HttpClientInterface $httpClient,
     ) {
-        parent::__construct();
     }
 
     public function getModel(string $modelName): Ollama
     {
-        $model = parent::getModel($modelName);
-
-        if (\array_key_exists($model->getName(), $this->models)) {
-            $finalModel = $this->models[$model->getName()];
-
-            return new $finalModel['class'](
-                $model->getName(),
-                $finalModel['capabilities'],
-                $model->getOptions(),
-            );
-        }
-
         $response = $this->httpClient->request('POST', \sprintf('%s/api/show', $this->host), [
             'json' => [
-                'model' => $model->getName(),
+                'model' => $modelName,
             ],
         ]);
 
@@ -66,13 +53,27 @@ final class OllamaApiCatalog extends FallbackModelCatalog
             $payload['capabilities'],
         );
 
-        $finalModel = new Ollama($model->getName(), $capabilities, $model->getOptions());
+        return new Ollama($modelName, $capabilities);
+    }
 
-        $this->models[$finalModel->getName()] = [
-            'class' => Ollama::class,
-            'capabilities' => $finalModel->getCapabilities(),
-        ];
+    public function getModels(): array
+    {
+        $response = $this->httpClient->request('POST', \sprintf('%s/api/tags', $this->host));
 
-        return $finalModel;
+        $models = $response->toArray();
+
+        return array_merge(...array_map(
+            function (array $model): array {
+                $retrievedModel = $this->getModel($model['name']);
+
+                return [
+                    $retrievedModel->getName() => [
+                        'class' => Ollama::class,
+                        'capabilities' => $retrievedModel->getCapabilities(),
+                    ],
+                ];
+            },
+            $models['models'],
+        ));
     }
 }
