@@ -1,0 +1,122 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-09T16:06:04Z
+
+Another approach would be to define a catalog for each platform when needed (Ollama requires a custom one, it's probably the only one with ElevenLabs) and inject it as the default implementation for the platform.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-09T16:52:13Z
+
+I think it's better to open up the FallbackModelCatalog to be able to receive additional models configured from the outside (like for the real ModelCatalog's), check these first and if not go with the Model::class as default. WDYT?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-09T17:09:06Z
+
+Not sure about the implementation but I get the idea of accepting additional models 🤔
+
+My main concern is about the capability to add those models at runtime, my issue here is that if I'm using models stored in Ollama but not in the catalog (so I can't configure them / add them in the catalog directly), the catalog is returning a `Model` rather than `Ollama`, of course, it triggers an error later when trying to see if the model is supported 😅
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-09T17:10:28Z
+
+Another approach would be to build the catalog from the Ollama API directly, something similar to what we're doing in the `OllamaClient`, the API already know if the model is supported, IMHO, listing models in the class is a bad idea at the end 🤔
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-09T17:15:17Z
+
+Yes, but not all models are available and in the end you cannot be up to date in the end always, so we need to have the option to be able to provide custom models. Take Azure for example, you need to deploy some models, so no model catalog for azure will look the same for a user...
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-09T17:22:09Z
+
+What if we're building the catalog directly from the API for specific platform?
+
+What I mean is that in the catalog, we can query the API (when available) and build the model list from it then if a list of models is provided in the constructor, we can merge both at the end of the method, WDYT? 🤔
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-09T17:34:03Z
+
+I am not convinced about doing this on runtime, it can be costly, we would need to introduce caches etc. WDYT @chr-hertel
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-09T17:36:35Z
+
+I pushed a POC, the idea is to move the code that we already have in the `OllamaClient` to the `OllamaCatalog`, this way, the model is built once then you can query the client as many times as needed.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-09T21:37:16Z
+
+> I am not convinced about doing this on runtime, it can be costly, we would need to introduce caches etc. WDYT @chr-hertel
+
+I don't think it's an issue here. The first call is a fraction of the time compared to the main call later, and we're talking local execution only anyways.
+
+but i agree that at least the `OllamaCatalog` should have a local cache var so the single instance of that object doesn't need to do it twice - an optional psr cache would be sugar on top but also introduces new questions like cachekey&invalidation after download of a new model etc
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-10T12:05:30Z
+
+@chr-hertel What about using the `Cache` component? Is there any real issue with it? I mean, we can make it optional (along with a TTL), if no cache is provided, the calls are performed each time and if provided, we store it for 10 minutes (or an hour?) 🤔
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-10-10T21:43:08Z
+
+same like PSR cache. sugar on top & introducing new concerns. not needed from my side for a first PR
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-11T15:48:42Z
+
+For reference:
+* #777
+
+I already updated the PR header and title with the new term `FallbackModelCatalog`.
+
+I will come up with a proposal shortly
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-12T14:11:07Z
+
+Sorry, when checking the code, Ollama has its own ModelCatalog, where you can configure the models you need. I don't see the problem here, why would you want to use FallbackModelCatalog?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-13T07:40:44Z
+
+@OskarStark 👋🏻
+
+I agree on the presence of a `ModelCatalog`, the problem is not "totally there", you can configure new models when using `Ollama` but it requires either to extends the class / decorate it, something not "developer friendly" IMHO when you're using multiple models / tags for a specific models and you don't want to configure again each time, the benefits of using a `FallbackModelCatalog` along with the retrieval of the model from the API is that you can tag a new model, deploy it and use it "out of the box" without building the container again and so on.
+
+The second benefit is that you're not forced to keep the AI codebase "up-to-date" with the latest models (what we're currently doing and even with the work that we're doing, we don't support out of the box the latest ones), we can just rely on the catalog to retrieve the model, perform our `invoke` call and it works, no need to configure the catalog or submit a new PR (same thing goes for `ElevenLabs` BTW).
+
+The goal behind this PR is to ease the usage of Ollama (especially when you're using a "cloud" version of it and/or you're using dozen of models) while removing the "hardcoded" aspect of it to keep the API as the "source of truth".
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-13T08:34:32Z
+
+Ok, but could we use the decorator pattern here, so the user can decide if he want to have the optional call or not? I talk about decorating the FallbackModelCatalog
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-10-16T17:29:13Z
+
+So maybe with an option like `retrieve_catalog_from_api`?
+
+If set to `true`, then we decorate and perform the call on the API?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-16T21:06:00Z
+
+yes, don't like the name, but we can rename it later
