@@ -69,7 +69,7 @@ final class ModelApiCatalog extends FallbackModelCatalog
                         $capabilities[] = Capability::INPUT_MULTIMODAL; // Video?
                         break;
                     default:
-                        throw new InvalidArgumentException('Unknown model "'.$inputModality.'" input modality.', 1763717587);
+                        throw new InvalidArgumentException('Unknown model '.$inputModality.' input modality.', 1763717587);
                 }
             }
 
@@ -82,7 +82,7 @@ final class ModelApiCatalog extends FallbackModelCatalog
                         $capabilities[] = Capability::OUTPUT_IMAGE;
                         break;
                     default:
-                        throw new InvalidArgumentException('Unknown model "'.$outputModality.'" output modality.', 1763717588);
+                        throw new InvalidArgumentException('Unknown model '.$outputModality.' output modality.', 1763717588);
                 }
             }
             $fullResult[$model['id']] = [
