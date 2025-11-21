@@ -5,10 +5,12 @@ on:
         paths:
             - '**.rst'
             - 'docs/**'
+            - '.github/workflows/doctor-rst.yaml'
     pull_request:
         paths:
             - '**.rst'
             - 'docs/**'
+            - '.github/workflows/doctor-rst.yaml'
 
 jobs:
     doctor-rst:
@@ -32,6 +34,6 @@ jobs:
                   key: doctor-rst-${{ steps.extract_base_branch.outputs.branch }}
 
             - name: DOCtor-RST
-              uses: docker://oskarstark/doctor-rst
+              uses: docker://oskarstark/doctor-rst:1.70.2
               with:
                   args: --short --error-format=github --cache-file=/github/workspace/.cache/doctor-rst.cache
