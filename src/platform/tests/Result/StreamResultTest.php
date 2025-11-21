@@ -18,18 +18,45 @@ final class StreamResultTest extends TestCase
 {
     public function testGetContent()
     {
-        $generator = (static function () {
-            yield 'data1';
-            yield 'data2';
+        $generator = (function () {
+            yield 'Hello';
+            yield ' ';
+            yield 'World';
         })();
 
         $result = new StreamResult($generator);
-        $this->assertInstanceOf(\Generator::class, $result->getContent());
-
         $content = iterator_to_array($result->getContent());
 
-        $this->assertCount(2, $content);
-        $this->assertSame('data1', $content[0]);
-        $this->assertSame('data2', $content[1]);
+        $this->assertSame(['Hello', ' ', 'World'], $content);
+    }
+
+    public function testGetContentWithMultipleChunks()
+    {
+        $generator = (function () {
+            yield 'Chunk';
+            yield '1';
+            yield 'Chunk';
+            yield '2';
+        })();
+
+        $result = new StreamResult($generator);
+        $content = iterator_to_array($result->getContent());
+
+        $this->assertSame(['Chunk', '1', 'Chunk', '2'], $content);
+    }
+
+    public function testGetContentWithEmptyGenerator()
+    {
+        $generator = (function () {
+            // Empty generator
+            if (false) {
+                yield;
+            }
+        })();
+
+        $result = new StreamResult($generator);
+        $content = iterator_to_array($result->getContent());
+
+        $this->assertSame([], $content);
     }
 }

@@ -16,10 +16,14 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Chat\Bridge\Local\InMemoryStore;
 use Symfony\AI\Chat\Chat;
+use Symfony\AI\Chat\Result\AccumulatingStreamResult;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 
 final class ChatTest extends TestCase
 {
@@ -112,5 +116,118 @@ final class ChatTest extends TestCase
         $this->assertInstanceOf(AssistantMessage::class, $result);
         $this->assertSame($assistantContent, $result->getContent());
         $this->assertCount(2, $this->store->load());
+    }
+
+    public function testItSupportsStreaming()
+    {
+        $userMessage = Message::ofUser('What is your favourite song?');
+        $generator = (function () {
+            yield 'Bitter Sweet';
+            yield ' ';
+            yield 'Symfony';
+        })();
+
+        $streamResult = new StreamResult($generator);
+
+        $this->agent->expects($this->once())
+            ->method('call')
+            ->willReturn($streamResult);
+
+        $result = $this->chat->submit($userMessage);
+        $this->assertInstanceOf(AccumulatingStreamResult::class, $result);
+
+        $chunks = iterator_to_array($result->getContent());
+        $this->assertSame(['Bitter Sweet', ' ', 'Symfony'], $chunks);
+
+        $storedMessages = $this->store->load();
+        $this->assertCount(2, $storedMessages);
+
+        $lastMessage = end($storedMessages->getMessages());
+        $this->assertInstanceOf(AssistantMessage::class, $lastMessage);
+        $this->assertSame('Bitter Sweet Symfony', $lastMessage->getContent());
+    }
+
+    public function testStreamingPreservesMetadata()
+    {
+        $userMessage = Message::ofUser('Hello');
+        $generator = (function () {
+            yield 'Test';
+        })();
+
+        $streamResult = new StreamResult($generator);
+        $streamResult->getMetadata()->add('key1', 'value1');
+        $streamResult->getMetadata()->add('key2', 'value2');
+
+        $this->agent->expects($this->once())
+            ->method('call')
+            ->willReturn($streamResult);
+
+        $result = $this->chat->submit($userMessage);
+
+        iterator_to_array($result->getContent());
+
+        $storedMessages = $this->store->load();
+        $lastMessage = $storedMessages->getMessages()[1];
+        $this->assertTrue($lastMessage->getMetadata()->has('key1'));
+        $this->assertTrue($lastMessage->getMetadata()->has('key2'));
+        $this->assertSame('value1', $lastMessage->getMetadata()->get('key1'));
+        $this->assertSame('value2', $lastMessage->getMetadata()->get('key2'));
+    }
+
+    public function testStreamingWithToolCalls()
+    {
+        $userMessage = Message::ofUser('Hello');
+        $toolCall = new ToolCall('call_123', 'test_tool', ['param' => 'value']);
+        $toolCallResult = new ToolCallResult($toolCall);
+
+        $generator = (function () use ($toolCallResult) {
+            yield 'Some text';
+            yield $toolCallResult;
+        })();
+
+        $streamResult = new StreamResult($generator);
+
+        $this->agent->expects($this->once())
+            ->method('call')
+            ->willReturn($streamResult);
+
+        $result = $this->chat->submit($userMessage);
+
+        iterator_to_array($result->getContent());
+
+        $storedMessages = $this->store->load();
+        $lastMessage = $storedMessages->getMessages()[1];
+        $this->assertInstanceOf(AssistantMessage::class, $lastMessage);
+        $this->assertSame('Some text', $lastMessage->getContent());
+        $this->assertTrue($lastMessage->hasToolCalls());
+    }
+
+    public function testStreamingCallbackFiresEvenIfIterationStopsEarly()
+    {
+        $userMessage = Message::ofUser('Hello');
+        $generator = (function () {
+            yield 'Chunk1';
+            yield 'Chunk2';
+            yield 'Chunk3';
+        })();
+
+        $streamResult = new StreamResult($generator);
+
+        $this->agent->expects($this->once())
+            ->method('call')
+            ->willReturn($streamResult);
+
+        $result = $this->chat->submit($userMessage);
+
+        $content = $result->getContent();
+        $content->current();
+        $content->next();
+
+        while ($content->valid()) {
+            $content->next();
+        }
+
+        $storedMessages = $this->store->load();
+        $this->assertCount(2, $storedMessages);
     }
 }

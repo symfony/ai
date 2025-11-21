@@ -15,12 +15,13 @@ use Psr\Cache\CacheItemPoolInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Chat\StreamableStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class CacheStore implements ManagedStoreInterface, MessageStoreInterface
+final class CacheStore implements ManagedStoreInterface, MessageStoreInterface, StreamableStoreInterface
 {
     public function __construct(
         private readonly CacheItemPoolInterface $cache,
