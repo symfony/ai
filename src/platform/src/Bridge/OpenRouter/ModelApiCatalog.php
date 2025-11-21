@@ -15,8 +15,6 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -38,17 +36,11 @@ final class ModelApiCatalog extends FallbackModelCatalog
      */
     protected function fetchRemoteModels(): array
     {
-        // Rework based on Olama Model API
-
         $fullResult = [];
-
-        $serializer = new Serializer(encoders: [new JsonEncoder()]);
 
         // Fetch models
         $responseModels = $this->httpClient->request('GET', 'https://openrouter.ai/api/v1/models');
-        $models = $serializer->decode($responseModels->getContent(), 'json');
-
-        foreach ($models['data'] as $model) {
+        foreach ($responseModels->toArray()['data'] as $model) {
             $capabilities = [];
 
             foreach ($model['architecture']['input_modalities'] as $inputModality) {
@@ -93,8 +85,7 @@ final class ModelApiCatalog extends FallbackModelCatalog
 
         // Fetch Embeddings
         $responseEmbeddings = $this->httpClient->request('GET', 'https://openrouter.ai/api/v1/embeddings/models');
-        $embeddings = $serializer->decode($responseEmbeddings->getContent(), 'json');
-        foreach ($embeddings['data'] as $embedding) {
+        foreach ($responseEmbeddings->toArray()['data'] as $embedding) {
             $fullResult[$embedding['id']] = [
                 'class' => Embeddings::class,
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
