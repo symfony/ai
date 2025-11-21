@@ -14,31 +14,30 @@ namespace Symfony\AI\Platform\Bridge\OpenRouter;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Tim Lochmüller <tim@fruit-lab.de>
  */
-final class ModelApiCatalog extends FallbackModelCatalog
+final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
     ) {
         parent::__construct();
 
-        // Models are fetched via OpenRouter meta API
-        $this->models = $this->fetchRemoteModels();
+        $this->models = [
+            ...$this->models,
+            ...$this->fetchRemoteModels(),
+            ...$this->fetchRemoteEmbeddings(),
+        ];
     }
 
     /**
-     * @return array<string, array{class: string, capabilities: list<Capability>}>
+     * @return array{class: string, capabilities: list<Capability>}
      */
-    protected function fetchRemoteModels(): array
+    protected function fetchRemoteModels(): iterable
     {
-        $fullResult = [];
-
-        // Fetch models
         $responseModels = $this->httpClient->request('GET', 'https://openrouter.ai/api/v1/models');
         foreach ($responseModels->toArray()['data'] as $model) {
             $capabilities = [];
@@ -77,21 +76,25 @@ final class ModelApiCatalog extends FallbackModelCatalog
                         throw new InvalidArgumentException('Unknown model '.$outputModality.' output modality.', 1763717588);
                 }
             }
-            $fullResult[$model['id']] = [
+
+            yield $model['id'] => [
                 'class' => Model::class,
                 'capabilities' => $capabilities,
             ];
         }
+    }
 
-        // Fetch Embeddings
+    /**
+     * @return array{class: string, capabilities: list<Capability>}
+     */
+    protected function fetchRemoteEmbeddings(): iterable
+    {
         $responseEmbeddings = $this->httpClient->request('GET', 'https://openrouter.ai/api/v1/embeddings/models');
         foreach ($responseEmbeddings->toArray()['data'] as $embedding) {
-            $fullResult[$embedding['id']] = [
+            yield $embedding['id'] => [
                 'class' => Embeddings::class,
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ];
         }
-
-        return $fullResult;
     }
 }

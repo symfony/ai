@@ -14,12 +14,11 @@ namespace Symfony\AI\Platform\Bridge\OpenRouter;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-final class ModelCatalog extends AbstractModelCatalog
+final class ModelCatalog extends AbstractOpenRouterModelCatalog
 {
     /**
      * @param array<string, array{class: string, capabilities: list<Capability>}> $additionalModels
@@ -27,6 +26,8 @@ final class ModelCatalog extends AbstractModelCatalog
     public function __construct(
         array $additionalModels = [],
     ) {
+        parent::__construct();
+
         // OpenRouter provides access to many different models from various providers
         // The model list is changed avery few days. This list is generated at 2025-11-21.
         // This catalog only contains the current state of the model list as default models
@@ -2729,7 +2730,11 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
         ];
 
-        $this->models = array_merge($defaultModels, $additionalModels);
+        $this->models = [
+            ...$this->models,
+            ...$defaultModels,
+            ...$additionalModels,
+        ];
     }
 
     public function getModel(string $modelName): Model
