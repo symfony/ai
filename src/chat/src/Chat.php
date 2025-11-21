@@ -12,10 +12,14 @@
 namespace Symfony\AI\Chat;
 
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Toolbox\StreamResult as ToolboxStreamResult;
+use Symfony\AI\Chat\Result\AccumulatingStreamResult;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 
 /**
@@ -35,18 +39,31 @@ final class Chat implements ChatInterface
         $this->store->save($messages);
     }
 
-    public function submit(UserMessage $message): AssistantMessage
+    public function submit(UserMessage $message): AssistantMessage|AccumulatingStreamResult
     {
         $messages = $this->store->load();
 
         $messages->add($message);
         $result = $this->agent->call($messages);
 
+        if ($result instanceof StreamResult || $result instanceof ToolboxStreamResult) {
+            if (!$this->store instanceof StreamableStoreInterface) {
+                throw new RuntimeException($this->store::class . ' does not support streaming.');
+            }
+
+            return new AccumulatingStreamResult($result, function (AssistantMessage $assistantMessage) use ($messages) {
+                $messages->add($assistantMessage);
+                $this->store->save($messages);
+            });
+        }
+
         \assert($result instanceof TextResult);
 
         $assistantMessage = Message::ofAssistant($result->getContent());
-        $messages->add($assistantMessage);
 
+        $assistantMessage->getMetadata()->set($result->getMetadata()->all());
+
+        $messages->add($assistantMessage);
         $this->store->save($messages);
 
         return $assistantMessage;
