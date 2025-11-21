@@ -24,14 +24,16 @@ class McpCommand extends Command
 {
     public function __construct(
         private readonly Server $server,
-        private readonly LoggerInterface $logger,
+        private readonly ?LoggerInterface $logger = null,
     ) {
         parent::__construct();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $transport = new StdioTransport(logger: $this->logger);
+        $transport = $this->logger
+            ? new StdioTransport(logger: $this->logger)
+            : new StdioTransport();
         $this->server->run($transport);
 
         return Command::SUCCESS;
