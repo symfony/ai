@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-21T07:50:25Z
+
+We could also use `Model::class` as default if none is provided, WDYT?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-21T09:47:01Z
+
++1 for the default
