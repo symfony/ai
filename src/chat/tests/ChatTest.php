@@ -142,7 +142,8 @@ final class ChatTest extends TestCase
         $storedMessages = $this->store->load();
         $this->assertCount(2, $storedMessages);
 
-        $lastMessage = end($storedMessages->getMessages());
+        $messages = $storedMessages->getMessages();
+        $lastMessage = end($messages);
         $this->assertInstanceOf(AssistantMessage::class, $lastMessage);
         $this->assertSame('Bitter Sweet Symfony', $lastMessage->getContent());
     }
