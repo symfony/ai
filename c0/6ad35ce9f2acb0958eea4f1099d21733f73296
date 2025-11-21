@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-11-20T09:51:40Z
+
+OH, I think it might fix my issue in https://github.com/symfony/ai/issues/898
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-20T10:10:56Z
+
+It should already be fixed via https://github.com/symfony/ai/pull/766, this PR is only about removing the decoration pattern (can help but the fix is already merged) 🙂
