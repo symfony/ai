@@ -51,6 +51,11 @@ final class StreamResult extends BaseResult
                 break;
             }
 
+            if (!\is_string($value)) {
+                yield $value;
+                break;
+            }
+
             $streamedResult .= $value;
 
             yield $value;
