@@ -3323,6 +3323,64 @@ class AiBundleTest extends TestCase
         $this->assertTrue($surrealDbMessageStoreDefinition->hasTag('ai.message_store'));
     }
 
+    #[TestDox('Model configuration defaults class to Model::class')]
+    #[DoesNotPerformAssertions]
+    public function testModelConfigurationDefaultsClassToModel()
+    {
+        // Should not throw - class defaults to Model::class
+        $this->buildContainer([
+            'ai' => [
+                'model' => [
+                    'openai' => [
+                        'my-custom-model' => [
+                            'capabilities' => ['input-text', 'output-text'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    #[TestDox('Model configuration throws exception when class does not exist')]
+    public function testModelConfigurationThrowsExceptionWhenClassDoesNotExist()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('does not exist');
+
+        $this->buildContainer([
+            'ai' => [
+                'model' => [
+                    'openai' => [
+                        'my-custom-model' => [
+                            'class' => 'NonExistentModelClass',
+                            'capabilities' => ['input-text', 'output-text'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    #[TestDox('Model configuration throws exception when class does not extend Model')]
+    public function testModelConfigurationThrowsExceptionWhenClassDoesNotExtendModel()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('must extend');
+
+        $this->buildContainer([
+            'ai' => [
+                'model' => [
+                    'openai' => [
+                        'my-custom-model' => [
+                            'class' => \stdClass::class,
+                            'capabilities' => ['input-text', 'output-text'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();

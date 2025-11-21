@@ -16,6 +16,7 @@ use MongoDB\Client as MongoDbClient;
 use Probots\Pinecone\Client as PineconeClient;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
 use Symfony\AI\Store\Bridge\Redis\Distance;
@@ -223,6 +224,23 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->end()
                     ->arrayPrototype()
                         ->children()
+                            ->stringNode('class')
+                                ->info('The fully qualified class name of the model (must extend '.Model::class.')')
+                                ->defaultValue(Model::class)
+                                ->cannotBeEmpty()
+                                ->validate()
+                                    ->ifTrue(function ($v) {
+                                        return !class_exists($v);
+                                    })
+                                    ->thenInvalid('The model class "%s" does not exist.')
+                                ->end()
+                                ->validate()
+                                    ->ifTrue(function ($v) {
+                                        return !is_a($v, Model::class, true);
+                                    })
+                                    ->thenInvalid('The model class "%s" must extend '.Model::class.'.')
+                                ->end()
+                            ->end()
                             ->arrayNode('capabilities')
                                 ->info('Array of capabilities that this model supports')
                                 ->enumPrototype(Capability::class)
