@@ -34,7 +34,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
     }
 
     /**
-     * @return array{class: string, capabilities: list<Capability>}
+     * @return iterable<string, array{class: class-string<Model>, capabilities: list<Capability::*>}>
      */
     protected function fetchRemoteModels(): iterable
     {
@@ -85,7 +85,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
     }
 
     /**
-     * @return array{class: string, capabilities: list<Capability>}
+     * @return iterable<string, array{class: class-string<Embeddings>, capabilities: list<Capability::*>}>
      */
     protected function fetchRemoteEmbeddings(): iterable
     {
