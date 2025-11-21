@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenRouter;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -32,6 +33,9 @@ final class ModelApiCatalog extends FallbackModelCatalog
         $this->models = $this->fetchRemoteModels();
     }
 
+    /**
+     * @return array<string, array{class: string, capabilities: list<Capability>}>
+     */
     protected function fetchRemoteModels(): array
     {
         // Rework based on Olama Model API
@@ -65,7 +69,7 @@ final class ModelApiCatalog extends FallbackModelCatalog
                         $capabilities[] = Capability::INPUT_MULTIMODAL; // Video?
                         break;
                     default:
-                        throw new \Exception('Unknown model input modality', ['inputModality' => $inputModality]);
+                        throw new InvalidArgumentException('Unknown model input modality.', 1763717587, ['inputModality' => $inputModality]);
                 }
             }
 
@@ -78,7 +82,7 @@ final class ModelApiCatalog extends FallbackModelCatalog
                         $capabilities[] = Capability::OUTPUT_IMAGE;
                         break;
                     default:
-                        throw new \Exception('Unknown model output modality', ['outputModality' => $outputModality]);
+                        throw new InvalidArgumentException('Unknown model output modality.', 1763717588, ['outputModality' => $outputModality]);
                 }
             }
             $fullResult[$model['id']] = [
