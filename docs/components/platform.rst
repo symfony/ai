@@ -22,7 +22,7 @@ specific use cases or performance requirements.
 Usage
 -----
 
-The instantiation of the :class:`Symfony\\AI\\Platform\Platform` class is
+The instantiation of the :class:`Symfony\\AI\\Platform\\Platform` class is
 usually delegated to a provider-specific factory, with a provider being
 OpenAI, Anthropic, Google, Replicate, and others.
 
@@ -34,7 +34,7 @@ For example, to use the OpenAI provider, you would typically do something like t
 
     $platform = PlatformFactory::create(env('OPENAI_API_KEY'));
 
-With this :class:`Symfony\\AI\\Platform\PlatformInterface` instance you can now interact with the LLM::
+With this :class:`Symfony\\AI\\Platform\\PlatformInterface` instance you can now interact with the LLM::
 
     // Generate a vector embedding for a text, returns a Symfony\AI\Platform\Result\VectorResult
     $vectorResult = $platform->invoke($embeddings, 'What is the capital of France?');
@@ -109,21 +109,22 @@ Supported Models & Platforms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * **Language Models**
-    * `OpenAI's GPT`_ with `OpenAI`_ and `Azure`_ as Platform
+    * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
     * `Anthropic's Claude`_ with `Anthropic`_ and `AWS Bedrock`_ as Platform
-    * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_ and `AWS Bedrock`_ as Platform
+    * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_, `AWS Bedrock`_ and `OpenRouter`_ as Platform
     * `Gemini`_ with `Google`_, `Vertex AI`_ and `OpenRouter`_ as Platform
     * `Vertex AI Gen AI`_ with `Vertex AI`_ as Platform
     * `DeepSeek's R1`_ with `OpenRouter`_ as Platform
     * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
-    * `Mistral's Mistral`_ with `Mistral`_ as Platform
+    * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
     * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
 * **Embeddings Models**
-    * `Gemini Text Embeddings`_ with `Google`_
+    * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
     * `Vertex AI Text Embeddings`_ with `Vertex AI`_
-    * `OpenAI's Text Embeddings`_ with `OpenAI`_ and `Azure`_ as Platform
+    * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
     * `Voyage's Embeddings`_ with `Voyage`_ as Platform
-    * `Mistral Embed`_ with `Mistral`_ as Platform
+    * `Mistral Embed`_ with `Mistral`_ and `OpenRouter`_ as Platform
+    * `Qwen`_ with `OpenRouter`_ as Platform
 * **Other Models**
     * `OpenAI's Dall·E`_ with `OpenAI`_ as Platform
     * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
@@ -510,6 +511,7 @@ Code Examples
 .. _`Albert API`: https://github.com/etalab-ia/albert-api
 .. _`Albert`: https://alliance.numerique.gouv.fr/produit/produits-interminist%C3%A9rielles/albert-api/
 .. _`Mistral`: https://www.mistral.ai/
+.. _`Qwen`: https://qwen.ai/
 .. _`Gemini Text Embeddings`: https://ai.google.dev/gemini-api/docs/embeddings
 .. _`Vertex AI Gen AI`: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference
 .. _`Vertex AI Text Embeddings`: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/text-embeddings-api
