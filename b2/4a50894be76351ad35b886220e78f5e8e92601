@@ -1,0 +1,47 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-25T16:49:40Z
+
+Let's zoom a bit out here, for two reasons:
+1. doesn't ollama caching already?
+2. if we want to have it user land, why only ollama?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-09-25T17:36:49Z
+
+> doesn't ollama caching already?
+
+Ollama does a "context caching" and/or a K/V caching, it stores the X latest messages for the model window (or pending tokens to speed TTFT), it's not a cache that returns the generated response if the request already exist.
+
+> if we want to have it user land, why only Ollama?
+
+Well, because that's the one that I use the most and the easiest to implement first but we can integrate it for every platform if that's the question, we just need to use the API contract, both Anthropic and OpenAI already does it natively 🤔
+
+If the question is: Could we implement it at the platform layer for every platform without relying on API calls, well, that's not a big deal to be honest and we could easily integrate it 🙂
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-09-25T17:40:31Z
+
+What do you think about having it as decorator `CachedPlatform` or similar?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-09-26T12:02:28Z
+
+I like the idea of `CachedPlatform`, looks and sound like `HttpCache`, I'll rewrite it 👍🏻
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-22T08:51:21Z
+
+IMHO, the token usage must be added in a separate PR, it requires to update existing platforms to send the informations in the result.
+
+Out of the current scope for this PR IMO.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-22T08:55:13Z
+
+@junaidbinfarooq I created an issue for the `TokenUsage` DTO 🙂
