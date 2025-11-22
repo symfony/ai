@@ -9,14 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent;
+namespace Symfony\AI\Voice\Tests;
 
-/**
- * @author Guillaume Loulier <personal@guillaumeloulier.fr>
- */
-interface VoiceProviderInterface
+use PHPUnit\Framework\TestCase;
+
+final class VoiceProviderTest extends TestCase
 {
-    public function addVoice(Output $output): void;
-
-    public function getName(): string;
 }

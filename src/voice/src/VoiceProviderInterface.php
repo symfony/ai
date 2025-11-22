@@ -9,16 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent;
+namespace Symfony\AI\Voice;
+
+use Symfony\AI\Agent\Output;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final readonly class Voice
+interface VoiceProviderInterface
 {
-    public function __construct(
-        private string $input,
-        private string $provider,
-    ) {
-    }
+    public function addVoice(Output $output): void;
 }

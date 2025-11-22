@@ -84,6 +84,8 @@ use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\AI\Store\StoreInterface;
+use Symfony\AI\Voice\Bridge\ElevenLabs\VoiceProvider as ElevenLabsVoiceProvider;
+use Symfony\AI\Voice\VoiceProviderInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\Attribute\Target;
@@ -182,6 +184,10 @@ final class AiBundle extends AbstractBundle
         if ([] === $messageStores) {
             $builder->removeDefinition('ai.command.setup_message_store');
             $builder->removeDefinition('ai.command.drop_message_store');
+        }
+
+        foreach ($config['voice'] as $voiceProvider => $provider) {
+            $this->processVoiceProviderConfig($voiceProvider, $provider, $builder);
         }
 
         foreach ($config['vectorizer'] ?? [] as $vectorizerName => $vectorizer) {
@@ -754,8 +760,9 @@ final class AiBundle extends AbstractBundle
         $agentDefinition
             ->setArgument(2, []) // placeholder until ProcessorCompilerPass process.
             ->setArgument(3, []) // placeholder until ProcessorCompilerPass process.
-            ->setArgument(4, $name)
-            ->setArgument(5, new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
+            ->setArgument(4, []) // placeholder until VoiceProviderCompilerPass process.
+            ->setArgument(5, $name)
+            ->setArgument(6, new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
         ;
 
         $container->setDefinition($agentId, $agentDefinition);
@@ -1392,6 +1399,30 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $type.'_'.$name);
+            }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $providers
+     */
+    private function processVoiceProviderConfig(string $name, array $providers, ContainerBuilder $container): void
+    {
+        if ('eleven_labs' === $name) {
+            foreach ($providers as $type => $config) {
+                $definition = new Definition(ElevenLabsVoiceProvider::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference('ai.platform.eleven_labs'),
+                        $config['model'],
+                    ])
+                    ->addTag('proxy', ['interface' => VoiceProviderInterface::class])
+                    ->addTag('ai.voice.provider');
+
+                $container->setDefinition('ai.voice.eleven_labs.'.$name, $definition);
+                $container->registerAliasForArgument('ai.voice.'.$type.'.'.$name, VoiceProviderInterface::class, $name);
+                $container->registerAliasForArgument('ai.voice.'.$type.'.'.$name, VoiceProviderInterface::class, $type.'_'.$name);
             }
         }
     }

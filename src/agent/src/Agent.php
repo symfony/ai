@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Voice\VoiceProviderInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>

@@ -9,12 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Bridge\ElevenLabs;
+namespace Symfony\AI\Voice\Bridge\ElevenLabs;
 
 use Symfony\AI\Agent\Output;
-use Symfony\AI\Agent\Voice;
-use Symfony\AI\Agent\VoiceProviderInterface;
-use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabs;
+use Symfony\AI\Voice\VoiceProviderInterface;
 use Symfony\AI\Platform\Platform;
 
 /**
@@ -23,7 +21,8 @@ use Symfony\AI\Platform\Platform;
 final readonly class VoiceProvider implements VoiceProviderInterface
 {
     public function __construct(
-        private Platform $elevenLabsPlatform,
+        private Platform $platform,
+        private string $model,
     ) {
     }
 
@@ -31,13 +30,8 @@ final readonly class VoiceProvider implements VoiceProviderInterface
     {
         $result = $output->getResult();
 
-        $voice = $this->elevenLabsPlatform->invoke($this->getName(), $result->getContent());
+        $voice = $this->platform->invoke($this->model, $result->getContent());
 
         $output->setVoice(new Voice($voice->asBinary(), $this->getName()));
-    }
-
-    public function getName(): string
-    {
-        return ElevenLabs::ELEVEN_MULTILINGUAL_V2;
     }
 }
