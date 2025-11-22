@@ -13,35 +13,15 @@ namespace Symfony\AI\Platform\Bridge\AiMlApi\Completions;
 
 use Symfony\AI\Platform\Bridge\AiMlApi\Completions;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelClientInterface;
-use Symfony\AI\Platform\Result\RawHttpResult;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\AI\Platform\Default\Completions\ModelClient as BaseModelClient;
 
 /**
  * @author Tim Lochmüller <tim@fruit-lab.de
  */
-final class ModelClient implements ModelClientInterface
+final class ModelClient extends BaseModelClient
 {
-    public function __construct(
-        #[\SensitiveParameter] private readonly string $apiKey,
-        private readonly HttpClientInterface $httpClient,
-        private readonly string $hostUrl,
-    ) {
-    }
-
     public function supports(Model $model): bool
     {
         return $model instanceof Completions;
-    }
-
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
-    {
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/v1/chat/completions', $this->hostUrl), [
-            'json' => array_merge($options, $payload),
-            'headers' => [
-                'Authorization' => 'Bearer '.$this->apiKey,
-                'Content-Type' => 'application/json',
-            ],
-        ]));
     }
 }

@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Tests\Bridge\Albert;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Albert\EmbeddingsModelClient;
+use Symfony\AI\Platform\Bridge\Albert\Embeddings\ModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -24,7 +24,7 @@ final class EmbeddingsModelClientTest extends TestCase
 {
     public function testSupportsEmbeddingsModel()
     {
-        $client = new EmbeddingsModelClient(
+        $client = new ModelClient(
             new MockHttpClient(),
             'test-api-key',
             'https://albert.example.com/'
@@ -36,7 +36,7 @@ final class EmbeddingsModelClientTest extends TestCase
 
     public function testDoesNotSupportNonEmbeddingsModel()
     {
-        $client = new EmbeddingsModelClient(
+        $client = new ModelClient(
             new MockHttpClient(),
             'test-api-key',
             'https://albert.example.com/'
@@ -57,7 +57,7 @@ final class EmbeddingsModelClientTest extends TestCase
             return new MockResponse();
         };
         $httpClient = new MockHttpClient([$resultCallback]);
-        $modelClient = new EmbeddingsModelClient($httpClient, 'api-key', 'https://albert.example.com/v1');
+        $modelClient = new ModelClient($httpClient, 'api-key', 'https://albert.example.com/v1');
         $modelClient->request(new Embeddings('embedding-small'), 'test text', []);
     }
 
@@ -72,7 +72,7 @@ final class EmbeddingsModelClientTest extends TestCase
             return new MockResponse();
         };
         $httpClient = new MockHttpClient([$resultCallback]);
-        $modelClient = new EmbeddingsModelClient($httpClient, 'api-key', 'https://albert.example.com/v1');
+        $modelClient = new ModelClient($httpClient, 'api-key', 'https://albert.example.com/v1');
         $modelClient->request(new Embeddings('embedding-small'), 'test text', ['dimensions' => 256]);
     }
 
@@ -87,7 +87,7 @@ final class EmbeddingsModelClientTest extends TestCase
             return new MockResponse();
         };
         $httpClient = new MockHttpClient([$resultCallback]);
-        $modelClient = new EmbeddingsModelClient($httpClient, 'api-key', 'https://albert.example.com/v1');
+        $modelClient = new ModelClient($httpClient, 'api-key', 'https://albert.example.com/v1');
         $modelClient->request(new Embeddings('embedding-small'), ['text1', 'text2', 'text3'], []);
     }
 
@@ -100,7 +100,7 @@ final class EmbeddingsModelClientTest extends TestCase
             return new JsonMockResponse(['data' => []]);
         });
 
-        $client = new EmbeddingsModelClient(
+        $client = new ModelClient(
             $httpClient,
             'test-api-key',
             'https://albert.example.com/v1'
@@ -121,7 +121,7 @@ final class EmbeddingsModelClientTest extends TestCase
             return new JsonMockResponse(['data' => []]);
         });
 
-        $client = new EmbeddingsModelClient(
+        $client = new ModelClient(
             $httpClient,
             'test-api-key',
             'https://albert.example.com/v1'

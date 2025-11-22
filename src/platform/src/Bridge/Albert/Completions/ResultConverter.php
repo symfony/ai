@@ -9,14 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\AiMlApi\Completions;
+namespace Symfony\AI\Platform\Bridge\Albert\Completions;
 
-use Symfony\AI\Platform\Bridge\AiMlApi\Completions;
+use Symfony\AI\Platform\Bridge\Albert\Completions;
 use Symfony\AI\Platform\Default\Completions\ResultConverter as BaseResultConverter;
 use Symfony\AI\Platform\Model;
 
 /**
- * @author Tim Lochmüller <tim@fruit-lab.de
+ * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class ResultConverter extends BaseResultConverter
 {
