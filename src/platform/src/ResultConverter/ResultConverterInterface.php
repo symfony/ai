@@ -9,20 +9,24 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform;
+namespace Symfony\AI\Platform\ResultConverter;
 
+use Symfony\AI\Platform\Exception\ExceptionInterface;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-interface ModelClientInterface
+interface ResultConverterInterface
 {
     public function supports(Model $model): bool;
 
     /**
-     * @param array<string|int, mixed> $payload
-     * @param array<string, mixed>     $options
+     * @param array<string, mixed> $options
+     *
+     * @throws ExceptionInterface
      */
-    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface;
+    public function convert(RawResultInterface $result, array $options = []): ResultInterface;
 }

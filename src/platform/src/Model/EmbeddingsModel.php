@@ -9,13 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\LmStudio;
+namespace Symfony\AI\Platform\Model;
 
 use Symfony\AI\Platform\Model;
 
-/**
- * @author André Lubian <lubiana123@gmail.com>
- */
-class Embeddings extends Model
+class EmbeddingsModel extends Model
 {
 }

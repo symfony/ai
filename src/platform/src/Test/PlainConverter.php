@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Test;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\ResultConverter\ResultConverterInterface;
 
 final class PlainConverter implements ResultConverterInterface
 {

@@ -15,10 +15,6 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\MessageBagNormalizer;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\UserMessageNormalizer;
-use Symfony\AI\Platform\Bridge\OpenRouter\Completions\ModelClient as CompletionsModelClient;
-use Symfony\AI\Platform\Bridge\OpenRouter\Completions\ResultConverter as CompletionsResultConverter;
-use Symfony\AI\Platform\Bridge\OpenRouter\Embeddings\ModelClient as EmbeddingsModelClient;
-use Symfony\AI\Platform\Bridge\OpenRouter\Embeddings\ResultConverter as EmbeddingsResultConverter;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
@@ -40,8 +36,8 @@ final class PlatformFactory
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [new EmbeddingsModelClient($httpClient, $apiKey), new CompletionsModelClient($httpClient, $apiKey)],
-            [new EmbeddingsResultConverter(), new CompletionsResultConverter()],
+            [new Embeddings\ModelClient($httpClient, $apiKey), new Completions\ModelClient($httpClient, $apiKey)],
+            [new Embeddings\ResultConverter(), new Completions\ResultConverter()],
             $modelCatalog,
             $contract ?? Contract::create(
                 new AssistantMessageNormalizer(),

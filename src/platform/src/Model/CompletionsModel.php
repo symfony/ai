@@ -9,13 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\AiMlApi;
+namespace Symfony\AI\Platform\Model;
 
 use Symfony\AI\Platform\Model;
 
-/**
- * @author Tim Lochmüller <tim@fruit-lab.de
- */
-class Completions extends Model
+class CompletionsModel extends Model
 {
 }

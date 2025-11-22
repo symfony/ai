@@ -9,23 +9,26 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\LmStudio\Embeddings;
+namespace Symfony\AI\Platform\ModelClient;
 
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Model\EmbeddingsModel;
-use Symfony\AI\Platform\ModelClient\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
+ * This default implementation is based on OpenAI's initial embeddings endpoint, that got later adopted by other
+ * providers as well. It can be used by any bridge or directly with the default PlatformFactory.
+ *
  * @author Christopher Hertel <mail@christopher-hertel.de>
- * @author André Lubian <lubiana123@gmail.com>
  */
-final class ModelClient implements ModelClientInterface
+class EmbeddingsModelClient implements ModelClientInterface
 {
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
-        private readonly string $hostUrl,
+        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly string $baseUrl,
+        private readonly string $path = '/v1/embeddings',
+        private readonly ?HttpClientInterface $httpClient = null,
     ) {
     }
 
@@ -36,7 +39,9 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/v1/embeddings', $this->hostUrl), [
+        return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, [
+            'auth_bearer' => $this->apiKey,
+            'headers' => ['Content-Type' => 'application/json'],
             'json' => array_merge($options, [
                 'model' => $model->getName(),
                 'input' => $payload,

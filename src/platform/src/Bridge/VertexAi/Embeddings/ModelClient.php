@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\VertexAi\Embeddings;
 
 use Symfony\AI\Platform\Model as BaseModel;
-use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\ModelClient\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;

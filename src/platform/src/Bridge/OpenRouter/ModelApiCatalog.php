@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenRouter;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Model\EmbeddingsModel;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -107,14 +108,14 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
     }
 
     /**
-     * @return iterable<string, array{class: class-string<Embeddings>, capabilities: list<Capability::*>}>
+     * @return iterable<string, array{class: class-string<EmbeddingsModel>, capabilities: list<Capability::*>}>
      */
     protected function fetchRemoteEmbeddings(): iterable
     {
         $responseEmbeddings = $this->httpClient->request('GET', 'https://openrouter.ai/api/v1/embeddings/models');
         foreach ($responseEmbeddings->toArray()['data'] as $embedding) {
             yield $embedding['id'] => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ];
         }

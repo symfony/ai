@@ -12,8 +12,8 @@
 namespace Symfony\AI\Platform\Tests\Bridge\LmStudio\Embeddings;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\LmStudio\Embeddings;
 use Symfony\AI\Platform\Bridge\LmStudio\Embeddings\ModelClient;
+use Symfony\AI\Platform\Model\EmbeddingsModel;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -23,7 +23,7 @@ class ModelClientTest extends TestCase
     {
         $client = new ModelClient(new MockHttpClient(), 'http://localhost:1234');
 
-        $this->assertTrue($client->supports(new Embeddings('test-model')));
+        $this->assertTrue($client->supports(new EmbeddingsModel('test-model')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -39,7 +39,7 @@ class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new ModelClient($httpClient, 'http://localhost:1234');
 
-        $model = new Embeddings('test-model');
+        $model = new EmbeddingsModel('test-model');
 
         $client->request($model, 'Hello, world!');
     }
@@ -60,7 +60,7 @@ class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new ModelClient($httpClient, 'http://localhost:1234');
 
-        $model = new Embeddings('test-model');
+        $model = new EmbeddingsModel('test-model');
 
         $client->request($model, 'Hello, world!', ['custom_option' => 'value']);
     }
@@ -78,7 +78,7 @@ class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient([$resultCallback]);
         $client = new ModelClient($httpClient, 'http://localhost:1234');
 
-        $model = new Embeddings('test-model');
+        $model = new EmbeddingsModel('test-model');
 
         $client->request($model, ['Hello', 'world']);
     }

@@ -12,8 +12,8 @@
 namespace Symfony\AI\Platform\Tests\Bridge\LmStudio\Completions;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\LmStudio\Completions;
 use Symfony\AI\Platform\Bridge\LmStudio\Completions\ModelClient;
+use Symfony\AI\Platform\Model\CompletionsModel;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -24,7 +24,7 @@ class ModelClientTest extends TestCase
     {
         $client = new ModelClient(new MockHttpClient(), 'http://localhost:1234');
 
-        $this->assertTrue($client->supports(new Completions('test-model')));
+        $this->assertTrue($client->supports(new CompletionsModel('test-model')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
@@ -50,7 +50,7 @@ class ModelClientTest extends TestCase
             ],
         ];
 
-        $client->request(new Completions('test-model'), $payload);
+        $client->request(new CompletionsModel('test-model'), $payload);
     }
 
     public function testItMergesOptionsWithPayload()
@@ -76,7 +76,7 @@ class ModelClientTest extends TestCase
             ],
         ];
 
-        $client->request(new Completions('test-model'), $payload, ['temperature' => 0.7]);
+        $client->request(new CompletionsModel('test-model'), $payload, ['temperature' => 0.7]);
     }
 
     public function testItUsesEventSourceHttpClient()

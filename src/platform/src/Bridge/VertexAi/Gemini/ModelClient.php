@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\VertexAi\Gemini;
 
 use Symfony\AI\Platform\Model as BaseModel;
-use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\ModelClient\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\HttpClient\EventSourceHttpClient;

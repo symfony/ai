@@ -11,9 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\LmStudio\Completions;
 
-use Symfony\AI\Platform\Bridge\LmStudio\Completions;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\Model\CompletionsModel;
+use Symfony\AI\Platform\ModelClient\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -34,7 +34,7 @@ final class ModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Completions;
+        return $model instanceof CompletionsModel;
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult

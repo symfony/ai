@@ -9,24 +9,25 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\AiMlApi\Embeddings;
+namespace Symfony\AI\Platform\ResultConverter;
 
-use Symfony\AI\Platform\Bridge\AiMlApi\Embeddings;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Model\EmbeddingsModel;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
-use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
- * @author Tim Lochmüller <tim@fruit-lab.de
+ * This default result converter assumes the same response format as OpenAI's embeddings endpoint.
+ *
+ * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class ResultConverter implements ResultConverterInterface
+class EmbeddingsResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
-        return $model instanceof Embeddings;
+        return $model instanceof EmbeddingsModel;
     }
 
     public function convert(RawResultInterface $result, array $options = []): VectorResult

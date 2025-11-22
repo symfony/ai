@@ -11,12 +11,12 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
-use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Model\CompletionsModel;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class Claude extends Model
+class Claude extends CompletionsModel
 {
     public const HAIKU_3 = 'claude-3-haiku-20240307';
     public const HAIKU_35 = 'claude-3-5-haiku-latest';
