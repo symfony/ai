@@ -584,7 +584,7 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->setArguments([
                         $platform['host_url'],
-                        new Reference('http_client'),
+                        new Reference($platform['http_client']),
                     ]);
 
                 $container->setDefinition('ai.platform.model_catalog.ollama', $catalogDefinition);
