@@ -79,10 +79,10 @@ use Symfony\AI\Store\Bridge\Azure\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
-use Symfony\AI\Store\Bridge\Local\CacheStore;
+use Symfony\AI\Store\Bridge\Local\CacheStore as LocalCacheStore;
 use Symfony\AI\Store\Bridge\Local\DistanceCalculator;
 use Symfony\AI\Store\Bridge\Local\DistanceStrategy;
-use Symfony\AI\Store\Bridge\Local\InMemoryStore;
+use Symfony\AI\Store\Bridge\Local\InMemoryStore as LocalInMemoryStore;
 use Symfony\AI\Store\Bridge\Manticore\Store as ManticoreStore;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
@@ -978,7 +978,7 @@ final class AiBundle extends AbstractBundle
                     $arguments[1] = new Reference('ai.store.distance_calculator.'.$name);
                 }
 
-                $definition = new Definition(CacheStore::class);
+                $definition = new Definition(LocalCacheStore::class);
                 $definition
                     ->setLazy(true)
                     ->setArguments($arguments)
@@ -1016,9 +1016,9 @@ final class AiBundle extends AbstractBundle
                 } else {
                     $httpClient = new Definition(HttpClientInterface::class);
                     $httpClient
+                        ->setLazy(true)
                         ->setFactory([HttpClient::class, 'createForBaseUri'])
-                        ->setArguments([$store['dsn']])
-                    ;
+                        ->setArguments([$store['dsn']]);
                 }
 
                 $definition = new Definition(ClickHouseStore::class);
@@ -1030,8 +1030,7 @@ final class AiBundle extends AbstractBundle
                         $store['table'],
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('ai.store')
-                ;
+                    ->addTag('ai.store');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -1046,15 +1045,9 @@ final class AiBundle extends AbstractBundle
                     $store['account_id'],
                     $store['api_key'],
                     $store['index_name'],
+                    $store['dimensions'],
+                    $store['metric'],
                 ];
-
-                if (\array_key_exists('dimensions', $store)) {
-                    $arguments[4] = $store['dimensions'];
-                }
-
-                if (\array_key_exists('metric', $store)) {
-                    $arguments[5] = $store['metric'];
-                }
 
                 if (\array_key_exists('endpoint_url', $store)) {
                     $arguments[6] = $store['endpoint_url'];
@@ -1079,23 +1072,11 @@ final class AiBundle extends AbstractBundle
                     new Reference('http_client'),
                     $store['endpoint'],
                     $store['table'],
+                    $store['field'],
+                    $store['type'],
+                    $store['similarity'],
+                    $store['dimensions'],
                 ];
-
-                if (\array_key_exists('field', $store)) {
-                    $arguments[3] = $store['field'];
-                }
-
-                if (\array_key_exists('type', $store)) {
-                    $arguments[4] = $store['type'];
-                }
-
-                if (\array_key_exists('similarity', $store)) {
-                    $arguments[5] = $store['similarity'];
-                }
-
-                if (\array_key_exists('dimensions', $store)) {
-                    $arguments[6] = $store['dimensions'];
-                }
 
                 if (\array_key_exists('quantization', $store)) {
                     $arguments[7] = $store['quantization'];
@@ -1104,9 +1085,9 @@ final class AiBundle extends AbstractBundle
                 $definition = new Definition(ManticoreStore::class);
                 $definition
                     ->setLazy(true)
-                    ->addTag('ai.store')
+                    ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->setArguments($arguments);
+                    ->addTag('ai.store');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -1117,9 +1098,9 @@ final class AiBundle extends AbstractBundle
         if ('mariadb' === $type) {
             foreach ($stores as $name => $store) {
                 $definition = new Definition(MariaDbStore::class);
-                $definition->setFactory([MariaDbStore::class, 'fromDbal']);
                 $definition
                     ->setLazy(true)
+                    ->setFactory([MariaDbStore::class, 'fromDbal'])
                     ->setArguments([
                         new Reference(\sprintf('doctrine.dbal.%s_connection', $store['connection'])),
                         $store['table_name'],
@@ -1190,7 +1171,7 @@ final class AiBundle extends AbstractBundle
                     $arguments[0] = new Reference('ai.store.distance_calculator.'.$name);
                 }
 
-                $definition = new Definition(InMemoryStore::class);
+                $definition = new Definition(LocalInMemoryStore::class);
                 $definition
                     ->setLazy(true)
                     ->setArguments($arguments)
@@ -1640,7 +1621,7 @@ final class AiBundle extends AbstractBundle
 
         if ('memory' === $type) {
             foreach ($messageStores as $name => $messageStore) {
-                $definition = new Definition(InMemoryStore::class);
+                $definition = new Definition(LocalInMemoryStore::class);
                 $definition
                     ->setLazy(true)
                     ->setArgument(0, $messageStore['identifier'])
