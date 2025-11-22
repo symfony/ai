@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-10-02T11:49:45Z
+
+@symfony/mergers I would love to get help on this one with the PHPStan and Integration tests using `link` binary etc. This would unlock to start the migration of tools, stores and platform into their own packages. Thanks
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-22T19:49:37Z
+
+Thanks for driving this @OskarStark :pray:
