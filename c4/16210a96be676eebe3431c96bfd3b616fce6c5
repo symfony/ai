@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-14T16:30:22Z
+
+Hey, thanks for that, that's actually an interesting one - the feature of litellm is to be a generic bridge to whatever based on the original OpenAI contract - right?
+AFAIK it adds a lot of features like costs, telemetry, fallback on top - but it's basically as generic as it could get.
+
+So i think we should work on the design shift here more - in case you're up for that.
+
+For example the contract got centralized already - and as long as the bridge uses that original openai compliant contract, no additional normalizers need to be registered with the platform. i think the same should apply for some kind generic endpoint handling (model client + result converter)
+
+so i think it would be great that we could use generic services (like litellm, openrouter, replicate) that conform to that first openai contract from payload and endpoint handling point of view without even installing a bridge.
+
+WDYT?
+
+(if that's off-scope for your current context, we can go ahead with this, merge it for now and potentially remove it later in favor of a generalized/centralized solution)
