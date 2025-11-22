@@ -771,7 +771,17 @@ the :class:`Symfony\\AI\\AiBundle\\Attribute\\AsOutputProcessor` attributes::
 Register Tools
 ~~~~~~~~~~~~~~
 
-To use existing tools, you can register them as a service:
+The following tools can be installed as dedicated packages, no configuration is needed as these bridges come with flex recipes.
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-brave-tool
+    $ composer require symfony/ai-firecrawl-tool
+    $ composer require symfony/ai-mapbox-tool
+    $ composer require symfony/ai-openmeteo-tool
+    $ composer require symfony/ai-tavily-tool
+
+For tools not available as dedicated packages (those in the ``Toolbox\Tool`` namespace), register them manually as services:
 
 .. code-block:: yaml
 
@@ -781,19 +791,14 @@ To use existing tools, you can register them as a service:
             autoconfigure: true
 
         Symfony\AI\Agent\Toolbox\Tool\Clock: ~
-        Symfony\AI\Agent\Bridge\OpenMeteo\OpenMeteo: ~
         Symfony\AI\Agent\Toolbox\Tool\SerpApi:
             $apiKey: '%env(SERP_API_KEY)%'
         Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch: ~
         Symfony\AI\Agent\Toolbox\Tool\Wikipedia: ~
         Symfony\AI\Agent\Toolbox\Tool\YouTubeTranscriber: ~
-        Symfony\AI\Agent\Bridge\Firecrawl\Firecrawl:
-          $endpoint: '%env(FIRECRAWL_ENDPOINT)%'
-          $apiKey: '%env(FIRECRAWL_API_KEY)%'
-        Symfony\AI\Agent\Bridge\Brave\Brave:
-          $apiKey: '%env(BRAVE_API_KEY)%'
-        Symfony\AI\Agent\Bridge\Tavily\Tavily:
-          $apiKey: '%env(TAVILY_API_KEY)%'
+
+Creating Custom Tools
+---------------------
 
 Custom tools can be registered by using the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute::
 
