@@ -1,0 +1,91 @@
+---------------------------------------------------------------------------
+
+by lochmueller at 2025-11-20T13:39:03Z
+
+Or do we prefer to integrate an external model selection directly into the catalog (like here: https://github.com/symfony/ai/pull/910/files )? I try to avoid external API calls in the model catalog... :-/
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-20T15:38:32Z
+
+Can we move it to the platform in bin/ folder?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-20T22:30:09Z
+
+> Can we move it to the platform in bin/ folder?
+
+should be even part of the OpenRouter bridge i'd say
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-20T22:33:48Z
+
+we'd need another solution in the long run here - i would prefer some kind of catalog that is dynamic with a cache.
+
+updating with the code base doesn't really solve the issue here - even if we'd make it part of the pipeline to do it automatically on release or something. the change frequency requires decoupling lib updates and catalog updates.
+
+not scope of this PR maybe, but we'll face that issue over and over again - with multiple bridges.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-21T07:11:00Z
+
+> should be even part of the OpenRouter bridge I'd say
+
+yeah, thats what I meant
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-21T07:11:48Z
+
+We could have libs just for the models getting regular automated updates, but that's future :-)
+
+---------------------------------------------------------------------------
+
+by lochmueller at 2025-11-21T07:22:37Z
+
+OK.... thanks for your feedback @OskarStark & @chr-hertel . how could I adapt the PR for this future need?
+
+My thoughts on this: I will drop the example script, I will drop the static model list in the ModelCatalog, move the fetch logic for the models and embeddings to the ModelCatalog and add some kind of PSR-6 compatible cache logic to keep the requests to the API endpoint low. I will rework the PR today...
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-21T07:39:24Z
+
+you can have a look at the ollama api catalog. next step would be to add proper caching to those api catalogs
+
+---------------------------------------------------------------------------
+
+by lochmueller at 2025-11-21T08:07:50Z
+
+So... I created a ModelApiCatalog that fetch the models and embeddings via API (incl. capabilities). The default catalog is still the default ModelCatalog that contains only the Embeddings (because they are created with another Model class) but create the models "on the fly" without capabilities (because they are not used in the ModelClient/ResultConverter). I also switch from json_decode functions to Serializer->JsonDecoder.
+
+There is no cache currently, but I think we should create some general interface (or even abstract integration incl. cache logic) for "remote fetched model information", because several bridges need this (Ollama, AiMlApi, Albert etc.) and every Bridge integrated this in another way currently...
+
+---------------------------------------------------------------------------
+
+by lochmueller at 2025-11-21T08:08:35Z
+
+I will check the broken pipelines shortly...
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-22T09:49:34Z
+
+Pleas update PR title + body, thanks
+
+---------------------------------------------------------------------------
+
+by lochmueller at 2025-11-22T18:55:53Z
+
+> one thing open for me in the `ModelApiCatalog` before merging it:
+>
+> the constructor cannot to http calls - that's too much of a workload for a `new` => i know it's a bit annoying with that abstraction, but we need to shift that to a later point in time => getters maybe?
+
+Done. Move the loading of the model list to getModel/getModels incl. a flag to avoid double loading of the list.
+
+> Pleas update PR title + body, thanks
+
+Also done.
