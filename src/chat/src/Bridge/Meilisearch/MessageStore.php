@@ -16,6 +16,7 @@ use Symfony\AI\Chat\Exception\RuntimeException;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Chat\StreamableStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Clock\ClockInterface;
@@ -31,7 +32,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
+final class MessageStore implements ManagedStoreInterface, MessageStoreInterface, StreamableStoreInterface
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
