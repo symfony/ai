@@ -27,6 +27,7 @@
         "symfony/string": "^7.3|^8.0"
     },
     "require-dev": {
+        "codewithkyrian/chromadb-php": "^0.2.1 || ^0.3 || ^0.4",
         "google/auth": "^1.47",
         "mongodb/mongodb": "^1.21 || ^2.0",
         "phpstan/phpstan": "^2.1",
