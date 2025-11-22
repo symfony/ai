@@ -9,36 +9,39 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Albert;
+namespace Symfony\AI\Platform\Default\Embeddings;
 
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
-use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * @author Oskar Stark <oskarstark@googlemail.com>
+ * This default implementation is based on OpenAI's initial embeddings endpoint, that got later adopted by other
+ * providers as well. It can be used by any bridge or directly with the default PlatformFactory.
+ *
+ * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class EmbeddingsModelClient implements ModelClientInterface
+class ModelClient implements ModelClientInterface
 {
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
         #[\SensitiveParameter] private readonly string $apiKey,
         private readonly string $baseUrl,
+        private readonly string $path = '/v1/embeddings',
+        private readonly ? HttpClientInterface $httpClient = null,
     ) {
     }
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Embeddings;
+        return true;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
+    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/embeddings', $this->baseUrl), [
+        return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, [
             'auth_bearer' => $this->apiKey,
+            'headers' => ['Content-Type' => 'application/json'],
             'json' => array_merge($options, [
                 'model' => $model->getName(),
                 'input' => $payload,
