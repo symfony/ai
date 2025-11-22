@@ -33,21 +33,19 @@ $toolProcessor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, 'gpt-4o-mini', [$toolProcessor], [$toolProcessor]);
 
 $messages = new MessageBag(Message::ofUser('What date and time is it?'));
-$result = $agent->call($messages, ['response_format' => [
+$result = $agent->call($messages, ['text' => ['format' => [
     'type' => 'json_schema',
-    'json_schema' => [
-        'name' => 'clock',
-        'strict' => true,
-        'schema' => [
-            'type' => 'object',
-            'properties' => [
-                'date' => ['type' => 'string', 'description' => 'The current date in the format YYYY-MM-DD.'],
-                'time' => ['type' => 'string', 'description' => 'The current time in the format HH:MM:SS.'],
-            ],
-            'required' => ['date', 'time'],
-            'additionalProperties' => false,
+    'name' => 'clock',
+    'strict' => true,
+    'schema' => [
+        'type' => 'object',
+        'properties' => [
+            'date' => ['type' => 'string', 'description' => 'The current date in the format YYYY-MM-DD.'],
+            'time' => ['type' => 'string', 'description' => 'The current time in the format HH:MM:SS.'],
         ],
+        'required' => ['date', 'time'],
+        'additionalProperties' => false,
     ],
-]]);
+]]]);
 
 dump($result->getContent());

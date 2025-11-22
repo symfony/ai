@@ -31,13 +31,14 @@ class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
-            'choices' => [
+            'output' => [
                 [
-                    'message' => [
-                        'role' => 'assistant',
-                        'content' => 'Hello world',
-                    ],
-                    'finish_reason' => 'stop',
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'Hello world',
+                    ]],
                 ],
             ],
         ]);
@@ -53,23 +54,12 @@ class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
-            'choices' => [
+            'output' => [
                 [
-                    'message' => [
-                        'role' => 'assistant',
-                        'content' => null,
-                        'tool_calls' => [
-                            [
-                                'id' => 'call_123',
-                                'type' => 'function',
-                                'function' => [
-                                    'name' => 'test_function',
-                                    'arguments' => '{"arg1": "value1"}',
-                                ],
-                            ],
-                        ],
-                    ],
-                    'finish_reason' => 'tool_calls',
+                    'type' => 'function_call',
+                    'id' => 'call_123',
+                    'name' => 'test_function',
+                    'arguments' => '{"arg1": "value1"}',
                 ],
             ],
         ]);
@@ -89,20 +79,22 @@ class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
-            'choices' => [
+            'output' => [
                 [
-                    'message' => [
-                        'role' => 'assistant',
-                        'content' => 'Choice 1',
-                    ],
-                    'finish_reason' => 'stop',
+                    'role' => 'assistant',
+                    'type' => 'message',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'Choice 1',
+                    ]],
                 ],
                 [
-                    'message' => [
-                        'role' => 'assistant',
-                        'content' => 'Choice 2',
-                    ],
-                    'finish_reason' => 'stop',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'Choice 2',
+                    ]],
+                    'type' => 'message',
                 ],
             ],
         ]);
@@ -110,10 +102,10 @@ class ResultConverterTest extends TestCase
         $result = $converter->convert(new RawHttpResult($httpResponse));
 
         $this->assertInstanceOf(ChoiceResult::class, $result);
-        $choices = $result->getContent();
-        $this->assertCount(2, $choices);
-        $this->assertSame('Choice 1', $choices[0]->getContent());
-        $this->assertSame('Choice 2', $choices[1]->getContent());
+        $output = $result->getContent();
+        $this->assertCount(2, $output);
+        $this->assertSame('Choice 1', $output[0]->getContent());
+        $this->assertSame('Choice 2', $output[1]->getContent());
     }
 
     public function testContentFilterException()
@@ -171,29 +163,7 @@ class ResultConverterTest extends TestCase
         $httpResponse->method('toArray')->willReturn([]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Response does not contain choices');
-
-        $converter->convert(new RawHttpResult($httpResponse));
-    }
-
-    public function testThrowsExceptionForUnsupportedFinishReason()
-    {
-        $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
-        $httpResponse->method('toArray')->willReturn([
-            'choices' => [
-                [
-                    'message' => [
-                        'role' => 'assistant',
-                        'content' => 'Test content',
-                    ],
-                    'finish_reason' => 'unsupported_reason',
-                ],
-            ],
-        ]);
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Unsupported finish reason "unsupported_reason"');
+        $this->expectExceptionMessage('Response does not contain output');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
