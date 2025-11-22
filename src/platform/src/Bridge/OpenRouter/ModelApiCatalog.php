@@ -21,16 +21,38 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
 {
+    protected bool $modelsAreLoaded = false;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
     ) {
         parent::__construct();
+    }
 
-        $this->models = [
-            ...$this->models,
-            ...$this->fetchRemoteModels(),
-            ...$this->fetchRemoteEmbeddings(),
-        ];
+    public function getModel(string $modelName): Model
+    {
+        $this->preloadRemoteModels();
+
+        return parent::getModel($modelName);
+    }
+
+    public function getModels(): array
+    {
+        $this->preloadRemoteModels();
+
+        return parent::getModels();
+    }
+
+    protected function preloadRemoteModels(): void
+    {
+        if (!$this->modelsAreLoaded) {
+            $this->models = [
+                ...$this->models,
+                ...$this->fetchRemoteModels(),
+                ...$this->fetchRemoteEmbeddings(),
+            ];
+            $this->modelsAreLoaded = true;
+        }
     }
 
     /**
