@@ -1432,6 +1432,38 @@ final class AiBundle extends AbstractBundle
                     $arguments[8] = $store['default_max_score'];
                 }
 
+                if (\array_key_exists('default_min_score', $store)) {
+                    $arguments[9] = $store['default_min_score'];
+                }
+
+                if (\array_key_exists('normalize_scores', $store)) {
+                    $arguments[10] = $store['normalize_scores'];
+                }
+
+                if (\array_key_exists('fuzzy_primary_threshold', $store)) {
+                    $arguments[11] = $store['fuzzy_primary_threshold'];
+                }
+
+                if (\array_key_exists('fuzzy_secondary_threshold', $store)) {
+                    $arguments[12] = $store['fuzzy_secondary_threshold'];
+                }
+
+                if (\array_key_exists('fuzzy_strict_threshold', $store)) {
+                    $arguments[13] = $store['fuzzy_strict_threshold'];
+                }
+
+                if (\array_key_exists('fuzzy_weight', $store)) {
+                    $arguments[14] = $store['fuzzy_weight'];
+                }
+
+                if (\array_key_exists('searchable_attributes', $store)) {
+                    $arguments[15] = $store['searchable_attributes'];
+                }
+
+                if (\array_key_exists('bm25_language', $store)) {
+                    $arguments[16] = $store['bm25_language'];
+                }
+
                 $definition
                     ->addTag('ai.store')
                     ->setArguments($arguments);

@@ -44,7 +44,7 @@ final class HybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $store = new HybridStore($pdo, 'hybrid_table');
 
-        $pdo->expects($this->exactly(4))
+        $pdo->expects($this->exactly(9))
             ->method('exec')
             ->willReturnCallback(function (string $sql): int {
                 static $callCount = 0;
@@ -53,15 +53,26 @@ final class HybridStoreTest extends TestCase
                 if (1 === $callCount) {
                     $this->assertSame('CREATE EXTENSION IF NOT EXISTS vector', $sql);
                 } elseif (2 === $callCount) {
+                    $this->assertSame('CREATE EXTENSION IF NOT EXISTS pg_trgm', $sql);
+                } elseif (3 === $callCount) {
                     $this->assertStringContainsString('CREATE TABLE IF NOT EXISTS hybrid_table', $sql);
                     $this->assertStringContainsString('content TEXT NOT NULL', $sql);
                     $this->assertStringContainsString('embedding vector(1536) NOT NULL', $sql);
                     $this->assertStringContainsString('content_tsv tsvector GENERATED ALWAYS AS (to_tsvector(\'simple\', content)) STORED', $sql);
-                } elseif (3 === $callCount) {
+                } elseif (4 === $callCount) {
+                    $this->assertStringContainsString('ALTER TABLE hybrid_table ADD COLUMN IF NOT EXISTS search_text TEXT', $sql);
+                } elseif (5 === $callCount) {
+                    $this->assertStringContainsString('CREATE OR REPLACE FUNCTION update_search_text()', $sql);
+                } elseif (6 === $callCount) {
+                    $this->assertStringContainsString('CREATE TRIGGER trigger_update_search_text', $sql);
+                } elseif (7 === $callCount) {
                     $this->assertStringContainsString('CREATE INDEX IF NOT EXISTS hybrid_table_embedding_idx', $sql);
-                } else {
+                } elseif (8 === $callCount) {
                     $this->assertStringContainsString('CREATE INDEX IF NOT EXISTS hybrid_table_content_tsv_idx', $sql);
                     $this->assertStringContainsString('USING gin(content_tsv)', $sql);
+                } else {
+                    $this->assertStringContainsString('CREATE INDEX IF NOT EXISTS hybrid_table_search_text_trgm_idx', $sql);
+                    $this->assertStringContainsString('USING gin(search_text gin_trgm_ops)', $sql);
                 }
 
                 return 0;
@@ -112,7 +123,8 @@ final class HybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 1.0);
+        // Disable score normalization for this test to keep legacy behavior
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 1.0, normalizeScores: false);
 
         $expectedSql = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
             FROM hybrid_table
@@ -157,19 +169,24 @@ final class HybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.0);
-
-        $expectedSql = "SELECT id, embedding AS embedding, metadata,
-                   (1.0 / (1.0 + ts_rank_cd(content_tsv, websearch_to_tsquery('simple', :query)))) AS score
-            FROM hybrid_table
-            WHERE content_tsv @@ websearch_to_tsquery('simple', :query)
-            ORDER BY score ASC
-            LIMIT 5";
+        // Disable normalization for consistent test scores
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.0, normalizeScores: false);
 
         $pdo->expects($this->once())
             ->method('prepare')
-            ->with($this->callback(function ($sql) use ($expectedSql) {
-                return $this->normalizeQuery($sql) === $this->normalizeQuery($expectedSql);
+            ->with($this->callback(function ($sql) {
+                // Verify BM25 structure instead of FTS
+                $this->assertStringContainsString('WITH', $sql);
+                $this->assertStringContainsString('bm25_search AS', $sql);
+                $this->assertStringContainsString('bm25topk(', $sql);
+                $this->assertStringContainsString('bm25_with_metadata AS', $sql);
+                $this->assertStringContainsString('DISTINCT ON (b.bm25_rank)', $sql);
+
+                // Should NOT contain old FTS functions
+                $this->assertStringNotContainsString('ts_rank_cd', $sql);
+                $this->assertStringNotContainsString('websearch_to_tsquery', $sql);
+
+                return true;
             }))
             ->willReturn($statement);
 
@@ -204,18 +221,30 @@ final class HybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.5, rrfK: 60);
+        // Disable normalization for consistent test scores
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.5, rrfK: 60, normalizeScores: false);
 
         $pdo->expects($this->once())
             ->method('prepare')
             ->with($this->callback(function ($sql) {
-                // Check for RRF CTE structure
+                // Check for RRF CTE structure with BM25 and fuzzy
                 $this->assertStringContainsString('WITH vector_scores AS', $sql);
-                $this->assertStringContainsString('fts_scores AS', $sql);
+                $this->assertStringContainsString('bm25_search AS', $sql);
+                $this->assertStringContainsString('bm25_with_metadata AS', $sql);
+                $this->assertStringContainsString('fuzzy_scores AS', $sql);
+                $this->assertStringContainsString('combined_results AS', $sql);
                 $this->assertStringContainsString('ROW_NUMBER() OVER', $sql);
-                $this->assertStringContainsString('COALESCE(1.0 / (60 + v.rank_ix), 0.0)', $sql);
                 $this->assertStringContainsString('FULL OUTER JOIN', $sql);
                 $this->assertStringContainsString('ORDER BY score DESC', $sql);
+
+                // Should NOT contain old fts_scores CTE
+                $this->assertStringNotContainsString('fts_scores AS', $sql);
+
+                // Should contain BM25 function call
+                $this->assertStringContainsString('bm25topk(', $sql);
+
+                // Should contain fuzzy matching
+                $this->assertStringContainsString('word_similarity', $sql);
 
                 return true;
             }))
@@ -324,12 +353,18 @@ final class HybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.0, language: 'french');
+        // Test BM25 language parameter (short code 'fr' instead of 'french')
+        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 0.0, language: 'french', bm25Language: 'fr');
 
         $pdo->expects($this->once())
             ->method('prepare')
             ->with($this->callback(function ($sql) {
-                $this->assertStringContainsString("websearch_to_tsquery('french'", $sql);
+                // Should NOT contain old FTS function
+                $this->assertStringNotContainsString("websearch_to_tsquery('french'", $sql);
+
+                // Should contain BM25 with 'fr' language code
+                $this->assertStringContainsString('bm25topk(', $sql);
+                $this->assertStringContainsString("'fr'", $sql);
 
                 return true;
             }))
@@ -356,8 +391,14 @@ final class HybridStoreTest extends TestCase
         $pdo->expects($this->once())
             ->method('prepare')
             ->with($this->callback(function ($sql) {
-                $this->assertStringContainsString('COALESCE(1.0 / (100 + v.rank_ix), 0.0)', $sql);
-                $this->assertStringContainsString('COALESCE(1.0 / (100 + f.rank_ix), 0.0)', $sql);
+                // Check for RRF constant 100 in the formula
+                $this->assertStringContainsString('100 + v.rank_ix', $sql);
+                $this->assertStringContainsString('100 + b.bm25_rank', $sql);
+                $this->assertStringContainsString('100 + fz.rank_ix', $sql);
+
+                // Verify BM25 and fuzzy structure (not old FTS)
+                $this->assertStringContainsString('bm25_search AS', $sql);
+                $this->assertStringContainsString('fuzzy_scores AS', $sql);
 
                 return true;
             }))
