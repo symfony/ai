@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -42,9 +43,18 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        return new RawHttpResult($this->httpClient->request('POST', self::getBaseUrl($this->region).'/v1/chat/completions', [
+        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
+            $schema = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema'];
+            $options['text']['format'] = $schema;
+            $options['text']['format']['name'] = $schema['name'];
+            $options['text']['format']['type'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['type'];
+
+            unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
+        }
+
+        return new RawHttpResult($this->httpClient->request('POST', self::getBaseUrl($this->region).'/v1/responses', [
             'auth_bearer' => $this->apiKey,
-            'json' => array_merge($options, $payload),
+            'json' => array_merge($options, ['model' => $model->getName()], $payload),
         ]));
     }
 }
