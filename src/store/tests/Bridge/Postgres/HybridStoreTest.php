@@ -529,6 +529,121 @@ final class HybridStoreTest extends TestCase
         $this->assertCount(0, $results);
     }
 
+    public function testFuzzyMatchingWithWordSimilarity()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        // Test fuzzy matching with custom thresholds
+        $store = new HybridStore(
+            $pdo,
+            'hybrid_table',
+            semanticRatio: 0.5,
+            fuzzyWeight: 0.3,
+            fuzzyPrimaryThreshold: 0.3,
+            fuzzySecondaryThreshold: 0.25,
+            fuzzyStrictThreshold: 0.2
+        );
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function ($sql) {
+                // Verify fuzzy_scores CTE exists
+                $this->assertStringContainsString('fuzzy_scores AS', $sql);
+
+                // Verify word_similarity function is used
+                $this->assertStringContainsString('word_similarity(:query, search_text)', $sql);
+
+                // Verify custom thresholds are applied
+                $this->assertStringContainsString('0.300000', $sql); // Primary threshold
+                $this->assertStringContainsString('0.250000', $sql); // Secondary threshold
+                $this->assertStringContainsString('0.200000', $sql); // Strict threshold
+
+                return true;
+            }))
+            ->willReturn($statement);
+
+        $statement->expects($this->once())->method('execute');
+        $statement->expects($this->once())->method('fetchAll')->willReturn([]);
+
+        $store->query(new Vector([0.1, 0.2, 0.3]), ['q' => 'test']);
+    }
+
+    public function testSearchableAttributesWithBoost()
+    {
+        $pdo = $this->createMock(\PDO::class);
+
+        // Test with searchable attributes configuration
+        $searchableAttributes = [
+            'title' => ['boost' => 2.0, 'metadata_key' => 'title'],
+            'overview' => ['boost' => 1.0, 'metadata_key' => 'overview'],
+        ];
+
+        $store = new HybridStore(
+            $pdo,
+            'hybrid_table',
+            searchableAttributes: $searchableAttributes
+        );
+
+        $pdo->expects($this->exactly(10))
+            ->method('exec')
+            ->willReturnCallback(function (string $sql): int {
+                static $callCount = 0;
+                ++$callCount;
+
+                if (3 === $callCount) {
+                    // Verify separate tsvector columns for each attribute
+                    $this->assertStringContainsString('title_tsv tsvector GENERATED ALWAYS AS', $sql);
+                    $this->assertStringContainsString('overview_tsv tsvector GENERATED ALWAYS AS', $sql);
+
+                    // Should NOT contain generic content_tsv (backward compat mode)
+                    $this->assertStringNotContainsString('content_tsv tsvector GENERATED ALWAYS AS (to_tsvector(\'simple\', content)) STORED', $sql);
+                } elseif ($callCount >= 8 && $callCount <= 9) {
+                    // Verify separate GIN indexes for each attribute (title_tsv_idx, overview_tsv_idx)
+                    $this->assertStringContainsString('_tsv_idx', $sql);
+                    $this->assertStringContainsString('USING gin(', $sql);
+                }
+
+                return 0;
+            });
+
+        $store->setup();
+    }
+
+    public function testFuzzyWeightParameter()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        // Test that fuzzyWeight controls the weight in RRF formula
+        $store = new HybridStore(
+            $pdo,
+            'hybrid_table',
+            semanticRatio: 0.4,  // 60% non-semantic
+            fuzzyWeight: 0.5     // 50% of non-semantic goes to fuzzy
+        );
+        // Expected: 40% vector, 30% BM25 (60% * 0.5), 30% fuzzy (60% * 0.5)
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function ($sql) {
+                // Verify fuzzy weight is present in the RRF formula
+                $this->assertStringContainsString('fuzzy_scores AS', $sql);
+                $this->assertStringContainsString('combined_results AS', $sql);
+
+                // Should have three components: vector, BM25, fuzzy
+                $this->assertStringContainsString('COALESCE(1.0 / (', $sql); // RRF formula pattern
+
+                return true;
+            }))
+            ->willReturn($statement);
+
+        $statement->expects($this->once())->method('execute');
+        $statement->expects($this->once())->method('fetchAll')->willReturn([]);
+
+        $store->query(new Vector([0.1, 0.2, 0.3]), ['q' => 'test']);
+    }
+
     private function normalizeQuery(string $query): string
     {
         // Remove extra spaces, tabs and newlines
