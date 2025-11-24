@@ -17,7 +17,9 @@ use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\SchemaDiff;
 use Doctrine\DBAL\Schema\Table;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\Doctrine\DoctrineDbalMessageStore;
@@ -76,14 +78,22 @@ final class DoctrineDbalMessageStoreTest extends TestCase
         $schema = $this->createMock(Schema::class);
         $schema->expects($this->once())->method('hasTable')->willReturn(false);
         $schema->expects($this->once())->method('createTable')->with('foo')->willReturn($table);
-        $schema->expects($this->once())->method('toSql')->with($platform)->willReturn([]);
 
         $sqliteSchemaManager = $this->createMock(AbstractSchemaManager::class);
         $sqliteSchemaManager->expects($this->once())->method('introspectSchema')->willReturn($schema);
 
+        $comparator = $this->createMock(Comparator::class);
+        $sqliteSchemaManager->expects($this->once())->method('createComparator')->willReturn($comparator);
+
         $connection = $this->createMock(Connection::class);
         $connection->expects($this->once())->method('createSchemaManager')->willReturn($sqliteSchemaManager);
         $connection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn($platform);
+
+        $schemaDiff = $this->createMock(SchemaDiff::class);
+
+        $comparator->expects($this->once())->method('compareSchemas')->willReturn($schemaDiff);
+        $platform->expects($this->once())->method('getAlterSchemaSQL')->willReturn(['SQL STATEMENT']);
+        $connection->expects($this->once())->method('executeQuery')->with('SQL STATEMENT');
 
         $messageStore = new DoctrineDbalMessageStore('foo', $connection);
         $messageStore->setup();

@@ -54,6 +54,11 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         }
 
         $schemaManager = $this->dbalConnection->createSchemaManager();
+        $currentSchema = $schemaManager->introspectSchema();
+
+        if ($currentSchema->hasTable($this->tableName)) {
+            return;
+        }
 
         if (class_exists(ComparatorConfig::class)) {
             $comparator = $schemaManager->createComparator(new ComparatorConfig(false, false));
@@ -62,7 +67,6 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             $comparator = $schemaManager->createComparator();
         }
 
-        $currentSchema = $schemaManager->introspectSchema();
         $migrations = $this->dbalConnection->getDatabasePlatform()->getAlterSchemaSQL($comparator->compareSchemas($currentSchema, $this->defineTableSchema($currentSchema)));
 
         foreach ($migrations as $sql) {
@@ -125,10 +129,6 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
     private function defineTableSchema(Schema $currentSchema): Schema
     {
         $schema = clone $currentSchema;
-
-        if ($schema->hasTable($this->tableName)) {
-            $schema->dropTable($this->tableName);
-        }
 
         $table = $schema->createTable($this->tableName);
         $table->addOption('_symfony_ai_chat_table_name', $this->tableName);
