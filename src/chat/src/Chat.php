@@ -48,7 +48,7 @@ final class Chat implements ChatInterface
 
         if ($result instanceof StreamResult || $result instanceof ToolboxStreamResult) {
             if (!$this->store instanceof StreamableStoreInterface) {
-                throw new RuntimeException($this->store::class . ' does not support streaming.');
+                throw new RuntimeException($this->store::class.' does not support streaming.');
             }
 
             return new AccumulatingStreamResult($result, function (AssistantMessage $assistantMessage) use ($messages) {

@@ -17,4 +17,3 @@ namespace Symfony\AI\Chat;
 interface StreamableStoreInterface
 {
 }
-

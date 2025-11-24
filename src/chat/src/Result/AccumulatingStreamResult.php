@@ -41,7 +41,7 @@ final class AccumulatingStreamResult
                 $existingCallback($message);
                 $callback($message);
             }
-            : $callback;
+        : $callback;
     }
 
     public function getContent(): \Generator
@@ -61,9 +61,9 @@ final class AccumulatingStreamResult
                 yield $value;
             }
         } finally {
-            if ($this->onComplete !== null) {
+            if (null !== $this->onComplete) {
                 $assistantMessage = Message::ofAssistant(
-                    $accumulatedContent === '' ? null : $accumulatedContent,
+                    '' === $accumulatedContent ? null : $accumulatedContent,
                     $toolCalls ?: null
                 );
 
@@ -79,4 +79,3 @@ final class AccumulatingStreamResult
         return $this->innerResult->getMetadata();
     }
 }
-
