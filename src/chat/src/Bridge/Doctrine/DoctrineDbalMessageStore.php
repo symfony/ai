@@ -67,7 +67,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             $comparator = $schemaManager->createComparator();
         }
 
-        $migrations = $this->dbalConnection->getDatabasePlatform()->getAlterSchemaSQL($comparator->compareSchemas($schema, $this->defineTableSchema($schema)));
+        $migrations = $this->dbalConnection->getDatabasePlatform()->getAlterSchemaSQL($comparator->compareSchemas($schema, $this->addTableToSchema($schema)));
 
         foreach ($migrations as $sql) {
             $this->dbalConnection->executeQuery($sql);
@@ -126,7 +126,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         return new MessageBag(...array_merge(...$messages));
     }
 
-    private function defineTableSchema(Schema $currentSchema): Schema
+    private function addTableToSchema(Schema $currentSchema): Schema
     {
         $schema = clone $currentSchema;
 
