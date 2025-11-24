@@ -11,11 +11,6 @@
 
 namespace Symfony\AI\McpBundle\Profiler;
 
-use Mcp\Schema\Prompt;
-use Mcp\Schema\Resource;
-use Mcp\Schema\ResourceTemplate;
-use Mcp\Schema\Tool;
-use Symfony\AI\McpBundle\Profiler\Loader\ProfilingLoader;
 use Symfony\Bundle\FrameworkBundle\DataCollector\AbstractDataCollector;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,7 +24,7 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
 {
     public function __construct(
-        private readonly ProfilingLoader $profilingLoader,
+        private readonly TraceableRegistry $registry,
     ) {
     }
 
@@ -39,74 +34,45 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
 
     public function lateCollect(): void
     {
-        $registry = $this->profilingLoader->getRegistry();
-
-        if (null === $registry) {
-            $this->data = [
-                'tools' => [],
-                'prompts' => [],
-                'resources' => [],
-                'resourceTemplates' => [],
-            ];
-
-            return;
-        }
-
         $tools = [];
-        foreach ($registry->getTools()->references as $item) {
-            if (!$item instanceof Tool) {
-                continue;
-            }
-
+        foreach ($this->registry->getTools()->references as $tool) {
             $tools[] = [
-                'name' => $item->name,
-                'description' => $item->description,
-                'inputSchema' => $item->inputSchema,
+                'name' => $tool->name,
+                'description' => $tool->description,
+                'inputSchema' => $tool->inputSchema,
             ];
         }
 
         $prompts = [];
-        foreach ($registry->getPrompts()->references as $item) {
-            if (!$item instanceof Prompt) {
-                continue;
-            }
-
+        foreach ($this->registry->getPrompts()->references as $prompt) {
             $prompts[] = [
-                'name' => $item->name,
-                'description' => $item->description,
+                'name' => $prompt->name,
+                'description' => $prompt->description,
                 'arguments' => array_map(fn ($arg) => [
                     'name' => $arg->name,
                     'description' => $arg->description,
                     'required' => $arg->required,
-                ], $item->arguments ?? []),
+                ], $prompt->arguments ?? []),
             ];
         }
 
         $resources = [];
-        foreach ($registry->getResources()->references as $item) {
-            if (!$item instanceof Resource) {
-                continue;
-            }
-
+        foreach ($this->registry->getResources()->references as $resource) {
             $resources[] = [
-                'uri' => $item->uri,
-                'name' => $item->name,
-                'description' => $item->description,
-                'mimeType' => $item->mimeType,
+                'uri' => $resource->uri,
+                'name' => $resource->name,
+                'description' => $resource->description,
+                'mimeType' => $resource->mimeType,
             ];
         }
 
         $resourceTemplates = [];
-        foreach ($registry->getResourceTemplates()->references as $item) {
-            if (!$item instanceof ResourceTemplate) {
-                continue;
-            }
-
+        foreach ($this->registry->getResourceTemplates()->references as $template) {
             $resourceTemplates[] = [
-                'uriTemplate' => $item->uriTemplate,
-                'name' => $item->name,
-                'description' => $item->description,
-                'mimeType' => $item->mimeType,
+                'uriTemplate' => $template->uriTemplate,
+                'name' => $template->name,
+                'description' => $template->description,
+                'mimeType' => $template->mimeType,
             ];
         }
 
