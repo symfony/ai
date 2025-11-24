@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-24T08:36:29Z
+
+Can you please add a test to avoid regressions in the future?
+
+---------------------------------------------------------------------------
+
+by franzwilding at 2025-11-24T08:45:27Z
+
+@OskarStark I already implemented the test some time ago, but the problem here is, that the platform is able to be created. Anyway. I added another check to see if the number of arguments of the factory method is gte the number of arguments. It is not very robust or elegant, but it catches at least some of the signature-mismatching problems.
