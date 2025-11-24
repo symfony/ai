@@ -10,7 +10,6 @@ CHANGELOG
    - Streamed responses now also create `AssistantMessage` & are added to `Store` in `Chat::submit()`
    - Bugfixed loss of metadata in `Chat::submit()`
  * Introduce the component
- * Introduce the component
  * Add support for external message stores:
    - Doctrine
    - Meilisearch
