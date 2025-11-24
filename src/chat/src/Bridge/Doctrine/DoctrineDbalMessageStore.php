@@ -70,7 +70,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             $comparator = $schemaManager->createComparator();
         }
 
-        $migrations = $this->dbalConnection->getDatabasePlatform()->getAlterSchemaSQL($comparator->compareSchemas($schema, $this->defineTableSchema($schema)));
+        $migrations = $this->dbalConnection->getDatabasePlatform()->getAlterSchemaSQL($comparator->compareSchemas($schema, $this->addTableToSchema($schema)));
 
         foreach ($migrations as $sql) {
             $this->dbalConnection->executeQuery($sql);
@@ -124,7 +124,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         return new MessageBag(...array_merge(...$messages));
     }
 
-    private function addTableToSchema(Schema $schema): void
+    private function addTableToSchema(Schema $currentSchema): Schema
     {
         $schema = clone $currentSchema;
 
@@ -134,8 +134,6 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             ->setAutoincrement(true)
             ->setNotnull(true);
         $table->addColumn('messages', Types::TEXT)
-            ->setNotnull(true);
-        $table->addColumn('added_at', Types::INTEGER)
             ->setNotnull(true);
         if (class_exists(PrimaryKeyConstraint::class)) {
             $table->addPrimaryKeyConstraint(new PrimaryKeyConstraint(null, [
