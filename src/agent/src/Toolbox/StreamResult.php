@@ -38,6 +38,7 @@ final class StreamResult extends BaseResult
                     $this->getMetadata()->add($key, $metadataValue);
                 }
                 $content = $innerResult->getContent();
+                
                 // Strings are iterable in PHP but yield from would iterate character-by-character.
                 // We need to yield the complete string as a single value to preserve streaming behavior.
                 // null should also be yielded as-is.
