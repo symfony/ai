@@ -15,6 +15,7 @@ use MongoDB\Client;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Chat\StreamableStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -27,7 +28,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
+final class MessageStore implements ManagedStoreInterface, MessageStoreInterface, StreamableStoreInterface
 {
     public function __construct(
         private readonly Client $client,
