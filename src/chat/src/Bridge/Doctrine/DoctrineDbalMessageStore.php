@@ -53,10 +53,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             throw new InvalidArgumentException('No supported options.');
         }
 
-        $platform = $this->dbalConnection->getDatabasePlatform();
         $schemaManager = $this->dbalConnection->createSchemaManager();
-
-        $currentSchema = $schemaManager->introspectSchema();
 
         if (class_exists(ComparatorConfig::class)) {
             $comparator = $schemaManager->createComparator(new ComparatorConfig(false, false));
@@ -65,7 +62,8 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             $comparator = $schemaManager->createComparator();
         }
 
-        $migrations = $platform->getAlterSchemaSQL($comparator->compareSchemas($currentSchema, $this->defineTableSchema($currentSchema)));
+        $currentSchema = $schemaManager->introspectSchema();
+        $migrations = $this->dbalConnection->getDatabasePlatform()->getAlterSchemaSQL($comparator->compareSchemas($currentSchema, $this->defineTableSchema($currentSchema)));
 
         foreach ($migrations as $sql) {
             $this->dbalConnection->executeQuery($sql);
