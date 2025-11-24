@@ -29,7 +29,7 @@ jobs:
             - name: Configure environment
               run: |
                   echo COLUMNS=120 >> $GITHUB_ENV
-                  echo COMPOSER_UP='composer update --no-progress --no-interaction --ansi --ignore-platform-req=ext-mongodb' >> $GITHUB_ENV
+                  echo COMPOSER_UP='composer update --prefer-lowest --no-progress --no-interaction --ansi --ignore-platform-req=ext-mongodb' >> $GITHUB_ENV
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
