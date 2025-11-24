@@ -33,8 +33,11 @@ final class StreamResult extends BaseResult
             if ($value instanceof ToolCallResult) {
                 $innerResult = ($this->handleToolCallsCallback)($value, Message::ofAssistant($streamedResult));
 
-                $this->getMetadata()->set($innerResult->getMetadata()->all());
-
+                // Propagate metadata from inner result to this result
+                foreach ($innerResult->getMetadata()->all() as $key => $metadataValue) {
+                    $this->getMetadata()->add($key, $metadataValue);
+                }
+                
                 $content = $innerResult->getContent();
                 // Strings are iterable in PHP but yield from would iterate character-by-character.
                 // We need to yield the complete string as a single value to preserve streaming behavior.
