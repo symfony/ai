@@ -18,3 +18,4 @@ CHANGELOG
    - Add `AccumulatingStreamResult` wrapper class which adds accumulation logic & callback chaining to `StreamResult` implementations (can wrap both `Agent` and `Platform` variants) to return the full message once `Generator` is exhausted
    - Streamed responses now also create `AssistantMessage` & are added to `Store` in `Chat::submit()`
    - Bugfixed loss of metadata in `Chat::submit()`
+
