@@ -11,8 +11,11 @@
 
 namespace Symfony\AI\Chat\Bridge\Doctrine;
 
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Connection as DBALConnection;
 use Doctrine\DBAL\Platforms\OraclePlatform;
+use Doctrine\DBAL\Result;
+use Doctrine\DBAL\Schema\ComparatorConfig;
 use Doctrine\DBAL\Schema\Name\Identifier;
 use Doctrine\DBAL\Schema\Name\UnqualifiedName;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
@@ -53,13 +56,23 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             throw new InvalidArgumentException('No supported options.');
         }
 
-        $schema = $this->dbalConnection->createSchemaManager()->introspectSchema();
+        $platform = $this->dbalConnection->getDatabasePlatform();
+        $schemaManager = $this->dbalConnection->createSchemaManager();
 
-        if ($schema->hasTable($this->tableName)) {
-            return;
+        $currentSchema = $schemaManager->introspectSchema();
+
+        if (class_exists(ComparatorConfig::class)) {
+            $comparator = $schemaManager->createComparator(new ComparatorConfig(false, false));
+        } else {
+            // Backwards compatibility for doctrine/dbal 3.x
+            $comparator = $schemaManager->createComparator();
         }
 
-        $this->addTableToSchema($schema);
+        $migrations = $platform->getAlterSchemaSQL($comparator->compareSchemas($currentSchema, $this->defineTableSchema($currentSchema)));
+
+        foreach ($migrations as $sql) {
+            $this->dbalConnection->executeQuery($sql);
+        }
     }
 
     public function drop(): void
@@ -111,6 +124,12 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
 
     private function addTableToSchema(Schema $schema): void
     {
+        $schema = clone $currentSchema;
+
+        if ($schema->hasTable($this->tableName)) {
+            $schema->dropTable($this->tableName);
+        }
+
         $table = $schema->createTable($this->tableName);
         $table->addOption('_symfony_ai_chat_table_name', $this->tableName);
         $idColumn = $table->addColumn('id', Types::BIGINT)
@@ -139,8 +158,6 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             }
         }
 
-        foreach ($schema->toSql($this->dbalConnection->getDatabasePlatform()) as $sql) {
-            $this->dbalConnection->executeQuery($sql);
-        }
+        return $schema;
     }
 }
