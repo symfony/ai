@@ -54,9 +54,9 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         }
 
         $schemaManager = $this->dbalConnection->createSchemaManager();
-        $currentSchema = $schemaManager->introspectSchema();
+        $schema = $schemaManager->introspectSchema();
 
-        if ($currentSchema->hasTable($this->tableName)) {
+        if ($schema->hasTable($this->tableName)) {
             return;
         }
 
@@ -67,7 +67,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             $comparator = $schemaManager->createComparator();
         }
 
-        $migrations = $this->dbalConnection->getDatabasePlatform()->getAlterSchemaSQL($comparator->compareSchemas($currentSchema, $this->defineTableSchema($currentSchema)));
+        $migrations = $this->dbalConnection->getDatabasePlatform()->getAlterSchemaSQL($comparator->compareSchemas($schema, $this->defineTableSchema($schema)));
 
         foreach ($migrations as $sql) {
             $this->dbalConnection->executeQuery($sql);
