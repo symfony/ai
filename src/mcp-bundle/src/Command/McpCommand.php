@@ -31,9 +31,7 @@ class McpCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $transport = $this->logger
-            ? new StdioTransport(logger: $this->logger)
-            : new StdioTransport();
+        $transport = new StdioTransport(logger: $this->logger);
         $this->server->run($transport);
 
         return Command::SUCCESS;

@@ -35,18 +35,12 @@ final class McpController
 
     public function handle(Request $request): Response
     {
-        $transport = $this->logger
-            ? new StreamableHttpTransport(
-                $this->httpMessageFactory->createRequest($request),
-                $this->responseFactory,
-                $this->streamFactory,
-                logger: $this->logger,
-            )
-            : new StreamableHttpTransport(
-                $this->httpMessageFactory->createRequest($request),
-                $this->responseFactory,
-                $this->streamFactory,
-            );
+        $transport = new StreamableHttpTransport(
+            $this->httpMessageFactory->createRequest($request),
+            $this->responseFactory,
+            $this->streamFactory,
+            logger: $this->logger,
+        );
 
         return $this->httpFoundationFactory->createResponse(
             $this->server->run($transport),
