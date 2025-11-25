@@ -1,0 +1,31 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-23T23:26:13Z
+
+Still cannot make the example `litellm/chat.php` work without API key for litellm - but that's mostly me struggling with litellm
+
+<img width="545" height="132" alt="image" src="https://github.com/user-attachments/assets/f1a70819-496b-4984-a8bb-d31f86345760" />
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-11-24T10:25:13Z
+
+I'm fixing usage of LiteLLM with ot without apikey (defined by master_key config entry). I'll push it as soon as my network connection allow it from my high-speed train!
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2025-11-24T14:15:32Z
+
+@chr-hertel I pushed a commit here, it should work (it's ok on my setup)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-24T22:03:17Z
+
+rebase needed to fix lowest job
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-25T06:20:50Z
+
+I rebased and squashed the commits into one to be able to use `gh` tool, I hope you don't mind @welcoMattic 😄
