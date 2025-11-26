@@ -11,8 +11,11 @@
 
 namespace Symfony\AI\Store\Bridge\Postgres;
 
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\TextSearchStrategyInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
@@ -21,16 +24,12 @@ use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Hybrid Search Store for PostgreSQL/Supabase
- * Combines pgvector (semantic) + BM25 (keyword) using RRF.
+ * Hybrid Search Store for PostgreSQL combining vector similarity and full-text search.
  *
- * Uses Reciprocal Rank Fusion (RRF) to combine vector similarity and BM25 search,
- * following the same approach as Supabase hybrid search implementation.
- *
- * Requirements:
- * - PostgreSQL with pgvector extension
- * - plpgsql_bm25 extension for BM25 search
- * - A 'content' text field for BM25 search
+ * Uses Reciprocal Rank Fusion (RRF) to combine multiple search signals:
+ * - Vector similarity (pgvector)
+ * - Full-text search (configurable: native PostgreSQL or BM25)
+ * - Fuzzy matching (pg_trgm) for typo tolerance
  *
  * @see https://supabase.com/docs/guides/ai/hybrid-search
  *
@@ -38,110 +37,76 @@ use Symfony\Component\Uid\Uuid;
  */
 final class HybridStore implements ManagedStoreInterface, StoreInterface
 {
+    private readonly ReciprocalRankFusion $rrf;
+    private readonly TextSearchStrategyInterface $textSearchStrategy;
+
     /**
-     * @param string     $vectorFieldName        Name of the vector field
-     * @param string     $contentFieldName       Name of the text field for FTS
-     * @param float      $semanticRatio          Ratio between semantic (vector) and keyword (FTS) search (0.0 to 1.0)
-     *                                           - 0.0 = 100% keyword search (FTS)
-     *                                           - 0.5 = balanced hybrid search
-     *                                           - 1.0 = 100% semantic search (vector only) - default
-     * @param Distance   $distance               Distance metric for vector similarity
-     * @param string     $language               PostgreSQL text search configuration (default: 'simple')
-     *                                           - 'simple': Works for ALL languages, no stemming (recommended for multilingual content)
-     *                                           - 'english', 'french', 'spanish', etc.: Language-specific stemming/stopwords
-     * @param int        $rrfK                   RRF (Reciprocal Rank Fusion) constant for hybrid search (default: 60)
-     *                                           Higher values = more equal weighting between results
-     * @param float|null $defaultMaxScore        Default maximum distance threshold for vector search (default: null = no filter)
-     *                                           Only applies to pure vector search (semanticRatio = 1.0)
-     *                                           Prevents returning irrelevant results with high distance scores
-     *                                           Example: 0.8 means only return documents with distance < 0.8
-     * @param float|null $defaultMinScore        Default minimum RRF score threshold (default: null = no filter)
-     *                                           Filters out results with RRF score below this threshold
-     *                                           Useful to prevent irrelevant results when FTS returns no matches
-     *                                           Example: 0.01 means only return documents with RRF score >= 0.01
-     * @param bool       $normalizeScores        Normalize scores to 0-100 range for better readability (default: true)
-     *                                           When true, scores are multiplied by 100
-     *                                           Example: 0.0164 becomes 1.64 (more intuitive)
-     * @param float      $fuzzyPrimaryThreshold  Primary threshold for fuzzy matching (default: 0.25)
-     *                                           Higher threshold = fewer false positives, stricter matching
-     *                                           Recommended: 0.25 for good balance
-     * @param float      $fuzzySecondaryThreshold Secondary threshold for fuzzy matching (default: 0.2)
-     *                                           Used with fuzzyStrictThreshold for double validation
-     *                                           Catches more typos but requires strict check
-     * @param float      $fuzzyStrictThreshold   Strict similarity threshold for double validation (default: 0.15)
-     *                                           Used with fuzzySecondaryThreshold to eliminate false positives
-     *                                           Ensures word_similarity > 0.2 has minimum similarity > 0.15
-     * @param float      $fuzzyWeight            Weight of fuzzy matching in hybrid search (default: 0.5)
-     *                                           - 0.0 = fuzzy disabled
-     *                                           - 0.5 = equal weight with FTS (recommended)
-     *                                           - 1.0 = fuzzy only (not recommended)
-     * @param array      $searchableAttributes   Searchable attributes with field-specific boosting (similar to Meilisearch)
-     *                                           Format: ['field_name' => ['boost' => 2.0, 'metadata_key' => 'title'], ...]
-     *                                           Each attribute creates a separate tsvector column extracted from metadata
-     *                                           Example: ['title' => ['boost' => 2.0, 'metadata_key' => 'title'],
-     *                                                     'overview' => ['boost' => 0.5, 'metadata_key' => 'overview']]
-     * @param string     $bm25Language           BM25 language code (default: 'en')
-     *                                           BM25 uses short codes: 'en', 'fr', 'es', 'de', etc.
-     *                                           Separate from $language which is for PostgreSQL FTS
+     * @param string                           $vectorFieldName         Name of the vector field
+     * @param string                           $contentFieldName        Name of the text field for FTS
+     * @param float                            $semanticRatio           Ratio between semantic and keyword search (0.0 to 1.0)
+     * @param Distance                         $distance                Distance metric for vector similarity
+     * @param string                           $language                PostgreSQL text search configuration
+     * @param TextSearchStrategyInterface|null $textSearchStrategy      Text search strategy (defaults to native PostgreSQL)
+     * @param ReciprocalRankFusion|null        $rrf                     RRF calculator (defaults to k=60, normalized)
+     * @param float|null                       $defaultMaxScore         Default max distance for vector search
+     * @param float|null                       $defaultMinScore         Default min RRF score threshold
+     * @param float                            $fuzzyPrimaryThreshold   Primary threshold for fuzzy matching
+     * @param float                            $fuzzySecondaryThreshold Secondary threshold for fuzzy matching
+     * @param float                                                         $fuzzyStrictThreshold    Strict threshold for double validation
+     * @param float                                                         $fuzzyWeight             Weight of fuzzy matching (0.0 to 1.0)
+     * @param array<string, array{metadata_key: string, boost?: float}>    $searchableAttributes    Searchable attributes with boosting config
      */
     public function __construct(
-        private \PDO $connection,
-        private string $tableName,
-        private string $vectorFieldName = 'embedding',
-        private string $contentFieldName = 'content',
-        private float $semanticRatio = 1.0,
-        private Distance $distance = Distance::L2,
-        private string $language = 'simple',
-        private int $rrfK = 60,
-        private ?float $defaultMaxScore = null,
-        private ?float $defaultMinScore = null,
-        private bool $normalizeScores = true,
-        private float $fuzzyPrimaryThreshold = 0.25,
-        private float $fuzzySecondaryThreshold = 0.2,
-        private float $fuzzyStrictThreshold = 0.15,
-        private float $fuzzyWeight = 0.5,
-        private array $searchableAttributes = [],
-        private string $bm25Language = 'en',
+        private readonly \PDO $connection,
+        private readonly string $tableName,
+        private readonly string $vectorFieldName = 'embedding',
+        private readonly string $contentFieldName = 'content',
+        private readonly float $semanticRatio = 1.0,
+        private readonly Distance $distance = Distance::L2,
+        private readonly string $language = 'simple',
+        ?TextSearchStrategyInterface $textSearchStrategy = null,
+        ?ReciprocalRankFusion $rrf = null,
+        private readonly ?float $defaultMaxScore = null,
+        private readonly ?float $defaultMinScore = null,
+        private readonly float $fuzzyPrimaryThreshold = 0.25,
+        private readonly float $fuzzySecondaryThreshold = 0.2,
+        private readonly float $fuzzyStrictThreshold = 0.15,
+        private readonly float $fuzzyWeight = 0.5,
+        private readonly array $searchableAttributes = [],
     ) {
         if ($semanticRatio < 0.0 || $semanticRatio > 1.0) {
-            throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $semanticRatio));
+            throw new InvalidArgumentException(\sprintf(
+                'The semantic ratio must be between 0.0 and 1.0, "%s" given.',
+                $semanticRatio
+            ));
         }
+
         if ($fuzzyWeight < 0.0 || $fuzzyWeight > 1.0) {
-            throw new InvalidArgumentException(\sprintf('The fuzzy weight must be between 0.0 and 1.0, "%s" given.', $fuzzyWeight));
+            throw new InvalidArgumentException(\sprintf(
+                'The fuzzy weight must be between 0.0 and 1.0, "%s" given.',
+                $fuzzyWeight
+            ));
         }
+
+        $this->textSearchStrategy = $textSearchStrategy ?? new PostgresTextSearchStrategy();
+        $this->rrf = $rrf ?? new ReciprocalRankFusion();
     }
 
+    /**
+     * @param array{vector_type?: string, vector_size?: positive-int, index_method?: string, index_opclass?: string} $options
+     */
     public function setup(array $options = []): void
     {
         // Enable pgvector extension
         $this->connection->exec('CREATE EXTENSION IF NOT EXISTS vector');
 
-        // Enable pg_trgm extension for fuzzy matching (typo tolerance)
+        // Enable pg_trgm extension for fuzzy matching
         $this->connection->exec('CREATE EXTENSION IF NOT EXISTS pg_trgm');
 
-        // Build tsvector columns based on searchable_attributes configuration
-        $tsvectorColumns = '';
-        if (!empty($this->searchableAttributes)) {
-            // Create separate tsvector column for each searchable attribute
-            foreach ($this->searchableAttributes as $fieldName => $config) {
-                $metadataKey = $config['metadata_key'];
-                $tsvectorColumns .= \sprintf(
-                    ",\n                    %s_tsv tsvector GENERATED ALWAYS AS (to_tsvector('%s', COALESCE(metadata->>'%s', ''))) STORED",
-                    $fieldName,
-                    $this->language,
-                    $metadataKey
-                );
-            }
-        } else {
-            // Backward compatibility: use single content_tsv if no searchable_attributes configured
-            $tsvectorColumns = \sprintf(
-                ",\n                    content_tsv tsvector GENERATED ALWAYS AS (to_tsvector('%s', %s)) STORED",
-                $this->language,
-                $this->contentFieldName
-            );
-        }
+        // Build tsvector columns
+        $tsvectorColumns = $this->buildTsvectorColumns();
 
-        // Create table with vector field, content field for FTS, and tsvector field(s)
+        // Create main table
         $this->connection->exec(
             \sprintf(
                 'CREATE TABLE IF NOT EXISTS %s (
@@ -159,8 +124,7 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             ),
         );
 
-        // Add search_text field for optimized fuzzy matching
-        // This field contains only title + relevant metadata for better fuzzy precision
+        // Add search_text field for fuzzy matching
         $this->connection->exec(
             \sprintf(
                 'ALTER TABLE %s ADD COLUMN IF NOT EXISTS search_text TEXT',
@@ -168,29 +132,8 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             ),
         );
 
-        // Create function to auto-update search_text from metadata
-        $this->connection->exec(
-            "CREATE OR REPLACE FUNCTION update_search_text()
-            RETURNS TRIGGER AS $$
-            BEGIN
-                NEW.search_text := COALESCE(NEW.metadata->>'title', '');
-                RETURN NEW;
-            END;
-            $$ LANGUAGE plpgsql;"
-        );
-
-        // Create trigger to auto-update search_text on insert/update
-        $this->connection->exec(
-            \sprintf(
-                "DROP TRIGGER IF EXISTS trigger_update_search_text ON %s;
-                CREATE TRIGGER trigger_update_search_text
-                BEFORE INSERT OR UPDATE ON %s
-                FOR EACH ROW
-                EXECUTE FUNCTION update_search_text();",
-                $this->tableName,
-                $this->tableName,
-            ),
-        );
+        // Create trigger for search_text auto-update
+        $this->createSearchTextTrigger();
 
         // Create vector index
         $this->connection->exec(
@@ -205,32 +148,17 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             ),
         );
 
-        // Create GIN index for full-text search
-        if (!empty($this->searchableAttributes)) {
-            // Create GIN index for each searchable attribute tsvector
-            foreach ($this->searchableAttributes as $fieldName => $config) {
-                $this->connection->exec(
-                    \sprintf(
-                        'CREATE INDEX IF NOT EXISTS %s_%s_tsv_idx ON %s USING gin(%s_tsv)',
-                        $this->tableName,
-                        $fieldName,
-                        $this->tableName,
-                        $fieldName,
-                    ),
-                );
+        // Execute text search strategy setup (only if not using searchableAttributes)
+        if ([] === $this->searchableAttributes) {
+            foreach ($this->textSearchStrategy->getSetupSql($this->tableName, $this->contentFieldName, $this->language) as $sql) {
+                $this->connection->exec($sql);
             }
         } else {
-            // Backward compatibility: create single content_tsv index
-            $this->connection->exec(
-                \sprintf(
-                    'CREATE INDEX IF NOT EXISTS %s_content_tsv_idx ON %s USING gin(content_tsv)',
-                    $this->tableName,
-                    $this->tableName,
-                ),
-            );
+            // Create GIN indexes for tsvector columns when using searchableAttributes
+            $this->createTsvectorIndexes();
         }
 
-        // Create trigram index on search_text for optimized fuzzy matching
+        // Create trigram index for fuzzy matching
         $this->connection->exec(
             \sprintf(
                 'CREATE INDEX IF NOT EXISTS %s_search_text_trgm_idx ON %s USING gin(search_text gin_trgm_ops)',
@@ -262,19 +190,21 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         );
 
         foreach ($documents as $document) {
-            $operation = [
+            $statement->execute([
                 'id' => $document->id->toRfc4122(),
                 'metadata' => json_encode($document->metadata->getArrayCopy(), \JSON_THROW_ON_ERROR),
                 'content' => $document->metadata->getText() ?? '',
                 'vector' => $this->toPgvector($document->vector),
-            ];
-
-            $statement->execute($operation);
+            ]);
         }
     }
 
     /**
      * Hybrid search combining vector similarity and full-text search.
+     *
+     * Note: When results come from FTS-only or fuzzy-only matches (no vector similarity),
+     * the VectorDocument will contain a NullVector. Check with `$doc->vector instanceof NullVector`
+     * before calling getData() or getDimensions() on the vector.
      *
      * @param array{
      *   q?: string,
@@ -287,36 +217,173 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
      *   includeScoreBreakdown?: bool,
      *   boostFields?: array<string, array{min?: float, max?: float, boost: float}>
      * } $options
+     *
+     * @return VectorDocument[]
      */
     public function query(Vector $vector, array $options = []): array
     {
-        $semanticRatio = $options['semanticRatio'] ?? $this->semanticRatio;
-
-        if ($semanticRatio < 0.0 || $semanticRatio > 1.0) {
-            throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $semanticRatio));
-        }
-
+        $semanticRatio = $this->validateSemanticRatio($options['semanticRatio'] ?? $this->semanticRatio);
         $queryText = $options['q'] ?? '';
         $limit = $options['limit'] ?? 5;
 
-        // Build WHERE clause
+        // Build WHERE clause and params
+        [$whereClause, $params] = $this->buildWhereClause($vector, $options, $semanticRatio);
+
+        // Choose query strategy
+        $sql = $this->buildQuery($semanticRatio, $queryText, $whereClause, $limit);
+
+        if ('' !== $queryText && $semanticRatio < 1.0) {
+            $params['query'] = $queryText;
+        }
+
+        // Execute query
+        $statement = $this->connection->prepare($sql);
+        $statement->execute([...$params, ...($options['params'] ?? [])]);
+
+        // Process results
+        $documents = $this->processResults(
+            $statement->fetchAll(\PDO::FETCH_ASSOC),
+            $options['includeScoreBreakdown'] ?? false,
+        );
+
+        // Apply boosting
+        if (isset($options['boostFields']) && [] !== $options['boostFields']) {
+            $documents = $this->applyBoostFields($documents, $options['boostFields']);
+        }
+
+        // Apply minimum score filter
+        $minScore = $options['minScore'] ?? $this->defaultMinScore;
+        if (null !== $minScore) {
+            $documents = array_values(array_filter(
+                $documents,
+                fn (VectorDocument $doc) => $doc->score >= $minScore
+            ));
+        }
+
+        return $documents;
+    }
+
+    /**
+     * Get the text search strategy being used.
+     */
+    public function getTextSearchStrategy(): TextSearchStrategyInterface
+    {
+        return $this->textSearchStrategy;
+    }
+
+    /**
+     * Get the RRF calculator being used.
+     */
+    public function getRrf(): ReciprocalRankFusion
+    {
+        return $this->rrf;
+    }
+
+    private function buildTsvectorColumns(): string
+    {
+        if ([] !== $this->searchableAttributes) {
+            $columns = '';
+            foreach ($this->searchableAttributes as $fieldName => $config) {
+                $metadataKey = $config['metadata_key'];
+                $columns .= \sprintf(
+                    ",\n                    %s_tsv tsvector GENERATED ALWAYS AS (to_tsvector('%s', COALESCE(metadata->>'%s', ''))) STORED",
+                    $fieldName,
+                    $this->language,
+                    $metadataKey
+                );
+            }
+
+            return $columns;
+        }
+
+        // When not using searchableAttributes, let the TextSearchStrategy handle tsvector columns
+        return '';
+    }
+
+    private function createSearchTextTrigger(): void
+    {
+        $this->connection->exec(
+            "CREATE OR REPLACE FUNCTION update_search_text()
+            RETURNS TRIGGER AS \$\$
+            BEGIN
+                NEW.search_text := COALESCE(NEW.metadata->>'title', '');
+                RETURN NEW;
+            END;
+            \$\$ LANGUAGE plpgsql;"
+        );
+
+        $this->connection->exec(
+            \sprintf(
+                "DROP TRIGGER IF EXISTS trigger_update_search_text ON %s;
+                CREATE TRIGGER trigger_update_search_text
+                BEFORE INSERT OR UPDATE ON %s
+                FOR EACH ROW
+                EXECUTE FUNCTION update_search_text();",
+                $this->tableName,
+                $this->tableName,
+            ),
+        );
+    }
+
+    private function createTsvectorIndexes(): void
+    {
+        if ([] !== $this->searchableAttributes) {
+            foreach ($this->searchableAttributes as $fieldName => $config) {
+                $this->connection->exec(
+                    \sprintf(
+                        'CREATE INDEX IF NOT EXISTS %s_%s_tsv_idx ON %s USING gin(%s_tsv)',
+                        $this->tableName,
+                        $fieldName,
+                        $this->tableName,
+                        $fieldName,
+                    ),
+                );
+            }
+        } else {
+            $this->connection->exec(
+                \sprintf(
+                    'CREATE INDEX IF NOT EXISTS %s_content_tsv_idx ON %s USING gin(content_tsv)',
+                    $this->tableName,
+                    $this->tableName,
+                ),
+            );
+        }
+    }
+
+    private function validateSemanticRatio(float $ratio): float
+    {
+        if ($ratio < 0.0 || $ratio > 1.0) {
+            throw new InvalidArgumentException(\sprintf(
+                'The semantic ratio must be between 0.0 and 1.0, "%s" given.',
+                $ratio
+            ));
+        }
+
+        return $ratio;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return array{string, array<string, mixed>}
+     */
+    private function buildWhereClause(Vector $vector, array $options, float $semanticRatio): array
+    {
         $where = [];
         $params = [];
 
-        // Use maxScore from options, or defaultMaxScore if configured
         $maxScore = $options['maxScore'] ?? $this->defaultMaxScore;
 
-        // Ensure embedding param is set if maxScore is used (regardless of semanticRatio)
         if ($semanticRatio > 0.0 || null !== $maxScore) {
             $params['embedding'] = $this->toPgvector($vector);
-            // DEBUG: Log query vector
-            $vecArray = $vector->getData();
-            $first5 = array_slice($vecArray, 0, 5);
-            file_put_contents('/tmp/hybrid_debug.log', sprintf("[%s] Query: %s | Vector dims: %d | First 5: [%s]\n", date('Y-m-d H:i:s'), $queryText, count($vecArray), implode(', ', array_map(fn($v) => sprintf('%.4f', $v), $first5))), FILE_APPEND);
         }
 
         if (null !== $maxScore) {
-            $where[] = "({$this->vectorFieldName} {$this->distance->getComparisonSign()} :embedding) <= :maxScore";
+            $where[] = \sprintf(
+                '(%s %s :embedding) <= :maxScore',
+                $this->vectorFieldName,
+                $this->distance->getComparisonSign()
+            );
             $params['maxScore'] = $maxScore;
         }
 
@@ -326,174 +393,30 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
 
         $whereClause = $where ? 'WHERE '.implode(' AND ', $where) : '';
 
-        // Choose query strategy based on semanticRatio and query text
+        return [$whereClause, $params];
+    }
+
+    private function buildQuery(float $semanticRatio, string $queryText, string $whereClause, int $limit): string
+    {
         if (1.0 === $semanticRatio || '' === $queryText) {
-            // Pure vector search
-            $sql = $this->buildVectorOnlyQuery($whereClause, $limit);
-        } elseif (0.0 === $semanticRatio) {
-            // Pure full-text search
-            $sql = $this->buildFtsOnlyQuery($whereClause, $limit);
-            $params['query'] = $queryText;
-        } else {
-            // Hybrid search with weighted combination
-            $sql = $this->buildHybridQuery($whereClause, $limit, $semanticRatio);
-            $params['query'] = $queryText;
+            return $this->buildVectorOnlyQuery($whereClause, $limit);
         }
 
-        // DEBUG: Log the SQL query and parameters
-        file_put_contents('/tmp/hybrid_debug.log', sprintf("[%s] SQL Query:\n%s\n\nParameters:\n%s\n\n", date('Y-m-d H:i:s'), $sql, print_r(array_merge($params, $options['params'] ?? []), true)), FILE_APPEND);
-
-        $statement = $this->connection->prepare($sql);
-        $statement->execute([...$params, ...($options['params'] ?? [])]);
-
-        $includeBreakdown = $options['includeScoreBreakdown'] ?? false;
-        $documents = [];
-        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
-            $metadata = new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR));
-
-            // Add score breakdown to metadata if requested
-            if ($includeBreakdown && isset($result['vector_rank'])) {
-                $metadata['_score_breakdown'] = [
-                    'vector_rank' => $result['vector_rank'],
-                    'fts_rank' => $result['fts_rank'],
-                    'vector_distance' => $result['vector_distance'],
-                    'fts_score' => $result['fts_score'],
-                    'vector_contribution' => $result['vector_contribution'],
-                    'fts_contribution' => $result['fts_contribution'],
-                ];
-
-                // Add fuzzy matching info if available
-                if (isset($result['fuzzy_rank'])) {
-                    $metadata['_score_breakdown']['fuzzy_rank'] = $result['fuzzy_rank'];
-                    $metadata['_score_breakdown']['fuzzy_score'] = $result['fuzzy_score'];
-                    $metadata['_score_breakdown']['fuzzy_contribution'] = $result['fuzzy_contribution'];
-                }
-            }
-
-            // Handle cases where embedding might be NULL (fuzzy-only or FTS-only matches)
-            $vectorData = $result['embedding'] !== null
-                ? new Vector($this->fromPgvector($result['embedding']))
-                : new Vector([0.0]); // Placeholder vector for non-semantic matches
-
-            $documents[] = new VectorDocument(
-                id: Uuid::fromString($result['id']),
-                vector: $vectorData,
-                metadata: $metadata,
-                score: $result['score'],
-            );
+        if (0.0 === $semanticRatio) {
+            return $this->buildFtsOnlyQuery($whereClause, $limit);
         }
 
-        // Normalize scores to 0-100 range for better readability (if enabled)
-        if ($this->normalizeScores) {
-            // Calculate theoretical maximum RRF score: 1/(k+1)
-            // Normalize to 0-100 by dividing by max and multiplying by 100
-            $maxScore = 1.0 / ($this->rrfK + 1);
-            $documents = array_map(function(VectorDocument $doc) use ($maxScore, $includeBreakdown) {
-                $metadata = $doc->metadata;
-
-                // Also normalize breakdown scores if they exist
-                if ($includeBreakdown && isset($metadata['_score_breakdown'])) {
-                    $breakdown = $metadata['_score_breakdown'];
-                    $metadata['_score_breakdown'] = [
-                        'vector_rank' => $breakdown['vector_rank'],
-                        'fts_rank' => $breakdown['fts_rank'],
-                        'vector_distance' => $breakdown['vector_distance'],
-                        'fts_score' => $breakdown['fts_score'],
-                        'vector_contribution' => ($breakdown['vector_contribution'] / $maxScore) * 100,
-                        'fts_contribution' => ($breakdown['fts_contribution'] / $maxScore) * 100,
-                    ];
-
-                    // Add normalized fuzzy scores if available
-                    if (isset($breakdown['fuzzy_rank'])) {
-                        $metadata['_score_breakdown']['fuzzy_rank'] = $breakdown['fuzzy_rank'];
-                        $metadata['_score_breakdown']['fuzzy_score'] = $breakdown['fuzzy_score'];
-                        $metadata['_score_breakdown']['fuzzy_contribution'] = ($breakdown['fuzzy_contribution'] / $maxScore) * 100;
-                    }
-                }
-
-                return new VectorDocument(
-                    id: $doc->id,
-                    vector: $doc->vector,
-                    metadata: $metadata,
-                    score: ($doc->score / $maxScore) * 100
-                );
-            }, $documents);
-        }
-
-        // Apply metadata-based boosting (if configured)
-        // Boost scores based on metadata field values (e.g., popularity, ratings)
-        $boostFields = $options['boostFields'] ?? [];
-        if (!empty($boostFields)) {
-            $documents = array_map(function(VectorDocument $doc) use ($boostFields) {
-                $metadata = $doc->metadata;
-                $score = $doc->score;
-                $appliedBoosts = [];
-
-                foreach ($boostFields as $field => $boostConfig) {
-                    // Skip if metadata doesn't have this field
-                    if (!isset($metadata[$field])) {
-                        continue;
-                    }
-
-                    $value = $metadata[$field];
-                    $boost = $boostConfig['boost'] ?? 0.0;
-
-                    // Check min/max conditions
-                    $shouldBoost = true;
-                    if (isset($boostConfig['min']) && $value < $boostConfig['min']) {
-                        $shouldBoost = false;
-                    }
-                    if (isset($boostConfig['max']) && $value > $boostConfig['max']) {
-                        $shouldBoost = false;
-                    }
-
-                    // Apply boost multiplier if conditions are met
-                    if ($shouldBoost && $boost !== 0.0) {
-                        $score *= (1.0 + $boost);
-                        $appliedBoosts[$field] = [
-                            'value' => $value,
-                            'boost' => $boost,
-                            'multiplier' => (1.0 + $boost),
-                        ];
-                    }
-                }
-
-                // Add boost information to metadata if any boosts were applied
-                if (!empty($appliedBoosts)) {
-                    $metadata['_applied_boosts'] = $appliedBoosts;
-                }
-
-                return new VectorDocument(
-                    id: $doc->id,
-                    vector: $doc->vector,
-                    metadata: $metadata,
-                    score: $score
-                );
-            }, $documents);
-
-            // Re-sort by boosted scores (descending)
-            usort($documents, fn(VectorDocument $a, VectorDocument $b) => $b->score <=> $a->score);
-        }
-
-        // Filter results by minimum score threshold (if configured)
-        // Note: minScore should be in the same scale as the scores (0-100 if normalized)
-        $minScore = $options['minScore'] ?? $this->defaultMinScore;
-        if (null !== $minScore) {
-            $documents = array_values(array_filter($documents, fn(VectorDocument $doc) => $doc->score >= $minScore));
-        }
-
-        return $documents;
+        return $this->buildHybridQuery($whereClause, $limit, $semanticRatio);
     }
 
     private function buildVectorOnlyQuery(string $whereClause, int $limit): string
     {
-        return \sprintf(<<<SQL
-            SELECT id, %s AS embedding, metadata, (%s %s :embedding) AS score
+        return \sprintf(
+            'SELECT id, %s AS embedding, metadata, (%s %s :embedding) AS score
             FROM %s
             %s
             ORDER BY score ASC
-            LIMIT %d
-            SQL,
+            LIMIT %d',
             $this->vectorFieldName,
             $this->vectorFieldName,
             $this->distance->getComparisonSign(),
@@ -503,106 +426,71 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         );
     }
 
-    /**
-     * Build BM25 search CTE with DISTINCT ON fix for duplicate titles.
-     * Replaces FTS rank expression to use plpgsql_bm25 instead of ts_rank_cd.
-     *
-     * @return string BM25 CTE SQL with deduplication fix
-     */
-    private function buildBm25Cte(): string
-    {
-        return \sprintf(
-            '
-            bm25_search AS (
-                SELECT
-                    SUBSTRING(bm25.doc FROM \'title: ([^\n]+)\') as extracted_title,
-                    bm25.doc,
-                    bm25.score as bm25_score,
-                    ROW_NUMBER() OVER (ORDER BY bm25.score DESC) as bm25_rank
-                FROM bm25topk(
-                    \'%s\',
-                    \'%s\',
-                    :query,
-                    100,
-                    \'\',
-                    \'%s\'
-                ) AS bm25
-            ),
-            bm25_with_metadata AS (
-                SELECT DISTINCT ON (b.bm25_rank)
-                    m.id,
-                    m.metadata,
-                    m.%s,
-                    b.bm25_score,
-                    b.bm25_rank
-                FROM bm25_search b
-                INNER JOIN %s m ON (m.metadata->>\'title\') = b.extracted_title
-                ORDER BY b.bm25_rank, m.id
-            )',
-            $this->tableName,
-            $this->contentFieldName,
-            $this->bm25Language,
-            $this->contentFieldName,
-            $this->tableName
-        );
-    }
-
     private function buildFtsOnlyQuery(string $whereClause, int $limit): string
     {
-        // BM25-only search (no vector)
-        $bm25Cte = $this->buildBm25Cte();
+        $ftsCte = $this->textSearchStrategy->buildSearchCte(
+            $this->tableName,
+            $this->contentFieldName,
+            $this->language,
+        );
+        $cteAlias = $this->textSearchStrategy->getCteAlias();
+        $scoreColumn = $this->textSearchStrategy->getScoreColumn();
 
-        return \sprintf(<<<SQL
-            WITH %s
-            SELECT id, NULL AS embedding, metadata,
-                   bm25_score AS score
-            FROM bm25_with_metadata
+        return \sprintf(
+            'WITH %s
+            SELECT id, NULL AS embedding, metadata, %s AS score
+            FROM %s
             %s
-            ORDER BY bm25_score DESC
-            LIMIT %d
-            SQL,
-            $bm25Cte,
-            $whereClause ? 'WHERE id IN (SELECT id FROM ' . $this->tableName . ' ' . $whereClause . ')' : '',
+            ORDER BY %s DESC
+            LIMIT %d',
+            $ftsCte,
+            $scoreColumn,
+            $cteAlias,
+            $whereClause ? 'WHERE id IN (SELECT id FROM '.$this->tableName.' '.$whereClause.')' : '',
+            $scoreColumn,
             $limit,
         );
     }
 
     private function buildHybridQuery(string $whereClause, int $limit, float $semanticRatio): string
     {
-        // Use BM25 CTE with DISTINCT ON fix for duplicate titles
-        $bm25Cte = $this->buildBm25Cte();
-
-        // Add fuzzy filter for the fuzzy_scores CTE using word_similarity on search_text
-        // word_similarity() compares query with individual words, much better for typos
-        // Hybrid threshold: Configurable thresholds to balance recall and precision
-        // - Primary threshold ($fuzzyPrimaryThreshold) for high-quality matches
-        // - Secondary + strict thresholds for catching more typos with double validation
-        $fuzzyFilter = \sprintf(
-            '(
-                word_similarity(:query, search_text) > %f
-                OR (
-                    word_similarity(:query, search_text) > %f
-                    AND similarity(:query, search_text) > %f
-                )
-            )',
-            $this->fuzzyPrimaryThreshold,
-            $this->fuzzySecondaryThreshold,
-            $this->fuzzyStrictThreshold
+        $ftsCte = $this->textSearchStrategy->buildSearchCte(
+            $this->tableName,
+            $this->contentFieldName,
+            $this->language,
         );
-        $fuzzyWhereClause = $this->addFilterToWhereClause($whereClause, $fuzzyFilter);
+        $ftsAlias = $this->textSearchStrategy->getCteAlias();
+        $ftsRankColumn = $this->textSearchStrategy->getRankColumn();
+        $ftsScoreColumn = $this->textSearchStrategy->getScoreColumn();
+        $ftsNormalizedScore = $this->textSearchStrategy->getNormalizedScoreExpression($ftsScoreColumn);
 
-        // Calculate weights for BM25 and Fuzzy (both share the non-semantic portion)
-        // Weights are configurable to allow tuning for different use cases
-        $bm25Weight = (1.0 - $semanticRatio) * (1.0 - $this->fuzzyWeight);
+        // Calculate weights
+        $ftsWeight = (1.0 - $semanticRatio) * (1.0 - $this->fuzzyWeight);
         $fuzzyWeightCalculated = (1.0 - $semanticRatio) * $this->fuzzyWeight;
 
-        // Enhanced RRF: Combines vector, BM25, and fuzzy matching
-        // Formula: (1/(k + rank)) * normalized_score * weight
-        // BM25 with DISTINCT ON fix eliminates duplicate titles
-        // Fuzzy matching uses word_similarity on search_text for optimal typo tolerance
-        // Final DISTINCT ON (id) ensures no duplicates in combined results
-        return \sprintf(<<<SQL
-            WITH vector_scores AS (
+        // Build fuzzy filter
+        $fuzzyFilter = $this->buildFuzzyFilter();
+        $fuzzyWhereClause = $this->addFilterToWhereClause($whereClause, $fuzzyFilter);
+
+        // Build RRF expressions using the RRF class
+        $vectorContribution = $this->rrf->buildSqlExpression(
+            'v.rank_ix',
+            '(1.0 - LEAST(v.distance / 2.0, 1.0))',
+            $semanticRatio,
+        );
+        $ftsContribution = $this->rrf->buildSqlExpression(
+            "b.{$ftsRankColumn}",
+            $ftsNormalizedScore,
+            $ftsWeight,
+        );
+        $fuzzyContribution = $this->rrf->buildSqlExpression(
+            'fz.rank_ix',
+            'fz.fuzzy_similarity',
+            $fuzzyWeightCalculated,
+        );
+
+        return \sprintf(
+            'WITH vector_scores AS (
                 SELECT id, %s AS embedding, metadata,
                        (%s %s :embedding) AS distance,
                        ROW_NUMBER() OVER (ORDER BY %s %s :embedding) AS rank_ix
@@ -618,34 +506,32 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
                 %s
             ),
             combined_results AS (
-                SELECT COALESCE(v.id, b.id, fz.id) as id, v.embedding, COALESCE(v.metadata, b.metadata, fz.metadata) as metadata,
-                       (
-                           COALESCE(1.0 / (%d + v.rank_ix) * (1.0 - LEAST(v.distance / 2.0, 1.0)), 0.0) * %f +
-                           COALESCE(1.0 / (%d + b.bm25_rank) * LEAST(b.bm25_score / 10.0, 1.0), 0.0) * %f +
-                           COALESCE(1.0 / (%d + fz.rank_ix) * fz.fuzzy_similarity, 0.0) * %f
-                       ) AS score,
-                       v.rank_ix AS vector_rank,
-                       b.bm25_rank AS fts_rank,
-                       v.distance AS vector_distance,
-                       b.bm25_score AS fts_score,
-                       fz.rank_ix AS fuzzy_rank,
-                       fz.fuzzy_similarity AS fuzzy_score,
-                       COALESCE(1.0 / (%d + v.rank_ix) * (1.0 - LEAST(v.distance / 2.0, 1.0)), 0.0) * %f AS vector_contribution,
-                       COALESCE(1.0 / (%d + b.bm25_rank) * LEAST(b.bm25_score / 10.0, 1.0), 0.0) * %f AS fts_contribution,
-                       COALESCE(1.0 / (%d + fz.rank_ix) * fz.fuzzy_similarity, 0.0) * %f AS fuzzy_contribution
+                SELECT
+                    COALESCE(v.id, b.id, fz.id) as id,
+                    v.embedding,
+                    COALESCE(v.metadata, b.metadata, fz.metadata) as metadata,
+                    (%s + %s + %s) AS score,
+                    v.rank_ix AS vector_rank,
+                    b.%s AS fts_rank,
+                    v.distance AS vector_distance,
+                    b.%s AS fts_score,
+                    fz.rank_ix AS fuzzy_rank,
+                    fz.fuzzy_similarity AS fuzzy_score,
+                    %s AS vector_contribution,
+                    %s AS fts_contribution,
+                    %s AS fuzzy_contribution
                 FROM vector_scores v
-                FULL OUTER JOIN bm25_with_metadata b ON v.id = b.id
+                FULL OUTER JOIN %s b ON v.id = b.id
                 FULL OUTER JOIN fuzzy_scores fz ON COALESCE(v.id, b.id) = fz.id
                 WHERE v.id IS NOT NULL OR b.id IS NOT NULL OR fz.id IS NOT NULL
             )
             SELECT * FROM (
-                SELECT DISTINCT ON (metadata->>'title') *
+                SELECT DISTINCT ON (metadata->>\'title\') *
                 FROM combined_results
-                ORDER BY metadata->>'title', score DESC
+                ORDER BY metadata->>\'title\', score DESC
             ) unique_results
             ORDER BY score DESC
-            LIMIT %d
-            SQL,
+            LIMIT %d',
             $this->vectorFieldName,
             $this->vectorFieldName,
             $this->distance->getComparisonSign(),
@@ -653,33 +539,38 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             $this->distance->getComparisonSign(),
             $this->tableName,
             $whereClause,
-            $bm25Cte,
+            $ftsCte,
             $this->tableName,
             $fuzzyWhereClause,
-            $this->rrfK,
-            $semanticRatio,
-            $this->rrfK,
-            $bm25Weight,
-            $this->rrfK,
-            $fuzzyWeightCalculated,
-            $this->rrfK,
-            $semanticRatio,
-            $this->rrfK,
-            $bm25Weight,
-            $this->rrfK,
-            $fuzzyWeightCalculated,
+            $vectorContribution,
+            $ftsContribution,
+            $fuzzyContribution,
+            $ftsRankColumn,
+            $ftsScoreColumn,
+            $vectorContribution,
+            $ftsContribution,
+            $fuzzyContribution,
+            $ftsAlias,
             $limit,
         );
     }
 
-    /**
-     * Adds a filter condition to an existing WHERE clause using AND logic.
-     *
-     * @param string $whereClause Existing WHERE clause (may be empty or start with 'WHERE ')
-     * @param string $filter      Filter condition to add (without 'WHERE ')
-     *
-     * @return string Combined WHERE clause
-     */
+    private function buildFuzzyFilter(): string
+    {
+        return \sprintf(
+            '(
+                word_similarity(:query, search_text) > %f
+                OR (
+                    word_similarity(:query, search_text) > %f
+                    AND similarity(:query, search_text) > %f
+                )
+            )',
+            $this->fuzzyPrimaryThreshold,
+            $this->fuzzySecondaryThreshold,
+            $this->fuzzyStrictThreshold
+        );
+    }
+
     private function addFilterToWhereClause(string $whereClause, string $filter): string
     {
         if ('' === $whereClause) {
@@ -692,8 +583,134 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             return "$whereClause AND $filter";
         }
 
-        // Unexpected format, prepend WHERE
         return "WHERE $filter AND ".ltrim($whereClause);
+    }
+
+    /**
+     * @param array<array<string, mixed>> $results
+     *
+     * @return VectorDocument[]
+     */
+    private function processResults(array $results, bool $includeBreakdown): array
+    {
+        $documents = [];
+
+        foreach ($results as $result) {
+            $metadata = new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR));
+
+            if ($includeBreakdown && isset($result['vector_rank'])) {
+                $metadata['_score_breakdown'] = $this->buildScoreBreakdown($result);
+            }
+
+            // Use NullVector for results without embedding (FTS-only or fuzzy-only matches)
+            $vector = null !== $result['embedding']
+                ? new Vector($this->fromPgvector($result['embedding']))
+                : new NullVector();
+
+            $score = $result['score'];
+            if ($this->rrf->isNormalized()) {
+                $score = $this->rrf->normalize($score);
+            }
+
+            $documents[] = new VectorDocument(
+                id: Uuid::fromString($result['id']),
+                vector: $vector,
+                metadata: $metadata,
+                score: $score,
+            );
+        }
+
+        return $documents;
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     *
+     * @return array<string, mixed>
+     */
+    private function buildScoreBreakdown(array $result): array
+    {
+        $breakdown = [
+            'vector_rank' => $result['vector_rank'],
+            'fts_rank' => $result['fts_rank'],
+            'vector_distance' => $result['vector_distance'],
+            'fts_score' => $result['fts_score'],
+            'vector_contribution' => $result['vector_contribution'],
+            'fts_contribution' => $result['fts_contribution'],
+        ];
+
+        if (isset($result['fuzzy_rank'])) {
+            $breakdown['fuzzy_rank'] = $result['fuzzy_rank'];
+            $breakdown['fuzzy_score'] = $result['fuzzy_score'];
+            $breakdown['fuzzy_contribution'] = $result['fuzzy_contribution'];
+        }
+
+        if ($this->rrf->isNormalized()) {
+            $breakdown['vector_contribution'] = $this->rrf->normalize($breakdown['vector_contribution']);
+            $breakdown['fts_contribution'] = $this->rrf->normalize($breakdown['fts_contribution']);
+
+            if (isset($breakdown['fuzzy_contribution'])) {
+                $breakdown['fuzzy_contribution'] = $this->rrf->normalize($breakdown['fuzzy_contribution']);
+            }
+        }
+
+        return $breakdown;
+    }
+
+    /**
+     * @param VectorDocument[]                                             $documents
+     * @param array<string, array{min?: float, max?: float, boost: float}> $boostFields
+     *
+     * @return VectorDocument[]
+     */
+    private function applyBoostFields(array $documents, array $boostFields): array
+    {
+        $documents = array_map(function (VectorDocument $doc) use ($boostFields) {
+            $metadata = $doc->metadata;
+            $score = $doc->score;
+            $appliedBoosts = [];
+
+            foreach ($boostFields as $field => $boostConfig) {
+                if (!isset($metadata[$field])) {
+                    continue;
+                }
+
+                $value = $metadata[$field];
+                $boost = $boostConfig['boost'] ?? 0.0;
+
+                $shouldBoost = true;
+                if (isset($boostConfig['min']) && $value < $boostConfig['min']) {
+                    $shouldBoost = false;
+                }
+                if (isset($boostConfig['max']) && $value > $boostConfig['max']) {
+                    $shouldBoost = false;
+                }
+
+                if ($shouldBoost && 0.0 !== $boost) {
+                    $score *= (1.0 + $boost);
+                    $appliedBoosts[$field] = [
+                        'value' => $value,
+                        'boost' => $boost,
+                        'multiplier' => (1.0 + $boost),
+                    ];
+                }
+            }
+
+            if ([] !== $appliedBoosts) {
+                $metadata['_applied_boosts'] = $appliedBoosts;
+            }
+
+            return new VectorDocument(
+                id: $doc->id,
+                vector: $doc->vector,
+                metadata: $metadata,
+                score: $score
+            );
+        }, $documents);
+
+        usort($documents, fn (VectorDocument $a, VectorDocument $b) => $b->score <=> $a->score);
+
+        return $documents;
     }
 
     private function toPgvector(VectorInterface $vector): string
