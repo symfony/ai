@@ -37,7 +37,7 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
 
 $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
-$indexer->index();
+$indexer->loadAndIndex();
 
 $retriever = new Retriever($vectorizer, $store, logger());
 

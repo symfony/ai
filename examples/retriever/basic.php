@@ -28,16 +28,15 @@ $indexer = new Indexer(
     loader: new TextFileLoader(),
     vectorizer: $vectorizer,
     store: $store,
-    source: [
-        dirname(__DIR__, 2).'/fixtures/movies/gladiator.md',
-        dirname(__DIR__, 2).'/fixtures/movies/inception.md',
-        dirname(__DIR__, 2).'/fixtures/movies/jurassic-park.md',
-    ],
     transformers: [
         new TextSplitTransformer(chunkSize: 500, overlap: 100),
     ],
 );
-$indexer->index();
+$indexer->loadAndIndex([
+    dirname(__DIR__, 2).'/fixtures/movies/gladiator.md',
+    dirname(__DIR__, 2).'/fixtures/movies/inception.md',
+    dirname(__DIR__, 2).'/fixtures/movies/jurassic-park.md',
+]);
 
 $retriever = new Retriever(
     vectorizer: $vectorizer,

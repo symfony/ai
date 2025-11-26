@@ -60,14 +60,13 @@ $indexer = new Indexer(
     loader: new InMemoryLoader($documents),
     vectorizer: $vectorizer,
     store: $store,
-    source: null,
     filters: $filters,
     transformers: [
         new TextTrimTransformer(),
     ],
 );
 
-$indexer->index();
+$indexer->loadAndIndex();
 
 $vector = $vectorizer->vectorize('technology artificial intelligence');
 $results = $store->query($vector);

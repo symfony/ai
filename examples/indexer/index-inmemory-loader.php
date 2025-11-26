@@ -42,13 +42,12 @@ $indexer = new Indexer(
     loader: new InMemoryLoader($documents),
     vectorizer: $vectorizer,
     store: $store,
-    source: null,
     transformers: [
         new TextSplitTransformer(chunkSize: 100, overlap: 20),
     ],
 );
 
-$indexer->index();
+$indexer->loadAndIndex();
 
 $vector = $vectorizer->vectorize('machine learning artificial intelligence');
 $results = $store->query($vector);

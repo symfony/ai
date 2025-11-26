@@ -52,7 +52,7 @@ $platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
 $vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'));
 $loader = new InMemoryLoader($documents);
 $indexer = new Indexer($loader, $vectorizer, $store, logger: logger());
-$indexer->index();
+$indexer->loadAndIndex();
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());

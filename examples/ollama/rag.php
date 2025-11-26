@@ -44,7 +44,7 @@ foreach (Movies::all() as $i => $movie) {
 $platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
 $vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'), logger());
 $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
-$indexer->index($documents);
+$indexer->loadAndIndex();
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
