@@ -25,7 +25,7 @@ final readonly class DecartClient implements ModelClientInterface
     public function __construct(
         private HttpClientInterface $httpClient,
         #[\SensitiveParameter] private string $apiKey,
-        private ?string $hostUrl = 'https://api.decart.ai/v1',
+        private string $hostUrl = 'https://api.decart.ai/v1',
     ) {
     }
 
