@@ -14,6 +14,9 @@ use Doctrine\DBAL\Tools\DsnParser;
 use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Store\Bridge\Postgres\HybridStore;
+use Symfony\AI\Store\Bridge\Postgres\ReciprocalRankFusion;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\Bm25TextSearchStrategy;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy;
 use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
@@ -25,10 +28,11 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 echo "=== PostgreSQL Hybrid Search Demo ===\n\n";
-echo "This example demonstrates how to configure the semantic ratio to balance\n";
-echo "between semantic (vector) search and PostgreSQL Full-Text Search.\n\n";
+echo "Demonstrates HybridStore with configurable search strategies:\n";
+echo "- Native PostgreSQL FTS vs BM25\n";
+echo "- Semantic ratio adjustment\n";
+echo "- Custom RRF scoring\n\n";
 
-// Initialize the hybrid store with balanced search (50/50)
 $connection = DriverManager::getConnection((new DsnParser())->parse(env('POSTGRES_URI')));
 $pdo = $connection->getNativeConnection();
 
@@ -36,10 +40,14 @@ if (!$pdo instanceof PDO) {
     throw new RuntimeException('Unable to get native PDO connection from Doctrine DBAL.');
 }
 
+echo "=== Using BM25 Text Search Strategy ===\n\n";
+
 $store = new HybridStore(
     connection: $pdo,
     tableName: 'hybrid_movies',
-    semanticRatio: 0.5, // Balanced hybrid search by default
+    textSearchStrategy: new Bm25TextSearchStrategy('en'),
+    rrf: new ReciprocalRankFusion(k: 60, normalizeScores: true),
+    semanticRatio: 0.5,
 );
 
 // Create embeddings and documents
@@ -119,9 +127,42 @@ echo "\n";
 // Cleanup
 $store->drop();
 
-echo "=== Summary ===\n";
-echo "- semanticRatio = 0.0: Best for exact keyword matches (PostgreSQL FTS)\n";
-echo "- semanticRatio = 0.5: Balanced approach using RRF (Reciprocal Rank Fusion)\n";
-echo "- semanticRatio = 1.0: Best for conceptual similarity searches (pgvector)\n";
-echo "\nYou can set the default ratio when instantiating the HybridStore,\n";
-echo "and override it per query using the 'semanticRatio' option.\n";
+echo "=== Comparing with Native PostgreSQL FTS ===\n\n";
+
+$storeFts = new HybridStore(
+    connection: $pdo,
+    tableName: 'hybrid_movies_fts',
+    textSearchStrategy: new PostgresTextSearchStrategy(),
+    semanticRatio: 0.5,
+);
+
+$storeFts->setup();
+$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $storeFts, logger: logger());
+$indexer->index($documents);
+
+$resultsFts = $storeFts->query($queryEmbedding, [
+    'semanticRatio' => 0.5,
+    'q' => 'technology',
+    'limit' => 3,
+]);
+
+echo "Top 3 results (Native FTS):\n";
+foreach ($resultsFts as $i => $result) {
+    $metadata = $result->metadata->getArrayCopy();
+    echo sprintf(
+        "  %d. %s (Score: %.4f)\n",
+        $i + 1,
+        $metadata['title'] ?? 'Unknown',
+        $result->score ?? 0.0
+    );
+}
+
+$storeFts->drop();
+
+echo "\n=== Summary ===\n";
+echo "- semanticRatio = 0.0: Pure keyword matching\n";
+echo "- semanticRatio = 0.5: Balanced hybrid (RRF)\n";
+echo "- semanticRatio = 1.0: Pure semantic search\n";
+echo "\nText Search Strategies:\n";
+echo "- PostgresTextSearchStrategy: Native FTS (ts_rank_cd)\n";
+echo "- Bm25TextSearchStrategy: BM25 ranking (requires pg_bm25 extension)\n";

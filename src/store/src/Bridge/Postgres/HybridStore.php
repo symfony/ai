@@ -41,20 +41,20 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
     private readonly TextSearchStrategyInterface $textSearchStrategy;
 
     /**
-     * @param string                           $vectorFieldName         Name of the vector field
-     * @param string                           $contentFieldName        Name of the text field for FTS
-     * @param float                            $semanticRatio           Ratio between semantic and keyword search (0.0 to 1.0)
-     * @param Distance                         $distance                Distance metric for vector similarity
-     * @param string                           $language                PostgreSQL text search configuration
-     * @param TextSearchStrategyInterface|null $textSearchStrategy      Text search strategy (defaults to native PostgreSQL)
-     * @param ReciprocalRankFusion|null        $rrf                     RRF calculator (defaults to k=60, normalized)
-     * @param float|null                       $defaultMaxScore         Default max distance for vector search
-     * @param float|null                       $defaultMinScore         Default min RRF score threshold
-     * @param float                            $fuzzyPrimaryThreshold   Primary threshold for fuzzy matching
-     * @param float                            $fuzzySecondaryThreshold Secondary threshold for fuzzy matching
-     * @param float                                                         $fuzzyStrictThreshold    Strict threshold for double validation
-     * @param float                                                         $fuzzyWeight             Weight of fuzzy matching (0.0 to 1.0)
-     * @param array<string, array{metadata_key: string, boost?: float}>    $searchableAttributes    Searchable attributes with boosting config
+     * @param string                                                    $vectorFieldName         Name of the vector field
+     * @param string                                                    $contentFieldName        Name of the text field for FTS
+     * @param float                                                     $semanticRatio           Ratio between semantic and keyword search (0.0 to 1.0)
+     * @param Distance                                                  $distance                Distance metric for vector similarity
+     * @param string                                                    $language                PostgreSQL text search configuration
+     * @param TextSearchStrategyInterface|null                          $textSearchStrategy      Text search strategy (defaults to native PostgreSQL)
+     * @param ReciprocalRankFusion|null                                 $rrf                     RRF calculator (defaults to k=60, normalized)
+     * @param float|null                                                $defaultMaxScore         Default max distance for vector search
+     * @param float|null                                                $defaultMinScore         Default min RRF score threshold
+     * @param float                                                     $fuzzyPrimaryThreshold   Primary threshold for fuzzy matching
+     * @param float                                                     $fuzzySecondaryThreshold Secondary threshold for fuzzy matching
+     * @param float                                                     $fuzzyStrictThreshold    Strict threshold for double validation
+     * @param float                                                     $fuzzyWeight             Weight of fuzzy matching (0.0 to 1.0)
+     * @param array<string, array{metadata_key: string, boost?: float}> $searchableAttributes    Searchable attributes with boosting config
      */
     public function __construct(
         private readonly \PDO $connection,
@@ -75,17 +75,11 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         private readonly array $searchableAttributes = [],
     ) {
         if ($semanticRatio < 0.0 || $semanticRatio > 1.0) {
-            throw new InvalidArgumentException(\sprintf(
-                'The semantic ratio must be between 0.0 and 1.0, "%s" given.',
-                $semanticRatio
-            ));
+            throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $semanticRatio));
         }
 
         if ($fuzzyWeight < 0.0 || $fuzzyWeight > 1.0) {
-            throw new InvalidArgumentException(\sprintf(
-                'The fuzzy weight must be between 0.0 and 1.0, "%s" given.',
-                $fuzzyWeight
-            ));
+            throw new InvalidArgumentException(\sprintf('The fuzzy weight must be between 0.0 and 1.0, "%s" given.', $fuzzyWeight));
         }
 
         $this->textSearchStrategy = $textSearchStrategy ?? new PostgresTextSearchStrategy();
@@ -314,11 +308,11 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
 
         $this->connection->exec(
             \sprintf(
-                "DROP TRIGGER IF EXISTS trigger_update_search_text ON %s;
+                'DROP TRIGGER IF EXISTS trigger_update_search_text ON %s;
                 CREATE TRIGGER trigger_update_search_text
                 BEFORE INSERT OR UPDATE ON %s
                 FOR EACH ROW
-                EXECUTE FUNCTION update_search_text();",
+                EXECUTE FUNCTION update_search_text();',
                 $this->tableName,
                 $this->tableName,
             ),
@@ -353,10 +347,7 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
     private function validateSemanticRatio(float $ratio): float
     {
         if ($ratio < 0.0 || $ratio > 1.0) {
-            throw new InvalidArgumentException(\sprintf(
-                'The semantic ratio must be between 0.0 and 1.0, "%s" given.',
-                $ratio
-            ));
+            throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $ratio));
         }
 
         return $ratio;

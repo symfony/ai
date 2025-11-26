@@ -132,7 +132,7 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
                 "SELECT 1 FROM pg_proc WHERE proname = 'bm25topk' LIMIT 1"
             );
 
-            return $stmt->fetchColumn() !== false;
+            return false !== $stmt->fetchColumn();
         } catch (\PDOException) {
             return false;
         }

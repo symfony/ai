@@ -26,7 +26,7 @@ use Symfony\Component\Uid\Uuid;
 
 final class HybridStoreTest extends TestCase
 {
-    public function testConstructorValidatesSemanticRatio(): void
+    public function testConstructorValidatesSemanticRatio()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
@@ -35,7 +35,7 @@ final class HybridStoreTest extends TestCase
         new HybridStore($pdo, 'test_table', semanticRatio: 1.5);
     }
 
-    public function testConstructorValidatesNegativeSemanticRatio(): void
+    public function testConstructorValidatesNegativeSemanticRatio()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
@@ -44,7 +44,7 @@ final class HybridStoreTest extends TestCase
         new HybridStore($pdo, 'test_table', semanticRatio: -0.5);
     }
 
-    public function testConstructorValidatesFuzzyWeight(): void
+    public function testConstructorValidatesFuzzyWeight()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The fuzzy weight must be between 0.0 and 1.0');
@@ -53,7 +53,7 @@ final class HybridStoreTest extends TestCase
         new HybridStore($pdo, 'test_table', fuzzyWeight: 1.5);
     }
 
-    public function testConstructorUsesDefaultTextSearchStrategy(): void
+    public function testConstructorUsesDefaultTextSearchStrategy()
     {
         $pdo = $this->createMock(\PDO::class);
         $store = new HybridStore($pdo, 'test_table');
@@ -61,7 +61,7 @@ final class HybridStoreTest extends TestCase
         $this->assertInstanceOf(PostgresTextSearchStrategy::class, $store->getTextSearchStrategy());
     }
 
-    public function testConstructorUsesCustomTextSearchStrategy(): void
+    public function testConstructorUsesCustomTextSearchStrategy()
     {
         $pdo = $this->createMock(\PDO::class);
         $customStrategy = new Bm25TextSearchStrategy();
@@ -70,7 +70,7 @@ final class HybridStoreTest extends TestCase
         $this->assertSame($customStrategy, $store->getTextSearchStrategy());
     }
 
-    public function testConstructorUsesDefaultRrf(): void
+    public function testConstructorUsesDefaultRrf()
     {
         $pdo = $this->createMock(\PDO::class);
         $store = new HybridStore($pdo, 'test_table');
@@ -79,7 +79,7 @@ final class HybridStoreTest extends TestCase
         $this->assertSame(60, $store->getRrf()->getK());
     }
 
-    public function testConstructorUsesCustomRrf(): void
+    public function testConstructorUsesCustomRrf()
     {
         $pdo = $this->createMock(\PDO::class);
         $customRrf = new ReciprocalRankFusion(k: 100, normalizeScores: false);
@@ -89,7 +89,7 @@ final class HybridStoreTest extends TestCase
         $this->assertSame(100, $store->getRrf()->getK());
     }
 
-    public function testSetupCreatesTableWithFullTextSearchSupport(): void
+    public function testSetupCreatesTableWithFullTextSearchSupport()
     {
         $pdo = $this->createMock(\PDO::class);
         $store = new HybridStore($pdo, 'hybrid_table');
@@ -135,7 +135,7 @@ final class HybridStoreTest extends TestCase
         $store->setup();
     }
 
-    public function testSetupExecutesTextSearchStrategySetupSql(): void
+    public function testSetupExecutesTextSearchStrategySetupSql()
     {
         $pdo = $this->createMock(\PDO::class);
 
@@ -150,7 +150,7 @@ final class HybridStoreTest extends TestCase
         $store = new HybridStore($pdo, 'hybrid_table', textSearchStrategy: $mockStrategy);
 
         $execCalls = [];
-        $pdo->expects($this->atLeast(1))
+        $pdo->expects($this->any())
             ->method('exec')
             ->willReturnCallback(function (string $sql) use (&$execCalls): int {
                 $execCalls[] = $sql;
@@ -161,9 +161,10 @@ final class HybridStoreTest extends TestCase
         $store->setup();
 
         $this->assertContains('CREATE INDEX custom_idx ON hybrid_table USING gin(content)', $execCalls);
+        $this->assertNotEmpty($execCalls, 'Expected at least one exec() call');
     }
 
-    public function testAddDocument(): void
+    public function testAddDocument()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -200,7 +201,7 @@ final class HybridStoreTest extends TestCase
         $store->add($document);
     }
 
-    public function testAddMultipleDocuments(): void
+    public function testAddMultipleDocuments()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -240,7 +241,7 @@ final class HybridStoreTest extends TestCase
         $store->add($document1, $document2);
     }
 
-    public function testPureVectorSearch(): void
+    public function testPureVectorSearch()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -287,7 +288,7 @@ final class HybridStoreTest extends TestCase
         $this->assertSame(0.05, $results[0]->score);
     }
 
-    public function testPureKeywordSearchWithPostgresStrategy(): void
+    public function testPureKeywordSearchWithPostgresStrategy()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -343,7 +344,7 @@ final class HybridStoreTest extends TestCase
         $this->assertInstanceOf(NullVector::class, $results[0]->vector);
     }
 
-    public function testPureKeywordSearchWithBm25Strategy(): void
+    public function testPureKeywordSearchWithBm25Strategy()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -400,7 +401,7 @@ final class HybridStoreTest extends TestCase
         $this->assertSame(0.5, $results[0]->score);
     }
 
-    public function testHybridSearchWithRRF(): void
+    public function testHybridSearchWithRRF()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -455,7 +456,7 @@ final class HybridStoreTest extends TestCase
         $this->assertSame(0.025, $results[0]->score);
     }
 
-    public function testQueryWithDefaultMaxScore(): void
+    public function testQueryWithDefaultMaxScore()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -494,7 +495,7 @@ final class HybridStoreTest extends TestCase
         $this->assertCount(0, $results);
     }
 
-    public function testQueryWithMaxScoreOverride(): void
+    public function testQueryWithMaxScoreOverride()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -527,7 +528,7 @@ final class HybridStoreTest extends TestCase
         $this->assertCount(0, $results);
     }
 
-    public function testQueryWithMinScoreFilter(): void
+    public function testQueryWithMinScoreFilter()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -576,7 +577,7 @@ final class HybridStoreTest extends TestCase
         $this->assertSame(0.8, $results[0]->score);
     }
 
-    public function testQueryWithCustomRRFK(): void
+    public function testQueryWithCustomRRFK()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -605,7 +606,7 @@ final class HybridStoreTest extends TestCase
         $store->query(new Vector([0.1, 0.2, 0.3]), ['q' => 'test']);
     }
 
-    public function testQueryInvalidSemanticRatioInOptions(): void
+    public function testQueryInvalidSemanticRatioInOptions()
     {
         $pdo = $this->createMock(\PDO::class);
         $store = new HybridStore($pdo, 'hybrid_table');
@@ -616,7 +617,7 @@ final class HybridStoreTest extends TestCase
         $store->query(new Vector([0.1, 0.2, 0.3]), ['semanticRatio' => 1.5]);
     }
 
-    public function testDrop(): void
+    public function testDrop()
     {
         $pdo = $this->createMock(\PDO::class);
         $store = new HybridStore($pdo, 'hybrid_table');
@@ -628,7 +629,7 @@ final class HybridStoreTest extends TestCase
         $store->drop();
     }
 
-    public function testQueryWithCustomLimit(): void
+    public function testQueryWithCustomLimit()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -655,7 +656,7 @@ final class HybridStoreTest extends TestCase
         $store->query(new Vector([0.1, 0.2, 0.3]), ['limit' => 10]);
     }
 
-    public function testPureKeywordSearchReturnsEmptyWhenNoMatch(): void
+    public function testPureKeywordSearchReturnsEmptyWhenNoMatch()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -679,7 +680,7 @@ final class HybridStoreTest extends TestCase
         $this->assertCount(0, $results);
     }
 
-    public function testFuzzyMatchingWithWordSimilarity(): void
+    public function testFuzzyMatchingWithWordSimilarity()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -718,7 +719,7 @@ final class HybridStoreTest extends TestCase
         $store->query(new Vector([0.1, 0.2, 0.3]), ['q' => 'test']);
     }
 
-    public function testSearchableAttributesWithBoost(): void
+    public function testSearchableAttributesWithBoost()
     {
         $pdo = $this->createMock(\PDO::class);
 
@@ -758,7 +759,7 @@ final class HybridStoreTest extends TestCase
         $store->setup();
     }
 
-    public function testFuzzyWeightParameter(): void
+    public function testFuzzyWeightParameter()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -787,7 +788,7 @@ final class HybridStoreTest extends TestCase
         $store->query(new Vector([0.1, 0.2, 0.3]), ['q' => 'test']);
     }
 
-    public function testBoostFieldsApplied(): void
+    public function testBoostFieldsApplied()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -840,7 +841,7 @@ final class HybridStoreTest extends TestCase
         $this->assertSame(0.6, $results[1]->score);
     }
 
-    public function testScoreBreakdownIncluded(): void
+    public function testScoreBreakdownIncluded()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -897,7 +898,7 @@ final class HybridStoreTest extends TestCase
         $this->assertSame(0.7, $breakdown['fuzzy_score']);
     }
 
-    public function testNullVectorForFtsOnlyResults(): void
+    public function testNullVectorForFtsOnlyResults()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
@@ -931,7 +932,7 @@ final class HybridStoreTest extends TestCase
         $this->assertInstanceOf(NullVector::class, $results[0]->vector);
     }
 
-    public function testScoreNormalization(): void
+    public function testScoreNormalization()
     {
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);

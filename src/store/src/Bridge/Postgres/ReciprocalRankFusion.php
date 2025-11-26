@@ -36,8 +36,8 @@ final class ReciprocalRankFusion
     /**
      * Calculate RRF score for a single result with multiple rankings.
      *
-     * @param array<string, array{rank: int, score: float, weight: float}> $rankings
-     *        Each entry contains: rank (1-based), score (normalized 0-1), weight (0-1)
+     * @param array<string, array{rank: int|null, score: float, weight: float}> $rankings
+     *                                                                                    Each entry contains: rank (1-based or null), score (normalized 0-1), weight (0-1)
      *
      * @return float The combined RRF score
      */
@@ -142,7 +142,7 @@ final class ReciprocalRankFusion
             );
         }
 
-        return '(' . implode(' + ', $expressions) . ')';
+        return '('.implode(' + ', $expressions).')';
     }
 
     public function getK(): int

@@ -16,7 +16,7 @@ use Symfony\AI\Store\Bridge\Postgres\ReciprocalRankFusion;
 
 final class ReciprocalRankFusionTest extends TestCase
 {
-    public function testDefaultConstruction(): void
+    public function testDefaultConstruction()
     {
         $rrf = new ReciprocalRankFusion();
 
@@ -24,7 +24,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertTrue($rrf->isNormalized());
     }
 
-    public function testCustomConstruction(): void
+    public function testCustomConstruction()
     {
         $rrf = new ReciprocalRankFusion(k: 100, normalizeScores: false);
 
@@ -32,7 +32,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertFalse($rrf->isNormalized());
     }
 
-    public function testCalculateSingleRanking(): void
+    public function testCalculateSingleRanking()
     {
         $rrf = new ReciprocalRankFusion(k: 60, normalizeScores: false);
 
@@ -44,7 +44,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertEqualsWithDelta(1 / 61, $score, 0.0001);
     }
 
-    public function testCalculateMultipleRankings(): void
+    public function testCalculateMultipleRankings()
     {
         $rrf = new ReciprocalRankFusion(k: 60, normalizeScores: false);
 
@@ -58,7 +58,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertEqualsWithDelta($expected, $score, 0.0001);
     }
 
-    public function testCalculateSkipsNullRank(): void
+    public function testCalculateSkipsNullRank()
     {
         $rrf = new ReciprocalRankFusion(k: 60, normalizeScores: false);
 
@@ -72,7 +72,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertEqualsWithDelta($expected, $score, 0.0001);
     }
 
-    public function testCalculateWithNormalization(): void
+    public function testCalculateWithNormalization()
     {
         $rrf = new ReciprocalRankFusion(k: 60, normalizeScores: true);
 
@@ -84,7 +84,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertEqualsWithDelta(100.0, $score, 0.01);
     }
 
-    public function testCalculateContribution(): void
+    public function testCalculateContribution()
     {
         $rrf = new ReciprocalRankFusion(k: 60, normalizeScores: false);
 
@@ -94,7 +94,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertEqualsWithDelta($expected, $contribution, 0.0001);
     }
 
-    public function testNormalize(): void
+    public function testNormalize()
     {
         $rrf = new ReciprocalRankFusion(k: 60);
 
@@ -104,7 +104,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertEqualsWithDelta(100.0, $normalized, 0.01);
     }
 
-    public function testDenormalize(): void
+    public function testDenormalize()
     {
         $rrf = new ReciprocalRankFusion(k: 60);
 
@@ -113,7 +113,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertEqualsWithDelta(1 / 61, $denormalized, 0.0001);
     }
 
-    public function testNormalizeAndDenormalizeAreInverse(): void
+    public function testNormalizeAndDenormalizeAreInverse()
     {
         $rrf = new ReciprocalRankFusion(k: 60);
 
@@ -124,7 +124,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertEqualsWithDelta($original, $denormalized, 0.0001);
     }
 
-    public function testBuildSqlExpression(): void
+    public function testBuildSqlExpression()
     {
         $rrf = new ReciprocalRankFusion(k: 60);
 
@@ -140,7 +140,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertStringContainsString(', 0.0)', $sql);
     }
 
-    public function testBuildSqlExpressionWithCustomNullDefault(): void
+    public function testBuildSqlExpressionWithCustomNullDefault()
     {
         $rrf = new ReciprocalRankFusion(k: 60);
 
@@ -154,7 +154,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertStringContainsString(', -1.0)', $sql);
     }
 
-    public function testBuildCombinedSqlExpression(): void
+    public function testBuildCombinedSqlExpression()
     {
         $rrf = new ReciprocalRankFusion(k: 60);
 
@@ -169,7 +169,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertStringContainsString('60 + f.rank', $sql);
     }
 
-    public function testDifferentKValues(): void
+    public function testDifferentKValues()
     {
         $rrf60 = new ReciprocalRankFusion(k: 60, normalizeScores: false);
         $rrf100 = new ReciprocalRankFusion(k: 100, normalizeScores: false);
@@ -189,7 +189,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertEqualsWithDelta(1 / 101, $score100, 0.0001);
     }
 
-    public function testWeightAffectsScore(): void
+    public function testWeightAffectsScore()
     {
         $rrf = new ReciprocalRankFusion(k: 60, normalizeScores: false);
 
@@ -204,7 +204,7 @@ final class ReciprocalRankFusionTest extends TestCase
         $this->assertEqualsWithDelta($scoreFullWeight / 2, $scoreHalfWeight, 0.0001);
     }
 
-    public function testLowerRankGivesLowerScore(): void
+    public function testLowerRankGivesLowerScore()
     {
         $rrf = new ReciprocalRankFusion(k: 60, normalizeScores: false);
 
