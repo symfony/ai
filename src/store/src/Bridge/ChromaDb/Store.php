@@ -57,11 +57,11 @@ final class Store implements StoreInterface
      */
     public function query(Vector $vector, array $options = []): array
     {
-        $include = ['embeddings', 'metadatas', 'distances'];
+        $include = null;
         if ([] !== ($options['include'] ?? [])) {
             $include = array_values(
                 array_unique(
-                    array_merge($include, $options['include'])
+                    array_merge(['embeddings', 'metadatas', 'distances'], $options['include'])
                 )
             );
         }
