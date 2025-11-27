@@ -53,7 +53,7 @@ final class Store implements StoreInterface
     }
 
     /**
-     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>} $options
+     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>} $options
      */
     public function query(Vector $vector, array $options = []): array
     {
@@ -63,14 +63,22 @@ final class Store implements StoreInterface
             nResults: 4,
             where: $options['where'] ?? null,
             whereDocument: $options['whereDocument'] ?? null,
+            include: $options['include'] ?? null,
         );
 
         $documents = [];
-        for ($i = 0; $i < \count($queryResponse->metadatas[0]); ++$i) {
+        $metaCount = \count($queryResponse->metadatas[0]);
+
+        for ($i = 0; $i < $metaCount; ++$i) {
+            $metaData = new Metadata($queryResponse->metadatas[0][$i]);
+            if (isset($queryResponse->documents[0][$i])) {
+                $metaData->setText($queryResponse->documents[0][$i]);
+            }
+
             $documents[] = new VectorDocument(
                 id: Uuid::fromString($queryResponse->ids[0][$i]),
                 vector: new Vector($queryResponse->embeddings[0][$i]),
-                metadata: new Metadata($queryResponse->metadatas[0][$i]),
+                metadata: $metaData,
             );
         }
 
