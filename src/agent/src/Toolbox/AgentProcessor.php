@@ -78,7 +78,10 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
     {
         if ($output->getResult() instanceof GenericStreamResponse) {
             $output->setResult(
-                new ToolboxStreamResponse($output->getResult()->getContent(), $this->handleToolCallsCallback($output))
+                new ToolboxStreamResponse(
+                    $output->getResult()->getContent(),
+                    fn (ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null) => $this->handleToolCallsCallback($output, $result, $streamedAssistantResponse)
+                )
             );
 
             return;
@@ -88,7 +91,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             return;
         }
 
-        $output->setResult($this->handleToolCallsCallback($output)($output->getResult()));
+        $output->setResult($this->handleToolCallsCallback($output, $output->getResult()));
     }
 
     /**
@@ -99,40 +102,39 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         return array_reduce($tools, fn (bool $carry, mixed $item) => $carry && \is_string($item), true);
     }
 
-    private function handleToolCallsCallback(Output $output): \Closure
+    private function handleToolCallsCallback(Output $output, ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null): ResultInterface
     {
-        return function (ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null) use ($output): ResultInterface {
-            ++$this->nestingLevel;
-            $messages = $this->keepToolMessages ? $output->getMessageBag() : clone $output->getMessageBag();
+        ++$this->nestingLevel;
+        $messages = $this->keepToolMessages ? $output->getMessageBag() : clone $output->getMessageBag();
 
-            if (null !== $streamedAssistantResponse && '' !== $streamedAssistantResponse->getContent()) {
-                $messages->add($streamedAssistantResponse);
+        if (null !== $streamedAssistantResponse && '' !== $streamedAssistantResponse->getContent()) {
+            $messages->add($streamedAssistantResponse);
+        }
+
+        do {
+            $toolCalls = $result->getContent();
+            $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
+
+            $results = [];
+            foreach ($toolCalls as $toolCall) {
+                $results[] = $toolResult = $this->toolbox->execute($toolCall);
+                // dd($toolResult);
+                $messages->add(Message::ofToolCall($toolCall, $this->resultConverter->convert($toolResult)));
+                array_push($this->sources, ...$toolResult->getSources());
             }
 
-            do {
-                $toolCalls = $result->getContent();
-                $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
+            $event = new ToolCallsExecuted(...$results);
+            $this->eventDispatcher?->dispatch($event);
 
-                $results = [];
-                foreach ($toolCalls as $toolCall) {
-                    $results[] = $toolResult = $this->toolbox->execute($toolCall);
-                    $messages->add(Message::ofToolCall($toolCall, $this->resultConverter->convert($toolResult)));
-                    array_push($this->sources, ...$toolResult->getSources());
-                }
+            $result = $event->hasResult() ? $event->getResult() : $this->agent->call($messages, $output->getOptions());
+        } while ($result instanceof ToolCallResult);
 
-                $event = new ToolCallsExecuted(...$results);
-                $this->eventDispatcher?->dispatch($event);
+        --$this->nestingLevel;
+        if ($this->includeSources && 0 === $this->nestingLevel) {
+            $result->getMetadata()->add('sources', $this->sources);
+            $this->sources = [];
+        }
 
-                $result = $event->hasResult() ? $event->getResult() : $this->agent->call($messages, $output->getOptions());
-            } while ($result instanceof ToolCallResult);
-
-            --$this->nestingLevel;
-            if ($this->includeSources && 0 === $this->nestingLevel) {
-                $result->getMetadata()->add('sources', $this->sources);
-                $this->sources = [];
-            }
-
-            return $result;
-        };
+        return $result;
     }
 }

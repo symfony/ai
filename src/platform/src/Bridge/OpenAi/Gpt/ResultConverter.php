@@ -173,7 +173,7 @@ final class ResultConverter implements ResultConverterInterface
     private function convertChoice(array $choice): ToolCallResult|TextResult
     {
         if ('tool_calls' === $choice['finish_reason']) {
-            return new ToolCallResult(...array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
+            return new ToolCallResult(...array_map($this->convertToolCall(...), $choice['message']['tool_calls']));
         }
 
         if (\in_array($choice['finish_reason'], ['stop', 'length'], true)) {
