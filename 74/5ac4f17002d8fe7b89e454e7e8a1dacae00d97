@@ -1,0 +1,26 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-27T11:45:03Z
+
+Why is this needed? we have the `link` binary
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-11-27T13:49:59Z
+
+> Why is this needed?
+
+On my computer, my fork was a bit outdated. I ran `cd examples && composer up`.
+And when I wanted to run the examples, I got an exception, because a class (Clock IIRC) has been moved.
+
+Explanation:
+
+* my current example expected code a version 1234
+* `composer up` grab code from main at version 1255
+* 💥
+
+With this patch, we ensure everything is sync.
+
+> we have the `link` binary
+
+It saves one step! Better onboarding
