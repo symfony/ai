@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Message;
 
-use Symfony\AI\Platform\Metadata\IdentifierAwareTrait;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\ToolCall;
 

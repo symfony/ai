@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
-use Symfony\AI\Platform\Metadata\IdentifierAwareTrait;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 
 /**
