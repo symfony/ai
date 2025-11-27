@@ -57,13 +57,22 @@ final class Store implements StoreInterface
      */
     public function query(Vector $vector, array $options = []): array
     {
+        $include ??= ['embeddings', 'metadatas', 'distances'];
+        if ([] !== ($options['include'] ?? [])) {
+            $include = array_values(
+                array_unique(
+                    array_merge($include, $options['include'])
+                )
+            );
+        }
+
         $collection = $this->client->getOrCreateCollection($this->collectionName);
         $queryResponse = $collection->query(
             queryEmbeddings: [$vector->getData()],
             nResults: 4,
             where: $options['where'] ?? null,
             whereDocument: $options['whereDocument'] ?? null,
-            include: $options['include'] ?? null,
+            include: $include,
         );
 
         $documents = [];
