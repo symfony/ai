@@ -27,7 +27,8 @@ final class Store implements StoreInterface
     public function __construct(
         private readonly Client $client,
         private readonly string $collectionName,
-    ) {
+    )
+    {
         if (!class_exists(Client::class)) {
             throw new RuntimeException('For using the ChromaDB as retrieval vector store, the codewithkyrian/chromadb-php package is required. Try running "composer require codewithkyrian/chromadb-php".');
         }
@@ -40,7 +41,7 @@ final class Store implements StoreInterface
         $metadata = [];
         $originalDocuments = [];
         foreach ($documents as $document) {
-            $ids[] = (string) $document->id;
+            $ids[] = (string)$document->id;
             $vectors[] = $document->vector->getData();
             $metadataCopy = $document->metadata->getArrayCopy();
             $originalDocuments[] = $document->metadata->getText() ?? '';
@@ -57,7 +58,7 @@ final class Store implements StoreInterface
      */
     public function query(Vector $vector, array $options = []): array
     {
-        $include ??= ['embeddings', 'metadatas', 'distances'];
+        $include = ['embeddings', 'metadatas', 'distances'];
         if ([] !== ($options['include'] ?? [])) {
             $include = array_values(
                 array_unique(
