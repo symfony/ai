@@ -17,7 +17,6 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -68,7 +67,7 @@ final class Store implements StoreInterface
         $documents = [];
         for ($i = 0; $i < \count($queryResponse->metadatas[0]); ++$i) {
             $documents[] = new VectorDocument(
-                id: Uuid::fromString($queryResponse->ids[0][$i]),
+                id: $queryResponse->ids[0][$i],
                 vector: new Vector($queryResponse->embeddings[0][$i]),
                 metadata: new Metadata($queryResponse->metadatas[0][$i]),
             );
