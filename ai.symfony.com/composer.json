@@ -6,17 +6,17 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "symfony/asset": "^7.3",
-        "symfony/asset-mapper": "^7.3",
-        "symfony/console": "^7.3",
-        "symfony/dotenv": "^7.3",
+        "symfony/asset": "^7.4",
+        "symfony/asset-mapper": "^7.4",
+        "symfony/console": "^7.4",
+        "symfony/dotenv": "^7.4",
         "symfony/flex": "^2",
-        "symfony/framework-bundle": "^7.3",
-        "symfony/runtime": "^7.3",
+        "symfony/framework-bundle": "^7.4",
+        "symfony/runtime": "^7.4",
         "symfony/stimulus-bundle": "^2.31",
-        "symfony/twig-bundle": "^7.3",
+        "symfony/twig-bundle": "^7.4",
         "symfony/ux-icons": "^2.31",
-        "symfony/yaml": "^7.3",
+        "symfony/yaml": "^7.4",
         "twig/extra-bundle": "^3.0",
         "twig/twig": "^3.0"
     },
@@ -61,7 +61,7 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "7.3.*"
+            "require": "7.4.*"
         }
     },
     "scripts": {
