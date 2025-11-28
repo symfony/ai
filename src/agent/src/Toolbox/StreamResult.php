@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent\Toolbox;
 
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Result\BaseResult;
+use Symfony\AI\Platform\Result\StreamResult as PlatformStreamResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 
 /**
@@ -21,7 +22,7 @@ use Symfony\AI\Platform\Result\ToolCallResult;
 final class StreamResult extends BaseResult
 {
     public function __construct(
-        private readonly \Generator $generator,
+        private readonly PlatformStreamResult $sourceStreamResult,
         private readonly \Closure $handleToolCallsCallback,
     ) {
     }
@@ -29,7 +30,7 @@ final class StreamResult extends BaseResult
     public function getContent(): \Generator
     {
         $streamedResult = '';
-        foreach ($this->generator as $value) {
+        foreach ($this->sourceStreamResult->getContent() as $value) {
             if ($value instanceof ToolCallResult) {
                 $innerResult = ($this->handleToolCallsCallback)($value, Message::ofAssistant($streamedResult));
 
@@ -48,17 +49,31 @@ final class StreamResult extends BaseResult
                     yield from $content;
                 }
 
-                break;
-            }
+                if ($innerResult->getMetadata()->has('calls')) {
+                    $innerCalls = $innerResult->getMetadata()->get('calls');
+                    $previousCalls = $this->getMetadata()->get('calls', []);
+                    $calls = array_merge($previousCalls, $innerCalls);
+                } else {
+                    $calls[] = $innerResult->getMetadata()->all();
+                }
 
-            if (!\is_string($value)) {
-                yield $value;
-                break;
+                if ($calls !== ['calls' => []]) {
+                    $this->getMetadata()->add('calls', $calls);
+                }
+
+                continue;
             }
 
             $streamedResult .= $value;
 
             yield $value;
+
         }
+
+        // Attach the metadata from the platform stream to the agent after the stream has been fully processed
+        // and the post-result metadata, such as usage, has been received.
+        $calls = $this->getMetadata()->get('calls', []);
+        $calls[] = $this->sourceStreamResult->getMetadata()->all();
+        $this->getMetadata()->add('calls', $calls);
     }
 }
