@@ -17,13 +17,13 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Metadata\TokenUsage;
+use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\Result\StreamChunk;
+use Symfony\AI\Platform\Result\TextChunk;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -90,50 +90,43 @@ final class ResultConverter implements ResultConverterInterface
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
         $toolCalls = [];
-        /** @var ToolCallResult|null $toolCallResult */
-        $toolCallResult = null;
+        $metadata = [];
         foreach ($result->getDataStream() as $data) {
+            if (!$metadata) {
+                $metadata['id'] = $data['id'];
+            }
+
+            if (isset($data['usage'])) {
+                $metadata['usage'] = $data['usage'];
+            }
+
+            if (isset($data['choices'][0]['finish_reason'])) {
+                $metadata['finish_reason'] = $data['choices'][0]['finish_reason'];
+            }
+
             if ($this->streamIsToolCall($data)) {
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
 
             if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
                 $toolCallResult = new ToolCallResult(...array_map($this->convertToolCall(...), $toolCalls));
-                // postpone yielding the tool call result until the usage is available
-                continue;
-            }
-
-            // Usage arrives after the tool calls are finished.
-            if ($usage = $data['usage'] ?? null) {
-                if ($toolCallResult) {
-                    $toolCallResult->getMetadata()->add('usage', $usage);
-                    yield $toolCallResult;
-                    $toolCallResult = null;
-                } else {
-                    yield new TokenUsage(
-                        promptTokens: $usage['prompt_tokens'] ?? null,
-                        completionTokens: $usage['completion_tokens'] ?? null,
-                        thinkingTokens: $usage['completion_tokens_details']['reasoning_tokens'] ?? null,
-                        cachedTokens: $usage['prompt_tokens_details']['cached_tokens'] ?? null,
-                        totalTokens: $usage['total_tokens'] ?? null,
-                    );
-                }
+                $metadata['tool_calls'] = $toolCalls;
+                $toolCallResult->getMetadata()->set($metadata);
+                yield $toolCallResult;
             }
 
             if (!isset($data['choices'][0]['delta']['content'])) {
                 continue;
             }
 
-            $chunk = new StreamChunk($data['choices'][0]['delta']['content']);
-            $chunk->setRawResult($result);
+            $textChunk = new TextChunk($data['choices'][0]['delta']['content']);
+            $textChunk->getMetadata()->set($metadata);
+            $textChunk->setRawResult($result);
 
-            yield $chunk;
+            yield $textChunk;
         }
 
-        // Yield the last tool call result if any.
-        if ($toolCallResult) {
-            yield $toolCallResult;
-        }
+        yield new Metadata($metadata);
     }
 
     /**
