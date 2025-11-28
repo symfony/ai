@@ -67,7 +67,6 @@ final class StreamResult extends BaseResult
             $streamedResult .= $value;
 
             yield $value;
-
         }
 
         // Attach the metadata from the platform stream to the agent after the stream has been fully processed
