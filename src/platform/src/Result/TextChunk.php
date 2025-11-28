@@ -14,22 +14,22 @@ namespace Symfony\AI\Platform\Result;
 /**
  * @author Oscar Esteve <oscarsdt@gmail.com>
  */
-final class StreamChunk extends BaseResult implements \Stringable
+final class TextChunk extends BaseResult implements \Stringable
 {
     /**
-     * @param string|iterable<mixed>|object|null $content
+     * @param string $content
      */
     public function __construct(
-        private readonly string|iterable|object|null $content,
+        private readonly string $content,
     ) {
     }
 
     public function __toString(): string
     {
-        return (string) $this->content;
+        return $this->content;
     }
 
-    public function getContent(): string|iterable|object|null
+    public function getContent(): string
     {
         return $this->content;
     }
