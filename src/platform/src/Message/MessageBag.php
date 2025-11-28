@@ -18,6 +18,8 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
+ *
+ * @implements \IteratorAggregate<MessageInterface>
  */
 class MessageBag implements \IteratorAggregate, \Countable
 {
