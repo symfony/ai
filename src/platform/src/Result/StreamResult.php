@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Result;
 
+use Symfony\AI\Platform\Metadata\Metadata;
+
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -23,6 +25,15 @@ final class StreamResult extends BaseResult
 
     public function getContent(): \Generator
     {
-        yield from $this->generator;
+        foreach ($this->generator as $content) {
+            if ($content instanceof Metadata) {
+                foreach ($content as $key => $value) {
+                    $this->getMetadata()->add($key, $value);
+                }
+                continue;
+            }
+
+            yield $content;
+        }
     }
 }
