@@ -976,27 +976,19 @@ final class AiBundle extends AbstractBundle
 
                 $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
 
-                $arguments = [
-                    new Reference($store['service']),
-                    new Reference('ai.store.distance_calculator.'.$name),
-                    $store['cache_key'] ?? $name,
-                ];
-
                 if (\array_key_exists('strategy', $store) && null !== $store['strategy']) {
-                    if (!$container->hasDefinition('ai.store.distance_calculator.'.$name)) {
-                        $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
-                        $distanceCalculatorDefinition->setLazy(true);
-                        $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
-
-                    $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
-
-                    $arguments[1] = new Reference('ai.store.distance_calculator.'.$name);
+                    $distanceCalculatorDefinition = $container->getDefinition('ai.store.distance_calculator.'.$name);
+                    $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
                 }
 
                 $definition = new Definition(LocalCacheStore::class);
                 $definition
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        new Reference($store['service']),
+                        new Reference('ai.store.distance_calculator.'.$name),
+                        $store['cache_key'] ?? $name,
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
@@ -1348,6 +1340,7 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
