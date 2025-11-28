@@ -16,9 +16,6 @@ namespace Symfony\AI\Platform\Result;
  */
 final class TextChunk extends BaseResult implements \Stringable
 {
-    /**
-     * @param string $content
-     */
     public function __construct(
         private readonly string $content,
     ) {
