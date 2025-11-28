@@ -13,10 +13,9 @@ namespace Symfony\AI\Platform\Tests\Bridge\OpenAi\Gpt;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
-use Symfony\AI\Platform\Metadata\TokenUsage;
 use Symfony\AI\Platform\Result\RawHttpResult;
-use Symfony\AI\Platform\Result\StreamChunk;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Result\TextChunk;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -49,7 +48,7 @@ final class ResultConverterStreamTest extends TestCase
 
         $this->assertInstanceOf(StreamResult::class, $result);
 
-        /** @var StreamChunk[] $chunks */
+        /** @var TextChunk[] $chunks */
         $chunks = [];
         $content = '';
 
@@ -107,6 +106,8 @@ final class ResultConverterStreamTest extends TestCase
         $this->assertSame('call_123', $toolCalls[0]->getId());
         $this->assertSame('test_function', $toolCalls[0]->getName());
         $this->assertSame(['arg1' => 'value1'], $toolCalls[0]->getArguments());
+
+        // Get the token usage metadata from the result
         $this->assertSame(
             [
                 'prompt_tokens' => 1039,
@@ -123,18 +124,18 @@ final class ResultConverterStreamTest extends TestCase
                     'rejected_prediction_tokens' => 0,
                 ],
             ],
-            $toolCallResult->getMetadata()->get('usage')
+            $result->getMetadata()->get('usage')
         );
     }
 
     public function testStreamTokenUsage()
     {
         $sseBody = ''
-            ."data: {\"choices\":[{\"delta\":{\"role\":\"assistant\"},\"index\":0}]}\n\n"
-            ."data: {\"choices\":[{\"delta\":{\"content\":\"Hello \"},\"index\":0}]}\n\n"
-            ."data: {\"choices\":[{\"delta\":{\"content\":\"world\"},\"index\":0}]}\n\n"
-            ."data: {\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"stop\"}]}\n\n"
-            ."data: {\"usage\":{\"prompt_tokens\":1039,\"completion_tokens\":10,\"total_tokens\":1049,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}}}\n\n"
+            ."data: {\"id\":\"chatcmpl-123\",\"choices\":[{\"delta\":{\"role\":\"assistant\"},\"index\":0}]}\n\n"
+            ."data: {\"id\":\"chatcmpl-123\",\"choices\":[{\"delta\":{\"content\":\"Hello \"},\"index\":0}]}\n\n"
+            ."data: {\"id\":\"chatcmpl-123\",\"choices\":[{\"delta\":{\"content\":\"world\"},\"index\":0}]}\n\n"
+            ."data: {\"id\":\"chatcmpl-123\",\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"stop\"}]}\n\n"
+            ."data: {\"id\":\"chatcmpl-123\",\"usage\":{\"prompt_tokens\":1039,\"completion_tokens\":10,\"total_tokens\":1049,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}}}\n\n"
             ."data: [DONE]\n\n";
 
         $mockClient = new MockHttpClient([
@@ -157,11 +158,10 @@ final class ResultConverterStreamTest extends TestCase
         foreach ($result->getContent() as $delta) {
             $yielded[] = $delta;
         }
-        $this->assertCount(3, $yielded);
-        $this->assertInstanceOf(TokenUsage::class, $yielded[2]);
-        $this->assertSame(1039, $yielded[2]->promptTokens);
-        $this->assertSame(10, $yielded[2]->completionTokens);
-        $this->assertSame(1049, $yielded[2]->totalTokens);
-        $this->assertSame(0, $yielded[2]->cachedTokens);
+        $this->assertCount(2, $yielded);
+        /** @var TextChunk $chunk */
+        $chunk = $yielded[0];
+        $this->assertInstanceOf(TextChunk::class, $chunk);
+        $this->assertEquals('chatcmpl-123', $chunk->getMetadata()->get('id'));
     }
 }
