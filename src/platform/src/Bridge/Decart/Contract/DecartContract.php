@@ -12,10 +12,19 @@
 namespace Symfony\AI\Platform\Bridge\Decart\Contract;
 
 use Symfony\AI\Platform\Contract;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final readonly class DecartContract extends Contract
+final class DecartContract extends Contract
 {
+    public static function create(NormalizerInterface ...$normalizer): Contract
+    {
+        return parent::create(
+            new ImageNormalizer(),
+            new VideoNormalizer(),
+            ...$normalizer
+        );
+    }
 }

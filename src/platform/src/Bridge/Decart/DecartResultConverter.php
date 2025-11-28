@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\Decart;
 
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -36,6 +35,6 @@ final readonly class DecartResultConverter implements ResultConverterInterface
 
         $headers = $response->getHeaders();
 
-        return new BinaryResult($response->getContent(), $headers['content-type']);
+        return new BinaryResult($response->getContent(), $headers['content-type'][0]);
     }
 }

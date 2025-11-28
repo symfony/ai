@@ -51,6 +51,12 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::IMAGE_TO_IMAGE,
                 ],
             ],
+            'lucy-pro-i2v' => [
+                'class' => Decart::class,
+                'capabilities' => [
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
             'lucy-pro-v2v' => [
                 'class' => Decart::class,
                 'capabilities' => [

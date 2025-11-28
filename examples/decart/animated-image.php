@@ -10,7 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory;
-use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\Image;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -19,8 +19,8 @@ $platform = PlatformFactory::create(
     httpClient: http_client(),
 );
 
-$result = $platform->invoke('lucy-pro-t2v', new Text('A serene ocean with dolphins jumping at sunset'), [
-    'timeout' => 3600,
+$result = $platform->invoke('lucy-pro-i2v', Image::fromFile(dirname(__DIR__, 2).'/fixtures/accordion.jpg'), [
+    'prompt' => 'Make the man move from right to left while playing accordion',
 ]);
 
-echo $result->asBinary();
+echo $result->asBinary().\PHP_EOL;

@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Decart;
 
+use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -36,7 +38,19 @@ final readonly class DecartClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
-        dd($this->httpClient->request('POST', \sprintf('%s/generate/%s', $this->hostUrl, $model->getName()), [
+        return match (true) {
+            \in_array(Capability::TEXT_TO_IMAGE, $model->getCapabilities(), true),
+            \in_array(Capability::TEXT_TO_VIDEO, $model->getCapabilities(), true) => $this->generate($model, $payload, $options),
+            \in_array(Capability::IMAGE_TO_IMAGE, $model->getCapabilities(), true),
+            \in_array(Capability::IMAGE_TO_VIDEO, $model->getCapabilities(), true),
+            \in_array(Capability::VIDEO_TO_VIDEO, $model->getCapabilities(), true) => $this->edit($model, $payload, $options),
+            default => throw new InvalidArgumentException(\sprintf('The "%s" model is not supported', $model->getName())),
+        };
+    }
+
+    private function generate(Model $model, array|string $payload, array $options = []): RawResultInterface
+    {
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/generate/%s', $this->hostUrl, $model->getName()), [
             'headers' => [
                 'x-api-key' => $this->apiKey,
             ],
@@ -44,14 +58,18 @@ final readonly class DecartClient implements ModelClientInterface
                 'prompt' => \is_string($payload) ? $payload : $payload['text'],
                 ...$options,
             ],
-        ])->getContent(false));
+        ]));
+    }
 
+    private function edit(Model $model, array|string $payload, array $options): RawResultInterface
+    {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/generate/%s', $this->hostUrl, $model->getName()), [
             'headers' => [
                 'x-api-key' => $this->apiKey,
             ],
             'body' => [
-                'prompt' => \is_string($payload) ? $payload : $payload['text'],
+                'prompt' => $options['prompt'],
+                'data' => fopen($payload['input_image']['path'] ?? $payload['input_video']['path'], 'r'),
                 ...$options,
             ],
         ]));
