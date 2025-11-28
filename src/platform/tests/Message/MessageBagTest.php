@@ -48,26 +48,6 @@ final class MessageBagTest extends TestCase
         $this->assertNull($messageBag->getSystemMessage());
     }
 
-    public function testWith()
-    {
-        $messageBag = new MessageBag(
-            Message::forSystem('My amazing system prompt.'),
-            Message::ofAssistant('It is time to sleep.'),
-            Message::ofUser('Hello, world!'),
-        );
-
-        $newMessage = Message::ofAssistant('It is time to wake up.');
-        $newMessageBag = $messageBag->with($newMessage);
-
-        $this->assertCount(3, $messageBag);
-        $this->assertCount(4, $newMessageBag);
-
-        $newMessageFromBag = $newMessageBag->getMessages()[3];
-
-        $this->assertInstanceOf(AssistantMessage::class, $newMessageFromBag);
-        $this->assertSame('It is time to wake up.', $newMessageFromBag->getContent());
-    }
-
     public function testMerge()
     {
         $messageBag = new MessageBag(
@@ -121,7 +101,7 @@ final class MessageBagTest extends TestCase
         );
 
         $newMessage = Message::forSystem('My amazing system prompt.');
-        $newMessageBag = $messageBag->prepend($newMessage);
+        $newMessageBag = (clone $messageBag)->prepend($newMessage);
 
         $this->assertCount(2, $messageBag);
         $this->assertCount(3, $newMessageBag);

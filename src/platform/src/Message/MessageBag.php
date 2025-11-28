@@ -12,13 +12,18 @@
 namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class MessageBag implements \Countable
+class MessageBag implements \IteratorAggregate, \Countable
 {
     use MetadataAwareTrait;
+
+    private AbstractUid&TimeBasedUidInterface $id;
 
     /**
      * @var list<MessageInterface>
@@ -28,11 +33,31 @@ class MessageBag implements \Countable
     public function __construct(MessageInterface ...$messages)
     {
         $this->messages = array_values($messages);
+        $this->id = Uuid::v7();
     }
 
-    public function add(MessageInterface $message): void
+    public function __clone()
+    {
+        $this->id = Uuid::v7();
+    }
+
+    public function getId(): AbstractUid&TimeBasedUidInterface
+    {
+        return $this->id;
+    }
+
+    public function add(MessageInterface $message): self
     {
         $this->messages[] = $message;
+
+        return $this;
+    }
+
+    public function prepend(MessageInterface $message): self
+    {
+        $this->messages = array_merge([$message], $this->messages);
+
+        return $this;
     }
 
     /**
@@ -65,20 +90,11 @@ class MessageBag implements \Countable
         return null;
     }
 
-    public function with(MessageInterface $message): self
-    {
-        $messages = clone $this;
-        $messages->add($message);
-
-        return $messages;
-    }
-
     public function merge(self $messageBag): self
     {
-        $messages = clone $this;
-        $messages->messages = array_merge($messages->messages, $messageBag->getMessages());
+        $this->messages = array_merge($this->messages, $messageBag->getMessages());
 
-        return $messages;
+        return $this;
     }
 
     public function withoutSystemMessage(): self
@@ -88,14 +104,6 @@ class MessageBag implements \Countable
             $messages->messages,
             static fn (MessageInterface $message) => !$message instanceof SystemMessage,
         ));
-
-        return $messages;
-    }
-
-    public function prepend(MessageInterface $message): self
-    {
-        $messages = clone $this;
-        $messages->messages = array_merge([$message], $messages->messages);
 
         return $messages;
     }
@@ -125,5 +133,10 @@ class MessageBag implements \Countable
     public function count(): int
     {
         return \count($this->messages);
+    }
+
+    public function getIterator(): \Traversable
+    {
+        return new \ArrayIterator($this->messages);
     }
 }
