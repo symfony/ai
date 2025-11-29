@@ -25,7 +25,7 @@ echo 'Initiating parallel calls to GPT on platform ...'.\PHP_EOL;
 $results = [];
 foreach (range('A', 'D') as $letter) {
     echo ' - Request for the letter '.$letter.' initiated.'.\PHP_EOL;
-    $results[] = $platform->invoke('gpt-4o-mini', $messages->with(Message::ofUser($letter)));
+    $results[] = $platform->invoke('gpt-4o-mini', (clone $messages)->add(Message::ofUser($letter)));
 }
 
 echo 'Waiting for the responses ...'.\PHP_EOL;
