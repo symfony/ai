@@ -57,7 +57,7 @@ final class Store implements StoreInterface
         $this->getVectors()->upsert($vectors, $this->namespace);
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $result = $this->getVectors()->query(
             vector: $vector->getData(),
@@ -67,17 +67,14 @@ final class Store implements StoreInterface
             includeValues: true,
         );
 
-        $documents = [];
         foreach ($result->json()['matches'] as $match) {
-            $documents[] = new VectorDocument(
+            yield new VectorDocument(
                 id: Uuid::fromString($match['id']),
                 vector: new Vector($match['values']),
                 metadata: new Metadata($match['metadata']),
                 score: $match['score'],
             );
         }
-
-        return $documents;
     }
 
     private function getVectors(): VectorResource

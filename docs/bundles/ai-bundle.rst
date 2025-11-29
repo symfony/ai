@@ -972,6 +972,69 @@ Benefits of Configured Vectorizers
 * **Consistency**: Ensure all indexers using the same vectorizer have identical embedding configuration
 * **Maintainability**: Change vectorizer settings in one place
 
+Retrievers
+----------
+
+Retrievers are the opposite of indexers. While indexers populate a vector store with documents,
+retrievers allow you to search for documents in a store based on a query string.
+They vectorize the query and retrieve similar documents from the store.
+
+Configuring Retrievers
+~~~~~~~~~~~~~~~~~~~~~~
+
+Retrievers are defined in the ``retriever`` section of your configuration:
+
+.. code-block:: yaml
+
+    ai:
+        retriever:
+            default:
+                vectorizer: 'ai.vectorizer.openai_small'
+                store: 'ai.store.chroma_db.default'
+
+            research:
+                vectorizer: 'ai.vectorizer.mistral_embed'
+                store: 'ai.store.memory.research'
+
+Using Retrievers
+~~~~~~~~~~~~~~~~
+
+The retriever can be injected into your services using the ``RetrieverInterface``::
+
+    use Symfony\AI\Store\RetrieverInterface;
+
+    final readonly class MyService
+    {
+        public function __construct(
+            private RetrieverInterface $retriever,
+        ) {
+        }
+
+        public function search(string $query): array
+        {
+            $documents = [];
+            foreach ($this->retriever->retrieve($query) as $document) {
+                $documents[] = $document;
+            }
+
+            return $documents;
+        }
+    }
+
+When you have multiple retrievers configured, you can use the ``#[Autowire]`` attribute to inject a specific one::
+
+    use Symfony\AI\Store\RetrieverInterface;
+    use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
+    final readonly class ResearchService
+    {
+        public function __construct(
+            #[Autowire(service: 'ai.retriever.research')]
+            private RetrieverInterface $retriever,
+        ) {
+        }
+    }
+
 Profiler
 --------
 

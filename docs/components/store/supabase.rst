@@ -12,7 +12,7 @@ Requirements
 ~~~~~~~~~~~~
 
 * Enable `pgvector extension`_ in the relevant schema of your Supabase project for using `vector`_ column types.
-* Add columns for embedding (type `vector`) and metadata (type `jsonb`) to your table
+* Add columns for embedding (type ``vector``) and metadata (type ``jsonb``) to your table
 * Pre-configured RPC `function`_ for similarity search
 
 See section below for detailed SQL commands.
@@ -29,8 +29,8 @@ Enable ``pgvector`` extension
 
     CREATE EXTENSION IF NOT EXISTS vector;
 
-Create the `documents` table
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Create the ``documents`` table
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: sql
 

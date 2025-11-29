@@ -37,6 +37,7 @@ You can find more advanced usage in combination with an Agent using the store fo
 * `Long-term context with Doctrine DBAL`_
 * `Current session context storage with HttpFoundation session`_
 * `Current process context storage with InMemory`_
+* `Long-term context with Cloudflare`_
 * `Long-term context with Meilisearch`_
 * `Long-term context with MongoDb`_
 * `Long-term context with Pogocache`_
@@ -47,6 +48,7 @@ Supported Message stores
 ------------------------
 
 * `Cache`_
+* `Cloudflare`_
 * `Doctrine DBAL`_
 * `HttpFoundation session`_
 * `InMemory`_
@@ -134,12 +136,14 @@ store and ``bin/console ai:message-store:drop`` to clean up the message store:
 .. _`Long-term context with Doctrine DBAL`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-doctrine-dbal.php
 .. _`Current session context storage with HttpFoundation session`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-session.php
 .. _`Current process context storage with InMemory`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat.php
+.. _`Long-term context with Cloudflare`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-cloudflare.php
 .. _`Long-term context with Meilisearch`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-meilisearch.php
 .. _`Long-term context with MongoDb`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-mongodb.php
 .. _`Long-term context with Pogocache`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-pogocache.php
 .. _`Long-term context with Redis`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-redis.php
 .. _`Long-term context with SurrealDb`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-surrealdb.php
 .. _`Cache`: https://symfony.com/doc/current/components/cache.html
+.. _`Cloudflare`: https://developers.cloudflare.com/kv/
 .. _`Doctrine DBAL`: https://www.doctrine-project.org/projects/dbal.html
 .. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
 .. _`HttpFoundation session`: https://developers.cloudflare.com/vectorize/

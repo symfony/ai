@@ -15,13 +15,13 @@ Example Use Cases
 -----------------
 
 The example use-cases assume that you are working with the Symfony AI demo application, where an agent named
-`blog` is already defined with a set of tools.
+``blog`` is already defined with a set of tools.
 
 Requirement: Set Up Dynamic Toolbox Class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-First, create a class that implements the `ToolboxInterface` and, in its constructor, accepts
-another `ToolboxInterface` instance to delegate calls to the original toolbox. This implements the decorator
+First, create a class that implements the ``ToolboxInterface`` and, in its constructor, accepts
+another ``ToolboxInterface`` instance to delegate calls to the original toolbox. This implements the decorator
 pattern.
 
 
@@ -56,18 +56,18 @@ pattern.
         }
     }
 
-By utilizing the `AsDecorator` attribute, this class will automatically decorate the existing toolbox
-for the `blog` agent, and the `AutowireDecorated` attribute will inject the original toolbox instance to
+By utilizing the ``AsDecorator`` attribute, this class will automatically decorate the existing toolbox
+for the ``blog`` agent, and the ``AutowireDecorated`` attribute will inject the original toolbox instance to
 ensure that existing functionality is preserved and does not need to be reimplemented.
 
 Case 1: Customizing Tools at Runtime
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To change a tool description dynamically, override the `getTools` method in the
-`DynamicToolbox` class. Here is an example of how to modify the description of a specific tool.
+To change a tool description dynamically, override the ``getTools`` method in the
+``DynamicToolbox`` class. Here is an example of how to modify the description of a specific tool.
 
 
-Let's assume that the existing tool `similarity_search` should not have a general-purpose description,
+Let's assume that the existing tool ``similarity_search`` should not have a general-purpose description,
 but instead a description that blocks general questions unless someone asks very politely, in which case it
 allows use of the tool.
 
@@ -97,7 +97,7 @@ allows use of the tool.
     }
 
 
-With this implementation, whenever the `similarity_search` tool is requested, it will have the new
+With this implementation, whenever the ``similarity_search`` tool is requested, it will have the new
 description that enforces the search term argument to include the word "please". For example,
 a question like "Find articles about Symfony" would become "articles symfony please".
 
@@ -109,7 +109,7 @@ Case 2: Removing a Tool
 
 
 To remove a tool dynamically, for example due to missing feature toggles, you can filter out the tool
-in the `getTools` method. In the following example, we simulate a feature toggle that is disabled, so
+in the ``getTools`` method. In the following example, we simulate a feature toggle that is disabled, so
 the clock tool must not be available to the agent registered for the blog toolbox by default.
 
 
@@ -132,15 +132,15 @@ the clock tool must not be available to the agent registered for the blog toolbo
 
 
 With this, and utilizing the blog example in the Symfony AI demo application, the agent will not be able
-to tell the date or time. Only if the `toggleClockFeature` is set to `true` will the agent answer with the
+to tell the date or time. Only if the ``toggleClockFeature`` is set to ``true`` will the agent answer with the
 current date and time again.
 
 Case 3: Adding a Tool
 ~~~~~~~~~~~~~~~~~~~~~
 
 
-To add a new tool dynamically, instantiate a new `Tool` object and append it to the list of tools
-returned by the `getTools` method. In the following example, we add a simple echo tool that returns whatever
+To add a new tool dynamically, instantiate a new ``Tool`` object and append it to the list of tools
+returned by the ``getTools`` method. In the following example, we add a simple echo tool that returns whatever
 input it receives. Notably, this example will also intercept the requested tool execution and respond directly
 with an uppercased version of the input.
 
@@ -186,8 +186,8 @@ with an uppercased version of the input.
     }
 
 
-With this implementation, the `echo` tool will be available to the agent alongside the existing tools.
-You can test this by using the blog example again and explicitly asking the agent to utilize the `echo` tool.
+With this implementation, the ``echo`` tool will be available to the agent alongside the existing tools.
+You can test this by using the blog example again and explicitly asking the agent to utilize the ``echo`` tool.
 
 
 Example:

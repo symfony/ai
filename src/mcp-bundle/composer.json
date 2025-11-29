@@ -7,6 +7,10 @@
         {
             "name": "Christopher Hertel",
             "email": "mail@christopher-hertel.de"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
         }
     ],
     "require": {

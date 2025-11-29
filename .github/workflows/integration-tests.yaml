@@ -104,6 +104,10 @@ jobs:
                   composer-options: "--no-scripts"
                   working-directory: demo
 
+            - name: Link local packages
+              working-directory: demo
+              run: ../link
+
             - run: composer run-script auto-scripts --no-interaction
               working-directory: demo
 

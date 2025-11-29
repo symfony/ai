@@ -210,7 +210,7 @@ final class StoreTest extends TestCase
             'test-index',
         );
 
-        $documents = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $documents = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(2, $documents);
         $this->assertInstanceOf(VectorDocument::class, $documents[0]);
@@ -274,7 +274,7 @@ final class StoreTest extends TestCase
             'test-index',
         );
 
-        $documents = $store->query(new Vector([0.1, 0.2, 0.3]), ['minScore' => 0.8]);
+        $documents = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['minScore' => 0.8]));
 
         $this->assertCount(0, $documents);
     }
@@ -326,11 +326,11 @@ final class StoreTest extends TestCase
             'test-index',
         );
 
-        $documents = $store->query(new Vector([0.1, 0.2, 0.3]), [
+        $documents = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
             'limit' => 10,
             'numCandidates' => 500,
             'filter' => ['category' => 'test'],
-        ]);
+        ]));
 
         $this->assertCount(0, $documents);
     }
@@ -558,7 +558,7 @@ final class StoreTest extends TestCase
             'custom_embeddings',
         );
 
-        $documents = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $documents = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(1, $documents);
         $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());

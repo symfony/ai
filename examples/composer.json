@@ -3,6 +3,24 @@
     "description": "Example scripts about using Symfony AI",
     "license": "MIT",
     "type": "project",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../src/agent"
+        },
+        {
+            "type": "path",
+            "url": "../src/chat"
+        },
+        {
+            "type": "path",
+            "url": "../src/platform"
+        },
+        {
+            "type": "path",
+            "url": "../src/store"
+        }
+    ],
     "require": {
         "php": ">=8.2",
         "ext-pdo": "*",

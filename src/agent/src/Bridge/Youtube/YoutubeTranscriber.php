@@ -42,7 +42,7 @@ final class YoutubeTranscriber
         $list = $fetcher->fetch($videoId);
         $transcript = $list->findTranscript($list->getAvailableLanguageCodes());
 
-        return array_reduce($transcript->fetch(), function (string $carry, array $item): string {
+        return array_reduce($transcript->fetch(), static function (string $carry, array $item): string {
             return $carry.\PHP_EOL.$item['text'];
         }, '');
     }

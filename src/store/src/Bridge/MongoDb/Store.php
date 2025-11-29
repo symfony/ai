@@ -143,7 +143,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     minScore?: float,
      * } $options
      */
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $minScore = null;
         if (\array_key_exists('minScore', $options)) {
@@ -181,18 +181,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
 
-        $documents = [];
-
         foreach ($results as $result) {
-            $documents[] = new VectorDocument(
+            yield new VectorDocument(
                 id: $this->toUuid($result['_id']),
                 vector: new Vector($result[$this->vectorFieldName]),
                 metadata: new Metadata($result['metadata'] ?? []),
                 score: $result['score'],
             );
         }
-
-        return $documents;
     }
 
     private function getCollection(): Collection

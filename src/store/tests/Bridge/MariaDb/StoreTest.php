@@ -63,7 +63,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new Vector($vectorData), ['maxScore' => $maxScore]);
+        $results = iterator_to_array($store->query(new Vector($vectorData), ['maxScore' => $maxScore]));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -111,7 +111,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new Vector($vectorData));
+        $results = iterator_to_array($store->query(new Vector($vectorData)));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -150,7 +150,7 @@ final class StoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = $store->query(new Vector($vectorData), ['limit' => 10]);
+        $results = iterator_to_array($store->query(new Vector($vectorData), ['limit' => 10]));
 
         $this->assertCount(0, $results);
     }
@@ -188,7 +188,7 @@ final class StoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]), ['where' => 'metadata->>\'category\' = \'products\'']);
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['where' => 'metadata->>\'category\' = \'products\'']));
 
         $this->assertCount(0, $results);
     }
@@ -230,10 +230,10 @@ final class StoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
             'maxScore' => 0.5,
             'where' => 'metadata->>\'active\' = \'true\'',
-        ]);
+        ]));
 
         $this->assertCount(0, $results);
     }
@@ -286,13 +286,13 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
             'where' => 'metadata->>\'crawlId\' = :crawlId AND id != :currentId',
             'params' => [
                 'crawlId' => $crawlId,
                 'currentId' => $uuid->toRfc4122(),
             ],
-        ]);
+        ]));
 
         $this->assertCount(1, $results);
         $this->assertSame(0.85, $results[0]->score);

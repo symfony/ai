@@ -24,7 +24,7 @@ interface StoreInterface
     /**
      * @param array<string, mixed> $options
      *
-     * @return VectorDocument[]
+     * @return iterable<VectorDocument>
      */
-    public function query(Vector $vector, array $options = []): array;
+    public function query(Vector $vector, array $options = []): iterable;
 }

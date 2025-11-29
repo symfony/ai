@@ -71,7 +71,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         });
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $results = $this->request('POST', \sprintf('vectorize/v2/indexes/%s/query', $this->index), [
             'vector' => $vector->getData(),
@@ -79,7 +79,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'returnMetadata' => 'all',
         ]);
 
-        return array_map($this->convertToVectorDocument(...), $results['result']['matches']);
+        foreach ($results['result']['matches'] as $item) {
+            yield $this->convertToVectorDocument($item);
+        }
     }
 
     /**

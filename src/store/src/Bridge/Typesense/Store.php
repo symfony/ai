@@ -69,7 +69,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $documents = $this->request('POST', 'multi_search', [
             'searches' => [
@@ -81,7 +81,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ],
         ]);
 
-        return array_map($this->convertToVectorDocument(...), $documents['results'][0]['hits']);
+        foreach ($documents['results'][0]['hits'] as $item) {
+            yield $this->convertToVectorDocument($item);
+        }
     }
 
     public function drop(): void

@@ -196,7 +196,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($client);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(2, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -241,7 +241,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($client, 'test-namespace', ['category' => 'test'], 5);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(0, $results);
     }
@@ -278,11 +278,11 @@ final class StoreTest extends TestCase
 
         $store = new Store($client);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
             'namespace' => 'custom-namespace',
             'filter' => ['type' => 'document'],
             'topK' => 10,
-        ]);
+        ]));
 
         $this->assertCount(0, $results);
     }
@@ -312,7 +312,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($client);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(0, $results);
     }

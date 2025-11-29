@@ -100,6 +100,10 @@ ai:
                 - 'Symfony\AI\Store\Document\Transformer\TextTrimTransformer'
             vectorizer: 'ai.vectorizer.openai'
             store: 'ai.store.chroma_db.symfonycon'
+    retriever:
+        blog:
+            vectorizer: 'ai.vectorizer.openai'
+            store: 'ai.store.chroma_db.symfonycon'
 
 services:
     _defaults:

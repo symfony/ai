@@ -64,7 +64,7 @@ class Store implements ManagedStoreInterface, StoreInterface
         $this->insertBatch($rows);
     }
 
-    public function query(Vector $vector, array $options = [], ?float $minScore = null): array
+    public function query(Vector $vector, array $options = [], ?float $minScore = null): iterable
     {
         $sql = <<<'SQL'
             SELECT
@@ -93,17 +93,14 @@ class Store implements ManagedStoreInterface, StoreInterface
             ->toArray()['data']
         ;
 
-        $documents = [];
         foreach ($results as $result) {
-            $documents[] = new VectorDocument(
+            yield new VectorDocument(
                 id: Uuid::fromString($result['id']),
                 vector: new Vector($result['embedding']),
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );
         }
-
-        return $documents;
     }
 
     /**

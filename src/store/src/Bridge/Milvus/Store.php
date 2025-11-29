@@ -100,7 +100,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $payload = [
             'collectionName' => $this->collection,
@@ -117,7 +117,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $documents = $this->request('POST', 'v2/vectordb/entities/search', $payload);
 
-        return array_map($this->convertToVectorDocument(...), $documents['data']);
+        foreach ($documents['data'] as $item) {
+            yield $this->convertToVectorDocument($item);
+        }
     }
 
     public function drop(): void

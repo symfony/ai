@@ -15,8 +15,10 @@ use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
+ *
+ * @implements \IteratorAggregate<int, MessageInterface>
  */
-class MessageBag implements \Countable
+class MessageBag implements \Countable, \IteratorAggregate
 {
     use MetadataAwareTrait;
 
@@ -125,5 +127,13 @@ class MessageBag implements \Countable
     public function count(): int
     {
         return \count($this->messages);
+    }
+
+    /**
+     * @return \ArrayIterator<int, MessageInterface>
+     */
+    public function getIterator(): \ArrayIterator
+    {
+        return new \ArrayIterator($this->messages);
     }
 }

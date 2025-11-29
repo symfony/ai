@@ -15,6 +15,10 @@
         {
             "name": "Oskar Stark",
             "email": "oskarstark@googlemail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
         }
     ],
     "require": {

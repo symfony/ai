@@ -47,7 +47,7 @@ final class ModelListCommand
             return Command::FAILURE;
         }
 
-        $formatModel = function (Model $model) {
+        $formatModel = static function (Model $model) {
             return \sprintf('%s <comment>[%s]</>', $model->getName(), implode(', ', $model->getOptions()['tags'] ?? []));
         };
 

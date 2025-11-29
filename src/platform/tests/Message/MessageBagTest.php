@@ -262,4 +262,42 @@ final class MessageBagTest extends TestCase
         // Should only return the text content, ignoring the image
         $this->assertSame('Text content', $userText);
     }
+
+    public function testGetIterator()
+    {
+        $systemMessage = Message::forSystem('My amazing system prompt.');
+        $assistantMessage = Message::ofAssistant('It is time to sleep.');
+        $userMessage = Message::ofUser('Hello, world!');
+
+        $messageBag = new MessageBag($systemMessage, $assistantMessage, $userMessage);
+
+        $iterator = $messageBag->getIterator();
+
+        $this->assertInstanceOf(\ArrayIterator::class, $iterator);
+        $this->assertCount(3, $iterator);
+
+        $messages = iterator_to_array($iterator);
+        $this->assertSame($systemMessage, $messages[0]);
+        $this->assertSame($assistantMessage, $messages[1]);
+        $this->assertSame($userMessage, $messages[2]);
+    }
+
+    public function testMessageBagIsIterable()
+    {
+        $systemMessage = Message::forSystem('My amazing system prompt.');
+        $assistantMessage = Message::ofAssistant('It is time to sleep.');
+        $userMessage = Message::ofUser('Hello, world!');
+
+        $messageBag = new MessageBag($systemMessage, $assistantMessage, $userMessage);
+
+        $collectedMessages = [];
+        foreach ($messageBag as $index => $message) {
+            $collectedMessages[$index] = $message;
+        }
+
+        $this->assertCount(3, $collectedMessages);
+        $this->assertSame($systemMessage, $collectedMessages[0]);
+        $this->assertSame($assistantMessage, $collectedMessages[1]);
+        $this->assertSame($userMessage, $collectedMessages[2]);
+    }
 }

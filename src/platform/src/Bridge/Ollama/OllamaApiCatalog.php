@@ -44,7 +44,7 @@ final class OllamaApiCatalog implements ModelCatalogInterface
         $capabilities = array_map(
             static fn (string $capability): Capability => match ($capability) {
                 'embedding' => Capability::EMBEDDINGS,
-                'completion' => Capability::INPUT_TEXT,
+                'completion' => Capability::INPUT_MESSAGES,
                 'tools' => Capability::TOOL_CALLING,
                 'thinking' => Capability::THINKING,
                 'vision' => Capability::INPUT_IMAGE,
@@ -58,7 +58,7 @@ final class OllamaApiCatalog implements ModelCatalogInterface
 
     public function getModels(): array
     {
-        $response = $this->httpClient->request('POST', \sprintf('%s/api/tags', $this->host));
+        $response = $this->httpClient->request('GET', \sprintf('%s/api/tags', $this->host));
 
         $models = $response->toArray();
 

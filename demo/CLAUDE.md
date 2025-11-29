@@ -39,7 +39,7 @@ echo "OPENAI_API_KEY='sk-...'" > .env.local
 symfony console ai:store:index blog -vv
 
 # Test vector store
-symfony console app:blog:query
+symfony console ai:store:retrieve blog "Week of Symfony"
 
 # Start development server
 symfony serve -d
