@@ -17,12 +17,14 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Result\TextChunk;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
@@ -88,21 +90,43 @@ final class ResultConverter implements ResultConverterInterface
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
         $toolCalls = [];
+        $metadata = [];
         foreach ($result->getDataStream() as $data) {
+            if (!$metadata && isset($data['id'])) {
+                $metadata['id'] = $data['id'];
+            }
+
+            if (isset($data['usage'])) {
+                $metadata['usage'] = $data['usage'];
+            }
+
+            if (isset($data['choices'][0]['finish_reason'])) {
+                $metadata['finish_reason'] = $data['choices'][0]['finish_reason'];
+            }
+
             if ($this->streamIsToolCall($data)) {
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
 
             if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
-                yield new ToolCallResult(...array_map($this->convertToolCall(...), $toolCalls));
+                $toolCallResult = new ToolCallResult(...array_map($this->convertToolCall(...), $toolCalls));
+                $metadata['tool_calls'] = $toolCalls;
+                $toolCallResult->getMetadata()->set($metadata);
+                yield $toolCallResult;
             }
 
             if (!isset($data['choices'][0]['delta']['content'])) {
                 continue;
             }
 
-            yield $data['choices'][0]['delta']['content'];
+            $textChunk = new TextChunk($data['choices'][0]['delta']['content']);
+            $textChunk->getMetadata()->set($metadata);
+            $textChunk->setRawResult($result);
+
+            yield $textChunk;
         }
+
+        yield new Metadata($metadata);
     }
 
     /**
