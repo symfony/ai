@@ -12,6 +12,9 @@
 namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -22,6 +25,8 @@ class MessageBag implements \Countable, \IteratorAggregate
 {
     use MetadataAwareTrait;
 
+    private AbstractUid&TimeBasedUidInterface $id;
+
     /**
      * @var list<MessageInterface>
      */
@@ -30,6 +35,12 @@ class MessageBag implements \Countable, \IteratorAggregate
     public function __construct(MessageInterface ...$messages)
     {
         $this->messages = array_values($messages);
+        $this->id = Uuid::v7();
+    }
+
+    public function getId(): AbstractUid&TimeBasedUidInterface
+    {
+        return $this->id;
     }
 
     public function add(MessageInterface $message): void
