@@ -469,6 +469,108 @@ final class StoreTest extends TestCase
         $this->assertCount(1, $documents);
     }
 
+    public function testQueryReturnsMetadatasEmbeddingsDistanceWithoutInclude()
+    {
+        $queryVector = new Vector([0.15, 0.25, 0.35]);
+        $queryResponse = new QueryItemsResponse(
+            ids: [['01234567-89ab-cdef-0123-456789abcdef']],
+            embeddings: [[[0.1, 0.2, 0.3]]],
+            metadatas: [[['title' => 'Doc 1']]],
+            documents: null,
+            data: null,
+            uris: null,
+            distances: null
+        );
+
+        $collection = $this->createMock(CollectionResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('query')
+            ->willReturn($queryResponse);
+
+        $store = new Store($client, 'test-collection');
+        $documents = iterator_to_array($store->query($queryVector));
+
+        $this->assertCount(1, $documents);
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
+        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
+        $this->assertSame(['title' => 'Doc 1'], $documents[0]->metadata->getArrayCopy());
+    }
+
+    public function testQueryReturnsMetadatasEmbeddingsDistanceWithOnlyDocuments()
+    {
+        $queryVector = new Vector([0.15, 0.25, 0.35]);
+        $queryResponse = new QueryItemsResponse(
+            ids: [['01234567-89ab-cdef-0123-456789abcdef']],
+            embeddings: [[[0.1, 0.2, 0.3]]],
+            metadatas: [[['title' => 'Doc 1']]],
+            documents: [['Document content here']],
+            data: null,
+            uris: null,
+            distances: null
+        );
+
+        $collection = $this->createMock(CollectionResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('query')
+            ->willReturn($queryResponse);
+
+        $store = new Store($client, 'test-collection');
+        $documents = iterator_to_array($store->query($queryVector, ['include' => ['documents']]));
+
+        $this->assertCount(1, $documents);
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
+        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
+        $this->assertSame(['title' => 'Doc 1', '_text' => 'Document content here'], $documents[0]->metadata->getArrayCopy());
+    }
+
+    public function testQueryReturnsMetadatasEmbeddingsDistanceWithAll()
+    {
+        $queryVector = new Vector([0.15, 0.25, 0.35]);
+        $queryResponse = new QueryItemsResponse(
+            ids: [['01234567-89ab-cdef-0123-456789abcdef']],
+            embeddings: [[[0.1, 0.2, 0.3]]],
+            metadatas: [[['title' => 'Doc 1']]],
+            documents: [['Document content here']],
+            data: null,
+            uris: null,
+            distances: null
+        );
+
+        $collection = $this->createMock(CollectionResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('query')
+            ->willReturn($queryResponse);
+
+        $store = new Store($client, 'test-collection');
+        $documents = iterator_to_array($store->query($queryVector, ['include' => ['embeddings', 'metadatas', 'distances', 'documents']]));
+
+        $this->assertCount(1, $documents);
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
+        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
+        $this->assertSame(['title' => 'Doc 1', '_text' => 'Document content here'], $documents[0]->metadata->getArrayCopy());
+    }
+
     /**
      * @return \Iterator<string, array{
      *     options: array{where?: array<string, string>, whereDocument?: array<string, mixed>},
