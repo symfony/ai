@@ -35,7 +35,7 @@ jobs:
                         symfony-version: '7.4.*'
 
         env:
-            SYMFONY_REQUIRE: ${{ matrix.symfony-version || '>=7.3' }}
+            SYMFONY_REQUIRE: ${{ matrix.symfony-version || '>=7.4' }}
 
         steps:
             - uses: actions/checkout@v6
