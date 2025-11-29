@@ -92,7 +92,7 @@ final class ResultConverter implements ResultConverterInterface
         $toolCalls = [];
         $metadata = [];
         foreach ($result->getDataStream() as $data) {
-            if (!$metadata) {
+            if (!$metadata && isset($data['id'])) {
                 $metadata['id'] = $data['id'];
             }
 
