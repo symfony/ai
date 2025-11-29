@@ -17,15 +17,13 @@ use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
-use Symfony\Component\Uid\AbstractUid;
-use Symfony\Component\Uid\TimeBasedUidInterface;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
 final class UserMessage implements MessageInterface
 {
+    use IdentifierAwareTrait;
     use MetadataAwareTrait;
 
     /**
@@ -33,23 +31,16 @@ final class UserMessage implements MessageInterface
      */
     private readonly array $content;
 
-    private readonly AbstractUid&TimeBasedUidInterface $id;
-
     public function __construct(
         ContentInterface ...$content,
     ) {
         $this->content = $content;
-        $this->id = Uuid::v7();
+        $this->withId();
     }
 
     public function getRole(): Role
     {
         return Role::User;
-    }
-
-    public function getId(): AbstractUid&TimeBasedUidInterface
-    {
-        return $this->id;
     }
 
     /**
