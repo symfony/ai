@@ -11,7 +11,8 @@
 
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
-use Symfony\AI\Agent\Toolbox\Tool\Clock;
+use Symfony\AI\Agent\Bridge\Clock\Clock;
+use Symfony\AI\Agent\Bridge\OpenMeteo\OpenMeteo;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor;
@@ -24,7 +25,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
 $clock = new Clock();
-$openMeteo = new Symfony\AI\Agent\Toolbox\Tool\OpenMeteo(http_client());
+$openMeteo = new OpenMeteo(http_client());
 $toolbox = new Toolbox([$clock, $openMeteo], logger: logger());
 $processor = new AgentProcessor($toolbox);
 
