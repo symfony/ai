@@ -44,7 +44,6 @@ $result = $agent->call($messages, [
 // Output text chunks
 /** @var TextChunk $textChunk */
 foreach ($result->getContent() as $textChunk) {
-
     // $textChunk implement \Stringable
     echo $textChunk->getContent();
 
