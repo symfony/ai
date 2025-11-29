@@ -119,7 +119,13 @@ final class DeferredResult
      */
     public function asStream(): \Generator
     {
-        yield from $this->as(StreamResult::class)->getContent();
+        $streamResult = $this->as(StreamResult::class);
+
+        yield from $streamResult->getContent();
+
+        foreach ($streamResult->getMetadata() as $key => $value) {
+            $this->getResult()->getMetadata()->add($key, $value);
+        }
     }
 
     /**
