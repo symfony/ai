@@ -1,0 +1,78 @@
+{% if collector.tools|length %}
+    <div class="sf-tabs">
+        {% for tool in collector.tools %}
+            <div class="tab">
+                <h3 class="tab-title">{{ tool.name }}</h3>
+                <div class="tab-content">
+                    {% if tool.description %}
+                        <p><strong>Description:</strong> {{ tool.description }}</p>
+                    {% endif %}
+
+                    {% if tool.inputSchema.properties is defined and tool.inputSchema.properties|length %}
+                        <h4>Parameters</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                    <th>Default</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for name, prop in tool.inputSchema.properties %}
+                                    <tr>
+                                        <td><code>{{ name }}</code></td>
+                                        <td><span class="badge badge-primary">{{ prop.type is iterable ? prop.type|join('|') : (prop.type ?? 'any') }}</span></td>
+                                        <td>
+                                            {% if tool.inputSchema.required is defined and name in tool.inputSchema.required %}
+                                                <span class="label status-error">Yes</span>
+                                            {% else %}
+                                                <span class="label">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if prop.default is defined %}
+                                                {% if prop.default is iterable %}
+                                                    <code>{{ prop.default|json_encode }}</code>
+                                                {% else %}
+                                                    <code>{{ prop.default }}</code>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ prop.description ?? '-' }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty">
+                            <p>This tool has no parameters.</p>
+                        </div>
+                    {% endif %}
+
+                    <h4>Full Schema</h4>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th>
+                                    <button class="btn btn-sm hidden" title="Copy Schema" data-clipboard-text="{{ tool.inputSchema|json_encode(constant('JSON_PRETTY_PRINT'))|e('html_attr') }}">Copy Schema</button>
+                                </th>
+                            </tr>
+                            <tr>
+                                <td>{{ dump(tool.inputSchema) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty">
+        <p>No tools were registered.</p>
+    </div>
+{% endif %}

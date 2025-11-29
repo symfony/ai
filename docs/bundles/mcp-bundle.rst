@@ -255,6 +255,23 @@ You can customize the logging level and destination according to your needs:
                 channels: ['mcp']
                 webhook_url: '%env(SLACK_WEBHOOK)%'
 
+Profiler
+--------
+
+When the Symfony Web Profiler is enabled, the MCP Bundle automatically adds a dedicated panel showing all registered MCP capabilities in your application:
+
+.. image:: images/profiler-mcp.png
+   :alt: MCP Profiler Panel
+
+The profiler displays:
+
+- **Tools**: All registered MCP tools with their descriptions and input schemas
+- **Prompts**: Available prompts with their arguments and requirements
+- **Resources**: Static resources with their URIs and MIME types
+- **Resource Templates**: Dynamic resource templates with URI patterns
+
+This makes it easy to inspect and debug your MCP server capabilities during development.
+
 Event System
 ------------
 

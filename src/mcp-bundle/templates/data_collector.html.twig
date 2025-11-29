@@ -1,0 +1,99 @@
+{% extends '@WebProfiler/Profiler/layout.html.twig' %}
+
+{% block toolbar %}
+    {% if collector.totalCount > 0 %}
+        {% set icon %}
+            {{ include('@Mcp/icon.svg', { y: 18 }) }}
+            <span class="sf-toolbar-value">{{ collector.totalCount }}</span>
+            <span class="sf-toolbar-info-piece-additional-detail">
+                <span class="sf-toolbar-label">capabilities</span>
+            </span>
+        {% endset %}
+
+        {% set text %}
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Tools</b>
+                <span class="sf-toolbar-status">{{ collector.tools|length }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Prompts</b>
+                <span class="sf-toolbar-status">{{ collector.prompts|length }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Resources</b>
+                <span class="sf-toolbar-status">{{ collector.resources|length }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Resource Templates</b>
+                <span class="sf-toolbar-status">{{ collector.resourceTemplates|length }}</span>
+            </div>
+        {% endset %}
+
+        {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', { 'link': true }) }}
+    {% endif %}
+{% endblock %}
+
+{% block menu %}
+    <span class="label">
+        <span class="icon">{{ include('@Mcp/icon.svg', { y: 16 }) }}</span>
+        <strong>MCP</strong>
+        <span class="count">{{ collector.totalCount }}</span>
+    </span>
+{% endblock %}
+
+{% block panel %}
+    <h2>MCP Capabilities</h2>
+    <section class="metrics">
+        <div class="metric-group">
+            <div class="metric">
+                <span class="value">{{ collector.tools|length }}</span>
+                <span class="label">Tools</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.prompts|length }}</span>
+                <span class="label">Prompts</span>
+            </div>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-group">
+            <div class="metric">
+                <span class="value">{{ collector.resources|length }}</span>
+                <span class="label">Resources</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.resourceTemplates|length }}</span>
+                <span class="label">Resource Templates</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="sf-tabs">
+        <div class="tab {{ collector.tools is empty ? 'disabled' }}">
+            <h3 class="tab-title">Tools <span class="badge">{{ collector.tools|length }}</span></h3>
+            <div class="tab-content">
+                {{ include('@Mcp/tools.html.twig') }}
+            </div>
+        </div>
+
+        <div class="tab {{ collector.prompts is empty ? 'disabled' }}">
+            <h3 class="tab-title">Prompts <span class="badge">{{ collector.prompts|length }}</span></h3>
+            <div class="tab-content">
+                {{ include('@Mcp/prompts.html.twig') }}
+            </div>
+        </div>
+
+        <div class="tab {{ collector.resources is empty ? 'disabled' }}">
+            <h3 class="tab-title">Resources <span class="badge">{{ collector.resources|length }}</span></h3>
+            <div class="tab-content">
+                {{ include('@Mcp/resources.html.twig') }}
+            </div>
+        </div>
+
+        <div class="tab {{ collector.resourceTemplates is empty ? 'disabled' }}">
+            <h3 class="tab-title">Resource Templates <span class="badge">{{ collector.resourceTemplates|length }}</span></h3>
+            <div class="tab-content">
+                {{ include('@Mcp/resource_templates.html.twig') }}
+            </div>
+        </div>
+    </div>
+{% endblock %}
