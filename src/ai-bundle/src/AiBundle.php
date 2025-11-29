@@ -1855,6 +1855,7 @@ final class AiBundle extends AbstractBundle
             new Reference($config['vectorizer']),
             new Reference($config['store']),
             $config['source'],
+            [],
             $filters,
             $transformers,
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
