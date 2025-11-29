@@ -81,10 +81,10 @@ use Symfony\AI\Store\Bridge\Azure\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
-use Symfony\AI\Store\Bridge\Local\CacheStore;
+use Symfony\AI\Store\Bridge\Local\CacheStore as LocalCacheStore;
 use Symfony\AI\Store\Bridge\Local\DistanceCalculator;
 use Symfony\AI\Store\Bridge\Local\DistanceStrategy;
-use Symfony\AI\Store\Bridge\Local\InMemoryStore;
+use Symfony\AI\Store\Bridge\Local\InMemoryStore as LocalInMemoryStore;
 use Symfony\AI\Store\Bridge\Manticore\Store as ManticoreStore;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
@@ -976,26 +976,19 @@ final class AiBundle extends AbstractBundle
 
                 $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
 
-                $arguments = [
-                    new Reference($store['service']),
-                    new Reference('ai.store.distance_calculator.'.$name),
-                    $store['cache_key'] ?? $name,
-                ];
-
                 if (\array_key_exists('strategy', $store) && null !== $store['strategy']) {
-                    $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
-                    $distanceCalculatorDefinition->setLazy(true);
+                    $distanceCalculatorDefinition = $container->getDefinition('ai.store.distance_calculator.'.$name);
                     $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
-
-                    $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
-
-                    $arguments[1] = new Reference('ai.store.distance_calculator.'.$name);
                 }
 
-                $definition = new Definition(CacheStore::class);
+                $definition = new Definition(LocalCacheStore::class);
                 $definition
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        new Reference($store['service']),
+                        new Reference('ai.store.distance_calculator.'.$name),
+                        $store['cache_key'] ?? $name,
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
@@ -1031,6 +1024,7 @@ final class AiBundle extends AbstractBundle
                 } else {
                     $httpClient = new Definition(HttpClientInterface::class);
                     $httpClient
+                        ->setLazy(true)
                         ->setFactory([HttpClient::class, 'createForBaseUri'])
                         ->setArguments([$store['dsn']]);
                 }
@@ -1115,9 +1109,9 @@ final class AiBundle extends AbstractBundle
         if ('mariadb' === $type) {
             foreach ($stores as $name => $store) {
                 $definition = new Definition(MariaDbStore::class);
-                $definition->setFactory([MariaDbStore::class, 'fromDbal']);
                 $definition
                     ->setLazy(true)
+                    ->setFactory([MariaDbStore::class, 'fromDbal'])
                     ->setArguments([
                         new Reference(\sprintf('doctrine.dbal.%s_connection', $store['connection'])),
                         $store['table_name'],
@@ -1128,12 +1122,11 @@ final class AiBundle extends AbstractBundle
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
 
-                $serviceId = 'ai.store.'.$type.'.'.$name;
-                $container->setDefinition($serviceId, $definition);
-                $container->registerAliasForArgument($serviceId, StoreInterface::class, $name);
-                $container->registerAliasForArgument($serviceId, StoreInterface::class, $type.'_'.$name);
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
 
-                $setupStoresOptions[$serviceId] = $store['setup_options'] ?? [];
+                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
             }
         }
 
@@ -1175,6 +1168,7 @@ final class AiBundle extends AbstractBundle
 
                 if (\array_key_exists('strategy', $store) && null !== $store['strategy']) {
                     $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
+                    $distanceCalculatorDefinition->setLazy(true);
                     $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
 
                     $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
@@ -1182,7 +1176,7 @@ final class AiBundle extends AbstractBundle
                     $arguments[0] = new Reference('ai.store.distance_calculator.'.$name);
                 }
 
-                $definition = new Definition(InMemoryStore::class);
+                $definition = new Definition(LocalInMemoryStore::class);
                 $definition
                     ->setLazy(true)
                     ->setArguments($arguments)
@@ -1233,11 +1227,8 @@ final class AiBundle extends AbstractBundle
                     $store['database'],
                     $store['collection'],
                     $store['index_name'],
+                    $store['vector_field'],
                 ];
-
-                if (\array_key_exists('vector_field', $store)) {
-                    $arguments[4] = $store['vector_field'];
-                }
 
                 if (\array_key_exists('bulk_write', $store)) {
                     $arguments[5] = $store['bulk_write'];
@@ -1267,19 +1258,10 @@ final class AiBundle extends AbstractBundle
                     $store['database'],
                     $store['vector_index_name'],
                     $store['node_name'],
+                    $store['vector_field'],
+                    $store['dimensions'],
+                    $store['distance'],
                 ];
-
-                if (\array_key_exists('vector_field', $store)) {
-                    $arguments[7] = $store['vector_field'];
-                }
-
-                if (\array_key_exists('dimensions', $store)) {
-                    $arguments[8] = $store['dimensions'];
-                }
-
-                if (\array_key_exists('distance', $store)) {
-                    $arguments[9] = $store['distance'];
-                }
 
                 if (\array_key_exists('quantization', $store)) {
                     $arguments[10] = $store['quantization'];
@@ -1304,11 +1286,8 @@ final class AiBundle extends AbstractBundle
                 $arguments = [
                     new Reference($store['client']),
                     $store['namespace'],
+                    $store['filter'],
                 ];
-
-                if (\array_key_exists('filter', $store)) {
-                    $arguments[2] = $store['filter'];
-                }
 
                 if (\array_key_exists('top_k', $store)) {
                     $arguments[3] = $store['top_k'];
@@ -1327,6 +1306,49 @@ final class AiBundle extends AbstractBundle
             }
         }
 
+        if ('postgres' === $type) {
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(PostgresStore::class);
+
+                if (\array_key_exists('dbal_connection', $store)) {
+                    $definition->setFactory([PostgresStore::class, 'fromDbal']);
+                    $arguments = [
+                        new Reference($store['dbal_connection']),
+                        $store['table_name'],
+                        $store['vector_field'],
+                    ];
+                } else {
+                    $pdo = new Definition(\PDO::class);
+                    $pdo->setArguments([
+                        $store['dsn'],
+                        $store['username'] ?? null,
+                        $store['password'] ?? null],
+                    );
+
+                    $arguments = [
+                        $pdo,
+                        $store['table_name'],
+                        $store['vector_field'],
+                    ];
+                }
+
+                if (\array_key_exists('distance', $store)) {
+                    $arguments[3] = $store['distance'];
+                }
+
+                $definition
+                    ->setLazy(true)
+                    ->setArguments($arguments)
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
         if ('qdrant' === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
@@ -1334,15 +1356,9 @@ final class AiBundle extends AbstractBundle
                     $store['endpoint'],
                     $store['api_key'],
                     $store['collection_name'],
+                    $store['dimensions'],
+                    $store['distance'],
                 ];
-
-                if (\array_key_exists('dimensions', $store)) {
-                    $arguments[4] = $store['dimensions'];
-                }
-
-                if (\array_key_exists('distance', $store)) {
-                    $arguments[5] = $store['distance'];
-                }
 
                 if (\array_key_exists('async', $store)) {
                     $arguments[6] = $store['async'];
@@ -1385,10 +1401,40 @@ final class AiBundle extends AbstractBundle
                     ->addTag('ai.store');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
             }
         }
 
-        if ('surreal_db' === $type) {
+        if ('supabase' === $type) {
+            foreach ($stores as $name => $store) {
+                $arguments = [
+                    new Reference($store['http_client']),
+                    $store['url'],
+                    $store['api_key'],
+                    $store['table'] ?? $name,
+                    $store['vector_field'],
+                    $store['vector_dimension'],
+                ];
+
+                if (\array_key_exists('function_name', $store)) {
+                    $arguments[6] = $store['function_name'];
+                }
+
+                $definition = new Definition(SupabaseStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments($arguments)
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.supabase.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('surrealdb' === $type) {
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference('http_client'),
@@ -1397,23 +1443,11 @@ final class AiBundle extends AbstractBundle
                     $store['password'],
                     $store['namespace'],
                     $store['database'],
+                    $store['table'] ?? $name,
+                    $store['vector_field'],
+                    $store['strategy'],
+                    $store['dimensions'],
                 ];
-
-                if (\array_key_exists('table', $store)) {
-                    $arguments[6] = $store['table'];
-                }
-
-                if (\array_key_exists('vector_field', $store)) {
-                    $arguments[7] = $store['vector_field'];
-                }
-
-                if (\array_key_exists('strategy', $store)) {
-                    $arguments[8] = $store['strategy'];
-                }
-
-                if (\array_key_exists('dimensions', $store)) {
-                    $arguments[9] = $store['dimensions'];
-                }
 
                 if (\array_key_exists('namespaced_user', $store)) {
                     $arguments[10] = $store['namespaced_user'];
@@ -1435,25 +1469,17 @@ final class AiBundle extends AbstractBundle
 
         if ('typesense' === $type) {
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    new Reference('http_client'),
-                    $store['endpoint'],
-                    $store['api_key'],
-                    $store['collection'],
-                ];
-
-                if (\array_key_exists('vector_field', $store)) {
-                    $arguments[4] = $store['vector_field'];
-                }
-
-                if (\array_key_exists('dimensions', $store)) {
-                    $arguments[5] = $store['dimensions'];
-                }
-
                 $definition = new Definition(TypesenseStore::class);
                 $definition
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        new Reference('http_client'),
+                        $store['endpoint'],
+                        $store['api_key'],
+                        $store['collection'],
+                        $store['vector_field'],
+                        $store['dimensions'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
@@ -1480,88 +1506,6 @@ final class AiBundle extends AbstractBundle
                     ->addTag('ai.store');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-            }
-        }
-
-        if ('postgres' === $type) {
-            foreach ($stores as $name => $store) {
-                $definition = new Definition(PostgresStore::class);
-
-                if (\array_key_exists('dbal_connection', $store)) {
-                    $definition->setFactory([PostgresStore::class, 'fromDbal']);
-                    $arguments = [
-                        new Reference($store['dbal_connection']),
-                        $store['table_name'],
-                    ];
-                } else {
-                    $pdo = new Definition(\PDO::class);
-                    $pdo->setArguments([
-                        $store['dsn'],
-                        $store['username'] ?? null,
-                        $store['password'] ?? null],
-                    );
-
-                    $arguments = [
-                        $pdo,
-                        $store['table_name'],
-                    ];
-                }
-
-                if (\array_key_exists('vector_field', $store)) {
-                    $arguments[2] = $store['vector_field'];
-                }
-
-                if (\array_key_exists('distance', $store)) {
-                    $arguments[3] = $store['distance'];
-                }
-
-                $definition
-                    ->setLazy(true)
-                    ->setArguments($arguments)
-                    ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
-
-                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-            }
-        }
-
-        if ('supabase' === $type) {
-            foreach ($stores as $name => $store) {
-                $arguments = [
-                    isset($store['http_client']) ? new Reference($store['http_client']) : new Definition(HttpClientInterface::class),
-                    $store['url'],
-                    $store['api_key'],
-                ];
-
-                if (\array_key_exists('table', $store)) {
-                    $arguments[3] = $store['table'];
-                }
-
-                if (\array_key_exists('vector_field', $store)) {
-                    $arguments[4] = $store['vector_field'];
-                }
-
-                if (\array_key_exists('vector_dimension', $store)) {
-                    $arguments[5] = $store['vector_dimension'];
-                }
-
-                if (\array_key_exists('function_name', $store)) {
-                    $arguments[6] = $store['function_name'];
-                }
-
-                $definition = new Definition(SupabaseStore::class);
-                $definition
-                    ->setLazy(true)
-                    ->setArguments($arguments)
-                    ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('ai.store');
-
-                $container->setDefinition('ai.store.supabase.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
             }
@@ -1671,7 +1615,7 @@ final class AiBundle extends AbstractBundle
 
         if ('memory' === $type) {
             foreach ($messageStores as $name => $messageStore) {
-                $definition = new Definition(InMemoryStore::class);
+                $definition = new Definition(LocalInMemoryStore::class);
                 $definition
                     ->setLazy(true)
                     ->setArgument(0, $messageStore['identifier'])
@@ -1774,7 +1718,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('surreal_db' === $type) {
+        if ('surrealdb' === $type) {
             foreach ($messageStores as $name => $messageStore) {
                 $arguments = [
                     new Reference('http_client'),

@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use Probots\Pinecone\Client as PineconeClient;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
@@ -36,11 +37,26 @@ use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickhouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Local\CacheStore;
+use Symfony\AI\Store\Bridge\Local\CacheStore as LocalCacheStore;
 use Symfony\AI\Store\Bridge\Local\DistanceCalculator;
 use Symfony\AI\Store\Bridge\Local\DistanceStrategy;
+use Symfony\AI\Store\Bridge\Local\InMemoryStore as LocalInMemoryStore;
 use Symfony\AI\Store\Bridge\Manticore\Store as ManticoreStore;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
+use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
+use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
+use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
+use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
+use Symfony\AI\Store\Bridge\Postgres\Distance;
+use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
+use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
+use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
+use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
+use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
+use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
+use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
+use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
 use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
@@ -50,7 +66,6 @@ use Symfony\AI\Store\IndexerInterface;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\RetrieverInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -512,16 +527,13 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_cache_store'));
 
         $definition = $container->getDefinition('ai.store.cache.my_cache_store');
-        $this->assertSame(CacheStore::class, $definition->getClass());
+        $this->assertSame(LocalCacheStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(3, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('cache.system', (string) $definition->getArgument(0));
         $this->assertSame('my_cache_store', $definition->getArgument(2));
-
-        $strategyDefinition = $container->getDefinition('ai.store.distance_calculator.my_cache_store');
-        $this->assertTrue($strategyDefinition->isLazy());
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -1084,6 +1096,7 @@ class AiBundleTest extends TestCase
         ]);
 
         $definition = $container->getDefinition('ai.store.meilisearch.custom');
+        $this->assertSame(MeilisearchStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(8, $definition->getArguments());
@@ -1132,6 +1145,7 @@ class AiBundleTest extends TestCase
         ]);
 
         $definition = $container->getDefinition('ai.store.meilisearch.custom');
+        $this->assertSame(MeilisearchStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(8, $definition->getArguments());
@@ -1173,6 +1187,9 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.memory.my_memory_store_with_custom_strategy'));
 
         $definition = $container->getDefinition('ai.store.memory.my_memory_store_with_custom_strategy');
+        $this->assertSame(LocalInMemoryStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
         $this->assertCount(1, $definition->getArguments());
         $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
         $this->assertSame(DistanceCalculator::class, $definition->getArgument(0)->getClass());
@@ -1209,7 +1226,9 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_memory_store_with_custom_strategy'));
 
         $definition = $container->getDefinition('ai.store.memory.my_memory_store_with_custom_strategy');
+        $this->assertSame(LocalInMemoryStore::class, $definition->getClass());
 
+        $this->assertTrue($definition->isLazy());
         $this->assertCount(1, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('ai.store.distance_calculator.my_memory_store_with_custom_strategy', (string) $definition->getArgument(0));
@@ -1328,6 +1347,371 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
     }
 
+    public function testMongoDbStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'mongodb' => [
+                        'my_mongo_store' => [
+                            'database' => 'my_db',
+                            'collection' => 'my_collection',
+                            'index_name' => 'vector_index',
+                            'vector_field' => 'embedding',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.mongodb.my_mongo_store'));
+
+        $definition = $container->getDefinition('ai.store.mongodb.my_mongo_store');
+        $this->assertSame(MongoDbStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(5, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame(MongoDbClient::class, (string) $definition->getArgument(0));
+        $this->assertSame('my_db', $definition->getArgument(1));
+        $this->assertSame('my_collection', $definition->getArgument(2));
+        $this->assertSame('vector_index', $definition->getArgument(3));
+        $this->assertSame('embedding', $definition->getArgument(4));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mongo_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMongoStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mongodb_my_mongo_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mongodbMyMongoStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testMongoDbStoreWithCustomClientCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'mongodb' => [
+                        'my_mongo_store' => [
+                            'client' => 'foo',
+                            'database' => 'my_db',
+                            'collection' => 'my_collection',
+                            'index_name' => 'vector_index',
+                            'vector_field' => 'embedding',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.mongodb.my_mongo_store'));
+
+        $definition = $container->getDefinition('ai.store.mongodb.my_mongo_store');
+        $this->assertSame(MongoDbStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(5, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('foo', (string) $definition->getArgument(0));
+        $this->assertSame('my_db', $definition->getArgument(1));
+        $this->assertSame('my_collection', $definition->getArgument(2));
+        $this->assertSame('vector_index', $definition->getArgument(3));
+        $this->assertSame('embedding', $definition->getArgument(4));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mongo_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMongoStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mongodb_my_mongo_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mongodbMyMongoStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testMongoDbStoreWithBulkWriteCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'mongodb' => [
+                        'my_mongo_store' => [
+                            'database' => 'my_db',
+                            'collection' => 'my_collection',
+                            'index_name' => 'vector_index',
+                            'vector_field' => 'embedding',
+                            'bulk_write' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.mongodb.my_mongo_store'));
+
+        $definition = $container->getDefinition('ai.store.mongodb.my_mongo_store');
+        $this->assertSame(MongoDbStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame(MongoDbClient::class, (string) $definition->getArgument(0));
+        $this->assertSame('my_db', $definition->getArgument(1));
+        $this->assertSame('my_collection', $definition->getArgument(2));
+        $this->assertSame('vector_index', $definition->getArgument(3));
+        $this->assertSame('embedding', $definition->getArgument(4));
+        $this->assertTrue($definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mongo_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMongoStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mongodb_my_mongo_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mongodbMyMongoStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testNeo4jStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'neo4j' => [
+                        'my_neo4j_store' => [
+                            'endpoint' => 'http://127.0.0.1:8000',
+                            'username' => 'test',
+                            'password' => 'test',
+                            'database' => 'foo',
+                            'vector_index_name' => 'test',
+                            'node_name' => 'foo',
+                            'vector_field' => '_vectors',
+                            'dimensions' => 768,
+                            'distance' => 'cosine',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.neo4j.my_neo4j_store'));
+
+        $definition = $container->getDefinition('ai.store.neo4j.my_neo4j_store');
+        $this->assertSame(Neo4jStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(10, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
+        $this->assertSame('test', $definition->getArgument(2));
+        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertSame('foo', $definition->getArgument(4));
+        $this->assertSame('test', $definition->getArgument(5));
+        $this->assertSame('foo', $definition->getArgument(6));
+        $this->assertSame('_vectors', $definition->getArgument(7));
+        $this->assertSame(768, $definition->getArgument(8));
+        $this->assertSame('cosine', $definition->getArgument(9));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_neo4j_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myNeo4jStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $neo4j_my_neo4j_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $neo4jMyNeo4jStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testNeo4jStoreWithQuantizationCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'neo4j' => [
+                        'my_neo4j_store' => [
+                            'endpoint' => 'http://127.0.0.1:8000',
+                            'username' => 'test',
+                            'password' => 'test',
+                            'database' => 'foo',
+                            'vector_index_name' => 'test',
+                            'node_name' => 'foo',
+                            'vector_field' => '_vectors',
+                            'dimensions' => 768,
+                            'distance' => 'cosine',
+                            'quantization' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.neo4j.my_neo4j_store'));
+
+        $definition = $container->getDefinition('ai.store.neo4j.my_neo4j_store');
+        $this->assertSame(Neo4jStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(11, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
+        $this->assertSame('test', $definition->getArgument(2));
+        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertSame('foo', $definition->getArgument(4));
+        $this->assertSame('test', $definition->getArgument(5));
+        $this->assertSame('foo', $definition->getArgument(6));
+        $this->assertSame('_vectors', $definition->getArgument(7));
+        $this->assertSame(768, $definition->getArgument(8));
+        $this->assertSame('cosine', $definition->getArgument(9));
+        $this->assertTrue($definition->getArgument(10));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_neo4j_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myNeo4jStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $neo4j_my_neo4j_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $neo4jMyNeo4jStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testPineconeStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'pinecone' => [
+                        'my_pinecone_store' => [
+                            'namespace' => 'my_namespace',
+                            'filter' => ['category' => 'books'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.pinecone.my_pinecone_store'));
+
+        $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
+        $this->assertSame(PineconeStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(3, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
+        $this->assertSame('my_namespace', $definition->getArgument(1));
+        $this->assertSame(['category' => 'books'], $definition->getArgument(2));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myPineconeStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $pinecone_my_pinecone_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $pineconeMyPineconeStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testPineconeStoreWithCustomClientCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'pinecone' => [
+                        'my_pinecone_store' => [
+                            'client' => 'foo',
+                            'namespace' => 'my_namespace',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.pinecone.my_pinecone_store'));
+
+        $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
+        $this->assertSame(PineconeStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(3, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('foo', (string) $definition->getArgument(0));
+        $this->assertSame('my_namespace', $definition->getArgument(1));
+        $this->assertSame([], $definition->getArgument(2));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myPineconeStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $pinecone_my_pinecone_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $pineconeMyPineconeStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testPineconeStoreWithTopKCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'pinecone' => [
+                        'my_pinecone_store' => [
+                            'namespace' => 'my_namespace',
+                            'top_k' => 100,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.pinecone.my_pinecone_store'));
+
+        $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
+        $this->assertSame(PineconeStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
+        $this->assertSame('my_namespace', $definition->getArgument(1));
+        $this->assertSame([], $definition->getArgument(2));
+        $this->assertSame(100, $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myPineconeStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $pinecone_my_pinecone_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $pineconeMyPineconeStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
     public function testPostgresStoreWithDifferentConnectionCanBeConfigured()
     {
         $container = $this->buildContainer([
@@ -1337,6 +1721,7 @@ class AiBundleTest extends TestCase
                         'db' => [
                             'dsn' => 'pgsql:host=localhost;port=5432;dbname=testdb;user=app;password=mypass',
                             'table_name' => 'vectors',
+                            'vector_field' => 'foo',
                         ],
                     ],
                 ],
@@ -1346,8 +1731,67 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.postgres.db'));
 
         $definition = $container->getDefinition('ai.store.postgres.db');
-        $this->assertCount(3, $definition->getArguments());
+        $this->assertSame(PostgresStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
         $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
+        $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
+        $this->assertSame('vectors', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $db'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $postgres_db'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $postgresDb'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'postgres' => [
+                        'db' => [
+                            'dsn' => 'pgsql:host=localhost;port=5432;dbname=testdb',
+                            'username' => 'foo',
+                            'password' => 'bar',
+                            'table_name' => 'vectors',
+                            'vector_field' => 'foo',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.postgres.db'));
+
+        $definition = $container->getDefinition('ai.store.postgres.db');
+        $this->assertSame(PostgresStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
+        $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
+        $this->assertSame(['pgsql:host=localhost;port=5432;dbname=testdb', 'foo', 'bar'], $definition->getArgument(0)->getArguments());
+        $this->assertSame('vectors', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $db'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $postgres_db'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $postgresDb'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
 
         $container = $this->buildContainer([
             'ai' => [
@@ -1356,6 +1800,7 @@ class AiBundleTest extends TestCase
                         'db' => [
                             'dbal_connection' => 'my_connection',
                             'table_name' => 'vectors',
+                            'vector_field' => 'foo',
                         ],
                     ],
                 ],
@@ -1363,8 +1808,671 @@ class AiBundleTest extends TestCase
         ]);
 
         $definition = $container->getDefinition('ai.store.postgres.db');
-        $this->assertCount(3, $definition->getArguments());
+        $this->assertSame(PostgresStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('my_connection', (string) $definition->getArgument(0));
+        $this->assertSame('vectors', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame(Distance::L2, $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $db'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $postgres_db'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $postgresDb'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'postgres' => [
+                        'db' => [
+                            'dbal_connection' => 'my_connection',
+                            'table_name' => 'vectors',
+                            'vector_field' => 'foo',
+                            'distance' => Distance::L1->value,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.postgres.db');
+        $this->assertSame(PostgresStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('my_connection', (string) $definition->getArgument(0));
+        $this->assertSame('vectors', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame(Distance::L1, $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $db'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $postgres_db'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $postgresDb'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testQdrantStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'qdrant' => [
+                        'my_qdrant_store' => [
+                            'endpoint' => 'http://127.0.0.1:8000',
+                            'api_key' => 'test',
+                            'collection_name' => 'foo',
+                            'dimensions' => 768,
+                            'distance' => 'Cosine',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
+
+        $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
+        $this->assertSame(QdrantStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
+        $this->assertSame('test', $definition->getArgument(2));
+        $this->assertSame('foo', $definition->getArgument(3));
+        $this->assertSame(768, $definition->getArgument(4));
+        $this->assertSame('Cosine', $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_qdrant_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myQdrantStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $qdrant_my_qdrant_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $qdrantMyQdrantStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testQdrantStoreWithAsyncCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'qdrant' => [
+                        'my_qdrant_store' => [
+                            'endpoint' => 'http://127.0.0.1:8000',
+                            'api_key' => 'test',
+                            'collection_name' => 'foo',
+                            'dimensions' => 768,
+                            'distance' => 'Cosine',
+                            'async' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
+
+        $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
+        $this->assertSame(QdrantStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(7, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
+        $this->assertSame('test', $definition->getArgument(2));
+        $this->assertSame('foo', $definition->getArgument(3));
+        $this->assertSame(768, $definition->getArgument(4));
+        $this->assertSame('Cosine', $definition->getArgument(5));
+        $this->assertTrue($definition->getArgument(6));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_qdrant_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myQdrantStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $qdrant_my_qdrant_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $qdrantMyQdrantStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testRedisStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'redis' => [
+                        'my_redis_store' => [
+                            'connection_parameters' => [
+                                'host' => '1.2.3.4',
+                                'port' => 6379,
+                            ],
+                            'index_name' => 'my_vector_index',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.redis.my_redis_store'));
+
+        $definition = $container->getDefinition('ai.store.redis.my_redis_store');
+        $this->assertSame(RedisStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
+        $this->assertSame(\Redis::class, $definition->getArgument(0)->getClass());
+        $this->assertSame('my_vector_index', $definition->getArgument(1));
+        $this->assertSame('vector:', $definition->getArgument(2));
+        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_redis_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myRedisStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $redis_my_redis_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $redisMyRedisStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testRedisStoreWithCustomClientCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'redis' => [
+                        'my_redis_store' => [
+                            'client' => 'foo',
+                            'index_name' => 'my_vector_index',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.redis.my_redis_store'));
+
+        $definition = $container->getDefinition('ai.store.redis.my_redis_store');
+        $this->assertSame(RedisStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('foo', (string) $definition->getArgument(0));
+        $this->assertSame('my_vector_index', $definition->getArgument(1));
+        $this->assertSame('vector:', $definition->getArgument(2));
+        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_redis_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myRedisStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $redis_my_redis_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $redisMyRedisStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testRedisStoreWithCustomKeyPrefixCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'redis' => [
+                        'my_redis_store' => [
+                            'client' => 'foo',
+                            'index_name' => 'my_vector_index',
+                            'key_prefix' => 'foo:',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.redis.my_redis_store'));
+
+        $definition = $container->getDefinition('ai.store.redis.my_redis_store');
+        $this->assertSame(RedisStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('foo', (string) $definition->getArgument(0));
+        $this->assertSame('my_vector_index', $definition->getArgument(1));
+        $this->assertSame('foo:', $definition->getArgument(2));
+        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_redis_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myRedisStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $redis_my_redis_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $redisMyRedisStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testRedisStoreWithCustomDistanceCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'redis' => [
+                        'my_redis_store' => [
+                            'client' => 'foo',
+                            'index_name' => 'my_vector_index',
+                            'distance' => RedisDistance::L2,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.redis.my_redis_store'));
+
+        $definition = $container->getDefinition('ai.store.redis.my_redis_store');
+        $this->assertSame(RedisStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('foo', (string) $definition->getArgument(0));
+        $this->assertSame('my_vector_index', $definition->getArgument(1));
+        $this->assertSame('vector:', $definition->getArgument(2));
+        $this->assertSame(RedisDistance::L2, $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_redis_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myRedisStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $redis_my_redis_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $redisMyRedisStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testSupabaseStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'supabase' => [
+                        'my_supabase_store' => [
+                            'url' => 'https://test.supabase.co',
+                            'api_key' => 'supabase_test_key',
+                            'table' => 'my_supabase_table',
+                            'vector_field' => 'my_embedding',
+                            'vector_dimension' => 1024,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.supabase.my_supabase_store'));
+
+        $definition = $container->getDefinition('ai.store.supabase.my_supabase_store');
+        $this->assertSame(SupabaseStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('https://test.supabase.co', $definition->getArgument(1));
+        $this->assertSame('supabase_test_key', $definition->getArgument(2));
+        $this->assertSame('my_supabase_table', $definition->getArgument(3));
+        $this->assertSame('my_embedding', $definition->getArgument(4));
+        $this->assertSame(1024, $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_supabase_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySupabaseStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $supabase_my_supabase_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $supabaseMySupabaseStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testSupabaseStoreWithCustomHttpClientCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'supabase' => [
+                        'my_supabase_store' => [
+                            'http_client' => 'foo',
+                            'url' => 'https://test.supabase.co',
+                            'api_key' => 'supabase_test_key',
+                            'table' => 'my_supabase_table',
+                            'vector_field' => 'my_embedding',
+                            'vector_dimension' => 1024,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.supabase.my_supabase_store'));
+
+        $definition = $container->getDefinition('ai.store.supabase.my_supabase_store');
+        $this->assertSame(SupabaseStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('foo', (string) $definition->getArgument(0));
+        $this->assertSame('https://test.supabase.co', $definition->getArgument(1));
+        $this->assertSame('supabase_test_key', $definition->getArgument(2));
+        $this->assertSame('my_supabase_table', $definition->getArgument(3));
+        $this->assertSame('my_embedding', $definition->getArgument(4));
+        $this->assertSame(1024, $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_supabase_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySupabaseStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $supabase_my_supabase_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $supabaseMySupabaseStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testSupabaseStoreWithCustomFunctionCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'supabase' => [
+                        'my_supabase_store' => [
+                            'url' => 'https://test.supabase.co',
+                            'api_key' => 'supabase_test_key',
+                            'table' => 'my_supabase_table',
+                            'vector_field' => 'my_embedding',
+                            'vector_dimension' => 1024,
+                            'function_name' => 'my_custom_function',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.supabase.my_supabase_store'));
+
+        $definition = $container->getDefinition('ai.store.supabase.my_supabase_store');
+        $this->assertSame(SupabaseStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(7, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('https://test.supabase.co', $definition->getArgument(1));
+        $this->assertSame('supabase_test_key', $definition->getArgument(2));
+        $this->assertSame('my_supabase_table', $definition->getArgument(3));
+        $this->assertSame('my_embedding', $definition->getArgument(4));
+        $this->assertSame(1024, $definition->getArgument(5));
+        $this->assertSame('my_custom_function', $definition->getArgument(6));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_supabase_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySupabaseStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $supabase_my_supabase_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $supabaseMySupabaseStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testSurrealDbStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'surrealdb' => [
+                        'my_surrealdb_store' => [
+                            'endpoint' => 'http://127.0.0.1:8000',
+                            'username' => 'test',
+                            'password' => 'test',
+                            'namespace' => 'foo',
+                            'database' => 'bar',
+                            'table' => 'bar',
+                            'vector_field' => '_vectors',
+                            'strategy' => 'cosine',
+                            'dimensions' => 768,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.surrealdb.my_surrealdb_store'));
+
+        $definition = $container->getDefinition('ai.store.surrealdb.my_surrealdb_store');
+        $this->assertSame(SurrealDbStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(10, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
+        $this->assertSame('test', $definition->getArgument(2));
+        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertSame('foo', $definition->getArgument(4));
+        $this->assertSame('bar', $definition->getArgument(5));
+        $this->assertSame('bar', $definition->getArgument(6));
+        $this->assertSame('_vectors', $definition->getArgument(7));
+        $this->assertSame('cosine', $definition->getArgument(8));
+        $this->assertSame(768, $definition->getArgument(9));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySurrealdbStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $surrealdb_my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $surrealdbMySurrealdbStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testSurrealDbStoreWithNamespacedUserCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'surrealdb' => [
+                        'my_surrealdb_store' => [
+                            'endpoint' => 'http://127.0.0.1:8000',
+                            'username' => 'test',
+                            'password' => 'test',
+                            'namespace' => 'foo',
+                            'database' => 'bar',
+                            'table' => 'bar',
+                            'vector_field' => '_vectors',
+                            'strategy' => 'cosine',
+                            'dimensions' => 768,
+                            'namespaced_user' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.surrealdb.my_surrealdb_store'));
+
+        $definition = $container->getDefinition('ai.store.surrealdb.my_surrealdb_store');
+        $this->assertSame(SurrealDbStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(11, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
+        $this->assertSame('test', $definition->getArgument(2));
+        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertSame('foo', $definition->getArgument(4));
+        $this->assertSame('bar', $definition->getArgument(5));
+        $this->assertSame('bar', $definition->getArgument(6));
+        $this->assertSame('_vectors', $definition->getArgument(7));
+        $this->assertSame('cosine', $definition->getArgument(8));
+        $this->assertSame(768, $definition->getArgument(9));
+        $this->assertTrue($definition->getArgument(10));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySurrealdbStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $surrealdb_my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $surrealdbMySurrealdbStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testTypesenseStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'typesense' => [
+                        'my_typesense_store' => [
+                            'endpoint' => 'http://localhost:8108',
+                            'api_key' => 'foo',
+                            'collection' => 'my_collection',
+                            'vector_field' => 'vector',
+                            'dimensions' => 768,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.typesense.my_typesense_store'));
+
+        $definition = $container->getDefinition('ai.store.typesense.my_typesense_store');
+        $this->assertSame(TypesenseStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://localhost:8108', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame('my_collection', $definition->getArgument(3));
+        $this->assertSame('vector', $definition->getArgument(4));
+        $this->assertSame(768, $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_typesense_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myTypesenseStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $typesense_my_typesense_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $typesenseMyTypesenseStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testWevaviateStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'weaviate' => [
+                        'my_weaviate_store' => [
+                            'endpoint' => 'http://localhost:8080',
+                            'api_key' => 'bar',
+                            'collection' => 'my_weaviate_collection',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.weaviate.my_weaviate_store'));
+
+        $definition = $container->getDefinition('ai.store.weaviate.my_weaviate_store');
+        $this->assertSame(WeaviateStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://localhost:8080', $definition->getArgument(1));
+        $this->assertSame('bar', $definition->getArgument(2));
+        $this->assertSame('my_weaviate_collection', $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_weaviate_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myWeaviateStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $weaviate_my_weaviate_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $weaviateMyWeaviateStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
     }
 
     public function testConfigurationWithUseAttributeAsKeyWorksWithoutNormalizeKeys()
@@ -1394,6 +2502,7 @@ class AiBundleTest extends TestCase
                             'database' => 'test_db',
                             'collection' => 'test_collection',
                             'index_name' => 'test_index',
+                            'vector_field' => 'foo',
                         ],
                     ],
                 ],
@@ -4184,41 +5293,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
 
-    public function testMeilisearchMessageStoreIsConfigured()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'message_store' => [
-                    'meilisearch' => [
-                        'custom' => [
-                            'endpoint' => 'http://127.0.0.1:7700',
-                            'api_key' => 'foo',
-                            'index_name' => 'test',
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $definition = $container->getDefinition('ai.message_store.meilisearch.custom');
-
-        $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
-        $this->assertSame('http://127.0.0.1:7700', $definition->getArgument(0));
-        $this->assertSame('foo', $definition->getArgument(1));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
-        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(2));
-        $this->assertSame('test', $definition->getArgument(3));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('serializer', (string) $definition->getArgument(4));
-
-        $this->assertSame([
-            ['interface' => MessageStoreInterface::class],
-            ['interface' => ManagedMessageStoreInterface::class],
-        ], $definition->getTag('proxy'));
-        $this->assertTrue($definition->hasTag('ai.message_store'));
-    }
-
     public function testMemoryMessageStoreCanBeConfiguredWithCustomKey()
     {
         $container = $this->buildContainer([
@@ -4446,7 +5520,7 @@ class AiBundleTest extends TestCase
         $container = $this->buildContainer([
             'ai' => [
                 'message_store' => [
-                    'surreal_db' => [
+                    'surrealdb' => [
                         'custom' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'username' => 'test',
@@ -4459,7 +5533,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $definition = $container->getDefinition('ai.message_store.surreal_db.custom');
+        $definition = $container->getDefinition('ai.message_store.surrealdb.custom');
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(8, $definition->getArguments());
@@ -4486,7 +5560,7 @@ class AiBundleTest extends TestCase
         $container = $this->buildContainer([
             'ai' => [
                 'message_store' => [
-                    'surreal_db' => [
+                    'surrealdb' => [
                         'custom' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'username' => 'test',
@@ -4500,7 +5574,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $definition = $container->getDefinition('ai.message_store.surreal_db.custom');
+        $definition = $container->getDefinition('ai.message_store.surrealdb.custom');
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(8, $definition->getArguments());
@@ -4527,7 +5601,7 @@ class AiBundleTest extends TestCase
         $container = $this->buildContainer([
             'ai' => [
                 'message_store' => [
-                    'surreal_db' => [
+                    'surrealdb' => [
                         'custom' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'username' => 'test',
@@ -4541,7 +5615,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $definition = $container->getDefinition('ai.message_store.surreal_db.custom');
+        $definition = $container->getDefinition('ai.message_store.surrealdb.custom');
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(9, $definition->getArguments());
@@ -4965,6 +6039,24 @@ class AiBundleTest extends TestCase
                             'filter' => ['category' => 'books'],
                             'top_k' => 10,
                         ],
+                        'my_pinecone_store_with_filter' => [
+                            'namespace' => 'my_namespace',
+                            'filter' => ['category' => 'books'],
+                        ],
+                        'my_pinecone_store_with_top_k' => [
+                            'namespace' => 'my_namespace',
+                            'filter' => ['category' => 'books'],
+                            'top_k' => 10,
+                        ],
+                    ],
+                    'postgres' => [
+                        'my_postgres_store' => [
+                            'dsn' => 'pgsql:host=127.0.0.1;port=5432;dbname=postgresql_db',
+                            'username' => 'postgres',
+                            'password' => 'pass',
+                            'table_name' => 'my_table',
+                            'vector_field' => 'my_embedding',
+                        ],
                     ],
                     'qdrant' => [
                         'my_qdrant_store' => [
@@ -4980,17 +6072,21 @@ class AiBundleTest extends TestCase
                             'api_key' => 'test',
                             'collection_name' => 'foo',
                             'dimensions' => 768,
+                            'distance' => 'Cosine',
                         ],
                         'my_custom_distance_qdrant_store' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'api_key' => 'test',
                             'collection_name' => 'foo',
+                            'dimensions' => 768,
                             'distance' => 'Cosine',
                         ],
                         'my_async_qdrant_store' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'api_key' => 'test',
                             'collection_name' => 'foo',
+                            'dimensions' => 768,
+                            'distance' => 'Cosine',
                             'async' => false,
                         ],
                     ],
@@ -5002,19 +6098,19 @@ class AiBundleTest extends TestCase
                             ],
                             'index_name' => 'my_vector_index',
                         ],
-                    ],
-                    'surreal_db' => [
-                        'my_surreal_db_store' => [
-                            'endpoint' => 'http://127.0.0.1:8000',
-                            'username' => 'test',
-                            'password' => 'test',
-                            'namespace' => 'foo',
-                            'database' => 'bar',
-                            'table' => 'bar',
-                            'vector_field' => '_vectors',
-                            'strategy' => 'cosine',
-                            'dimensions' => 768,
-                            'namespaced_user' => true,
+                        'my_redis_store_with_custom_client' => [
+                            'client' => 'foo',
+                            'index_name' => 'my_vector_index',
+                        ],
+                        'my_redis_store_with_custom_key_prefix' => [
+                            'client' => 'foo',
+                            'index_name' => 'my_vector_index',
+                            'key_prefix' => 'foo:',
+                        ],
+                        'my_redis_store_with_custom_distance' => [
+                            'client' => 'foo',
+                            'index_name' => 'my_vector_index',
+                            'distance' => RedisDistance::L2,
                         ],
                     ],
                     'supabase' => [
@@ -5025,6 +6121,36 @@ class AiBundleTest extends TestCase
                             'vector_field' => 'my_embedding',
                             'vector_dimension' => 1024,
                             'function_name' => 'my_match_function',
+                        ],
+                        'my_supabase_store_with_custom_http_client' => [
+                            'http_client' => 'foo',
+                            'url' => 'https://test.supabase.co',
+                            'api_key' => 'supabase_test_key',
+                            'table' => 'my_supabase_table',
+                            'vector_field' => 'my_embedding',
+                            'vector_dimension' => 1024,
+                        ],
+                        'my_supabase_store_with_custom_function' => [
+                            'url' => 'https://test.supabase.co',
+                            'api_key' => 'supabase_test_key',
+                            'table' => 'my_supabase_table',
+                            'vector_field' => 'my_embedding',
+                            'vector_dimension' => 1024,
+                            'function_name' => 'foo',
+                        ],
+                    ],
+                    'surrealdb' => [
+                        'my_surrealdb_store' => [
+                            'endpoint' => 'http://127.0.0.1:8000',
+                            'username' => 'test',
+                            'password' => 'test',
+                            'namespace' => 'foo',
+                            'database' => 'bar',
+                            'table' => 'bar',
+                            'vector_field' => '_vectors',
+                            'strategy' => 'cosine',
+                            'dimensions' => 768,
+                            'namespaced_user' => true,
                         ],
                     ],
                     'typesense' => [
@@ -5041,15 +6167,6 @@ class AiBundleTest extends TestCase
                             'endpoint' => 'http://localhost:8080',
                             'api_key' => 'bar',
                             'collection' => 'my_weaviate_collection',
-                        ],
-                    ],
-                    'postgres' => [
-                        'my_postgres_store' => [
-                            'dsn' => 'pgsql:host=127.0.0.1;port=5432;dbname=postgresql_db',
-                            'username' => 'postgres',
-                            'password' => 'pass',
-                            'table_name' => 'my_table',
-                            'vector_field' => 'my_embedding',
                         ],
                     ],
                 ],
@@ -5128,8 +6245,8 @@ class AiBundleTest extends TestCase
                             'identifier' => 'session',
                         ],
                     ],
-                    'surreal_db' => [
-                        'my_surreal_db_message_store' => [
+                    'surrealdb' => [
+                        'my_surrealdb_message_store' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'username' => 'test',
                             'password' => 'test',
@@ -5137,7 +6254,7 @@ class AiBundleTest extends TestCase
                             'database' => 'bar',
                             'namespaced_user' => true,
                         ],
-                        'my_surreal_db_message_store_with_custom_table' => [
+                        'my_surrealdb_message_store_with_custom_table' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'username' => 'test',
                             'password' => 'test',
