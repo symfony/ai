@@ -469,7 +469,7 @@ final class StoreTest extends TestCase
         $this->assertCount(1, $documents);
     }
 
-    public function testQueryReturnsMetadatasEmbeddingsDistanceWithoutInclude(): void
+    public function testQueryReturnsMetadatasEmbeddingsDistanceWithoutInclude()
     {
         $queryVector = new Vector([0.15, 0.25, 0.35]);
         $queryResponse = new QueryItemsResponse(
@@ -503,7 +503,7 @@ final class StoreTest extends TestCase
         $this->assertSame(['title' => 'Doc 1'], $documents[0]->metadata->getArrayCopy());
     }
 
-    public function testQueryReturnsMetadatasEmbeddingsDistanceWithOnlyDocuments(): void
+    public function testQueryReturnsMetadatasEmbeddingsDistanceWithOnlyDocuments()
     {
         $queryVector = new Vector([0.15, 0.25, 0.35]);
         $queryResponse = new QueryItemsResponse(
@@ -537,7 +537,7 @@ final class StoreTest extends TestCase
         $this->assertSame(['title' => 'Doc 1', '_text' => 'Document content here'], $documents[0]->metadata->getArrayCopy());
     }
 
-    public function testQueryReturnsMetadatasEmbeddingsDistanceWithAll(): void
+    public function testQueryReturnsMetadatasEmbeddingsDistanceWithAll()
     {
         $queryVector = new Vector([0.15, 0.25, 0.35]);
         $queryResponse = new QueryItemsResponse(
