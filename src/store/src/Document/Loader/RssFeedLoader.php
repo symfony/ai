@@ -35,6 +35,7 @@ final class RssFeedLoader implements LoaderInterface
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $uuidNamespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+        private readonly ?string $defaultSource = null,
     ) {
     }
 
@@ -46,6 +47,8 @@ final class RssFeedLoader implements LoaderInterface
         if (!class_exists(Crawler::class)) {
             throw new RuntimeException('For using the RSS loader, the Symfony DomCrawler component is required. Try running "composer require symfony/dom-crawler".');
         }
+
+        $source ??= $this->defaultSource;
 
         if (null === $source) {
             throw new InvalidArgumentException(\sprintf('"%s" requires a URL as source, null given.', self::class));
