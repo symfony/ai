@@ -16,6 +16,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -24,12 +25,13 @@ final class PlatformFactory
 {
     public static function create(
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
+        ?SpeechConfiguration $speechConfiguration = new SpeechConfiguration(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         if (!class_exists(Transformers::class)) {
             throw new RuntimeException('For using the TransformersPHP with FFI to run models in PHP, the codewithkyrian/transformers package is required. Try running "composer require codewithkyrian/transformers".');
         }
 
-        return new Platform([new ModelClient()], [new ResultConverter()], $modelCatalog, eventDispatcher: $eventDispatcher);
+        return new Platform([new ModelClient()], [new ResultConverter()], $modelCatalog, speechConfiguration: $speechConfiguration, eventDispatcher: $eventDispatcher);
     }
 }

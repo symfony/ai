@@ -56,6 +56,8 @@ use Symfony\AI\Platform\Bridge\Cartesia\PlatformFactory as CartesiaPlatformFacto
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFactory;
 use Symfony\AI\Platform\Bridge\DeepSeek\PlatformFactory as DeepSeekPlatformFactory;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory as DockerModelRunnerPlatformFactory;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsSpeechListener;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsSpeechProvider;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory as HuggingFacePlatformFactory;
@@ -77,6 +79,9 @@ use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
+use Symfony\AI\Platform\Speech\SpeechListenerInterface;
+use Symfony\AI\Platform\Speech\SpeechProviderInterface;
 use Symfony\AI\Store\Bridge\Azure\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
@@ -253,6 +258,17 @@ final class AiBundle extends AbstractBundle
             }
         }
 
+        foreach ($config['speech'] ?? [] as $voiceProvider => $provider) {
+            $this->processSpeechConfig($voiceProvider, $provider, $builder);
+        }
+
+        $speechProviders = array_keys($builder->findTaggedServiceIds('ai.speech_provider'));
+        $speechListeners = array_keys($builder->findTaggedServiceIds('ai.speech_listener'));
+
+        if ([] === $speechProviders && [] === $speechListeners) {
+            $builder->removeDefinition('ai.speech_provider.listener');
+        }
+
         foreach ($config['vectorizer'] ?? [] as $vectorizerName => $vectorizer) {
             $this->processVectorizerConfig($vectorizerName, $vectorizer, $builder);
         }
@@ -333,6 +349,7 @@ final class AiBundle extends AbstractBundle
                     $platform['base_url'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.albert'),
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'albert']);
@@ -353,6 +370,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.anthropic'),
                     new Reference('ai.platform.contract.anthropic'),
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'anthropic']);
@@ -377,6 +395,7 @@ final class AiBundle extends AbstractBundle
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         new Reference('ai.platform.model_catalog.openai'),
                         new Reference('ai.platform.contract.openai'),
+                        null,
                         new Reference('event_dispatcher'),
                     ])
                     ->addTag('ai.platform', ['name' => 'azure.'.$name]);
@@ -416,6 +435,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.cartesia'),
                     null,
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'cartesia']);
@@ -434,6 +454,7 @@ final class AiBundle extends AbstractBundle
                     $platform['host'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.'.$type),
+                    null,
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -457,6 +478,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.gemini'),
                     new Reference('ai.platform.contract.gemini'),
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'gemini']);
@@ -478,6 +500,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.huggingface'),
                     new Reference('ai.platform.contract.huggingface'),
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'huggingface']);
@@ -519,6 +542,7 @@ final class AiBundle extends AbstractBundle
                     $httpClient,
                     new Reference('ai.platform.model_catalog.vertexai.gemini'),
                     new Reference('ai.platform.contract.vertexai.gemini'),
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'vertexai']);
@@ -540,6 +564,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.openai'),
                     new Reference('ai.platform.contract.openai'),
                     $platform['region'] ?? null,
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'openai']);
@@ -559,6 +584,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.openrouter'),
+                    null,
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -580,6 +606,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.mistral'),
                     null,
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'mistral']);
@@ -599,6 +626,7 @@ final class AiBundle extends AbstractBundle
                     $platform['host_url'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.lmstudio'),
+                    null,
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -629,6 +657,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.ollama'),
                     new Reference('ai.platform.contract.ollama'),
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
@@ -650,6 +679,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.cerebras'),
                     null,
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'cerebras']);
@@ -669,6 +699,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.deepseek'),
+                    null,
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -690,6 +721,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.voyage'),
                     null,
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'voyage']);
@@ -710,6 +742,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.perplexity'),
                     new Reference('ai.platform.contract.perplexity'),
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform');
@@ -730,6 +763,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.dockermodelrunner'),
                     null,
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform');
@@ -749,6 +783,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.scaleway'),
+                    null,
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1826,6 +1861,61 @@ final class AiBundle extends AbstractBundle
 
         $container->setDefinition('ai.chat.'.$name, $definition);
         $container->registerAliasForArgument('ai.chat.'.$name, ChatInterface::class, $name);
+    }
+
+    /**
+     * @param array<string, mixed> $provider
+     */
+    private function processSpeechConfig(string $name, array $provider, ContainerBuilder $container): void
+    {
+        if ('elevenlabs' === $name) {
+            if (!$container->hasDefinition('ai.platform.'.$name)) {
+                throw new RuntimeException('The ElevenLabs platform cannot be found.');
+            }
+
+            $configurationDefinition = new Definition(SpeechConfiguration::class);
+            $configurationDefinition
+                ->setArguments([
+                    $provider['tts_model'],
+                    $provider['tts_voice'],
+                    $provider['tts_extra_options'] ?? [],
+                    $provider['stt_model'],
+                    $provider['stt_extra_options'] ?? [],
+                ]);
+
+            $container->setDefinition('ai.speech.'.$name.'.configuration', $configurationDefinition);
+
+            $container->getDefinition('ai.platform.'.$name)
+                ->replaceArgument(5, new Reference('ai.speech.'.$name.'.configuration'));
+
+            if (\array_key_exists('tts_model', $provider)) {
+                $definition = new Definition(ElevenLabsSpeechProvider::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference('ai.platform.'.$name),
+                    ])
+                    ->addTag('proxy', ['interface' => SpeechProviderInterface::class])
+                    ->addTag('ai.speech_provider');
+
+                $container->setDefinition('ai.speech_provider.'.$name, $definition);
+                $container->registerAliasForArgument('ai.speech_provider.'.$name, SpeechProviderInterface::class, $name);
+            }
+
+            if (\array_key_exists('stt_model', $provider)) {
+                $definition = new Definition(ElevenLabsSpeechListener::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference('ai.platform.'.$name),
+                    ])
+                    ->addTag('proxy', ['interface' => SpeechListenerInterface::class])
+                    ->addTag('ai.speech_listener');
+
+                $container->setDefinition('ai.speech_listener.'.$name, $definition);
+                $container->registerAliasForArgument('ai.speech_listener.'.$name, SpeechListenerInterface::class, $name);
+            }
+        }
     }
 
     /**

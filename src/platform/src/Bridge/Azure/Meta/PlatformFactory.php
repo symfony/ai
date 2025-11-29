@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Meta\ModelCatalog;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -30,10 +31,11 @@ final class PlatformFactory
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        ?SpeechConfiguration $speechConfiguration = new SpeechConfiguration(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         $modelClient = new LlamaModelClient($httpClient ?? HttpClient::create(), $baseUrl, $apiKey);
 
-        return new Platform([$modelClient], [new LlamaResultConverter()], $modelCatalog, $contract, $eventDispatcher);
+        return new Platform([$modelClient], [new LlamaResultConverter()], $modelCatalog, $contract, $speechConfiguration, $eventDispatcher);
     }
 }

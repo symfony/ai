@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -31,6 +32,7 @@ final class PlatformFactory
         string $baseUrl,
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
+        ?SpeechConfiguration $speechConfiguration = new SpeechConfiguration(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         if (!str_starts_with($baseUrl, 'https://')) {
@@ -56,6 +58,7 @@ final class PlatformFactory
             [new Gpt\ResultConverter(), new Embeddings\ResultConverter()],
             $modelCatalog,
             Contract::create(),
+            $speechConfiguration,
             $eventDispatcher,
         );
     }
