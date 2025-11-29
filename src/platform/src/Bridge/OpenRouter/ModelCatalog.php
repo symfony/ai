@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenRouter;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Model\EmbeddingsModel;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -2582,147 +2583,147 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
 
             // Embeddings
             'thenlper/gte-base' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'thenlper/gte-large' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'intfloat/e5-large-v2' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'intfloat/e5-base-v2' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'intfloat/multilingual-e5-large' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'sentence-transformers/paraphrase-minilm-l6-v2' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'sentence-transformers/all-minilm-l12-v2' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'baai/bge-base-en-v1.5' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'sentence-transformers/multi-qa-mpnet-base-dot-v1' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'baai/bge-large-en-v1.5' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'baai/bge-m3' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'sentence-transformers/all-mpnet-base-v2' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'sentence-transformers/all-minilm-l6-v2' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'mistralai/mistral-embed-2312' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'google/gemini-embedding-001' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'openai/text-embedding-ada-002' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'mistralai/codestral-embed-2505' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'openai/text-embedding-3-large' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'openai/text-embedding-3-small' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'qwen/qwen3-embedding-8b' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
                 ],
             ],
             'qwen/qwen3-embedding-4b' => [
-                'class' => Embeddings::class,
+                'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,

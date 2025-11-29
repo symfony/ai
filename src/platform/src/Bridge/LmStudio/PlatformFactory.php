@@ -12,10 +12,11 @@
 namespace Symfony\AI\Platform\Bridge\LmStudio;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Symfony\AI\Platform\Bridge\LmStudio\Embeddings\ModelClient;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\ResultConverter\CompletionsResultConverter;
+use Symfony\AI\Platform\ResultConverter\EmbeddingsResultConverter;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -35,12 +36,12 @@ class PlatformFactory
 
         return new Platform(
             [
-                new ModelClient($httpClient, $hostUrl),
+                new Embeddings\ModelClient($httpClient, $hostUrl),
                 new Completions\ModelClient($httpClient, $hostUrl),
             ],
             [
-                new Embeddings\ResultConverter(),
-                new Completions\ResultConverter(),
+                new EmbeddingsResultConverter(),
+                new CompletionsResultConverter(),
             ],
             $modelCatalog,
             $contract,

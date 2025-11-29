@@ -11,15 +11,15 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenRouter\Embeddings;
 
-use Symfony\AI\Platform\Bridge\OpenRouter\Embeddings;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Model\EmbeddingsModel;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
-use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\ResultConverter\ResultConverterInterface;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
@@ -29,7 +29,7 @@ final class ResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
-        return $model instanceof Embeddings;
+        return $model instanceof EmbeddingsModel;
     }
 
     public function convert(RawResultInterface $result, array $options = []): VectorResult

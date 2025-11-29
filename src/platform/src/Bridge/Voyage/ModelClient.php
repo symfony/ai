@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Voyage;
 
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\ModelClient\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 

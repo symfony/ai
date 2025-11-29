@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\TransformersPhp;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\ModelClient\ModelClientInterface;
 
 use function Codewithkyrian\Transformers\Pipelines\pipeline;
 
