@@ -33,16 +33,16 @@ final class MemoryToolFactory extends AbstractToolFactory
     }
 
     /**
-     * @param class-string $reference
+     * @param class-string $className
      */
-    public function getTool(string $reference): iterable
+    public function getTool(string $className): iterable
     {
-        if (!isset($this->tools[$reference])) {
-            throw ToolException::invalidReference($reference);
+        if (!isset($this->tools[$className])) {
+            throw ToolException::invalidReference($className);
         }
 
-        foreach ($this->tools[$reference] as $tool) {
-            yield $this->convertAttribute($reference, $tool);
+        foreach ($this->tools[$className] as $tool) {
+            yield $this->convertAttribute($className, $tool);
         }
     }
 }
