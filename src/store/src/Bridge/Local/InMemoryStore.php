@@ -53,7 +53,7 @@ class InMemoryStore implements ManagedStoreInterface, StoreInterface
      * } $options If maxItems is provided, only the top N results will be returned.
      *            If filter is provided, only documents matching the filter will be considered.
      */
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $documents = $this->documents;
 
@@ -61,7 +61,7 @@ class InMemoryStore implements ManagedStoreInterface, StoreInterface
             $documents = array_values(array_filter($documents, $options['filter']));
         }
 
-        return $this->distanceCalculator->calculate($documents, $vector, $options['maxItems'] ?? null);
+        yield from $this->distanceCalculator->calculate($documents, $vector, $options['maxItems'] ?? null);
     }
 
     public function drop(): void

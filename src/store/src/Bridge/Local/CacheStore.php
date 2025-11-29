@@ -77,7 +77,7 @@ final class CacheStore implements ManagedStoreInterface, StoreInterface
      * } $options If maxItems is provided, only the top N results will be returned.
      *            If filter is provided, only documents matching the filter will be considered.
      */
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $documents = $this->cache->get($this->cacheKey, static fn (): array => []);
 
@@ -91,7 +91,7 @@ final class CacheStore implements ManagedStoreInterface, StoreInterface
             $vectorDocuments = array_values(array_filter($vectorDocuments, $options['filter']));
         }
 
-        return $this->distanceCalculator->calculate($vectorDocuments, $vector, $options['maxItems'] ?? null);
+        yield from $this->distanceCalculator->calculate($vectorDocuments, $vector, $options['maxItems'] ?? null);
     }
 
     public function drop(): void

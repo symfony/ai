@@ -126,7 +126,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -165,7 +165,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -192,7 +192,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]), ['maxScore' => 0.8]);
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['maxScore' => 0.8]));
 
         $this->assertCount(0, $results); // Should be filtered out due to maxScore
     }
@@ -216,7 +216,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn([0]); // No results
 
-        $results = $store->query(new Vector([0.7, 0.8, 0.9]), ['limit' => 10]);
+        $results = iterator_to_array($store->query(new Vector([0.7, 0.8, 0.9]), ['limit' => 10]));
 
         $this->assertCount(0, $results);
     }
@@ -240,7 +240,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn([0]); // No results
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]), ['where' => '@metadata_category:products']);
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['where' => '@metadata_category:products']));
 
         $this->assertCount(0, $results);
     }
@@ -273,10 +273,10 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
             'where' => '@metadata_active:true',
             'maxScore' => 0.8,
-        ]);
+        ]));
 
         $this->assertCount(0, $results);
     }
@@ -301,7 +301,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(1, $results);
         $this->assertSame([], $results[0]->metadata->getArrayCopy());
@@ -319,7 +319,7 @@ final class StoreTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to execute query: "Search failed".');
 
-        $store->query(new Vector([0.1, 0.2, 0.3]));
+        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
     }
 
     public function testInitialize()
@@ -463,7 +463,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn([0]);
 
-        $store->query(new Vector([0.1, 0.2, 0.3]));
+        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
     }
 
     public function testQueryEmptyResults()
@@ -475,7 +475,7 @@ final class StoreTest extends TestCase
             ->method('rawCommand')
             ->willReturn([0]); // No results
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(0, $results);
     }
@@ -489,7 +489,7 @@ final class StoreTest extends TestCase
             ->method('rawCommand')
             ->willReturn(null); // Invalid results
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(0, $results);
     }
@@ -511,7 +511,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(0, $results); // Should skip documents without required fields
     }

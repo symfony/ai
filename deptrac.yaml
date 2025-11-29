@@ -2,35 +2,105 @@ deptrac:
   paths:
     - ./src
   exclude_files:
-    - '#.*test.*#'
+    - '#.*test.*#i'
     - '#.*vendor.*#'
   layers:
-    - name: Agent
+    - name: AgentComponent
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Agent.*
-    - name: Chat
+          value: ^Symfony\\AI\\Agent\\(?!Bridge\\).*
+    - name: BraveTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Brave\\.*
+    - name: ClockTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Clock\\.*
+    - name: FirecrawlTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Firecrawl\\.*
+    - name: MapboxTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Mapbox\\.*
+    - name: OpenMeteoTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\OpenMeteo\\.*
+    - name: ScraperTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Scraper\\.*
+    - name: SerpApiTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\SerpApi\\.*
+    - name: SimilaritySearchTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\SimilaritySearch\\.*
+    - name: TavilyTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Tavily\\.*
+    - name: WikipediaTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Wikipedia\\.*
+    - name: YoutubeTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Youtube\\.*
+    - name: ChatComponent
       collectors:
         - type: classLike
           value: Symfony\\AI\\Chat.*
-    - name: Platform
+    - name: PlatformComponent
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform.*
-    - name: Store
+    - name: StoreComponent
       collectors:
         - type: classLike
           value: Symfony\\AI\\Store.*
   ruleset:
-    Agent:
-      - Platform
-      - Store
-    Chat:
-      - Agent
-      - Platform
-    Platform: ~
-    Store:
-      - Platform
+    AgentComponent:
+      - PlatformComponent
+      - StoreComponent
+    BraveTool:
+      - AgentComponent
+      - PlatformComponent
+    ClockTool:
+      - AgentComponent
+    FirecrawlTool:
+      - AgentComponent
+    MapboxTool:
+      - AgentComponent
+      - PlatformComponent
+    OpenMeteoTool:
+      - AgentComponent
+      - PlatformComponent
+    ScraperTool:
+      - AgentComponent
+    SerpApiTool:
+      - AgentComponent
+    SimilaritySearchTool:
+      - AgentComponent
+      - StoreComponent
+    TavilyTool:
+      - AgentComponent
+    WikipediaTool:
+      - AgentComponent
+    YoutubeTool:
+      - AgentComponent
+    ChatComponent:
+      - AgentComponent
+      - PlatformComponent
+    PlatformComponent: ~
+    StoreComponent:
+      - PlatformComponent
   # Baseline of known violations to be skipped for now
   skip_violations:
     Symfony\AI\Platform\Bridge\Anthropic\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]

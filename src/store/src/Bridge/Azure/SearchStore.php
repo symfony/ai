@@ -44,13 +44,15 @@ final class SearchStore implements StoreInterface
         ]);
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $result = $this->request('search', [
             'vectorQueries' => [$this->buildVectorQuery($vector)],
         ]);
 
-        return array_map([$this, 'convertToVectorDocument'], $result['value']);
+        foreach ($result['value'] as $item) {
+            yield $this->convertToVectorDocument($item);
+        }
     }
 
     /**

@@ -26,15 +26,21 @@ use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Bridge\Azure\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickhouseStore;
+use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Local\CacheStore;
 use Symfony\AI\Store\Bridge\Local\DistanceCalculator;
 use Symfony\AI\Store\Bridge\Local\DistanceStrategy;
+use Symfony\AI\Store\Bridge\Manticore\Store as ManticoreStore;
+use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
+use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
 use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
@@ -42,6 +48,7 @@ use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\RetrieverInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -549,6 +556,7 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.cache.my_cache_store_with_custom_key');
 
+        $this->assertTrue($definition->isLazy());
         $this->assertCount(3, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('cache.system', (string) $definition->getArgument(0));
@@ -818,6 +826,338 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
     }
 
+    public function testCloudflareStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cloudflare' => [
+                        'my_cloudflare_store' => [
+                            'account_id' => 'foo',
+                            'api_key' => 'bar',
+                            'index_name' => 'random',
+                            'dimensions' => 1536,
+                            'metric' => 'cosine',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.cloudflare.my_cloudflare_store'));
+
+        $definition = $container->getDefinition('ai.store.cloudflare.my_cloudflare_store');
+        $this->assertSame(CloudflareStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('foo', $definition->getArgument(1));
+        $this->assertSame('bar', $definition->getArgument(2));
+        $this->assertSame('random', $definition->getArgument(3));
+        $this->assertSame(1536, $definition->getArgument(4));
+        $this->assertSame('cosine', $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_cloudflare_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myCloudflareStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $cloudflareMyCloudflareStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testCloudflareStoreWithCustomEndpointCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cloudflare' => [
+                        'my_cloudflare_store' => [
+                            'account_id' => 'foo',
+                            'api_key' => 'bar',
+                            'index_name' => 'random',
+                            'dimensions' => 1536,
+                            'metric' => 'cosine',
+                            'endpoint_url' => 'https://api.cloudflare.com/client/v5/accounts',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.cloudflare.my_cloudflare_store'));
+
+        $definition = $container->getDefinition('ai.store.cloudflare.my_cloudflare_store');
+        $this->assertSame(CloudflareStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(7, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('foo', $definition->getArgument(1));
+        $this->assertSame('bar', $definition->getArgument(2));
+        $this->assertSame('random', $definition->getArgument(3));
+        $this->assertSame(1536, $definition->getArgument(4));
+        $this->assertSame('cosine', $definition->getArgument(5));
+        $this->assertSame('https://api.cloudflare.com/client/v5/accounts', $definition->getArgument(6));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_cloudflare_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myCloudflareStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $cloudflareMyCloudflareStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testManticoreStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'manticore' => [
+                        'my_manticore_store' => [
+                            'endpoint' => 'http://127.0.0.1:9306',
+                            'table' => 'test',
+                            'field' => 'foo_vector',
+                            'type' => 'hnsw',
+                            'similarity' => 'cosine',
+                            'dimensions' => 768,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.manticore.my_manticore_store'));
+
+        $definition = $container->getDefinition('ai.store.manticore.my_manticore_store');
+        $this->assertSame(ManticoreStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(7, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:9306', $definition->getArgument(1));
+        $this->assertSame('test', $definition->getArgument(2));
+        $this->assertSame('foo_vector', $definition->getArgument(3));
+        $this->assertSame('hnsw', $definition->getArgument(4));
+        $this->assertSame('cosine', $definition->getArgument(5));
+        $this->assertSame(768, $definition->getArgument(6));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_manticore_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myManticoreStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $manticoreMyManticoreStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testManticoreStoreWithQuantizationCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'manticore' => [
+                        'my_manticore_store' => [
+                            'endpoint' => 'http://127.0.0.1:9306',
+                            'table' => 'test',
+                            'field' => 'foo_vector',
+                            'type' => 'hnsw',
+                            'similarity' => 'cosine',
+                            'dimensions' => 768,
+                            'quantization' => '1bit',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.manticore.my_manticore_store'));
+
+        $definition = $container->getDefinition('ai.store.manticore.my_manticore_store');
+        $this->assertSame(ManticoreStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(8, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:9306', $definition->getArgument(1));
+        $this->assertSame('test', $definition->getArgument(2));
+        $this->assertSame('foo_vector', $definition->getArgument(3));
+        $this->assertSame('hnsw', $definition->getArgument(4));
+        $this->assertSame('cosine', $definition->getArgument(5));
+        $this->assertSame(768, $definition->getArgument(6));
+        $this->assertSame('1bit', $definition->getArgument(7));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_manticore_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myManticoreStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $manticoreMyManticoreStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testMariaDbStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'mariadb' => [
+                        'my_mariadb_store' => [
+                            'connection' => 'default',
+                            'table_name' => 'vector_table',
+                            'index_name' => 'vector_idx',
+                            'vector_field_name' => 'vector',
+                            'setup_options' => [
+                                'dimensions' => 1024,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.mariadb.my_mariadb_store'));
+
+        $definition = $container->getDefinition('ai.store.mariadb.my_mariadb_store');
+        $this->assertSame(MariaDbStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(0));
+        $this->assertSame('vector_table', $definition->getArgument(1));
+        $this->assertSame('vector_idx', $definition->getArgument(2));
+        $this->assertSame('vector', $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mariadb_store'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mariadb_my_mariadb_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mariadbMyMariadbStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testMeilisearchStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'meilisearch' => [
+                        'custom' => [
+                            'endpoint' => 'http://127.0.0.1:7700',
+                            'api_key' => 'foo',
+                            'index_name' => 'test',
+                            'embedder' => 'default',
+                            'vector_field' => '_vectors',
+                            'dimensions' => 768,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.meilisearch.custom');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(8, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:7700', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertSame('default', $definition->getArgument(4));
+        $this->assertSame('_vectors', $definition->getArgument(5));
+        $this->assertSame(768, $definition->getArgument(6));
+        $this->assertSame(1.0, $definition->getArgument(7));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $custom'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $meilisearch_custom'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $meilisearchCustom'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    #[TestDox('Meilisearch store with custom semantic_ratio can be configured')]
+    public function testMeilisearchStoreWithCustomSemanticRatioCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'meilisearch' => [
+                        'custom' => [
+                            'endpoint' => 'http://127.0.0.1:7700',
+                            'api_key' => 'foo',
+                            'index_name' => 'test',
+                            'embedder' => 'default',
+                            'vector_field' => '_vectors',
+                            'dimensions' => 768,
+                            'semantic_ratio' => 0.5,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.meilisearch.custom');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(8, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:7700', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertSame('default', $definition->getArgument(4));
+        $this->assertSame('_vectors', $definition->getArgument(5));
+        $this->assertSame(768, $definition->getArgument(6));
+        $this->assertSame(0.5, $definition->getArgument(7));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $custom'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $meilisearch_custom'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $meilisearchCustom'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
     public function testInMemoryStoreWithoutCustomStrategyCanBeConfigured()
     {
         $container = $this->buildContainer([
@@ -836,6 +1176,19 @@ class AiBundleTest extends TestCase
         $this->assertCount(1, $definition->getArguments());
         $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
         $this->assertSame(DistanceCalculator::class, $definition->getArgument(0)->getClass());
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_memory_store_with_custom_strategy'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMemoryStoreWithCustomStrategy'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $memory_my_memory_store_with_custom_strategy'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $memoryMyMemoryStoreWithCustomStrategy'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
     }
 
     public function testInMemoryStoreWithCustomStrategyCanBeConfigured()
@@ -860,6 +1213,119 @@ class AiBundleTest extends TestCase
         $this->assertCount(1, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('ai.store.distance_calculator.my_memory_store_with_custom_strategy', (string) $definition->getArgument(0));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_memory_store_with_custom_strategy'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMemoryStoreWithCustomStrategy'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $memory_my_memory_store_with_custom_strategy'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $memoryMyMemoryStoreWithCustomStrategy'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testMilvusStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'milvus' => [
+                        'my_milvus_store' => [
+                            'endpoint' => 'http://127.0.0.1:19530',
+                            'api_key' => 'foo',
+                            'database' => 'test',
+                            'collection' => 'default',
+                            'vector_field' => '_vectors',
+                            'dimensions' => 768,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.milvus.my_milvus_store'));
+
+        $definition = $container->getDefinition('ai.store.milvus.my_milvus_store');
+        $this->assertSame(MilvusStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(7, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:19530', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertSame('default', $definition->getArgument(4));
+        $this->assertSame('_vectors', $definition->getArgument(5));
+        $this->assertSame(768, $definition->getArgument(6));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_milvus_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMilvusStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $milvus_my_milvus_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $milvusMyMilvusStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testMilvusStoreWithCustomMetricsCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'milvus' => [
+                        'my_milvus_store' => [
+                            'endpoint' => 'http://127.0.0.1:19530',
+                            'api_key' => 'foo',
+                            'database' => 'test',
+                            'collection' => 'default',
+                            'vector_field' => '_vectors',
+                            'dimensions' => 768,
+                            'metric_type' => 'COSINE',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.milvus.my_milvus_store'));
+
+        $definition = $container->getDefinition('ai.store.milvus.my_milvus_store');
+        $this->assertSame(MilvusStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(8, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:19530', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertSame('default', $definition->getArgument(4));
+        $this->assertSame('_vectors', $definition->getArgument(5));
+        $this->assertSame(768, $definition->getArgument(6));
+        $this->assertSame('COSINE', $definition->getArgument(7));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_milvus_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMilvusStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $milvus_my_milvus_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $milvusMyMilvusStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
     }
 
     public function testPostgresStoreWithDifferentConnectionCanBeConfigured()
@@ -1111,6 +1577,125 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($foundInput, 'Default tool processor should have input tag with full agent ID');
         $this->assertTrue($foundOutput, 'Default tool processor should have output tag with full agent ID');
+    }
+
+    public function testElevenLabsPlatformCanBeRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+
+        $definition = $container->getDefinition('ai.platform.elevenlabs');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertSame([PlatformFactory::class, 'create'], $definition->getFactory());
+
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('https://api.elevenlabs.io/v1', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('ai.platform.model_catalog.elevenlabs', (string) $definition->getArgument(3));
+        $this->assertNull($definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $elevenlabs'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface'));
+    }
+
+    public function testElevenLabsPlatformWithCustomEndpointCanBeRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                        'host' => 'https://api.elevenlabs.io/v2',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+
+        $definition = $container->getDefinition('ai.platform.elevenlabs');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertSame([PlatformFactory::class, 'create'], $definition->getFactory());
+
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('https://api.elevenlabs.io/v2', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('ai.platform.model_catalog.elevenlabs', (string) $definition->getArgument(3));
+        $this->assertNull($definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $elevenlabs'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface'));
+    }
+
+    public function testElevenLabsPlatformWithCustomHttpClientCanBeRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                        'http_client' => 'foo',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+
+        $definition = $container->getDefinition('ai.platform.elevenlabs');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertSame([PlatformFactory::class, 'create'], $definition->getFactory());
+
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('https://api.elevenlabs.io/v1', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('foo', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('ai.platform.model_catalog.elevenlabs', (string) $definition->getArgument(3));
+        $this->assertNull($definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $elevenlabs'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface'));
     }
 
     #[TestDox('Token usage processor tags use the correct agent ID')]
@@ -2709,6 +3294,94 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(IndexerInterface::class.' $another'));
     }
 
+    public function testRetrieverWithConfiguredVectorizer()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'memory' => [
+                        'my_store' => [],
+                    ],
+                ],
+                'vectorizer' => [
+                    'my_vectorizer' => [
+                        'platform' => 'my_platform_service_id',
+                        'model' => 'text-embedding-3-small',
+                    ],
+                ],
+                'retriever' => [
+                    'my_retriever' => [
+                        'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        'store' => 'ai.store.memory.my_store',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.retriever.my_retriever'));
+        $this->assertTrue($container->hasDefinition('ai.vectorizer.my_vectorizer'));
+
+        $retrieverDefinition = $container->getDefinition('ai.retriever.my_retriever');
+        $arguments = $retrieverDefinition->getArguments();
+
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('ai.vectorizer.my_vectorizer', (string) $arguments[0]);
+
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('ai.store.memory.my_store', (string) $arguments[1]);
+
+        $this->assertInstanceOf(Reference::class, $arguments[2]); // logger
+        $this->assertSame('logger', (string) $arguments[2]);
+    }
+
+    public function testRetrieverAliasIsRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'memory' => [
+                        'my_store' => [],
+                    ],
+                ],
+                'retriever' => [
+                    'my_retriever' => [
+                        'vectorizer' => 'my_vectorizer_service',
+                        'store' => 'ai.store.memory.my_store',
+                    ],
+                    'another' => [
+                        'vectorizer' => 'my_vectorizer_service',
+                        'store' => 'ai.store.memory.my_store',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasAlias(RetrieverInterface::class.' $myRetriever'));
+        $this->assertTrue($container->hasAlias(RetrieverInterface::class.' $another'));
+    }
+
+    public function testSingleRetrieverCreatesDefaultAlias()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'memory' => [
+                        'my_store' => [],
+                    ],
+                ],
+                'retriever' => [
+                    'default' => [
+                        'vectorizer' => 'my_vectorizer_service',
+                        'store' => 'ai.store.memory.my_store',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.retriever.default'));
+        $this->assertTrue($container->hasAlias(RetrieverInterface::class));
+    }
+
     public function testValidMultiAgentConfiguration()
     {
         $container = $this->buildContainer([
@@ -3374,6 +4047,78 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
 
+    public function testCloudflareMessageStoreIsConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'message_store' => [
+                    'cloudflare' => [
+                        'my_cloudflare_message_store' => [
+                            'account_id' => 'foo',
+                            'api_key' => 'bar',
+                            'namespace' => 'random',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.message_store.cloudflare.my_cloudflare_message_store');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(5, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('random', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame('bar', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('serializer', (string) $definition->getArgument(4));
+
+        $this->assertSame([
+            ['interface' => MessageStoreInterface::class],
+            ['interface' => ManagedMessageStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.message_store'));
+    }
+
+    public function testCloudflareMessageStoreWithCustomEndpointIsConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'message_store' => [
+                    'cloudflare' => [
+                        'my_cloudflare_message_store_with_new_endpoint' => [
+                            'account_id' => 'foo',
+                            'api_key' => 'bar',
+                            'namespace' => 'random',
+                            'endpoint_url' => 'https://api.cloudflare.com/client/v6/accounts',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.message_store.cloudflare.my_cloudflare_message_store_with_new_endpoint');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('random', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame('bar', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('serializer', (string) $definition->getArgument(4));
+        $this->assertSame('https://api.cloudflare.com/client/v6/accounts', $definition->getArgument(5));
+
+        $this->assertSame([
+            ['interface' => MessageStoreInterface::class],
+            ['interface' => ManagedMessageStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.message_store'));
+    }
+
     public function testDoctrineDbalMessageStoreCanBeConfiguredWithCustomKey()
     {
         $container = $this->buildContainer([
@@ -3472,30 +4217,6 @@ class AiBundleTest extends TestCase
             ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
-    }
-
-    #[TestDox('Meilisearch store with custom semantic_ratio can be configured')]
-    public function testMeilisearchStoreWithCustomSemanticRatioCanBeConfigured()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'store' => [
-                    'meilisearch' => [
-                        'test_store' => [
-                            'endpoint' => 'http://127.0.0.1:7700',
-                            'api_key' => 'test_key',
-                            'index_name' => 'test_index',
-                            'semantic_ratio' => 0.5,
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertTrue($container->hasDefinition('ai.store.meilisearch.test_store'));
-        $definition = $container->getDefinition('ai.store.meilisearch.test_store');
-        $arguments = $definition->getArguments();
-        $this->assertSame(0.5, $arguments[7]);
     }
 
     public function testMemoryMessageStoreCanBeConfiguredWithCustomKey()
@@ -4025,9 +4746,9 @@ class AiBundleTest extends TestCase
                         'version' => '2025-04-16',
                         'http_client' => 'http_client',
                     ],
-                    'eleven_labs' => [
+                    'elevenlabs' => [
                         'host' => 'https://api.elevenlabs.io/v1',
-                        'api_key' => 'eleven_labs_key_full',
+                        'api_key' => 'elevenlabs_key_full',
                     ],
                     'gemini' => [
                         'api_key' => 'gemini_key_full',
@@ -4134,6 +4855,11 @@ class AiBundleTest extends TestCase
                             'database' => 'my_db',
                             'table' => 'my_table',
                         ],
+                        'my_clickhouse_store_with_custom_dsn' => [
+                            'dsn' => 'http://foo:bar@1.2.3.4:9999',
+                            'database' => 'my_db',
+                            'table' => 'my_table',
+                        ],
                     ],
                     'cloudflare' => [
                         'my_cloudflare_store' => [
@@ -4147,6 +4873,14 @@ class AiBundleTest extends TestCase
                     ],
                     'manticore' => [
                         'my_manticore_store' => [
+                            'endpoint' => 'http://127.0.0.1:9306',
+                            'table' => 'test',
+                            'field' => 'foo_vector',
+                            'type' => 'hnsw',
+                            'similarity' => 'cosine',
+                            'dimensions' => 768,
+                        ],
+                        'my_manticore_store_with_quantization' => [
                             'endpoint' => 'http://127.0.0.1:9306',
                             'table' => 'test',
                             'field' => 'foo_vector',
@@ -4185,6 +4919,14 @@ class AiBundleTest extends TestCase
                     ],
                     'milvus' => [
                         'my_milvus_store' => [
+                            'endpoint' => 'http://127.0.0.1:19530',
+                            'api_key' => 'foo',
+                            'database' => 'test',
+                            'collection' => 'default',
+                            'vector_field' => '_vectors',
+                            'dimensions' => 768,
+                        ],
+                        'my_milvus_store_with_custom_metric_type' => [
                             'endpoint' => 'http://127.0.0.1:19530',
                             'api_key' => 'foo',
                             'database' => 'test',
@@ -4319,6 +5061,19 @@ class AiBundleTest extends TestCase
                         'my_cache_message_store_with_custom_cache_key' => [
                             'service' => 'cache.system',
                             'key' => 'foo',
+                        ],
+                    ],
+                    'cloudflare' => [
+                        'my_cloudflare_message_store' => [
+                            'account_id' => 'foo',
+                            'api_key' => 'bar',
+                            'namespace' => 'random',
+                        ],
+                        'my_cloudflare_message_store_with_new_endpoint' => [
+                            'account_id' => 'foo',
+                            'api_key' => 'bar',
+                            'namespace' => 'random',
+                            'endpoint_url' => 'https://api.cloudflare.com/client/v6/accounts',
                         ],
                     ],
                     'doctrine' => [

@@ -152,7 +152,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'test_db', 'test_table');
 
-        $results = $store->query($queryVector);
+        $results = iterator_to_array($store->query($queryVector));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -175,10 +175,10 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'test_db', 'test_table');
 
-        $results = $store->query($queryVector, [
+        $results = iterator_to_array($store->query($queryVector, [
             'limit' => 10,
             'params' => ['custom_param' => 'test_value'],
-        ]);
+        ]));
 
         $this->assertCount(0, $results);
     }
@@ -197,9 +197,9 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'test_db', 'test_table');
 
-        $results = $store->query($queryVector, [
+        $results = iterator_to_array($store->query($queryVector, [
             'where' => "JSONExtractString(metadata, 'type') = 'document'",
-        ]);
+        ]));
 
         $this->assertCount(0, $results);
     }
@@ -226,7 +226,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'test_db', 'test_table');
 
-        $results = $store->query($queryVector);
+        $results = iterator_to_array($store->query($queryVector));
 
         $this->assertCount(1, $results);
         $this->assertSame([], $results[0]->metadata->getArrayCopy());

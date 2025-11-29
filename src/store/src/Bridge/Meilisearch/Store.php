@@ -77,7 +77,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         );
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $semanticRatio = $options['semanticRatio'] ?? $this->semanticRatio;
 
@@ -96,7 +96,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ],
         ]);
 
-        return array_map($this->convertToVectorDocument(...), $result['hits']);
+        foreach ($result['hits'] as $item) {
+            yield $this->convertToVectorDocument($item);
+        }
     }
 
     public function drop(): void

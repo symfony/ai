@@ -288,7 +288,7 @@ final class StoreTest extends TestCase
         $store->setup();
         $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(2, $results);
         $this->assertSame(3, $httpClient->getRequestsCount());

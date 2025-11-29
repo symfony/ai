@@ -167,7 +167,7 @@ final class SearchStoreTest extends TestCase
             '2023-11-01',
         );
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(2, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -216,7 +216,7 @@ final class SearchStoreTest extends TestCase
             'custom_vector_field',
         );
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -247,7 +247,7 @@ final class SearchStoreTest extends TestCase
         $this->expectExceptionMessage('HTTP 400 returned');
         $this->expectExceptionCode(400);
 
-        $store->query(new Vector([0.1, 0.2, 0.3]));
+        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
     }
 
     public function testQueryWithNullVector()
@@ -277,7 +277,7 @@ final class SearchStoreTest extends TestCase
             '2023-11-01',
         );
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);

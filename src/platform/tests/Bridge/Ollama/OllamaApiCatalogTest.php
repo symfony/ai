@@ -34,7 +34,7 @@ final class OllamaApiCatalogTest extends TestCase
 
         $this->assertSame('foo', $model->getName());
         $this->assertSame([
-            Capability::INPUT_TEXT,
+            Capability::INPUT_MESSAGES,
         ], $model->getCapabilities());
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -66,7 +66,7 @@ final class OllamaApiCatalogTest extends TestCase
         $this->assertSame(Ollama::class, $model['class']);
         $this->assertCount(1, $model['capabilities']);
         $this->assertSame([
-            Capability::INPUT_TEXT,
+            Capability::INPUT_MESSAGES,
         ], $model['capabilities']);
         $this->assertSame(2, $httpClient->getRequestsCount());
     }

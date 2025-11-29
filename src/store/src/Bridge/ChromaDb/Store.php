@@ -55,7 +55,7 @@ final class Store implements StoreInterface
     /**
      * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>} $options
      */
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $collection = $this->client->getOrCreateCollection($this->collectionName);
         $queryResponse = $collection->query(
@@ -65,15 +65,13 @@ final class Store implements StoreInterface
             whereDocument: $options['whereDocument'] ?? null,
         );
 
-        $documents = [];
         for ($i = 0; $i < \count($queryResponse->metadatas[0]); ++$i) {
-            $documents[] = new VectorDocument(
+            yield new VectorDocument(
                 id: Uuid::fromString($queryResponse->ids[0][$i]),
                 vector: new Vector($queryResponse->embeddings[0][$i]),
                 metadata: new Metadata($queryResponse->metadatas[0][$i]),
+                score: $queryResponse->distances[0][$i] ?? null,
             );
         }
-
-        return $documents;
     }
 }

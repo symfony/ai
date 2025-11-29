@@ -28,7 +28,7 @@ final class CacheStoreTest extends TestCase
         $store = new CacheStore(new ArrayAdapter());
         $store->setup();
 
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]));
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(0, $result);
     }
 
@@ -41,12 +41,12 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1])),
         );
 
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]));
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(3, $result);
 
         $store->drop();
 
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]));
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(0, $result);
     }
 
@@ -59,7 +59,7 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1])),
         );
 
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]));
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(3, $result);
         $this->assertSame([0.1, 0.1, 0.5], $result[0]->vector->getData());
 
@@ -69,7 +69,7 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1])),
         );
 
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]));
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(6, $result);
         $this->assertSame([0.1, 0.1, 0.5], $result[0]->vector->getData());
     }
@@ -85,7 +85,7 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.0, 0.1, 0.6])),
         );
 
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]));
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(5, $result);
         $this->assertSame([0.0, 0.1, 0.6], $result[0]->vector->getData());
         $this->assertSame([0.1, 0.1, 0.5], $result[1]->vector->getData());
@@ -103,9 +103,9 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1])),
         );
 
-        $this->assertCount(1, $store->query(new Vector([0.0, 0.1, 0.6]), [
+        $this->assertCount(1, iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
             'maxItems' => 1,
-        ]));
+        ])));
     }
 
     public function testStoreCanSearchUsingAngularDistance()
@@ -116,7 +116,7 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([1.0, 5.0, 7.0])),
         );
 
-        $result = $store->query(new Vector([1.2, 2.3, 3.4]));
+        $result = iterator_to_array($store->query(new Vector([1.2, 2.3, 3.4])));
 
         $this->assertCount(2, $result);
         $this->assertSame([1.0, 2.0, 3.0], $result[0]->vector->getData());
@@ -130,7 +130,7 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([1.0, 2.0, 3.0])),
         );
 
-        $result = $store->query(new Vector([1.2, 2.3, 3.4]));
+        $result = iterator_to_array($store->query(new Vector([1.2, 2.3, 3.4])));
 
         $this->assertCount(2, $result);
         $this->assertSame([1.0, 2.0, 3.0], $result[0]->vector->getData());
@@ -144,7 +144,7 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([1.0, 5.0, 7.0])),
         );
 
-        $result = $store->query(new Vector([1.2, 2.3, 3.4]));
+        $result = iterator_to_array($store->query(new Vector([1.2, 2.3, 3.4])));
 
         $this->assertCount(2, $result);
         $this->assertSame([1.0, 2.0, 3.0], $result[0]->vector->getData());
@@ -158,7 +158,7 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([1.0, 5.0, 7.0])),
         );
 
-        $result = $store->query(new Vector([1.2, 2.3, 3.4]));
+        $result = iterator_to_array($store->query(new Vector([1.2, 2.3, 3.4])));
 
         $this->assertCount(2, $result);
         $this->assertSame([1.0, 2.0, 3.0], $result[0]->vector->getData());
@@ -173,9 +173,9 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1]), new Metadata(['category' => 'products', 'enabled' => false])),
         );
 
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]), [
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
             'filter' => fn (VectorDocument $doc) => 'products' === $doc->metadata['category'],
-        ]);
+        ]));
 
         $this->assertCount(2, $result);
         $this->assertSame('products', $result[0]->metadata['category']);
@@ -192,10 +192,10 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.0, 0.1, 0.6]), new Metadata(['category' => 'products'])),
         );
 
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]), [
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
             'filter' => fn (VectorDocument $doc) => 'products' === $doc->metadata['category'],
             'maxItems' => 2,
-        ]);
+        ]));
 
         $this->assertCount(2, $result);
         $this->assertSame('products', $result[0]->metadata['category']);
@@ -211,9 +211,9 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1]), new Metadata(['price' => 50, 'stock' => 10])),
         );
 
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]), [
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
             'filter' => fn (VectorDocument $doc) => $doc->metadata['price'] <= 150 && $doc->metadata['stock'] > 0,
-        ]);
+        ]));
 
         $this->assertCount(2, $result);
     }
@@ -227,9 +227,9 @@ final class CacheStoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1]), new Metadata(['options' => ['size' => 'S', 'color' => 'red']])),
         );
 
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]), [
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
             'filter' => fn (VectorDocument $doc) => 'S' === $doc->metadata['options']['size'],
-        ]);
+        ]));
 
         $this->assertCount(2, $result);
         $this->assertSame('S', $result[0]->metadata['options']['size']);
@@ -246,9 +246,9 @@ final class CacheStoreTest extends TestCase
         );
 
         $allowedBrands = ['Nike', 'Adidas', 'Puma'];
-        $result = $store->query(new Vector([0.0, 0.1, 0.6]), [
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
             'filter' => fn (VectorDocument $doc) => \in_array($doc->metadata['brand'] ?? '', $allowedBrands, true),
-        ]);
+        ]));
 
         $this->assertCount(2, $result);
     }

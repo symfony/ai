@@ -18,7 +18,7 @@ final class StreamResultTest extends TestCase
 {
     public function testGetContent()
     {
-        $generator = (function () {
+        $generator = (static function () {
             yield 'data1';
             yield 'data2';
         })();

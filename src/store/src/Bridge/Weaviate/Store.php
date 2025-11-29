@@ -55,7 +55,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $results = $this->request('POST', 'v1/graphql', [
             'query' => \sprintf('{
@@ -73,7 +73,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
             }', $this->collection, implode(', ', $vector->getData())),
         ]);
 
-        return array_map($this->convertToVectorDocument(...), $results['data']['Get'][$this->collection]);
+        foreach ($results['data']['Get'][$this->collection] as $item) {
+            yield $this->convertToVectorDocument($item);
+        }
     }
 
     public function drop(): void

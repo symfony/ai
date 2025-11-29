@@ -76,19 +76,21 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
 
     public function processOutput(Output $output): void
     {
-        if ($output->getResult() instanceof GenericStreamResponse) {
+        $result = $output->getResult();
+
+        if ($result instanceof GenericStreamResponse) {
             $output->setResult(
-                new ToolboxStreamResponse($output->getResult()->getContent(), $this->handleToolCallsCallback($output))
+                new ToolboxStreamResponse($result->getContent(), $this->handleToolCallsCallback($output))
             );
 
             return;
         }
 
-        if (!$output->getResult() instanceof ToolCallResult) {
+        if (!$result instanceof ToolCallResult) {
             return;
         }
 
-        $output->setResult($this->handleToolCallsCallback($output)($output->getResult()));
+        $output->setResult($this->handleToolCallsCallback($output)($result));
     }
 
     /**

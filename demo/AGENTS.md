@@ -31,8 +31,8 @@ composer install
 echo "OPENAI_API_KEY='sk-...'" > .env.local
 
 # Initialize vector store
-symfony console app:blog:embed -vv
-symfony console app:blog:query
+symfony console ai:store:index blog -vv
+symfony console ai:store:retrieve blog "Week of Symfony"
 
 # Start server
 symfony serve -d

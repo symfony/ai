@@ -168,7 +168,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8108/multi_search".');
         $this->expectExceptionCode(400);
-        $store->query(new Vector([0.1, 0.2, 0.3]));
+        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
     }
 
     public function testStoreCanQuery()
@@ -209,7 +209,7 @@ final class StoreTest extends TestCase
             'test',
         );
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(2, $results);
         $this->assertSame(1, $httpClient->getRequestsCount());

@@ -36,6 +36,7 @@ use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
+use Symfony\AI\Chat\Bridge\Cloudflare\MessageStore as CloudflareMessageStore;
 use Symfony\AI\Chat\Bridge\Doctrine\DoctrineDbalMessageStore;
 use Symfony\AI\Chat\Bridge\HttpFoundation\SessionStore;
 use Symfony\AI\Chat\Bridge\Local\CacheStore as CacheMessageStore;
@@ -103,6 +104,8 @@ use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Indexer;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Retriever;
+use Symfony\AI\Store\RetrieverInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -261,6 +264,13 @@ final class AiBundle extends AbstractBundle
             $builder->setAlias(IndexerInterface::class, 'ai.indexer.'.$indexerName);
         }
 
+        foreach ($config['retriever'] ?? [] as $retrieverName => $retriever) {
+            $this->processRetrieverConfig($retrieverName, $retriever, $builder);
+        }
+        if (1 === \count($config['retriever'] ?? []) && isset($retrieverName)) {
+            $builder->setAlias(RetrieverInterface::class, 'ai.retriever.'.$retrieverName);
+        }
+
         $builder->registerAttributeForAutoconfiguration(AsTool::class, static function (ChildDefinition $definition, AsTool $attribute): void {
             $definition->addTag('ai.tool', [
                 'name' => $attribute->name,
@@ -415,23 +425,23 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('eleven_labs' === $type) {
-            $platformId = 'ai.platform.eleven_labs';
+        if ('elevenlabs' === $type) {
             $definition = (new Definition(Platform::class))
                 ->setFactory(ElevenLabsPlatformFactory::class.'::create')
                 ->setLazy(true)
-                ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['api_key'],
                     $platform['host'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.elevenlabs'),
+                    new Reference('ai.platform.model_catalog.'.$type),
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'eleven_labs']);
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform', ['name' => $type]);
 
-            $container->setDefinition($platformId, $definition);
+            $container->setDefinition('ai.platform.'.$type, $definition);
+            $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type);
 
             return;
         }
@@ -1050,18 +1060,12 @@ final class AiBundle extends AbstractBundle
                     $store['account_id'],
                     $store['api_key'],
                     $store['index_name'],
+                    $store['dimensions'],
+                    $store['metric'],
                 ];
 
-                if (\array_key_exists('dimensions', $store)) {
-                    $arguments[4] = $store['dimensions'];
-                }
-
-                if (\array_key_exists('metric', $store)) {
-                    $arguments[5] = $store['metric'];
-                }
-
-                if (\array_key_exists('endpoint', $store)) {
-                    $arguments[6] = $store['endpoint'];
+                if (\array_key_exists('endpoint_url', $store)) {
+                    $arguments[6] = $store['endpoint_url'];
                 }
 
                 $definition = new Definition(CloudflareStore::class);
@@ -1084,23 +1088,11 @@ final class AiBundle extends AbstractBundle
                     new Reference('http_client'),
                     $store['endpoint'],
                     $store['table'],
+                    $store['field'],
+                    $store['type'],
+                    $store['similarity'],
+                    $store['dimensions'],
                 ];
-
-                if (\array_key_exists('field', $store)) {
-                    $arguments[3] = $store['field'];
-                }
-
-                if (\array_key_exists('type', $store)) {
-                    $arguments[4] = $store['type'];
-                }
-
-                if (\array_key_exists('similarity', $store)) {
-                    $arguments[5] = $store['similarity'];
-                }
-
-                if (\array_key_exists('dimensions', $store)) {
-                    $arguments[6] = $store['dimensions'];
-                }
 
                 if (\array_key_exists('quantization', $store)) {
                     $arguments[7] = $store['quantization'];
@@ -1109,10 +1101,10 @@ final class AiBundle extends AbstractBundle
                 $definition = new Definition(ManticoreStore::class);
                 $definition
                     ->setLazy(true)
-                    ->addTag('ai.store')
+                    ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->setArguments($arguments);
+                    ->addTag('ai.store');
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -1122,18 +1114,16 @@ final class AiBundle extends AbstractBundle
 
         if ('mariadb' === $type) {
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    new Reference(\sprintf('doctrine.dbal.%s_connection', $store['connection'])),
-                    $store['table_name'],
-                    $store['index_name'],
-                    $store['vector_field_name'],
-                ];
-
                 $definition = new Definition(MariaDbStore::class);
                 $definition->setFactory([MariaDbStore::class, 'fromDbal']);
                 $definition
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        new Reference(\sprintf('doctrine.dbal.%s_connection', $store['connection'])),
+                        $store['table_name'],
+                        $store['index_name'],
+                        $store['vector_field_name'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
@@ -1154,19 +1144,10 @@ final class AiBundle extends AbstractBundle
                     $store['endpoint'],
                     $store['api_key'],
                     $store['index_name'],
+                    $store['embedder'],
+                    $store['vector_field'],
+                    $store['dimensions'],
                 ];
-
-                if (\array_key_exists('embedder', $store)) {
-                    $arguments[4] = $store['embedder'];
-                }
-
-                if (\array_key_exists('vector_field', $store)) {
-                    $arguments[5] = $store['vector_field'];
-                }
-
-                if (\array_key_exists('dimensions', $store)) {
-                    $arguments[6] = $store['dimensions'];
-                }
 
                 if (\array_key_exists('semantic_ratio', $store)) {
                     $arguments[7] = $store['semantic_ratio'];
@@ -1193,12 +1174,10 @@ final class AiBundle extends AbstractBundle
                 ];
 
                 if (\array_key_exists('strategy', $store) && null !== $store['strategy']) {
-                    if (!$container->hasDefinition('ai.store.distance_calculator.'.$name)) {
-                        $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
-                        $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
+                    $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
+                    $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
 
-                        $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
-                    }
+                    $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
 
                     $arguments[0] = new Reference('ai.store.distance_calculator.'.$name);
                 }
@@ -1225,15 +1204,9 @@ final class AiBundle extends AbstractBundle
                     $store['api_key'],
                     $store['database'],
                     $store['collection'],
+                    $store['vector_field'],
+                    $store['dimensions'],
                 ];
-
-                if (\array_key_exists('vector_field', $store)) {
-                    $arguments[5] = $store['vector_field'];
-                }
-
-                if (\array_key_exists('dimensions', $store)) {
-                    $arguments[6] = $store['dimensions'];
-                }
 
                 if (\array_key_exists('metric_type', $store)) {
                     $arguments[7] = $store['metric_type'];
@@ -1625,6 +1598,34 @@ final class AiBundle extends AbstractBundle
             }
         }
 
+        if ('cloudflare' === $type) {
+            foreach ($messageStores as $name => $messageStore) {
+                $arguments = [
+                    new Reference('http_client'),
+                    $messageStore['namespace'],
+                    $messageStore['account_id'],
+                    $messageStore['api_key'],
+                    new Reference('serializer'),
+                ];
+
+                if (\array_key_exists('endpoint_url', $messageStore)) {
+                    $arguments[5] = $messageStore['endpoint_url'];
+                }
+
+                $definition = new Definition(CloudflareMessageStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments($arguments)
+                    ->addTag('proxy', ['interface' => MessageStoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedMessageStoreInterface::class])
+                    ->addTag('ai.message_store');
+
+                $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $type.'_'.$name);
+            }
+        }
+
         if ('doctrine' === $type) {
             foreach ($messageStores['dbal'] ?? [] as $name => $dbalMessageStore) {
                 $definition = new Definition(DoctrineDbalMessageStore::class);
@@ -1872,6 +1873,23 @@ final class AiBundle extends AbstractBundle
         $serviceId = 'ai.indexer.'.$name;
         $container->setDefinition($serviceId, $definition);
         $container->registerAliasForArgument($serviceId, IndexerInterface::class, (new Target((string) $name))->getParsedName());
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function processRetrieverConfig(int|string $name, array $config, ContainerBuilder $container): void
+    {
+        $definition = new Definition(Retriever::class, [
+            new Reference($config['vectorizer']),
+            new Reference($config['store']),
+            new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+        ]);
+        $definition->addTag('ai.retriever', ['name' => $name]);
+
+        $serviceId = 'ai.retriever.'.$name;
+        $container->setDefinition($serviceId, $definition);
+        $container->registerAliasForArgument($serviceId, RetrieverInterface::class, (new Target((string) $name))->getParsedName());
     }
 
     /**

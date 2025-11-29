@@ -33,7 +33,34 @@ used vector store::
     $document = new TextDocument('This is a sample document.');
     $indexer->index($document);
 
-You can find more advanced usage in combination with an Agent using the store for RAG in the examples folder:
+You can find more advanced usage in combination with an Agent using the store for RAG in the examples folder.
+
+Retrieving
+----------
+
+The opposite of indexing is retrieving. The :class:`Symfony\\AI\\Store\\Retriever` is a higher level feature that allows you to
+search for documents in a store based on a query string. It vectorizes the query and retrieves similar documents from the store::
+
+    use Symfony\AI\Store\Retriever;
+
+    $retriever = new Retriever($vectorizer, $store);
+    $documents = $retriever->retrieve('What is the capital of France?');
+
+    foreach ($documents as $document) {
+        echo $document->metadata->get('source');
+    }
+
+The retriever accepts optional parameters to customize the retrieval:
+
+* ``$options``: An array of options to pass to the underlying store query (e.g., limit, filters)
+
+Example Usage
+~~~~~~~~~~~~~
+
+* `Basic Retriever Example`_
+
+Similarity Search Examples
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * `Similarity Search with Cloudflare (RAG)`_
 * `Similarity Search with Manticore (RAG)`_
@@ -129,6 +156,7 @@ This leads to a store implementing two methods::
     }
 
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
+.. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php
 .. _`Similarity Search with Cloudflare (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cloudflare.php
 .. _`Similarity Search with Manticore (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/manticore.php
 .. _`Similarity Search with MariaDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/mariadb-gemini.php

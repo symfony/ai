@@ -65,7 +65,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $response = $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
             'statement' => \sprintf('CALL db.index.vector.queryNodes("%s", 5, $vectors) YIELD node, score RETURN node, score', $this->vectorIndexName),
@@ -74,7 +74,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ],
         ]);
 
-        return array_map($this->convertToVectorDocument(...), $response['data']['values']);
+        foreach ($response['data']['values'] as $item) {
+            yield $this->convertToVectorDocument($item);
+        }
     }
 
     public function drop(): void

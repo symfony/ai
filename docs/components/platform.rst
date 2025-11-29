@@ -347,7 +347,7 @@ To achieve this, the ``Symfony\AI\Platform\StructuredOutput\PlatformSubscriber``
 Array Structures as Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Also PHP array structures as `response_format` are supported, which also requires the event subscriber mentioned above. On
+Also PHP array structures as ``response_format`` are supported, which also requires the event subscriber mentioned above. On
 top this example uses the feature through the agent to leverage tool calling::
 
     use Symfony\AI\Platform\Message\Message;

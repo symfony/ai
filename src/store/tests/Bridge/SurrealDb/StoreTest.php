@@ -326,7 +326,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/sql".');
         $this->expectExceptionCode(400);
-        $store->query(new Vector(array_fill(0, 1275, 0.1)));
+        iterator_to_array($store->query(new Vector(array_fill(0, 1275, 0.1))));
     }
 
     public function testStoreCanQueryOnValidEmbeddings()
@@ -400,7 +400,7 @@ final class StoreTest extends TestCase
 
         $store->add(new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1))));
 
-        $results = $store->query(new Vector(array_fill(0, 1275, 0.1)));
+        $results = iterator_to_array($store->query(new Vector(array_fill(0, 1275, 0.1))));
 
         $this->assertCount(2, $results);
     }

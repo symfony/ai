@@ -61,7 +61,7 @@ class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $vectors = json_encode($vector->getData());
 
@@ -70,7 +70,9 @@ class Store implements ManagedStoreInterface, StoreInterface
             $this->vectorFieldName, $this->strategy, $this->vectorFieldName, $vectors, $this->table, $this->vectorFieldName, $vectors,
         ));
 
-        return array_map($this->convertToVectorDocument(...), $results[0]['result']);
+        foreach ($results[0]['result'] as $item) {
+            yield $this->convertToVectorDocument($item);
+        }
     }
 
     public function drop(): void

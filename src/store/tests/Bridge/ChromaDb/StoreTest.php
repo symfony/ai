@@ -168,7 +168,7 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = $store->query($queryVector);
+        $documents = iterator_to_array($store->query($queryVector));
 
         $this->assertCount(2, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
@@ -213,7 +213,7 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = $store->query($queryVector, ['where' => $whereFilter]);
+        $documents = iterator_to_array($store->query($queryVector, ['where' => $whereFilter]));
 
         $this->assertCount(1, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
@@ -257,7 +257,7 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = $store->query($queryVector, ['whereDocument' => $whereDocumentFilter]);
+        $documents = iterator_to_array($store->query($queryVector, ['whereDocument' => $whereDocumentFilter]));
 
         $this->assertCount(2, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
@@ -302,10 +302,10 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = $store->query($queryVector, [
+        $documents = iterator_to_array($store->query($queryVector, [
             'where' => $whereFilter,
             'whereDocument' => $whereDocumentFilter,
-        ]);
+        ]));
 
         $this->assertCount(1, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
@@ -349,9 +349,74 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = $store->query($queryVector, ['where' => $whereFilter]);
+        $documents = iterator_to_array($store->query($queryVector, ['where' => $whereFilter]));
 
         $this->assertCount(0, $documents);
+    }
+
+    public function testQueryReturnsDistancesAsScore()
+    {
+        $queryVector = new Vector([0.15, 0.25, 0.35]);
+        $queryResponse = new QueryItemsResponse(
+            ids: [['01234567-89ab-cdef-0123-456789abcdef', 'fedcba98-7654-3210-fedc-ba9876543210']],
+            embeddings: [[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]],
+            metadatas: [[['title' => 'Doc 1'], ['title' => 'Doc 2']]],
+            documents: null,
+            data: null,
+            uris: null,
+            distances: [[0.123, 0.456]]
+        );
+
+        $collection = $this->createMock(CollectionResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('query')
+            ->willReturn($queryResponse);
+
+        $store = new Store($client, 'test-collection');
+        $documents = iterator_to_array($store->query($queryVector));
+
+        $this->assertCount(2, $documents);
+        $this->assertSame(0.123, $documents[0]->score);
+        $this->assertSame(0.456, $documents[1]->score);
+    }
+
+    public function testQueryReturnsNullScoreWhenDistancesNotAvailable()
+    {
+        $queryVector = new Vector([0.15, 0.25, 0.35]);
+        $queryResponse = new QueryItemsResponse(
+            ids: [['01234567-89ab-cdef-0123-456789abcdef']],
+            embeddings: [[[0.1, 0.2, 0.3]]],
+            metadatas: [[['title' => 'Doc 1']]],
+            documents: null,
+            data: null,
+            uris: null,
+            distances: null
+        );
+
+        $collection = $this->createMock(CollectionResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('query')
+            ->willReturn($queryResponse);
+
+        $store = new Store($client, 'test-collection');
+        $documents = iterator_to_array($store->query($queryVector));
+
+        $this->assertCount(1, $documents);
+        $this->assertNull($documents[0]->score);
     }
 
     /**
@@ -399,7 +464,7 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = $store->query($queryVector, $options);
+        $documents = iterator_to_array($store->query($queryVector, $options));
 
         $this->assertCount(1, $documents);
     }

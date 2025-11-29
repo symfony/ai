@@ -94,14 +94,14 @@ class StoreTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Supabase query failed: Query failed');
-        $store->query($queryVector);
+        iterator_to_array($store->query($queryVector));
     }
 
     public function testQueryWithDefaultOptions()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
         $store = $this->createStore($httpClient);
-        $result = $store->query(new Vector([1.0, 2.0]));
+        $result = iterator_to_array($store->query(new Vector([1.0, 2.0])));
 
         $this->assertSame([], $result);
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -111,7 +111,7 @@ class StoreTest extends TestCase
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
         $store = $this->createStore($httpClient);
-        $result = $store->query(new Vector([1.0, 2.0]), ['limit' => 1]);
+        $result = iterator_to_array($store->query(new Vector([1.0, 2.0]), ['limit' => 1]));
 
         $this->assertSame([], $result);
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -121,12 +121,10 @@ class StoreTest extends TestCase
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
         $store = $this->createStore($httpClient);
-        $wrongDimensionVector = new Vector([1.0]);
-        $store = $this->createStore($httpClient);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Vector dimension mismatch: expected 2');
-        $store->query($wrongDimensionVector);
+        iterator_to_array($store->query(new Vector([1.0])));
     }
 
     public function testQuerySuccess()
@@ -142,7 +140,7 @@ class StoreTest extends TestCase
         ];
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 3);
-        $result = $store->query(new Vector([1.0, 2.0, 3.0]), ['max_items' => 5, 'min_score' => 0.7]);
+        $result = iterator_to_array($store->query(new Vector([1.0, 2.0, 3.0]), ['max_items' => 5, 'min_score' => 0.7]));
 
         $this->assertCount(1, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
@@ -174,7 +172,7 @@ class StoreTest extends TestCase
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 2);
 
-        $result = $store->query(new Vector([1.0, 2.0]), ['max_items' => 2, 'min_score' => 0.8]);
+        $result = iterator_to_array($store->query(new Vector([1.0, 2.0]), ['max_items' => 2, 'min_score' => 0.8]));
 
         $this->assertCount(2, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
@@ -205,7 +203,7 @@ class StoreTest extends TestCase
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 3);
 
-        $result = $store->query(new Vector([1.0, 2.0, 3.0]));
+        $result = iterator_to_array($store->query(new Vector([1.0, 2.0, 3.0])));
 
         $document = $result[0];
         $metadata = $document->metadata->getArrayCopy();

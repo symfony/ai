@@ -141,7 +141,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     maxScore?: float|null,
      * } $options
      */
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $where = null;
 
@@ -183,19 +183,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $params['maxScore'] = $maxScore;
         }
 
-        $documents = [];
-
         $statement->execute($params);
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
-            $documents[] = new VectorDocument(
+            yield new VectorDocument(
                 id: Uuid::fromRfc4122($result['id']),
                 vector: new Vector(json_decode((string) $result['embedding'], true)),
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true)),
                 score: $result['score'],
             );
         }
-
-        return $documents;
     }
 }

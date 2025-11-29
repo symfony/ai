@@ -30,6 +30,7 @@ $fileHeaderParts = [
 return (new PhpCsFixer\Config())
     // @see https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/pull/7777
     ->setParallelConfig(PhpCsFixer\Runner\Parallel\ParallelConfigFactory::detect())
+    ->setUnsupportedPhpVersionAllowed(true)
     ->setRules([
         '@Symfony' => true,
         '@Symfony:risky' => true,

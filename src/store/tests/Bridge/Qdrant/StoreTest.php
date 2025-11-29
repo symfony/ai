@@ -227,7 +227,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points/query".');
         $this->expectExceptionCode(400);
-        $store->query(new Vector([0.1, 0.2, 0.3]));
+        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
     }
 
     public function testStoreCanQuery()
@@ -255,7 +255,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertSame(1, $httpClient->getRequestsCount());
         $this->assertCount(2, $results);
@@ -286,13 +286,13 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
 
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
             'filter' => [
                 'must' => [
                     ['key' => 'foo', 'match' => ['value' => 'bar']],
                 ],
             ],
-        ]);
+        ]));
 
         $this->assertSame(1, $httpClient->getRequestsCount());
         $this->assertCount(2, $results);

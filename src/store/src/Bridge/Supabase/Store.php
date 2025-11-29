@@ -96,7 +96,7 @@ final class Store implements StoreInterface
      *      min_score?: float
      *  } $options
      */
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         if (\count($vector->getData()) !== $this->vectorDimension) {
             throw new InvalidArgumentException("Vector dimension mismatch: expected {$this->vectorDimension}.");
@@ -127,7 +127,6 @@ final class Store implements StoreInterface
         }
 
         $records = json_decode($response->getContent(), true, 512, \JSON_THROW_ON_ERROR);
-        $documents = [];
 
         foreach ($records as $record) {
             if (!isset($record['id'], $record[$this->vectorFieldName], $record['metadata'], $record['score']) || !\is_string($record['id'])) {
@@ -137,14 +136,12 @@ final class Store implements StoreInterface
             $embedding = \is_array($record[$this->vectorFieldName]) ? $record[$this->vectorFieldName] : json_decode($record[$this->vectorFieldName] ?? '{}', true, 512, \JSON_THROW_ON_ERROR);
             $metadata = \is_array($record['metadata']) ? $record['metadata'] : json_decode($record['metadata'], true, 512, \JSON_THROW_ON_ERROR);
 
-            $documents[] = new VectorDocument(
+            yield new VectorDocument(
                 id: Uuid::fromString($record['id']),
                 vector: new Vector($embedding),
                 metadata: new Metadata($metadata),
                 score: (float) $record['score'],
             );
         }
-
-        return $documents;
     }
 }
