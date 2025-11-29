@@ -55,9 +55,6 @@ final class Store implements StoreInterface
     /**
      * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>} $options
      */
-        /**
-     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>} $options
-     */
     public function query(Vector $vector, array $options = []): iterable
     {
         $include = null;
