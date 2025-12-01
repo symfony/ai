@@ -23,25 +23,10 @@ use Symfony\AI\Platform\Result\ToolCallResult;
  */
 final class AccumulatingStreamResult
 {
-    private ?\Closure $onComplete = null;
-
     public function __construct(
         private readonly StreamResult|ToolboxStreamResult $innerResult,
-        ?\Closure $onComplete = null,
+        private ?\Closure $onComplete = null,
     ) {
-        $this->onComplete = $onComplete;
-    }
-
-    public function addOnComplete(\Closure $callback): void
-    {
-        $existingCallback = $this->onComplete;
-
-        $this->onComplete = $existingCallback
-            ? function (AssistantMessage $message) use ($existingCallback, $callback) {
-                $existingCallback($message);
-                $callback($message);
-            }
-        : $callback;
     }
 
     public function getContent(): \Generator
