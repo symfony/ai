@@ -12,7 +12,6 @@
 namespace Symfony\AI\Chat\Result;
 
 use Symfony\AI\Agent\Toolbox\StreamResult as ToolboxStreamResult;
-use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\StreamResult;
