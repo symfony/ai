@@ -15,7 +15,6 @@ use Symfony\AI\Agent\Bridge\OpenMeteo\OpenMeteo;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\TextChunk;
@@ -29,12 +28,9 @@ $openMeteo = new OpenMeteo(http_client());
 $toolbox = new Toolbox([$clock, $openMeteo], logger: logger());
 $processor = new AgentProcessor($toolbox);
 
-$tokenOutputProcessor = new TokenOutputProcessor();
-
 $agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor]);
-$messages = new MessageBag(Message::ofUser(<<<TXT
-    Tell me the time and the weather in Dublin.
-    TXT));
+$messages = new MessageBag(Message::ofUser('Tell me the time and the weather in Dublin.'));
+
 $result = $agent->call($messages, [
     'stream' => true, // enable streaming of response text
     'stream_options' => [
@@ -42,17 +38,11 @@ $result = $agent->call($messages, [
     ],
 ]);
 
-// Output text chunks
 /** @var TextChunk $textChunk */
 foreach ($result->getContent() as $textChunk) {
-    // $textChunk implement \Stringable
     echo $textChunk->getContent();
-
-    // Chunk also contain metadata
-    // $textChunk->getMetadata()->get('id'); // Stream id
 }
 
-// Output token usage statistics for each call
 foreach ($result->getMetadata()->get('calls', []) as $call) {
     echo \PHP_EOL.sprintf(
         '%s: %d tokens - Finish reason: [%s]',
