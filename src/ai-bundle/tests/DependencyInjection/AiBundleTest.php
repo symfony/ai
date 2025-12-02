@@ -47,6 +47,7 @@ use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
+use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\Distance;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
@@ -2073,6 +2074,269 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myNeo4jStore'));
         $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $neo4j_my_neo4j_store'));
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $neo4jMyNeo4jStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testOpenSearchStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'opensearch' => [
+                        'my_opensearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.opensearch.my_opensearch_store'));
+
+        $definition = $container->getDefinition('ai.store.opensearch.my_opensearch_store');
+        $this->assertSame(OpenSearchStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:9200', $definition->getArgument(1));
+        $this->assertSame('my_opensearch_store', $definition->getArgument(2));
+        $this->assertSame('_vectors', $definition->getArgument(3));
+        $this->assertSame(1536, $definition->getArgument(4));
+        $this->assertSame('l2', $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testOpenSearchStoreWithCustomIndexCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'opensearch' => [
+                        'my_opensearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'index_name' => 'foo',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.opensearch.my_opensearch_store'));
+
+        $definition = $container->getDefinition('ai.store.opensearch.my_opensearch_store');
+        $this->assertSame(OpenSearchStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:9200', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame('_vectors', $definition->getArgument(3));
+        $this->assertSame(1536, $definition->getArgument(4));
+        $this->assertSame('l2', $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testOpenSearchStoreWithCustomFieldCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'opensearch' => [
+                        'my_opensearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'vectors_field' => 'foo',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.opensearch.my_opensearch_store'));
+
+        $definition = $container->getDefinition('ai.store.opensearch.my_opensearch_store');
+        $this->assertSame(OpenSearchStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:9200', $definition->getArgument(1));
+        $this->assertSame('my_opensearch_store', $definition->getArgument(2));
+        $this->assertSame('foo', $definition->getArgument(3));
+        $this->assertSame(1536, $definition->getArgument(4));
+        $this->assertSame('l2', $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testOpenSearchStoreWithCustomDimensionsCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'opensearch' => [
+                        'my_opensearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'dimensions' => 768,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.opensearch.my_opensearch_store'));
+
+        $definition = $container->getDefinition('ai.store.opensearch.my_opensearch_store');
+        $this->assertSame(OpenSearchStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:9200', $definition->getArgument(1));
+        $this->assertSame('my_opensearch_store', $definition->getArgument(2));
+        $this->assertSame('_vectors', $definition->getArgument(3));
+        $this->assertSame(768, $definition->getArgument(4));
+        $this->assertSame('l2', $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testOpenSearchStoreWithCustomSpaceTypeCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'opensearch' => [
+                        'my_opensearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'space_type' => 'l1',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.opensearch.my_opensearch_store'));
+
+        $definition = $container->getDefinition('ai.store.opensearch.my_opensearch_store');
+        $this->assertSame(OpenSearchStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:9200', $definition->getArgument(1));
+        $this->assertSame('my_opensearch_store', $definition->getArgument(2));
+        $this->assertSame('_vectors', $definition->getArgument(3));
+        $this->assertSame(1536, $definition->getArgument(4));
+        $this->assertSame('l1', $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testOpenSearchStoreWithCustomHttpClientCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'opensearch' => [
+                        'my_opensearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'http_client' => 'foo',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.opensearch.my_opensearch_store'));
+
+        $definition = $container->getDefinition('ai.store.opensearch.my_opensearch_store');
+        $this->assertSame(OpenSearchStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('foo', (string) $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:9200', $definition->getArgument(1));
+        $this->assertSame('my_opensearch_store', $definition->getArgument(2));
+        $this->assertSame('_vectors', $definition->getArgument(3));
+        $this->assertSame(1536, $definition->getArgument(4));
+        $this->assertSame('l2', $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
     }
 
@@ -6854,6 +7118,27 @@ class AiBundleTest extends TestCase
                             'dimensions' => 768,
                             'distance' => 'cosine',
                             'quantization' => true,
+                        ],
+                    ],
+                    'opensearch' => [
+                        'my_opensearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                        ],
+                        'my_opensearch_store_with_custom_index' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'index_name' => 'foo',
+                        ],
+                        'my_opensearch_store_with_custom_field' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'vectors_field' => 'foo',
+                        ],
+                        'my_opensearch_store_with_custom_space_type' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'space_type' => 'l1',
+                        ],
+                        'my_opensearch_store_with_custom_http_client' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'http_client' => 'foo',
                         ],
                     ],
                     'pinecone' => [

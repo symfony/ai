@@ -70,6 +70,7 @@ Similarity Search Examples
 * `Similarity Search with Milvus (RAG)`_
 * `Similarity Search with MongoDB (RAG)`_
 * `Similarity Search with Neo4j (RAG)`_
+* `Similarity Search with OpenSearch (RAG)`_
 * `Similarity Search with Pinecone (RAG)`_
 * `Similarity Search with Qdrant (RAG)`_
 * `Similarity Search with SurrealDB (RAG)`_
@@ -97,6 +98,7 @@ Supported Stores
 * `Milvus`_
 * `MongoDB Atlas`_ (requires ``mongodb/mongodb`` as additional dependency)
 * `Neo4j`_
+* `OpenSearch`_
 * `Pinecone`_ (requires ``probots-io/pinecone-php`` as additional dependency)
 * `Postgres`_ (requires ``ext-pdo``)
 * `Qdrant`_
@@ -165,6 +167,7 @@ This leads to a store implementing two methods::
 .. _`Similarity Search with Milvus (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/milvus.php
 .. _`Similarity Search with MongoDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/mongodb.php
 .. _`Similarity Search with Neo4j (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/neo4j.php
+.. _`Similarity Search with OpenSearch (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/opensearch.php
 .. _`Similarity Search with Pinecone (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
 .. _`Similarity Search with Symfony Cache (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cache.php
 .. _`Similarity Search with Qdrant (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/qdrant.php
@@ -186,6 +189,7 @@ This leads to a store implementing two methods::
 .. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
 .. _`Qdrant`: https://qdrant.tech/
 .. _`Neo4j`: https://neo4j.com/
+.. _`OpenSearch`: https://opensearch.org/
 .. _`Typesense`: https://typesense.org/
 .. _`Symfony Cache`: https://symfony.com/doc/current/components/cache.html
 .. _`Weaviate`: https://weaviate.io/
