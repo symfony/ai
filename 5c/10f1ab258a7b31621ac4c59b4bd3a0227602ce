@@ -1,0 +1,37 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-15T08:26:08Z
+
+Is this still needed?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-15T08:33:14Z
+
+Yes, for message store's, some improvements to apply, need to finish it 🙂
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-23T10:24:27Z
+
+That PR quite big, can you maybe split some logical parts to a dedicated PR?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-23T10:28:01Z
+
+I can try to extract the `proxy` / `lazy` part into a separate PR, regarding the other parts, it will be hard, the tests are tied to the improvements on `AiBundle.php` and improvements are tested via the tests 😅
+
+Most of the added lines are tests, the heaviest file is `AiBundleTest.php` due to extra tests.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-24T08:45:34Z
+
+@OskarStark FYI, I started to look at how to split this PR, the best approach would be to split it every two-three stores, this way, we should be able to easily merge smaller PRs, the final split is under work, should be ready pretty soon.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-29T18:48:43Z
+
+@OskarStark I reduced the changes to tests and minor ones on `AiBundle.php` / `options.php`, we should be "ready for review" on this one, that's the last one 🙂
