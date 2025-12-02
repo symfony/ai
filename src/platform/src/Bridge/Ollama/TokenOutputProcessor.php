@@ -29,8 +29,17 @@ final class TokenOutputProcessor implements OutputProcessorInterface
 
         if ($result instanceof StreamResult) {
             foreach ($result->getContent() as $chunk) {
-                dump($chunk);
+                if ($chunk instanceof OllamaMessageChunk && !$chunk->isDone()) {
+                    continue;
+                }
+
+                $currentOutputMetadata->add('token_usage', new TokenUsage(
+                    promptTokens: $chunk->raw['prompt_eval_count'],
+                    completionTokens: $chunk->raw['eval_count']
+                ));
             }
+
+            return;
         }
 
         $rawResponse = $result->getRawResult()?->getObject();
@@ -38,7 +47,7 @@ final class TokenOutputProcessor implements OutputProcessorInterface
             return;
         }
 
-        $payload = $rawResponse->toArray(false);
+        $payload = $rawResponse->toArray();
 
         $currentOutputMetadata->add('token_usage', new TokenUsage(
             promptTokens: $payload['prompt_eval_count'],

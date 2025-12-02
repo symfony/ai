@@ -15,5 +15,4 @@ use PHPUnit\Framework\TestCase;
 
 final class TokenOutputProcessorTest extends TestCase
 {
-
 }
