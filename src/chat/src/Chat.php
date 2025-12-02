@@ -51,10 +51,7 @@ final class Chat implements ChatInterface
                 throw new RuntimeException($this->store::class.' does not support streaming.');
             }
 
-            return new AccumulatingStreamResult($result, function (AssistantMessage $assistantMessage) use ($messages) {
-                $messages->add($assistantMessage);
-                $this->store->save($messages);
-            });
+            return new AccumulatingStreamResult($result, fn (AssistantMessage $assistantMessage) => $this->store->save($messages->with($assistantMessage)));
         }
 
         \assert($result instanceof TextResult);
