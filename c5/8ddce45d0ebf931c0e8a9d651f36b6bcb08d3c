@@ -1,0 +1,142 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-29T13:02:55Z
+
+Please add some tests
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-29T13:10:34Z
+
+@Guikingone we should leverage this new id in the chat component then
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-29T13:21:06Z
+
+@OskarStark Hum, yes and "maybe no" 😅
+
+If we're setting the id at the bag level, how do we pass it to the store / chat one?
+
+We're ending in the same discussions that we've faced in #254, if the bag is the object storing the current conversation identifier, we should/must have an identifier at the `Chat` / `MessageStore` level (in this case, coming from the bag level), the `Store` level is not an issue (as it's the default behavior) but the `Chat` one is an issue we've discussed (if I'm right, @chr-hertel was also in the loop and again, if I'm right, we were on the side of not storing identifiers at `Chat` level).
+
+Not to mention that at `MessageStore` level, we're not storing the bag but each messages individually (as they already have an identifier), I'm not sure that storing the bag is a good approach (just my POV here) as AFAIK, the bag is just "a transport layer" for messages that we can merge, prepend and so on.
+
+If @lochmueller has a POV on this issue, I'll be more than happy to discuss around it as this is something that we're facing in #821 (the `fork` approach allows to prevent storing an identifier at the `Chat` level, only the `MessageStore` knows it).
+
+I dont want to "lock this PR in endless debates" but I already faced this situation and I'm still equally open to add an identifier at bag level (because this could lead to a solution) and opposed to add it as I don't see the benefits against the disadvantages 😅
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-29T17:48:47Z
+
+We might need to update the normalization process, maybe creating a new `MessageBagNormalizer` that can handle the normalization of the bag then call the `MessageNormalizer` to normalize messages then send the whole payload to stores?
+
+Could be handled in another PR but might be worth the work to ensure that we don't miss the id during normalization.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-30T10:06:56Z
+
+@Guikingone regarding the chat component you mean?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-30T10:24:15Z
+
+@chr-hertel Yes, after thinking about it, the id in the message bag could lead to a solution.
+
+Let's agree on the fact that messages are identified using an UUID, now, we're adding an UUID to the message bag, this could create a OTM-like relation between bag and messages, so now, we have the "id" of a chat, we could store it in message stores as a "foreign-key like" identifier used by each messages and retrieve each messages linked to this bag, this storage part will require a new normalizer to handle the "bag -> messages" relation, that's why I was thinking about a `MessageBagNormalizer`.
+
+The only issue that we're facing now is "how to keep this id at `Chat` level", I was looking at the `Cache` component last night and especially at the `TagAwareAdapter`, what if we implement a `IdentifierAwareChat` that keep the id of the current message bag?
+
+This lead to a stateful service but stores are already stateful, messages store are also stateful (as they store the identifier of the queue / table / etc) but it will allows to "switch / fork / othermethodname" between bags (maybe we can list bags in a command like `ai:chat:list`) while relying on UUIDs?
+
+---------------------------------------------------------------------------
+
+by marco-jouwweb at 2025-12-02T11:23:17Z
+
+@Guikingone: I don't want to extend this discussion endlessly either, but I do feel like adding my two cents. Forgive me :-p
+
+As I see it, the MessageBag currently has a dual purpose role, which might be where the confusion stems from. While it functions as a transport layer, it also represents a conversation as a whole on an object level.
+
+Not giving it an identifier makes it impossible to reference conversations in the store properly. This would require implementations to keep some kind of external mapping where they associate MessageBag objects to a self-created identifier.
+
+However, this brings risks. Store implementations can be swapped, and they have subtle but impactful differences. The most important would be TTL. While a database has an indefinite TTL, cache storage does not.
+
+Consider a user keeping a separate MessageBag to ID mapping in a custom cache, together with a CacheStore implementation. They cannot swap to another store implementation without reimplementing that mapping using the same mechanism. If they swap to DoctrineDbalMessageStore, the TTL between the mapping and the MessageBag storage will differ, which brings synchronization issues. If the mapping uses cache and expires faster, the conversation loses its identifier while the messages are still alive.
+
+By introducing this identifier at MessageBag level, it becomes part of the serialized object. This means it will always be included in the used store, no matter the underlying technique. This makes it more robust and impossible to be out of sync, as it is part of the MessageBag itself.
+
+I understand this stems from LLMs not being stateful, but as you said yourself: a store implementation is unavoidably stateful. A conversation object seems like a very important part of this puzzle, and by trying to avoid having one while still using the MessageBag as a disguised conversation, it becomes difficult to create a clear and understandable flow. Conversation level operations become nearly impossible to implement cleanly if we skip this part of the puzzle.
+
+I feel like this could be a key design consideration for the current architecture, but I might be mistaken. Hope it makes sense. I might be completely wrong here, but I noticed this before so when I saw this PR, I couldn't help myself.
+
+Have a nice day and thanks in advance for your time. :-)
+
+Edit: To clarify, the mapping scenario I described isn't hypothetical. The current architecture requires one store instance per conversation, so supporting multiple conversations requires building an external mapping layer. I've implemented this, and the TTL synchronization issue is a real problem I encountered. The MessageStore essentially acts as a repository, and repositories need identifiable entities.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-02T12:51:18Z
+
+@marco-jouwweb That's why I'm no longer opposed to the `id` at the bag level, the issue is not there and never was, the main concern is about using this identifier at the `Chat` level (the equivalent of `Conversation` AFAIK) and keeping the chat synced with the flow of messages.
+
+Without storing this id at the `Chat` level, I prefer to be honest, I don't have a clue about how to solve the issue, IMHO, having the `Chat` as a stateful service is not a big issue but I remember discussions in #254 where it was identified as a issue (I can understand the concerns about using it as a stateful service).
+
+IMHO, we can't solve the issue without storing the id at `Chat` level, without it, I don't know how to retrieve / switch between conversations without doing black magic 😅.
+
+This PR introduce an UUID, so we solve "half the issue", the other half isn't as we don't use it as `Chat` level 😅
+
+---------------------------------------------------------------------------
+
+by marco-jouwweb at 2025-12-02T13:07:42Z
+
+> @marco-jouwweb That's why I'm no longer opposed to the `id` at the bag level, the issue is not there and never was, the main concern is about using this identifier at the `Chat` level (the equivalent of `Conversation` AFAIK) and keeping the chat synced with the flow of messages.
+>
+> Without storing this id at the `Chat` level, I prefer to be honest, I don't have a clue about how to solve the issue, IMHO, having the `Chat` as a stateful service is not a big issue but I remember discussions in #254 where it was identified as a issue (I can understand the concerns about using it as a stateful service).
+>
+> IMHO, we can't solve the issue without storing the id at `Chat` level, without it, I don't know how to retrieve / switch between conversations without doing black magic 😅.
+>
+> This PR introduce an UUID, so we solve "half the issue", the other half isn't as we don't use it as `Chat` level 😅
+
+Ah, thanks for your quick response @Guikingone. That makes sense!
+
+I do agree with you: it would be better to keep `Chat` stateless. That way, `Chat` can mimic how LLMs handle chat sessions more accurately, which should represent the domain better.
+
+I suspect that the best way to fix this, would be passing the new ID this PR adds to `Chat` functions, and refactoring `Store` implementations into proper repositories (also taking these IDs as input for its functions). This way, the `Chat` can be a stateless singleton, and all stateful logic is located within the stores themselves. While this is a breaking change, it seems like the only proper, future proof solution.
+
+I think anyhow, the stores are going to need a refactor to allow this. And while at it, I wonder if it'd be a better idea to store `MessageBag` instances over the `Message` instances directly. Might be a good idea to combine these changes in one refactor. What do you think about this approach?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-02T13:51:10Z
+
+Well, adding the `id` at `Chat` methods level was already discussed in https://github.com/symfony/ai/pull/254#issuecomment-3208003116 and it's open to debate 😅
+
+A solution would be to allow nullable ids but it's even worse (and I already tried this approach 😅 ).
+
+---------------------------------------------------------------------------
+
+by marco-jouwweb at 2025-12-02T14:01:50Z
+
+> Well, adding the `id` at `Chat` methods level was already discussed in [#254 (comment)](https://github.com/symfony/ai/pull/254#issuecomment-3208003116) and it's open to debate 😅
+>
+> A solution would be to allow nullable ids but it's even worse (and I already tried this approach 😅 ).
+
+Thanks for linking! Hard to follow since this conversation has so many angles and is scattered throughout...
+Feel like thats the best way out of these issues. Maybe it could help to create one discussion thread where we unite these topics? As they all influence each other somehow...
+
+As for the nullable ID approach you was talking about: was the reason for this purely not to introduce a breaking change, or am I missing another implication this has?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-03T07:15:36Z
+
+Ok, but we can agree, Chat topic aside for now, that it is a good idea to have an ID on the `MessageBag`, right?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-03T08:05:41Z
+
+Yes, looks good on my side, I might have an idea regarding the `Chat` issue BTW.
