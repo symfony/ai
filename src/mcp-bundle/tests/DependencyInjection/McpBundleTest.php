@@ -14,7 +14,6 @@ namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\McpBundle;
-use Symfony\Bundle\MonologBundle\MonologBundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class McpBundleTest extends TestCase
@@ -50,10 +49,6 @@ class McpBundleTest extends TestCase
 
     public function testMcpLoggerServiceIsCreated()
     {
-        if (!class_exists(MonologBundle::class)) {
-            $this->markTestSkipped('MonologBundle is not installed');
-        }
-
         $container = $this->buildContainer([]);
 
         $this->assertTrue($container->hasDefinition('monolog.logger.mcp'));
