@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Gemini\Gemini\ResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -131,5 +132,37 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('base64EncodedData', $result->getContent());
         $this->assertNull($result->getMimeType());
+    }
+
+    public function testConvertsMultiPartThinkingResponseToTextResult()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'text' => '<analysis>This is the thinking process...</analysis>',
+                                'thoughtSignature' => 'base64-encoded-signature...',
+                            ],
+                            [
+                                'text' => '```json\n{"result": "actual response"}\n```',
+                            ],
+                        ],
+                    ],
+                    'finishReason' => 'STOP',
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame(
+            '<analysis>This is the thinking process...</analysis>```json\n{"result": "actual response"}\n```',
+            $result->getContent()
+        );
     }
 }

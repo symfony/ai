@@ -146,11 +146,20 @@ final class ResultConverter implements ResultConverterInterface
             }
         }
 
+        // Fallback for multi-part text responses (e.g., thinking + response)
+        if ('' === $content) {
+            foreach ($contentParts as $contentPart) {
+                if (isset($contentPart['text'])) {
+                    $content .= $contentPart['text'];
+                }
+            }
+        }
+
         if ('' !== $content) {
             return new TextResult($content);
         }
 
-        throw new RuntimeException('Code execution failed.');
+        throw new RuntimeException('Response does not contain any text content.');
     }
 
     /**
