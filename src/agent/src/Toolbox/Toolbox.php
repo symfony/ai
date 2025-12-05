@@ -43,7 +43,7 @@ final class Toolbox implements ToolboxInterface
      *
      * @var Tool[]
      */
-    private array $map;
+    private array $toolsMetadata;
 
     /**
      * @param iterable<object> $tools
@@ -60,18 +60,18 @@ final class Toolbox implements ToolboxInterface
 
     public function getTools(): array
     {
-        if (isset($this->map)) {
-            return $this->map;
+        if (isset($this->toolsMetadata)) {
+            return $this->toolsMetadata;
         }
 
-        $map = [];
+        $toolsMetadata = [];
         foreach ($this->tools as $tool) {
             foreach ($this->toolFactory->getTool($tool::class) as $metadata) {
-                $map[] = $metadata;
+                $toolsMetadata[] = $metadata;
             }
         }
 
-        return $this->map = $map;
+        return $this->toolsMetadata = $toolsMetadata;
     }
 
     public function execute(ToolCall $toolCall): ToolResult
