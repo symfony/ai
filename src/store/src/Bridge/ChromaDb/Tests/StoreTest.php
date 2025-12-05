@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Store\Tests\Bridge\ChromaDb;
+namespace Symfony\AI\Store\Bridge\ChromaDb\Tests;
 
 use Codewithkyrian\ChromaDB\Client;
 use Codewithkyrian\ChromaDB\Generated\Responses\QueryItemsResponse;
