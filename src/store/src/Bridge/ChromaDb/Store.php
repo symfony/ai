@@ -15,7 +15,6 @@ use Codewithkyrian\ChromaDB\Client;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -28,9 +27,6 @@ final class Store implements StoreInterface
         private readonly Client $client,
         private readonly string $collectionName,
     ) {
-        if (!class_exists(Client::class)) {
-            throw new RuntimeException('For using the ChromaDB as retrieval vector store, the codewithkyrian/chromadb-php package is required. Try running "composer require codewithkyrian/chromadb-php".');
-        }
     }
 
     public function add(VectorDocument ...$documents): void

@@ -64,7 +64,11 @@ deptrac:
     - name: StoreComponent
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Store.*
+          value: ^Symfony\\AI\\Store\\(?!Bridge\\).*
+    - name: ChromaDbStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\ChromaDb\\.*
   ruleset:
     AgentComponent:
       - PlatformComponent
@@ -101,6 +105,8 @@ deptrac:
     PlatformComponent: ~
     StoreComponent:
       - PlatformComponent
+    ChromaDbStore:
+      - StoreComponent
   # Baseline of known violations to be skipped for now
   skip_violations:
     Symfony\AI\Platform\Bridge\Anthropic\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]

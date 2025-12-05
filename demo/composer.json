@@ -8,7 +8,7 @@
         "ext-ctype": "*",
         "ext-gd": "*",
         "ext-iconv": "*",
-        "codewithkyrian/chromadb-php": "^0.4.0",
+        "symfony/ai-chromadb-store": "@dev",
         "league/commonmark": "^2.7.1",
         "mrmysql/youtube-transcript": "^0.0.5",
         "php-http/discovery": "^1.20",
