@@ -1,0 +1,55 @@
+{
+    "name": "symfony/ai-prompt-template",
+    "description": "PHP library for prompt template management with extensible rendering strategies.",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "ai",
+        "llm",
+        "prompt",
+        "template"
+    ],
+    "authors": [
+        {
+            "name": "Johannes Wachter",
+            "email": "johannes@sulu.io"
+        }
+    ],
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.13",
+        "symfony/expression-language": "^7.3|^8.0"
+    },
+    "suggest": {
+        "symfony/expression-language": "For advanced expression-based template rendering"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\PromptTemplate\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\Fixtures\\": "../../fixtures",
+            "Symfony\\AI\\PHPStan\\": "../../.phpstan/",
+            "Symfony\\AI\\PromptTemplate\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    }
+}
