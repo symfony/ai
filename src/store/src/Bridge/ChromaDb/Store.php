@@ -53,23 +53,40 @@ final class Store implements StoreInterface
     }
 
     /**
-     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>} $options
+     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>} $options
      */
     public function query(Vector $vector, array $options = []): iterable
     {
+        $include = null;
+        if ([] !== ($options['include'] ?? [])) {
+            $include = array_values(
+                array_unique(
+                    array_merge(['embeddings', 'metadatas', 'distances'], $options['include'])
+                )
+            );
+        }
+
         $collection = $this->client->getOrCreateCollection($this->collectionName);
         $queryResponse = $collection->query(
             queryEmbeddings: [$vector->getData()],
             nResults: 4,
             where: $options['where'] ?? null,
             whereDocument: $options['whereDocument'] ?? null,
+            include: $include,
         );
 
-        for ($i = 0; $i < \count($queryResponse->metadatas[0]); ++$i) {
+        $metaCount = \count($queryResponse->metadatas[0]);
+
+        for ($i = 0; $i < $metaCount; ++$i) {
+            $metaData = new Metadata($queryResponse->metadatas[0][$i]);
+            if (isset($queryResponse->documents[0][$i])) {
+                $metaData->setText($queryResponse->documents[0][$i]);
+            }
+
             yield new VectorDocument(
                 id: Uuid::fromString($queryResponse->ids[0][$i]),
                 vector: new Vector($queryResponse->embeddings[0][$i]),
-                metadata: new Metadata($queryResponse->metadatas[0][$i]),
+                metadata: $metaData,
                 score: $queryResponse->distances[0][$i] ?? null,
             );
         }
