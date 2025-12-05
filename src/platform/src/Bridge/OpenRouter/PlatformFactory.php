@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Bridge\OpenRouter\Embeddings\ResultConverter as Embeddin
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -35,6 +36,7 @@ final class PlatformFactory
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        ?SpeechConfiguration $speechConfiguration = new SpeechConfiguration(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
@@ -48,6 +50,7 @@ final class PlatformFactory
                 new MessageBagNormalizer(),
                 new UserMessageNormalizer(),
             ),
+            $speechConfiguration,
             $eventDispatcher,
         );
     }

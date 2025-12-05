@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -43,6 +44,7 @@ final class Platform implements PlatformInterface
         iterable $resultConverters,
         private readonly ModelCatalogInterface $modelCatalog,
         private ?Contract $contract = null,
+        private readonly ?SpeechConfiguration $speechConfiguration = null,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
         $this->contract = $contract ?? Contract::create();
@@ -75,6 +77,11 @@ final class Platform implements PlatformInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->modelCatalog;
+    }
+
+    public function getSpeechConfiguration(): ?SpeechConfiguration
+    {
+        return $this->speechConfiguration;
     }
 
     /**

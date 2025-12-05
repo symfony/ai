@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
@@ -65,5 +66,10 @@ final class CachedPlatform implements PlatformInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->platform->getModelCatalog();
+    }
+
+    public function getSpeechConfiguration(): ?SpeechConfiguration
+    {
+        return $this->platform->getSpeechConfiguration();
     }
 }

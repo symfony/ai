@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -36,6 +37,7 @@ final class PlatformFactory
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        ?SpeechConfiguration $speechConfiguration = new SpeechConfiguration(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         if (!class_exists(ApplicationDefaultCredentials::class)) {
@@ -49,6 +51,7 @@ final class PlatformFactory
             [new GeminiResultConverter(), new EmbeddingsResultConverter()],
             $modelCatalog,
             $contract ?? GeminiContract::create(),
+            $speechConfiguration,
             $eventDispatcher,
         );
     }

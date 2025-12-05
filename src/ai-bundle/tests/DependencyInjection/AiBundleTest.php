@@ -30,8 +30,11 @@ use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Exception\RuntimeException as PlatformRuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Speech\SpeechListenerInterface;
+use Symfony\AI\Platform\Speech\SpeechProviderInterface;
 use Symfony\AI\Store\Bridge\Azure\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickhouseStore;
@@ -133,6 +136,7 @@ class AiBundleTest extends TestCase
             'ai.command.drop_store' => true,
             'ai.command.setup_message_store' => true,
             'ai.command.drop_message_store' => true,
+            'ai.speech_provider.listener' => true,
         ], $container->getRemovedIds());
     }
 
@@ -155,6 +159,7 @@ class AiBundleTest extends TestCase
             'ai.command.drop_store' => true,
             'ai.command.setup_message_store' => true,
             'ai.command.drop_message_store' => true,
+            'ai.speech_provider.listener' => true,
         ], $container->getRemovedIds());
     }
 
@@ -3331,7 +3336,7 @@ class AiBundleTest extends TestCase
         $ollamaDefinition = $container->getDefinition('ai.platform.ollama');
 
         $this->assertTrue($ollamaDefinition->isLazy());
-        $this->assertCount(5, $ollamaDefinition->getArguments());
+        $this->assertCount(6, $ollamaDefinition->getArguments());
         $this->assertSame('http://127.0.0.1:11434', $ollamaDefinition->getArgument(0));
         $this->assertInstanceOf(Reference::class, $ollamaDefinition->getArgument(1));
         $this->assertSame('http_client', (string) $ollamaDefinition->getArgument(1));
@@ -3339,8 +3344,9 @@ class AiBundleTest extends TestCase
         $this->assertSame('ai.platform.model_catalog.ollama', (string) $ollamaDefinition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $ollamaDefinition->getArgument(3));
         $this->assertSame('ai.platform.contract.ollama', (string) $ollamaDefinition->getArgument(3));
-        $this->assertInstanceOf(Reference::class, $ollamaDefinition->getArgument(4));
-        $this->assertSame('event_dispatcher', (string) $ollamaDefinition->getArgument(4));
+        $this->assertNull($ollamaDefinition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $ollamaDefinition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $ollamaDefinition->getArgument(5));
 
         $ollamaCatalogDefinition = $container->getDefinition('ai.platform.model_catalog.ollama');
 
@@ -3505,7 +3511,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->isLazy());
         $this->assertSame([PlatformFactory::class, 'create'], $definition->getFactory());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(7, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.elevenlabs.io/v1', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -3513,8 +3519,9 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
         $this->assertSame('ai.platform.model_catalog.elevenlabs', (string) $definition->getArgument(3));
         $this->assertNull($definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+        $this->assertNull($definition->getArgument(5));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(6));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(6));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
@@ -3545,7 +3552,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->isLazy());
         $this->assertSame([PlatformFactory::class, 'create'], $definition->getFactory());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(7, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.elevenlabs.io/v2', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -3553,8 +3560,9 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
         $this->assertSame('ai.platform.model_catalog.elevenlabs', (string) $definition->getArgument(3));
         $this->assertNull($definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+        $this->assertNull($definition->getArgument(5));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(6));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(6));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
@@ -3585,7 +3593,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->isLazy());
         $this->assertSame([PlatformFactory::class, 'create'], $definition->getFactory());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(7, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.elevenlabs.io/v1', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -3593,8 +3601,9 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
         $this->assertSame('ai.platform.model_catalog.elevenlabs', (string) $definition->getArgument(3));
         $this->assertNull($definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+        $this->assertNull($definition->getArgument(5));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(6));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(6));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
@@ -3659,7 +3668,7 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.platform.openai');
         $arguments = $definition->getArguments();
 
-        $this->assertCount(6, $arguments);
+        $this->assertCount(7, $arguments);
         $this->assertSame('sk-test-key', $arguments[0]);
         $this->assertNull($arguments[4]); // region should be null by default
     }
@@ -3685,7 +3694,7 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.platform.openai');
         $arguments = $definition->getArguments();
 
-        $this->assertCount(6, $arguments);
+        $this->assertCount(7, $arguments);
         $this->assertSame('sk-test-key', $arguments[0]);
         $this->assertSame($region, $arguments[4]);
     }
@@ -3724,7 +3733,7 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.platform.perplexity');
         $arguments = $definition->getArguments();
 
-        $this->assertCount(5, $arguments);
+        $this->assertCount(6, $arguments);
         $this->assertSame('pplx-test-key', $arguments[0]);
         $this->assertInstanceOf(Reference::class, $arguments[1]);
         $this->assertSame('http_client', (string) $arguments[1]);
@@ -6571,6 +6580,92 @@ class AiBundleTest extends TestCase
         $this->assertSame([], $definition->getArguments());
     }
 
+    public function testSpeechProviderListenerCannotBeRegisteredWithoutSpeechProviders()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'speech' => [],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.speech_provider.listener'));
+        $this->assertFalse($container->hasDefinition('ai.speech.eleven_labs.configuration'));
+    }
+
+    public function testElevenLabsSpeechProviderListenerCannotBeRegisteredWithoutPlaform()
+    {
+        $this->expectException(PlatformRuntimeException::class);
+        $this->expectExceptionMessage('The ElevenLabs platform cannot be found.');
+        $this->expectExceptionCode(0);
+        $this->buildContainer([
+            'ai' => [
+                'speech' => [
+                    'elevenlabs' => [
+                        'tts_model' => 'foo',
+                        'tts_voice' => 'bar',
+                        'tts_extra_options' => [
+                            'foo' => 'bar',
+                        ],
+                        'stt_model' => 'foo',
+                        'stt_extra_options' => [
+                            'foo' => 'bar',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testElevenLabsSpeechProviderListenerIsRegisteredWithSpeechProviders()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                    ],
+                ],
+                'speech' => [
+                    'elevenlabs' => [
+                        'tts_model' => 'foo',
+                        'tts_voice' => 'bar',
+                        'tts_extra_options' => [
+                            'foo' => 'bar',
+                        ],
+                        'stt_model' => 'foo',
+                        'stt_extra_options' => [
+                            'foo' => 'bar',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.speech_provider.listener'));
+        $this->assertTrue($container->hasDefinition('ai.speech.elevenlabs.configuration'));
+
+        $platformDefinition = $container->getDefinition('ai.platform.elevenlabs');
+        $this->assertCount(7, $platformDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $platformDefinition->getArgument(5));
+        $this->assertSame('ai.speech.elevenlabs.configuration', (string) $platformDefinition->getArgument(5));
+
+        $providerDefinition = $container->getDefinition('ai.speech_provider.elevenlabs');
+        $this->assertTrue($providerDefinition->isLazy());
+        $this->assertCount(1, $providerDefinition->getArguments());
+        $this->assertSame('ai.platform.elevenlabs', (string) $providerDefinition->getArgument(0));
+
+        $this->assertSame([['interface' => SpeechProviderInterface::class]], $providerDefinition->getTag('proxy'));
+        $this->assertTrue($providerDefinition->hasTag('ai.speech_provider'));
+
+        $listenerDefinition = $container->getDefinition('ai.speech_listener.elevenlabs');
+        $this->assertTrue($listenerDefinition->isLazy());
+        $this->assertCount(1, $listenerDefinition->getArguments());
+        $this->assertSame('ai.platform.elevenlabs', (string) $listenerDefinition->getArgument(0));
+
+        $this->assertSame([['interface' => SpeechListenerInterface::class]], $listenerDefinition->getTag('proxy'));
+        $this->assertTrue($listenerDefinition->hasTag('ai.speech_listener'));
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();
@@ -7092,6 +7187,19 @@ class AiBundleTest extends TestCase
                     'main' => [
                         'agent' => 'my_chat_agent',
                         'message_store' => 'cache',
+                    ],
+                ],
+                'speech' => [
+                    'elevenlabs' => [
+                        'tts_model' => 'foo',
+                        'tts_voice' => 'bar',
+                        'tts_extra_options' => [
+                            'foo' => 'bar',
+                        ],
+                        'stt_model' => 'foo',
+                        'stt_extra_options' => [
+                            'foo' => 'bar',
+                        ],
                     ],
                 ],
                 'vectorizer' => [
