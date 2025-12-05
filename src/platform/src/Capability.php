@@ -43,6 +43,15 @@ enum Capability: string
     case TEXT_TO_SPEECH = 'text-to-speech';
     case SPEECH_TO_TEXT = 'speech-to-text';
 
+    // IMAGE
+    case TEXT_TO_IMAGE = 'text-to-image';
+    case IMAGE_TO_IMAGE = 'image-to-image';
+
+    // VIDEO
+    case TEXT_TO_VIDEO = 'text-to-video';
+    case IMAGE_TO_VIDEO = 'image-to-video';
+    case VIDEO_TO_VIDEO = 'video-to-video';
+
     // EMBEDDINGS
     case EMBEDDINGS = 'embeddings';
 
