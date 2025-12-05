@@ -12,12 +12,14 @@
 namespace Symfony\AI\Platform\Bridge\Albert;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\ModelClient\CompletionsModelClient;
+use Symfony\AI\Platform\ModelClient\EmbeddingsModelClient;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\ResultConverter\CompletionsResultConverter;
+use Symfony\AI\Platform\ResultConverter\EmbeddingsResultConverter;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -50,10 +52,10 @@ final class PlatformFactory
 
         return new Platform(
             [
-                new GptModelClient($httpClient, $apiKey, $baseUrl),
-                new EmbeddingsModelClient($httpClient, $apiKey, $baseUrl),
+                new CompletionsModelClient($apiKey, $baseUrl, httpClient: $httpClient),
+                new EmbeddingsModelClient($apiKey, $baseUrl, httpClient: $httpClient),
             ],
-            [new Gpt\ResultConverter(), new Embeddings\ResultConverter()],
+            [new CompletionsResultConverter(), new EmbeddingsResultConverter()],
             $modelCatalog,
             Contract::create(),
             $eventDispatcher,

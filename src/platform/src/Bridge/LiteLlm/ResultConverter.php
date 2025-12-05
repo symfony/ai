@@ -11,29 +11,16 @@
 
 namespace Symfony\AI\Platform\Bridge\LiteLlm;
 
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter as OpenAiResponseConverter;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\RawResultInterface;
-use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\ResultConverter\CompletionsResultConverter;
 
 /**
  * @author Mathieu Santostefano <msantostefano@proton.me>
  */
-final class ResultConverter implements ResultConverterInterface
+final class ResultConverter extends CompletionsResultConverter
 {
-    public function __construct(
-        private readonly OpenAiResponseConverter $gptResponseConverter = new OpenAiResponseConverter(),
-    ) {
-    }
-
     public function supports(Model $model): bool
     {
         return true;
-    }
-
-    public function convert(RawResultInterface $result, array $options = []): ResultInterface
-    {
-        return $this->gptResponseConverter->convert($result, $options);
     }
 }

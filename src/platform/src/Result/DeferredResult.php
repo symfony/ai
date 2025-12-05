@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Result;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
-use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\ResultConverter\ResultConverterInterface;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**

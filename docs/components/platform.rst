@@ -48,15 +48,21 @@ very flexible and powerful interface for working with AI models.
 Models
 ------
 
-The component provides a model base class :class:`Symfony\\AI\\Platform\\Model` which is a combination of a model name, a set of
-capabilities, and additional options. Usually, bridges to specific providers extend this base class to provide a quick
-start for vendor-specific models and their capabilities.
+The component provides a generic model base class :class:`Symfony\\AI\\Platform\\Model` which is a combination of a
+model name, a set of capabilities, and additional options. Usually, bridges to specific providers extend this base class
+to provide a quick start for vendor-specific models and their capabilities.
 
 Capabilities are a list of strings defined by :class:`Symfony\\AI\\Platform\\Capability`, which can be used to check if a model
 supports a specific feature, like ``Capability::INPUT_AUDIO`` or ``Capability::OUTPUT_IMAGE``.
 
 Options are additional parameters that can be passed to the model, like ``temperature`` or ``max_tokens``, and are
 usually defined by the specific models and their documentation.
+
+Additionally, the component provides two more specific base classes, that are needed to trigger built-in API endpoint
+and result conversion implementations:
+
+* :class:`Symfony\\AI\\Platform\\Model\\CompletionsModel` - for models that support text completions
+* :class:`Symfony\\AI\\Platform\\Model\\EmbeddingsModel` - for models that support vector embeddings
 
 Model Size Variants
 ~~~~~~~~~~~~~~~~~~~
@@ -106,7 +112,7 @@ When using the bundle, the usage of ``OllamaApiCatalog`` is available via the ``
                 api_catalog: true
 
 Supported Models & Platforms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
 * **Language Models**
     * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
@@ -118,7 +124,6 @@ Supported Models & Platforms
     * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
     * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
     * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
-    * `LiteLLM`_ as unified Platform
 * **Embeddings Models**
     * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
     * `Vertex AI Text Embeddings`_ with `Vertex AI`_
@@ -135,6 +140,16 @@ Supported Models & Platforms
 * **Voice Models**
     * `Cartesia TTS`_ with `Cartesia`_ as Platform
     * `Cartesia STT`_ with `Cartesia`_ as Platform
+
+Generic Platforms
+~~~~~~~~~~~~~~~~~
+
+Platforms like `LiteLLM`_ or `OpenRouter`_ provide a unified API to access multiple models from different providers.
+Therefore, they rely on endpoint and contract design, that is inspired by OpenAI's original GPT API - an implicit
+standard in the industry. Platforms using this de facto standard can be used without the need of a dedicated bridge, by
+using built-in classes::
+
+    ???
 
 Options
 -------

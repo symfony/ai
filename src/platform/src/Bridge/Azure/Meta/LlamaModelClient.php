@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Azure\Meta;
 
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\ModelClient\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 

@@ -9,41 +9,44 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Albert;
+namespace Symfony\AI\Platform\ModelClient;
 
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\Model\CompletionsModel;
 use Symfony\AI\Platform\Result\RawHttpResult;
-use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * @author Oskar Stark <oskarstark@googlemail.com>
+ * This default implementation is based on OpenAI's initial completion endpoint, that got later adopted by other
+ * providers as well. It can be used by any bridge or directly with the default PlatformFactory.
+ *
+ * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class GptModelClient implements ModelClientInterface
+class CompletionsModelClient implements ModelClientInterface
 {
     private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
-        HttpClientInterface $httpClient,
         #[\SensitiveParameter] private readonly string $apiKey,
         private readonly string $baseUrl,
+        private readonly string $path = '/v1/chat/completions',
+        ?HttpClientInterface $httpClient = null,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Gpt;
+        return $model instanceof CompletionsModel;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
+    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/chat/completions', $this->baseUrl), [
+        return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, [
             'auth_bearer' => $this->apiKey,
-            'json' => \is_array($payload) ? array_merge($payload, $options) : $payload,
+            'headers' => ['Content-Type' => 'application/json'],
+            'json' => array_merge($options, $payload),
         ]));
     }
 }

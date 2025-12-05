@@ -16,7 +16,7 @@ use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\ModelClient\ModelClientInterface;
 
 /**
  * @author Björn Altmann

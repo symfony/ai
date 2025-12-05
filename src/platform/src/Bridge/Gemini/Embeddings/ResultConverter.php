@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
-use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\ResultConverter\ResultConverterInterface;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**

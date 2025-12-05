@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\ResultConverter\ResultConverterInterface;
 
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
