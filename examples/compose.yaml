@@ -124,6 +124,31 @@ services:
             - '7474:7474'
             - '7687:7687'
 
+    opensearch:
+        image: opensearchproject/opensearch
+        environment:
+            discovery.type: 'single-node'
+            bootstrap.memory_lock: true
+            indices.requests.cache.maximum_cacheable_size: 256
+            DISABLE_SECURITY_PLUGIN: true
+            OPENSEARCH_JAVA_OPTS: '-Xms512m -Xmx512m'
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+            nofile:
+                soft: 65536
+                hard: 65536
+        healthcheck:
+            test: [ 'CMD', 'curl', "-f", "http://127.0.0.1:9200" ]
+            interval: 30s
+            start_period: 120s
+            timeout: 20s
+            retries: 3
+        ports:
+            - '9200:9200'
+            - '9600:9600'
+
     pogocache:
         image: pogocache/pogocache
         command: [ 'pogocache', '--auth', 'symfony' ]

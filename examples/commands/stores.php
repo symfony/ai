@@ -23,6 +23,7 @@ use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
+use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
@@ -32,6 +33,7 @@ use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -86,6 +88,11 @@ $factories = [
         vectorIndexName: 'Commands',
         nodeName: 'symfony',
     ),
+    'opensearch' => static fn (): OpenSearchStore => new OpenSearchStore(
+        http_client(),
+        env('OPENSEARCH_ENDPOINT'),
+        'symfony',
+    ),
     'postgres' => static fn (): PostgresStore => PostgresStore::fromDbal(
         DriverManager::getConnection((new DsnParser())->parse(env('POSTGRES_URI'))),
         'my_table',
@@ -132,6 +139,9 @@ $application->addCommands([
     new SetupStoreCommand(new ServiceLocator($factories)),
     new DropStoreCommand(new ServiceLocator($factories)),
 ]);
+
+$clock = new MonotonicClock();
+$clock->sleep(10);
 
 foreach ($storesIds as $store) {
     $setupOutputCode = $application->run(new ArrayInput([

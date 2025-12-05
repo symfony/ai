@@ -103,6 +103,9 @@ $application->addCommands([
     new DropStoreCommand(new ServiceLocator($factories)),
 ]);
 
+$clock = new MonotonicClock();
+$clock->sleep(10);
+
 foreach ($storesIds as $store) {
     $setupOutputCode = $application->run(new ArrayInput([
         'command' => 'ai:message-store:setup',

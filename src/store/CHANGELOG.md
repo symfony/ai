@@ -43,6 +43,7 @@ CHANGELOG
    - Meilisearch
    - MongoDB
    - Neo4j
+   - OpenSearch
    - Pinecone
    - PostgreSQL with pgvector extension
    - Qdrant
