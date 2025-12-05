@@ -14,6 +14,7 @@
         "milvus",
         "mongodb",
         "neo4j",
+        "opensearch",
         "pinecone",
         "postgres",
         "qdrant",
