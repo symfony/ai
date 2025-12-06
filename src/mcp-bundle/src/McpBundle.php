@@ -27,7 +27,6 @@ use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
@@ -114,9 +113,10 @@ final class McpBundle extends AbstractBundle
             $container->register('mcp.server.command', McpCommand::class)
                 ->setArguments([
                     new Reference('mcp.server'),
-                    new Reference('monolog.logger.mcp', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('logger'),
                 ])
-                ->addTag('console.command');
+                ->addTag('console.command')
+                ->addTag('monolog.logger', ['channel' => 'mcp']);
         }
 
         if ($transports['http']) {
@@ -127,10 +127,11 @@ final class McpBundle extends AbstractBundle
                     new Reference('mcp.http_foundation_factory'),
                     new Reference('mcp.psr17_factory'),
                     new Reference('mcp.psr17_factory'),
-                    new Reference('monolog.logger.mcp', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('logger'),
                 ])
                 ->setPublic(true)
-                ->addTag('controller.service_arguments');
+                ->addTag('controller.service_arguments')
+                ->addTag('monolog.logger', ['channel' => 'mcp']);
         }
 
         $container->register('mcp.server.route_loader', RouteLoader::class)
