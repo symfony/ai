@@ -1,0 +1,35 @@
+{% if collector.resources|length %}
+    <div class="sf-tabs">
+        {% for resource in collector.resources %}
+            <div class="tab">
+                <h3 class="tab-title">{{ resource.name }}</h3>
+                <div class="tab-content">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th>URI</th>
+                                <td><code>{{ resource.uri }}</code></td>
+                            </tr>
+                            {% if resource.description %}
+                                <tr>
+                                    <th>Description</th>
+                                    <td>{{ resource.description }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if resource.mimeType %}
+                                <tr>
+                                    <th>MIME Type</th>
+                                    <td><code>{{ resource.mimeType }}</code></td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty">
+        <p>No resources were registered.</p>
+    </div>
+{% endif %}
