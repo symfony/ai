@@ -32,24 +32,16 @@ final class TokenOutputProcessor implements OutputProcessorInterface
         }
 
         $metadata = $output->getResult()->getMetadata();
-
-        $tokenUsage = new TokenUsage();
-
         $content = $rawResponse->toArray(false);
-        if (!\array_key_exists('usageMetadata', $content)) {
-            $metadata->add('token_usage', $tokenUsage);
 
-            return;
-        }
-
-        $usage = $content['usageMetadata'];
-
-        $tokenUsage->promptTokens = $usage['promptTokenCount'] ?? null;
-        $tokenUsage->completionTokens = $usage['candidatesTokenCount'] ?? null;
-        $tokenUsage->thinkingTokens = $usage['thoughtsTokenCount'] ?? null;
-        $tokenUsage->toolTokens = $usage['toolUsePromptTokenCount'] ?? null;
-        $tokenUsage->cachedTokens = $usage['cachedContentTokenCount'] ?? null;
-        $tokenUsage->totalTokens = $usage['totalTokenCount'] ?? null;
+        $tokenUsage = new TokenUsage(
+            promptTokens: $content['usageMetadata']['promptTokenCount'] ?? null,
+            completionTokens: $content['usageMetadata']['candidatesTokenCount'] ?? null,
+            thinkingTokens: $content['usageMetadata']['thoughtsTokenCount'] ?? null,
+            toolTokens: $content['usageMetadata']['toolUsePromptTokenCount'] ?? null,
+            cachedTokens: $content['usageMetadata']['cachedContentTokenCount'] ?? null,
+            totalTokens: $content['usageMetadata']['totalTokenCount'] ?? null,
+        );
 
         $metadata->add('token_usage', $tokenUsage);
     }

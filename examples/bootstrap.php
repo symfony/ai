@@ -107,15 +107,15 @@ function print_token_usage(Metadata $metadata): void
     $table = new Table(output());
     $table->setHeaderTitle('Token Usage');
     $table->setRows([
-        ['Prompt tokens', $tokenUsage->promptTokens ?? $na],
-        ['Completion tokens', $tokenUsage->completionTokens ?? $na],
-        ['Thinking tokens', $tokenUsage->thinkingTokens ?? $na],
-        ['Tool tokens', $tokenUsage->toolTokens ?? $na],
-        ['Cached tokens', $tokenUsage->cachedTokens ?? $na],
-        ['Remaining tokens minute', $tokenUsage->remainingTokensMinute ?? $na],
-        ['Remaining tokens month', $tokenUsage->remainingTokensMonth ?? $na],
-        ['Remaining tokens', $tokenUsage->remainingTokens ?? $na],
-        ['Utilized tokens', $tokenUsage->totalTokens ?? $na],
+        ['Prompt tokens', $tokenUsage->getPromptTokens() ?? $na],
+        ['Completion tokens', $tokenUsage->getCompletionTokens() ?? $na],
+        ['Thinking tokens', $tokenUsage->getThinkingTokens() ?? $na],
+        ['Tool tokens', $tokenUsage->getToolTokens() ?? $na],
+        ['Cached tokens', $tokenUsage->getCachedTokens() ?? $na],
+        ['Remaining tokens minute', $tokenUsage->getRemainingTokensMinute() ?? $na],
+        ['Remaining tokens month', $tokenUsage->getRemainingTokensMonth() ?? $na],
+        ['Remaining tokens', $tokenUsage->getRemainingTokens() ?? $na],
+        ['Utilized tokens', $tokenUsage->getTotalTokens() ?? $na],
     ]);
     $table->render();
 }

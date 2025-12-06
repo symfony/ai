@@ -14,46 +14,63 @@ namespace Symfony\AI\Platform\Metadata;
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
  */
-final class TokenUsage implements \JsonSerializable
+final class TokenUsage implements TokenUsageInterface
 {
     public function __construct(
-        public ?int $promptTokens = null,
-        public ?int $completionTokens = null,
-        public ?int $thinkingTokens = null,
-        public ?int $toolTokens = null,
-        public ?int $cachedTokens = null,
-        public ?int $remainingTokens = null,
-        public ?int $remainingTokensMinute = null,
-        public ?int $remainingTokensMonth = null,
-        public ?int $totalTokens = null,
+        private readonly ?int $promptTokens = null,
+        private readonly ?int $completionTokens = null,
+        private readonly ?int $thinkingTokens = null,
+        private readonly ?int $toolTokens = null,
+        private readonly ?int $cachedTokens = null,
+        private readonly ?int $remainingTokens = null,
+        private readonly ?int $remainingTokensMinute = null,
+        private readonly ?int $remainingTokensMonth = null,
+        private readonly ?int $totalTokens = null,
     ) {
     }
 
-    /**
-     * @return array{
-     *      prompt_tokens: ?int,
-     *      completion_tokens: ?int,
-     *      thinking_tokens: ?int,
-     *      tool_tokens: ?int,
-     *      cached_tokens: ?int,
-     *      remaining_tokens: ?int,
-     *      remaining_tokens_minute: ?int,
-     *      remaining_tokens_month: ?int,
-     *      total_tokens: ?int,
-     *  }
-     */
-    public function jsonSerialize(): array
+    public function getPromptTokens(): ?int
     {
-        return [
-            'prompt_tokens' => $this->promptTokens,
-            'completion_tokens' => $this->completionTokens,
-            'thinking_tokens' => $this->thinkingTokens,
-            'tool_tokens' => $this->toolTokens,
-            'cached_tokens' => $this->cachedTokens,
-            'remaining_tokens' => $this->remainingTokens,
-            'remaining_tokens_minute' => $this->remainingTokensMinute,
-            'remaining_tokens_month' => $this->remainingTokensMonth,
-            'total_tokens' => $this->totalTokens,
-        ];
+        return $this->promptTokens;
+    }
+
+    public function getCompletionTokens(): ?int
+    {
+        return $this->completionTokens;
+    }
+
+    public function getThinkingTokens(): ?int
+    {
+        return $this->thinkingTokens;
+    }
+
+    public function getToolTokens(): ?int
+    {
+        return $this->toolTokens;
+    }
+
+    public function getCachedTokens(): ?int
+    {
+        return $this->cachedTokens;
+    }
+
+    public function getRemainingTokens(): ?int
+    {
+        return $this->remainingTokens;
+    }
+
+    public function getRemainingTokensMinute(): ?int
+    {
+        return $this->remainingTokensMinute;
+    }
+
+    public function getRemainingTokensMonth(): ?int
+    {
+        return $this->remainingTokensMonth;
+    }
+
+    public function getTotalTokens(): ?int
+    {
+        return $this->totalTokens;
     }
 }
