@@ -92,6 +92,7 @@ use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
+use Symfony\AI\Store\Bridge\Postgres\HybridStore;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
@@ -1395,6 +1396,113 @@ final class AiBundle extends AbstractBundle
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('postgres_hybrid' === $type) {
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(HybridStore::class);
+
+                // Handle connection (PDO service reference, DBAL connection, or DSN)
+                if (\array_key_exists('connection', $store)) {
+                    // Direct PDO service reference
+                    $serviceId = ltrim($store['connection'], '@');
+                    $connection = new Reference($serviceId);
+                    $arguments = [
+                        $connection,
+                        $store['table_name'],
+                    ];
+                } elseif (\array_key_exists('dbal_connection', $store)) {
+                    // DBAL connection - extract native PDO
+                    $connection = (new Definition(\PDO::class))
+                        ->setFactory([new Reference($store['dbal_connection']), 'getNativeConnection']);
+                    $arguments = [
+                        $connection,
+                        $store['table_name'],
+                    ];
+                } else {
+                    // Create new PDO instance from DSN
+                    $pdo = new Definition(\PDO::class);
+                    $pdo->setArguments([
+                        $store['dsn'],
+                        $store['username'] ?? null,
+                        $store['password'] ?? null],
+                    );
+
+                    $arguments = [
+                        $pdo,
+                        $store['table_name'],
+                    ];
+                }
+
+                // Add optional parameters
+                if (\array_key_exists('vector_field', $store)) {
+                    $arguments[2] = $store['vector_field'];
+                }
+
+                if (\array_key_exists('content_field', $store)) {
+                    $arguments[3] = $store['content_field'];
+                }
+
+                if (\array_key_exists('semantic_ratio', $store)) {
+                    $arguments[4] = $store['semantic_ratio'];
+                }
+
+                if (\array_key_exists('distance', $store)) {
+                    $arguments[5] = $store['distance'];
+                }
+
+                if (\array_key_exists('language', $store)) {
+                    $arguments[6] = $store['language'];
+                }
+
+                if (\array_key_exists('rrf_k', $store)) {
+                    $arguments[7] = $store['rrf_k'];
+                }
+
+                if (\array_key_exists('default_max_score', $store)) {
+                    $arguments[8] = $store['default_max_score'];
+                }
+
+                if (\array_key_exists('default_min_score', $store)) {
+                    $arguments[9] = $store['default_min_score'];
+                }
+
+                if (\array_key_exists('normalize_scores', $store)) {
+                    $arguments[10] = $store['normalize_scores'];
+                }
+
+                if (\array_key_exists('fuzzy_primary_threshold', $store)) {
+                    $arguments[11] = $store['fuzzy_primary_threshold'];
+                }
+
+                if (\array_key_exists('fuzzy_secondary_threshold', $store)) {
+                    $arguments[12] = $store['fuzzy_secondary_threshold'];
+                }
+
+                if (\array_key_exists('fuzzy_strict_threshold', $store)) {
+                    $arguments[13] = $store['fuzzy_strict_threshold'];
+                }
+
+                if (\array_key_exists('fuzzy_weight', $store)) {
+                    $arguments[14] = $store['fuzzy_weight'];
+                }
+
+                if (\array_key_exists('searchable_attributes', $store)) {
+                    $arguments[15] = $store['searchable_attributes'];
+                }
+
+                if (\array_key_exists('bm25_language', $store)) {
+                    $arguments[16] = $store['bm25_language'];
+                }
+
+                $definition
+                    ->addTag('ai.store')
+                    ->setArguments($arguments);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
