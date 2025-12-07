@@ -1,0 +1,32 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-28T11:54:34Z
+
+PR title: Tall or Tool?
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-11-28T13:39:41Z
+
+Ouch, too many typos 😅 . I edited the PR title.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-29T10:24:09Z
+
+and the PHPStan issue looks real - wonder if that's worth the trouble
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-12-02T09:03:25Z
+
+> and the PHPStan issue looks real - wonder if that's worth the trouble
+
+There was a real issue with PHPStan. Since the code is now better, PHPStan found the typo. I fixed it.
+
+---
+
+Pr rebases, and cleaned. Ready for review
+
+> [!NOTE]
+> there is a [pending question](https://github.com/symfony/ai/pull/1010#discussion_r2569575651) about a bigger cleaning. It would happen in a new PR, But I would love to get an answer.
