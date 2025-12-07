@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-28T10:57:16Z
+
+do we want to commit or add to gitignore?
+
+<img width="817" height="169" alt="image" src="https://github.com/user-attachments/assets/1a6f612a-1bc8-40dc-a4ea-5bfad6ff3f92" />
+
+---------------------------------------------------------------------------
+
+by javiereguiluz at 2025-11-28T11:42:27Z
+
+The recommendation is to commit those `reference.php` files.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-07T13:43:27Z
+
+Blocked by symfony/symfony patch release.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-07T16:13:49Z
+
+> Blocked by symfony/symfony patch release.
+
+7.4.1 just out now
