@@ -1,0 +1,40 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-04T06:35:12Z
+
+CI is failing:
+```
+An error occurred while setting up the "opensearch" store: Empty reply from server for "http://127.0.0.1:9200/symfony".
+```
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-04T14:39:41Z
+
+Hmm, CI is still failing
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-04T14:41:06Z
+
+Yes, I know 😅
+
+Looks like OS is too slow during its boot phase, I'm looking for a solution 🙂
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-05T10:00:57Z
+
+I made it a Draft-PR again until solved
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-05T13:24:52Z
+
+@OskarStark It's fixed, sorry for the extra delay and the X notifications about the CI 😅
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-05T14:48:23Z
+
+No worries
