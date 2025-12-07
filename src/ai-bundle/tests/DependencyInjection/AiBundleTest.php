@@ -3536,6 +3536,75 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
     }
 
+    public function testPostgresHybridStoreWithDsnCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'postgres_hybrid' => [
+                        'hybrid_db' => [
+                            'dsn' => 'pgsql:host=localhost;port=5432;dbname=testdb',
+                            'username' => 'app',
+                            'password' => 'mypass',
+                            'table_name' => 'hybrid_vectors',
+                            'semantic_ratio' => 0.7,
+                            'language' => 'english',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.postgres_hybrid.hybrid_db'));
+        $definition = $container->getDefinition('ai.store.postgres_hybrid.hybrid_db');
+        $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
+        $this->assertSame('hybrid_vectors', $definition->getArgument(1));
+    }
+
+    public function testPostgresHybridStoreWithDbalConnectionCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'postgres_hybrid' => [
+                        'hybrid_db' => [
+                            'dbal_connection' => 'my_connection',
+                            'table_name' => 'hybrid_vectors',
+                            'rrf_k' => 100,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.postgres_hybrid.hybrid_db'));
+        $definition = $container->getDefinition('ai.store.postgres_hybrid.hybrid_db');
+        $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
+        $this->assertSame('hybrid_vectors', $definition->getArgument(1));
+        $this->assertSame(100, $definition->getArgument(7));
+    }
+
+    public function testPostgresHybridStoreWithConnectionReferenceCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'postgres_hybrid' => [
+                        'hybrid_db' => [
+                            'connection' => '@my_pdo_service',
+                            'table_name' => 'hybrid_vectors',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.postgres_hybrid.hybrid_db'));
+        $definition = $container->getDefinition('ai.store.postgres_hybrid.hybrid_db');
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('my_pdo_service', (string) $definition->getArgument(0));
+    }
+
     public function testConfigurationWithUseAttributeAsKeyWorksWithoutNormalizeKeys()
     {
         // Test that configurations using useAttributeAsKey work correctly
