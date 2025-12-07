@@ -13,12 +13,13 @@ namespace Symfony\AI\Chat\Bridge\Local;
 
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Chat\StreamableStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class InMemoryStore implements ManagedStoreInterface, MessageStoreInterface
+final class InMemoryStore implements ManagedStoreInterface, MessageStoreInterface, StreamableStoreInterface
 {
     /**
      * @var MessageBag[]
