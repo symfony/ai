@@ -19,6 +19,10 @@
         {
             "type": "path",
             "url": "../src/store"
+        },
+        {
+            "type": "path",
+            "url": "../src/store/src/Bridge/ChromaDb"
         }
     ],
     "require": {
