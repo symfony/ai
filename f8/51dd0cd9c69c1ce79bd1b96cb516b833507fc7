@@ -1,0 +1,21 @@
+---------------------------------------------------------------------------
+
+by xprojects-de at 2025-12-05T17:26:30Z
+
+@OskarStark nice to split, but what about https://github.com/symfony/ai/pull/1012
+Is this merged before?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-05T19:09:36Z
+
+Final review from @chr-hertel needed, otherwise we need to rebase afterwards 👍🏻
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-06T02:09:39Z
+
+Will fix the deptrac stuff and would like to get the confirmation for the package name from @fabpot, then good to merge
+
+Edit:
+Ah no the frameworkbundle config needs to check for the store class available to allow the options
