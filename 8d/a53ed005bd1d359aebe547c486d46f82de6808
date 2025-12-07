@@ -1,0 +1,35 @@
+---------------------------------------------------------------------------
+
+by xprojects-de at 2025-12-02T19:09:06Z
+
+Do I need to adjust anything, or is it okay as is?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-03T07:01:27Z
+
+From the code POV it looks ok, lets wait for the review of @chr-hertel, but please do a proper rebase, we cannot merge it, when a Merge-Commit is present (see Fabbot CI failure)
+
+---------------------------------------------------------------------------
+
+by xprojects-de at 2025-12-03T09:35:21Z
+
+Thanks but I don't think I can manage a clean rebase myself! When I rebase to the upstream, it always includes the commit history in the pull request. I don't think that's desired. Any help would be appreciated :-)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-03T09:55:35Z
+
+`git remote add upstream git@github.com:symfony/ai.git && geit fetch upstream && git rebase upstream/main` in your branch does not work?
+
+---------------------------------------------------------------------------
+
+by xprojects-de at 2025-12-03T10:10:49Z
+
+no change. Maybe i have to close the Pull an make an new one!?
+
+---------------------------------------------------------------------------
+
+by xprojects-de at 2025-12-03T10:27:27Z
+
+hard job :-) But i think the pull is fine now :-) Please excuse the inconvenience.
