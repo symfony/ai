@@ -55,6 +55,11 @@ final class RawHttpResult implements RawResultInterface
                     continue;
                 }
 
+                if (str_starts_with(trim($delta), ':')) {
+                    // SEE comments via Spec https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation
+                    continue;
+                }
+
                 yield json_decode($delta, true, flags: \JSON_THROW_ON_ERROR);
             }
         }

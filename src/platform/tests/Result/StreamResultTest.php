@@ -32,4 +32,22 @@ final class StreamResultTest extends TestCase
         $this->assertSame('data1', $content[0]);
         $this->assertSame('data2', $content[1]);
     }
+
+    public function testGetContentInclSseComments()
+    {
+        $generator = (static function () {
+            yield 'data1';
+            yield ': this is just a comment';
+            yield 'data2';
+        })();
+
+        $result = new StreamResult($generator);
+        $this->assertInstanceOf(\Generator::class, $result->getContent());
+
+        $content = iterator_to_array($result->getContent());
+
+        $this->assertCount(2, $content);
+        $this->assertSame('data1', $content[0]);
+        $this->assertSame('data2', $content[1]);
+    }
 }
