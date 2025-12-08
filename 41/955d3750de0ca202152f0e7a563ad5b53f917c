@@ -1,0 +1,35 @@
+---------------------------------------------------------------------------
+
+by paulinevos at 2025-11-14T14:37:28Z
+
+lol, please hold. Forgot to add a whole bunch of tests. Feel free to review functionality in the meantime
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-23T08:09:22Z
+
+I extracted the `o3`examples stuff to an extra PR:
+* https://github.com/symfony/ai/pull/953
+
+---------------------------------------------------------------------------
+
+by paulinevos at 2025-12-01T12:09:54Z
+
+> besides that one comment the example `openai/image-input-url.php` throws an error for me locally:
+>
+> <img alt="image" width="1315" height="227" src="https://private-user-images.githubusercontent.com/2852185/516539327-e8be2397-49ad-40f8-957c-ba611220ef2e.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjQ1OTEyMzgsIm5iZiI6MTc2NDU5MDkzOCwicGF0aCI6Ii8yODUyMTg1LzUxNjUzOTMyNy1lOGJlMjM5Ny00OWFkLTQwZjgtOTU3Yy1iYTYxMTIyMGVmMmUucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MTIwMSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTEyMDFUMTIwODU4WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9ODE4ZTczOGQwZDFkYmMzMjcyY2I0YTg5ODk0MzIyODlmNTk0NTNjZjEwMmE0Y2Y5ZDFkMjEyNDRhNjI0ODc2ZSZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.oa3CUU3LGrkSTJOCPv_tb2j92FP0x7V4pH0n_HkgNLQ">
+> does it work for you?
+
+So, re: this failure, this is failing on `main` also and seems to be related to OpenAI weirdness rather than this PR breaking anything... No matter what URL you throw at OpenAI right now it will say it's invalid, lol.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-07T17:01:51Z
+
+#1052 is now merged 👍
+
+---------------------------------------------------------------------------
+
+by paulinevos at 2025-12-08T10:23:29Z
+
+Thanks @chr-hertel, having a look now
