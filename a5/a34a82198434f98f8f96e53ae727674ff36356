@@ -1,0 +1,12 @@
+---------------------------------------------------------------------------
+
+by xprojects-de at 2025-12-08T10:09:51Z
+
+Why do we still need the Require-Dev packages?
+EDIT: OK used in the AiBundle. It´s ok
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-08T10:27:53Z
+
+Yes for the tests
