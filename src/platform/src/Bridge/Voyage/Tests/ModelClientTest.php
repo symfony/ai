@@ -21,9 +21,6 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class ModelClientTest extends TestCase
 {
-    /**
-     * @param array<string, mixed> $expectedPayload
-     */
     #[DataProvider('requestProvider')]
     public function testItSendsExpectedRequest(Voyage $model, string $expectedPath, array $expectedPayload)
     {
