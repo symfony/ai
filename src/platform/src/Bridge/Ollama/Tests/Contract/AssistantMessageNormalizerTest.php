@@ -54,6 +54,9 @@ final class AssistantMessageNormalizerTest extends TestCase
         $this->assertEquals($expectedOutput, $normalized);
     }
 
+    /**
+     * @return iterable<string, array{AssistantMessage, array{role: Role::Assistant, tool_calls: list<array{type: string, function: array{name: string, arguments: mixed}}>}}>
+     */
     public static function normalizeDataProvider(): iterable
     {
         yield 'assistant message without tool calls' => [
