@@ -31,6 +31,7 @@
   ],
   "require": {
     "php": ">=8.2",
+    "symfony/ai-agent": "@dev",
     "symfony/ai-platform": "@dev"
   },
   "require-dev": {
