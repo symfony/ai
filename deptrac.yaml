@@ -125,10 +125,6 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\Cerebras\\.*
-    - name: DecartPlatform
-      collectors:
-        - type: classLike
-          value: Symfony\\AI\\Platform\\Bridge\\Decart\\.*
     - name: DeepSeekPlatform
       collectors:
         - type: classLike
@@ -366,8 +362,6 @@ deptrac:
     CartesiaPlatform:
       - PlatformComponent
     CerebrasPlatform:
-      - PlatformComponent
-    DecartPlatform:
       - PlatformComponent
     DeepSeekPlatform:
       - PlatformComponent
