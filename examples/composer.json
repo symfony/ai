@@ -115,9 +115,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "codewithkyrian/transformers": "^0.6.2",
         "doctrine/dbal": "^3.3|^4.0",
-        "google/auth": "^1.47",
         "symfony/ai-agent": "@dev",
         "symfony/ai-ai-ml-api-platform": "@dev",
         "symfony/ai-albert-platform": "@dev",
