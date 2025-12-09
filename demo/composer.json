@@ -15,6 +15,8 @@
         "symfony/ai-bundle": "@dev",
         "symfony/ai-chroma-db-store": "@dev",
         "symfony/ai-clock-tool": "@dev",
+        "symfony/ai-hugging-face-platform": "@dev",
+        "symfony/ai-open-ai-platform": "@dev",
         "symfony/ai-similarity-search-tool": "@dev",
         "symfony/ai-wikipedia-tool": "@dev",
         "symfony/asset": "^8.0",
