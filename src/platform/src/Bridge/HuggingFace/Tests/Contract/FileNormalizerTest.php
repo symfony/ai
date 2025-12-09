@@ -60,26 +60,26 @@ final class FileNormalizerTest extends TestCase
     public static function normalizeDataProvider(): iterable
     {
         yield 'image from file' => [
-            File::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/image.jpg'),
+            File::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg'),
             [
                 'headers' => ['Content-Type' => 'image/jpeg'],
-                'body' => file_get_contents(\dirname(__DIR__, 5).'/tests/Fixtures/image.jpg'),
+                'body' => file_get_contents(\dirname(__DIR__, 6).'/fixtures/image.jpg'),
             ],
         ];
 
         yield 'pdf document from file' => [
-            File::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/document.pdf'),
+            File::fromFile(\dirname(__DIR__, 6).'/fixtures/document.pdf'),
             [
                 'headers' => ['Content-Type' => 'application/pdf'],
-                'body' => file_get_contents(\dirname(__DIR__, 5).'/tests/Fixtures/document.pdf'),
+                'body' => file_get_contents(\dirname(__DIR__, 6).'/fixtures/document.pdf'),
             ],
         ];
 
         yield 'audio from file' => [
-            File::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/audio.mp3'),
+            File::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'),
             [
                 'headers' => ['Content-Type' => 'audio/mpeg'],
-                'body' => file_get_contents(\dirname(__DIR__, 5).'/tests/Fixtures/audio.mp3'),
+                'body' => file_get_contents(\dirname(__DIR__, 6).'/fixtures/audio.mp3'),
             ],
         ];
 
