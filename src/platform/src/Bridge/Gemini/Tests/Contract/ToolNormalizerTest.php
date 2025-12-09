@@ -44,6 +44,9 @@ final class ToolNormalizerTest extends TestCase
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
     }
 
+    /**
+     * @param array<string, mixed> $expected
+     */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(Tool $tool, array $expected)
     {
@@ -55,7 +58,7 @@ final class ToolNormalizerTest extends TestCase
     }
 
     /**
-     * @return iterable<array{0: Tool, 1: array}>
+     * @return iterable<array{0: Tool, 1: array<string, mixed>}>
      */
     public static function normalizeDataProvider(): iterable
     {
