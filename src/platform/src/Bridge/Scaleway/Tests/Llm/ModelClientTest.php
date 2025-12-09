@@ -14,6 +14,7 @@ namespace Bridge\Scaleway\Llm;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Scaleway\Llm\ModelClient;
 use Symfony\AI\Platform\Bridge\Scaleway\Scaleway;
+use Symfony\AI\Platform\Bridge\Scaleway\ScalewayResponses;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -52,6 +53,13 @@ final class ModelClientTest extends TestCase
         $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
 
         $this->assertTrue($modelClient->supports(new Scaleway('deepseek-r1-distill-llama-70b')));
+    }
+
+    public function testItDoesNotSupportResponsesModel()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
+
+        $this->assertFalse($modelClient->supports(new ScalewayResponses('gpt-oss-120b')));
     }
 
     public function testItIsExecutingTheCorrectRequest()
