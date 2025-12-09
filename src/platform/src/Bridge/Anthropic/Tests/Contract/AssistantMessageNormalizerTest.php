@@ -38,6 +38,9 @@ final class AssistantMessageNormalizerTest extends TestCase
         $this->assertSame([AssistantMessage::class => true], $normalizer->getSupportedTypes(null));
     }
 
+    /**
+     * @param array<string, mixed> $expectedOutput
+     */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(AssistantMessage $message, array $expectedOutput)
     {

@@ -97,6 +97,11 @@ class ModelClientTest extends TestCase
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
+    /**
+     * @param list<string> $headers
+     *
+     * @return array<string, string>
+     */
     private function parseHeaders(array $headers): array
     {
         $parsed = [];

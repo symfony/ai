@@ -26,6 +26,9 @@ use Symfony\AI\Platform\Result\ToolCall;
 
 final class ContractTest extends TestCase
 {
+    /**
+     * @param array<string, mixed> $expected
+     */
     #[DataProvider('provideMessageBag')]
     public function testConvert(MessageBag $bag, array $expected)
     {
@@ -41,7 +44,7 @@ final class ContractTest extends TestCase
     }
 
     /**
-     * @return iterable<array{0: MessageBag, 1: array}>
+     * @return iterable<array{0: MessageBag, 1: array<string, mixed>}>
      */
     public static function provideMessageBag(): iterable
     {
