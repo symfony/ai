@@ -41,9 +41,6 @@ final class FileUrlNormalizerTest extends TestCase
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
     }
 
-    /**
-     * @param array<string, mixed> $expected
-     */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(DocumentUrl $document, array $expected)
     {
@@ -54,9 +51,6 @@ final class FileUrlNormalizerTest extends TestCase
         $this->assertEquals($expected, $normalized);
     }
 
-    /**
-     * @return iterable<array{0: DocumentUrl, 1: array<string, mixed>}>
-     */
     public static function normalizeDataProvider(): iterable
     {
         yield 'document from file url' => [

@@ -46,9 +46,6 @@ final class AssistantMessageNormalizerTest extends TestCase
         $this->assertSame([AssistantMessage::class => true], $this->normalizer->getSupportedTypes(null));
     }
 
-    /**
-     * @param array<string, mixed> $expectedOutput
-     */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(AssistantMessage $message, array $expectedOutput)
     {
@@ -57,9 +54,6 @@ final class AssistantMessageNormalizerTest extends TestCase
         $this->assertEquals($expectedOutput, $normalized);
     }
 
-    /**
-     * @return iterable<string, array{AssistantMessage, array{role: Role::Assistant, tool_calls: list<array{type: string, function: array{name: string, arguments: mixed}}>}}>
-     */
     public static function normalizeDataProvider(): iterable
     {
         yield 'assistant message without tool calls' => [

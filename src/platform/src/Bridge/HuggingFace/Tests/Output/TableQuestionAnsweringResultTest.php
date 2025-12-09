@@ -47,11 +47,6 @@ final class TableQuestionAnsweringResultTest extends TestCase
         $this->assertSame($aggregator, $result->aggregator);
     }
 
-    /**
-     * @param array<int, array<int, int>> $coordinates
-     * @param array<int, int|string>      $cells
-     * @param array<int, string>          $aggregator
-     */
     #[TestDox('Constructor accepts various parameter combinations')]
     #[TestWith(['Yes', [], [], []])]
     #[TestWith(['No', [[0, 1]], ['A1'], ['COUNT']])]
@@ -99,9 +94,6 @@ final class TableQuestionAnsweringResultTest extends TestCase
         $this->assertSame(['SUM'], $result->aggregator);
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
     #[TestDox('fromArray handles optional fields with default values')]
     #[TestWith([['answer' => 'Test', 'coordinates' => [[0, 0], [1, 1]]]])]
     #[TestWith([['answer' => 'Test', 'cells' => ['A1', 'B1']]])]
@@ -138,9 +130,6 @@ final class TableQuestionAnsweringResultTest extends TestCase
         $this->assertSame(['NONE'], $result->aggregator);
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
     #[TestDox('fromArray handles various aggregator formats')]
     #[TestWith([['answer' => 'Test', 'aggregator' => []]])]
     #[TestWith([['answer' => 'Test', 'aggregator' => ['NONE']]])]
