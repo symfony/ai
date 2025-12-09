@@ -1,0 +1,60 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Contract\Gpt\Message\Content;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\Message\Content\ImageNormalizer;
+use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Model;
+
+class ImageNormalizerTest extends TestCase
+{
+    public function testNormalize()
+    {
+        $image = Image::fromFile(\dirname(__DIR__, 10).'/fixtures/image.jpg');
+        $actual = (new ImageNormalizer())->normalize($image, null, [Contract::CONTEXT_MODEL => new Gpt('o3')]);
+
+        $this->assertEquals([
+            'type' => 'input_image',
+            'image_url' => $image->asDataUrl(),
+        ], $actual);
+    }
+
+    #[DataProvider('supportsNormalizationProvider')]
+    public function testSupportsNormalization(mixed $data, Model $model, bool $expected)
+    {
+        $this->assertSame(
+            $expected,
+            (new ImageNormalizer())->supportsNormalization($data, null, [Contract::CONTEXT_MODEL => $model])
+        );
+    }
+
+    public static function supportsNormalizationProvider(): \Generator
+    {
+        $image = Image::fromFile(\dirname(__DIR__, 10).'/fixtures/image.jpg');
+        $gpt = new Gpt('o3', [Capability::INPUT_IMAGE]);
+
+        yield 'supported' => [$image, $gpt, true];
+
+        yield 'unsupported model' => [$image, new Gemini('foo', [Capability::INPUT_IMAGE]), false];
+
+        yield 'model lacks image input capability' => [$image, new Gpt('o3'), false];
+
+        yield 'unsupported data' => [new Text('foo'), $gpt, false];
+    }
+}

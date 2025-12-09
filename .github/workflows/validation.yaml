@@ -48,3 +48,16 @@ jobs:
 
             - name: Validate tool bridges are in splitsh.json
               run: .github/scripts/validate-bridge-splitsh.sh tool agent
+
+    validate_platforms:
+        name: Platform Bridges
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Validate platform bridge naming conventions
+              run: .github/scripts/validate-bridge-naming.sh platform platform
+
+            - name: Validate platform bridges are in splitsh.json
+              run: .github/scripts/validate-bridge-splitsh.sh platform

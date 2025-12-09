@@ -1,0 +1,125 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Embeddings;
+
+use PHPUnit\Framework\Attributes\TestWith;
+use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
+use Symfony\AI\Platform\Bridge\OpenAi\Embeddings\ModelClient;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
+
+/**
+ * @author Oskar Stark <oskarstark@googlemail.com>
+ */
+final class ModelClientTest extends TestCase
+{
+    public function testItThrowsExceptionWhenApiKeyIsEmpty()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The API key must not be empty.');
+
+        new ModelClient(new MockHttpClient(), '');
+    }
+
+    #[TestWith(['api-key-without-prefix'])]
+    #[TestWith(['pk-api-key'])]
+    #[TestWith(['SK-api-key'])]
+    #[TestWith(['skapikey'])]
+    #[TestWith(['sk api-key'])]
+    #[TestWith(['sk'])]
+    public function testItThrowsExceptionWhenApiKeyDoesNotStartWithSk(string $invalidApiKey)
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The API key must start with "sk-".');
+
+        new ModelClient(new MockHttpClient(), $invalidApiKey);
+    }
+
+    public function testItAcceptsValidApiKey()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'sk-valid-api-key');
+
+        $this->assertInstanceOf(ModelClient::class, $modelClient);
+    }
+
+    public function testItIsSupportingTheCorrectModel()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
+
+        $this->assertTrue($modelClient->supports(new Embeddings('text-embedding-3-small')));
+    }
+
+    public function testItIsExecutingTheCorrectRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('POST', $method);
+            self::assertSame('https://api.openai.com/v1/embeddings', $url);
+            self::assertSame('Authorization: Bearer sk-api-key', $options['normalized_headers']['authorization'][0]);
+            self::assertSame('{"model":"text-embedding-3-small","input":"test text"}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $modelClient->request(new Embeddings('text-embedding-3-small'), 'test text', []);
+    }
+
+    public function testItIsExecutingTheCorrectRequestWithCustomOptions()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('POST', $method);
+            self::assertSame('https://api.openai.com/v1/embeddings', $url);
+            self::assertSame('Authorization: Bearer sk-api-key', $options['normalized_headers']['authorization'][0]);
+            self::assertSame('{"dimensions":256,"model":"text-embedding-3-large","input":"test text"}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $modelClient->request(new Embeddings('text-embedding-3-large'), 'test text', ['dimensions' => 256]);
+    }
+
+    public function testItIsExecutingTheCorrectRequestWithArrayInput()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('POST', $method);
+            self::assertSame('https://api.openai.com/v1/embeddings', $url);
+            self::assertSame('Authorization: Bearer sk-api-key', $options['normalized_headers']['authorization'][0]);
+            self::assertSame('{"model":"text-embedding-3-small","input":["text1","text2","text3"]}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $modelClient->request(new Embeddings('text-embedding-3-small'), ['text1', 'text2', 'text3'], []);
+    }
+
+    #[TestWith(['EU', 'https://eu.api.openai.com/v1/embeddings'])]
+    #[TestWith(['US', 'https://us.api.openai.com/v1/embeddings'])]
+    #[TestWith([null, 'https://api.openai.com/v1/embeddings'])]
+    public function testItUsesCorrectBaseUrl(?string $region, string $expectedUrl)
+    {
+        $resultCallback = static function (string $method, string $url, array $options) use ($expectedUrl): HttpResponse {
+            self::assertSame('POST', $method);
+            self::assertSame($expectedUrl, $url);
+            self::assertSame('Authorization: Bearer sk-api-key', $options['normalized_headers']['authorization'][0]);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key', $region);
+        $modelClient->request(new Embeddings('text-embedding-3-small'), 'test input', []);
+    }
+}
