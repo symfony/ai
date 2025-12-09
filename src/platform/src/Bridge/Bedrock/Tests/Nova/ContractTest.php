@@ -26,9 +26,6 @@ use Symfony\AI\Platform\Result\ToolCall;
 
 final class ContractTest extends TestCase
 {
-    /**
-     * @param array<string, mixed> $expected
-     */
     #[DataProvider('provideMessageBag')]
     public function testConvert(MessageBag $bag, array $expected)
     {
@@ -43,9 +40,6 @@ final class ContractTest extends TestCase
         $this->assertEquals($expected, $contract->createRequestPayload(new Nova('nova-pro'), $bag));
     }
 
-    /**
-     * @return iterable<array{0: MessageBag, 1: array<string, mixed>}>
-     */
     public static function provideMessageBag(): iterable
     {
         yield 'simple text' => [

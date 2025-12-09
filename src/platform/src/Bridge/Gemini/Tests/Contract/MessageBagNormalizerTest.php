@@ -76,9 +76,6 @@ final class MessageBagNormalizerTest extends TestCase
         $this->assertEquals($expected, $normalized);
     }
 
-    /**
-     * @return iterable<array{0: MessageBag, 1: array}>
-     */
     public static function provideMessageBagData(): iterable
     {
         yield 'simple text' => [

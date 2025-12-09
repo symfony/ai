@@ -69,9 +69,6 @@ final class UserMessageNormalizerTest extends TestCase
         $this->assertStringStartsWith($expectedPrefix, $normalized[1]['inlineData']['data']);
     }
 
-    /**
-     * @return iterable<string, array{0: File, 1: string, 2: string}>
-     */
     public static function binaryContentProvider(): iterable
     {
         yield 'image' => [Image::fromFile(\dirname(__DIR__, 7).'/fixtures/image.jpg'), 'image/jpeg', '/9j/'];

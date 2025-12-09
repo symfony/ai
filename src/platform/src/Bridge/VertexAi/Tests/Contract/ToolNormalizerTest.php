@@ -54,9 +54,6 @@ final class ToolNormalizerTest extends TestCase
         $this->assertEquals($expected, $normalized);
     }
 
-    /**
-     * @return iterable<array{0: Tool, 1: array}>
-     */
     public static function normalizeDataProvider(): iterable
     {
         yield 'call without params' => [

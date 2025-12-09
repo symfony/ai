@@ -46,9 +46,6 @@ final class MessageBagNormalizerTest extends TestCase
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
     }
 
-    /**
-     * @param array<string, mixed> $expected
-     */
     #[DataProvider('provideMessageBagData')]
     public function testNormalize(MessageBag $bag, array $expected)
     {
@@ -76,9 +73,6 @@ final class MessageBagNormalizerTest extends TestCase
         $this->assertEquals($expected, $normalized);
     }
 
-    /**
-     * @return iterable<array{0: MessageBag, 1: array<string, mixed>}>
-     */
     public static function provideMessageBagData(): iterable
     {
         yield 'simple text message' => [
