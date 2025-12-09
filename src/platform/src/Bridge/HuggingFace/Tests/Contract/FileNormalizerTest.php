@@ -41,9 +41,6 @@ final class FileNormalizerTest extends TestCase
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
     }
 
-    /**
-     * @param array<string, mixed> $expected
-     */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(File $file, array $expected)
     {
@@ -54,9 +51,6 @@ final class FileNormalizerTest extends TestCase
         $this->assertEquals($expected, $normalized);
     }
 
-    /**
-     * @return iterable<array{0: File, 1: array<string, mixed>}>
-     */
     public static function normalizeDataProvider(): iterable
     {
         yield 'image from file' => [
