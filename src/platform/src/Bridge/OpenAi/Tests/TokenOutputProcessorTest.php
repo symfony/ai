@@ -132,6 +132,9 @@ final class TokenOutputProcessorTest extends TestCase
         $this->assertNull($tokenUsage->getTotalTokens());
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private function createRawResult(array $data = []): RawHttpResult
     {
         $rawResponse = $this->createStub(ResponseInterface::class);

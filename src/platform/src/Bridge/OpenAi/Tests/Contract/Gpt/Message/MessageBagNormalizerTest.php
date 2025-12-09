@@ -30,6 +30,9 @@ use Symfony\Component\Serializer\Serializer;
 
 class MessageBagNormalizerTest extends TestCase
 {
+    /**
+     * @param array<string, mixed> $expected
+     */
     #[DataProvider('normalizeProvider')]
     public function testNormalize(MessageBag $messageBag, array $expected)
     {

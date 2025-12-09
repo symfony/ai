@@ -75,6 +75,12 @@ final class ModelClientTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<string, mixed> $input
+     * @param array<string, mixed> $options
+     * @param array<int, string>   $expectedKeys
+     * @param array<string, mixed> $expectedValues
+     */
     #[DataProvider('payloadTestCases')]
     public function testGetPayloadForDifferentInputsAndTasks(object|array|string $input, array $options, array $expectedKeys, array $expectedValues = [])
     {
