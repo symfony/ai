@@ -503,6 +503,7 @@ deptrac:
     ScalewayPlatform:
       - PlatformComponent
       - GenericPlatform
+      - OpenResponsesPlatform
     TransformersPhpPlatform:
       - PlatformComponent
     VertexAiPlatform:

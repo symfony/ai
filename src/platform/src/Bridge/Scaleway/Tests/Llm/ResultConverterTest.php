@@ -13,6 +13,8 @@ namespace Bridge\Scaleway\Llm;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Scaleway\Llm\ResultConverter;
+use Symfony\AI\Platform\Bridge\Scaleway\Scaleway;
+use Symfony\AI\Platform\Bridge\Scaleway\ScalewayResponses;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -27,6 +29,20 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class ResultConverterTest extends TestCase
 {
+    public function testItSupportsScalewayModel()
+    {
+        $converter = new ResultConverter();
+
+        $this->assertTrue($converter->supports(new Scaleway('deepseek-r1-distill-llama-70b')));
+    }
+
+    public function testItDoesNotSupportResponsesModel()
+    {
+        $converter = new ResultConverter();
+
+        $this->assertFalse($converter->supports(new ScalewayResponses('gpt-oss-120b')));
+    }
+
     public function testConvertTextResult()
     {
         $converter = new ResultConverter();
@@ -144,6 +160,23 @@ final class ResultConverterTest extends TestCase
 
         $this->expectException(ContentFilterException::class);
         $this->expectExceptionMessage('Content was filtered');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsExceptionOnApiError()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'error' => [
+                'type' => 'invalid_request_error',
+                'message' => 'Invalid model specified',
+            ],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Error "invalid_request_error": "Invalid model specified"');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
