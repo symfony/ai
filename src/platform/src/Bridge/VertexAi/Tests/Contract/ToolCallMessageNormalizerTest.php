@@ -42,9 +42,6 @@ final class ToolCallMessageNormalizerTest extends TestCase
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
     }
 
-    /**
-     * @param array<int, array<string, mixed>> $expected
-     */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(ToolCallMessage $message, array $expected)
     {
@@ -55,9 +52,6 @@ final class ToolCallMessageNormalizerTest extends TestCase
         $this->assertEquals($expected, $normalized);
     }
 
-    /**
-     * @return iterable<array{0: ToolCallMessage, 1: array<int, array<string, mixed>>}>
-     */
     public static function normalizeDataProvider(): iterable
     {
         yield 'scalar' => [
