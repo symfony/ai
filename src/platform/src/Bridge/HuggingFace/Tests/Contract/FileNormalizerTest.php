@@ -51,6 +51,9 @@ final class FileNormalizerTest extends TestCase
         $this->assertEquals($expected, $normalized);
     }
 
+    /**
+     * @return iterable<string, array{0: File, 1: array}>
+     */
     public static function normalizeDataProvider(): iterable
     {
         yield 'image from file' => [

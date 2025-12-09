@@ -89,13 +89,13 @@ final class MessageBagNormalizerTest extends TestCase
 
         yield 'text with image' => [
             new MessageBag(
-                Message::ofUser('Tell me about this instrument', Image::fromFile(\dirname(__DIR__, 7).'/fixtures/image.jpg'))
+                Message::ofUser('Tell me about this instrument', Image::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/image.jpg'))
             ),
             [
                 'contents' => [
                     ['role' => 'user', 'parts' => [
                         ['text' => 'Tell me about this instrument'],
-                        ['inline_data' => ['mime_type' => 'image/jpeg', 'data' => base64_encode(file_get_contents(\dirname(__DIR__, 7).'/fixtures/image.jpg'))]],
+                        ['inline_data' => ['mime_type' => 'image/jpeg', 'data' => base64_encode(file_get_contents(\dirname(__DIR__, 5).'/tests/Fixtures/image.jpg'))]],
                     ]],
                 ],
             ],
