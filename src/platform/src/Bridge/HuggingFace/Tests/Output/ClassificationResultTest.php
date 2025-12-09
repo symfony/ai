@@ -108,6 +108,9 @@ final class ClassificationResultTest extends TestCase
         $this->assertSame('third', $result->classifications[2]->label);
     }
 
+    /**
+     * @param array{label: string, score: float} $classification
+     */
     #[TestDox('fromArray handles various label formats')]
     #[TestWith([['label' => '', 'score' => 0.5]])]
     #[TestWith([['label' => 'UPPERCASE', 'score' => 0.5]])]

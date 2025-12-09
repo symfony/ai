@@ -217,6 +217,9 @@ final class OllamaResultConverterTest extends TestCase
         $this->assertArrayHasKey('total_duration', $chunks->current()->raw);
     }
 
+    /**
+     * @return iterable<array<string, mixed>>
+     */
     private function generateConvertStreamingStream(): iterable
     {
         yield ['model' => 'deepseek-r1:latest', 'created_at' => '2025-10-29T17:15:49.631700779Z', 'message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => false];
@@ -224,6 +227,9 @@ final class OllamaResultConverterTest extends TestCase
             'done_reason' => 'stop', 'total_duration' => 100, 'load_duration' => 10, 'prompt_eval_count' => 42, 'prompt_eval_duration' => 30, 'eval_count' => 17, 'eval_duration' => 60];
     }
 
+    /**
+     * @return iterable<array<string, mixed>>
+     */
     private function generateConvertThinkingStreamingStream(): iterable
     {
         yield ['model' => 'deepseek-r1:latest', 'created_at' => '2025-10-29T17:15:49.631700779Z', 'message' => ['role' => 'assistant', 'content' => '', 'thinking' => 'Thinking'], 'done' => false];
