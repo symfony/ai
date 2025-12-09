@@ -21,7 +21,7 @@
     "require": {
         "php": ">=8.2",
         "symfony/ai-platform": "@dev",
-        "async-aws/bedrock-runtime": "^0.1.0"
+        "async-aws/bedrock-runtime": "^0.1|^1.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^11.5.13"
