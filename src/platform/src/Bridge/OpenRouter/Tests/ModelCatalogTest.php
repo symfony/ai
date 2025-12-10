@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\OpenRouter;
+namespace Symfony\AI\Platform\Bridge\OpenRouter\Tests;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
