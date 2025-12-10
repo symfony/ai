@@ -52,6 +52,16 @@ final class UserMessageNormalizerTest extends TestCase
         $this->assertSame([['text' => 'Write a story about a magic backpack.']], $normalized);
     }
 
+    /**
+     * @return iterable<string, array{0: File, 1: string, 2: string}>
+     */
+    public static function binaryContentProvider(): iterable
+    {
+        yield 'image' => [Image::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/image.jpg'), 'image/jpeg', '/9j/'];
+        yield 'document' => [Document::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/document.pdf'), 'application/pdf', 'JVBE'];
+        yield 'audio' => [Audio::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/audio.mp3'), 'audio/mpeg', 'SUQz'];
+    }
+
     #[DataProvider('binaryContentProvider')]
     public function testNormalizeBinaryContent(File $content, string $expectedMimeType, string $expectedPrefix)
     {
@@ -68,15 +78,5 @@ final class UserMessageNormalizerTest extends TestCase
 
         // Verify that the base64 data string starts correctly
         $this->assertStringStartsWith($expectedPrefix, $normalized[1]['inline_data']['data']);
-    }
-
-    /**
-     * @return iterable<string, array{0: File, 1: string, 2: string}>
-     */
-    public static function binaryContentProvider(): iterable
-    {
-        yield 'image' => [Image::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/image.jpg'), 'image/jpeg', '/9j/'];
-        yield 'document' => [Document::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/document.pdf'), 'application/pdf', 'JVBE'];
-        yield 'audio' => [Audio::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/audio.mp3'), 'audio/mpeg', 'SUQz'];
     }
 }
