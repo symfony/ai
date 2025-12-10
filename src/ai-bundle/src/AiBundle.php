@@ -58,6 +58,7 @@ use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFacto
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\DeepSeek\PlatformFactory as DeepSeekPlatformFactory;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory as DockerModelRunnerPlatformFactory;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsSpeechPlatform;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
@@ -80,6 +81,8 @@ use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\Speech\SpeechToTextPlatformInterface;
+use Symfony\AI\Platform\Speech\TextToSpeechPlatformInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
@@ -257,6 +260,17 @@ final class AiBundle extends AbstractBundle
                 $suffix = u($chat)->afterLast('.')->toString();
                 $builder->setDefinition('ai.traceable_chat.'.$suffix, $traceableChatDefinition);
             }
+        }
+
+        foreach ($config['speech'] ?? [] as $voiceProvider => $provider) {
+            $this->processSpeechConfig($voiceProvider, $provider, $builder);
+        }
+
+        $speechProviders = array_keys($builder->findTaggedServiceIds('ai.speech_provider'));
+        $speechListeners = array_keys($builder->findTaggedServiceIds('ai.speech_listener'));
+
+        if ([] === $speechProviders && [] === $speechListeners) {
+            $builder->removeDefinition('ai.speech_provider.listener');
         }
 
         foreach ($config['vectorizer'] ?? [] as $vectorizerName => $vectorizer) {
@@ -505,7 +519,6 @@ final class AiBundle extends AbstractBundle
                         $config['api_key'],
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         new Reference($config['model_catalog'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        null,
                         new Reference('event_dispatcher'),
                         $config['supports_completions'],
                         $config['supports_embeddings'],
@@ -1925,6 +1938,39 @@ final class AiBundle extends AbstractBundle
 
         $container->setDefinition('ai.chat.'.$name, $definition);
         $container->registerAliasForArgument('ai.chat.'.$name, ChatInterface::class, $name);
+    }
+
+    /**
+     * @param array<string, mixed> $provider
+     */
+    private function processSpeechConfig(string $name, array $provider, ContainerBuilder $container): void
+    {
+        if ('elevenlabs' === $name) {
+            if (!$container->hasDefinition($provider['platform'])) {
+                throw new RuntimeException(\sprintf('The "%s" platform cannot be found.', $name));
+            }
+
+            $decoratedPlatform = new Definition(ElevenLabsSpeechPlatform::class);
+            $decoratedPlatform
+                ->setLazy(true)
+                ->setDecoratedService('ai.platform.'.$name)
+                ->setArguments([
+                    new Reference('.inner'),
+                    $provider['tts_model'],
+                    $provider['tts_voice'],
+                    $provider['tts_extra_options'] ?? [],
+                    $provider['stt_model'],
+                    $provider['stt_extra_options'] ?? [],
+                ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('proxy', ['interface' => TextToSpeechPlatformInterface::class])
+                ->addTag('proxy', ['interface' => SpeechToTextPlatformInterface::class])
+                ->addTag('ai.text_to_speech.platform', ['name' => $name])
+                ->addTag('ai.speech_to_text.platform', ['name' => $name])
+            ;
+
+            $container->setDefinition('ai.speech.'.$name.'.platform', $decoratedPlatform);
+        }
     }
 
     /**
