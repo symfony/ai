@@ -50,6 +50,10 @@
         },
         {
             "type": "path",
+            "url": "../src/platform/src/Bridge/Decart"
+        },
+        {
+            "type": "path",
             "url": "../src/platform/src/Bridge/DeepSeek"
         },
         {
@@ -132,6 +136,7 @@
         "symfony/ai-click-house-store": "@dev",
         "symfony/ai-clock-tool": "@dev",
         "symfony/ai-cloudflare-store": "@dev",
+        "symfony/ai-decart-platform": "@dev",
         "symfony/ai-deep-seek-platform": "@dev",
         "symfony/ai-docker-model-runner-platform": "@dev",
         "symfony/ai-eleven-labs-platform": "@dev",

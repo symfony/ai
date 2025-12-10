@@ -26,6 +26,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | AWS Bedrock | `symfony/ai-bedrock-platform` |
 | Cartesia | `symfony/ai-cartesia-platform` |
 | Cerebras | `symfony/ai-cerebras-platform` |
+| Decart | `symfony/ai-decart-platform` |
 | DeepSeek | `symfony/ai-deep-seek-platform` |
 | Docker Model Runner | `symfony/ai-docker-model-runner-platform` |
 | ElevenLabs | `symfony/ai-eleven-labs-platform` |
