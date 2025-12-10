@@ -48,6 +48,12 @@ final class AssistantMessageNormalizerTest extends TestCase
         $this->assertSame($expectedOutput, $normalized);
     }
 
+    /**
+     * @return iterable<string, array{
+     *     AssistantMessage,
+     *     array{text?: string, functionCall?: array{name: string, args?: mixed}}[]
+     * }>
+     */
     public static function normalizeDataProvider(): iterable
     {
         yield 'assistant message' => [
