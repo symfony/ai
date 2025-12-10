@@ -11,10 +11,12 @@
 
 namespace Symfony\AI\Platform\Speech;
 
+use Symfony\AI\Platform\Message\Content\Text;
+
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-interface SpeechAwarePlatformInterface
+interface SpeechToTextPlatformInterface
 {
-    public function getSpeechConfiguration(): SpeechConfiguration;
+    public function listen(object|array|string $input, array $options): Text;
 }

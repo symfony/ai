@@ -248,8 +248,8 @@ return static function (ContainerConfigurator $container): void {
         // listeners
         ->set('ai.speech_provider.listener', SpeechProviderListener::class)
             ->args([
-                tagged_iterator('ai.speech_provider', 'name'),
-                tagged_iterator('ai.speech_listener', 'name'),
+                tagged_iterator('ai.speech_to_text.platform', 'name'),
+                tagged_iterator('ai.text_to_speech.platform', 'name'),
             ])
             ->tag('kernel.event_subscriber')
     ;

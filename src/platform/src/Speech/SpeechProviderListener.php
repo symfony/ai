@@ -23,12 +23,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class SpeechProviderListener implements EventSubscriberInterface
 {
     /**
-     * @param SpeechProviderInterface[] $speechProviders
-     * @param SpeechListenerInterface[] $speechListeners
+     * @param SpeechToTextPlatformInterface[] $speechToTextPlatforms
+     * @param TextToSpeechPlatformInterface[] $textToSpeechPlatforms
      */
     public function __construct(
-        private readonly iterable $speechProviders,
-        private readonly iterable $speechListeners,
+        private readonly iterable $speechToTextPlatforms,
+        private readonly iterable $textToSpeechPlatforms,
     ) {
     }
 
@@ -45,12 +45,8 @@ final class SpeechProviderListener implements EventSubscriberInterface
         $input = $event->getInput();
         $options = $event->getOptions();
 
-        foreach ($this->speechListeners as $speechListener) {
-            if (!$speechListener->support($input, $options)) {
-                continue;
-            }
-
-            $overriddenInput = $speechListener->listen($input, $options);
+        foreach ($this->speechToTextPlatforms as $speechToTextPlatform) {
+            $overriddenInput = $speechToTextPlatform->listen($input, $options);
 
             if (!$input instanceof MessageBag) {
                 $event->setInput($overriddenInput);
@@ -69,12 +65,8 @@ final class SpeechProviderListener implements EventSubscriberInterface
         $deferredResult = $event->getDeferredResult();
         $options = $event->getOptions();
 
-        foreach ($this->speechProviders as $speechProvider) {
-            if (!$speechProvider->support($deferredResult, $options)) {
-                continue;
-            }
-
-            $deferredResult->addSpeech($speechProvider->generate($deferredResult, $options));
+        foreach ($this->textToSpeechPlatforms as $textToSpeechPlatform) {
+            $deferredResult->addSpeech($textToSpeechPlatform->generate($deferredResult, $options));
 
             $event->setDeferredResult($deferredResult);
         }

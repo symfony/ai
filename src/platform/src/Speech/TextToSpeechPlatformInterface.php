@@ -16,15 +16,7 @@ use Symfony\AI\Platform\Result\DeferredResult;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-interface SpeechProviderInterface
+interface TextToSpeechPlatformInterface
 {
-    /**
-     * @param array<string, mixed> $options
-     */
     public function generate(DeferredResult $result, array $options): Speech;
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    public function support(DeferredResult $result, array $options): bool;
 }

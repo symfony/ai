@@ -58,8 +58,7 @@ use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFacto
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\DeepSeek\PlatformFactory as DeepSeekPlatformFactory;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory as DockerModelRunnerPlatformFactory;
-use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsSpeechListener;
-use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsSpeechProvider;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsSpeechPlatform;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
@@ -82,11 +81,8 @@ use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\AI\Platform\Speech\SpeechAwarePlatform;
-use Symfony\AI\Platform\Speech\SpeechAwarePlatformInterface;
-use Symfony\AI\Platform\Speech\SpeechConfiguration;
-use Symfony\AI\Platform\Speech\SpeechListenerInterface;
-use Symfony\AI\Platform\Speech\SpeechProviderInterface;
+use Symfony\AI\Platform\Speech\SpeechToTextPlatformInterface;
+use Symfony\AI\Platform\Speech\TextToSpeechPlatformInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
@@ -1954,62 +1950,26 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException(\sprintf('The "%s" platform cannot be found.', $name));
             }
 
-            $configurationDefinition = new Definition(SpeechConfiguration::class);
-            $configurationDefinition
+            $decoratedPlatform = new Definition(ElevenLabsSpeechPlatform::class);
+            $decoratedPlatform
+                ->setLazy(true)
+                ->setDecoratedService('ai.platform.'.$name)
                 ->setArguments([
+                    new Reference('.inner'),
                     $provider['tts_model'],
                     $provider['tts_voice'],
                     $provider['tts_extra_options'] ?? [],
                     $provider['stt_model'],
                     $provider['stt_extra_options'] ?? [],
                 ])
-                ->addTag('ai.speech_configuration', ['name' => $name])
-            ;
-
-            $container->setDefinition('ai.speech.'.$name.'.configuration', $configurationDefinition);
-
-            $decoratedPlatform = new Definition(SpeechAwarePlatform::class);
-            $decoratedPlatform
-                ->setLazy(true)
-                ->setDecoratedService('ai.platform.'.$name)
-                ->setArguments([
-                    new Reference('.inner'),
-                    new Reference('ai.speech.'.$name.'.configuration'),
-                ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
-                ->addTag('proxy', ['interface' => SpeechAwarePlatformInterface::class])
-                ->addTag('ai.speech_aware_platform', ['name' => $name])
+                ->addTag('proxy', ['interface' => TextToSpeechPlatformInterface::class])
+                ->addTag('proxy', ['interface' => SpeechToTextPlatformInterface::class])
+                ->addTag('ai.text_to_speech.platform', ['name' => $name])
+                ->addTag('ai.speech_to_text.platform', ['name' => $name])
             ;
 
             $container->setDefinition('ai.speech.'.$name.'.platform', $decoratedPlatform);
-
-            if (\array_key_exists('tts_model', $provider)) {
-                $definition = new Definition(ElevenLabsSpeechProvider::class);
-                $definition
-                    ->setLazy(true)
-                    ->setArguments([
-                        new Reference('ai.speech.'.$name.'.platform'),
-                    ])
-                    ->addTag('proxy', ['interface' => SpeechProviderInterface::class])
-                    ->addTag('ai.speech_provider');
-
-                $container->setDefinition('ai.speech_provider.'.$name, $definition);
-                $container->registerAliasForArgument('ai.speech_provider.'.$name, SpeechProviderInterface::class, $name);
-            }
-
-            if (\array_key_exists('stt_model', $provider)) {
-                $definition = new Definition(ElevenLabsSpeechListener::class);
-                $definition
-                    ->setLazy(true)
-                    ->setArguments([
-                        new Reference('ai.speech.'.$name.'.platform'),
-                    ])
-                    ->addTag('proxy', ['interface' => SpeechListenerInterface::class])
-                    ->addTag('ai.speech_listener');
-
-                $container->setDefinition('ai.speech_listener.'.$name, $definition);
-                $container->registerAliasForArgument('ai.speech_listener.'.$name, SpeechListenerInterface::class, $name);
-            }
         }
     }
 
