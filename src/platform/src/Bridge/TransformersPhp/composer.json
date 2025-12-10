@@ -38,6 +38,10 @@
         }
     },
     "config": {
+        "allow-plugins": {
+            "codewithkyrian/platform-package-installer": true,
+            "codewithkyrian/transformers-libsloader": true
+        },
         "sort-packages": true
     },
     "extra": {
