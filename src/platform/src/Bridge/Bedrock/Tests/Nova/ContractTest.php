@@ -40,6 +40,9 @@ final class ContractTest extends TestCase
         $this->assertEquals($expected, $contract->createRequestPayload(new Nova('nova-pro'), $bag));
     }
 
+    /**
+     * @return iterable<array{0: MessageBag, 1: array}>
+     */
     public static function provideMessageBag(): iterable
     {
         yield 'simple text' => [

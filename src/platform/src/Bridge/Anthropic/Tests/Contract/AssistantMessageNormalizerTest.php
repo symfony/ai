@@ -49,7 +49,18 @@ final class AssistantMessageNormalizerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{0: AssistantMessage, 1: array}>
+     * @return iterable<string, array{
+     *     0: AssistantMessage,
+     *     1: array{
+     *         role: 'assistant',
+     *         content: string|list<array{
+     *             type: 'tool_use',
+     *             id: string,
+     *             name: string,
+     *             input: array<string, mixed>|\stdClass
+     *         }>
+     *     }
+     * }>
      */
     public static function normalizeDataProvider(): iterable
     {
