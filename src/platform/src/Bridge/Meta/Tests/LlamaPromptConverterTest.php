@@ -69,6 +69,9 @@ final class LlamaPromptConverterTest extends TestCase
         );
     }
 
+    /**
+     * @return iterable<array{string, UserMessage|SystemMessage|AssistantMessage}>
+     */
     public static function provideMessages(): iterable
     {
         yield 'System message' => [
