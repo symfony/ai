@@ -26,6 +26,7 @@
     ],
     "require": {
         "php": ">=8.2",
+        "symfony/ai-generic-platform": "@dev",
         "symfony/ai-platform": "@dev",
         "symfony/http-client": "^7.3|^8.0"
     },
