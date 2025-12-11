@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\Decart;
+namespace Symfony\AI\Platform\Bridge\Decart\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Decart\Contract\ImageNormalizer;
@@ -54,7 +54,7 @@ final class DecartClientTest extends TestCase
     {
         $normalizer = new ImageNormalizer();
 
-        $payload = $normalizer->normalize(Image::fromFile(\dirname(__DIR__, 5).'/fixtures/image.jpg'));
+        $payload = $normalizer->normalize(Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg'));
 
         $httpClient = new MockHttpClient([
             new MockResponse($payload),
@@ -76,7 +76,7 @@ final class DecartClientTest extends TestCase
     {
         $normalizer = new VideoNormalizer();
 
-        $payload = $normalizer->normalize(Video::fromFile(\dirname(__DIR__, 5).'/fixtures/ocean.mp4'));
+        $payload = $normalizer->normalize(Video::fromFile(\dirname(__DIR__, 6).'/fixtures/ocean.mp4'));
 
         $httpClient = new MockHttpClient([
             new MockResponse($payload),
@@ -98,7 +98,7 @@ final class DecartClientTest extends TestCase
     {
         $normalizer = new ImageNormalizer();
 
-        $payload = $normalizer->normalize(Image::fromFile(\dirname(__DIR__, 5).'/fixtures/image.jpg'));
+        $payload = $normalizer->normalize(Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg'));
 
         $httpClient = new MockHttpClient([
             new MockResponse($payload),
@@ -121,8 +121,8 @@ final class DecartClientTest extends TestCase
         $normalizer = new ImageNormalizer();
         $videoNormalizer = new VideoNormalizer();
 
-        $payload = $normalizer->normalize(Image::fromFile(\dirname(__DIR__, 5).'/fixtures/image.jpg'));
-        $responsePayload = $videoNormalizer->normalize(Video::fromFile(\dirname(__DIR__, 5).'/fixtures/ocean.mp4'));
+        $payload = $normalizer->normalize(Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg'));
+        $responsePayload = $videoNormalizer->normalize(Video::fromFile(\dirname(__DIR__, 6).'/fixtures/ocean.mp4'));
 
         $httpClient = new MockHttpClient([
             new MockResponse($responsePayload),
@@ -144,7 +144,7 @@ final class DecartClientTest extends TestCase
     {
         $normalizer = new VideoNormalizer();
 
-        $payload = $normalizer->normalize(Video::fromFile(\dirname(__DIR__, 5).'/fixtures/ocean.mp4'));
+        $payload = $normalizer->normalize(Video::fromFile(\dirname(__DIR__, 6).'/fixtures/ocean.mp4'));
 
         $httpClient = new MockHttpClient([
             new MockResponse($payload),

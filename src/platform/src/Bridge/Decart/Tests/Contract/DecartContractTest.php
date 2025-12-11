@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\Decart\Contract;
+namespace Symfony\AI\Platform\Bridge\Decart\Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Decart\Contract\DecartContract;
@@ -21,7 +21,7 @@ final class DecartContractTest extends TestCase
 {
     public function testItCanCreatePayloadWithImage()
     {
-        $image = Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg');
+        $image = Image::fromFile(\dirname(__DIR__, 7).'/fixtures/image.jpg');
 
         $contract = DecartContract::create();
 
@@ -39,7 +39,7 @@ final class DecartContractTest extends TestCase
 
     public function testItCanCreatePayloadWithVideo()
     {
-        $image = Video::fromFile(\dirname(__DIR__, 6).'/fixtures/ocean.mp4');
+        $image = Video::fromFile(\dirname(__DIR__, 7).'/fixtures/ocean.mp4');
 
         $contract = DecartContract::create();
 

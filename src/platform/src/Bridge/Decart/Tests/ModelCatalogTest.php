@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\Decart;
+namespace Symfony\AI\Platform\Bridge\Decart\Tests;
 
 use Symfony\AI\Platform\Bridge\Decart\Decart;
 use Symfony\AI\Platform\Bridge\Decart\ModelCatalog;

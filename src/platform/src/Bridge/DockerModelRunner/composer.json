@@ -3,7 +3,12 @@
     "description": "Docker Model Runner platform bridge for Symfony AI",
     "license": "MIT",
     "type": "symfony-ai-platform",
-    "keywords": ["ai", "bridge", "docker", "platform"],
+    "keywords": [
+        "ai",
+        "bridge",
+        "docker",
+        "platform"
+    ],
     "authors": [
         {
             "name": "Christopher Hertel",
@@ -20,7 +25,8 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-platform": "@dev"
+        "symfony/ai-platform": "@dev",
+        "symfony/http-client": "^7.3|^8.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^11.5.13"
