@@ -97,7 +97,7 @@ Use a vectorizer to convert documents into embeddings and store them::
         $vectorizer,
         $store
     );
-    $indexer->index($documents);
+    $indexer->loadAndIndex();
 
 The indexer handles:
 
@@ -324,7 +324,7 @@ Index documents in batches for better performance::
 
     $batchSize = 100;
     foreach (array_chunk($documents, $batchSize) as $batch) {
-        $indexer->index($batch);
+        $indexer->loadAndIndex(options: $batch);
     }
 
 Caching Embeddings
