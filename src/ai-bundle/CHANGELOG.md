@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add sleep-time agent DI configuration (`sleep_time_agent`)
+
 0.6
 ---
 

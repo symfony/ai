@@ -731,6 +731,60 @@ Testing a service that uses an agent::
 The ``MockAgent`` provides all the benefits of traditional mocks while offering a more intuitive API for AI agent testing,
 making your tests more reliable and easier to maintain.
 
+Sleep-Time Agents
+~~~~~~~~~~~~~~~~~
+
+Sleep-time agents perform background analysis of conversations to enrich shared
+memory blocks. A dedicated "sleeping" agent processes conversation history after
+every N calls and updates shared memory blocks via a ``rethink_memory`` tool.
+
+Creating a sleep-time agent requires four components:
+
+1. **Memory blocks**: Shared, labeled containers for storing insights
+2. **MemoryBlockProvider**: Injects enriched memory into the primary agent's context
+3. **RethinkMemory tool**: Allows the sleeping agent to update memory blocks
+4. **SleepTimeAgent**: Orchestrates both agents and manages the sleep cycle
+
+Example::
+
+    use Symfony\AI\Agent\SleepTime\MemoryBlock;
+    use Symfony\AI\Agent\SleepTime\MemoryBlockProvider;
+    use Symfony\AI\Agent\SleepTime\SleepTimeAgent;
+    use Symfony\AI\Agent\SleepTime\Tool\RethinkMemory;
+
+    // 1. Create shared memory blocks
+    $summaryBlock = new MemoryBlock('summary');
+    $preferencesBlock = new MemoryBlock('preferences');
+    $memoryBlocks = [$summaryBlock, $preferencesBlock];
+
+    // 2. Create the MemoryBlockProvider for the primary agent
+    //    Wire it via MemoryInputProcessor to inject memory into the system prompt
+    $memoryProvider = new MemoryBlockProvider($memoryBlocks);
+
+    // 3. Create the RethinkMemory tool for the sleeping agent
+    //    Add this tool to the sleeping agent's toolbox
+    $rethinkMemory = new RethinkMemory($memoryBlocks);
+
+    // 4. Create the SleepTimeAgent
+    $sleepTimeAgent = new SleepTimeAgent(
+        primaryAgent: $primaryAgent,   // Your main agent (with MemoryBlockProvider wired)
+        sleepingAgent: $sleepingAgent, // Agent with rethink_memory in its toolbox
+        memoryBlocks: $memoryBlocks,
+        frequency: 5,                  // Run sleep phase every 5 calls
+    );
+
+    // Use it like any other agent
+    $result = $sleepTimeAgent->call($messages);
+
+The ``MemoryBlock`` objects are shared by reference between all components.
+When the sleeping agent calls ``rethink_memory``, it updates the block content
+in place, and the ``MemoryBlockProvider`` reads the updated content on the next
+primary agent call.
+
+.. note::
+
+    For performances concerns, the recommandation is to use a bigger model for the `sleeping_agent` than the primary one.
+
 Code Examples
 ~~~~~~~~~~~~~
 

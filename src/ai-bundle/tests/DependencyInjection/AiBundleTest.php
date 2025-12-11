@@ -26,6 +26,10 @@ use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
+use Symfony\AI\Agent\SleepTime\MemoryBlock;
+use Symfony\AI\Agent\SleepTime\MemoryBlockProvider;
+use Symfony\AI\Agent\SleepTime\SleepTimeAgent;
+use Symfony\AI\Agent\SleepTime\Tool\RethinkMemory;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -6642,6 +6646,314 @@ class AiBundleTest extends TestCase
 
         // Orchestrator should have tools processor
         $this->assertTrue($container->hasDefinition('ai.tool.agent_processor.orchestrator'));
+    }
+
+    public function testValidSleepTimeAgentConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'assistant' => [
+                        'model' => 'gpt-4o',
+                    ],
+                    'analyzer' => [
+                        'model' => 'gpt-4o-mini',
+                        'tools' => [
+                            ['service' => 'some_tool', 'description' => 'A tool'],
+                        ],
+                    ],
+                ],
+                'sleep_time_agent' => [
+                    'my_sleep_agent' => [
+                        'primary' => 'assistant',
+                        'sleeping' => 'analyzer',
+                        'memory_blocks' => [
+                            'summary' => 'Initial summary',
+                            'preferences' => '',
+                        ],
+                        'frequency' => 3,
+                    ],
+                ],
+            ],
+        ]);
+
+        // Verify SleepTimeAgent service is created
+        $this->assertTrue($container->hasDefinition('ai.sleep_time_agent.my_sleep_agent'));
+
+        $sleepTimeAgentDefinition = $container->getDefinition('ai.sleep_time_agent.my_sleep_agent');
+        $this->assertSame(SleepTimeAgent::class, $sleepTimeAgentDefinition->getClass());
+
+        // Verify constructor arguments
+        $arguments = $sleepTimeAgentDefinition->getArguments();
+        $this->assertCount(6, $arguments);
+
+        // Primary agent reference
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('ai.agent.assistant', (string) $arguments[0]);
+
+        // Sleeping agent reference
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('ai.agent.analyzer', (string) $arguments[1]);
+
+        // Memory block references
+        $this->assertIsArray($arguments[2]);
+        $this->assertCount(2, $arguments[2]);
+        $this->assertInstanceOf(Reference::class, $arguments[2][0]);
+        $this->assertInstanceOf(Reference::class, $arguments[2][1]);
+
+        // Frequency
+        $this->assertSame(3, $arguments[3]);
+
+        // Name
+        $this->assertSame('my_sleep_agent', $arguments[4]);
+
+        // Logger reference
+        $this->assertInstanceOf(Reference::class, $arguments[5]);
+
+        // Verify tags
+        $tags = $sleepTimeAgentDefinition->getTags();
+        $this->assertArrayHasKey('ai.sleep_time_agent', $tags);
+        $this->assertSame([['name' => 'my_sleep_agent']], $tags['ai.sleep_time_agent']);
+        $this->assertArrayHasKey('ai.agent', $tags);
+        $this->assertSame([['name' => 'my_sleep_agent']], $tags['ai.agent']);
+
+        // Verify alias
+        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\AgentInterface $mySleepAgent'));
+
+        // Verify MemoryBlock services are created
+        $this->assertTrue($container->hasDefinition('ai.sleep_time_agent.my_sleep_agent.memory_block.summary'));
+        $this->assertTrue($container->hasDefinition('ai.sleep_time_agent.my_sleep_agent.memory_block.preferences'));
+
+        $summaryBlockDef = $container->getDefinition('ai.sleep_time_agent.my_sleep_agent.memory_block.summary');
+        $this->assertSame(MemoryBlock::class, $summaryBlockDef->getClass());
+        $this->assertSame(['summary', 'Initial summary'], $summaryBlockDef->getArguments());
+
+        $preferencesBlockDef = $container->getDefinition('ai.sleep_time_agent.my_sleep_agent.memory_block.preferences');
+        $this->assertSame(MemoryBlock::class, $preferencesBlockDef->getClass());
+        $this->assertSame(['preferences', ''], $preferencesBlockDef->getArguments());
+
+        // Verify RethinkMemory service is created
+        $this->assertTrue($container->hasDefinition('ai.sleep_time_agent.my_sleep_agent.rethink_memory'));
+        $rethinkDef = $container->getDefinition('ai.sleep_time_agent.my_sleep_agent.rethink_memory');
+        $this->assertSame(RethinkMemory::class, $rethinkDef->getClass());
+
+        // Verify MemoryBlockProvider service is created
+        $this->assertTrue($container->hasDefinition('ai.sleep_time_agent.my_sleep_agent.memory_block_provider'));
+        $providerDef = $container->getDefinition('ai.sleep_time_agent.my_sleep_agent.memory_block_provider');
+        $this->assertSame(MemoryBlockProvider::class, $providerDef->getClass());
+
+        // Verify MemoryInputProcessor is created and tagged for primary agent
+        $this->assertTrue($container->hasDefinition('ai.sleep_time_agent.my_sleep_agent.memory_input_processor'));
+        $memoryProcessorDef = $container->getDefinition('ai.sleep_time_agent.my_sleep_agent.memory_input_processor');
+        $this->assertSame(MemoryInputProcessor::class, $memoryProcessorDef->getClass());
+
+        $processorTags = $memoryProcessorDef->getTag('ai.agent.input_processor');
+        $this->assertCount(1, $processorTags);
+        $this->assertSame('ai.agent.assistant', $processorTags[0]['agent']);
+        $this->assertSame(-40, $processorTags[0]['priority']);
+    }
+
+    public function testSleepTimeAgentWithDefaultFrequency()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'assistant' => [
+                        'model' => 'gpt-4o',
+                    ],
+                    'analyzer' => [
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                'sleep_time_agent' => [
+                    'my_agent' => [
+                        'primary' => 'assistant',
+                        'sleeping' => 'analyzer',
+                        'memory_blocks' => [
+                            'summary' => '',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.sleep_time_agent.my_agent');
+        $this->assertSame(5, $definition->getArgument(3));
+    }
+
+    public function testSleepTimeAgentNameConflictWithAgentThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Agent names and sleep-time agent names must be unique. Duplicate name(s) found: "assistant"');
+
+        $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'assistant' => [
+                        'model' => 'gpt-4o',
+                    ],
+                    'analyzer' => [
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                'sleep_time_agent' => [
+                    'assistant' => [
+                        'primary' => 'assistant',
+                        'sleeping' => 'analyzer',
+                        'memory_blocks' => [
+                            'summary' => '',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testSleepTimeAgentNameConflictWithMultiAgentThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Multi-agent names and sleep-time agent names must be unique. Duplicate name(s) found: "support"');
+
+        $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'dispatcher' => [
+                        'model' => 'gpt-4o-mini',
+                    ],
+                    'technical' => [
+                        'model' => 'gpt-4',
+                    ],
+                    'general' => [
+                        'model' => 'claude-3-opus-20240229',
+                    ],
+                    'analyzer' => [
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                'multi_agent' => [
+                    'support' => [
+                        'orchestrator' => 'dispatcher',
+                        'fallback' => 'general',
+                        'handoffs' => [
+                            'technical' => ['code', 'debug'],
+                        ],
+                    ],
+                ],
+                'sleep_time_agent' => [
+                    'support' => [
+                        'primary' => 'general',
+                        'sleeping' => 'analyzer',
+                        'memory_blocks' => [
+                            'summary' => '',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testSleepTimeAgentWithNonExistentPrimaryAgentThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The agent "non_existing" referenced in sleep-time agent "my_agent" as primary does not exist');
+
+        $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'analyzer' => [
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                'sleep_time_agent' => [
+                    'my_agent' => [
+                        'primary' => 'non_existing',
+                        'sleeping' => 'analyzer',
+                        'memory_blocks' => [
+                            'summary' => '',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testSleepTimeAgentWithNonExistentSleepingAgentThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The agent "non_existing" referenced in sleep-time agent "my_agent" as sleeping does not exist');
+
+        $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'assistant' => [
+                        'model' => 'gpt-4o',
+                    ],
+                ],
+                'sleep_time_agent' => [
+                    'my_agent' => [
+                        'primary' => 'assistant',
+                        'sleeping' => 'non_existing',
+                        'memory_blocks' => [
+                            'summary' => '',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testSleepTimeAgentWithEmptyMemoryBlocksThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The path "ai.sleep_time_agent.my_agent.memory_blocks" should have at least 1 element(s) defined.');
+
+        $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'assistant' => [
+                        'model' => 'gpt-4o',
+                    ],
+                    'analyzer' => [
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                'sleep_time_agent' => [
+                    'my_agent' => [
+                        'primary' => 'assistant',
+                        'sleeping' => 'analyzer',
+                        'memory_blocks' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testSleepTimeAgentWithInvalidFrequencyThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'assistant' => [
+                        'model' => 'gpt-4o',
+                    ],
+                    'analyzer' => [
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                'sleep_time_agent' => [
+                    'my_agent' => [
+                        'primary' => 'assistant',
+                        'sleeping' => 'analyzer',
+                        'memory_blocks' => [
+                            'summary' => '',
+                        ],
+                        'frequency' => 0,
+                    ],
+                ],
+            ],
+        ]);
     }
 
     #[TestDox('Agent model configuration preserves colon notation in model names (e.g., qwen3:0.6b)')]
