@@ -155,7 +155,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     private function convertToIndexableArray(VectorDocument $document): array
     {
         return [
-            'id' => $document->id->toRfc4122(),
+            'id' => $document->id,
             '_metadata' => json_encode($document->metadata->getArrayCopy()),
             $this->vectorFieldName => $document->vector->getData(),
         ];
@@ -174,6 +174,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $score = $data['distance'] ?? null;
 
-        return new VectorDocument(Uuid::fromString($id), $vector, new Metadata(json_decode($data['_metadata'], true)), $score);
+        return new VectorDocument($id, $vector, new Metadata(json_decode($data['_metadata'], true)), $score);
     }
 }
