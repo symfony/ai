@@ -179,7 +179,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         foreach ($results as $result) {
             yield new VectorDocument(
-                id: $this->toUuid($result['_id']),
+                id: $this->getBinaryData($result['_id']),
                 vector: new Vector($result[$this->vectorFieldName]),
                 metadata: new Metadata($result['metadata'] ?? []),
                 score: $result['score'],
@@ -197,8 +197,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return new Binary($uuid->toBinary(), Binary::TYPE_UUID);
     }
 
-    private function toUuid(Binary $binary): Uuid
+    private function getBinaryData(Binary $binary): string
     {
-        return Uuid::fromString($binary->getData());
+        return $binary->getData();
     }
 }
