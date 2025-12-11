@@ -106,6 +106,16 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'ministral-14b-latest' => [
+                'class' => Mistral::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
             'pixstral-large-latest' => [
                 'class' => Mistral::class,
                 'capabilities' => [

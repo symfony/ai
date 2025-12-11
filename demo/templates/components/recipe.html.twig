@@ -1,0 +1,101 @@
+<div class="card mx-auto shadow-lg" {{ attributes.defaults(stimulus_controller('recipe')) }}>
+    <div class="card-header p-2">
+            {{ ux_icon('mdi:cook', { height: '32px', width: '32px' }) }}
+            <strong class="ms-1 pt-1 d-inline-block">Recipe Bot</strong>
+        <button id="chat-reset" class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
+    </div>
+    <div id="chat-body" class="card-body p-4 overflow-auto">
+        {% if this.recipe %}
+            {% set recipe = this.recipe %}
+            <div id="recipe-card">
+                <h2 class="mb-4 pb-3 border-bottom">{{ recipe.name }}</h2>
+                <div class="row mb-4">
+                    <div class="col-md-4 text-center">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="info-box p-2 bg-light rounded">
+                                    {{ ux_icon('mdi:clock', { height: '24px', width: '24px', class: 'text-primary' }) }}
+                                    <p class="mb-0 mt-2 small">
+                                        <strong>{{ recipe.duration }}</strong><br>
+                                        <span class="text-muted">minutes</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-box p-2 bg-light rounded">
+                                    {{ ux_icon('mdi:signal-variant', { height: '24px', width: '24px', class: 'text-warning' }) }}
+                                    <p class="mb-0 mt-2 small">
+                                        <strong>{{ recipe.level }}</strong><br>
+                                        <span class="text-muted">difficulty</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-box p-2 bg-light rounded">
+                                    {{ ux_icon('mdi:leaf', { height: '24px', width: '24px', class: 'text-success' }) }}
+                                    <p class="mb-0 mt-2 small">
+                                        <strong>{{ recipe.diet }}</strong><br>
+                                        <span class="text-muted">diet</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ingredients Section -->
+                        <div class="mb-4 text-start mt-4">
+                            <h5 class="mb-3">
+                                {{ ux_icon('mdi:format-list-checkbox', { height: '20px', width: '20px', class: 'me-2' }) }}
+                                Ingredients
+                            </h5>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for ingredient in recipe.ingredients %}
+                                    <span class="badge text-start bg-success bg-opacity-50 text-white py-2 px-3">
+                                        <strong>{{ ingredient.name }}</strong><br />
+                                        <small>{{ ingredient.quantity }}</small>
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8 text-start">
+                        <h5 class="mb-3">
+                            {{ ux_icon('mdi:clipboard-list', { height: '20px', width: '20px', class: 'me-2' }) }}
+                            Instructions
+                        </h5>
+                        <div class="">
+                            {% for step in recipe.steps %}
+                                <div class="d-flex mb-2 bg-light-subtle p-2 rounded">
+                                    <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="min-width: 32px; width: 32px; height: 32px;">
+                                        <small class="fw-bold">{{ loop.index }}</small>
+                                    </div>
+                                    {{ step }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div id="welcome" class="text-center mt-5 py-5 bg-white rounded-5 shadow-sm w-75 mx-auto">
+                {{ ux_icon('mdi:cook', { height: '200px', width: '200px' }) }}
+                <h4 class="mt-5">Cooking Recipes</h4>
+                <span class="text-muted">Please provide your preferences for a recipe.</span>
+            </div>
+        {% endif %}
+        <div id="loading-message" class="d-none">
+            <div class="d-flex flex-column align-items-center justify-content-center w-100">
+                <div class="spinner-border text-success mb-4" style="width: 60px; height: 60px;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h4 class="text-muted mb-2">The bot is cooking your recipe...</h4>
+                <p class="text-secondary small">This may take a moment</p>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer p-2">
+        <div class="input-group">
+            <input id="chat-message" type="text" class="form-control border-0" placeholder="Write a message ...">
+            <button id="chat-submit" class="btn btn-outline-secondary border-0" type="button">{{ ux_icon('mingcute:send-fill', { height: '25px', width: '25px' }) }} Submit</button>
+        </div>
+    </div>
+</div>

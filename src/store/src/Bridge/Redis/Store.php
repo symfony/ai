@@ -107,7 +107,7 @@ class Store implements ManagedStoreInterface, StoreInterface
      *
      * @return VectorDocument[]
      */
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $limit = $options['limit'] ?? 5;
         $maxScore = $options['maxScore'] ?? null;
@@ -134,7 +134,6 @@ class Store implements ManagedStoreInterface, StoreInterface
             return [];
         }
 
-        $documents = [];
         $numResults = $results[0];
 
         // Parse results (skip first element which is the count)
@@ -166,15 +165,13 @@ class Store implements ManagedStoreInterface, StoreInterface
                 continue;
             }
 
-            $documents[] = new VectorDocument(
+            yield new VectorDocument(
                 id: $data['$.id'],
                 vector: new Vector($data['$.embedding'] ?? []),
                 metadata: new Metadata($data['$.metadata'] ?? []),
                 score: $score,
             );
         }
-
-        return $documents;
     }
 
     private function toRedisVector(VectorInterface $vector): string

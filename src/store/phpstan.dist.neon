@@ -10,3 +10,19 @@ parameters:
     ignoreErrors:
         -
             message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
+        -
+            identifier: missingType.iterableValue
+            path: tests/*
+            reportUnmatched: false
+        -
+            identifier: missingType.iterableValue
+            path: src/Bridge/**/Tests/*
+            reportUnmatched: false
+        -
+            identifier: 'symfonyAi.forbidNativeException'
+            path: tests/*
+            reportUnmatched: false
+        -
+            identifier: 'symfonyAi.forbidNativeException'
+            path: src/Bridge/**/Tests/*
+            reportUnmatched: false

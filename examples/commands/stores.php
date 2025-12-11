@@ -14,15 +14,15 @@ require_once dirname(__DIR__).'/bootstrap.php';
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 use MongoDB\Client as MongoDbClient;
+use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
-use Symfony\AI\Store\Bridge\Local\CacheStore;
-use Symfony\AI\Store\Bridge\Local\InMemoryStore;
-use Symfony\AI\Store\Bridge\Manticore\Store as ManticoreStore;
+use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
+use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
@@ -31,7 +31,9 @@ use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
+use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -45,9 +47,9 @@ $factories = [
         env('CLICKHOUSE_DATABASE'),
         env('CLICKHOUSE_TABLE'),
     ),
-    'manticore' => static fn (): ManticoreStore => new ManticoreStore(
+    'manticoresearch' => static fn (): ManticoreSearchStore => new ManticoreSearchStore(
         http_client(),
-        env('MANTICORE_HOST'),
+        env('MANTICORESEARCH_HOST'),
         'symfony',
         '_vectors',
     ),
@@ -85,6 +87,11 @@ $factories = [
         databaseName: env('NEO4J_DATABASE'),
         vectorIndexName: 'Commands',
         nodeName: 'symfony',
+    ),
+    'opensearch' => static fn (): OpenSearchStore => new OpenSearchStore(
+        http_client(),
+        env('OPENSEARCH_ENDPOINT'),
+        'symfony',
     ),
     'postgres' => static fn (): PostgresStore => PostgresStore::fromDbal(
         DriverManager::getConnection((new DsnParser())->parse(env('POSTGRES_URI'))),
@@ -132,6 +139,9 @@ $application->addCommands([
     new SetupStoreCommand(new ServiceLocator($factories)),
     new DropStoreCommand(new ServiceLocator($factories)),
 ]);
+
+$clock = new MonotonicClock();
+$clock->sleep(10);
 
 foreach ($storesIds as $store) {
     $setupOutputCode = $application->run(new ArrayInput([

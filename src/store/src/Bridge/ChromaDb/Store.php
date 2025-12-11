@@ -15,7 +15,6 @@ use Codewithkyrian\ChromaDB\Client;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -27,9 +26,6 @@ final class Store implements StoreInterface
         private readonly Client $client,
         private readonly string $collectionName,
     ) {
-        if (!class_exists(Client::class)) {
-            throw new RuntimeException('For using the ChromaDB as retrieval vector store, the codewithkyrian/chromadb-php package is required. Try running "composer require codewithkyrian/chromadb-php".');
-        }
     }
 
     public function add(VectorDocument ...$documents): void
@@ -48,31 +44,49 @@ final class Store implements StoreInterface
         }
 
         $collection = $this->client->getOrCreateCollection($this->collectionName);
+
+        // @phpstan-ignore argument.type (chromadb-php library has incorrect PHPDoc type for $metadatas parameter)
         $collection->add($ids, $vectors, $metadata, $originalDocuments);
     }
 
     /**
-     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>} $options
+     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, queryTexts?: array<string>} $options
      */
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
-        $collection = $this->client->getOrCreateCollection($this->collectionName);
-        $queryResponse = $collection->query(
-            queryEmbeddings: [$vector->getData()],
-            nResults: 4,
-            where: $options['where'] ?? null,
-            whereDocument: $options['whereDocument'] ?? null,
-        );
-
-        $documents = [];
-        for ($i = 0; $i < \count($queryResponse->metadatas[0]); ++$i) {
-            $documents[] = new VectorDocument(
-                id: $queryResponse->ids[0][$i],
-                vector: new Vector($queryResponse->embeddings[0][$i]),
-                metadata: new Metadata($queryResponse->metadatas[0][$i]),
+        $include = null;
+        if ([] !== ($options['include'] ?? [])) {
+            $include = array_values(
+                array_unique(
+                    array_merge(['embeddings', 'metadatas', 'distances'], $options['include'])
+                )
             );
         }
 
-        return $documents;
+        $collection = $this->client->getOrCreateCollection($this->collectionName);
+        $queryResponse = $collection->query(
+            queryEmbeddings: [$vector->getData()],
+            queryTexts: $options['queryTexts'] ?? null,
+            nResults: 4,
+            where: $options['where'] ?? null,
+            whereDocument: $options['whereDocument'] ?? null,
+            include: $include,
+        );
+
+        $metaCount = \count($queryResponse->metadatas[0]);
+
+        for ($i = 0; $i < $metaCount; ++$i) {
+            $metaData = new Metadata($queryResponse->metadatas[0][$i]);
+            if (isset($queryResponse->documents[0][$i])) {
+                $metaData->setText($queryResponse->documents[0][$i]);
+            }
+
+            yield new VectorDocument(
+                id: $queryResponse->ids[0][$i],
+                vector: new Vector($queryResponse->embeddings[0][$i]),
+                metadata: $metaData,
+                score: $queryResponse->distances[0][$i] ?? null,
+            );
+        }
     }
 }

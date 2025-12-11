@@ -247,7 +247,7 @@ class MultiAgentTest extends TestCase
                 $this->isInstanceOf(MessageBag::class),
                 $this->callback(fn ($opts) => isset($opts['temperature']) && 0.7 === $opts['temperature']
                     && isset($opts['max_tokens']) && 100 === $opts['max_tokens']
-                    && isset($opts['output_structure']) && Decision::class === $opts['output_structure']
+                    && isset($opts['response_format']) && Decision::class === $opts['response_format']
                 )
             )
             ->willReturn($orchestratorResult);

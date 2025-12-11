@@ -11,6 +11,10 @@
         {
             "name": "Oskar Stark",
             "email": "oskarstark@googlemail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
         }
     ],
     "require": {
@@ -31,10 +35,16 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5",
+        "symfony/ai-chroma-db-store": "@dev",
+        "symfony/ai-mongo-db-store": "@dev",
+        "symfony/ai-pinecone-store": "@dev",
+        "symfony/ai-postgres-store": "@dev",
+        "symfony/ai-redis-store": "@dev",
         "symfony/expression-language": "^7.3|^8.0",
         "symfony/security-core": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0"
     },
+    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Symfony\\AI\\AiBundle\\": "src/"
@@ -47,13 +57,18 @@
         }
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
     },
     "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"
         }
-    },
-    "minimum-stability": "dev"
+    }
 }

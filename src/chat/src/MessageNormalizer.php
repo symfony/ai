@@ -107,7 +107,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
         }
 
         return [
-            'id' => $data->getId()->toRfc4122(),
+            $context['identifier'] ?? 'id' => $data->getId()->toRfc4122(),
             'type' => $data::class,
             'content' => ($data instanceof SystemMessage || $data instanceof AssistantMessage || $data instanceof ToolCallMessage) ? $data->getContent() : '',
             'contentAsBase64' => ($data instanceof UserMessage && [] !== $data->getContent()) ? array_map(

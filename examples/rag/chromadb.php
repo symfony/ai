@@ -11,8 +11,8 @@
 
 use Codewithkyrian\ChromaDB\Factory;
 use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
-use Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;

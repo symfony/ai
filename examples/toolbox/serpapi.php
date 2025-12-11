@@ -10,10 +10,10 @@
  */
 
 use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\Bridge\Clock\Clock;
+use Symfony\AI\Agent\Bridge\Scraper\Scraper;
+use Symfony\AI\Agent\Bridge\SerpApi\SerpApi;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
-use Symfony\AI\Agent\Toolbox\Tool\Clock;
-use Symfony\AI\Agent\Toolbox\Tool\Scraper;
-use Symfony\AI\Agent\Toolbox\Tool\SerpApi;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;

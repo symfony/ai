@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaClient;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -37,9 +38,6 @@ final class OllamaClientTest extends TestCase
     {
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
-                'capabilities' => ['completion', 'tools'],
-            ]),
-            new JsonMockResponse([
                 'model' => 'foo',
                 'response' => [
                     'age' => 22,
@@ -50,7 +48,10 @@ final class OllamaClientTest extends TestCase
         ], 'http://127.0.0.1:1234');
 
         $client = new OllamaClient($httpClient, 'http://127.0.0.1:1234');
-        $response = $client->request(new Ollama('llama3.2'), [
+        $response = $client->request(new Ollama('llama3.2', [
+            Capability::INPUT_MESSAGES,
+            Capability::TOOL_CALLING,
+        ]), [
             'messages' => [
                 [
                     'role' => 'user',
@@ -77,7 +78,7 @@ final class OllamaClientTest extends TestCase
             ],
         ]);
 
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame(1, $httpClient->getRequestsCount());
         $this->assertSame([
             'model' => 'foo',
             'response' => [
@@ -91,9 +92,6 @@ final class OllamaClientTest extends TestCase
     public function testStreamingIsSupported()
     {
         $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'capabilities' => ['completion'],
-            ]),
             new MockResponse('data: '.json_encode([
                 'model' => 'llama3.2',
                 'created_at' => '2025-08-23T10:00:00Z',
@@ -123,7 +121,7 @@ final class OllamaClientTest extends TestCase
 
         $this->assertInstanceOf(StreamResult::class, $result);
         $this->assertInstanceOf(\Generator::class, $result->getContent());
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testStreamingConverterWithDirectResponse()

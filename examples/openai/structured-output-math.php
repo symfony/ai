@@ -27,6 +27,6 @@ $messages = new MessageBag(
     Message::ofUser('how can I solve 8x + 7 = -23'),
 );
 
-$result = $platform->invoke('gpt-4o-mini', $messages, ['output_structure' => MathReasoning::class]);
+$result = $platform->invoke('gpt-4o-mini', $messages, ['response_format' => MathReasoning::class]);
 
 dump($result->asObject());

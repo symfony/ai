@@ -14,25 +14,6 @@
         <h3 class="text-dark">Examples</h3>
         <div class="row">
             <div class="col-md-3">
-                <div class="card blog bg-body shadow-sm">
-                    <div class="card-img-top py-2">
-                        {{ ux_icon('mdi:symfony', { height: '150px', width: '150px' }) }}
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Symfony Blog Bot</h5>
-                        <p class="card-text">Retrieval Augmented Generation (RAG) based on Symfony's blog dumped to a vector store.</p>
-                        <a href="{{ path('blog') }}" class="btn btn-outline-dark d-block">Try Symfony Blog Bot</a>
-                    </div>
-                    {# Profiler route only available in dev #}
-                    {% if 'dev' == app.environment %}
-                        <div class="card-footer">
-                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
-                            <a href="{{ path('_profiler_open_file', { file: 'src/Blog/Chat.php', line: 21 }) }}">See Implementation</a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="col-md-3">
                 <div class="card youtube bg-body shadow-sm">
                     <div class="card-img-top py-2">
                         {{ ux_icon('bi:youtube', { height: '150px', width: '150px' }) }}
@@ -47,6 +28,25 @@
                         <div class="card-footer">
                             {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
                             <a href="{{ path('_profiler_open_file', { file: 'src/YouTube/Chat.php', line: 21 }) }}">See Implementation</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card recipe bg-body shadow-sm">
+                    <div class="card-img-top py-2">
+                        {{ ux_icon('mdi:cook', { height: '150px', width: '150px' }) }}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Recipe Bot</h5>
+                        <p class="card-text">Chatbot for proposing cooking recipes - powered by structured output.</p>
+                        <a href="{{ path('recipe') }}" class="btn btn-outline-dark d-block">Try Recipe Bot</a>
+                    </div>
+                    {# Profiler route only available in dev #}
+                    {% if 'dev' == app.environment %}
+                        <div class="card-footer">
+                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            <a href="{{ path('_profiler_open_file', { file: 'src/Recipe/Chat.php', line: 22 }) }}">See Implementation</a>
                         </div>
                     {% endif %}
                 </div>
@@ -71,6 +71,65 @@
                 </div>
             </div>
             <div class="col-md-3">
+                <div class="card blog bg-body shadow-sm">
+                    <div class="card-img-top py-2">
+                        {{ ux_icon('mdi:symfony', { height: '150px', width: '150px' }) }}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Symfony Blog Bot</h5>
+                        <p class="card-text">Retrieval Augmented Generation (RAG) based on Symfony's blog dumped to a vector store.</p>
+                        <a href="{{ path('blog') }}" class="btn btn-outline-dark d-block">Try Symfony Blog Bot</a>
+                    </div>
+                    {# Profiler route only available in dev #}
+                    {% if 'dev' == app.environment %}
+                        <div class="card-footer">
+                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            <a href="{{ path('_profiler_open_file', { file: 'src/Blog/Chat.php', line: 21 }) }}">See Implementation</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card speech bg-body shadow-sm">
+                    <div class="card-img-top py-2">
+                        {{ ux_icon('iconoir:microphone-solid', { height: '150px', width: '150px' }) }}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Speech Bot + Subagent</h5>
+                        <p class="card-text">Demonstration of speech-to-text & text-to-speech and a subagent, combining 4 models in total.</p>
+                        <a href="{{ path('speech') }}" class="btn btn-outline-dark d-block">Try Speech Bot</a>
+                    </div>
+                    {# Profiler route only available in dev #}
+                    {% if 'dev' == app.environment %}
+                        <div class="card-footer">
+                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            <a href="{{ path('_profiler_open_file', { file: 'src/Speech/Chat.php', line: 25 }) }}">See Implementation</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card video bg-body shadow-sm">
+                    <div class="card-img-top py-2">
+                        {{ ux_icon('tabler:video-filled', { height: '150px', width: '150px' }) }}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Video Bot</h5>
+                        <p class="card-text">Demonstration of vision capabilities of GPT in combination with your webcam.</p>
+                        <a href="{{ path('video') }}" class="btn btn-outline-dark d-block">Try Video Bot</a>
+                    </div>
+                    {# Profiler route only available in dev #}
+                    {% if 'dev' == app.environment %}
+                        <div class="card-footer">
+                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            <a href="{{ path('_profiler_open_file', { file: 'src/Video/TwigComponent.php', line: 41 }) }}">See Implementation</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-3">
                 <div class="card crop bg-body shadow-sm">
                     <div class="card-img-top py-2">
                         {{ ux_icon('material-symbols:crop', { height: '150px', width: '150px' }) }}
@@ -89,67 +148,23 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
-        <div class="row mt-4">
-            <div class="col-md-9 mx-auto">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card audio bg-body shadow-sm">
-                            <div class="card-img-top py-2">
-                                {{ ux_icon('iconoir:microphone-solid', { height: '150px', width: '150px' }) }}
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title">Audio Bot</h5>
-                                <p class="card-text">Simple demonstration of speech-to-text with Whisper in combination with GPT.</p>
-                                <a href="{{ path('audio') }}" class="btn btn-outline-dark d-block">Try Audio Bot</a>
-                            </div>
-                            {# Profiler route only available in dev #}
-                            {% if 'dev' == app.environment %}
-                                <div class="card-footer">
-                                    {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
-                                    <a href="{{ path('_profiler_open_file', { file: 'src/Audio/Chat.php', line: 25 }) }}">See Implementation</a>
-                                </div>
-                            {% endif %}
-                        </div>
+            <div class="col-md-3">
+                <div class="card stream bg-body shadow-sm">
+                    <div class="card-img-top py-2">
+                        {{ ux_icon('mdi:car-turbocharger', { height: '150px', width: '150px' }) }}
                     </div>
-                    <div class="col-md-4">
-                        <div class="card video bg-body shadow-sm">
-                            <div class="card-img-top py-2">
-                                {{ ux_icon('tabler:video-filled', { height: '150px', width: '150px' }) }}
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title">Video Bot</h5>
-                                <p class="card-text">Simple demonstration of vision capabilities of GPT in combination with your webcam.</p>
-                                <a href="{{ path('video') }}" class="btn btn-outline-dark d-block">Try Video Bot</a>
-                            </div>
-                            {# Profiler route only available in dev #}
-                            {% if 'dev' == app.environment %}
-                                <div class="card-footer">
-                                    {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
-                                    <a href="{{ path('_profiler_open_file', { file: 'src/Video/TwigComponent.php', line: 41 }) }}">See Implementation</a>
-                                </div>
-                            {% endif %}
-                        </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Turbo Stream Bot</h5>
+                        <p class="card-text">Demonstration of streaming text responses in combination with markdown based on Turbo and SSE.</p>
+                        <a href="{{ path('stream') }}" class="btn btn-outline-dark d-block">Try Turbo Stream Bot</a>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card stream bg-body shadow-sm">
-                            <div class="card-img-top py-2">
-                                {{ ux_icon('mdi:car-turbocharger', { height: '150px', width: '150px' }) }}
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title">Turbo Stream Bot</h5>
-                                <p class="card-text">Simple demonstration of text streaming capabilities based on Turbo and SSE.</p>
-                                <a href="{{ path('stream') }}" class="btn btn-outline-dark d-block">Try Turbo Stream Bot</a>
-                            </div>
-                            {# Profiler route only available in dev #}
-                            {% if 'dev' == app.environment %}
-                                <div class="card-footer">
-                                    {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
-                                    <a href="{{ path('_profiler_open_file', { file: 'src/Stream/TwigComponent.php', line: 41 }) }}">See Implementation</a>
-                                </div>
-                            {% endif %}
+                    {# Profiler route only available in dev #}
+                    {% if 'dev' == app.environment %}
+                        <div class="card-footer">
+                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            <a href="{{ path('_profiler_open_file', { file: 'src/Stream/TwigComponent.php', line: 41 }) }}">See Implementation</a>
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

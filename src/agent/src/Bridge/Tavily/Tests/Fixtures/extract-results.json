@@ -1,0 +1,11 @@
+{
+  "results": [
+    {
+      "title": "Example Article",
+      "url": "https://example.com/article",
+      "raw_content": "This is the full content of the article that was extracted from the webpage. It contains detailed information about the topic.",
+      "score": 1.0
+    }
+  ],
+  "response_time": 0.89
+}

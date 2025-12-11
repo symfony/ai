@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Azure\OpenAi;
 
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
+use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -53,7 +53,7 @@ final class EmbeddingsModelClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Embeddings;
+        return $model instanceof EmbeddingsModel;
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult

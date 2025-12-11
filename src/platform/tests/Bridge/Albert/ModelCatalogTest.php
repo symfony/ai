@@ -12,8 +12,8 @@
 namespace Symfony\AI\Platform\Tests\Bridge\Albert;
 
 use Symfony\AI\Platform\Bridge\Albert\ModelCatalog;
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Test\ModelCatalogTestCase;
@@ -25,9 +25,9 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 {
     public static function modelsProvider(): iterable
     {
-        yield 'albert-small' => ['albert-small', Gpt::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
-        yield 'albert-large' => ['albert-large', Gpt::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
-        yield 'embeddings-small' => ['embeddings-small', Embeddings::class, [Capability::INPUT_TEXT]];
+        yield 'albert-small' => ['albert-small', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
+        yield 'albert-large' => ['albert-large', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
+        yield 'embeddings-small' => ['embeddings-small', EmbeddingsModel::class, [Capability::INPUT_TEXT]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

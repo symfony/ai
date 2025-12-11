@@ -10,8 +10,8 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Chat\Bridge\Local\InMemoryStore;
 use Symfony\AI\Chat\Chat;
+use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;

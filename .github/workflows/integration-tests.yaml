@@ -23,7 +23,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php-version: ['8.2', '8.3', '8.4']
+                php-version: ['8.2', '8.5']
                 dependency-version: ['']
                 symfony-version: ['']
                 include:
@@ -35,10 +35,10 @@ jobs:
                         symfony-version: '7.4.*'
 
         env:
-            SYMFONY_REQUIRE: ${{ matrix.symfony-version || '>=7.3' }}
+            SYMFONY_REQUIRE: ${{ matrix.symfony-version || '>=7.4' }}
 
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
 
             - name: Up the examples services
               working-directory: examples
@@ -65,25 +65,25 @@ jobs:
             - name: Install root dependencies
               uses: ramsey/composer-install@v3
 
-            - name: Install examples dependencies
+            - name: Build root packages
+              run: php .github/build-packages.php
+
+            - name: Install root dependencies
               uses: ramsey/composer-install@v3
               with:
                   working-directory: examples
 
-            - name: Link examples
-              working-directory: examples
-              run: ../link
-
             - name: Run commands examples
+              working-directory: examples
               run: |
-                php examples/commands/stores.php
-                php examples/commands/message-stores.php
+                php commands/stores.php
+                php commands/message-stores.php
 
     demo:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
@@ -95,13 +95,16 @@ jobs:
             - name: Install root dependencies
               uses: ramsey/composer-install@v3
 
+            - name: Build root packages
+              run: php .github/build-packages.php
+
             - name: Install demo dependencies
               uses: ramsey/composer-install@v3
               with:
                   composer-options: "--no-scripts"
                   working-directory: demo
 
-            - name: Link demo
+            - name: Link local packages
               working-directory: demo
               run: ../link
 

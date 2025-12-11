@@ -14,6 +14,7 @@
         "milvus",
         "mongodb",
         "neo4j",
+        "opensearch",
         "pinecone",
         "postgres",
         "qdrant",
@@ -30,6 +31,10 @@
         {
             "name": "Oskar Stark",
             "email": "oskarstark@googlemail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
         }
     ],
     "require": {
@@ -43,21 +48,22 @@
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
-        "codewithkyrian/chromadb-php": "^0.2.1 || ^0.3 || ^0.4",
-        "doctrine/dbal": "^3.3 || ^4.0",
-        "mongodb/mongodb": "^1.21 || ^2.0",
+        "codewithkyrian/chromadb-php": "^1.0",
+        "doctrine/dbal": "^3.3|^4.0",
+        "mongodb/mongodb": "^1.21|^2.0",
         "phpstan/phpstan": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5",
         "probots-io/pinecone-php": "^1.0",
-        "symfony/cache": "^6.4 || ^7.1",
-        "symfony/console": "^6.4 || ^7.1",
-        "symfony/dependency-injection": "^6.4 || ^7.1",
-        "symfony/dom-crawler": "^6.4 || ^7.1"
+        "symfony/cache": "^6.4|^7.1",
+        "symfony/console": "^6.4|^7.1",
+        "symfony/dependency-injection": "^6.4|^7.1",
+        "symfony/dom-crawler": "^6.4|^7.1"
     },
     "conflict": {
         "mongodb/mongodb": "<1.21"
     },
+    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Symfony\\AI\\Store\\": "src/"
@@ -73,10 +79,12 @@
         "sort-packages": true
     },
     "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"
         }
-    },
-    "minimum-stability": "dev"
+    }
 }

@@ -77,8 +77,7 @@ final class MemoryInputProcessor implements InputProcessorInterface
         }
 
         $messages = $input->getMessageBag()
-            ->withoutSystemMessage()
-            ->prepend(Message::forSystem($combinedMessage));
+            ->withSystemMessage(Message::forSystem($combinedMessage));
 
         $input->setMessageBag($messages);
     }

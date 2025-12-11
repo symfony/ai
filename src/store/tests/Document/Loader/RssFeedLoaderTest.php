@@ -38,7 +38,7 @@ final class RssFeedLoaderTest extends TestCase
 
     public function testLoadWithValidRssFeed()
     {
-        $httpClient = new MockHttpClient([MockResponse::fromFile(__DIR__.'/../../fixtures/symfony-blog.rss')]);
+        $httpClient = new MockHttpClient([MockResponse::fromFile(__DIR__.'/../../Fixtures/symfony-blog.rss')]);
         $loader = new RssFeedLoader($httpClient);
 
         $documents = iterator_to_array($loader->load('https://feeds.feedburner.com/symfony/blog'));
@@ -119,7 +119,7 @@ XML;
 
     public function testLoadReturnsIterableOfTextDocuments()
     {
-        $httpClient = new MockHttpClient([MockResponse::fromFile(__DIR__.'/../../fixtures/symfony-blog.rss')]);
+        $httpClient = new MockHttpClient([MockResponse::fromFile(__DIR__.'/../../Fixtures/symfony-blog.rss')]);
         $loader = new RssFeedLoader($httpClient);
         $result = $loader->load('https://feeds.feedburner.com/symfony/blog');
 
@@ -132,12 +132,12 @@ XML;
 
     public function testLoadGeneratesConsistentUuids()
     {
-        $httpClient = new MockHttpClient([MockResponse::fromFile(__DIR__.'/../../fixtures/symfony-blog.rss')]);
+        $httpClient = new MockHttpClient([MockResponse::fromFile(__DIR__.'/../../Fixtures/symfony-blog.rss')]);
         $loader = new RssFeedLoader($httpClient);
         $documents1 = iterator_to_array($loader->load('https://feeds.feedburner.com/symfony/blog'));
 
         // Load same feed again
-        $httpClient2 = new MockHttpClient([MockResponse::fromFile(__DIR__.'/../../fixtures/symfony-blog.rss')]);
+        $httpClient2 = new MockHttpClient([MockResponse::fromFile(__DIR__.'/../../Fixtures/symfony-blog.rss')]);
         $loader2 = new RssFeedLoader($httpClient2);
         $documents2 = iterator_to_array($loader2->load('https://feeds.feedburner.com/symfony/blog'));
 

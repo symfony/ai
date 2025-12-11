@@ -1,0 +1,36 @@
+{
+  "search_metadata": {
+    "id": "test-search-id",
+    "status": "Success",
+    "created_at": "2025-01-22 00:00:00 UTC",
+    "processed_at": "2025-01-22 00:00:01 UTC",
+    "total_time_taken": 0.5
+  },
+  "search_parameters": {
+    "q": "symfony ai framework",
+    "engine": "google"
+  },
+  "organic_results": [
+    {
+      "position": 1,
+      "title": "Symfony AI - Build AI-powered applications",
+      "link": "https://symfony.com/ai",
+      "snippet": "The Symfony AI component provides a unified interface to interact with various AI platforms and build intelligent applications.",
+      "source": "Symfony"
+    },
+    {
+      "position": 2,
+      "title": "Getting Started with Symfony AI",
+      "link": "https://symfony.com/doc/ai/index.html",
+      "snippet": "Learn how to integrate AI capabilities into your Symfony applications with support for OpenAI, Anthropic, and more.",
+      "source": "Symfony Documentation"
+    },
+    {
+      "position": 3,
+      "title": "Symfony AI Platform Component",
+      "link": "https://github.com/symfony/ai",
+      "snippet": "A comprehensive AI integration framework for PHP applications, supporting multiple AI providers and models.",
+      "source": "GitHub"
+    }
+  ]
+}

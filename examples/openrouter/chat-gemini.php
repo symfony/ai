@@ -16,14 +16,11 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENROUTER_KEY'), http_client());
-$model = 'google/gemini-2.0-flash-exp:free';
-// In case free is running into 404 errors, you can use the paid model:
-// $model = 'google/gemini-2.0-flash-lite-001';
 
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
 );
-$result = $platform->invoke($model, $messages);
+$result = $platform->invoke('google/gemini-2.5-flash-lite', $messages);
 
 echo $result->asText().\PHP_EOL;

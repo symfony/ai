@@ -12,7 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\AiMlApi;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Symfony\AI\Platform\Bridge\AiMlApi\Embeddings\ModelClient;
+use Symfony\AI\Platform\Bridge\Generic\Completions;
+use Symfony\AI\Platform\Bridge\Generic\Embeddings;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -26,13 +27,13 @@ class PlatformFactory
         #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,
         ?Contract $contract = null,
-        string $hostUrl = 'https://api.aimlapi.com',
+        string $baseUrl = 'https://api.aimlapi.com',
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         return new Platform(
             [
-                new ModelClient($apiKey, $httpClient, $hostUrl),
-                new Completions\ModelClient($apiKey, $httpClient, $hostUrl),
+                new Completions\ModelClient($httpClient, $baseUrl, $apiKey),
+                new Embeddings\ModelClient($httpClient, $baseUrl, $apiKey),
             ],
             [
                 new Embeddings\ResultConverter(),

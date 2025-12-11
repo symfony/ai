@@ -24,6 +24,17 @@ final class BinaryResult extends BaseResult
     ) {
     }
 
+    public static function fromBase64(string $base64Data, ?string $mimeType = null): self
+    {
+        $data = base64_decode($base64Data, true);
+
+        if (false === $data) {
+            throw new RuntimeException('The provided data is not valid base64-encoded data.');
+        }
+
+        return new self($data, $mimeType);
+    }
+
     public function getMimeType(): ?string
     {
         return $this->mimeType;

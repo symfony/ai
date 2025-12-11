@@ -77,10 +77,10 @@ To initialize the Chroma DB, you need to run the following command:
 symfony console ai:store:index blog -vv
 ```
 
-Now you should be able to run the test command and get some results:
+Now you should be able to retrieve documents from the store:
 
 ```shell
-symfony console app:blog:query
+symfony console ai:store:retrieve blog "Week of Symfony"
 ```
 
 **Don't forget to set up the project in your favorite IDE or editor.**

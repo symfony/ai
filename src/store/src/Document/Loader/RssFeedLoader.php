@@ -41,7 +41,7 @@ final class RssFeedLoader implements LoaderInterface
     /**
      * @param array{uuid_namespace?: string} $options
      */
-    public function load(?string $source, array $options = []): iterable
+    public function load(?string $source = null, array $options = []): iterable
     {
         if (!class_exists(Crawler::class)) {
             throw new RuntimeException('For using the RSS loader, the Symfony DomCrawler component is required. Try running "composer require symfony/dom-crawler".');

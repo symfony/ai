@@ -75,7 +75,7 @@ Advanced Example with Multiple Agents
                     include_tools: true # Include tool definitions at the end of the system prompt
                 tools:
                     # Referencing a service with #[AsTool] attribute
-                    - 'Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch'
+                    - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
 
                     # Referencing a service without #[AsTool] attribute
                     - service: 'App\Agent\Tool\CompanyName'
@@ -91,7 +91,7 @@ Advanced Example with Multiple Agents
                 platform: 'ai.platform.anthropic'
                 model: 'claude-3-7-sonnet'
                 tools: # If undefined, all tools are injected into the agent, use "tools: false" to disable tools.
-                    - 'Symfony\AI\Agent\Toolbox\Tool\Wikipedia'
+                    - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
             search_agent:
                 platform: 'ai.platform.perplexity'
@@ -102,7 +102,7 @@ Advanced Example with Multiple Agents
                 model: 'text-to-speech'
                 tools: false
         store:
-            chroma_db:
+            chromadb:
                 # multiple collections possible per type
                 default:
                     collection: 'my_collection'
@@ -129,12 +129,68 @@ Advanced Example with Multiple Agents
             default:
                 loader: 'Symfony\AI\Store\Document\Loader\InMemoryLoader'
                 vectorizer: 'ai.vectorizer.openai_embeddings'
-                store: 'ai.store.chroma_db.default'
+                store: 'ai.store.chromadb.default'
 
             research:
                 loader: 'Symfony\AI\Store\Document\Loader\TextFileLoader'
                 vectorizer: 'ai.vectorizer.mistral_embeddings'
                 store: 'ai.store.memory.research'
+
+Generic Platform
+----------------
+
+Based on the generic bridge, you can configure any service, that complies with the original OpenAI API, like LiteLLM:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            generic:
+                litellm:
+                    base_url: '%env(LITELLM_HOST_URL)%' # e.g. http://localhost:4000
+                    api_key: '%env(LITELLM_API_KEY)%' # e.g. sk-1234
+                    model_catalog: 'Symfony\AI\Platform\Bridge\Generic\ModelCatalog' # see below
+        agent:
+            test:
+                platform: 'ai.platform.generic.litellm'
+                model: 'mistral-small-latest'
+                tools: false
+
+    services:
+        Symfony\AI\Platform\Bridge\Generic\ModelCatalog:
+            $models:
+                mistral-small-latest:
+                    class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
+                    capabilities:
+                        - !php/const 'Symfony\AI\Platform\Capability::INPUT_MESSAGES'
+                        - !php/const 'Symfony\AI\Platform\Capability::OUTPUT_TEXT'
+                        - !php/const 'Symfony\AI\Platform\Capability::OUTPUT_STREAMING'
+                        - !php/const 'Symfony\AI\Platform\Capability::OUTPUT_STRUCTURED'
+                        - !php/const 'Symfony\AI\Platform\Capability::INPUT_IMAGE'
+                        - !php/const 'Symfony\AI\Platform\Capability::TOOL_CALLING'
+
+Cached Platform
+---------------
+
+Thanks to Symfony's Cache component, platforms can be decorated and use any cache adapter,
+this platform allows to reduce network calls / resource consumption:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openai:
+                api_key: '%env(OPENAI_API_KEY)%'
+            cache:
+                platform: 'ai.platform.openai'
+                service: 'cache.app'
+
+        agent:
+            openai:
+                platform: 'ai.platform.cache.openai'
+                model: 'gpt-4o-mini'
 
 Store Dependency Injection
 --------------------------
@@ -156,7 +212,7 @@ For each configured store, the bundle automatically creates two types of aliases
                     strategy: 'cosine'
                 products:
                     strategy: 'manhattan'
-            chroma_db:
+            chromadb:
                 main:
                     collection: 'documents'
 
@@ -164,7 +220,7 @@ From the configuration above, the following aliases are automatically registered
 
 - ``StoreInterface $main`` - References the memory store (first occurrence)
 - ``StoreInterface $memoryMain`` - Explicitly references the memory store
-- ``StoreInterface $chromaDbMain`` - Explicitly references the chroma_db store
+- ``StoreInterface $chromadbMain`` - Explicitly references the chromadb store
 - ``StoreInterface $products`` - References the memory products store
 - ``StoreInterface $memoryProducts`` - Explicitly references the memory products store
 
@@ -176,14 +232,14 @@ You can inject stores into your services using the generated aliases::
     {
         public function __construct(
             private StoreInterface $main,              // Uses memory store (first occurrence)
-            private StoreInterface $chromaDbMain,      // Explicitly uses chroma_db store
+            private StoreInterface $chromadbMain,      // Explicitly uses chromadb store
             private StoreInterface $memoryProducts,    // Explicitly uses memory products store
         ) {
         }
     }
 
 When multiple stores share the same name (like ``main`` in the example), the simple alias (``$main``) will reference the first occurrence.
-Use type-prefixed aliases (``$memoryMain``, ``$chromaDbMain``) for explicit disambiguation.
+Use type-prefixed aliases (``$memoryMain``, ``$chromadbMain``) for explicit disambiguation.
 
 Model Configuration
 -------------------
@@ -636,8 +692,8 @@ The ``ai:store:setup`` command prepares the required infrastructure for a store 
 
     $ php bin/console ai:store:setup <store>
 
-    # Setup the chroma_db store
-    $ php bin/console ai:store:setup chroma_db.default
+    # Setup the chromadb store
+    $ php bin/console ai:store:setup chromadb.default
 
 .. note::
 
@@ -653,8 +709,8 @@ The ``ai:store:drop`` command drops the infrastructure for a store (e.g., remove
 
     $ php bin/console ai:store:drop <store> --force
 
-    # Drop the chroma_db store
-    $ php bin/console ai:store:drop chroma_db.default --force
+    # Drop the chromadb store
+    $ php bin/console ai:store:drop chromadb.default --force
 
 .. warning::
 
@@ -749,7 +805,23 @@ the :class:`Symfony\\AI\\AiBundle\\Attribute\\AsOutputProcessor` attributes::
 Register Tools
 ~~~~~~~~~~~~~~
 
-To use existing tools, you can register them as a service:
+The following tools can be installed as dedicated packages, no configuration is needed as these bridges come with flex recipes.
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-brave-tool
+    $ composer require symfony/ai-clock-tool
+    $ composer require symfony/ai-firecrawl-tool
+    $ composer require symfony/ai-mapbox-tool
+    $ composer require symfony/ai-open-meteo-tool
+    $ composer require symfony/ai-scraper-tool
+    $ composer require symfony/ai-serp-api-tool
+    $ composer require symfony/ai-similarity-search-tool
+    $ composer require symfony/ai-tavily-tool
+    $ composer require symfony/ai-wikipedia-tool
+    $ composer require symfony/ai-youtube-tool
+
+Some tools may require additional configuration even when installed as dedicated packages. For example, the SimilaritySearch tool requires a vectorizer and store:
 
 .. code-block:: yaml
 
@@ -758,20 +830,12 @@ To use existing tools, you can register them as a service:
             autowire: true
             autoconfigure: true
 
-        Symfony\AI\Agent\Toolbox\Tool\Clock: ~
-        Symfony\AI\Agent\Toolbox\Tool\OpenMeteo: ~
-        Symfony\AI\Agent\Toolbox\Tool\SerpApi:
-            $apiKey: '%env(SERP_API_KEY)%'
-        Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch: ~
-        Symfony\AI\Agent\Toolbox\Tool\Tavily:
-          $apiKey: '%env(TAVILY_API_KEY)%'
-        Symfony\AI\Agent\Toolbox\Tool\Wikipedia: ~
-        Symfony\AI\Agent\Toolbox\Tool\YouTubeTranscriber: ~
-        Symfony\AI\Agent\Toolbox\Tool\Firecrawl:
-          $endpoint: '%env(FIRECRAWL_ENDPOINT)%'
-          $apiKey: '%env(FIRECRAWL_API_KEY)%'
-        Symfony\AI\Agent\Toolbox\Tool\Brave:
-          $apiKey: '%env(BRAVE_API_KEY)%'
+        Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:
+            $vectorizer: '@ai.vectorizer.openai'
+            $store: '@ai.store.main'
+
+Creating Custom Tools
+---------------------
 
 Custom tools can be registered by using the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute::
 
@@ -923,12 +987,12 @@ Once configured, vectorizers can be referenced by name in indexer configurations
             documents:
                 loader: 'Symfony\AI\Store\Document\Loader\TextFileLoader'
                 vectorizer: 'ai.vectorizer.openai_small'
-                store: 'ai.store.chroma_db.documents'
+                store: 'ai.store.chromadb.documents'
 
             research:
                 loader: 'Symfony\AI\Store\Document\Loader\TextFileLoader'
                 vectorizer: 'ai.vectorizer.openai_large'
-                store: 'ai.store.chroma_db.research'
+                store: 'ai.store.chromadb.research'
 
             knowledge_base:
                 loader: 'Symfony\AI\Store\Document\Loader\InMemoryLoader'
@@ -942,12 +1006,75 @@ Benefits of Configured Vectorizers
 * **Consistency**: Ensure all indexers using the same vectorizer have identical embedding configuration
 * **Maintainability**: Change vectorizer settings in one place
 
+Retrievers
+----------
+
+Retrievers are the opposite of indexers. While indexers populate a vector store with documents,
+retrievers allow you to search for documents in a store based on a query string.
+They vectorize the query and retrieve similar documents from the store.
+
+Configuring Retrievers
+~~~~~~~~~~~~~~~~~~~~~~
+
+Retrievers are defined in the ``retriever`` section of your configuration:
+
+.. code-block:: yaml
+
+    ai:
+        retriever:
+            default:
+                vectorizer: 'ai.vectorizer.openai_small'
+                store: 'ai.store.chromadb.default'
+
+            research:
+                vectorizer: 'ai.vectorizer.mistral_embed'
+                store: 'ai.store.memory.research'
+
+Using Retrievers
+~~~~~~~~~~~~~~~~
+
+The retriever can be injected into your services using the ``RetrieverInterface``::
+
+    use Symfony\AI\Store\RetrieverInterface;
+
+    final readonly class MyService
+    {
+        public function __construct(
+            private RetrieverInterface $retriever,
+        ) {
+        }
+
+        public function search(string $query): array
+        {
+            $documents = [];
+            foreach ($this->retriever->retrieve($query) as $document) {
+                $documents[] = $document;
+            }
+
+            return $documents;
+        }
+    }
+
+When you have multiple retrievers configured, you can use the ``#[Autowire]`` attribute to inject a specific one::
+
+    use Symfony\AI\Store\RetrieverInterface;
+    use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
+    final readonly class ResearchService
+    {
+        public function __construct(
+            #[Autowire(service: 'ai.retriever.research')]
+            private RetrieverInterface $retriever,
+        ) {
+        }
+    }
+
 Profiler
 --------
 
 The profiler panel provides insights into the agent's execution:
 
-.. image:: profiler.png
+.. image:: images/profiler-ai.png
    :alt: Profiler Panel
 
 Message stores
@@ -966,8 +1093,8 @@ Message stores are defined in the ``message_store`` section of your configuratio
     ai:
         # ...
         message_store:
-            youtube:
-                cache:
+            cache:
+                youtube:
                     service: 'cache.app'
                     key: 'youtube'
 

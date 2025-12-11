@@ -29,6 +29,6 @@ $messages = new MessageBag(
     PROMPT),
     Message::ofUser('What is the current time?'),
 );
-$result = $platform->invoke('gpt-4o-mini', $messages, ['output_structure' => UnionTypeDto::class]);
+$result = $platform->invoke('gpt-4o-mini', $messages, ['response_format' => UnionTypeDto::class]);
 
 dump($result->asObject());

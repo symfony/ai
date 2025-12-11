@@ -11,14 +11,19 @@
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
+use Doctrine\DBAL\DriverManager;
+use MongoDB\Client as MongoDbClient;
+use Symfony\AI\Chat\Bridge\Cache\Store as CacheStore;
+use Symfony\AI\Chat\Bridge\Doctrine\DoctrineDbalMessageStore;
 use Symfony\AI\Chat\Bridge\HttpFoundation\SessionStore;
-use Symfony\AI\Chat\Bridge\Local\CacheStore;
-use Symfony\AI\Chat\Bridge\Local\InMemoryStore;
 use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore as MeilisearchMessageStore;
+use Symfony\AI\Chat\Bridge\MongoDb\MessageStore as MongoDbMessageStore;
 use Symfony\AI\Chat\Bridge\Pogocache\MessageStore as PogocacheMessageStore;
 use Symfony\AI\Chat\Bridge\Redis\MessageStore as RedisMessageStore;
+use Symfony\AI\Chat\Bridge\SurrealDb\MessageStore as SurrealDbMessageStore;
 use Symfony\AI\Chat\Command\DropStoreCommand;
 use Symfony\AI\Chat\Command\SetupStoreCommand;
+use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Clock\MonotonicClock;
@@ -36,6 +41,10 @@ use Symfony\Component\Serializer\Serializer;
 
 $factories = [
     'cache' => static fn (): CacheStore => new CacheStore(new ArrayAdapter(), cacheKey: 'symfony'),
+    'doctrine' => static fn (): DoctrineDbalMessageStore => new DoctrineDbalMessageStore(
+        'symfony',
+        DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]),
+    ),
     'meilisearch' => static fn (): MeilisearchMessageStore => new MeilisearchMessageStore(
         http_client(),
         env('MEILISEARCH_HOST'),
@@ -44,6 +53,11 @@ $factories = [
         'symfony',
     ),
     'memory' => static fn (): InMemoryStore => new InMemoryStore('symfony'),
+    'mongodb' => static fn (): MongoDbMessageStore => new MongoDbMessageStore(
+        new MongoDbClient(env('MONGODB_URI')),
+        'chat',
+        'symfony',
+    ),
     'pogocache' => static fn (): PogocacheMessageStore => new PogocacheMessageStore(
         http_client(),
         env('POGOCACHE_HOST'),
@@ -68,6 +82,15 @@ $factories = [
 
         return new SessionStore($requestStack, 'symfony');
     },
+    'surrealdb' => static fn (): SurrealDbMessageStore => new SurrealDbMessageStore(
+        httpClient: http_client(),
+        endpointUrl: env('SURREALDB_HOST'),
+        user: env('SURREALDB_USER'),
+        password: env('SURREALDB_PASS'),
+        namespace: 'default',
+        database: 'chat',
+        table: 'chat',
+    ),
 ];
 
 $storesIds = array_keys($factories);
@@ -79,6 +102,9 @@ $application->addCommands([
     new SetupStoreCommand(new ServiceLocator($factories)),
     new DropStoreCommand(new ServiceLocator($factories)),
 ]);
+
+$clock = new MonotonicClock();
+$clock->sleep(10);
 
 foreach ($storesIds as $store) {
     $setupOutputCode = $application->run(new ArrayInput([

@@ -11,17 +11,20 @@
 
 namespace Symfony\AI\Chat\Tests\Bridge\Meilisearch;
 
-use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore;
-use Symfony\AI\Chat\Tests\MessageStoreTestCase;
+use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Serializer;
 
-final class MessageStoreTest extends MessageStoreTestCase
+final class MessageStoreTest extends TestCase
 {
     public function testStoreCannotSetupOnInvalidResponse()
     {
@@ -215,27 +218,31 @@ final class MessageStoreTest extends MessageStoreTestCase
         $store->load();
     }
 
-    /**
-     * @param array<mixed, mixed> $payload
-     */
-    #[DataProvider('provideMessages')]
-    public function testStoreCanLoadMessages(array $payload)
+    public function testStoreCanLoadMessages()
     {
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
                 'results' => [
-                    $payload,
+                    $serializer->normalize(Message::ofUser('Hello World')),
                 ],
             ], [
                 'http_code' => 200,
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new MessageStore($httpClient, 'http://127.0.0.1:7700', 'test', new MonotonicClock(), 'test');
+        $store = new MessageStore($httpClient, 'http://127.0.0.1:7700', 'test', new MonotonicClock(), 'test', $serializer);
 
         $messageBag = $store->load();
 
         $this->assertCount(1, $messageBag);
         $this->assertSame(1, $httpClient->getRequestsCount());
+
+        $storedMessage = $messageBag->getUserMessage();
+        $this->assertSame('Hello World', $storedMessage->asText());
     }
 }

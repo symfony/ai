@@ -22,5 +22,5 @@ interface LoaderInterface
      *
      * @return iterable<EmbeddableDocumentInterface> iterable of embeddable documents loaded from the source
      */
-    public function load(?string $source, array $options = []): iterable;
+    public function load(?string $source = null, array $options = []): iterable;
 }

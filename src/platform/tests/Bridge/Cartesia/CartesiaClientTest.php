@@ -115,7 +115,7 @@ final class CartesiaClientTest extends TestCase
 
     public function testClientCannotPerformSpeechToTextOnInvalidResponse()
     {
-        $payload = Audio::fromFile(\dirname(__DIR__, 2).'/fixtures/audio.mp3');
+        $payload = Audio::fromFile(\dirname(__DIR__, 2).'/Fixtures/audio.mp3');
 
         $normalizer = new AudioNormalizer();
 
@@ -141,7 +141,7 @@ final class CartesiaClientTest extends TestCase
 
     public function testClientCanPerformSpeechToText()
     {
-        $payload = Audio::fromFile(\dirname(__DIR__, 2).'/fixtures/audio.mp3');
+        $payload = Audio::fromFile(\dirname(__DIR__, 2).'/Fixtures/audio.mp3');
 
         $normalizer = new AudioNormalizer();
 

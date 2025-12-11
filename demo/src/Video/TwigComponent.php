@@ -49,7 +49,7 @@ final class TwigComponent
         );
 
         $result = $this->platform->invoke('gpt-4o-mini', $messageBag, [
-            'max_tokens' => 100,
+            'max_output_tokens' => 100,
         ]);
 
         $this->caption = $result->asText();

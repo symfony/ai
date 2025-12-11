@@ -1,7 +1,7 @@
 services:
     Codewithkyrian\ChromaDB\Factory:
         calls:
-            - withHost: ['%env(CHROMADB_HOST)%']
+            - withHost: ['http://%env(CHROMADB_HOST)%']
             - withPort: ['%env(CHROMADB_PORT)%']
 
     Codewithkyrian\ChromaDB\Client:

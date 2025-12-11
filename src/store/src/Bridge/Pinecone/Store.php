@@ -16,7 +16,6 @@ use Probots\Pinecone\Resources\Data\VectorResource;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -33,9 +32,6 @@ final class Store implements StoreInterface
         private readonly array $filter = [],
         private readonly int $topK = 3,
     ) {
-        if (!class_exists(Client::class)) {
-            throw new RuntimeException('For using the Pinecone as retrieval vector store, the probots-io/pinecone-php package is required. Try running "composer require probots-io/pinecone-php".');
-        }
     }
 
     public function add(VectorDocument ...$documents): void
@@ -56,7 +52,7 @@ final class Store implements StoreInterface
         $this->getVectors()->upsert($vectors, $this->namespace);
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $result = $this->getVectors()->query(
             vector: $vector->getData(),
@@ -66,17 +62,14 @@ final class Store implements StoreInterface
             includeValues: true,
         );
 
-        $documents = [];
         foreach ($result->json()['matches'] as $match) {
-            $documents[] = new VectorDocument(
+            yield new VectorDocument(
                 id: $match['id'],
                 vector: new Vector($match['values']),
                 metadata: new Metadata($match['metadata']),
                 score: $match['score'],
             );
         }
-
-        return $documents;
     }
 
     private function getVectors(): VectorResource

@@ -11,9 +11,13 @@
 
 namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 
+use Mcp\Capability\Registry\Loader\LoaderInterface;
+use Mcp\Server\Handler\Notification\NotificationHandlerInterface;
+use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\McpBundle;
+use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class McpBundleTest extends TestCase
@@ -149,13 +153,50 @@ class McpBundleTest extends TestCase
         $methodCalls = $builderDefinition->getMethodCalls();
 
         $hasEventDispatcherCall = false;
+        $hasRequestHandlers = false;
+        $hasNotificationHandlers = false;
+        $hasLoaders = false;
+
         foreach ($methodCalls as $call) {
             if ('setEventDispatcher' === $call[0]) {
                 $hasEventDispatcherCall = true;
-                break;
+            }
+
+            if ('addRequestHandlers' === $call[0]) {
+                $argument = $call[1][0];
+                if (
+                    $argument instanceof TaggedIteratorArgument
+                    && 'mcp.request_handler' === $argument->getTag()
+                ) {
+                    $hasRequestHandlers = true;
+                }
+            }
+
+            if ('addNotificationHandlers' === $call[0]) {
+                $argument = $call[1][0];
+                if (
+                    $argument instanceof TaggedIteratorArgument
+                    && 'mcp.notification_handler' === $argument->getTag()
+                ) {
+                    $hasNotificationHandlers = true;
+                }
+            }
+
+            if ('addLoaders' === $call[0]) {
+                $argument = $call[1][0];
+                if (
+                    $argument instanceof TaggedIteratorArgument
+                    && 'mcp.loader' === $argument->getTag()
+                ) {
+                    $hasLoaders = true;
+                }
             }
         }
+
         $this->assertTrue($hasEventDispatcherCall, 'ServerBuilder should have setEventDispatcher method call');
+        $this->assertTrue($hasRequestHandlers, 'ServerBuilder should have addRequestHandlers with mcp.request_handler tag');
+        $this->assertTrue($hasNotificationHandlers, 'ServerBuilder should have addNotificationHandlers with mcp.notification_handler tag');
+        $this->assertTrue($hasLoaders, 'ServerBuilder should have addLoaders with mcp.loader tag');
     }
 
     public function testMcpToolAttributeAutoconfiguration()
@@ -347,6 +388,33 @@ class McpBundleTest extends TestCase
 
         $this->assertSame(['src'], $container->getParameter('mcp.discovery.scan_dirs'));
         $this->assertSame(['src/DataFixtures'], $container->getParameter('mcp.discovery.exclude_dirs'));
+    }
+
+    public function testLoaderInterfaceAutoconfiguration()
+    {
+        $container = $this->buildContainer([]);
+        $autoconfigured = $container->getAutoconfiguredInstanceof();
+        $this->assertArrayHasKey(LoaderInterface::class, $autoconfigured);
+        $definition = $autoconfigured[LoaderInterface::class];
+        $this->assertTrue($definition->hasTag('mcp.loader'));
+    }
+
+    public function testRequestHandlerInterfaceAutoconfiguration()
+    {
+        $container = $this->buildContainer([]);
+        $autoconfigured = $container->getAutoconfiguredInstanceof();
+        $this->assertArrayHasKey(RequestHandlerInterface::class, $autoconfigured);
+        $definition = $autoconfigured[RequestHandlerInterface::class];
+        $this->assertTrue($definition->hasTag('mcp.request_handler'));
+    }
+
+    public function testNotificationHandlerInterfaceAutoconfiguration()
+    {
+        $container = $this->buildContainer([]);
+        $autoconfigured = $container->getAutoconfiguredInstanceof();
+        $this->assertArrayHasKey(NotificationHandlerInterface::class, $autoconfigured);
+        $definition = $autoconfigured[NotificationHandlerInterface::class];
+        $this->assertTrue($definition->hasTag('mcp.notification_handler'));
     }
 
     private function buildContainer(array $configuration): ContainerBuilder

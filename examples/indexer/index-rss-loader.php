@@ -10,11 +10,11 @@
  */
 
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Store\Bridge\Local\InMemoryStore;
 use Symfony\AI\Store\Document\Loader\RssFeedLoader;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\Component\HttpClient\HttpClient;
 
 require_once dirname(__DIR__).'/bootstrap.php';

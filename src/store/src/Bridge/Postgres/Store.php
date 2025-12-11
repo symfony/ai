@@ -126,7 +126,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $where = null;
 
@@ -169,17 +169,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $statement->execute($params);
 
-        $documents = [];
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
-            $documents[] = new VectorDocument(
+            yield new VectorDocument(
                 id: $result['id'],
                 vector: new Vector($this->fromPgvector($result['embedding'])),
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );
         }
-
-        return $documents;
     }
 
     private function toPgvector(VectorInterface $vector): string

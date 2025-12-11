@@ -17,6 +17,15 @@ Usage
 
 At first, you need to decide whether your application should act as a MCP server or client. Both can be configured in
 the ``mcp`` section of your ``config/packages/mcp.yaml`` file.
+You also need to add few lines in the routing configuration for this bundle:
+
+.. code-block:: yaml
+
+    # config/routes.yaml
+    mcp:
+        resource: .
+        type: mcp
+
 
 Act as Server
 ~~~~~~~~~~~~~
@@ -199,6 +208,7 @@ Configuration
                 directory: '%kernel.cache_dir%/mcp-sessions' # Directory for file store (default: cache_dir/mcp-sessions)
                 ttl: 3600 # Session TTL in seconds (default: 3600)
 
+        # Not supported yet
         servers:
             name:
                 transport: 'stdio' # Transport method to use, either 'stdio' or 'http'
@@ -244,6 +254,23 @@ You can customize the logging level and destination according to your needs:
                 level: error
                 channels: ['mcp']
                 webhook_url: '%env(SLACK_WEBHOOK)%'
+
+Profiler
+--------
+
+When the Symfony Web Profiler is enabled, the MCP Bundle automatically adds a dedicated panel showing all registered MCP capabilities in your application:
+
+.. image:: images/profiler-mcp.png
+   :alt: MCP Profiler Panel
+
+The profiler displays:
+
+- **Tools**: All registered MCP tools with their descriptions and input schemas
+- **Prompts**: Available prompts with their arguments and requirements
+- **Resources**: Static resources with their URIs and MIME types
+- **Resource Templates**: Dynamic resource templates with URI patterns
+
+This makes it easy to inspect and debug your MCP server capabilities during development.
 
 Event System
 ------------

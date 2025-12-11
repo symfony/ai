@@ -30,9 +30,7 @@ The complete implementation consists of three main parts:
 Complete Example
 ~~~~~~~~~~~~~~~~
 
-.. literalinclude:: ../../examples/memory/static.php
-   :language: php
-   :linenos:
+See the complete example: `static.php <https://github.com/symfony/ai/blob/main/examples/memory/static.php>`_
 
 Key Components
 --------------

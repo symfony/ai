@@ -19,7 +19,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('ANTHROPIC_API_KEY'), http_client());
 
-$agent = new Agent($platform, 'claude-3-5-sonnet-20241022', outputProcessors: [new TokenOutputProcessor()]);
+$agent = new Agent($platform, 'claude-sonnet-4-5-20250929', outputProcessors: [new TokenOutputProcessor()]);
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),

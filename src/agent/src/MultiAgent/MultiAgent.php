@@ -81,7 +81,7 @@ final class MultiAgent implements AgentInterface
         $agentSelectionPrompt = $this->buildAgentSelectionPrompt($userText);
 
         $decision = $this->orchestrator->call(new MessageBag(Message::ofUser($agentSelectionPrompt)), array_merge($options, [
-            'output_structure' => Decision::class,
+            'response_format' => Decision::class,
         ]))->getContent();
 
         if (!$decision instanceof Decision) {

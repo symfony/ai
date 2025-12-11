@@ -7,19 +7,23 @@
         {
             "name": "Christopher Hertel",
             "email": "mail@christopher-hertel.de"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
         }
     ],
     "require": {
+        "mcp/sdk": "^0.1",
+        "php-http/discovery": "^1.20",
         "symfony/config": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
         "symfony/dependency-injection": "^7.3|^8.0",
         "symfony/framework-bundle": "^7.3|^8.0",
         "symfony/http-foundation": "^7.3|^8.0",
         "symfony/http-kernel": "^7.3|^8.0",
-        "mcp/sdk": "@dev",
-        "symfony/routing": "^7.3|^8.0",
         "symfony/psr-http-message-bridge": "^7.3|^8.0",
-        "php-http/discovery": "^1.20"
+        "symfony/routing": "^7.3|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
@@ -39,12 +43,15 @@
         }
     },
     "config": {
-        "sort-packages": true,
         "allow-plugins": {
             "php-http/discovery": true
-        }
+        },
+        "sort-packages": true
     },
     "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"

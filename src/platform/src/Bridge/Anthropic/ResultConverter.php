@@ -49,6 +49,12 @@ class ResultConverter implements ResultConverterInterface
 
         $data = $result->getData();
 
+        if (isset($data['type']) && 'error' === $data['type']) {
+            $type = $data['error']['type'] ?? 'Unknown';
+            $message = $data['error']['message'] ?? 'An unknown error occurred.';
+            throw new RuntimeException(\sprintf('API Error [%s]: "%s"', $type, $message));
+        }
+
         if (!isset($data['content']) || [] === $data['content']) {
             throw new RuntimeException('Response does not contain any content.');
         }

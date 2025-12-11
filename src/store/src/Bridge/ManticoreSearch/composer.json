@@ -1,0 +1,60 @@
+{
+    "name": "symfony/ai-manticore-search-store",
+    "description": "ManticoreSearch vector store bridge for Symfony AI",
+    "license": "MIT",
+    "type": "symfony-ai-store",
+    "keywords": [
+        "ai",
+        "bridge",
+        "manticoresearch",
+        "store",
+        "vector"
+    ],
+    "authors": [
+        {
+            "name": "Christopher Hertel",
+            "email": "mail@christopher-hertel.de"
+        },
+        {
+            "name": "Oskar Stark",
+            "email": "oskarstark@googlemail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/ai-platform": "@dev",
+        "symfony/ai-store": "@dev",
+        "symfony/http-client": "^7.3|^8.0",
+        "symfony/uid": "^7.3|^8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5.13"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Store\\Bridge\\ManticoreSearch\\": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\Store\\Bridge\\ManticoreSearch\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    }
+}

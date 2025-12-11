@@ -1,0 +1,80 @@
+{
+    "description": "The ai.symfony.com website.",
+    "license": "proprietary",
+    "type": "project",
+    "require": {
+        "php": ">=8.4",
+        "ext-ctype": "*",
+        "ext-iconv": "*",
+        "symfony/asset": "^7.4",
+        "symfony/asset-mapper": "^7.4",
+        "symfony/console": "^7.4",
+        "symfony/dotenv": "^7.4",
+        "symfony/flex": "^2",
+        "symfony/framework-bundle": "^7.4",
+        "symfony/runtime": "^7.4",
+        "symfony/stimulus-bundle": "^2.31",
+        "symfony/twig-bundle": "^7.4",
+        "symfony/ux-icons": "^2.31",
+        "symfony/yaml": "^7.4",
+        "twig/extra-bundle": "^3.0",
+        "twig/twig": "^3.0"
+    },
+    "require-dev": {
+        "symfony/maker-bundle": "^1.64"
+    },
+    "replace": {
+        "symfony/polyfill-ctype": "*",
+        "symfony/polyfill-iconv": "*",
+        "symfony/polyfill-php72": "*",
+        "symfony/polyfill-php73": "*",
+        "symfony/polyfill-php74": "*",
+        "symfony/polyfill-php80": "*",
+        "symfony/polyfill-php81": "*",
+        "symfony/polyfill-php82": "*",
+        "symfony/polyfill-php83": "*",
+        "symfony/polyfill-php84": "*"
+    },
+    "conflict": {
+        "symfony/symfony": "*"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "symfony/flex": true,
+            "symfony/runtime": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "7.4.*"
+        }
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ],
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd",
+            "importmap:install": "symfony-cmd"
+        }
+    }
+}

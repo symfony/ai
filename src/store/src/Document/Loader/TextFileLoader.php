@@ -23,7 +23,7 @@ use Symfony\Component\Uid\Uuid;
  */
 final class TextFileLoader implements LoaderInterface
 {
-    public function load(?string $source, array $options = []): iterable
+    public function load(?string $source = null, array $options = []): iterable
     {
         if (null === $source) {
             throw new InvalidArgumentException('TextFileLoader requires a file path as source, null given.');

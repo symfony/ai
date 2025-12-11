@@ -32,18 +32,34 @@ final class DropStoreCommandTest extends TestCase
         $this->assertTrue($definition->hasArgument('store'));
 
         $storeArgument = $definition->getArgument('store');
-        $this->assertSame('Name of the store to drop', $storeArgument->getDescription());
+        $this->assertSame('Service name of the store to drop', $storeArgument->getDescription());
         $this->assertTrue($storeArgument->isRequired());
     }
 
-    public function testCommandCannotDropUndefinedStore()
+    public function testCommandCannotDropWithoutStores()
     {
         $command = new DropStoreCommand(new ServiceLocator([]));
 
         $tester = new CommandTester($command);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('The "foo" store does not exist.');
+        $this->expectExceptionMessage('No store is configured to be dropped.');
+        $this->expectExceptionCode(0);
+        $tester->execute([
+            'store' => 'foo',
+        ]);
+    }
+
+    public function testCommandCannotDropUndefinedStore()
+    {
+        $command = new DropStoreCommand(new ServiceLocator([
+            'bar' => fn (): object => $this->createMock(ManagedStoreInterface::class),
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The "foo" store does not exist, use "bar".');
         $this->expectExceptionCode(0);
         $tester->execute([
             'store' => 'foo',

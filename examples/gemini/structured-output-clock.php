@@ -10,8 +10,8 @@
  */
 
 use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\Bridge\Clock\Clock;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
-use Symfony\AI\Agent\Toolbox\Tool\Clock;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -30,7 +30,7 @@ $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client(), eventD
 $clock = new Clock(new SymfonyClock());
 $toolbox = new Toolbox([$clock], logger: logger());
 $toolProcessor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gemini-2.5-flash', [$toolProcessor], [$toolProcessor]);
+$agent = new Agent($platform, 'gemini-3-pro-preview', [$toolProcessor], [$toolProcessor]);
 
 $messages = new MessageBag(Message::ofUser('What date and time is it?'));
 $result = $agent->call($messages, ['response_format' => [

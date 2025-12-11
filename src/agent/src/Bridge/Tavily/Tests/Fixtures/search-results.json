@@ -1,0 +1,21 @@
+{
+  "query": "latest AI news",
+  "results": [
+    {
+      "title": "AI breakthrough announced",
+      "url": "https://example.com/ai-news",
+      "content": "Major AI company announces breakthrough in language models.",
+      "raw_content": "Major AI company announces breakthrough in language models with new architecture that improves efficiency.",
+      "score": 0.95
+    },
+    {
+      "title": "Machine Learning Advances",
+      "url": "https://example.com/ml-advances",
+      "content": "New research in machine learning shows promise.",
+      "raw_content": "New research in machine learning shows promise for solving complex problems in various domains.",
+      "score": 0.87
+    }
+  ],
+  "images": [],
+  "response_time": 1.23
+}

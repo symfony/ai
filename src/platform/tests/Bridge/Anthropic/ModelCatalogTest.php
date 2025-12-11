@@ -25,16 +25,19 @@ final class ModelCatalogTest extends ModelCatalogTestCase
     public static function modelsProvider(): iterable
     {
         yield 'claude-3-haiku-20240307' => ['claude-3-haiku-20240307', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
+        yield 'claude-3-opus-20240229' => ['claude-3-opus-20240229', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
         yield 'claude-3-5-haiku-latest' => ['claude-3-5-haiku-latest', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
-        yield 'claude-3-sonnet-20240229' => ['claude-3-sonnet-20240229', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
-        yield 'claude-3-5-sonnet-latest' => ['claude-3-5-sonnet-latest', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
+        yield 'claude-3-5-haiku-20241022' => ['claude-3-5-haiku-latest', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
         yield 'claude-3-7-sonnet-latest' => ['claude-3-7-sonnet-latest', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
+        yield 'claude-3-7-sonnet-20250219' => ['claude-3-7-sonnet-latest', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
         yield 'claude-sonnet-4-20250514' => ['claude-sonnet-4-20250514', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
         yield 'claude-sonnet-4-0' => ['claude-sonnet-4-0', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
-        yield 'claude-3-opus-20240229' => ['claude-3-opus-20240229', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
         yield 'claude-opus-4-20250514' => ['claude-opus-4-20250514', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
         yield 'claude-opus-4-0' => ['claude-opus-4-0', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
-        yield 'claude-opus-4-1' => ['claude-opus-4-1', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
+        yield 'claude-opus-4-1' => ['claude-opus-4-1', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'claude-opus-4-1-20250805' => ['claude-opus-4-1-20250805', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'claude-sonnet-4-5-20250929' => ['claude-sonnet-4-5-20250929', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'claude-haiku-4-5-20251001' => ['claude-haiku-4-5-20251001', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

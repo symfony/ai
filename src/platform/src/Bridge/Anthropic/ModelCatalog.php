@@ -35,6 +35,16 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'claude-3-opus-20240229' => [
+                'class' => Claude::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
             'claude-3-5-haiku-latest' => [
                 'class' => Claude::class,
                 'capabilities' => [
@@ -45,27 +55,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'claude-3-sonnet-20240229' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-5-sonnet-latest' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-5-sonnet-20241022' => [
+            'claude-3-5-haiku-20241022' => [
                 'class' => Claude::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -76,6 +66,16 @@ final class ModelCatalog extends AbstractModelCatalog
                 ],
             ],
             'claude-3-7-sonnet-latest' => [
+                'class' => Claude::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'claude-3-7-sonnet-20250219' => [
                 'class' => Claude::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -96,16 +96,6 @@ final class ModelCatalog extends AbstractModelCatalog
                 ],
             ],
             'claude-sonnet-4-0' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-opus-20240229' => [
                 'class' => Claude::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -136,6 +126,39 @@ final class ModelCatalog extends AbstractModelCatalog
                 ],
             ],
             'claude-opus-4-1' => [
+                'class' => Claude::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'claude-opus-4-1-20250805' => [
+                'class' => Claude::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'claude-sonnet-4-5-20250929' => [
+                'class' => Claude::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'claude-haiku-4-5-20251001' => [
                 'class' => Claude::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,

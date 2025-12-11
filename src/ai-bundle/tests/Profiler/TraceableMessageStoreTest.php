@@ -13,7 +13,7 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
-use Symfony\AI\Chat\Bridge\Local\InMemoryStore;
+use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\Clock\MonotonicClock;

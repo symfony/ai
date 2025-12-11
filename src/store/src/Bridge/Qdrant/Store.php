@@ -75,7 +75,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     offset?: positive-int
      * } $options
      */
-    public function query(Vector $vector, array $options = []): array
+    public function query(Vector $vector, array $options = []): iterable
     {
         $payload = [
             'query' => $vector->getData(),
@@ -97,7 +97,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $response = $this->request('POST', \sprintf('collections/%s/points/query', $this->collectionName), $payload);
 
-        return array_map($this->convertToVectorDocument(...), $response['result']['points']);
+        foreach ($response['result']['points'] as $item) {
+            yield $this->convertToVectorDocument($item);
+        }
     }
 
     public function drop(): void

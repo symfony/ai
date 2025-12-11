@@ -4,13 +4,6 @@ index:
     defaults:
         template:  'index.html.twig'
 
-audio:
-    path: '/audio'
-    controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
-    defaults:
-        template:  'chat.html.twig'
-        context: { chat: 'audio' }
-
 blog:
     path: '/blog'
     controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
@@ -23,6 +16,20 @@ crop:
     controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
     defaults:
         template:  'crop.html.twig'
+
+recipe:
+    path: '/recipe'
+    controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
+    defaults:
+        template:  'chat.html.twig'
+        context: { chat: 'recipe' }
+
+speech:
+    path: '/speech'
+    controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
+    defaults:
+        template:  'chat.html.twig'
+        context: { chat: 'speech' }
 
 stream:
     path: '/stream'

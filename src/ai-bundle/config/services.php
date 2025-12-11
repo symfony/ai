@@ -31,6 +31,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\TokenOutputProcessor as AnthropicTokenOutputProcessor;
 use Symfony\AI\Platform\Bridge\Cartesia\ModelCatalog as CartesiaModelCatalog;
 use Symfony\AI\Platform\Bridge\Cerebras\ModelCatalog as CerebrasModelCatalog;
+use Symfony\AI\Platform\Bridge\Decart\ModelCatalog as DecartModelCatalog;
 use Symfony\AI\Platform\Bridge\DeepSeek\ModelCatalog as DeepSeekModelCatalog;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\ModelCatalog as DockerModelRunnerModelCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
@@ -62,11 +63,14 @@ use Symfony\AI\Platform\Bridge\Voyage\ModelCatalog as VoyageModelCatalog;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\Serializer\StructuredOutputSerializer;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
+use Symfony\AI\Store\Command\RetrieveCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
 
 return static function (ContainerConfigurator $container): void {
@@ -93,9 +97,12 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.anthropic', AnthropicModelCatalog::class)
         ->set('ai.platform.model_catalog.cartesia', CartesiaModelCatalog::class)
         ->set('ai.platform.model_catalog.cerebras', CerebrasModelCatalog::class)
+        ->set('ai.platform.model_catalog.decart', DecartModelCatalog::class)
         ->set('ai.platform.model_catalog.deepseek', DeepSeekModelCatalog::class)
         ->set('ai.platform.model_catalog.dockermodelrunner', DockerModelRunnerModelCatalog::class)
         ->set('ai.platform.model_catalog.elevenlabs', ElevenLabsModelCatalog::class)
+            ->lazy(true)
+            ->tag('proxy', ['interface' => ModelCatalogInterface::class])
         ->set('ai.platform.model_catalog.gemini', GeminiModelCatalog::class)
         ->set('ai.platform.model_catalog.huggingface', HuggingFaceModelCatalog::class)
         ->set('ai.platform.model_catalog.lmstudio', LmStudioModelCatalog::class)
@@ -122,10 +129,11 @@ return static function (ContainerConfigurator $container): void {
                 service('type_info.resolver')->nullOnInvalid(),
             ])
         ->alias(ResponseFormatFactoryInterface::class, 'ai.platform.response_format_factory')
+        ->set('ai.platform.structured_output_serializer', StructuredOutputSerializer::class)
         ->set('ai.platform.structured_output_subscriber', PlatformSubscriber::class)
             ->args([
                 service('ai.agent.response_format_factory'),
-                service('serializer'),
+                service('ai.platform.structured_output_serializer'),
             ])
             ->tag('kernel.event_subscriber')
 
@@ -205,6 +213,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.command.setup_store', SetupStoreCommand::class)
             ->args([
                 tagged_locator('ai.store', 'name'),
+                abstract_arg('setup store options'),
             ])
             ->tag('console.command')
         ->set('ai.command.drop_store', DropStoreCommand::class)
@@ -215,6 +224,11 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.command.index', IndexCommand::class)
             ->args([
                 tagged_locator('ai.indexer', 'name'),
+            ])
+            ->tag('console.command')
+        ->set('ai.command.retrieve', RetrieveCommand::class)
+            ->args([
+                tagged_locator('ai.retriever', 'name'),
             ])
             ->tag('console.command')
         ->set('ai.command.platform_invoke', PlatformInvokeCommand::class)

@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Tests\Bridge\Gemini\Gemini;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini\ResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -83,6 +84,7 @@ final class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
+        $image = Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg');
         $httpResponse->method('toArray')->willReturn([
             'candidates' => [
                 [
@@ -90,8 +92,8 @@ final class ResultConverterTest extends TestCase
                         'parts' => [
                             [
                                 'inlineData' => [
-                                    'mimeType' => 'image/png',
-                                    'data' => 'base64EncodedImageData',
+                                    'mimeType' => 'image/jpeg',
+                                    'data' => $image->asBase64(),
                                 ],
                             ],
                         ],
@@ -102,8 +104,9 @@ final class ResultConverterTest extends TestCase
 
         $result = $converter->convert(new RawHttpResult($httpResponse));
         $this->assertInstanceOf(BinaryResult::class, $result);
-        $this->assertSame('base64EncodedImageData', $result->getContent());
-        $this->assertSame('image/png', $result->getMimeType());
+        $this->assertSame($image->asBinary(), $result->getContent());
+        $this->assertSame('image/jpeg', $result->getMimeType());
+        $this->assertSame($image->asDataUrl(), $result->toDataUri());
     }
 
     public function testConvertsInlineDataWithoutMimeTypeToBinaryResult()
@@ -111,6 +114,7 @@ final class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
+        $image = Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg');
         $httpResponse->method('toArray')->willReturn([
             'candidates' => [
                 [
@@ -118,7 +122,7 @@ final class ResultConverterTest extends TestCase
                         'parts' => [
                             [
                                 'inlineData' => [
-                                    'data' => 'base64EncodedData',
+                                    'data' => $image->asBase64(),
                                 ],
                             ],
                         ],
@@ -129,7 +133,7 @@ final class ResultConverterTest extends TestCase
 
         $result = $converter->convert(new RawHttpResult($httpResponse));
         $this->assertInstanceOf(BinaryResult::class, $result);
-        $this->assertSame('base64EncodedData', $result->getContent());
+        $this->assertSame($image->asBinary(), $result->getContent());
         $this->assertNull($result->getMimeType());
     }
 }

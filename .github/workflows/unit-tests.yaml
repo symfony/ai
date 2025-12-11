@@ -23,7 +23,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php-version: ['8.2', '8.3', '8.4']
+                php-version: ['8.2', '8.5']
                 dependency-version: ['']
                 symfony-version: ['']
                 include:
@@ -34,14 +34,14 @@ jobs:
                     -   php-version: '8.2'
                         symfony-version: '7.4.*'
                     # Symfony 8.0
-                    -   php-version: '8.4'
+                    -   php-version: '8.5'
                         symfony-version: '8.0.*'
 
         env:
-            SYMFONY_REQUIRE: ${{ matrix.symfony-version || '>=7.3' }}
+            SYMFONY_REQUIRE: ${{ matrix.symfony-version || '>=7.4' }}
 
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
 
             - name: Configure environment
               run: |
@@ -73,6 +73,10 @@ jobs:
                   key: ${{ runner.os }}-composer-packages-${{ matrix.php-version }}-${{ matrix.dependency-version }}-${{ matrix.symfony-version }}-${{ hashFiles('src/**/composer.json') }}
                   restore-keys: |
                       ${{ runner.os }}-composer-packages-${{ matrix.php-version }}-${{ matrix.dependency-version }}-${{ matrix.symfony-version }}
+
+            - name: Remove deptrac/deptrac for Symfony 8
+              if: matrix.symfony-version == '8.0.*'
+              run: composer remove deptrac/deptrac --dev --no-update
 
             - name: Install root dependencies
               uses: ramsey/composer-install@v3

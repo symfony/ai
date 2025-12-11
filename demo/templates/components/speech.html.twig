@@ -1,0 +1,49 @@
+{% import "_message.html.twig" as msg %}
+
+<div class="card mx-auto shadow-lg" {{ attributes.defaults(stimulus_controller('speech')) }}>
+    <div class="card-header p-2">
+        {{ ux_icon('iconoir:microphone-solid', { height: '32px', width: '32px' }) }}
+        <strong class="ms-1 pt-1 d-inline-block">Speech Bot</strong>
+        <button id="chat-reset" class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
+    </div>
+    <div id="chat-body" class="card-body p-4 overflow-auto">
+        {% for message in this.messages %}
+            {% if 'user' == message.role.value %}
+                {% include '_message.html.twig' with { message, latest: loop.last } %}
+            {% else %}
+                <div class="d-flex align-items-baseline mb-4">
+                    <div class="bot avatar rounded-3 shadow-sm">
+                        {{ ux_icon('fluent:bot-24-filled', { height: '45px', width: '45px' }) }}
+                    </div>
+                    <div class="ps-2">
+                        <audio class="pt-3" controls {{ loop.last ? 'autoplay' }} src="{{ message.metadata.get('speech') }}"></audio>
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div id="welcome" class="text-center mt-5 py-5 bg-white rounded-5 shadow-sm w-75 mx-auto">
+                {{ ux_icon('iconoir:microphone-solid', { height: '200px', width: '200px' }) }}
+                <h4 class="mt-5">Speech Bot</h4>
+                <span class="text-muted">Please hit the button below to start talking and again to stop</span>
+            </div>
+        {% endfor %}
+        <div id="loading-message" class="d-none">
+            {{ msg.user([{text:'Converting your speech to text ...'}], true) }}
+            {{ msg.bot('The Bot is looking for an answer ...', true) }}
+        </div>
+    </div>
+    <div class="card-footer p-2 text-center">
+        <button id="micro-start" class="btn btn-primary" type="button">
+            {{ ux_icon('iconoir:microphone-solid', { height: '24px', width: '24px' }) }}
+            <strong>Say something</strong>
+        </button>
+        <button id="micro-stop" class="btn btn-danger d-none" type="button">
+            {{ ux_icon('iconoir:microphone-mute-solid', { height: '24px', width: '24px' }) }}
+            <strong>Stop</strong>
+        </button>
+        <button id="bot-thinking" class="btn btn-secondary disabled d-none" type="button">
+            {{ ux_icon('iconoir:timer-solid', { height: '24px', width: '24px' }) }}
+            <strong>Bot is thinking</strong>
+        </button>
+    </div>
+</div>

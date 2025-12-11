@@ -1,0 +1,54 @@
+routes:
+    "https://{all}/": { type: upstream, upstream: "app:http" }
+    "http://{all}/": { type: redirect, to: "https://{all}/" }
+
+services:
+
+applications:
+    app:
+        source:
+            root: "/ai.symfony.com"
+
+        type: php:8.4
+
+        runtime:
+            extensions:
+
+        variables:
+            php:
+                opcache.preload: config/preload.php
+
+        build:
+            flavor: none
+
+        web:
+            locations:
+                "/":
+                    root: "public/"
+                    expires: 1h
+                    passthru: "/index.php"
+
+        mounts:
+            "/var/cache": { source: instance, source_path: var/cache }
+            "/var/share": { source: storage, source_path: var/share }
+
+        hooks:
+            build: |
+                set -x -e
+
+                curl -fs https://get.symfony.com/cloud/configurator | bash
+                NODE_VERSION=22 symfony-build
+
+            deploy: |
+                set -x -e
+
+                symfony-deploy
+
+        crons:
+            security-check:
+                # Check that no security issues have been found for PHP packages deployed in production
+                spec: '50 23 * * *'
+                cmd: if [ "$PLATFORM_ENVIRONMENT_TYPE" = "production" ]; then croncape COMPOSER_ROOT_VERSION=1.0.0 COMPOSER_AUDIT_ABANDONED=ignore composer audit --no-cache; fi
+            clean-expired-sessions:
+                spec: '17,47 * * * *'
+                cmd: croncape php-session-clean

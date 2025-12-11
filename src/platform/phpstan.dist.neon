@@ -22,3 +22,16 @@ parameters:
         -
             identifier: missingType.iterableValue
             path: tests/*
+            reportUnmatched: false
+        -
+            identifier: missingType.iterableValue
+            path: src/Bridge/**/Tests/*
+            reportUnmatched: false
+        -
+            identifier: 'symfonyAi.forbidNativeException'
+            path: tests/*
+            reportUnmatched: false
+        -
+            identifier: 'symfonyAi.forbidNativeException'
+            path: src/Bridge/**/Tests/*
+            reportUnmatched: false

@@ -62,7 +62,40 @@
         ]
     },
     "symfony/ai-bundle": {
-        "version": "dev-integrate-demo"
+        "version": "0.9999999",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "05cfb98b7551d4647c6a9b6f777a8a697642eb9e"
+        },
+        "files": [
+            "config/packages/ai.yaml"
+        ]
+    },
+    "symfony/ai-clock-tool": {
+        "version": "0.9999999",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "c17a3fe7b1301a5db970c9b0a91ab57ad7da2cd0"
+        },
+        "files": [
+            "config/packages/ai_clock_tool.yaml"
+        ]
+    },
+    "symfony/ai-wikipedia-tool": {
+        "version": "0.9999999",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "56c57f9b4a7a2353bdc6df287944722c09f414b2"
+        },
+        "files": [
+            "config/packages/ai_wikipedia_tool.yaml"
+        ]
     },
     "symfony/asset-mapper": {
         "version": "7.1",
@@ -197,7 +230,7 @@
         "files": [
             "assets/bootstrap.js",
             "assets/controllers.json",
-            "assets/controllers/chat_controller.js"
+            "assets/controllers/blog_controller.js"
         ]
     },
     "symfony/twig-bundle": {

@@ -300,7 +300,6 @@ final class Factory
          * @see https://github.com/symfony/ai/pull/585#issuecomment-3303631346
          */
         $reflectionProperty = new \ReflectionProperty($result, 'mapping');
-        $reflectionProperty->setAccessible(true);
 
         return $reflectionProperty->getValue($result);
     }

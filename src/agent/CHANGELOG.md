@@ -25,14 +25,15 @@ CHANGELOG
    - `SimilaritySearch` for RAG/vector store searches
    - `Agent` allowing agents to use other agents as tools
    - `Clock` for current date/time
-   - `Brave` for web search integration
    - `Crawler` for web page crawling
    - `Mapbox` for geocoding addresses to coordinates and reverse geocoding
    - `OpenMeteo` for weather information
    - `SerpApi` for search engine results
-   - `Tavily` for AI-powered search
    - `Wikipedia` for Wikipedia content retrieval
    - `YouTubeTranscriber` for YouTube video transcription
+ * Add bridges:
+   - `Brave` for web search integration (`symfony/ai-brave-tool`)
+   - `Tavily` for AI-powered search (`symfony/ai-tavily-tool`)
  * Add structured output support:
    - PHP class output with automatic conversion from LLM responses
    - Array structure output with JSON schema validation

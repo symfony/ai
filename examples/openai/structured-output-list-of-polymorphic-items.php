@@ -26,6 +26,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a persona data collector! Return all the data you can gather from the user input.'),
     Message::ofUser('Hi! My name is John Doe, I am 30 years old and I live in Paris.'),
 );
-$result = $platform->invoke('gpt-4o-mini', $messages, ['output_structure' => ListOfPolymorphicTypesDto::class]);
+$result = $platform->invoke('gpt-4o-mini', $messages, ['response_format' => ListOfPolymorphicTypesDto::class]);
 
 dump($result->asObject());

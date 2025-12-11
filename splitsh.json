@@ -1,0 +1,47 @@
+{
+    "subtrees": {
+        "ai-demo": "demo",
+        "ai-agent": {
+            "prefixes": [{ "from": "src/agent", "to": "", "excludes": ["src/Bridge"] }]
+        },
+        "ai-brave-tool": "src/agent/src/Bridge/Brave",
+        "ai-clock-tool": "src/agent/src/Bridge/Clock",
+        "ai-firecrawl-tool": "src/agent/src/Bridge/Firecrawl",
+        "ai-mapbox-tool": "src/agent/src/Bridge/Mapbox",
+        "ai-open-meteo-tool": "src/agent/src/Bridge/OpenMeteo",
+        "ai-scraper-tool": "src/agent/src/Bridge/Scraper",
+        "ai-serp-api-tool": "src/agent/src/Bridge/SerpApi",
+        "ai-similarity-search-tool": "src/agent/src/Bridge/SimilaritySearch",
+        "ai-tavily-tool": "src/agent/src/Bridge/Tavily",
+        "ai-youtube-tool": "src/agent/src/Bridge/Youtube",
+        "ai-wikipedia-tool": "src/agent/src/Bridge/Wikipedia",
+        "ai-bundle": "src/ai-bundle",
+        "ai-chat": "src/chat",
+        "mcp-bundle": "src/mcp-bundle",
+        "mcp-sdk": "src/mcp-sdk",
+        "ai-platform": "src/platform",
+        "ai-store": {
+            "prefixes": [{ "from": "src/store", "to": "", "excludes": ["src/Bridge"] }]
+        },
+        "ai-azure-search-store": "src/store/src/Bridge/AzureSearch",
+        "ai-cache-store": "src/store/src/Bridge/Cache",
+        "ai-click-house-store": "src/store/src/Bridge/ClickHouse",
+        "ai-cloudflare-store": "src/store/src/Bridge/Cloudflare",
+        "ai-chroma-db-store": "src/store/src/Bridge/ChromaDb",
+        "ai-manticore-search-store": "src/store/src/Bridge/ManticoreSearch",
+        "ai-maria-db-store": "src/store/src/Bridge/MariaDb",
+        "ai-meilisearch-store": "src/store/src/Bridge/Meilisearch",
+        "ai-milvus-store": "src/store/src/Bridge/Milvus",
+        "ai-mongo-db-store": "src/store/src/Bridge/MongoDb",
+        "ai-neo4j-store": "src/store/src/Bridge/Neo4j",
+        "ai-open-search-store": "src/store/src/Bridge/OpenSearch",
+        "ai-pinecone-store": "src/store/src/Bridge/Pinecone",
+        "ai-postgres-store": "src/store/src/Bridge/Postgres",
+        "ai-qdrant-store": "src/store/src/Bridge/Qdrant",
+        "ai-redis-store": "src/store/src/Bridge/Redis",
+        "ai-supabase-store": "src/store/src/Bridge/Supabase",
+        "ai-surreal-db-store": "src/store/src/Bridge/SurrealDb",
+        "ai-typesense-store": "src/store/src/Bridge/Typesense",
+        "ai-weaviate-store": "src/store/src/Bridge/Weaviate"
+    }
+}

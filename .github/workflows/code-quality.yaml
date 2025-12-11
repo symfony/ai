@@ -21,10 +21,10 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php-version: [ '8.4' ]
+                php-version: [ '8.5' ]
         steps:
             - name: Checkout
-              uses: actions/checkout@v5
+              uses: actions/checkout@v6
 
             - name: Configure environment
               run: |
@@ -32,7 +32,7 @@ jobs:
                   echo COMPOSER_UP='composer update --no-progress --no-interaction --no-scripts --ansi --ignore-platform-req=ext-mongodb' >> $GITHUB_ENV
                   echo PHPSTAN='vendor/bin/phpstan' >> $GITHUB_ENV
 
-                  PACKAGES=$(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -printf '%h\n' | sed 's/^src\///' | grep -Ev "examples" | sort |  tr '\n' ' ')
+                  PACKAGES=$(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -not -path "*/Bridge/*" -printf '%h\n' | sed 's/^src\///' | grep -Ev "examples" | sort |  tr '\n' ' ')
                   echo "Packages: $PACKAGES"
                   echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 

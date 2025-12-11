@@ -21,6 +21,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $platform->invoke('claude-3-5-sonnet-20241022', $messages);
+$result = $platform->invoke('claude-sonnet-4-5-20250929', $messages);
 
 echo $result->asText().\PHP_EOL;

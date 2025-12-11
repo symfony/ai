@@ -1,0 +1,316 @@
+deptrac:
+  paths:
+    - ./src
+  exclude_files:
+    - '#.*test.*#i'
+    - '#.*vendor.*#'
+  layers:
+    - name: AgentComponent
+      collectors:
+        - type: classLike
+          value: ^Symfony\\AI\\Agent\\(?!Bridge\\).*
+    - name: BraveTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Brave\\.*
+    - name: ClockTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Clock\\.*
+    - name: FirecrawlTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Firecrawl\\.*
+    - name: MapboxTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Mapbox\\.*
+    - name: OpenMeteoTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\OpenMeteo\\.*
+    - name: ScraperTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Scraper\\.*
+    - name: SerpApiTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\SerpApi\\.*
+    - name: SimilaritySearchTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\SimilaritySearch\\.*
+    - name: TavilyTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Tavily\\.*
+    - name: WikipediaTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Wikipedia\\.*
+    - name: YoutubeTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Youtube\\.*
+    - name: ChatComponent
+      collectors:
+        - type: classLike
+          value: ^Symfony\\AI\\Chat\\(?!Bridge\\).*
+    - name: ChatCacheBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Chat\\Bridge\\Cache\\.*
+    - name: ChatCloudflareBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Chat\\Bridge\\Cloudflare\\.*
+    - name: ChatDoctrineBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Chat\\Bridge\\Doctrine\\.*
+    - name: ChatHttpFoundationBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Chat\\Bridge\\HttpFoundation\\.*
+    - name: ChatMeilisearchBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Chat\\Bridge\\Meilisearch\\.*
+    - name: ChatMongoDbBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Chat\\Bridge\\MongoDb\\.*
+    - name: ChatPogocacheBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Chat\\Bridge\\Pogocache\\.*
+    - name: ChatRedisBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Chat\\Bridge\\Redis\\.*
+    - name: ChatSurrealDbBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Chat\\Bridge\\SurrealDb\\.*
+    - name: PlatformComponent
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform.*
+    - name: StoreComponent
+      collectors:
+        - type: classLike
+          value: ^Symfony\\AI\\Store\\(?!Bridge\\).*
+    - name: AzureSearchStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\AzureSearch\\.*
+    - name: CacheStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Cache\\.*
+    - name: ChromaDbStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\ChromaDb\\.*
+    - name: ClickHouseStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\ClickHouse\\.*
+    - name: CloudflareStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Cloudflare\\.*
+    - name: ManticoreSearchStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\ManticoreSearch\\.*
+    - name: MariaDbStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\MariaDb\\.*
+    - name: MeilisearchStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Meilisearch\\.*
+    - name: MilvusStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Milvus\\.*
+    - name: MongoDbStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\MongoDb\\.*
+    - name: Neo4jStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Neo4j\\.*
+    - name: OpenSearchStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\OpenSearch\\.*
+    - name: PineconeStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Pinecone\\.*
+    - name: PostgresStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Postgres\\.*
+    - name: QdrantStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Qdrant\\.*
+    - name: RedisStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Redis\\.*
+    - name: SupabaseStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Supabase\\.*
+    - name: SurrealDbStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\SurrealDb\\.*
+    - name: TypesenseStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Typesense\\.*
+    - name: WeaviateStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Weaviate\\.*
+  ruleset:
+    AgentComponent:
+      - PlatformComponent
+      - StoreComponent
+    BraveTool:
+      - AgentComponent
+      - PlatformComponent
+    ClockTool:
+      - AgentComponent
+    FirecrawlTool:
+      - AgentComponent
+    MapboxTool:
+      - AgentComponent
+      - PlatformComponent
+    OpenMeteoTool:
+      - AgentComponent
+      - PlatformComponent
+    ScraperTool:
+      - AgentComponent
+    SerpApiTool:
+      - AgentComponent
+    SimilaritySearchTool:
+      - AgentComponent
+      - StoreComponent
+    TavilyTool:
+      - AgentComponent
+    WikipediaTool:
+      - AgentComponent
+    YoutubeTool:
+      - AgentComponent
+    ChatComponent:
+      - AgentComponent
+      - PlatformComponent
+    ChatCacheBridge:
+      - ChatComponent
+      - PlatformComponent
+    ChatCloudflareBridge:
+      - ChatComponent
+      - PlatformComponent
+    ChatDoctrineBridge:
+      - ChatComponent
+      - PlatformComponent
+    ChatHttpFoundationBridge:
+      - ChatComponent
+      - PlatformComponent
+    ChatMeilisearchBridge:
+      - ChatComponent
+      - PlatformComponent
+    ChatMongoDbBridge:
+      - ChatComponent
+      - PlatformComponent
+    ChatPogocacheBridge:
+      - ChatComponent
+      - PlatformComponent
+    ChatRedisBridge:
+      - ChatComponent
+      - PlatformComponent
+    ChatSurrealDbBridge:
+      - ChatComponent
+      - PlatformComponent
+    PlatformComponent: ~
+    StoreComponent:
+      - PlatformComponent
+    AzureSearchStore:
+      - StoreComponent
+      - PlatformComponent
+    CacheStore:
+      - StoreComponent
+      - PlatformComponent
+    ChromaDbStore:
+      - StoreComponent
+      - PlatformComponent
+    ClickHouseStore:
+      - StoreComponent
+      - PlatformComponent
+    CloudflareStore:
+      - StoreComponent
+      - PlatformComponent
+    ManticoreSearchStore:
+      - StoreComponent
+      - PlatformComponent
+    MariaDbStore:
+      - StoreComponent
+      - PlatformComponent
+    MeilisearchStore:
+      - StoreComponent
+      - PlatformComponent
+    MilvusStore:
+      - StoreComponent
+      - PlatformComponent
+    MongoDbStore:
+      - StoreComponent
+      - PlatformComponent
+    Neo4jStore:
+      - StoreComponent
+      - PlatformComponent
+    OpenSearchStore:
+      - StoreComponent
+      - PlatformComponent
+    PineconeStore:
+      - StoreComponent
+      - PlatformComponent
+    PostgresStore:
+      - StoreComponent
+      - PlatformComponent
+    QdrantStore:
+      - StoreComponent
+      - PlatformComponent
+    RedisStore:
+      - StoreComponent
+      - PlatformComponent
+    SupabaseStore:
+      - StoreComponent
+      - PlatformComponent
+    SurrealDbStore:
+      - StoreComponent
+      - PlatformComponent
+    TypesenseStore:
+      - StoreComponent
+      - PlatformComponent
+    WeaviateStore:
+      - StoreComponent
+      - PlatformComponent
+  # Baseline of known violations to be skipped for now
+  skip_violations:
+    Symfony\AI\Platform\Bridge\Anthropic\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\DeepSeek\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\Gemini\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\Mistral\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\Perplexity\SearchResultProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\Perplexity\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
+    Symfony\AI\Platform\Bridge\VertexAi\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]

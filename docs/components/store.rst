@@ -33,16 +33,44 @@ used vector store::
     $document = new TextDocument('This is a sample document.');
     $indexer->index($document);
 
-You can find more advanced usage in combination with an Agent using the store for RAG in the examples folder:
+You can find more advanced usage in combination with an Agent using the store for RAG in the examples folder.
+
+Retrieving
+----------
+
+The opposite of indexing is retrieving. The :class:`Symfony\\AI\\Store\\Retriever` is a higher level feature that allows you to
+search for documents in a store based on a query string. It vectorizes the query and retrieves similar documents from the store::
+
+    use Symfony\AI\Store\Retriever;
+
+    $retriever = new Retriever($vectorizer, $store);
+    $documents = $retriever->retrieve('What is the capital of France?');
+
+    foreach ($documents as $document) {
+        echo $document->metadata->get('source');
+    }
+
+The retriever accepts optional parameters to customize the retrieval:
+
+* ``$options``: An array of options to pass to the underlying store query (e.g., limit, filters)
+
+Example Usage
+~~~~~~~~~~~~~
+
+* `Basic Retriever Example`_
+
+Similarity Search Examples
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * `Similarity Search with Cloudflare (RAG)`_
-* `Similarity Search with Manticore (RAG)`_
+* `Similarity Search with Manticore Search (RAG)`_
 * `Similarity Search with MariaDB (RAG)`_
 * `Similarity Search with Meilisearch (RAG)`_
 * `Similarity Search with memory storage (RAG)`_
 * `Similarity Search with Milvus (RAG)`_
 * `Similarity Search with MongoDB (RAG)`_
 * `Similarity Search with Neo4j (RAG)`_
+* `Similarity Search with OpenSearch (RAG)`_
 * `Similarity Search with Pinecone (RAG)`_
 * `Similarity Search with Qdrant (RAG)`_
 * `Similarity Search with SurrealDB (RAG)`_
@@ -53,7 +81,7 @@ You can find more advanced usage in combination with an Agent using the store fo
 
 .. note::
 
-    Both `InMemory` and `PSR-6 cache` vector stores will load all the data into the
+    Both ``InMemory`` and ``PSR-6 cache`` vector stores will load all the data into the
     memory of the PHP process. They can be used only the amount of data fits in the
     PHP memory limit, typically for testing.
 
@@ -61,28 +89,29 @@ Supported Stores
 ----------------
 
 * `Azure AI Search`_
-* `Chroma`_ (requires `codewithkyrian/chromadb-php` as additional dependency)
+* `Chroma`_ (requires ``codewithkyrian/chromadb-php`` as additional dependency)
 * `Cloudflare`_
 * `InMemory`_
-* `Manticore`_
-* `MariaDB`_ (requires `ext-pdo`)
+* `Manticore Search`_
+* `MariaDB`_ (requires ``ext-pdo``)
 * `Meilisearch`_
 * `Milvus`_
-* `MongoDB Atlas`_ (requires `mongodb/mongodb` as additional dependency)
+* `MongoDB Atlas`_ (requires ``mongodb/mongodb`` as additional dependency)
 * `Neo4j`_
-* `Pinecone`_ (requires `probots-io/pinecone-php` as additional dependency)
-* `Postgres`_ (requires `ext-pdo`)
+* `OpenSearch`_
+* `Pinecone`_ (requires ``probots-io/pinecone-php`` as additional dependency)
+* `Postgres`_ (requires ``ext-pdo``)
 * `Qdrant`_
 * `Supabase`_ (requires manual database setup)
 * `SurrealDB`_
-* `Symfony Cache`_ (requires `symfony/cache` as additional dependency)
+* `Symfony Cache`_ (requires ``symfony/cache`` as additional dependency)
 * `Typesense`_
 * `Weaviate`_
 
 Commands
 --------
 
-While using the `Store` component in your Symfony application along with the ``AiBundle``,
+While using the ``Store`` component in your Symfony application along with the ``AiBundle``,
 you can use the ``bin/console ai:store:setup`` command to initialize the store and ``bin/console ai:store:drop`` to clean up the store:
 
 .. code-block:: yaml
@@ -92,7 +121,7 @@ you can use the ``bin/console ai:store:setup`` command to initialize the store a
         # ...
 
         store:
-            chroma_db:
+            chromadb:
                 symfonycon:
                     collection: 'symfony_blog'
 
@@ -129,14 +158,16 @@ This leads to a store implementing two methods::
     }
 
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
+.. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php
 .. _`Similarity Search with Cloudflare (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cloudflare.php
-.. _`Similarity Search with Manticore (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/manticore.php
+.. _`Similarity Search with Manticore Search (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/manticore.php
 .. _`Similarity Search with MariaDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/mariadb-gemini.php
 .. _`Similarity Search with Meilisearch (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/meilisearch.php
 .. _`Similarity Search with memory storage (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/in-memory.php
 .. _`Similarity Search with Milvus (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/milvus.php
 .. _`Similarity Search with MongoDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/mongodb.php
 .. _`Similarity Search with Neo4j (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/neo4j.php
+.. _`Similarity Search with OpenSearch (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/opensearch.php
 .. _`Similarity Search with Pinecone (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
 .. _`Similarity Search with Symfony Cache (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cache.php
 .. _`Similarity Search with Qdrant (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/qdrant.php
@@ -147,7 +178,7 @@ This leads to a store implementing two methods::
 .. _`Azure AI Search`: https://azure.microsoft.com/products/ai-services/ai-search
 .. _`Chroma`: https://www.trychroma.com/
 .. _`Cloudflare`: https://developers.cloudflare.com/vectorize/
-.. _`Manticore`: https://manticoresearch.com/
+.. _`Manticore Search`: https://manticoresearch.com/
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
 .. _`Pinecone`: https://www.pinecone.io/
 .. _`Postgres`: https://www.postgresql.org/about/news/pgvector-070-released-2852/
@@ -158,6 +189,7 @@ This leads to a store implementing two methods::
 .. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
 .. _`Qdrant`: https://qdrant.tech/
 .. _`Neo4j`: https://neo4j.com/
+.. _`OpenSearch`: https://opensearch.org/
 .. _`Typesense`: https://typesense.org/
 .. _`Symfony Cache`: https://symfony.com/doc/current/components/cache.html
 .. _`Weaviate`: https://weaviate.io/

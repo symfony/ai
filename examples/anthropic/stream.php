@@ -21,6 +21,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a thoughtful philosopher.'),
     Message::ofUser('What is the purpose of an ant?'),
 );
-$result = $platform->invoke('claude-3-5-sonnet-20241022', $messages, ['stream' => true]);
+$result = $platform->invoke('claude-sonnet-4-5-20250929', $messages, ['stream' => true]);
 
 print_stream($result);

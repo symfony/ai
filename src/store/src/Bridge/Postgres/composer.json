@@ -1,0 +1,64 @@
+{
+    "name": "symfony/ai-postgres-store",
+    "description": "PostgreSQL pgvector vector store bridge for Symfony AI",
+    "license": "MIT",
+    "type": "symfony-ai-store",
+    "keywords": [
+        "ai",
+        "bridge",
+        "pgvector",
+        "postgres",
+        "postgresql",
+        "store",
+        "vector"
+    ],
+    "authors": [
+        {
+            "name": "Christopher Hertel",
+            "email": "mail@christopher-hertel.de"
+        },
+        {
+            "name": "Oskar Stark",
+            "email": "oskarstark@googlemail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-pdo": "*",
+        "oskarstark/enum-helper": "^1.5",
+        "symfony/ai-platform": "@dev",
+        "symfony/ai-store": "@dev",
+        "symfony/uid": "^7.3|^8.0"
+    },
+    "require-dev": {
+        "doctrine/dbal": "^3.3|^4.0",
+        "phpunit/phpunit": "^11.5.13"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Store\\Bridge\\Postgres\\": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\Store\\Bridge\\Postgres\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    }
+}

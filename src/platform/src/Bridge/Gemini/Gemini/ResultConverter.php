@@ -127,7 +127,7 @@ final class ResultConverter implements ResultConverterInterface
             }
 
             if (isset($contentPart['inlineData'])) {
-                return new BinaryResult($contentPart['inlineData']['data'], $contentPart['inlineData']['mimeType'] ?? null);
+                return BinaryResult::fromBase64($contentPart['inlineData']['data'], $contentPart['inlineData']['mimeType'] ?? null);
             }
 
             throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finishReason']));
@@ -150,7 +150,8 @@ final class ResultConverter implements ResultConverterInterface
             return new TextResult($content);
         }
 
-        throw new RuntimeException('Code execution failed.');
+        // TODO: see https://github.com/symfony/ai/issues/1053
+        throw new RuntimeException('Choice conversion failed. Potentially due to multiple content parts.');
     }
 
     /**

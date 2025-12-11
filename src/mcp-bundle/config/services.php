@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Mcp\Capability\Registry;
 use Mcp\Server;
 use Mcp\Server\Builder;
 
@@ -21,6 +22,9 @@ return static function (ContainerConfigurator $container): void {
             ->args(['mcp'])
             ->tag('monolog.logger', ['channel' => 'mcp'])
 
+        ->set('mcp.registry', Registry::class)
+            ->args([service('event_dispatcher'), service('monolog.logger.mcp')])
+
         ->set('mcp.server.builder', Builder::class)
             ->factory([Server::class, 'builder'])
             ->call('setServerInfo', [param('mcp.app'), param('mcp.version')])
@@ -28,11 +32,13 @@ return static function (ContainerConfigurator $container): void {
             ->call('setInstructions', [param('mcp.instructions')])
             ->call('setLogger', [service('monolog.logger.mcp')])
             ->call('setEventDispatcher', [service('event_dispatcher')])
+            ->call('setRegistry', [service('mcp.registry')])
             ->call('setSession', [service('mcp.session.store')])
+            ->call('addRequestHandlers', [tagged_iterator('mcp.request_handler')])
+            ->call('addNotificationHandlers', [tagged_iterator('mcp.notification_handler')])
+            ->call('addLoaders', [tagged_iterator('mcp.loader')])
             ->call('setDiscovery', [param('kernel.project_dir'), param('mcp.discovery.scan_dirs'), param('mcp.discovery.exclude_dirs')])
 
         ->set('mcp.server', Server::class)
-            ->factory([service('mcp.server.builder'), 'build'])
-
-    ;
+            ->factory([service('mcp.server.builder'), 'build']);
 };

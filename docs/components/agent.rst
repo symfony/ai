@@ -241,8 +241,8 @@ tools in the same chain - which even enables you to overwrite the pre-existing c
 
     The order of the factories in the ChainFactory matters, as the first factory has the highest priority.
 
-Agent uses Agent 🤯
-~~~~~~~~~~~~~~~~~~
+Agent uses Agent
+~~~~~~~~~~~~~~~~
 
 Similar to third-party tools, an agent can also use an different agent as a tool. This can be useful to encapsulate
 complex logic or to reuse an agent in multiple places or hide sub-agents from the LLM::

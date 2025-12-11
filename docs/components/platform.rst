@@ -22,7 +22,7 @@ specific use cases or performance requirements.
 Usage
 -----
 
-The instantiation of the :class:`Symfony\\AI\\Platform\Platform` class is
+The instantiation of the :class:`Symfony\\AI\\Platform\\Platform` class is
 usually delegated to a provider-specific factory, with a provider being
 OpenAI, Anthropic, Google, Replicate, and others.
 
@@ -34,7 +34,7 @@ For example, to use the OpenAI provider, you would typically do something like t
 
     $platform = PlatformFactory::create(env('OPENAI_API_KEY'));
 
-With this :class:`Symfony\\AI\\Platform\PlatformInterface` instance you can now interact with the LLM::
+With this :class:`Symfony\\AI\\Platform\\PlatformInterface` instance you can now interact with the LLM::
 
     // Generate a vector embedding for a text, returns a Symfony\AI\Platform\Result\VectorResult
     $vectorResult = $platform->invoke($embeddings, 'What is the capital of France?');
@@ -77,25 +77,55 @@ You can also combine size variants with query parameters::
     // Get model with size variant and query parameters
     $model = $catalog->getModel('qwen3:32b?temperature=0.5&top_p=0.9');
 
+Custom models
+~~~~~~~~~~~~~
+
+For providers like Ollama, you can use custom models (built on top of ``Modelfile``), as those models are not listed in
+the default catalog, you can use the built-in ``OllamaApiCatalog`` to query the model information from the API rather
+than the default catalog::
+
+    use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
+    use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    $platform = PlatformFactory::create('http://127.0.0.1:11434', HttpClient::create(), new OllamaApiCatalog(
+        'http://127.0.0.1:11434',
+        HttpClient::create(),
+    ));
+
+    $platform->invoke('your_custom_model_name', new MessageBag(
+        Message::ofUser(...)
+    ));
+
+When using the bundle, the usage of ``OllamaApiCatalog`` is available via the ``api_catalog`` option::
+
+    ai:
+        platform:
+            ollama:
+                api_catalog: true
+
 Supported Models & Platforms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
 * **Language Models**
-    * `OpenAI's GPT`_ with `OpenAI`_ and `Azure`_ as Platform
+    * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
     * `Anthropic's Claude`_ with `Anthropic`_ and `AWS Bedrock`_ as Platform
-    * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_ and `AWS Bedrock`_ as Platform
+    * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_, `AWS Bedrock`_ and `OpenRouter`_ as Platform
     * `Gemini`_ with `Google`_, `Vertex AI`_ and `OpenRouter`_ as Platform
     * `Vertex AI Gen AI`_ with `Vertex AI`_ as Platform
     * `DeepSeek's R1`_ with `OpenRouter`_ as Platform
     * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
-    * `Mistral's Mistral`_ with `Mistral`_ as Platform
+    * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
     * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
+    * `LiteLLM`_ as unified Platform
 * **Embeddings Models**
-    * `Gemini Text Embeddings`_ with `Google`_
+    * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
     * `Vertex AI Text Embeddings`_ with `Vertex AI`_
-    * `OpenAI's Text Embeddings`_ with `OpenAI`_ and `Azure`_ as Platform
+    * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
     * `Voyage's Embeddings`_ with `Voyage`_ as Platform
-    * `Mistral Embed`_ with `Mistral`_ as Platform
+    * `Mistral Embed`_ with `Mistral`_ and `OpenRouter`_ as Platform
+    * `Qwen`_ with `OpenRouter`_ as Platform
 * **Other Models**
     * `OpenAI's Dall·E`_ with `OpenAI`_ as Platform
     * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
@@ -103,8 +133,38 @@ Supported Models & Platforms
     * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
       and also filtered, e.g. ``php examples/huggingface/_model-listing.php --provider=hf-inference --task=object-detection``
 * **Voice Models**
-    * `Cartesia TTS` with `Cartesia`_ as Platform
-    * `Cartesia STT` with `Cartesia`_ as Platform
+    * `ElevenLabs TTS`_ with `ElevenLabs`_ as Platform
+    * `ElevenLabs STT`_ with `ElevenLabs`_ as Platform
+    * `Cartesia TTS`_ with `Cartesia`_ as Platform
+    * `Cartesia STT`_ with `Cartesia`_ as Platform
+* **Image/Video Models**
+    * `Decart T2I`_ with `Decart`_  as Platform
+    * `Decart T2V`_ with `Decart`_  as Platform
+
+Generic Platforms
+~~~~~~~~~~~~~~~~~
+
+Platforms like `LiteLLM`_ or `OpenRouter`_ provide a unified API to access multiple models from different providers.
+Therefore, they rely on endpoint and contract design, that is inspired by OpenAI's original GPT API - an implicit
+standard in the industry. Platforms using this de facto standard can be used with the generic bridge::
+
+    use Symfony\AI\Platform\Bridge\Generic\PlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    $platform = PlatformFactory::create('https://api.example.com', 'sk-xxxxxx', $httpClient, $modelCatalog);
+
+    $messages = new MessageBag(
+        Message::forSystem('You are a pirate and you write funny.'),
+        Message::ofUser('What is the Symfony framework?'),
+    );
+    $result = $platform->invoke('model-name', $messages);
+
+    echo $result->asText();
+
+This requires to configure a :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\ModelCatalog` explicitly, using
+:class:`Symfony\\AI\\Platform\\Bridge\\Generic\\CompletionsModel` or :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\EmbeddingsModel`,
+see `LiteLLM example`_ for more details.
 
 Options
 -------
@@ -279,6 +339,7 @@ Code Examples
 
 * `Embeddings with OpenAI`_
 * `Embeddings with Voyage`_
+* `Multimodal embeddings with Voyage`_
 * `Embeddings with Mistral`_
 
 Structured Output
@@ -310,14 +371,14 @@ To achieve this, the ``Symfony\AI\Platform\StructuredOutput\PlatformSubscriber``
         Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
         Message::ofUser('how can I solve 8x + 7 = -23'),
     );
-    $result = $platform->invoke('mistral-small-latest', $messages, ['output_structure' => MathReasoning::class]);
+    $result = $platform->invoke('mistral-small-latest', $messages, ['response_format' => MathReasoning::class]);
 
     dump($result->asObject()); // returns an instance of `MathReasoning` class
 
 Array Structures as Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Also PHP array structures as response_format are supported, which also requires the event subscriber mentioned above. On
+Also PHP array structures as ``response_format`` are supported, which also requires the event subscriber mentioned above. On
 top this example uses the feature through the agent to leverage tool calling::
 
     use Symfony\AI\Platform\Message\Message;
@@ -376,6 +437,29 @@ which can be useful to speed up the processing::
     foreach ($results as $result) {
         echo $result->asText().PHP_EOL;
     }
+
+Cached Platform Calls
+---------------------
+
+Thanks to Symfony's Cache component, platform calls can be cached to reduce calls and resources consumption::
+
+    use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+    use Symfony\AI\Platform\CachedPlatform;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\Component\Cache\Adapter\ArrayAdapter;
+    use Symfony\Component\Cache\Adapter\TagAwareAdapter;
+
+    $platform = PlatformFactory::create($apiKey, eventDispatcher: $dispatcher);
+    $cachedPlatform = new CachedPlatform($platform, new TagAwareAdapter(new ArrayAdapter());
+
+    $firstResult = $cachedPlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
+
+    echo $firstResult->getContent().\PHP_EOL;
+
+    $secondResult = $cachedPlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
+
+    echo $secondResult->getContent().\PHP_EOL;
 
 Testing Tools
 -------------
@@ -466,7 +550,17 @@ Code Examples
 .. _`Anthropic's Claude`: https://www.anthropic.com/claude
 .. _`Anthropic`: https://www.anthropic.com/
 .. _`AWS Bedrock`: https://aws.amazon.com/bedrock/
-.. _`Cartesia`: https://cartesia.ai/sonic
+.. _`LiteLLM`: https://docs.litellm.ai/docs/
+.. _`Cartesia`: https://cartesia.ai/
+.. _`Cartesia STT`: https://cartesia.ai/ink
+.. _`Cartesia TTS`: https://cartesia.ai/sonic
+.. _`Decart`: https://decart.ai/
+.. _`Decart T2I`: https://platform.decart.ai/models/lucy-image
+.. _`Decart T2V`: https://platform.decart.ai/models/lucy
+.. _`ElevenLabs`: https://elevenlabs.io/
+.. _`ElevenLabs STT`: https://elevenlabs.io/speech-to-text
+.. _`ElevenLabs TTS`: https://elevenlabs.io/text-to-speech
+.. _`LiteLLM example`: https://github.com/symfony/ai/blob/main/examples/litellm/chat.php
 .. _`Meta's Llama`: https://www.llama.com/
 .. _`Ollama`: https://ollama.com/
 .. _`Replicate`: https://replicate.com/
@@ -477,6 +571,7 @@ Code Examples
 .. _`DeepSeek's R1`: https://www.deepseek.com/
 .. _`Amazon's Nova`: https://nova.amazon.com
 .. _`Mistral's Mistral`: https://www.mistral.ai/
+.. _`Qwen`: https://qwen.ai/
 .. _`Albert API`: https://github.com/etalab-ia/albert-api
 .. _`Albert`: https://alliance.numerique.gouv.fr/produit/produits-interminist%C3%A9rielles/albert-api/
 .. _`Mistral`: https://www.mistral.ai/
@@ -498,7 +593,8 @@ Code Examples
 .. _`Image URL Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/image-input-url.php
 .. _`Audio Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-input.php
 .. _`Embeddings with OpenAI`: https://github.com/symfony/ai/blob/main/examples/openai/embeddings.php
-.. _`Embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/embeddings.php
+.. _`Embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/text-embeddings.php
+.. _`Multimodal embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/multimodal-embeddings.php
 .. _`Embeddings with Mistral`: https://github.com/symfony/ai/blob/main/examples/mistral/embeddings.php
 .. _`Structured Output with PHP class`: https://github.com/symfony/ai/blob/main/examples/openai/structured-output-math.php
 .. _`Structured Output with array`: https://github.com/symfony/ai/blob/main/examples/openai/structured-output-clock.php

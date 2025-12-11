@@ -1,0 +1,9 @@
+model_list:
+    - model_name: mistral-small-latest
+      litellm_params:
+          model: mistral/mistral-small-latest
+          api_key: "os.environ/MISTRAL_API_KEY"
+
+general_settings:
+    master_key: sk-1234
+    database_url: "postgresql://litellm:litellm@litellm-db:5432/litellm"

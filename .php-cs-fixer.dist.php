@@ -65,5 +65,6 @@ return (new PhpCsFixer\Config())
             ->in(__DIR__.'/{.phpstan,demo,examples,fixtures,src}')
             ->append([__FILE__])
             ->exclude('var')
+            ->notPath('demo/config/reference.php')
     )
 ;

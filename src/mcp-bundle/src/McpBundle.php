@@ -16,11 +16,16 @@ use Mcp\Capability\Attribute\McpPrompt;
 use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Capability\Registry\Loader\LoaderInterface;
+use Mcp\Server\Handler\Notification\NotificationHandlerInterface;
+use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
+use Symfony\AI\McpBundle\Profiler\DataCollector;
+use Symfony\AI\McpBundle\Profiler\TraceableRegistry;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
@@ -28,6 +33,7 @@ use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
@@ -54,6 +60,28 @@ final class McpBundle extends AbstractBundle
         $builder->setParameter('mcp.discovery.exclude_dirs', $config['discovery']['exclude_dirs']);
 
         $this->registerMcpAttributes($builder);
+
+        $builder->registerForAutoconfiguration(LoaderInterface::class)
+            ->addTag('mcp.loader');
+
+        $builder->registerForAutoconfiguration(RequestHandlerInterface::class)
+            ->addTag('mcp.request_handler');
+
+        $builder->registerForAutoconfiguration(NotificationHandlerInterface::class)
+            ->addTag('mcp.notification_handler');
+
+        if ($builder->getParameter('kernel.debug')) {
+            $traceableRegistry = (new Definition('mcp.traceable_registry'))
+                ->setClass(TraceableRegistry::class)
+                ->setArguments([new Reference('.inner')])
+                ->setDecoratedService('mcp.registry');
+            $builder->setDefinition('mcp.traceable_registry', $traceableRegistry);
+
+            $dataCollector = (new Definition(DataCollector::class))
+                ->setArguments([new Reference('mcp.traceable_registry')])
+                ->addTag('data_collector');
+            $builder->setDefinition('mcp.data_collector', $dataCollector);
+        }
 
         if (isset($config['client_transports'])) {
             $this->configureClient($config['client_transports'], $config['http'], $builder);

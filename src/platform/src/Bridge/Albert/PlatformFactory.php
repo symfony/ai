@@ -12,8 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\Albert;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Bridge\Generic\Completions;
+use Symfony\AI\Platform\Bridge\Generic\Embeddings;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -50,10 +50,10 @@ final class PlatformFactory
 
         return new Platform(
             [
-                new GptModelClient($httpClient, $apiKey, $baseUrl),
-                new EmbeddingsModelClient($httpClient, $apiKey, $baseUrl),
+                new Completions\ModelClient($httpClient, $baseUrl, $apiKey, '/chat/completions'),
+                new Embeddings\ModelClient($httpClient, $baseUrl, $apiKey, '/embeddings'),
             ],
-            [new Gpt\ResultConverter(), new Embeddings\ResultConverter()],
+            [new Completions\ResultConverter(), new Embeddings\ResultConverter()],
             $modelCatalog,
             Contract::create(),
             $eventDispatcher,

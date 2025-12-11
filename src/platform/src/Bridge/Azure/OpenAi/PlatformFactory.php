@@ -12,9 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\Azure\OpenAi;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
-use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog;
+use Symfony\AI\Platform\Bridge\Generic\Completions;
+use Symfony\AI\Platform\Bridge\Generic\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
 use Symfony\AI\Platform\Contract;
@@ -39,13 +38,14 @@ final class PlatformFactory
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
-        $embeddingsModelClient = new EmbeddingsModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey);
-        $gptModelClient = new GptModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey);
-        $whisperModelClient = new WhisperModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey);
 
         return new Platform(
-            [$gptModelClient, $embeddingsModelClient, $whisperModelClient],
-            [new Gpt\ResultConverter(), new Embeddings\ResultConverter(), new Whisper\ResultConverter()],
+            [
+                new EmbeddingsModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey),
+                new CompletionsModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey),
+                new WhisperModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey),
+            ],
+            [new Completions\ResultConverter(), new Embeddings\ResultConverter(), new Whisper\ResultConverter()],
             $modelCatalog,
             $contract ?? Contract::create(new AudioNormalizer()),
             $eventDispatcher,

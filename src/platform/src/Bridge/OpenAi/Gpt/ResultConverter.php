@@ -31,9 +31,17 @@ use Symfony\AI\Platform\ResultConverterInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  * @author Denis Zunke <denis.zunke@gmail.com>
+ *
+ * @phpstan-type OutputMessage array{content: array<Refusal|OutputText>, id: string, role: string, type: 'message'}
+ * @phpstan-type OutputText array{type: 'output_text', text: string}
+ * @phpstan-type Refusal array{type: 'refusal', refusal: string}
+ * @phpstan-type FunctionCall array{id: string, arguments: string, call_id: string, name: string, type: 'function_call'}
+ * @phpstan-type Reasoning array{summary: array{text?: string}, id: string}
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    private const KEY_OUTPUT = 'output';
+
     public function supports(Model $model): bool
     {
         return $model instanceof Gpt;
@@ -73,131 +81,120 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if (isset($data['error'])) {
-            throw new RuntimeException(\sprintf('Error "%s"-%s (%s): "%s".', $data['error']['code'], $data['error']['type'], $data['error']['param'], $data['error']['message']));
+            throw new RuntimeException(\sprintf('Error "%s"-%s (%s): "%s".', $data['error']['code'] ?? '-', $data['error']['type'] ?? '-', $data['error']['param'] ?? '-', $data['error']['message'] ?? '-'));
         }
 
-        if (!isset($data['choices'])) {
-            throw new RuntimeException('Response does not contain choices.');
+        if (!isset($data[self::KEY_OUTPUT])) {
+            throw new RuntimeException('Response does not contain output.');
         }
 
-        $choices = array_map($this->convertChoice(...), $data['choices']);
+        $results = $this->convertOutputArray($data[self::KEY_OUTPUT]);
 
-        return 1 === \count($choices) ? $choices[0] : new ChoiceResult(...$choices);
+        return 1 === \count($results) ? array_pop($results) : new ChoiceResult(...$results);
+    }
+
+    /**
+     * @param array<OutputMessage|FunctionCall|Reasoning> $output
+     *
+     * @return ResultInterface[]
+     */
+    private function convertOutputArray(array $output): array
+    {
+        [$toolCallResult, $output] = $this->extractFunctionCalls($output);
+
+        $results = array_filter(array_map($this->processOutputItem(...), $output));
+        if ($toolCallResult) {
+            $results[] = $toolCallResult;
+        }
+
+        return $results;
+    }
+
+    /**
+     * @param OutputMessage|Reasoning $item
+     */
+    private function processOutputItem(array $item): ?ResultInterface
+    {
+        $type = $item['type'] ?? null;
+
+        return match ($type) {
+            'message' => $this->convertOutputMessage($item),
+            'reasoning' => $this->convertReasoning($item),
+            default => throw new RuntimeException(\sprintf('Unsupported output type "%s".', $type)),
+        };
     }
 
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
-        $toolCalls = [];
-        foreach ($result->getDataStream() as $data) {
-            if ($this->streamIsToolCall($data)) {
-                $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
+        foreach ($result->getDataStream() as $event) {
+            $type = $event['type'] ?? '';
+
+            if (str_contains($type, 'output_text') && isset($event['delta'])) {
+                yield $event['delta'];
             }
 
-            if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
-                yield new ToolCallResult(...array_map($this->convertToolCall(...), $toolCalls));
-            }
-
-            if (!isset($data['choices'][0]['delta']['content'])) {
+            if (!str_contains($type, 'completed')) {
                 continue;
             }
 
-            yield $data['choices'][0]['delta']['content'];
+            [$toolCallResult] = $this->extractFunctionCalls($event['response'][self::KEY_OUTPUT] ?? []);
+
+            if ($toolCallResult && 'response.completed' === $type) {
+                yield $toolCallResult;
+            }
         }
     }
 
     /**
-     * @param array<string, mixed> $toolCalls
-     * @param array<string, mixed> $data
+     * @param array<OutputMessage|FunctionCall|Reasoning> $output
      *
-     * @return array<string, mixed>
+     * @return list<ToolCallResult|array<OutputMessage|Reasoning>|null>
      */
-    private function convertStreamToToolCalls(array $toolCalls, array $data): array
+    private function extractFunctionCalls(array $output): array
     {
-        if (!isset($data['choices'][0]['delta']['tool_calls'])) {
-            return $toolCalls;
-        }
-
-        foreach ($data['choices'][0]['delta']['tool_calls'] as $i => $toolCall) {
-            if (isset($toolCall['id'])) {
-                // initialize tool call
-                $toolCalls[$i] = [
-                    'id' => $toolCall['id'],
-                    'function' => $toolCall['function'],
-                ];
-                continue;
+        $functionCalls = [];
+        foreach ($output as $key => $item) {
+            if ('function_call' === ($item['type'] ?? null)) {
+                $functionCalls[] = $item;
+                unset($output[$key]);
             }
-
-            // add arguments delta to tool call
-            $toolCalls[$i]['function']['arguments'] .= $toolCall['function']['arguments'];
         }
 
-        return $toolCalls;
+        $toolCallResult = $functionCalls ? new ToolCallResult(
+            ...array_map($this->convertFunctionCall(...), $functionCalls)
+        ) : null;
+
+        return [$toolCallResult, $output];
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param OutputMessage $output
      */
-    private function streamIsToolCall(array $data): bool
+    private function convertOutputMessage(array $output): ?TextResult
     {
-        return isset($data['choices'][0]['delta']['tool_calls']);
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function isToolCallsStreamFinished(array $data): bool
-    {
-        return isset($data['choices'][0]['finish_reason']) && 'tool_calls' === $data['choices'][0]['finish_reason'];
-    }
-
-    /**
-     * @param array{
-     *     index: int,
-     *     message: array{
-     *         role: 'assistant',
-     *         content: ?string,
-     *         tool_calls: array{
-     *             id: string,
-     *             type: 'function',
-     *             function: array{
-     *                 name: string,
-     *                 arguments: string
-     *             },
-     *         },
-     *         refusal: ?mixed
-     *     },
-     *     logprobs: string,
-     *     finish_reason: 'stop'|'length'|'tool_calls'|'content_filter',
-     * } $choice
-     */
-    private function convertChoice(array $choice): ToolCallResult|TextResult
-    {
-        if ('tool_calls' === $choice['finish_reason']) {
-            return new ToolCallResult(...array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
+        $content = $output['content'] ?? [];
+        if ([] === $content) {
+            return null;
         }
 
-        if (\in_array($choice['finish_reason'], ['stop', 'length'], true)) {
-            return new TextResult($choice['message']['content']);
+        $content = array_pop($content);
+        if ('refusal' === $content['type']) {
+            return new TextResult(\sprintf('Model refused to generate output: %s', $content['refusal']));
         }
 
-        throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finish_reason']));
+        return new TextResult($content['text']);
     }
 
     /**
-     * @param array{
-     *     id: string,
-     *     type: 'function',
-     *     function: array{
-     *         name: string,
-     *         arguments: string
-     *     }
-     * } $toolCall
+     * @param FunctionCall $toolCall
+     *
+     * @throws \JsonException
      */
-    private function convertToolCall(array $toolCall): ToolCall
+    private function convertFunctionCall(array $toolCall): ToolCall
     {
-        $arguments = json_decode($toolCall['function']['arguments'], true, flags: \JSON_THROW_ON_ERROR);
+        $arguments = json_decode($toolCall['arguments'], true, flags: \JSON_THROW_ON_ERROR);
 
-        return new ToolCall($toolCall['id'], $toolCall['function']['name'], $arguments);
+        return new ToolCall($toolCall['id'], $toolCall['name'], $arguments);
     }
 
     /**
@@ -218,5 +215,16 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         return null;
+    }
+
+    /**
+     * @param Reasoning $item
+     */
+    private function convertReasoning(array $item): ?ResultInterface
+    {
+        // Reasoning is sometimes missing if it exceeds the context limit.
+        $summary = $item['summary']['text'] ?? null;
+
+        return $summary ? new TextResult($summary) : null;
     }
 }

@@ -46,13 +46,14 @@ final class ElevenLabsClient implements ModelClientInterface
             return $this->doSpeechToTextRequest($model, $payload);
         }
 
-        $capabilities = $this->retrieveCapabilities($model);
-
-        if (!$capabilities['can_do_text_to_speech']) {
-            throw new InvalidArgumentException(\sprintf('The model "%s" does not support text-to-speech.', $model->getName()));
+        if ($model->supports(Capability::TEXT_TO_SPEECH)) {
+            return $this->doTextToSpeechRequest($model, $payload, [
+                ...$options,
+                ...$model->getOptions(),
+            ]);
         }
 
-        return $this->doTextToSpeechRequest($model, $payload, array_merge($options, $model->getOptions()));
+        throw new InvalidArgumentException(\sprintf('The model "%s" does not support text-to-speech or speech-to-text, please check the model information.', $model->getName()));
     }
 
     /**
@@ -101,27 +102,5 @@ final class ElevenLabsClient implements ModelClientInterface
                 'model_id' => $model->getName(),
             ],
         ]));
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function retrieveCapabilities(Model $model): array
-    {
-        $capabilityResponse = $this->httpClient->request('GET', \sprintf('%s/models', $this->hostUrl), [
-            'headers' => [
-                'xi-api-key' => $this->apiKey,
-            ],
-        ]);
-
-        $models = $capabilityResponse->toArray();
-
-        $currentModelConfiguration = array_filter($models, static fn (array $information): bool => $information['model_id'] === $model->getName());
-
-        if ([] === $currentModelConfiguration) {
-            throw new InvalidArgumentException('The model information could not be retrieved from the ElevenLabs API. Your model might not be supported. Try to use another one.');
-        }
-
-        return reset($currentModelConfiguration);
     }
 }

@@ -30,7 +30,7 @@ final class InMemoryLoader implements LoaderInterface
     ) {
     }
 
-    public function load(?string $source, array $options = []): iterable
+    public function load(?string $source = null, array $options = []): iterable
     {
         yield from $this->documents;
     }

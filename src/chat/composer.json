@@ -17,6 +17,10 @@
         {
             "name": "Oskar Stark",
             "email": "oskarstark@googlemail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
         }
     ],
     "require": {
@@ -26,19 +30,22 @@
     },
     "require-dev": {
         "ext-redis": "*",
+        "doctrine/dbal": "^3.3|^4.0",
+        "mongodb/mongodb": "^1.21|^2.0",
         "phpstan/phpstan": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.13",
         "psr/cache": "^3.0",
-        "symfony/dependency-injection": "^7.3|^8.0",
         "symfony/clock": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
+        "symfony/dependency-injection": "^7.3|^8.0",
         "symfony/http-foundation": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0"
     },
-    "suggest": {
-        "symfony/clock": "To use stores that requires waiting for actions like Meilisearch"
+    "conflict": {
+        "mongodb/mongodb": "<1.21"
     },
+    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Symfony\\AI\\Chat\\": "src/"
@@ -54,10 +61,12 @@
         "sort-packages": true
     },
     "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"
         }
-    },
-    "minimum-stability": "dev"
+    }
 }

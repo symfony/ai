@@ -1,0 +1,6 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    Symfony\AI\Agent\Bridge\Clock\Clock: null

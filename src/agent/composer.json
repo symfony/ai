@@ -16,6 +16,10 @@
         {
             "name": "Oskar Stark",
             "email": "oskarstark@googlemail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
         }
     ],
     "require": {
@@ -33,19 +37,17 @@
         "symfony/type-info": "^7.3|^8.0"
     },
     "require-dev": {
-        "mrmysql/youtube-transcript": "^0.0.5",
         "phpstan/phpstan": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.13",
         "symfony/ai-store": "@dev",
         "symfony/cache": "^7.3|^8.0",
-        "symfony/css-selector": "^7.3|^8.0",
-        "symfony/dom-crawler": "^7.3|^8.0",
         "symfony/event-dispatcher": "^7.3|^8.0",
         "symfony/http-foundation": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0",
         "symfony/translation-contracts": "^3.6"
     },
+    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Symfony\\AI\\Agent\\": "src/"
@@ -62,10 +64,12 @@
         "sort-packages": true
     },
     "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"
         }
-    },
-    "minimum-stability": "dev"
+    }
 }

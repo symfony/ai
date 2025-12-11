@@ -31,9 +31,11 @@ final class SetupStoreCommand extends Command
 {
     /**
      * @param ServiceLocator<ManagedStoreInterface> $stores
+     * @param array<string, mixed>                  $setupStoresOptions
      */
     public function __construct(
         private readonly ServiceLocator $stores,
+        private readonly array $setupStoresOptions = [],
     ) {
         parent::__construct();
     }
@@ -41,14 +43,14 @@ final class SetupStoreCommand extends Command
     public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
     {
         if ($input->mustSuggestArgumentValuesFor('store')) {
-            $suggestions->suggestValues(array_keys($this->stores->getProvidedServices()));
+            $suggestions->suggestValues($this->getStoreNames());
         }
     }
 
     protected function configure(): void
     {
         $this
-            ->addArgument('store', InputArgument::REQUIRED, 'Name of the store to setup')
+            ->addArgument('store', InputArgument::REQUIRED, 'Service name of the store to setup')
             ->setHelp(<<<EOF
 The <info>%command.name%</info> command setups the stores:
 
@@ -62,21 +64,22 @@ EOF
         ;
     }
 
-    protected function initialize(InputInterface $input, OutputInterface $output): void
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        if (0 === \count($this->getStoreNames())) {
+            throw new RuntimeException('No store is configured to be set up.');
+        }
+
         $storeName = $input->getArgument('store');
         if (!$this->stores->has($storeName)) {
-            throw new RuntimeException(\sprintf('The "%s" store does not exist.', $storeName));
+            throw new RuntimeException(\sprintf('The "%s" store does not exist, use "%s".', $storeName, implode('", "', $this->getStoreNames())));
         }
 
         $store = $this->stores->get($storeName);
         if (!$store instanceof ManagedStoreInterface) {
             throw new RuntimeException(\sprintf('The "%s" store does not support setup.', $storeName));
         }
-    }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
         $io = new SymfonyStyle($input, $output);
 
         $storeName = $input->getArgument('store');
@@ -84,12 +87,20 @@ EOF
         $store = $this->stores->get($storeName);
 
         try {
-            $store->setup();
+            $store->setup($this->setupStoresOptions[$storeName] ?? []);
             $io->success(\sprintf('The "%s" store was set up successfully.', $storeName));
         } catch (\Exception $e) {
             throw new RuntimeException(\sprintf('An error occurred while setting up the "%s" store: ', $storeName).$e->getMessage(), previous: $e);
         }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getStoreNames(): array
+    {
+        return array_keys($this->stores->getProvidedServices());
     }
 }

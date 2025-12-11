@@ -26,7 +26,7 @@ final class ResultConverter implements ResultConverterInterface
     public function __construct(
         private readonly ResultConverterInterface $innerConverter,
         private readonly SerializerInterface $serializer,
-        private readonly ?string $outputClass = null,
+        private readonly ?string $outputType = null,
     ) {
     }
 
@@ -44,12 +44,12 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         try {
-            $structure = null === $this->outputClass ? json_decode($innerResult->getContent(), true, flags: \JSON_THROW_ON_ERROR)
-                : $this->serializer->deserialize($innerResult->getContent(), $this->outputClass, 'json');
+            $structure = null === $this->outputType ? json_decode($innerResult->getContent(), true, flags: \JSON_THROW_ON_ERROR)
+                : $this->serializer->deserialize($innerResult->getContent(), $this->outputType, 'json');
         } catch (\JsonException $e) {
             throw new RuntimeException('Cannot json decode the content.', previous: $e);
         } catch (SerializerExceptionInterface $e) {
-            throw new RuntimeException(\sprintf('Cannot deserialize the content into the "%s" class.', $this->outputClass), previous: $e);
+            throw new RuntimeException(\sprintf('Cannot deserialize the content into the "%s" class.', $this->outputType), previous: $e);
         }
 
         $objectResult = new ObjectResult($structure);

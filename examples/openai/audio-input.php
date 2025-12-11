@@ -9,21 +9,19 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Platform\Message\Content\Audio;
-use Symfony\AI\Platform\Message\Message;
-use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Exception\RuntimeException;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-
-$messages = new MessageBag(
-    Message::ofUser(
-        'What is this recording about?',
-        Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'),
-    ),
-);
-$result = $platform->invoke('gpt-4o-audio-preview', $messages);
-
-echo $result->asText().\PHP_EOL;
+throw new RuntimeException('This example is temporarily unavailable due to migration to Responses API (which does not support audio yet).');
+// $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+//
+// $messages = new MessageBag(
+//    Message::ofUser(
+//        'What is this recording about?',
+//        Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'),
+//    ),
+// );
+// $result = $platform->invoke('gpt-4o-audio-preview', $messages);
+//
+// echo $result->asText().\PHP_EOL;

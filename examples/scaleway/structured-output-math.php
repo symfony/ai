@@ -27,6 +27,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),
 );
-$result = $platform->invoke('gpt-oss-120b', $messages, ['output_structure' => MathReasoning::class]);
+$result = $platform->invoke('gpt-oss-120b', $messages, ['response_format' => MathReasoning::class]);
 
 dump($result->asObject());

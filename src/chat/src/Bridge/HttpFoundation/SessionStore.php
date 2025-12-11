@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Chat\Bridge\HttpFoundation;
 
-use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Chat\Exception\RuntimeException;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;

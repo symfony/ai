@@ -209,10 +209,10 @@ final class FactoryTest extends TestCase
                         'additionalProperties' => false,
                     ],
                 ],
-                'confidence' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 100],
                 'finalAnswer' => ['type' => 'string'],
+                'result' => ['type' => 'number'],
             ],
-            'required' => ['steps', 'confidence', 'finalAnswer'],
+            'required' => ['steps', 'finalAnswer', 'result'],
             'additionalProperties' => false,
         ];
 

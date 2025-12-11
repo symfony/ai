@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -49,10 +50,10 @@ final class ModelClient implements ModelClientInterface
             $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent',
         );
 
-        if (isset($options['response_format']['json_schema']['schema'])) {
+        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
             $options['responseMimeType'] = 'application/json';
-            $options['responseJsonSchema'] = $options['response_format']['json_schema']['schema'];
-            unset($options['response_format']);
+            $options['responseJsonSchema'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'];
+            unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
         }
 
         $generationConfig = ['generationConfig' => $options];

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<transcript>
+    <text start="0.0" dur="2.5">Hello and welcome to this video</text>
+    <text start="2.5" dur="3.0">Today we will learn about PHP</text>
+    <text start="5.5" dur="2.0">Thank you for watching</text>
+</transcript>

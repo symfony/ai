@@ -9,7 +9,7 @@ ai:
             platform: 'ai.platform.openai'
             model: 'gpt-4o-mini'
             tools:
-                - 'Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch'
+                - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
                 - service: 'clock'
                   name: 'clock'
                   description: 'Provides the current date and time.'
@@ -24,6 +24,12 @@ ai:
             platform: 'ai.platform.openai'
             model: 'gpt-4o-mini'
             tools: false
+        recipe:
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
+            prompt:
+                text: 'You are a helpful cooking assistant. Provide detailed recipes based on user requests.'
+            tools: false
         wikipedia:
             platform: 'ai.platform.openai'
             model:
@@ -34,9 +40,9 @@ ai:
                 text: 'Please answer the users question based on Wikipedia, only use information provided in the messages.'
                 include_tools: true
             tools:
-                - 'Symfony\AI\Agent\Toolbox\Tool\Wikipedia'
+                - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
             include_sources: true
-        audio:
+        speech:
             platform: 'ai.platform.openai'
             model: 'gpt-4o-mini?temperature=1.0'
             prompt: |
@@ -46,12 +52,14 @@ ai:
                 If you don't know the answer, say so. Keep in mind that you are in a spoken conversation, so keep your
                 answers concise and to the point. They will be read out loud to the user.
             tools:
+                - 'Symfony\AI\Agent\Bridge\Clock\Clock'
                 # Agent in agent 🤯
                 - agent: 'blog'
                   name: 'symfony_blog'
                   description: |
                       Subagent, that can answer questions about latest news around the Symfony Framework, like latest
                       features, events or community news.
+        # Multi-agent setup
         orchestrator:
             platform: 'ai.platform.openai'
             model: 'gpt-4o-mini'
@@ -74,7 +82,7 @@ ai:
                 technical: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
             fallback: 'fallback'
     store:
-        chroma_db:
+        chromadb:
             symfonycon:
                 collection: 'symfony_blog'
     vectorizer:
@@ -91,21 +99,20 @@ ai:
                 - 'Symfony\AI\Store\Document\Transformer\TextSplitTransformer'
                 - 'Symfony\AI\Store\Document\Transformer\TextTrimTransformer'
             vectorizer: 'ai.vectorizer.openai'
-            store: 'ai.store.chroma_db.symfonycon'
+            store: 'ai.store.chromadb.symfonycon'
+    retriever:
+        blog:
+            vectorizer: 'ai.vectorizer.openai'
+            store: 'ai.store.chromadb.symfonycon'
 
 services:
     _defaults:
         autowire: true
         autoconfigure: true
 
-    # Symfony\AI\Agent\Toolbox\Tool\Clock: ~
-    # Symfony\AI\Agent\Toolbox\Tool\OpenMeteo: ~
-    # Symfony\AI\Agent\Toolbox\Tool\SerpApi:
-    #     $apiKey: '%env(SERP_API_KEY)%'
-    Symfony\AI\Agent\Toolbox\Tool\Wikipedia: ~
-    Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch:
+    Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:
         $vectorizer: '@ai.vectorizer.openai'
-        $store: '@ai.store.chroma_db.symfonycon'
+        $store: '@ai.store.chromadb.symfonycon'
 
     Symfony\AI\Store\Document\Loader\RssFeedLoader: ~
     Symfony\AI\Store\Document\Transformer\TextSplitTransformer: ~

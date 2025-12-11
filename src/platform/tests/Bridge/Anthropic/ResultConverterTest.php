@@ -13,10 +13,12 @@ namespace Symfony\AI\Platform\Tests\Bridge\Anthropic;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class ResultConverterTest extends TestCase
 {
@@ -41,5 +43,35 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('toolu_01UM4PcTjC1UDiorSXVHSVFM', $result->getContent()[0]->getId());
         $this->assertSame('xxx_tool', $result->getContent()[0]->getName());
         $this->assertSame(['action' => 'get_data'], $result->getContent()[0]->getArguments());
+    }
+
+    public function testModelNotFoundError()
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse('{"type":"error","error":{"type":"not_found_error","message":"model: claude-3-5-sonnet-20241022"}}'),
+        ]);
+
+        $response = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+        $converter = new ResultConverter();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('API Error [not_found_error]: "model: claude-3-5-sonnet-20241022"');
+
+        $converter->convert(new RawHttpResult($response));
+    }
+
+    public function testUnknownError()
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse('{"type":"error"}'),
+        ]);
+
+        $response = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+        $converter = new ResultConverter();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('API Error [Unknown]: "An unknown error occurred."');
+
+        $converter->convert(new RawHttpResult($response));
     }
 }

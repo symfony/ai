@@ -12,13 +12,20 @@
 namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
+ *
+ * @implements \IteratorAggregate<int, MessageInterface>
  */
-class MessageBag implements \Countable
+class MessageBag implements \Countable, \IteratorAggregate
 {
     use MetadataAwareTrait;
+
+    private AbstractUid&TimeBasedUidInterface $id;
 
     /**
      * @var list<MessageInterface>
@@ -28,6 +35,12 @@ class MessageBag implements \Countable
     public function __construct(MessageInterface ...$messages)
     {
         $this->messages = array_values($messages);
+        $this->id = Uuid::v7();
+    }
+
+    public function getId(): AbstractUid&TimeBasedUidInterface
+    {
+        return $this->id;
     }
 
     public function add(MessageInterface $message): void
@@ -92,9 +105,12 @@ class MessageBag implements \Countable
         return $messages;
     }
 
-    public function prepend(MessageInterface $message): self
+    /**
+     * Clones the MessageBag without previous system message and prepends the given one.
+     */
+    public function withSystemMessage(SystemMessage $message): self
     {
-        $messages = clone $this;
+        $messages = $this->withoutSystemMessage();
         $messages->messages = array_merge([$message], $messages->messages);
 
         return $messages;
@@ -125,5 +141,13 @@ class MessageBag implements \Countable
     public function count(): int
     {
         return \count($this->messages);
+    }
+
+    /**
+     * @return \ArrayIterator<int, MessageInterface>
+     */
+    public function getIterator(): \ArrayIterator
+    {
+        return new \ArrayIterator($this->messages);
     }
 }

@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 /**
  * @author Shaun Johnston <shaun@snj.au>
  */
-final class OllamaMessageChunk
+final class OllamaMessageChunk implements \Stringable
 {
     /**
      * @param array<string, mixed> $message

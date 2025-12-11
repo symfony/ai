@@ -23,19 +23,22 @@
                 <div class="collapse navbar-collapse">
                     <ul class="navbar-nav ms-auto me-2 mb-0 small">
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ path('youtube') }}">{{ ux_icon('bi:youtube', { height: '20px', width: '20px' }) }} YouTube</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('recipe') }}">{{ ux_icon('mdi:cook', { height: '20px', width: '20px' }) }} Recipe</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('wikipedia') }}">{{ ux_icon('mdi:wikipedia', { height: '20px', width: '20px' }) }} Wikipedia</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ path('blog') }}">{{ ux_icon('mdi:symfony', { height: '20px', width: '20px' }) }} Symfony Blog</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ path('youtube') }}">{{ ux_icon('bi:youtube', { height: '20px', width: '20px' }) }} YouTube Transcript</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ path('wikipedia') }}">{{ ux_icon('mdi:wikipedia', { height: '20px', width: '20px' }) }} Wikipedia Research</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ path('crop') }}">{{ ux_icon('material-symbols:crop', { height: '20px', width: '20px' }) }} Smart Crop</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ path('audio') }}">{{ ux_icon('iconoir:microphone-solid', { height: '20px', width: '20px' }) }} Audio</a>
+                            <a class="nav-link" href="{{ path('speech') }}">{{ ux_icon('iconoir:microphone-solid', { height: '20px', width: '20px' }) }} Speech</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ path('video') }}">{{ ux_icon('tabler:video-filled', { height: '20px', width: '20px' }) }} Video</a>

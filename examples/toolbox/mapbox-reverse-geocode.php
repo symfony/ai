@@ -10,8 +10,8 @@
  */
 
 use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\Bridge\Mapbox\Mapbox;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
-use Symfony\AI\Agent\Toolbox\Tool\Mapbox;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
