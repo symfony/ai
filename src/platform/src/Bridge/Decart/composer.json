@@ -37,9 +37,6 @@
         }
     },
     "config": {
-        "allow-plugins": {
-            "php-http/discovery": true
-        },
         "sort-packages": true
     },
     "extra": {
