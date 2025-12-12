@@ -19,6 +19,8 @@ use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Probots\Pinecone\Client as PineconeClient;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
@@ -32,6 +34,8 @@ use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsApiCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
+use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
+use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\CachedPlatform;
 use Symfony\AI\Platform\Capability;
@@ -85,6 +89,8 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AiBundleTest extends TestCase
@@ -3948,6 +3954,62 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => ModelCatalogInterface::class]], $modelCatalogDefinition->getTag('proxy'));
     }
 
+    public function testFailoverPlatformCanBeCreated()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'host_url' => 'http://127.0.0.1:11434',
+                    ],
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'failover' => [
+                        'main' => [
+                            'platforms' => [
+                                'ai.platform.ollama',
+                                'ai.platform.openai',
+                            ],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.failover.main'));
+
+        $definition = $container->getDefinition('ai.platform.failover.main');
+
+        $this->assertSame([
+            FailoverPlatformFactory::class,
+            'create',
+        ], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+        $this->assertSame(FailoverPlatform::class, $definition->getClass());
+
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(2, $definition->getArgument(0));
+        $this->assertEquals([
+            new Reference('ai.platform.ollama'),
+            new Reference('ai.platform.openai'),
+        ], $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('limiter.failover_platform', (string) $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame(LoggerInterface::class, (string) $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'failover']], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $main'));
+    }
+
     public function testOpenAiPlatformWithDefaultRegion()
     {
         $container = $this->buildContainer([
@@ -7086,6 +7148,16 @@ class AiBundleTest extends TestCase
         $container->setParameter('kernel.build_dir', 'public');
         $container->setDefinition(ClockInterface::class, new Definition(MonotonicClock::class));
         $container->setDefinition('async_aws.client.bedrock_us', new Definition(BedrockRuntimeClient::class));
+        $container->setDefinition(LoggerInterface::class, new Definition(NullLogger::class));
+        $container->setDefinition('limiter.failover_platform', new Definition(RateLimiterFactory::class, [
+            [
+                'policy' => 'sliding_window',
+                'id' => 'test',
+                'interval' => '60 seconds',
+                'limit' => 1,
+            ],
+            new Definition(InMemoryStorage::class),
+        ]));
 
         $extension = (new AiBundle())->getContainerExtension();
         $extension->load($configuration, $container);
@@ -7146,6 +7218,15 @@ class AiBundleTest extends TestCase
                     'elevenlabs' => [
                         'host' => 'https://api.elevenlabs.io/v1',
                         'api_key' => 'elevenlabs_key_full',
+                    ],
+                    'failover' => [
+                        'main' => [
+                            'platforms' => [
+                                'ai.platform.ollama',
+                                'ai.platform.openai',
+                            ],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
                     ],
                     'gemini' => [
                         'api_key' => 'gemini_key_full',
