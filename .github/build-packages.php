@@ -49,9 +49,6 @@ foreach ($finder as $composerFile) {
             $repositories[] = [
                 'type' => 'path',
                 'url' => $packageInfo['path'],
-                'options' => [
-                    'symlink' => false,
-                ],
             ];
             $key = isset($packageData['require'][$packageName]) ? 'require' : 'require-dev';
             $packageData[$key][$packageName] = '@dev';
