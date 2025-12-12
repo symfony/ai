@@ -116,10 +116,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
     {
         return [
             'class' => $this->collection,
-            'id' => $document->id->toRfc4122(),
+            'id' => $document->id,
             'vector' => $document->vector->getData(),
             'properties' => [
-                'uuid' => $document->id->toRfc4122(),
+                'uuid' => $document->id,
                 'vector' => $document->vector->getData(),
                 '_metadata' => json_encode($document->metadata->getArrayCopy()),
             ],
@@ -137,6 +137,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ? new NullVector()
             : new Vector($data['vector']);
 
-        return new VectorDocument(Uuid::fromString($id), $vector, new Metadata(json_decode($data['_metadata'], true)));
+        return new VectorDocument($id, $vector, new Metadata(json_decode($data['_metadata'], true)));
     }
 }
