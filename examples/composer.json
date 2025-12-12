@@ -82,6 +82,10 @@
         },
         {
             "type": "path",
+            "url": "../src/platform/src/Bridge/Meta"
+        },
+        {
+            "type": "path",
             "url": "../src/platform/src/Bridge/Mistral"
         },
         {
@@ -147,6 +151,7 @@
         "symfony/ai-manticore-search-store": "@dev",
         "symfony/ai-maria-db-store": "@dev",
         "symfony/ai-meilisearch-store": "@dev",
+        "symfony/ai-meta-platform": "@dev",
         "symfony/ai-milvus-store": "@dev",
         "symfony/ai-mistral-platform": "@dev",
         "symfony/ai-mongo-db-store": "@dev",
