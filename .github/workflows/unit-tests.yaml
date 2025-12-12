@@ -106,14 +106,4 @@ jobs:
               run: |
                   source .github/workflows/.utils.sh
 
-                  if [ "${{ matrix.dependency-version }}" = "lowest" ]; then
-                      # Run sequentially for lowest to see where it fails
-                      for pkg in $PACKAGES; do
-                          echo "========================================"
-                          echo "Testing: $pkg"
-                          echo "========================================"
-                          (cd src/$pkg && $COMPOSER_UP && $PHPUNIT)
-                      done
-                  else
-                      echo "$PACKAGES" | xargs -n1 | parallel -j +3 "_run_task {} '(cd src/{} && $COMPOSER_UP && $PHPUNIT)'"
-                  fi
+                  echo "$PACKAGES" | xargs -n1 | parallel -j +3 "_run_task {} '(cd src/{} && $COMPOSER_UP && $PHPUNIT)'"
