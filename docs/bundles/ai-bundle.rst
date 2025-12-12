@@ -423,6 +423,14 @@ Then configure the prompt with translation enabled:
 The system prompt text will be automatically translated using the configured translator service.
 If no translation domain is specified, the default domain will be used.
 
+Message Template Support
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Platform's feature for using message templates is set up by the bundle, and conditionally also registers the
+expression language support if the `symfony/expression-language` package is installed.
+
+More about message templates can be found in the :doc:`Platform documentation <components/platform>`.
+
 Memory Provider Configuration
 -----------------------------
 
