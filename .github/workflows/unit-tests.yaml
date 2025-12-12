@@ -50,8 +50,8 @@ jobs:
                   echo PHPUNIT='vendor/bin/phpunit' >> $GITHUB_ENV
                   [ 'lowest' = '${{ matrix.dependency-version }}' ] && export SYMFONY_DEPRECATIONS_HELPER=weak
 
-                  # Skip platform bridges (except Generic, OpenRouter, LmStudio) until packages are published
-                  PACKAGES=$(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -printf '%h\n' | sed 's/^src\///' | grep -Ev "examples|platform/src/Bridge/(AiMlApi|Albert|Anthropic|Azure|Bedrock|Cartesia|Cerebras|Decart|DeepSeek|DockerModelRunner|ElevenLabs|Gemini|HuggingFace|Meta|Mistral|Ollama|OpenAi|Perplexity|Replicate|Scaleway|TransformersPhp|VertexAi|Voyage)" | sort |  tr '\n' ' ')
+                  # Skip platform bridges (except Generic, OpenRouter, LmStudio, Anthropic) until packages are published
+                  PACKAGES=$(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -printf '%h\n' | sed 's/^src\///' | grep -Ev "examples|platform/src/Bridge/(AiMlApi|Albert|Azure|Bedrock|Cartesia|Cerebras|Decart|DeepSeek|DockerModelRunner|ElevenLabs|Gemini|HuggingFace|Meta|Mistral|Ollama|OpenAi|Perplexity|Replicate|Scaleway|TransformersPhp|VertexAi|Voyage)" | sort |  tr '\n' ' ')
                   echo "Packages: $PACKAGES"
                   echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
