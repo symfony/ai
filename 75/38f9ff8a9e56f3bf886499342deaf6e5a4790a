@@ -1,0 +1,107 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-29T10:43:53Z
+
+Thanks for this @wachterjohannes - would really love to get this in :pray:
+
+two things that we need to sort here:
+1. is it a standalone component? for that we need to sort how we would use and render the template with the Message & Platform
+2. terminology: we currently don't use the terminology "prompt", but "message" - i'd prefer to go with that here as well like `MessageTemplate`
+
+we could have something like:
+```php
+$template = new Symfony\AI\Platform\Message\Template::expression('Total: {price * quantity}');
+$message = Message::forSystem($template);
+$messages = new MessageBag($message);
+
+$result = $platform->invoke('gpt-4o-mini', $messages, [
+    'template_vars' => ['price' => 10, 'quantity' => 5],
+]);
+```
+
+and later - while serializing - take care of the rendering - potentially throw an error on unsupported types.
+
+with type being only a string instead of a renderer instance + named construct for promoted use:
+```php
+class Template
+{
+    public function __construct(
+        private string $template,
+        private string $type,
+    ) { }
+
+    public static function string(string $template): self;
+    public static function expression(string $template): self;
+    public static function twig(string $template): self
+    {
+        return new self($template, 'twig');
+    }
+}
+
+```
+
+WDYT?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-11-29T13:40:21Z
+
+@chr-hertel in my opinion an own component makes sense as it is totally independent to the other component and as  you mentioned we could integrate it into the agent and platform. @OskarStark what do you think.
+
+Regarding the renaming - makes totally sense and i will do that when the decission over the component is final :)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-29T13:44:27Z
+
+My thinking always is: API first, then implementation, then slicing. That's why i would delay that component discussion.
+
+Templates alone are not valuable, they need an integration into the Message I'd say
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-11-29T14:29:27Z
+
+@chr-hertel both are absolutly thru statements :) so let us wait for feedback from @OskarStark
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-07T21:25:28Z
+
+Lets go with the platform component first 👍
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-07T21:27:57Z
+
+@OskarStark that was luck 😂 pushed a few minutes ago!
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-08T19:52:52Z
+
+@chr-hertel fixed your comments
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-09T19:33:38Z
+
+@chr-hertel hopefully all fixed now :)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-12T19:25:54Z
+
+TemplateRendererRegistry is better that Chained.... imho
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-12T19:27:51Z
+
+No need for 03- prefix etc in the example filenames
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-12T19:51:14Z
+
+@OskarStark yeah your right - just changed that - you can take another look
