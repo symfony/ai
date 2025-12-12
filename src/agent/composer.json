@@ -1,18 +1,5 @@
 {
     "name": "symfony/ai-agent",
-    "repositories": [
-        { "type": "path", "url": "src/Bridge/Brave" },
-        { "type": "path", "url": "src/Bridge/Clock" },
-        { "type": "path", "url": "src/Bridge/Firecrawl" },
-        { "type": "path", "url": "src/Bridge/Mapbox" },
-        { "type": "path", "url": "src/Bridge/OpenMeteo" },
-        { "type": "path", "url": "src/Bridge/Scraper" },
-        { "type": "path", "url": "src/Bridge/SerpApi" },
-        { "type": "path", "url": "src/Bridge/SimilaritySearch" },
-        { "type": "path", "url": "src/Bridge/Tavily" },
-        { "type": "path", "url": "src/Bridge/Wikipedia" },
-        { "type": "path", "url": "src/Bridge/Youtube" }
-    ],
     "description": "PHP library for building agentic applications.",
     "license": "MIT",
     "type": "library",
