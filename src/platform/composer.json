@@ -65,6 +65,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.46",
+        "symfony/ai-agent": "@dev",
         "symfony/cache": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
         "symfony/dotenv": "^7.3|^8.0",

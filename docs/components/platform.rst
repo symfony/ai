@@ -544,6 +544,70 @@ Thanks to Symfony's Cache component, platform calls can be cached to reduce call
 
     echo $secondResult->getContent().\PHP_EOL;
 
+High Availability
+-----------------
+
+As most platform exposes a REST API, errors can occurs during generation phase due to network issues, timeout and more.
+
+To prevent exceptions at the application level and allows to keep a smooth experience for end users,
+the :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform` can be used to automatically call a backup platform::
+
+    use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
+    use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\Component\RateLimiter\RateLimiterFactory;
+    use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
+
+    $rateLimiter = new RateLimiterFactory([
+        'policy' => 'sliding_window',
+        'id' => 'failover',
+        'interval' => '3 seconds',
+        'limit' => 1,
+    ], new InMemoryStorage());
+
+    // # Ollama will fail as 'gpt-4o' is not available in the catalog
+    $platform = new FailoverPlatform([
+        OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), http_client()),
+        OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), http_client()),
+    ], $rateLimiter);
+
+    $result = $platform->invoke('gpt-4o', new MessageBag(
+        Message::forSystem('You are a helpful assistant.'),
+        Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
+    ));
+
+    echo $result->asText().\PHP_EOL;
+
+This platform can also be configured when using the bundle::
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openai:
+                # ...
+            ollama:
+                # ...
+            failover:
+                ollama_to_openai:
+                    platforms:
+                        - 'ai.platform.ollama'
+                        - 'ai.platform.openai'
+                    rate_limiter: 'limiter.failover_platform'
+
+    # config/packages/rate_limiter.yaml
+    framework:
+        rate_limiter:
+            failover_platform:
+                policy: 'sliding_window'
+                limit: 100
+                interval: '60 minutes'
+
+.. note::
+
+    Platforms are executed in the order they're injected into :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform`.
+
 Testing Tools
 -------------
 

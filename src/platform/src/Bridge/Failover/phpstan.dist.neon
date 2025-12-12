@@ -1,0 +1,23 @@
+includes:
+    - ../../../../../.phpstan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - .
+        - Tests/
+    excludePaths:
+        - vendor/
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        -
+            message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
+            reportUnmatched: false
+        -
+            identifier: missingType.iterableValue
+            path: Tests/*
+            reportUnmatched: false
+        -
+            identifier: 'symfonyAi.forbidNativeException'
+            path: Tests/*
+            reportUnmatched: false
