@@ -100,7 +100,7 @@ jobs:
                   echo "$SYMFONY_REQUIRE"
                   echo ""
                   echo "=== Packages to test ==="
-                  echo "$PACKAGES" | tr ' ' '\n' | grep -v '^$'
+                  echo "$PACKAGES"
 
             - name: Run packages tests
               run: |
