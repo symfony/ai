@@ -84,24 +84,6 @@ jobs:
             - name: Build root packages
               run: php .github/build-packages.php
 
-            - name: Debug environment (lowest only)
-              if: matrix.dependency-version == 'lowest'
-              run: |
-                  echo "=== PHP Version ==="
-                  php -v
-                  echo ""
-                  echo "=== Composer Version ==="
-                  composer --version
-                  echo ""
-                  echo "=== COMPOSER_UP command ==="
-                  echo "$COMPOSER_UP"
-                  echo ""
-                  echo "=== SYMFONY_REQUIRE ==="
-                  echo "$SYMFONY_REQUIRE"
-                  echo ""
-                  echo "=== Packages to test ==="
-                  echo "$PACKAGES"
-
             - name: Run packages tests
               run: |
                   source .github/workflows/.utils.sh
