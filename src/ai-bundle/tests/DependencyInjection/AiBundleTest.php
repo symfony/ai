@@ -18,6 +18,8 @@ use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Probots\Pinecone\Client as PineconeClient;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
@@ -34,6 +36,7 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformF
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
+use Symfony\AI\Platform\FailoverPlatform;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
@@ -74,6 +77,8 @@ use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\RetrieverInterface;
 use Symfony\AI\Store\StoreInterface;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -4016,6 +4021,133 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => ModelCatalogInterface::class]], $modelCatalogDefinition->getTag('proxy'));
     }
 
+    public function testFailoverPlatformCanBeCreated()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'host_url' => 'http://127.0.0.1:11434',
+                    ],
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'failover' => [
+                        'platforms' => [
+                            'ai.platform.ollama',
+                            'ai.platform.openai',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.failover'));
+
+        $definition = $container->getDefinition('ai.platform.failover');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertSame(FailoverPlatform::class, $definition->getClass());
+
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(2, $definition->getArgument(0));
+        $this->assertEquals([
+            new Reference('ai.platform.ollama'),
+            new Reference('ai.platform.openai'),
+        ], $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertSame(60, $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame(LoggerInterface::class, (string) $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'failover']], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $failover'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'host_url' => 'http://127.0.0.1:11434',
+                    ],
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'failover' => [
+                        'platforms' => [
+                            'ai.platform.ollama',
+                            'ai.platform.openai',
+                        ],
+                        'retry_period' => 120,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.failover'));
+
+        $definition = $container->getDefinition('ai.platform.failover');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertSame(FailoverPlatform::class, $definition->getClass());
+
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(2, $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertSame(120, $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame(LoggerInterface::class, (string) $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'failover']], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $failover'));
+    }
+
+    #[TestDox('Token usage processor tags use the correct agent ID')]
+    public function testTokenUsageProcessorTags()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test_key',
+                    ],
+                ],
+                'agent' => [
+                    'tracked_agent' => [
+                        'platform' => 'ai.platform.openai',
+                        'model' => 'gpt-4',
+                        'track_token_usage' => true,
+                    ],
+                ],
+            ],
+        ]);
+
+        $agentId = 'ai.agent.tracked_agent';
+
+        // Token usage processor must exist for OpenAI platform
+        $tokenUsageProcessor = $container->getDefinition('ai.platform.token_usage_processor.openai');
+        $outputTags = $tokenUsageProcessor->getTag('ai.agent.output_processor');
+
+        $foundTag = false;
+        foreach ($outputTags as $tag) {
+            if (($tag['agent'] ?? '') === $agentId) {
+                $foundTag = true;
+                break;
+            }
+        }
+
+        $this->assertTrue($foundTag, 'Token usage processor should have output tag with full agent ID');
+    }
+
     public function testOpenAiPlatformWithDefaultRegion()
     {
         $container = $this->buildContainer([
@@ -6987,6 +7119,8 @@ class AiBundleTest extends TestCase
         $container->setParameter('kernel.debug', true);
         $container->setParameter('kernel.environment', 'dev');
         $container->setParameter('kernel.build_dir', 'public');
+        $container->setDefinition(ClockInterface::class, new Definition(MonotonicClock::class));
+        $container->setDefinition(LoggerInterface::class, new Definition(NullLogger::class));
 
         $extension = (new AiBundle())->getContainerExtension();
         $extension->load($configuration, $container);
@@ -7041,6 +7175,13 @@ class AiBundleTest extends TestCase
                     'elevenlabs' => [
                         'host' => 'https://api.elevenlabs.io/v1',
                         'api_key' => 'elevenlabs_key_full',
+                    ],
+                    'failover' => [
+                        'platforms' => [
+                            'ai.platform.ollama',
+                            'ai.platform.openai',
+                        ],
+                        'retry_period' => 120,
                     ],
                     'gemini' => [
                         'api_key' => 'gemini_key_full',

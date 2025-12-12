@@ -13,6 +13,7 @@ namespace Symfony\AI\AiBundle;
 
 use Google\Auth\ApplicationDefaultCredentials;
 use Google\Auth\FetchAuthTokenInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
@@ -76,6 +77,7 @@ use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
 use Symfony\AI\Platform\CachedPlatform;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FailoverPlatform;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -478,6 +480,27 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.'.$type),
                     null,
                     new Reference('event_dispatcher'),
+                ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform', ['name' => $type]);
+
+            $container->setDefinition('ai.platform.'.$type, $definition);
+            $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type);
+
+            return;
+        }
+
+        if ('failover' === $type) {
+            $definition = (new Definition(FailoverPlatform::class))
+                ->setLazy(true)
+                ->setArguments([
+                    array_map(
+                        static fn (string $platform): Reference => new Reference($platform),
+                        $platform['platforms'],
+                    ),
+                    new Reference(ClockInterface::class),
+                    $platform['retry_period'],
+                    new Reference(LoggerInterface::class),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform', ['name' => $type]);
