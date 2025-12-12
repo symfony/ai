@@ -51,7 +51,7 @@ jobs:
                   [ 'lowest' = '${{ matrix.dependency-version }}' ] && export SYMFONY_DEPRECATIONS_HELPER=weak
 
                   # Skip platform bridges until packages are published
-                  PACKAGES=$(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -printf '%h\n' | sed 's/^src\///' | grep -Ev "examples|platform/src/Bridge/(Azure|Bedrock|Cartesia|Cerebras|Decart|DeepSeek|DockerModelRunner|ElevenLabs|Gemini|HuggingFace|Meta|Mistral|Ollama|OpenAi|Perplexity|Replicate|Scaleway|TransformersPhp|VertexAi|Voyage)" | sort |  tr '\n' ' ')
+                  PACKAGES=$(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -printf '%h\n' | sed 's/^src\///' | grep -Ev "examples|platform/src/Bridge/(Bedrock|Cartesia|Cerebras|Decart|DeepSeek|DockerModelRunner|ElevenLabs|Gemini|HuggingFace|Meta|Mistral|Ollama|OpenAi|Perplexity|Replicate|Scaleway|TransformersPhp|VertexAi|Voyage)" | sort |  tr '\n' ' ')
                   echo "Packages: $PACKAGES"
                   echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
