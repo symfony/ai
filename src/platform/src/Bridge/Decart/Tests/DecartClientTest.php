@@ -52,12 +52,10 @@ final class DecartClientTest extends TestCase
 
     public function testClientCanGenerateTextToImage()
     {
-        $normalizer = new ImageNormalizer();
-
-        $payload = $normalizer->normalize(Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg'));
+        $imageContent = file_get_contents(\dirname(__DIR__, 6).'/fixtures/image.jpg');
 
         $httpClient = new MockHttpClient([
-            new MockResponse($payload),
+            new MockResponse($imageContent, ['response_headers' => ['content-type' => 'image/jpeg']]),
         ]);
 
         $client = new DecartClient(
@@ -74,12 +72,10 @@ final class DecartClientTest extends TestCase
 
     public function testClientCanGenerateTextToVideo()
     {
-        $normalizer = new VideoNormalizer();
-
-        $payload = $normalizer->normalize(Video::fromFile(\dirname(__DIR__, 6).'/fixtures/ocean.mp4'));
+        $videoContent = file_get_contents(\dirname(__DIR__, 6).'/fixtures/ocean.mp4');
 
         $httpClient = new MockHttpClient([
-            new MockResponse($payload),
+            new MockResponse($videoContent, ['response_headers' => ['content-type' => 'video/mp4']]),
         ]);
 
         $client = new DecartClient(
@@ -97,11 +93,12 @@ final class DecartClientTest extends TestCase
     public function testClientCanGenerateImageToImage()
     {
         $normalizer = new ImageNormalizer();
+        $imageContent = file_get_contents(\dirname(__DIR__, 6).'/fixtures/image.jpg');
 
         $payload = $normalizer->normalize(Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg'));
 
         $httpClient = new MockHttpClient([
-            new MockResponse($payload),
+            new MockResponse($imageContent, ['response_headers' => ['content-type' => 'image/jpeg']]),
         ]);
 
         $client = new DecartClient(
@@ -119,13 +116,12 @@ final class DecartClientTest extends TestCase
     public function testClientCanGenerateImageToVideo()
     {
         $normalizer = new ImageNormalizer();
-        $videoNormalizer = new VideoNormalizer();
+        $videoContent = file_get_contents(\dirname(__DIR__, 6).'/fixtures/ocean.mp4');
 
         $payload = $normalizer->normalize(Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg'));
-        $responsePayload = $videoNormalizer->normalize(Video::fromFile(\dirname(__DIR__, 6).'/fixtures/ocean.mp4'));
 
         $httpClient = new MockHttpClient([
-            new MockResponse($responsePayload),
+            new MockResponse($videoContent, ['response_headers' => ['content-type' => 'video/mp4']]),
         ]);
 
         $client = new DecartClient(
@@ -143,11 +139,12 @@ final class DecartClientTest extends TestCase
     public function testClientCanGenerateVideoToVideo()
     {
         $normalizer = new VideoNormalizer();
+        $videoContent = file_get_contents(\dirname(__DIR__, 6).'/fixtures/ocean.mp4');
 
         $payload = $normalizer->normalize(Video::fromFile(\dirname(__DIR__, 6).'/fixtures/ocean.mp4'));
 
         $httpClient = new MockHttpClient([
-            new MockResponse($payload),
+            new MockResponse($videoContent, ['response_headers' => ['content-type' => 'video/mp4']]),
         ]);
 
         $client = new DecartClient(
