@@ -27,9 +27,10 @@ jobs:
                 dependency-version: ['']
                 symfony-version: ['']
                 include:
+                    # TODO: Uncomment once all platform bridge packages are published and at least one tag exists
                     # lowest deps
-                    -   php-version: '8.2'
-                        dependency-version: 'lowest'
+                    # -   php-version: '8.2'
+                    #     dependency-version: 'lowest'
                     # Symfony 7.4 LTS
                     -   php-version: '8.2'
                         symfony-version: '7.4.*'
