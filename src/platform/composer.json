@@ -81,7 +81,6 @@
         "psr-4": {
             "Symfony\\AI\\Platform\\": "src/"
         }
-
     },
     "autoload-dev": {
         "psr-4": {
