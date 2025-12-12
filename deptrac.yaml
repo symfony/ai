@@ -96,7 +96,11 @@ deptrac:
     - name: PlatformComponent
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Platform.*
+          value: ^Symfony\\AI\\Platform\\(?!Bridge\\).*
+    - name: GenericPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Generic\\.*
     - name: StoreComponent
       collectors:
         - type: classLike
@@ -242,6 +246,8 @@ deptrac:
       - ChatComponent
       - PlatformComponent
     PlatformComponent: ~
+    GenericPlatform:
+      - PlatformComponent
     StoreComponent:
       - PlatformComponent
     AzureSearchStore:

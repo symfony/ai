@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\Generic\Completions;
+namespace Symfony\AI\Platform\Bridge\Generic\Tests\Completions;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter;

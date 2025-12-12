@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\Generic\Embeddings;
+namespace Symfony\AI\Platform\Bridge\Generic\Tests\Embeddings;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\Embeddings\ResultConverter;

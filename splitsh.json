@@ -18,7 +18,10 @@
         "ai-bundle": "src/ai-bundle",
         "ai-chat": "src/chat",
         "mcp-bundle": "src/mcp-bundle",
-        "ai-platform": "src/platform",
+        "ai-platform": {
+            "prefixes": [{ "from": "src/platform", "to": "", "excludes": ["src/Bridge"] }]
+        },
+        "ai-generic-platform": "src/platform/src/Bridge/Generic",
         "ai-store": {
             "prefixes": [{ "from": "src/store", "to": "", "excludes": ["src/Bridge"] }]
         },
