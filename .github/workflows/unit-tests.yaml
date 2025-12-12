@@ -50,8 +50,8 @@ jobs:
                   echo PHPUNIT='vendor/bin/phpunit' >> $GITHUB_ENV
                   [ 'lowest' = '${{ matrix.dependency-version }}' ] && export SYMFONY_DEPRECATIONS_HELPER=weak
 
-                  # Skip bridges that depend on unpublished packages (symfony/ai-generic-platform)
-                  PACKAGES=$(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -printf '%h\n' | sed 's/^src\///' | grep -Ev "examples|platform/src/Bridge/OpenRouter|platform/src/Bridge/LmStudio" | sort |  tr '\n' ' ')
+                  # Skip platform bridges (except Generic) until packages are published
+                  PACKAGES=$(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -printf '%h\n' | sed 's/^src\///' | grep -Ev "examples|platform/src/Bridge/(AiMlApi|Albert|Anthropic|Azure|Bedrock|Cartesia|Cerebras|Decart|DeepSeek|DockerModelRunner|ElevenLabs|Gemini|HuggingFace|LmStudio|Meta|Mistral|Ollama|OpenAi|OpenRouter|Perplexity|Replicate|Scaleway|TransformersPhp|VertexAi|Voyage)" | sort |  tr '\n' ' ')
                   echo "Packages: $PACKAGES"
                   echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
