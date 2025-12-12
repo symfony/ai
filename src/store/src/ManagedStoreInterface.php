@@ -21,5 +21,5 @@ interface ManagedStoreInterface
      */
     public function setup(array $options = []): void;
 
-    public function drop(): void;
+    public function drop(array $options = []): void;
 }

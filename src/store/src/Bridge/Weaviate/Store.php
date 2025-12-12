@@ -78,7 +78,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
-    public function drop(): void
+    public function drop(array $options = []): void
     {
         $this->request('DELETE', \sprintf('v1/schema/%s', $this->collection), []);
     }

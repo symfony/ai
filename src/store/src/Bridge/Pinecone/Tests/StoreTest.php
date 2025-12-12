@@ -13,6 +13,8 @@ namespace Symfony\AI\Store\Bridge\Pinecone\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Probots\Pinecone\Client;
+use Probots\Pinecone\Resources\Control\IndexResource;
+use Probots\Pinecone\Resources\ControlResource;
 use Probots\Pinecone\Resources\Data\VectorResource;
 use Probots\Pinecone\Resources\DataResource;
 use Saloon\Http\Response;
@@ -24,6 +26,76 @@ use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
 {
+    public function testStoreCantSetupWithInvalidOptions()
+    {
+        $pinecone = $this->createMock(Client::class);
+        $store = new Store($pinecone);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $store->setup();
+    }
+
+    public function testStoreCanSetup()
+    {
+        $pinecone = $this->createMock(Client::class);
+        $indexResource = $this->createMock(IndexResource::class);
+        $controlResource = $this->createMock(ControlResource::class);
+
+        $pinecone->expects($this->once())
+            ->method('control')
+            ->willReturn($controlResource);
+
+        $controlResource->expects($this->once())
+            ->method('index')
+            ->with('test-index')
+            ->willReturn($indexResource);
+
+        $indexResource->expects($this->once())
+            ->method('createServerless')
+            ->with(1536, null, null, null);
+
+        $store = new Store($pinecone);
+        $store->setup([
+            'indexName' => 'test-index',
+            'dimension' => 1536,
+        ]);
+    }
+
+    public function testStoreCantDropWithInvalidOptions()
+    {
+        $pinecone = $this->createMock(Client::class);
+        $store = new Store($pinecone);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $store->drop();
+    }
+
+    public function testStoreCanDrop()
+    {
+        $pinecone = $this->createMock(Client::class);
+        $indexResource = $this->createMock(IndexResource::class);
+        $controlResource = $this->createMock(ControlResource::class);
+
+        $pinecone->expects($this->once())
+            ->method('control')
+            ->willReturn($controlResource);
+
+        $controlResource->expects($this->once())
+            ->method('index')
+            ->with('test-index')
+            ->willReturn($indexResource);
+
+        $indexResource->expects($this->once())
+            ->method('delete');
+
+        $store = new Store($pinecone);
+        $store->drop([
+            'indexName' => 'test-index',
+        ]);
+    }
+
     public function testAddSingleDocument()
     {
         $vectorResource = $this->createMock(VectorResource::class);
