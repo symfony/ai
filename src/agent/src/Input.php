@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent;
 
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -25,6 +26,7 @@ final class Input
         private string $model,
         private MessageBag $messageBag,
         private array $options = [],
+        private ?PlatformInterface $platform = null,
     ) {
     }
 
@@ -62,5 +64,15 @@ final class Input
     public function setOptions(array $options): void
     {
         $this->options = $options;
+    }
+
+    public function getPlatform(): ?PlatformInterface
+    {
+        return $this->platform;
+    }
+
+    public function setPlatform(PlatformInterface $platform): void
+    {
+        $this->platform = $platform;
     }
 }
