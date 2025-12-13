@@ -63,3 +63,7 @@ body {
         }
     }
 }
+
+.timeline .bot-message img {
+    max-width: 500px;
+}

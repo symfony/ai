@@ -4,6 +4,17 @@ ai:
             api_key: '%env(OPENAI_API_KEY)%'
         huggingface:
             api_key: '%env(HUGGINGFACE_API_KEY)%'
+    mcp:
+        graphify:
+            transport: sse
+            url: 'https://agents-mcp-hackathon-graphify.hf.space/gradio_api/mcp/sse'
+            tools:
+                - 'Graphify_generate_timeline_diagram'
+        city:
+            transport: sse
+            url: 'https://kingabzpro-live-city-mcp.hf.space/gradio_api/mcp/sse'
+            tools:
+                - 'live_city_mcp_get_city_news'
     agent:
         blog:
             platform: 'ai.platform.openai'
@@ -75,6 +86,17 @@ ai:
             model: 'gpt-4o-mini'
             prompt: 'You are a helpful general assistant. Assist users with any questions or tasks they may have.'
             tools: false
+        timeline:
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
+            prompt: |
+                You are a news timeline generator. When the user asks about a city:
+                1) First use live_city_mcp_get_city_news to fetch news for that city
+                2) Then use Graphify_generate_timeline_diagram with this JSON format:
+                {"title": "News from [City]", "events_per_row": 3, "events": [{"id": "1", "label": "Short title", "date": "2024-12-13"}]}
+            tools:
+                - 'ai.mcp.toolbox.graphify'
+                - 'ai.mcp.toolbox.city'
     multi_agent:
         support:
             orchestrator: 'orchestrator'

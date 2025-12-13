@@ -17,6 +17,11 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Bridge\Mcp\McpClient;
+use Symfony\AI\Agent\Bridge\Mcp\McpToolbox;
+use Symfony\AI\Agent\Bridge\Mcp\Transport\HttpTransport;
+use Symfony\AI\Agent\Bridge\Mcp\Transport\SseTransport;
+use Symfony\AI\Agent\Bridge\Mcp\Transport\StdioTransport;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -30,6 +35,7 @@ use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
+use Symfony\AI\AiBundle\DependencyInjection\ToolboxCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
@@ -142,6 +148,7 @@ final class AiBundle extends AbstractBundle
         parent::build($container);
 
         $container->addCompilerPass(new ProcessorCompilerPass());
+        $container->addCompilerPass(new ToolboxCompilerPass());
     }
 
     public function configure(DefinitionConfigurator $definition): void
@@ -277,6 +284,10 @@ final class AiBundle extends AbstractBundle
         }
         if (1 === \count($config['retriever'] ?? []) && isset($retrieverName)) {
             $builder->setAlias(RetrieverInterface::class, 'ai.retriever.'.$retrieverName);
+        }
+
+        foreach ($config['mcp'] ?? [] as $mcpName => $mcp) {
+            $this->processMcpConfig($mcpName, $mcp, $builder);
         }
 
         $builder->registerAttributeForAutoconfiguration(AsTool::class, static function (ChildDefinition $definition, AsTool $attribute): void {
@@ -2085,5 +2096,65 @@ final class AiBundle extends AbstractBundle
 
         $definition = $builder->getDefinition($modelCatalogId);
         $definition->setArguments([$additionalModels]);
+    }
+
+    /**
+     * Process MCP server configuration.
+     *
+     * Creates transport, client, and toolbox services for each MCP server.
+     *
+     * @param array<string, mixed> $config
+     */
+    private function processMcpConfig(string $name, array $config, ContainerBuilder $container): void
+    {
+        $transportId = 'ai.mcp.transport.'.$name;
+        $clientId = 'ai.mcp.client.'.$name;
+        $toolboxId = 'ai.mcp.toolbox.'.$name;
+
+        // Create transport based on type
+        $transportDefinition = match ($config['transport']) {
+            'http' => (new Definition(HttpTransport::class))
+                ->setArguments([
+                    new Reference($config['http_client']),
+                    $config['url'],
+                    $config['headers'] ?? [],
+                    $config['timeout'],
+                ]),
+            'sse' => (new Definition(SseTransport::class))
+                ->setArguments([
+                    new Reference($config['http_client']),
+                    $config['url'],
+                    $config['headers'] ?? [],
+                    $config['timeout'],
+                ]),
+            'stdio' => (new Definition(StdioTransport::class))
+                ->setArguments([
+                    $config['command'],
+                    $config['args'] ?? [],
+                    $config['env'] ?? [],
+                    $config['timeout'],
+                ]),
+            default => throw new InvalidArgumentException(\sprintf('Unknown MCP transport type "%s".', $config['transport'])),
+        };
+        $transportDefinition->setLazy(true);
+        $container->setDefinition($transportId, $transportDefinition);
+
+        // Create MCP client
+        $clientDefinition = (new Definition(McpClient::class))
+            ->setArguments([new Reference($transportId)])
+            ->setLazy(true);
+        $container->setDefinition($clientId, $clientDefinition);
+
+        // Create MCP toolbox
+        $allowedTools = \is_array($config['tools']) && [] !== $config['tools'] ? $config['tools'] : null;
+        $toolboxDefinition = (new Definition(McpToolbox::class))
+            ->setArguments([
+                new Reference($clientId),
+                new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+                $allowedTools,
+            ])
+            ->setLazy(true)
+            ->addTag('ai.mcp.toolbox', ['name' => $name]);
+        $container->setDefinition($toolboxId, $toolboxDefinition);
     }
 }
