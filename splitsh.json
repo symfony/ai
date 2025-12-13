@@ -27,6 +27,7 @@
         "ai-click-house-store": "src/store/src/Bridge/ClickHouse",
         "ai-cloudflare-store": "src/store/src/Bridge/Cloudflare",
         "ai-chroma-db-store": "src/store/src/Bridge/ChromaDb",
+        "ai-elasticsearch-store": "src/store/src/Bridge/Elasticsearch",
         "ai-manticore-search-store": "src/store/src/Bridge/ManticoreSearch",
         "ai-maria-db-store": "src/store/src/Bridge/MariaDb",
         "ai-meilisearch-store": "src/store/src/Bridge/Meilisearch",

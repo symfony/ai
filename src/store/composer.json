@@ -9,6 +9,7 @@
         "chromadb",
         "clickhouse",
         "cloudflare",
+        "elasticsearch",
         "mariadb",
         "meilisearch",
         "milvus",

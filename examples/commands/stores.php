@@ -16,6 +16,7 @@ use Doctrine\DBAL\Tools\DsnParser;
 use MongoDB\Client as MongoDbClient;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
+use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
@@ -46,6 +47,11 @@ $factories = [
         HttpClient::createForBaseUri(env('CLICKHOUSE_HOST')),
         env('CLICKHOUSE_DATABASE'),
         env('CLICKHOUSE_TABLE'),
+    ),
+    'elasticsearch' => static fn (): ElasticsearchStore => new ElasticsearchStore(
+        http_client(),
+        env('ELASTICSEARCH_ENDPOINT'),
+        'symfony',
     ),
     'manticoresearch' => static fn (): ManticoreSearchStore => new ManticoreSearchStore(
         http_client(),

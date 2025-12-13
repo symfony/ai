@@ -36,6 +36,7 @@
         "symfony/ai-click-house-store": "@dev",
         "symfony/ai-clock-tool": "@dev",
         "symfony/ai-cloudflare-store": "@dev",
+        "symfony/ai-elasticsearch-store": "@dev",
         "symfony/ai-manticore-search-store": "@dev",
         "symfony/ai-maria-db-store": "@dev",
         "symfony/ai-meilisearch-store": "@dev",

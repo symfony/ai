@@ -87,6 +87,7 @@ use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
+use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
@@ -1364,6 +1365,33 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->setLazy(true)
                     ->setArguments($arguments)
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('elasticsearch' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-elasticsearch-store', ElasticsearchStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Elasticsearch store configuration requires "symfony/ai-elasticsearch-store" package. Try running "composer require symfony/ai-elasticsearch-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(ElasticsearchStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference($store['http_client']),
+                        $store['endpoint'],
+                        $store['index_name'] ?? $name,
+                        $store['vectors_field'],
+                        $store['dimensions'],
+                        $store['similarity'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
