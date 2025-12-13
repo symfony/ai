@@ -229,6 +229,89 @@ This provides several benefits:
     // Get string representation
     echo $id->toRfc4122(); // e.g., "01928d1f-6f2e-7123-a456-123456789abc"
 
+Message Templates
+~~~~~~~~~~~~~~~~~
+
+Message templates allow dynamic variable substitution in messages. Both system and user messages support templates, enabling reusable message patterns with runtime variables.
+
+String Templates
+................
+
+String templates use curly braces for variable placeholders::
+
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Message\Template;
+
+    // System message with template
+    $messages = new MessageBag(
+        Message::forSystem(Template::string('You are a {role} assistant.')),
+        Message::ofUser('What is PHP?')
+    );
+
+    $result = $platform->invoke('gpt-4o-mini', $messages, [
+        'template_vars' => ['role' => 'programming'],
+    ]);
+
+User messages also support templates::
+
+    $messages = new MessageBag(
+        Message::forSystem('You are a helpful assistant.'),
+        Message::ofUser(Template::string('Tell me about {topic}'))
+    );
+
+    $result = $platform->invoke('gpt-4o-mini', $messages, [
+        'template_vars' => ['topic' => 'PHP'],
+    ]);
+
+Multiple messages can use the same variable set::
+
+    $messages = new MessageBag(
+        Message::forSystem(Template::string('You are a {domain} assistant.')),
+        Message::ofUser(Template::string('Calculate {operation}'))
+    );
+
+    $result = $platform->invoke('gpt-4o-mini', $messages, [
+        'template_vars' => [
+            'domain' => 'math',
+            'operation' => '2 + 2',
+        ],
+    ]);
+
+Expression Templates
+....................
+
+For advanced use cases, expression templates provide dynamic evaluation using Symfony's Expression Language::
+
+    $template = Template::expression('price * quantity');
+
+.. note::
+
+    Expression templates require the ``symfony/expression-language`` component to be installed.
+
+Setup
+.....
+
+To use templates, register the ``TemplateRendererListener`` with your platform's event dispatcher::
+
+    use Symfony\AI\Platform\EventListener\TemplateRendererListener;
+    use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
+    use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
+    use Symfony\Component\EventDispatcher\EventDispatcher;
+
+    $eventDispatcher = new EventDispatcher();
+    $rendererRegistry = new TemplateRendererRegistry([
+        new StringTemplateRenderer(),
+    ]);
+    $templateListener = new TemplateRendererListener($rendererRegistry);
+    $eventDispatcher->addSubscriber($templateListener);
+
+    $platform = PlatformFactory::create($apiKey, eventDispatcher: $eventDispatcher);
+
+.. note::
+
+    When using the AI Bundle, template rendering is automatically configured and available without manual setup.
+
 Result Streaming
 ----------------
 
