@@ -119,7 +119,9 @@ final class MessageTest extends TestCase
         $toolCall = new ToolCall('call_123456', 'my_tool', ['foo' => 'bar']);
         $message = Message::ofToolCall($toolCall, 'Foo bar.');
 
-        $this->assertSame('Foo bar.', $message->getContent());
+        $this->assertSame('Foo bar.', $message->asText());
+        $this->assertCount(1, $message->getContent());
+        $this->assertInstanceOf(Text::class, $message->getContent()[0]);
         $this->assertSame($toolCall, $message->getToolCall());
     }
 }

@@ -33,7 +33,7 @@ class ToolCallMessageNormalizerTest extends TestCase
         $this->assertEquals([
             'type' => 'function_call_output',
             'call_id' => $toolCall->getId(),
-            'output' => $toolCallMessage->getContent(),
+            'output' => $toolCallMessage->asText(),
         ], $actual);
     }
 

@@ -63,6 +63,13 @@ youtube:
         template:  'chat.html.twig'
         context: { chat: 'youtube' }
 
+timeline:
+    path: '/timeline'
+    controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
+    defaults:
+        template:  'chat.html.twig'
+        context: { chat: 'timeline' }
+
 # Load MCP routes conditionally based on configuration
 _mcp:
     resource: .

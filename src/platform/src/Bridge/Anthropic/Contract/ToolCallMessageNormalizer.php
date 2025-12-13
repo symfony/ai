@@ -33,19 +33,24 @@ final class ToolCallMessageNormalizer extends ModelContractNormalizer implements
      *     content: list<array{
      *         type: 'tool_result',
      *         tool_use_id: string,
-     *         content: string,
+     *         content: list<array<string, mixed>>,
      *     }>
      * }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
+        $content = [];
+        foreach ($data->getContent() as $item) {
+            $content[] = $this->normalizer->normalize($item, $format, $context);
+        }
+
         return [
             'role' => 'user',
             'content' => [
                 [
                     'type' => 'tool_result',
                     'tool_use_id' => $data->getToolCall()->getId(),
-                    'content' => $data->getContent(),
+                    'content' => $content,
                 ],
             ],
         ];

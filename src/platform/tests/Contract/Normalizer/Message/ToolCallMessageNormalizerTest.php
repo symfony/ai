@@ -15,7 +15,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\Normalizer\Message\ToolCallMessageNormalizer;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 final class ToolCallMessageNormalizerTest extends TestCase
 {
@@ -43,19 +42,10 @@ final class ToolCallMessageNormalizerTest extends TestCase
     {
         $toolCall = new ToolCall('tool_call_123', 'get_weather', ['location' => 'Paris']);
         $message = new ToolCallMessage($toolCall, 'Weather data for Paris');
-        $expectedContent = 'Normalized weather data for Paris';
-
-        $innerNormalizer = $this->createMock(NormalizerInterface::class);
-        $innerNormalizer->expects($this->once())
-            ->method('normalize')
-            ->with($message->getContent(), null, [])
-            ->willReturn($expectedContent);
-
-        $this->normalizer->setNormalizer($innerNormalizer);
 
         $expected = [
             'role' => 'tool',
-            'content' => $expectedContent,
+            'content' => 'Weather data for Paris',
             'tool_call_id' => 'tool_call_123',
         ];
 

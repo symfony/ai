@@ -77,7 +77,7 @@ class MessageBagNormalizerTest extends TestCase
             [
                 'type' => 'function_call_output',
                 'call_id' => $toolCallMessage->getToolCall()->getId(),
-                'output' => $toolCallMessage->getContent(),
+                'output' => $toolCallMessage->asText(),
             ],
         ]];
 

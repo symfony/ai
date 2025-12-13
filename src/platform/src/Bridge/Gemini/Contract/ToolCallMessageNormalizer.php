@@ -13,6 +13,8 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Contract;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
+use Symfony\AI\Platform\Message\Content\File;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Model;
 
@@ -34,16 +36,13 @@ final class ToolCallMessageNormalizer extends ModelContractNormalizer
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        $resultContent = json_validate($data->getContent())
-            ? json_decode($data->getContent(), true) : $data->getContent();
+        $response = $this->buildResponse($data);
 
         return [[
             'functionResponse' => array_filter([
                 'id' => $data->getToolCall()->getId(),
                 'name' => $data->getToolCall()->getName(),
-                'response' => \is_array($resultContent) ? $resultContent : [
-                    'rawResponse' => $resultContent, // Gemini expects the response to be an object, but not everyone uses objects as their responses.
-                ],
+                'response' => $response,
             ]),
         ]];
     }
@@ -56,5 +55,50 @@ final class ToolCallMessageNormalizer extends ModelContractNormalizer
     protected function supportsModel(Model $model): bool
     {
         return $model instanceof Gemini;
+    }
+
+    /**
+     * @return array<int|string, mixed>
+     */
+    private function buildResponse(ToolCallMessage $data): array
+    {
+        $contents = $data->getContent();
+
+        // Check if we have multimodal content
+        $hasMultimodal = false;
+        foreach ($contents as $content) {
+            if ($content instanceof File) {
+                $hasMultimodal = true;
+                break;
+            }
+        }
+
+        if (!$hasMultimodal) {
+            // Text-only: use the original JSON parsing logic
+            $textContent = $data->asText() ?? '';
+            $resultContent = json_validate($textContent)
+                ? json_decode($textContent, true) : $textContent;
+
+            return \is_array($resultContent) ? $resultContent : [
+                'rawResponse' => $resultContent,
+            ];
+        }
+
+        // Multimodal content: build parts array
+        $parts = [];
+        foreach ($contents as $content) {
+            if ($content instanceof Text) {
+                $parts[] = ['text' => $content->getText()];
+            } elseif ($content instanceof File) {
+                $parts[] = [
+                    'inline_data' => [
+                        'mime_type' => $content->getFormat(),
+                        'data' => $content->asBase64(),
+                    ],
+                ];
+            }
+        }
+
+        return ['parts' => $parts];
     }
 }

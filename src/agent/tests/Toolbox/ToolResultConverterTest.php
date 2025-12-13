@@ -16,32 +16,34 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Fixtures\StructuredOutput\UserWithConstructor;
+use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Result\ToolCall;
 
 final class ToolResultConverterTest extends TestCase
 {
     #[DataProvider('provideResults')]
-    public function testConvert(mixed $result, ?string $expected)
+    public function testConvert(mixed $result, array $expected)
     {
         $toolResult = new ToolResult(new ToolCall('123456789', 'tool_name'), $result);
         $converter = new ToolResultConverter();
 
-        $this->assertSame($expected, $converter->convert($toolResult));
+        $this->assertEquals($expected, $converter->convert($toolResult));
     }
 
     public static function provideResults(): \Generator
     {
-        yield 'null' => [null, null];
+        yield 'null' => [null, []];
 
-        yield 'integer' => [42, '42'];
+        yield 'integer' => [42, [new Text('42')]];
 
-        yield 'float' => [42.42, '42.42'];
+        yield 'float' => [42.42, [new Text('42.42')]];
 
-        yield 'array' => [['key' => 'value'], '{"key":"value"}'];
+        yield 'array' => [['key' => 'value'], [new Text('{"key":"value"}')]];
 
-        yield 'string' => ['plain string', 'plain string'];
+        yield 'string' => ['plain string', [new Text('plain string')]];
 
-        yield 'datetime' => [new \DateTimeImmutable('2021-07-31 12:34:56'), '"2021-07-31T12:34:56+00:00"'];
+        yield 'datetime' => [new \DateTimeImmutable('2021-07-31 12:34:56'), [new Text('"2021-07-31T12:34:56+00:00"')]];
 
         yield 'stringable' => [
             new class implements \Stringable {
@@ -50,7 +52,7 @@ final class ToolResultConverterTest extends TestCase
                     return 'stringable';
                 }
             },
-            'stringable',
+            [new Text('stringable')],
         ];
 
         yield 'json_serializable' => [
@@ -60,7 +62,7 @@ final class ToolResultConverterTest extends TestCase
                     return ['key' => 'value'];
                 }
             },
-            '{"key":"value"}',
+            [new Text('{"key":"value"}')],
         ];
 
         yield 'object' => [
@@ -71,7 +73,12 @@ final class ToolResultConverterTest extends TestCase
                 isActive: true,
                 age: 18,
             ),
-            '{"id":123,"name":"John Doe","createdAt":"2021-07-31T12:34:56+00:00","isActive":true,"age":18}',
+            [new Text('{"id":123,"name":"John Doe","createdAt":"2021-07-31T12:34:56+00:00","isActive":true,"age":18}')],
+        ];
+
+        yield 'content_interface_array' => [
+            [new Text('hello'), new Image('data', 'image/png')],
+            [new Text('hello'), new Image('data', 'image/png')],
         ];
     }
 }

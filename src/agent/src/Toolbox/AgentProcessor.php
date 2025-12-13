@@ -120,7 +120,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             $results = [];
             foreach ($toolCalls as $toolCall) {
                 $results[] = $toolResult = $this->toolbox->execute($toolCall);
-                $messages->add(Message::ofToolCall($toolCall, $this->resultConverter->convert($toolResult)));
+                $messages->add(Message::ofToolCall($toolCall, ...$this->resultConverter->convert($toolResult)));
                 array_push($this->sources, ...$toolResult->getSources());
             }
 

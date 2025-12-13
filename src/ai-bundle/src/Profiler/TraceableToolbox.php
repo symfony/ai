@@ -25,6 +25,8 @@ final class TraceableToolbox implements ToolboxInterface
      */
     public array $calls = [];
 
+    private bool $toolsLoaded = false;
+
     public function __construct(
         private readonly ToolboxInterface $toolbox,
     ) {
@@ -32,6 +34,25 @@ final class TraceableToolbox implements ToolboxInterface
 
     public function getTools(): array
     {
+        $this->toolsLoaded = true;
+
+        return $this->toolbox->getTools();
+    }
+
+    /**
+     * Get tools only if already loaded (lazy-safe for profiling).
+     *
+     * This prevents triggering remote MCP connections during profiler
+     * data collection if the toolbox wasn't actually used during the request.
+     *
+     * @return array<\Symfony\AI\Platform\Tool\Tool>
+     */
+    public function getToolsIfLoaded(): array
+    {
+        if (!$this->toolsLoaded) {
+            return [];
+        }
+
         return $this->toolbox->getTools();
     }
 

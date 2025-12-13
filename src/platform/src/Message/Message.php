@@ -57,8 +57,8 @@ final class Message
         return new UserMessage(...$content);
     }
 
-    public static function ofToolCall(ToolCall $toolCall, string $content): ToolCallMessage
+    public static function ofToolCall(ToolCall $toolCall, ContentInterface|string ...$content): ToolCallMessage
     {
-        return new ToolCallMessage($toolCall, $content);
+        return new ToolCallMessage($toolCall, ...$content);
     }
 }

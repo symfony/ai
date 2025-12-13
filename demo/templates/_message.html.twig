@@ -1,6 +1,8 @@
 {% if message.role.value == 'assistant' %}
     {{ _self.bot(message.content, latest: latest) }}
-{% else %}
+{% elseif message.role.value == 'tool' and message.hasImageContent() %}
+    {{ _self.toolResult(message.content) }}
+{% elseif message.role.value == 'user' %}
     {{ _self.user(message.content) }}
 {% endif %}
 
@@ -48,6 +50,23 @@
         </div>
         <div class="user avatar rounded-3 shadow-sm">
             {{ ux_icon('solar:user-bold', { width: '45px', height: '45px' }) }}
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro toolResult(content) %}
+    <div class="d-flex align-items-baseline mb-4">
+        <div class="tool avatar rounded-3 shadow-sm bg-secondary-subtle">
+            {{ ux_icon('mdi:tools', { height: '45px', width: '45px' }) }}
+        </div>
+        <div class="ps-2">
+            {% for item in content %}
+                {% if item.format is defined and item.format starts with 'image/' %}
+                    <div class="tool-result d-inline-block p-2 m-1 border border-light-subtle shadow-sm">
+                        <img src="{{ item.asDataUrl() }}" class="img-fluid rounded" style="max-width: 500px;">
+                    </div>
+                {% endif %}
+            {% endfor %}
         </div>
     </div>
 {% endmacro %}
