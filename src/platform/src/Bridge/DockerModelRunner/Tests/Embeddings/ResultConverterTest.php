@@ -1,0 +1,120 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Platform\Bridge\DockerModelRunner\Tests\Embeddings;
+
+use PHPUnit\Framework\Attributes\TestWith;
+use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\DockerModelRunner\Embeddings;
+use Symfony\AI\Platform\Bridge\DockerModelRunner\Embeddings\ResultConverter;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
+use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\Contracts\HttpClient\ResponseInterface;
+
+class ResultConverterTest extends TestCase
+{
+    public function testItConvertsAResponseToAVectorResult()
+    {
+        $result = $this->createStub(ResponseInterface::class);
+        $result
+            ->method('toArray')
+            ->willReturn(
+                json_decode(
+                    <<<'JSON'
+                        {
+                          "object": "list",
+                          "data": [
+                            {
+                              "object": "embedding",
+                              "index": 0,
+                              "embedding": [0.3, 0.4, 0.4]
+                            },
+                            {
+                              "object": "embedding",
+                              "index": 1,
+                              "embedding": [0.0, 0.0, 0.2]
+                            }
+                          ]
+                        }
+                        JSON,
+                    true
+                )
+            );
+
+        $vectorResult = (new ResultConverter())->convert(new RawHttpResult($result));
+        $convertedContent = $vectorResult->getContent();
+
+        $this->assertCount(2, $convertedContent);
+
+        $this->assertSame([0.3, 0.4, 0.4], $convertedContent[0]->getData());
+        $this->assertSame([0.0, 0.0, 0.2], $convertedContent[1]->getData());
+    }
+
+    public function testItThrowsExceptionWhenResponseDoesNotContainData()
+    {
+        $result = $this->createStub(ResponseInterface::class);
+        $result
+            ->method('toArray')
+            ->willReturn(['invalid' => 'response']);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Response does not contain data');
+
+        (new ResultConverter())->convert(new RawHttpResult($result));
+    }
+
+    public function testItSupportsEmbeddingsModel()
+    {
+        $converter = new ResultConverter();
+
+        $this->assertTrue($converter->supports(new Embeddings('test-model')));
+    }
+
+    #[TestWith(['Model not found'])]
+    #[TestWith(['MODEL NOT FOUND'])]
+    public function testItThrowsModelNotFoundExceptionWhen404WithModelNotFoundMessage(string $message)
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response
+            ->method('getStatusCode')
+            ->willReturn(404);
+        $response
+            ->method('getContent')
+            ->with(false)
+            ->willReturn($message);
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage($message);
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
+    }
+
+    public function testItDoesNotThrowModelNotFoundExceptionWhen404WithoutModelNotFoundMessage()
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response
+            ->method('getStatusCode')
+            ->willReturn(404);
+        $response
+            ->method('getContent')
+            ->with(false)
+            ->willReturn('Not found');
+        $response
+            ->method('toArray')
+            ->willReturn(['error' => 'some other error']);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Response does not contain data.');
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
+    }
+}
