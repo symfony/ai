@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Tests\Vector;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 
@@ -31,5 +32,28 @@ final class VectorTest extends TestCase
 
         $this->assertSame($vectors, $vector->getData());
         $this->assertSame(3, $vector->getDimensions());
+    }
+
+    public function testWithExplicitDimensions()
+    {
+        $vector = new Vector([1.0, 2.0, 3.0], 3);
+
+        $this->assertSame(3, $vector->getDimensions());
+    }
+
+    public function testThrowsOnDimensionMismatch()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Vector must have 5 dimensions');
+
+        new Vector([1.0, 2.0], 5);
+    }
+
+    public function testThrowsOnEmptyData()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Vector must have at least one dimension');
+
+        new Vector([]);
     }
 }
