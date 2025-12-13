@@ -67,7 +67,7 @@ class Store implements ManagedStoreInterface, StoreInterface
         $this->redis->clearLastError();
     }
 
-    public function drop(): void
+    public function drop(array $options = []): void
     {
         try {
             $this->redis->rawCommand('FT.DROPINDEX', $this->indexName);

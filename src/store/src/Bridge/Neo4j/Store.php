@@ -79,7 +79,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
-    public function drop(): void
+    public function drop(array $options = []): void
     {
         $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
             'statement' => 'MATCH (n) DETACH DELETE n',

@@ -99,7 +99,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
-    public function drop(): void
+    public function drop(array $options = []): void
     {
         $this->getCollection()->drop();
     }

@@ -76,7 +76,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         );
     }
 
-    public function drop(): void
+    public function drop(array $options = []): void
     {
         $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
     }

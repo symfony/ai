@@ -48,7 +48,7 @@ class Store implements ManagedStoreInterface, StoreInterface
         $this->execute('POST', $sql);
     }
 
-    public function drop(): void
+    public function drop(array $options = []): void
     {
         $this->execute('POST', 'DROP TABLE IF EXISTS {{ table }}');
     }
