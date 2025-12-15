@@ -33,6 +33,7 @@ final class PlatformFactory
     public static function create(
         string $location,
         string $projectId,
+        #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
@@ -45,7 +46,7 @@ final class PlatformFactory
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [new GeminiModelClient($httpClient, $location, $projectId), new EmbeddingsModelClient($httpClient, $location, $projectId)],
+            [new GeminiModelClient($httpClient, $location, $projectId, $apiKey), new EmbeddingsModelClient($httpClient, $location, $projectId, $apiKey)],
             [new GeminiResultConverter(), new EmbeddingsResultConverter()],
             $modelCatalog,
             $contract ?? GeminiContract::create(),

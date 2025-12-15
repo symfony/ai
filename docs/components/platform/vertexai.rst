@@ -21,12 +21,12 @@ Setup
 Authentication
 ~~~~~~~~~~~~~~
 
-Vertex AI requires Google Cloud authentication. Follow the `Google cloud authentication guide`_ to set up your credentials.
+Vertex AI supports the following authentication methods:
 
-You can authenticate using:
+1. Application Default Credentials (ADC)
+........................................
 
-1. **Application Default Credentials (ADC)** - Recommended for production
-2. **Service Account Key** - For development or specific service accounts
+Follow the `Google cloud authentication guide`_ to set up your credentials.
 
 For ADC, install the Google Cloud SDK and authenticate:
 
@@ -36,9 +36,6 @@ For ADC, install the Google Cloud SDK and authenticate:
 
 For detailed authentication setup, see `Setting up authentication for Vertex AI`_.
 
-Environment Variables
-~~~~~~~~~~~~~~~~~~~~~
-
 Configure your Google Cloud project and location:
 
 .. code-block:: bash
@@ -46,8 +43,6 @@ Configure your Google Cloud project and location:
     GOOGLE_CLOUD_PROJECT=your-project-id
     GOOGLE_CLOUD_LOCATION=us-central1
 
-Usage
------
 
 Basic usage example::
 
@@ -59,7 +54,7 @@ Basic usage example::
     $platform = PlatformFactory::create(
         $_ENV['GOOGLE_CLOUD_LOCATION'],
         $_ENV['GOOGLE_CLOUD_PROJECT'],
-        $httpClient
+        httpClient: $httpClient
     );
 
     $messages = new MessageBag(
@@ -68,6 +63,28 @@ Basic usage example::
 
     $result = $platform->invoke('gemini-2.5-flash', $messages);
     echo $result->getContent();
+
+2. Service Account Key
+......................
+
+Similar to the first approach, but instead of authenticating with the `gcloud` command, you provide the service account key directly using an environment variable:
+
+.. code-block:: bash
+
+    GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
+
+3. API Key
+..........
+
+Similar to the first approach, but instead of authenticating with the `gcloud` command, you provide the API keys when creating the platform::
+
+    $platform = PlatformFactory::create(
+        $_ENV['GOOGLE_CLOUD_LOCATION'],
+        $_ENV['GOOGLE_CLOUD_PROJECT'],
+        apiKey: $_ENV['GOOGLE_CLOUD_VERTEX_API_KEY'],
+    );
+
+To get an API key, visit: `Vertex AI Studio (API keys)`_.
 
 Model Availability by Location
 ------------------------------
@@ -164,3 +181,4 @@ See the ``examples/vertexai/`` directory for complete working examples:
 .. _Google cloud authentication guide: https://cloud.google.com/docs/authentication
 .. _Setting up authentication for Vertex AI: https://cloud.google.com/vertex-ai/docs/authentication
 .. _Google Cloud Console for Vertex AI: https://console.cloud.google.com/vertex-ai
+.. _Vertex AI Studio (API keys): https://console.cloud.google.com/vertex-ai/studio/settings/api-keys
