@@ -66,7 +66,7 @@ use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
+use Symfony\AI\Store\Document\Loader\DocumentCollectionLoader;
 use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Document\VectorizerInterface;
@@ -5094,7 +5094,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'vectorizer' => 'ai.vectorizer.my_vectorizer',
                         'store' => 'ai.store.memory.my_store',
                     ],
@@ -5109,7 +5109,7 @@ class AiBundleTest extends TestCase
         $arguments = $indexerDefinition->getArguments();
 
         $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame(InMemoryLoader::class, (string) $arguments[0]);
+        $this->assertSame(DocumentCollectionLoader::class, (string) $arguments[0]);
 
         $this->assertInstanceOf(Reference::class, $arguments[1]);
         $this->assertSame('ai.vectorizer.my_vectorizer', (string) $arguments[1]);
@@ -5130,7 +5130,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'source' => 'https://example.com/feed.xml',
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
@@ -5157,7 +5157,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'source' => [
                             '/path/to/file1.txt',
                             '/path/to/file2.txt',
@@ -5194,7 +5194,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
                         // source not configured, should default to null
@@ -5221,7 +5221,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'transformers' => [
                             TextTrimTransformer::class,
                             'App\CustomTransformer',
@@ -5259,7 +5259,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'transformers' => [],
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
@@ -5287,7 +5287,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
                         // transformers not configured, should default to empty array
@@ -5315,7 +5315,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'source' => [
                             '/path/to/file1.txt',
                             '/path/to/file2.txt',
@@ -5335,7 +5335,7 @@ class AiBundleTest extends TestCase
         $arguments = $indexerDefinition->getArguments();
 
         $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame(InMemoryLoader::class, (string) $arguments[0]);
+        $this->assertSame(DocumentCollectionLoader::class, (string) $arguments[0]);
 
         $this->assertInstanceOf(Reference::class, $arguments[1]);
         $this->assertSame('my_vectorizer_service', (string) $arguments[1]);
@@ -5368,7 +5368,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'filters' => [
                             TextContainsFilter::class,
                             'App\CustomFilter',
@@ -5409,7 +5409,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'filters' => [],
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
@@ -5436,7 +5436,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
                         // filters not configured, should default to empty array
@@ -5463,7 +5463,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'filters' => [
                             TextContainsFilter::class,
                         ],
@@ -5505,7 +5505,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'source' => [
                             '/path/to/file1.txt',
                             '/path/to/file2.txt',
@@ -5529,7 +5529,7 @@ class AiBundleTest extends TestCase
 
         // Verify correct order: loader, vectorizer, store, source, filters, transformers, logger
         $this->assertInstanceOf(Reference::class, $arguments[0]); // loader
-        $this->assertSame(InMemoryLoader::class, (string) $arguments[0]);
+        $this->assertSame(DocumentCollectionLoader::class, (string) $arguments[0]);
 
         $this->assertInstanceOf(Reference::class, $arguments[1]); // vectorizer
         $this->assertSame('my_vectorizer_service', (string) $arguments[1]);
@@ -5566,13 +5566,13 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'transformers' => [],
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
                     ],
                     'another' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'transformers' => [],
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
@@ -7564,7 +7564,7 @@ class AiBundleTest extends TestCase
                 ],
                 'indexer' => [
                     'my_text_indexer' => [
-                        'loader' => InMemoryLoader::class,
+                        'loader' => DocumentCollectionLoader::class,
                         'vectorizer' => 'ai.vectorizer.test_vectorizer',
                         'store' => 'my_azuresearch_store_service_id',
                     ],

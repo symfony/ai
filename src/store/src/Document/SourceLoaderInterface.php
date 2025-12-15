@@ -14,13 +14,25 @@ namespace Symfony\AI\Store\Document;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-interface LoaderInterface
+interface SourceLoaderInterface
 {
     /**
-     * @param string|null          $source  Identifier for the loader to load the documents from, e.g. file path, folder, or URL. Can be null for InMemoryLoader.
+     * @param string|array<mixed> $source
+     *
+     * @return iterable<SourceInterface>
+     */
+    public static function createSource(string|array $source): iterable;
+
+    /**
+     * @return class-string<SourceInterface>
+     */
+    public static function supportedSource(): string;
+
+    /**
+     * @param SourceInterface      $source  Source descriptor instance to load the documents from
      * @param array<string, mixed> $options loader specific set of options to control the loading process
      *
      * @return iterable<EmbeddableDocumentInterface> iterable of embeddable documents loaded from the source
      */
-    public function load(?string $source = null, array $options = []): iterable;
+    public function load(SourceInterface $source, array $options = []): iterable;
 }

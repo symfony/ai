@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Bridge\MariaDb\Store;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
+use Symfony\AI\Store\Document\Loader\DocumentCollectionLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -53,7 +53,7 @@ $store->setup(['dimensions' => 768]);
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 $model = 'gemini-embedding-exp-03-07?dimensions=768&task_type=SEMANTIC_SIMILARITY';
 $vectorizer = new Vectorizer($platform, $model, logger());
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
+$indexer = new Indexer(new DocumentCollectionLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);

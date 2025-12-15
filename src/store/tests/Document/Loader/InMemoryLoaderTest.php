@@ -12,7 +12,7 @@
 namespace Symfony\AI\Store\Tests\Document\Loader;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
+use Symfony\AI\Store\Document\Loader\DocumentCollectionLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\Component\Uid\Uuid;
@@ -24,7 +24,7 @@ final class InMemoryLoaderTest extends TestCase
 {
     public function testLoadWithEmptyDocuments()
     {
-        $loader = new InMemoryLoader();
+        $loader = new DocumentCollectionLoader();
         $documents = iterator_to_array($loader->load(null));
 
         $this->assertSame([], $documents);
@@ -33,7 +33,7 @@ final class InMemoryLoaderTest extends TestCase
     public function testLoadWithSingleDocument()
     {
         $document = new TextDocument(Uuid::v4(), 'This is test content');
-        $loader = new InMemoryLoader([$document]);
+        $loader = new DocumentCollectionLoader([$document]);
 
         $documents = iterator_to_array($loader->load(null));
 
@@ -46,7 +46,7 @@ final class InMemoryLoaderTest extends TestCase
     {
         $document1 = new TextDocument(Uuid::v4(), 'First document');
         $document2 = new TextDocument(Uuid::v4(), 'Second document', new Metadata(['type' => 'test']));
-        $loader = new InMemoryLoader([$document1, $document2]);
+        $loader = new DocumentCollectionLoader([$document1, $document2]);
 
         $documents = iterator_to_array($loader->load(null));
 
@@ -61,7 +61,7 @@ final class InMemoryLoaderTest extends TestCase
     public function testLoadIgnoresSourceParameter()
     {
         $document = new TextDocument(Uuid::v4(), 'Test content');
-        $loader = new InMemoryLoader([$document]);
+        $loader = new DocumentCollectionLoader([$document]);
 
         // Source parameter should be ignored - same result regardless of value
         $documentsWithNull = iterator_to_array($loader->load(null));
