@@ -1184,7 +1184,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->end()
                 ->end()
             ->end()
-            ->arrayNode('indexer')
+            ->arrayNode('ingester')
                 ->useAttributeAsKey('name')
                 ->arrayPrototype()
                     ->children()

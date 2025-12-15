@@ -89,7 +89,7 @@ ai:
         openai:
             platform: 'ai.platform.openai'
             model: 'text-embedding-ada-002'
-    indexer:
+    ingester:
         blog:
             loader: 'Symfony\AI\Store\Document\Loader\RssFeedLoader'
             source: 'https://feeds.feedburner.com/symfony/blog'

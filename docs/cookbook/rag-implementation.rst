@@ -89,17 +89,20 @@ Use a vectorizer to convert documents into embeddings and store them::
     use Symfony\AI\Store\Document\Loader\InMemoryLoader;
     use Symfony\AI\Store\Document\Vectorizer;
     use Symfony\AI\Store\Indexer;
+    use Symfony\AI\Store\Ingester;
 
     $platform = PlatformFactory::create(env('OPENAI_API_KEY'));
     $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
-    $indexer = new Indexer(
+    $ingester = new Ingester(
         new InMemoryLoader($documents),
-        $vectorizer,
-        $store
+        new Indexer(
+            $vectorizer,
+            $store
+        ),
     );
-    $indexer->index($documents);
+    $ingester->ingest();
 
-The indexer handles:
+The ingester handles:
 
 * Loading documents from the source
 * Generating vector embeddings
@@ -324,7 +327,7 @@ Index documents in batches for better performance::
 
     $batchSize = 100;
     foreach (array_chunk($documents, $batchSize) as $batch) {
-        $indexer->index($batch);
+        $ingester->ingest(options: $batch);
     }
 
 Caching Embeddings

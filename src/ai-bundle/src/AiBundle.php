@@ -110,7 +110,8 @@ use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Indexer;
-use Symfony\AI\Store\IndexerInterface;
+use Symfony\AI\Store\Ingester;
+use Symfony\AI\Store\IngesterInterface;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Retriever;
@@ -266,11 +267,11 @@ final class AiBundle extends AbstractBundle
             $this->processVectorizerConfig($vectorizerName, $vectorizer, $builder);
         }
 
-        foreach ($config['indexer'] as $indexerName => $indexer) {
-            $this->processIndexerConfig($indexerName, $indexer, $builder);
+        foreach ($config['ingester'] as $ingesterName => $ingester) {
+            $this->processIngesterConfig($ingesterName, $ingester, $builder);
         }
-        if (1 === \count($config['indexer']) && isset($indexerName)) {
-            $builder->setAlias(IndexerInterface::class, 'ai.indexer.'.$indexerName);
+        if (1 === \count($config['ingester']) && isset($ingesterName)) {
+            $builder->setAlias(IngesterInterface::class, 'ai.ingester.'.$ingesterName);
         }
 
         foreach ($config['retriever'] ?? [] as $retrieverName => $retriever) {
@@ -1969,7 +1970,7 @@ final class AiBundle extends AbstractBundle
     /**
      * @param array<string, mixed> $config
      */
-    private function processIndexerConfig(int|string $name, array $config, ContainerBuilder $container): void
+    private function processIngesterConfig(int|string $name, array $config, ContainerBuilder $container): void
     {
         $transformers = [];
         foreach ($config['transformers'] as $transformer) {
@@ -1981,20 +1982,23 @@ final class AiBundle extends AbstractBundle
             $filters[] = new Reference($filter);
         }
 
-        $definition = new Definition(Indexer::class, [
+        $definition = new Definition(Ingester::class, [
             new Reference($config['loader']),
-            new Reference($config['vectorizer']),
-            new Reference($config['store']),
+            new Definition(Indexer::class, [
+                new Reference($config['vectorizer']),
+                new Reference($config['store']),
+                $filters,
+                $transformers,
+                new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+            ]),
             $config['source'],
-            $filters,
-            $transformers,
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
-        $definition->addTag('ai.indexer', ['name' => $name]);
+        $definition->addTag('ai.ingester', ['name' => $name]);
 
-        $serviceId = 'ai.indexer.'.$name;
+        $serviceId = 'ai.ingester.'.$name;
         $container->setDefinition($serviceId, $definition);
-        $container->registerAliasForArgument($serviceId, IndexerInterface::class, (new Target((string) $name))->getParsedName());
+        $container->registerAliasForArgument($serviceId, IngesterInterface::class, (new Target((string) $name))->getParsedName());
     }
 
     /**

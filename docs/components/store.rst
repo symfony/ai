@@ -19,19 +19,21 @@ implemented by different concrete and vendor-specific implementations, so called
 On top of those bridges, the Store component provides higher level features to populate and query those stores with and
 for documents.
 
-Indexing
---------
+Ingesting
+---------
 
-One higher level feature is the :class:`Symfony\\AI\\Store\\Indexer`. The purpose of this service is to populate a store with documents.
+One higher level feature is the :class:`Symfony\\AI\\Store\\Ingester`. The purpose of this service is to populate a store with documents.
 Therefore it accepts one or multiple :class:`Symfony\\AI\\Store\\Document\\TextDocument` objects, converts them into embeddings and stores them in the
 used vector store::
 
     use Symfony\AI\Store\Document\TextDocument;
     use Symfony\AI\Store\Indexer;
+    use Symfony\AI\Store\Ingester;
 
-    $indexer = new Indexer($platform, $model, $store);
-    $document = new TextDocument('This is a sample document.');
-    $indexer->index($document);
+    $document = [new TextDocument('This is a sample document.')];
+    $loader = new InMemoryLoader($documents)
+    $indexer = new Ingester($loader, new Indexer($vectorizer, $store));
+    $indexer->index();
 
 You can find more advanced usage in combination with an Agent using the store for RAG in the examples folder.
 

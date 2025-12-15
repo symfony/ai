@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-The Symfony AI Bundle is an integration bundle that provides Symfony dependency injection configuration for the Symfony AI components (Platform, Agent, Store). It enables declarative configuration of AI agents, platforms, vector stores, and indexers through semantic YAML configuration and PHP attributes.
+The Symfony AI Bundle is an integration bundle that provides Symfony dependency injection configuration for the Symfony AI components (Platform, Agent, Store). It enables declarative configuration of AI agents, platforms, vector stores, and ingesters through semantic YAML configuration and PHP attributes.
 
 ## Architecture
 

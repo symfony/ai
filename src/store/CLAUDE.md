@@ -41,7 +41,7 @@ composer install
 ### Core Interfaces
 - **StoreInterface**: Main interface defining `add()` and `query()` methods for vector document storage and retrieval
 - **ManagedStoreInterface**: Extension interface providing `setup()` and `drop()` methods for store lifecycle management
-- **Indexer**: High-level service that converts TextDocuments to VectorDocuments and stores them in batches
+- **Ingester**: High-level service that converts TextDocuments to VectorDocuments and stores them in batches
 
 ### Bridge Pattern Architecture
 The component follows a bridge pattern with implementations for multiple vector stores:
