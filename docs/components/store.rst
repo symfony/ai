@@ -29,9 +29,10 @@ used vector store::
     use Symfony\AI\Store\Document\TextDocument;
     use Symfony\AI\Store\Indexer;
 
-    $indexer = new Indexer($platform, $model, $store);
-    $document = new TextDocument('This is a sample document.');
-    $indexer->index($document);
+    $document = [new TextDocument('This is a sample document.')];
+    $loader = new InMemoryLoader($documents)
+    $indexer = new Indexer($loader, $vectorizer, $store);
+    $indexer->index();
 
 You can find more advanced usage in combination with an Agent using the store for RAG in the examples folder.
 
