@@ -26,6 +26,7 @@ final class ModelClient implements ModelClientInterface
         private readonly HttpClientInterface $httpClient,
         private readonly string $location,
         private readonly string $projectId,
+        #[\SensitiveParameter] private readonly ?string $apiKey = null,
     ) {
     }
 
@@ -46,6 +47,11 @@ final class ModelClient implements ModelClientInterface
             $model->getName(),
             'predict',
         );
+
+        $query = [];
+        if (null !== $this->apiKey) {
+            $query['key'] = $this->apiKey;
+        }
 
         $modelOptions = $model->getOptions();
 
@@ -71,6 +77,7 @@ final class ModelClient implements ModelClientInterface
                         'Content-Type' => 'application/json',
                     ],
                     'json' => array_merge($payload, $modelOptions),
+                    'query' => $query,
                 ]
             )
         );

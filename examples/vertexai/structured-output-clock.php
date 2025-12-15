@@ -25,7 +25,7 @@ require_once __DIR__.'/bootstrap.php';
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
 
-$platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client(), eventDispatcher: $dispatcher);
+$platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), httpClient: adc_aware_http_client(), eventDispatcher: $dispatcher);
 
 $clock = new Clock(new SymfonyClock());
 $toolbox = new Toolbox([$clock], logger: logger());

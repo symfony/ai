@@ -93,9 +93,9 @@ class AiBundleTest extends TestCase
     {
         $container = $this->buildContainer($this->getFullConfig());
 
-        // Mock services that are used as platform create arguments, but should not be testet here or are not available.
+        // Mock services that are used as platform create arguments, but should not be tested here or are not available.
         $container->set('event_dispatcher', $this->createMock(EventDispatcherInterface::class));
-        $container->getDefinition('ai.platform.vertexai')->replaceArgument(2, $this->createMock(HttpClientInterface::class));
+        $container->getDefinition('ai.platform.vertexai')->replaceArgument(3, $this->createMock(HttpClientInterface::class));
 
         $platforms = $container->findTaggedServiceIds('ai.platform');
 
@@ -6921,7 +6921,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('my-project', $arguments[1]);
 
         // Argument 2 is the http client definition which uses the configured http_client service
-        $httpClientDefinition = $arguments[2];
+        $httpClientDefinition = $arguments[3];
         $this->assertInstanceOf(Definition::class, $httpClientDefinition);
 
         $factory = $httpClientDefinition->getFactory();
@@ -7174,6 +7174,7 @@ class AiBundleTest extends TestCase
                     'vertexai' => [
                         'location' => 'global',
                         'project_id' => '123',
+                        'api_key' => 'vertex_key_full',
                     ],
                     'dockermodelrunner' => [
                         'host_url' => 'http://127.0.0.1:12434',

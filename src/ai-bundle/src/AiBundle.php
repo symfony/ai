@@ -725,6 +725,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['location'],
                     $platform['project_id'],
+                    $platform['api_key'] ?? null,
                     $httpClient,
                     new Reference('ai.platform.model_catalog.vertexai.gemini'),
                     new Reference('ai.platform.contract.vertexai.gemini'),

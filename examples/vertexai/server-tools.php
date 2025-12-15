@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 
 require_once __DIR__.'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client());
+$platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), httpClient: adc_aware_http_client());
 
 $messages = new MessageBag(
     Message::ofUser(

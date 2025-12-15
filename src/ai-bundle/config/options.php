@@ -169,6 +169,7 @@ return static function (DefinitionConfigurator $configurator): void {
                         ->children()
                             ->stringNode('location')->isRequired()->end()
                             ->stringNode('project_id')->isRequired()->end()
+                            ->stringNode('api_key')->defaultNull()->end()
                             ->stringNode('http_client')
                                 ->defaultValue('http_client')
                                 ->info('Service ID of the HTTP client to use')
