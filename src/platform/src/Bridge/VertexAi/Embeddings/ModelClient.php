@@ -26,6 +26,7 @@ final class ModelClient implements ModelClientInterface
         private readonly HttpClientInterface $httpClient,
         private readonly string $location,
         private readonly string $projectId,
+        private readonly ?string $apiKey = null,
     ) {
     }
 
@@ -46,6 +47,10 @@ final class ModelClient implements ModelClientInterface
             $model->getName(),
             'predict',
         );
+
+        if (null !== $this->apiKey) {
+            $url .= '?key=' . $this->apiKey;
+        }
 
         $modelOptions = $model->getOptions();
 
