@@ -17,7 +17,7 @@ use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
+use Symfony\AI\Store\Document\Loader\DocumentCollectionLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -43,7 +43,7 @@ foreach (Movies::all() as $i => $movie) {
 // create embeddings for documents
 $platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
 $vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'), logger());
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
+$indexer = new Indexer(new DocumentCollectionLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);

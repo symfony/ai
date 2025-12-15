@@ -12,8 +12,10 @@
 namespace Symfony\AI\Store\Document\Loader;
 
 use Symfony\AI\Store\Document\Loader\Rss\RssItem;
-use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Document\Metadata;
+use Symfony\AI\Store\Document\Source\RssFeed;
+use Symfony\AI\Store\Document\SourceInterface;
+use Symfony\AI\Store\Document\SourceLoaderInterface;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
@@ -25,7 +27,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Niklas Grießer <niklas@griesser.me>
  */
-final class RssFeedLoader implements LoaderInterface
+final class RssFeedLoader implements SourceLoaderInterface
 {
     public const OPTION_UUID_NAMESPACE = 'uuid_namespace';
 
@@ -39,9 +41,32 @@ final class RssFeedLoader implements LoaderInterface
     }
 
     /**
+     * @return iterable<SourceInterface>
+     */
+    public static function createSource(string|array $source): iterable
+    {
+        foreach ((array) $source as $url) {
+            if (!\is_string($url)) {
+                throw new InvalidArgumentException(\sprintf('"%s" requires a string or an array of strings as source, "%s" given.', self::class, get_debug_type($url)));
+            }
+
+            if (!filter_var($url, \FILTER_VALIDATE_URL)) {
+                throw new InvalidArgumentException(\sprintf('"%s" is not a valid URL.', $url));
+            }
+
+            yield new RssFeed($url);
+        }
+    }
+
+    public static function supportedSource(): string
+    {
+        return RssFeed::class;
+    }
+
+    /**
      * @param array{uuid_namespace?: string} $options
      */
-    public function load(?string $source = null, array $options = []): iterable
+    public function load(RssFeed|SourceInterface $source, array $options = []): iterable
     {
         if (!class_exists(Crawler::class)) {
             throw new RuntimeException('For using the RSS loader, the Symfony DomCrawler component is required. Try running "composer require symfony/dom-crawler".');
@@ -54,7 +79,7 @@ final class RssFeedLoader implements LoaderInterface
         $uuidNamespace = Uuid::fromString($options[self::OPTION_UUID_NAMESPACE] ?? $this->uuidNamespace);
 
         try {
-            $xml = $this->httpClient->request('GET', $source, [
+            $xml = $this->httpClient->request('GET', $source->getUrl(), [
                 'headers' => [
                     'Accept' => 'application/rss+xml,application/xml,text/xml',
                 ],
