@@ -44,6 +44,23 @@ jobs:
               working-directory: examples
               run: docker compose up -d
 
+            - name: Wait for services to be healthy
+              working-directory: examples
+              run: |
+                  echo "Waiting for all services to be healthy..."
+                  for i in {1..60}; do
+                      if docker compose ps --format json | jq -s -e 'all(.[]; .Health == "healthy" or .Health == "")' > /dev/null 2>&1; then
+                          echo "All services are healthy!"
+                          exit 0
+                      fi
+                      echo "Attempt $i/60: Some services are still starting..."
+                      docker compose ps
+                      sleep 5
+                  done
+                  echo "Timeout waiting for services to be healthy"
+                  docker compose ps
+                  exit 1
+
             - name: Configure environment
               run: |
                   echo COLUMNS=120 >> $GITHUB_ENV
