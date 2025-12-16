@@ -15,6 +15,7 @@ AI capabilities to your application:
 * :doc:`Agent Component </components/agent>`: Framework for building AI agents with tools and workflows
 * :doc:`Chat Component </components/chat>`: API to interact with agents and store conversation history
 * :doc:`Store Component </components/store>`: Data storage abstraction for vector databases and RAG applications
+* :doc:`Mate Component </components/mate>`: MCP server for AI assistant integration with your application
 * :doc:`AI Bundle </bundles/ai-bundle>`: Symfony integration bringing all components together
 * :doc:`MCP Bundle </bundles/mcp-bundle>`: Integration for the Model Context Protocol SDK
 

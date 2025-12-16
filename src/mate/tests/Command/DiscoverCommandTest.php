@@ -1,0 +1,196 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Mate\Tests\Command;
+
+use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use Symfony\AI\Mate\Command\DiscoverCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Tester\CommandTester;
+
+/**
+ * @author Johannes Wachter <johannes@sulu.io>
+ * @author Tobias Nyholm <tobias.nyholm@gmail.com>
+ */
+final class DiscoverCommandTest extends TestCase
+{
+    private string $fixturesDir;
+
+    protected function setUp(): void
+    {
+        $this->fixturesDir = __DIR__.'/../Discovery/Fixtures';
+    }
+
+    public function testDiscoversBridgesAndCreatesFile()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        try {
+            $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
+            $command = new DiscoverCommand($rootDir, new NullLogger());
+            $tester = new CommandTester($command);
+
+            $tester->execute([]);
+
+            $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+            $this->assertFileExists($tempDir.'/.mate/bridges.php');
+
+            $bridges = include $tempDir.'/.mate/bridges.php';
+            $this->assertIsArray($bridges);
+            $this->assertArrayHasKey('vendor/package-a', $bridges);
+            $this->assertArrayHasKey('vendor/package-b', $bridges);
+            $this->assertIsArray($bridges['vendor/package-a']);
+            $this->assertIsArray($bridges['vendor/package-b']);
+            $this->assertTrue($bridges['vendor/package-a']['enabled']);
+            $this->assertTrue($bridges['vendor/package-b']['enabled']);
+
+            $output = $tester->getDisplay();
+            $this->assertStringContainsString('Discovered 2 Bridge', $output);
+            $this->assertStringContainsString('vendor/package-a', $output);
+            $this->assertStringContainsString('vendor/package-b', $output);
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testPreservesExistingEnabledState()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
+        mkdir($tempDir.'/.mate', 0755, true);
+
+        try {
+            // Create existing bridges.php with package-a disabled
+            file_put_contents($tempDir.'/.mate/bridges.php', <<<'PHP'
+<?php
+return [
+    'vendor/package-a' => ['enabled' => false],
+    'vendor/package-b' => ['enabled' => true],
+];
+PHP
+            );
+
+            $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
+            $command = new DiscoverCommand($rootDir, new NullLogger());
+            $tester = new CommandTester($command);
+
+            $tester->execute([]);
+
+            $bridges = include $tempDir.'/.mate/bridges.php';
+            $this->assertIsArray($bridges);
+            $this->assertIsArray($bridges['vendor/package-a']);
+            $this->assertIsArray($bridges['vendor/package-b']);
+            $this->assertFalse($bridges['vendor/package-a']['enabled'], 'Should preserve disabled state');
+            $this->assertTrue($bridges['vendor/package-b']['enabled'], 'Should preserve enabled state');
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testNewPackagesDefaultToEnabled()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
+        mkdir($tempDir.'/.mate', 0755, true);
+
+        try {
+            // Create existing bridges.php with only package-a
+            file_put_contents($tempDir.'/.mate/bridges.php', <<<'PHP'
+<?php
+return [
+    'vendor/package-a' => ['enabled' => false],
+];
+PHP
+            );
+
+            $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
+            $command = new DiscoverCommand($rootDir, new NullLogger());
+            $tester = new CommandTester($command);
+
+            $tester->execute([]);
+
+            $bridges = include $tempDir.'/.mate/bridges.php';
+            $this->assertIsArray($bridges);
+            $this->assertIsArray($bridges['vendor/package-a']);
+            $this->assertIsArray($bridges['vendor/package-b']);
+            $this->assertFalse($bridges['vendor/package-a']['enabled'], 'Existing disabled state preserved');
+            $this->assertTrue($bridges['vendor/package-b']['enabled'], 'New package defaults to enabled');
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testDisplaysWarningWhenNoBridgesFound()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        try {
+            $rootDir = $this->createConfiguration($this->fixturesDir.'/without-ai-mate-config', $tempDir);
+            $command = new DiscoverCommand($rootDir, new NullLogger());
+            $tester = new CommandTester($command);
+
+            $tester->execute([]);
+
+            $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+            $output = $tester->getDisplay();
+            $this->assertStringContainsString('No MCP bridges found', $output);
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    private function createConfiguration(string $rootDir, string $tempDir): string
+    {
+        // Copy fixture to temp directory for testing
+        $this->copyDirectory($rootDir.'/vendor', $tempDir.'/vendor');
+
+        return $tempDir;
+    }
+
+    private function copyDirectory(string $src, string $dst): void
+    {
+        if (!is_dir($src)) {
+            return;
+        }
+
+        if (!is_dir($dst)) {
+            mkdir($dst, 0755, true);
+        }
+
+        $files = array_diff(scandir($src) ?: [], ['.', '..']);
+        foreach ($files as $file) {
+            $srcPath = $src.'/'.$file;
+            $dstPath = $dst.'/'.$file;
+
+            if (is_dir($srcPath)) {
+                $this->copyDirectory($srcPath, $dstPath);
+            } else {
+                copy($srcPath, $dstPath);
+            }
+        }
+    }
+
+    private function removeDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = array_diff(scandir($dir) ?: [], ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir.'/'.$file;
+            is_dir($path) ? $this->removeDirectory($path) : unlink($path);
+        }
+        rmdir($dir);
+    }
+}

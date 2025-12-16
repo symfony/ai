@@ -1,0 +1,8 @@
+{
+    "packages": [
+        {
+            "name": "vendor/regular-package",
+            "type": "library"
+        }
+    ]
+}

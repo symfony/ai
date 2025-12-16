@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <service id="service.logger" class="Psr\Log\NullLogger">
+            <tag name="monolog.logger" channel="app"/>
+        </service>
+        <service id="service.router" class="Symfony\Component\Routing\Router">
+            <call method="setContext"/>
+            <tag name="routing.router"/>
+        </service>
+        <service id="service.event_dispatcher" class="Symfony\Component\EventDispatcher\EventDispatcher">
+            <tag name="event_dispatcher"/>
+        </service>
+        <service id="service.cache" class="Symfony\Component\Cache\Adapter\FilesystemAdapter">
+            <factory class="Symfony\Component\Cache\Adapter\FilesystemAdapter" method="create"/>
+        </service>
+        <service id="service.http_client" class="Symfony\Component\HttpClient\HttpClient"/>
+        <service id="logger.alias" alias="service.logger"/>
+    </services>
+</container>

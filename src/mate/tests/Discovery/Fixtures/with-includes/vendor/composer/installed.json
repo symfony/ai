@@ -1,0 +1,14 @@
+{
+    "packages": [
+        {
+            "name": "vendor/package-with-includes",
+            "type": "library",
+            "extra": {
+                "ai-mate": {
+                    "scan-dirs": ["src"],
+                    "includes": ["config/services.php"]
+                }
+            }
+        }
+    ]
+}

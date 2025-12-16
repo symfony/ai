@@ -1,0 +1,79 @@
+{
+    "name": "symfony/ai-mate",
+    "description": "AI development assistant MCP server for Symfony projects",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "ai",
+        "mcp",
+        "model-context-protocol",
+        "symfony",
+        "debug",
+        "development"
+    ],
+    "authors": [
+        {
+            "name": "Johannes Wachter",
+            "email": "johannes@sulu.io"
+        },
+        {
+            "name": "Tobias Nyholm",
+            "email": "tobias.nyholm@gmail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "bin": [
+        "bin/mate"
+    ],
+    "require": {
+        "php": ">=8.2",
+        "mcp/sdk": "^0.1",
+        "psr/log": "^2.0|^3.0",
+        "symfony/config": "^7.3|^8.0",
+        "symfony/console": "^7.3|^8.0",
+        "symfony/dependency-injection": "^7.3|^8.0",
+        "symfony/finder": "^7.3|^8.0"
+    },
+    "require-dev": {
+        "ext-simplexml": "*",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.46",
+        "symfony/dotenv": "^7.3|^8.0"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Mate\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\PHPStan\\": "../../.phpstan/",
+            "Symfony\\AI\\Mate\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        },
+        "ai-mate": {
+            "scan-dirs": [
+                "src/Capability"
+            ]
+        }
+    }
+}

@@ -1,0 +1,65 @@
+{
+    "name": "symfony/ai-monolog-mate",
+    "description": "Monolog bridge for AI Mate - provides log search and analysis tools",
+    "license": "MIT",
+    "type": "symfony-ai-mate",
+    "keywords": [
+        "ai",
+        "mcp",
+        "monolog",
+        "logs",
+        "bridge"
+    ],
+    "authors": [
+        {
+            "name": "Johannes Wachter",
+            "email": "johannes@sulu.io"
+        },
+        {
+            "name": "Tobias Nyholm",
+            "email": "tobias.nyholm@gmail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/ai-mate": "@dev",
+        "monolog/monolog": "^2.0|^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5.46",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Mate\\Bridge\\Monolog\\": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/",
+            "Symfony\\AI\\Mate\\Bridge\\Monolog\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        },
+        "ai-mate": {
+            "scan-dirs": ["Capability"],
+            "includes": ["config/services.php"]
+        }
+    }
+}

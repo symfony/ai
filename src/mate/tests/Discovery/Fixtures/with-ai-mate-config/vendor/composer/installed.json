@@ -1,0 +1,22 @@
+{
+    "packages": [
+        {
+            "name": "vendor/package-a",
+            "type": "library",
+            "extra": {
+                "ai-mate": {
+                    "scan-dirs": ["src"]
+                }
+            }
+        },
+        {
+            "name": "vendor/package-b",
+            "type": "library",
+            "extra": {
+                "ai-mate": {
+                    "scan-dirs": ["src"]
+                }
+            }
+        }
+    ]
+}

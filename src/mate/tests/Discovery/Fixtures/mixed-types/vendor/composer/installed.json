@@ -1,0 +1,12 @@
+{
+    "packages": [
+        {
+            "name": "vendor/package-mixed",
+            "extra": {
+                "ai-mate": {
+                    "scan-dirs": ["src"]
+                }
+            }
+        }
+    ]
+}

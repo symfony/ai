@@ -28,6 +28,11 @@
         "ai-pogocache-message-store": "src/chat/src/Bridge/Pogocache",
         "ai-redis-message-store": "src/chat/src/Bridge/Redis",
         "ai-surreal-db-message-store": "src/chat/src/Bridge/SurrealDb",
+        "ai-mate": {
+            "prefixes": [{ "from": "src/mate", "to": "", "excludes": ["src/Bridge"] }]
+        },
+        "ai-monolog-mate": "src/mate/src/Bridge/Monolog",
+        "ai-symfony-mate": "src/mate/src/Bridge/Symfony",
         "mcp-bundle": "src/mcp-bundle",
         "ai-platform": {
             "prefixes": [{ "from": "src/platform", "to": "", "excludes": ["src/Bridge"] }]

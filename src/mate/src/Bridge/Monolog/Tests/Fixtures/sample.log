@@ -1,0 +1,6 @@
+[2024-01-15 10:30:45] app.INFO: Application started [] []
+[2024-01-15 10:31:12] app.DEBUG: Processing request {"method":"GET","path":"/api/users"} []
+[2024-01-15 10:31:45] security.WARNING: Failed login attempt {"username":"admin","ip":"192.168.1.1"} []
+[2024-01-15 10:32:10] app.ERROR: Database connection failed {"error":"Connection timeout"} []
+[2024-01-15 10:32:55] app.INFO: User logged in {"user_id":123} []
+[2024-01-15 10:33:20] app.DEBUG: Cache cleared [] []

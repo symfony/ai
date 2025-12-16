@@ -1,0 +1,5 @@
+vendor
+
+# Allow test fixture vendor directories
+!tests/Discovery/Fixtures/**/vendor
+!tests/Discovery/Fixtures/**/vendor/**

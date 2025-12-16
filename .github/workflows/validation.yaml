@@ -103,3 +103,21 @@ jobs:
             - name: Validate platform bridges have correct type
               run: .github/scripts/validate-bridge-type.sh platform
 
+    validate_mate_bridges:
+        name: Mate Bridges
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Validate Mate bridge naming conventions
+              run: .github/scripts/validate-bridge-naming.sh mate mate
+
+            - name: Validate Mate bridges are in splitsh.json
+              run: .github/scripts/validate-bridge-splitsh.sh mate
+
+            - name: Validate Mate bridges have required files
+              run: .github/scripts/validate-bridge-files.sh mate
+
+            - name: Validate Mate bridges have correct type
+              run: .github/scripts/validate-bridge-type.sh mate

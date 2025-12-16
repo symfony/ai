@@ -6,5 +6,6 @@ Components
 
     agent
     chat
+    mate
     platform
     store

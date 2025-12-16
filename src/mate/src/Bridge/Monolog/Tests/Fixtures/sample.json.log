@@ -1,0 +1,5 @@
+{"datetime":"2024-01-15T11:00:00+00:00","channel":"app","level":"INFO","message":"API request received","context":{"endpoint":"/api/products"},"extra":[]}
+{"datetime":"2024-01-15T11:01:00+00:00","channel":"app","level":"DEBUG","message":"Query executed","context":{"query":"SELECT * FROM users"},"extra":[]}
+{"datetime":"2024-01-15T11:02:00+00:00","channel":"security","level":"INFO","message":"User authenticated","context":{"user_id":456},"extra":[]}
+{"datetime":"2024-01-15T11:03:00+00:00","channel":"app","level":"ERROR","message":"Failed to process payment","context":{"error":"Invalid card"},"extra":[]}
+{"datetime":"2024-01-15T11:04:00+00:00","channel":"app","level":"INFO","message":"Request completed","context":{"duration":125},"extra":[]}
