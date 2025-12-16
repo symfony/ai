@@ -139,10 +139,10 @@ services:
                 soft: 65536
                 hard: 65536
         healthcheck:
-            test: [ 'CMD', 'curl', '-f', 'http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=1s' ]
+            test: [ 'CMD', 'curl', '-f', 'http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=50s' ]
             interval: 10s
             start_period: 120s
-            timeout: 5s
+            timeout: 60s
             retries: 5
         ports:
             - '9201:9200'
