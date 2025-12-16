@@ -114,7 +114,7 @@
                                                             {{ _self.tool_calls(message.toolCalls) }}
                                                         {% elseif 'tool' == message.role.value %}
                                                             <i>Result of tool call with ID {{ message.toolCall.id }}</i><br />
-                                                            {{ message.content|nl2br }}
+                                                            {{ message.asText|nl2br }}
                                                         {% elseif 'user' == message.role.value %}
                                                             {% for item in message.content %}
                                                                 {% if item.text is defined %}

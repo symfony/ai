@@ -29,7 +29,8 @@ final class ToolCallMessageTest extends TestCase
         $obj = new ToolCallMessage($toolCall, 'bar');
 
         $this->assertSame($toolCall, $obj->getToolCall());
-        $this->assertSame('bar', $obj->getContent());
+        $this->assertSame('bar', $obj->asText());
+        $this->assertCount(1, $obj->getContent());
     }
 
     public function testMessageHasUid()

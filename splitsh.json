@@ -15,6 +15,7 @@
         "ai-tavily-tool": "src/agent/src/Bridge/Tavily",
         "ai-youtube-tool": "src/agent/src/Bridge/Youtube",
         "ai-wikipedia-tool": "src/agent/src/Bridge/Wikipedia",
+        "ai-mcp-tool": "src/agent/src/Bridge/Mcp",
         "ai-bundle": "src/ai-bundle",
         "ai-chat": "src/chat",
         "mcp-bundle": "src/mcp-bundle",

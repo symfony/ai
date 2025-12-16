@@ -168,5 +168,26 @@
                 </div>
             </div>
         </div>
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card timeline bg-body shadow-sm">
+                    <div class="card-img-top py-2">
+                        {{ ux_icon('mdi:timeline', { height: '150px', width: '150px' }) }}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Timeline Bot</h5>
+                        <p class="card-text">Generate news timelines using MCP client integration.</p>
+                        <a href="{{ path('timeline') }}" class="btn btn-outline-dark d-block">Try Timeline Bot</a>
+                    </div>
+                    {# Profiler route only available in dev #}
+                    {% if 'dev' == app.environment %}
+                        <div class="card-footer">
+                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            <a href="{{ path('_profiler_open_file', { file: 'src/Timeline/Chat.php', line: 24 }) }}">See Implementation</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

@@ -11,6 +11,10 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\AI\Platform\Message\Content\Audio;
+use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Uid\Uuid;
@@ -23,10 +27,19 @@ final class ToolCallMessage implements MessageInterface
     use IdentifierAwareTrait;
     use MetadataAwareTrait;
 
+    /**
+     * @var ContentInterface[]
+     */
+    private readonly array $content;
+
     public function __construct(
         private readonly ToolCall $toolCall,
-        private readonly string $content,
+        ContentInterface|string ...$content,
     ) {
+        $this->content = array_map(
+            static fn (ContentInterface|string $c): ContentInterface => \is_string($c) ? new Text($c) : $c,
+            $content,
+        );
         $this->id = Uuid::v7();
     }
 
@@ -40,8 +53,52 @@ final class ToolCallMessage implements MessageInterface
         return $this->toolCall;
     }
 
-    public function getContent(): string
+    /**
+     * @return ContentInterface[]
+     */
+    public function getContent(): array
     {
         return $this->content;
+    }
+
+    public function hasImageContent(): bool
+    {
+        foreach ($this->content as $content) {
+            if ($content instanceof Image) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function hasAudioContent(): bool
+    {
+        foreach ($this->content as $content) {
+            if ($content instanceof Audio) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get all text content as a single string.
+     */
+    public function asText(): ?string
+    {
+        $texts = [];
+        foreach ($this->content as $content) {
+            if ($content instanceof Text) {
+                $texts[] = $content->getText();
+            }
+        }
+
+        if ([] === $texts) {
+            return null;
+        }
+
+        return implode("\n", $texts);
     }
 }
