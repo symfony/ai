@@ -23,7 +23,7 @@ CHANGELOG
    - `Vectorizer` for converting TextDocuments to VectorDocuments
    - Batch vectorization support for compatible platforms
    - Single document vectorization with fallback
- * Add high-level `Indexer` service:
+ * Add high-level `Ingester` service:
    - Orchestrates document processing pipeline
    - Accepts TextDocuments, vectorizes and stores in chunks
    - Configurable batch processing

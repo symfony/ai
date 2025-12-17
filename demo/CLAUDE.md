@@ -10,7 +10,7 @@ This is a Symfony 7.3 demo application showcasing AI integration capabilities us
 
 ### Core Components
 - **Chat Systems**: Multiple specialized chat implementations in `src/` (Blog, YouTube, Wikipedia, Audio, Stream)
-- **Twig LiveComponents**: Interactive UI components using Symfony UX for real-time chat interfaces  
+- **Twig LiveComponents**: Interactive UI components using Symfony UX for real-time chat interfaces
 - **AI Agents**: Configured agents with different models, tools, and system prompts
 - **Vector Store**: ChromaDB integration for embedding storage and similarity search
 - **MCP Tools**: Model Context Protocol tools for extending agent capabilities
@@ -36,7 +36,7 @@ composer install
 echo "OPENAI_API_KEY='sk-...'" > .env.local
 
 # Initialize vector store
-symfony console ai:store:index blog -vv
+symfony console ai:store:ingest blog -vv
 
 # Test vector store
 symfony console ai:store:retrieve blog "Week of Symfony"
@@ -81,7 +81,7 @@ symfony console mcp:server
 - **Agents**: Multiple pre-configured agents (blog, stream, youtube, wikipedia, audio)
 - **Platform**: OpenAI integration with API key from environment
 - **Store**: ChromaDB vector store for similarity search
-- **Indexer**: Text embedding model configuration
+- **Ingester**: Text embedding model configuration
 
 ### Chat Implementations
 Each chat type follows the pattern:

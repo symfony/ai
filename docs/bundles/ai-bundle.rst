@@ -124,7 +124,7 @@ Advanced Example with Multiple Agents
             mistral_embeddings:
                 platform: 'ai.platform.mistral'
                 model: 'mistral-embed'
-        indexer:
+        ingester:
             default:
                 loader: 'Symfony\AI\Store\Document\Loader\InMemoryLoader'
                 vectorizer: 'ai.vectorizer.openai_embeddings'
@@ -721,26 +721,26 @@ The ``ai:store:drop`` command drops the infrastructure for a store (e.g., remove
     This command only works with stores that implement ``ManagedStoreInterface``.
     Not all store types support drop operations.
 
-``ai:store:index``
-~~~~~~~~~~~~~~~~~~
+``ai:store:ingest``
+~~~~~~~~~~~~~~~~~~~
 
-The ``ai:store:index`` command indexes documents into a store using a configured indexer.
+The ``ai:store:ingest`` command ingests documents into a store using a configured ingester.
 
 .. code-block:: terminal
 
-    $ php bin/console ai:store:index <indexer>
+    $ php bin/console ai:store:ingest <ingester>
 
-    # Index using the default indexer
-    $ php bin/console ai:store:index default
+    # Ingest using the default ingester
+    $ php bin/console ai:store:ingest default
 
     # Override the configured source with a single file
-    $ php bin/console ai:store:index blog --source=/path/to/file.txt
+    $ php bin/console ai:store:ingest blog --source=/path/to/file.txt
 
     # Override with multiple sources
-    $ php bin/console ai:store:index blog --source=/path/to/file1.txt --source=/path/to/file2.txt
+    $ php bin/console ai:store:ingest blog --source=/path/to/file1.txt --source=/path/to/file2.txt
 
-The ``--source`` (or ``-s``) option allows you to override the source(s) configured in your indexer.
-This is useful for ad-hoc indexing operations or testing different data sources.
+The ``--source`` (or ``-s``) option allows you to override the source(s) configured in your ingester.
+This is useful for ad-hoc ingesting operations or testing different data sources.
 
 Usage
 -----
@@ -935,7 +935,7 @@ Vectorizers
 -----------
 
 Vectorizers are components that convert text documents into vector embeddings for storage and retrieval.
-They can be configured once and reused across multiple indexers, providing better maintainability and consistency.
+They can be configured once and reused across multiple ingesters, providing better maintainability and consistency.
 
 Configuring Vectorizers
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -961,15 +961,15 @@ Vectorizers are defined in the ``vectorizer`` section of your configuration:
                 platform: 'ai.platform.mistral'
                 model: 'mistral-embed'
 
-Using Vectorizers in Indexers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using Vectorizers in Ingesters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Once configured, vectorizers can be referenced by name in indexer configurations:
+Once configured, vectorizers can be referenced by name in ingester configurations:
 
 .. code-block:: yaml
 
     ai:
-        indexer:
+        ingester:
             documents:
                 loader: 'Symfony\AI\Store\Document\Loader\TextFileLoader'
                 vectorizer: 'ai.vectorizer.openai_small'
@@ -988,14 +988,14 @@ Once configured, vectorizers can be referenced by name in indexer configurations
 Benefits of Configured Vectorizers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* **Reusability**: Define once, use in multiple indexers
-* **Consistency**: Ensure all indexers using the same vectorizer have identical embedding configuration
+* **Reusability**: Define once, use in multiple ingesters
+* **Consistency**: Ensure all ingesters using the same vectorizer have identical embedding configuration
 * **Maintainability**: Change vectorizer settings in one place
 
 Retrievers
 ----------
 
-Retrievers are the opposite of indexers. While indexers populate a vector store with documents,
+Retrievers are the opposite of ingesters. While ingesters populate a vector store with documents,
 retrievers allow you to search for documents in a store based on a query string.
 They vectorize the query and retrieve similar documents from the store.
 

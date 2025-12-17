@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Store;
 
+use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+
 /**
  * Handles the complete document processing pipeline: load → transform → vectorize → store.
  *
@@ -19,16 +21,10 @@ namespace Symfony\AI\Store;
 interface IndexerInterface
 {
     /**
-     * Process sources through the complete document pipeline: load → transform → vectorize → store.
+     * Process documents through the document pipeline: transform → vectorize → store.
      *
-     * @param array{chunk_size?: int} $options Processing options
+     * @param iterable<EmbeddableDocumentInterface> $documents
+     * @param array{chunk_size?: int}               $options   Processing options
      */
-    public function index(array $options = []): void;
-
-    /**
-     * Create a new instance with a different source.
-     *
-     * @param string|array<string> $source Source identifier (file path, URL, etc.) or array of sources
-     */
-    public function withSource(string|array $source): self;
+    public function index(iterable $documents, array $options = []): void;
 }

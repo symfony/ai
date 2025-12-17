@@ -23,6 +23,7 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Ingester;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -35,7 +36,7 @@ $store = new Store(
     'movies',
 );
 
-// initialize the collection (needs to be called before the indexer)
+// initialize the collection (needs to be called before the ingester)
 $store->setup();
 
 // create embeddings and documents
@@ -51,8 +52,8 @@ foreach (Movies::all() as $movie) {
 // create embeddings for documents
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
-$indexer->index($documents);
+$ingester = new Ingester(new InMemoryLoader($documents), new Indexer($vectorizer, $store, logger: logger()), logger: logger());
+$ingester->ingest();
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());

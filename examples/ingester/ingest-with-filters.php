@@ -17,6 +17,7 @@ use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Ingester;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\Component\Uid\Uuid;
 
@@ -56,18 +57,19 @@ $filters = [
     new TextContainsFilter('SPAM:', caseSensitive: true),
 ];
 
-$indexer = new Indexer(
+$ingester = new Ingester(
     loader: new InMemoryLoader($documents),
-    vectorizer: $vectorizer,
-    store: $store,
-    source: null,
-    filters: $filters,
-    transformers: [
-        new TextTrimTransformer(),
-    ],
+    indexer: new Indexer(
+        vectorizer: $vectorizer,
+        store: $store,
+        filters: $filters,
+        transformers: [
+            new TextTrimTransformer(),
+        ],
+    ),
 );
 
-$indexer->index();
+$ingester->ingest();
 
 $vector = $vectorizer->vectorize('technology artificial intelligence');
 $results = $store->query($vector);

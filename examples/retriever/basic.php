@@ -14,6 +14,7 @@ use Symfony\AI\Store\Document\Loader\TextFileLoader;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Ingester;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\AI\Store\Retriever;
 
@@ -24,20 +25,21 @@ $store = new InMemoryStore();
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
 
-$indexer = new Indexer(
+$ingester = new Ingester(
     loader: new TextFileLoader(),
-    vectorizer: $vectorizer,
-    store: $store,
-    source: [
-        dirname(__DIR__, 2).'/fixtures/movies/gladiator.md',
-        dirname(__DIR__, 2).'/fixtures/movies/inception.md',
-        dirname(__DIR__, 2).'/fixtures/movies/jurassic-park.md',
-    ],
-    transformers: [
-        new TextSplitTransformer(chunkSize: 500, overlap: 100),
-    ],
+    indexer: new Indexer(
+        vectorizer: $vectorizer,
+        store: $store,
+        transformers: [
+            new TextSplitTransformer(chunkSize: 500, overlap: 100),
+        ],
+    ),
 );
-$indexer->index();
+$ingester->ingest([
+    dirname(__DIR__, 2).'/fixtures/movies/gladiator.md',
+    dirname(__DIR__, 2).'/fixtures/movies/inception.md',
+    dirname(__DIR__, 2).'/fixtures/movies/jurassic-park.md',
+]);
 
 $retriever = new Retriever(
     vectorizer: $vectorizer,

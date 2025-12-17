@@ -12,7 +12,7 @@
 namespace Symfony\AI\Store\Command;
 
 use Symfony\AI\Store\Exception\RuntimeException;
-use Symfony\AI\Store\IndexerInterface;
+use Symfony\AI\Store\IngesterInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Completion\CompletionInput;
@@ -28,34 +28,34 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
 #[AsCommand(
-    name: 'ai:store:index',
+    name: 'ai:store:ingest',
     description: 'Index documents into a store',
 )]
-final class IndexCommand extends Command
+final class IngestCommand extends Command
 {
     /**
-     * @param ServiceLocator<IndexerInterface> $indexers
+     * @param ServiceLocator<IngesterInterface> $ingesters
      */
     public function __construct(
-        private readonly ServiceLocator $indexers,
+        private readonly ServiceLocator $ingesters,
     ) {
         parent::__construct();
     }
 
     public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
     {
-        if ($input->mustSuggestArgumentValuesFor('indexer')) {
-            $suggestions->suggestValues(array_keys($this->indexers->getProvidedServices()));
+        if ($input->mustSuggestArgumentValuesFor('ingester')) {
+            $suggestions->suggestValues(array_keys($this->ingesters->getProvidedServices()));
         }
     }
 
     protected function configure(): void
     {
         $this
-            ->addArgument('indexer', InputArgument::REQUIRED, 'Name of the indexer to run')
-            ->addOption('source', 's', InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, 'Source(s) to index (overrides configured source)')
+            ->addArgument('ingester', InputArgument::REQUIRED, 'Name of the ingester to run')
+            ->addOption('source', 's', InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, 'Source(s) to ingest (overrides configured source)')
             ->setHelp(<<<'EOF'
-The <info>%command.name%</info> command indexes documents into a store using the specified indexer.
+The <info>%command.name%</info> command ingestes documents into a store using the specified ingester.
 
 Basic usage:
     <info>php %command.full_name% blog</info>
@@ -74,7 +74,7 @@ EOF
     {
         $io = new SymfonyStyle($input, $output);
 
-        $indexer = $input->getArgument('indexer');
+        $ingester = $input->getArgument('ingester');
         $sources = $input->getOption('source');
         $source = match (true) {
             [] === $sources => null,
@@ -82,24 +82,24 @@ EOF
             default => $sources,
         };
 
-        if (!$this->indexers->has($indexer)) {
-            throw new RuntimeException(\sprintf('The "%s" indexer does not exist.', $indexer));
+        if (!$this->ingesters->has($ingester)) {
+            throw new RuntimeException(\sprintf('The "%s" ingester does not exist.', $ingester));
         }
 
-        $indexerService = $this->indexers->get($indexer);
+        $ingesterService = $this->ingesters->get($ingester);
 
         if (null !== $source) {
-            $indexerService = $indexerService->withSource($source);
+            $ingesterService = $ingesterService->withSource($source);
         }
 
-        $io->title(\sprintf('Indexing documents using "%s" indexer', $indexer));
+        $io->title(\sprintf('Indexing documents using "%s" ingester', $ingester));
 
         try {
-            $indexerService->index([]);
+            $ingesterService->ingest($source);
 
-            $io->success(\sprintf('Documents indexed successfully using "%s" indexer.', $indexer));
+            $io->success(\sprintf('Documents ingested successfully using "%s" ingester.', $ingester));
         } catch (\Exception $e) {
-            throw new RuntimeException(\sprintf('An error occurred while indexing with "%s": ', $indexer).$e->getMessage(), previous: $e);
+            throw new RuntimeException(\sprintf('An error occurred while ingesting with "%s": ', $ingester).$e->getMessage(), previous: $e);
         }
 
         return Command::SUCCESS;

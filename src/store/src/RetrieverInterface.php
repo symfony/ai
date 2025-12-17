@@ -16,7 +16,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 /**
  * Retrieves documents from a vector store based on a query string.
  *
- * The opposite of IndexerInterface - while the Indexer loads, transforms, vectorizes and stores documents,
+ * The opposite of IngesterInterface - while the Ingester loads, transforms, vectorizes and stores documents,
  * the Retriever vectorizes a query and retrieves similar documents from the store.
  *
  * @author Oskar Stark <oskarstark@googlemail.com>

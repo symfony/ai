@@ -70,7 +70,8 @@ use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Document\VectorizerInterface;
-use Symfony\AI\Store\IndexerInterface;
+use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\IngesterInterface;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\RetrieverInterface;
@@ -5077,7 +5078,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(VectorizerInterface::class.' $another'));
     }
 
-    public function testIndexerWithConfiguredVectorizer()
+    public function testIngesterWithConfiguredVectorizer()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5092,8 +5093,8 @@ class AiBundleTest extends TestCase
                         'model' => 'text-embedding-3-small',
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'vectorizer' => 'ai.vectorizer.my_vectorizer',
                         'store' => 'ai.store.memory.my_store',
@@ -5102,24 +5103,26 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
         $this->assertTrue($container->hasDefinition('ai.vectorizer.my_vectorizer'));
 
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
 
         $this->assertInstanceOf(Reference::class, $arguments[0]);
         $this->assertSame(InMemoryLoader::class, (string) $arguments[0]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[1]);
-        $this->assertSame('ai.vectorizer.my_vectorizer', (string) $arguments[1]);
+        $this->assertInstanceOf(Definition::class, $arguments[1]);
+        $this->assertSame(Indexer::class, $arguments[1]->getClass());
+        $this->assertSame('ai.vectorizer.my_vectorizer', (string) $arguments[1]->getArguments()[0]);
+        $this->assertSame('ai.store.memory.my_store', (string) $arguments[1]->getArguments()[1]);
 
         // Should not create model-specific vectorizer when using configured one
-        $this->assertFalse($container->hasDefinition('ai.indexer.my_indexer.vectorizer'));
-        $this->assertFalse($container->hasDefinition('ai.indexer.my_indexer.model'));
+        $this->assertFalse($container->hasDefinition('ai.ingester.my_ingester.vectorizer'));
+        $this->assertFalse($container->hasDefinition('ai.ingester.my_ingester.model'));
     }
 
-    public function testIndexerWithStringSource()
+    public function testIngesterWithStringSource()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5128,8 +5131,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'source' => 'https://example.com/feed.xml',
                         'vectorizer' => 'my_vectorizer_service',
@@ -5139,14 +5142,14 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
 
-        $this->assertSame('https://example.com/feed.xml', $arguments[3]);
+        $this->assertSame('https://example.com/feed.xml', $arguments[2]);
     }
 
-    public function testIndexerWithArraySource()
+    public function testIngesterWithArraySource()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5155,8 +5158,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'source' => [
                             '/path/to/file1.txt',
@@ -5170,20 +5173,20 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
 
-        $this->assertIsArray($arguments[3]);
-        $this->assertCount(3, $arguments[3]);
+        $this->assertIsArray($arguments[2]);
+        $this->assertCount(3, $arguments[2]);
         $this->assertSame([
             '/path/to/file1.txt',
             '/path/to/file2.txt',
             'https://example.com/feed.xml',
-        ], $arguments[3]);
+        ], $arguments[2]);
     }
 
-    public function testIndexerWithNullSource()
+    public function testIngesterWithNullSource()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5192,8 +5195,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
@@ -5203,14 +5206,14 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
 
-        $this->assertNull($arguments[3]);
+        $this->assertNull($arguments[2]);
     }
 
-    public function testIndexerWithConfiguredTransformers()
+    public function testIngesterWithConfiguredTransformers()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5219,8 +5222,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'transformers' => [
                             TextTrimTransformer::class,
@@ -5233,22 +5236,24 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
 
-        $this->assertSame([], $arguments[4]); // Empty filters
-        $this->assertIsArray($arguments[5]);
-        $this->assertCount(2, $arguments[5]);
+        $indexerArguments = $arguments[1]->getArguments();
 
-        $this->assertInstanceOf(Reference::class, $arguments[5][0]);
-        $this->assertSame(TextTrimTransformer::class, (string) $arguments[5][0]);
+        $this->assertSame([], $indexerArguments[2]); // Empty filters
+        $this->assertIsArray($indexerArguments[3]);
+        $this->assertCount(2, $indexerArguments[3]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[5][1]);
-        $this->assertSame('App\CustomTransformer', (string) $arguments[5][1]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[3][0]);
+        $this->assertSame(TextTrimTransformer::class, (string) $indexerArguments[3][0]);
+
+        $this->assertInstanceOf(Reference::class, $indexerArguments[3][1]);
+        $this->assertSame('App\CustomTransformer', (string) $indexerArguments[3][1]);
     }
 
-    public function testIndexerWithEmptyTransformers()
+    public function testIngesterWithEmptyTransformers()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5257,8 +5262,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'transformers' => [],
                         'vectorizer' => 'my_vectorizer_service',
@@ -5268,15 +5273,16 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
+        $indexerArguments = $arguments[1]->getArguments();
 
-        $this->assertSame([], $arguments[4]); // Empty filters
-        $this->assertSame([], $arguments[5]); // Empty transformers
+        $this->assertSame([], $indexerArguments[2]); // Empty filters
+        $this->assertSame([], $indexerArguments[3]); // Empty transformers
     }
 
-    public function testIndexerWithoutTransformers()
+    public function testIngesterWithoutTransformers()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5285,8 +5291,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
@@ -5296,15 +5302,16 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
+        $indexerArguments = $arguments[1]->getArguments();
 
-        $this->assertSame([], $arguments[4]); // Empty filters
-        $this->assertSame([], $arguments[5]); // Empty transformers
+        $this->assertSame([], $indexerArguments[2]); // Empty filters
+        $this->assertSame([], $indexerArguments[3]); // Empty transformers
     }
 
-    public function testIndexerWithSourceAndTransformers()
+    public function testIngesterWithSourceAndTransformers()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5313,8 +5320,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'source' => [
                             '/path/to/file1.txt',
@@ -5330,34 +5337,36 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
 
         $this->assertInstanceOf(Reference::class, $arguments[0]);
         $this->assertSame(InMemoryLoader::class, (string) $arguments[0]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[1]);
-        $this->assertSame('my_vectorizer_service', (string) $arguments[1]);
+        $indexerArguments = $arguments[1]->getArguments();
 
-        $this->assertInstanceOf(Reference::class, $arguments[2]);
-        $this->assertSame('ai.store.memory.my_store', (string) $arguments[2]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[0]);
+        $this->assertSame('my_vectorizer_service', (string) $indexerArguments[0]);
 
-        $this->assertIsArray($arguments[3]);
-        $this->assertCount(2, $arguments[3]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[1]);
+        $this->assertSame('ai.store.memory.my_store', (string) $indexerArguments[1]);
+
+        $this->assertIsArray($arguments[2]);
+        $this->assertCount(2, $arguments[2]);
         $this->assertSame([
             '/path/to/file1.txt',
             '/path/to/file2.txt',
-        ], $arguments[3]);
+        ], $arguments[2]);
 
-        $this->assertSame([], $arguments[4]); // Empty filters
-        $this->assertIsArray($arguments[5]);
-        $this->assertCount(1, $arguments[5]);
-        $this->assertInstanceOf(Reference::class, $arguments[5][0]);
-        $this->assertSame(TextTrimTransformer::class, (string) $arguments[5][0]);
+        $this->assertSame([], $indexerArguments[2]); // Empty filters
+        $this->assertIsArray($indexerArguments[3]);
+        $this->assertCount(1, $indexerArguments[3]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[3][0]);
+        $this->assertSame(TextTrimTransformer::class, (string) $indexerArguments[3][0]);
     }
 
-    public function testIndexerWithConfiguredFilters()
+    public function testIngesterWithConfiguredFilters()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5366,8 +5375,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'filters' => [
                             TextContainsFilter::class,
@@ -5380,25 +5389,26 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
+        $indexerArguments = $arguments[1]->getArguments();
 
-        // Verify filters are in the correct position (index 4, before transformers)
-        $this->assertIsArray($arguments[4]);
-        $this->assertCount(2, $arguments[4]);
+        // Verify filters are in the correct position
+        $this->assertIsArray($indexerArguments[2]);
+        $this->assertCount(2, $indexerArguments[2]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[4][0]);
-        $this->assertSame(TextContainsFilter::class, (string) $arguments[4][0]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[2][0]);
+        $this->assertSame(TextContainsFilter::class, (string) $indexerArguments[2][0]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[4][1]);
-        $this->assertSame('App\CustomFilter', (string) $arguments[4][1]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[2][1]);
+        $this->assertSame('App\CustomFilter', (string) $indexerArguments[2][1]);
 
-        // Verify transformers are in the correct position (index 5, after filters)
-        $this->assertSame([], $arguments[5]); // Empty transformers
+        // Verify transformers are in the correct position (index 3, after filters)
+        $this->assertSame([], $indexerArguments[3]); // Empty transformers
     }
 
-    public function testIndexerWithEmptyFilters()
+    public function testIngesterWithEmptyFilters()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5407,8 +5417,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'filters' => [],
                         'vectorizer' => 'my_vectorizer_service',
@@ -5418,14 +5428,15 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
+        $indexerArguments = $arguments[1]->getArguments();
 
-        $this->assertSame([], $arguments[4]); // Empty filters
+        $this->assertSame([], $indexerArguments[2]); // Empty filters
     }
 
-    public function testIndexerWithoutFilters()
+    public function testIngesterWithoutFilters()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5434,8 +5445,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
@@ -5445,14 +5456,16 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
 
-        $this->assertSame([], $arguments[4]); // Empty filters
+        $indexerArguments = $arguments[1]->getArguments();
+
+        $this->assertSame([], $indexerArguments[2]); // Empty filters
     }
 
-    public function testIndexerWithFiltersAndTransformers()
+    public function testIngesterWithFiltersAndTransformers()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5461,8 +5474,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'filters' => [
                             TextContainsFilter::class,
@@ -5477,24 +5490,26 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
 
-        // Verify filters are at index 4
-        $this->assertIsArray($arguments[4]);
-        $this->assertCount(1, $arguments[4]);
-        $this->assertInstanceOf(Reference::class, $arguments[4][0]);
-        $this->assertSame(TextContainsFilter::class, (string) $arguments[4][0]);
+        $indexerArguments = $arguments[1]->getArguments();
 
-        // Verify transformers are at index 5
-        $this->assertIsArray($arguments[5]);
-        $this->assertCount(1, $arguments[5]);
-        $this->assertInstanceOf(Reference::class, $arguments[5][0]);
-        $this->assertSame(TextTrimTransformer::class, (string) $arguments[5][0]);
+        // Verify filters are at index 2
+        $this->assertIsArray($indexerArguments[2]);
+        $this->assertCount(1, $indexerArguments[2]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[2][0]);
+        $this->assertSame(TextContainsFilter::class, (string) $indexerArguments[2][0]);
+
+        // Verify transformers are at index 3
+        $this->assertIsArray($indexerArguments[3]);
+        $this->assertCount(1, $indexerArguments[3]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[3][0]);
+        $this->assertSame(TextTrimTransformer::class, (string) $indexerArguments[3][0]);
     }
 
-    public function testIndexerWithSourceFiltersAndTransformers()
+    public function testIngesterWithSourceFiltersAndTransformers()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5503,8 +5518,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'source' => [
                             '/path/to/file1.txt',
@@ -5523,36 +5538,40 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $this->assertTrue($container->hasDefinition('ai.ingester.my_ingester'));
+        $ingesterDefinition = $container->getDefinition('ai.ingester.my_ingester');
+        $arguments = $ingesterDefinition->getArguments();
+        $indexerArguments = $arguments[1]->getArguments();
 
         // Verify correct order: loader, vectorizer, store, source, filters, transformers, logger
         $this->assertInstanceOf(Reference::class, $arguments[0]); // loader
         $this->assertSame(InMemoryLoader::class, (string) $arguments[0]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[1]); // vectorizer
-        $this->assertSame('my_vectorizer_service', (string) $arguments[1]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[0]); // vectorizer
+        $this->assertSame('my_vectorizer_service', (string) $indexerArguments[0]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[2]); // store
-        $this->assertSame('ai.store.memory.my_store', (string) $arguments[2]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[1]); // store
+        $this->assertSame('ai.store.memory.my_store', (string) $indexerArguments[1]);
 
-        $this->assertIsArray($arguments[3]); // source
-        $this->assertCount(2, $arguments[3]);
-        $this->assertSame(['/path/to/file1.txt', '/path/to/file2.txt'], $arguments[3]);
+        $this->assertIsArray($arguments[2]); // source
+        $this->assertCount(2, $arguments[2]);
+        $this->assertSame(['/path/to/file1.txt', '/path/to/file2.txt'], $arguments[2]);
 
-        $this->assertIsArray($arguments[4]); // filters
-        $this->assertCount(1, $arguments[4]);
-        $this->assertInstanceOf(Reference::class, $arguments[4][0]);
-        $this->assertSame(TextContainsFilter::class, (string) $arguments[4][0]);
+        $this->assertIsArray($indexerArguments[2]); // filters
+        $this->assertCount(1, $indexerArguments[2]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[2][0]);
+        $this->assertSame(TextContainsFilter::class, (string) $indexerArguments[2][0]);
 
-        $this->assertIsArray($arguments[5]); // transformers
-        $this->assertCount(1, $arguments[5]);
-        $this->assertInstanceOf(Reference::class, $arguments[5][0]);
-        $this->assertSame(TextTrimTransformer::class, (string) $arguments[5][0]);
+        $this->assertIsArray($indexerArguments[3]); // transformers
+        $this->assertCount(1, $indexerArguments[3]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[3][0]);
+        $this->assertSame(TextTrimTransformer::class, (string) $indexerArguments[3][0]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[6]); // logger
-        $this->assertSame('logger', (string) $arguments[6]);
+        $this->assertInstanceOf(Reference::class, $indexerArguments[4]); // logger
+        $this->assertSame('logger', (string) $indexerArguments[4]);
+
+        $this->assertInstanceOf(Reference::class, $arguments[3]); // logger
+        $this->assertSame('logger', (string) $arguments[3]);
     }
 
     public function testInjectionIndexerAliasIsRegistered()
@@ -5564,8 +5583,8 @@ class AiBundleTest extends TestCase
                         'my_store' => [],
                     ],
                 ],
-                'indexer' => [
-                    'my_indexer' => [
+                'ingester' => [
+                    'my_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'transformers' => [],
                         'vectorizer' => 'my_vectorizer_service',
@@ -5581,8 +5600,8 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasAlias(IndexerInterface::class.' $myIndexer'));
-        $this->assertTrue($container->hasAlias(IndexerInterface::class.' $another'));
+        $this->assertTrue($container->hasAlias(IngesterInterface::class.' $myIngester'));
+        $this->assertTrue($container->hasAlias(IngesterInterface::class.' $another'));
     }
 
     public function testRetrieverWithConfiguredVectorizer()
@@ -7562,8 +7581,8 @@ class AiBundleTest extends TestCase
                         ],
                     ],
                 ],
-                'indexer' => [
-                    'my_text_indexer' => [
+                'ingester' => [
+                    'my_text_ingester' => [
                         'loader' => InMemoryLoader::class,
                         'vectorizer' => 'ai.vectorizer.test_vectorizer',
                         'store' => 'my_azuresearch_store_service_id',

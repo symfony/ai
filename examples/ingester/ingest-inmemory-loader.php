@@ -16,6 +16,7 @@ use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Ingester;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\Component\Uid\Uuid;
 
@@ -38,17 +39,18 @@ $documents = [
     ),
 ];
 
-$indexer = new Indexer(
+$ingester = new Ingester(
     loader: new InMemoryLoader($documents),
-    vectorizer: $vectorizer,
-    store: $store,
-    source: null,
-    transformers: [
-        new TextSplitTransformer(chunkSize: 100, overlap: 20),
-    ],
+    indexer: new Indexer(
+        vectorizer: $vectorizer,
+        store: $store,
+        transformers: [
+            new TextSplitTransformer(chunkSize: 100, overlap: 20),
+        ],
+    ),
 );
 
-$indexer->index();
+$ingester->ingest();
 
 $vector = $vectorizer->vectorize('machine learning artificial intelligence');
 $results = $store->query($vector);

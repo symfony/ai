@@ -17,6 +17,7 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Ingester;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -50,8 +51,8 @@ $store->setup();
 // Create embeddings for documents
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
-$indexer->index($documents);
+$ingester = new Ingester(new InMemoryLoader($documents), new Indexer($vectorizer, $store, logger: logger()), logger: logger());
+$ingester->ingest();
 
 // Create a query embedding
 $queryText = 'futuristic technology and artificial intelligence';

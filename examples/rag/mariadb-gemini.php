@@ -25,6 +25,7 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Ingester;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -53,8 +54,8 @@ $store->setup(['dimensions' => 768]);
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 $model = 'gemini-embedding-exp-03-07?dimensions=768&task_type=SEMANTIC_SIMILARITY';
 $vectorizer = new Vectorizer($platform, $model, logger());
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
-$indexer->index($documents);
+$ingester = new Ingester(new InMemoryLoader($documents), new Indexer($vectorizer, $store, logger: logger()), logger: logger());
+$ingester->ingest();
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());

@@ -62,7 +62,7 @@ symfony console mcp:server
 - **Agents**: blog, stream, youtube, wikipedia, audio
 - **Platform**: OpenAI integration
 - **Store**: ChromaDB vector store
-- **Indexer**: Text embedding model
+- **Ingester**: Text embedding model
 
 ### Chat Pattern
 - `Chat` class: Message flow and session management

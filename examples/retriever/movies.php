@@ -16,6 +16,7 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Ingester;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\AI\Store\Retriever;
 use Symfony\Component\Uid\Uuid;
@@ -36,8 +37,8 @@ foreach (Movies::all() as $movie) {
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
 
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
-$indexer->index();
+$ingester = new Ingester(new InMemoryLoader($documents), new Indexer($vectorizer, $store, logger: logger()), logger: logger());
+$ingester->ingest();
 
 $retriever = new Retriever($vectorizer, $store, logger());
 

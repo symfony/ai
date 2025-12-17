@@ -11,7 +11,7 @@ Low-level abstraction for vector stores enabling RAG applications. Unified inter
 ### Core Interfaces
 - **StoreInterface**: Main interface with `add()` and `query()` methods
 - **ManagedStoreInterface**: Extends with `setup()` and `drop()` lifecycle methods
-- **Indexer**: High-level service converting TextDocuments to VectorDocuments
+- **Ingester**: High-level service converting TextDocuments to VectorDocuments
 
 ### Bridge Pattern
 Multiple vector store implementations:

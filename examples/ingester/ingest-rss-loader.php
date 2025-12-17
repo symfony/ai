@@ -14,6 +14,7 @@ use Symfony\AI\Store\Document\Loader\RssFeedLoader;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Ingester;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\Component\HttpClient\HttpClient;
 
@@ -22,20 +23,21 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $store = new InMemoryStore();
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
-$indexer = new Indexer(
+$ingester = new Ingester(
     loader: new RssFeedLoader(HttpClient::create()),
-    vectorizer: $vectorizer,
-    store: $store,
-    source: [
-        'https://feeds.feedburner.com/symfony/blog',
-        'https://www.tagesschau.de/index~rss2.xml',
-    ],
-    transformers: [
-        new TextSplitTransformer(chunkSize: 500, overlap: 100),
-    ],
+    indexer: new Indexer(
+        vectorizer: $vectorizer,
+        store: $store,
+        transformers: [
+            new TextSplitTransformer(chunkSize: 500, overlap: 100),
+        ],
+    )
 );
 
-$indexer->index();
+$ingester->ingest([
+    'https://feeds.feedburner.com/symfony/blog',
+    'https://www.tagesschau.de/index~rss2.xml',
+]);
 
 $vector = $vectorizer->vectorize('Week of Symfony');
 $results = $store->query($vector);

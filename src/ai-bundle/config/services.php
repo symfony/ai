@@ -68,7 +68,7 @@ use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
 use Symfony\AI\Store\Command\DropStoreCommand;
-use Symfony\AI\Store\Command\IndexCommand;
+use Symfony\AI\Store\Command\IngestCommand;
 use Symfony\AI\Store\Command\RetrieveCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
@@ -238,9 +238,9 @@ return static function (ContainerConfigurator $container): void {
                 tagged_locator('ai.store', 'name'),
             ])
             ->tag('console.command')
-        ->set('ai.command.index', IndexCommand::class)
+        ->set('ai.command.ingest', IngestCommand::class)
             ->args([
-                tagged_locator('ai.indexer', 'name'),
+                tagged_locator('ai.ingester', 'name'),
             ])
             ->tag('console.command')
         ->set('ai.command.retrieve', RetrieveCommand::class)
