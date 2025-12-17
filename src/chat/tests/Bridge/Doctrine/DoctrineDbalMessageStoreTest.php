@@ -67,11 +67,15 @@ final class DoctrineDbalMessageStoreTest extends TestCase
         $column = $this->createMock(Column::class);
         $column->expects($this->once())->method('setAutoincrement')->willReturnSelf();
 
-        $table = $this->createMock(Table::class);
+        $table = $this->getMockBuilder(Table::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['addOption', 'addColumn', 'addPrimaryKeyConstraint'])
+            ->getMock();
         $table->expects($this->once())->method('addOption')
             ->with('_symfony_ai_chat_table_name', 'foo')
             ->willReturnSelf();
         $table->expects($this->exactly(2))->method('addColumn')->willReturn($column);
+        $table->expects($this->once())->method('addPrimaryKeyConstraint');
 
         $schema = $this->createMock(Schema::class);
         $schema->expects($this->once())->method('hasTable')->willReturn(false);

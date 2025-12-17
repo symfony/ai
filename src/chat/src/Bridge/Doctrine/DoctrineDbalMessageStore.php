@@ -122,13 +122,9 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             ->setNotnull(true);
         $table->addColumn('messages', Types::TEXT)
             ->setNotnull(true);
-        if (class_exists(PrimaryKeyConstraint::class)) {
-            $table->addPrimaryKeyConstraint(new PrimaryKeyConstraint(null, [
-                new UnqualifiedName(Identifier::unquoted('id')),
-            ], true));
-        } else {
-            $table->setPrimaryKey(['id']);
-        }
+        $table->addPrimaryKeyConstraint(new PrimaryKeyConstraint(null, [
+            new UnqualifiedName(Identifier::unquoted('id')),
+        ], true));
 
         // We need to create a sequence for Oracle and set the id column to get the correct nextval
         if ($this->dbalConnection->getDatabasePlatform() instanceof OraclePlatform) {

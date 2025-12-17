@@ -30,7 +30,7 @@
     },
     "require-dev": {
         "ext-redis": "*",
-        "doctrine/dbal": "^3.3|^4.0",
+        "doctrine/dbal": "^4.0",
         "mongodb/mongodb": "^1.21|^2.0",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
