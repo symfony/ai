@@ -76,6 +76,30 @@ class DataCollectorTest extends TestCase
         $this->assertSame('Assistant response', $dataCollector->getPlatformCalls()[0]['result']);
     }
 
+    public function testCollectsDataForUnconsumedStreamingResponse()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
+        $result = new StreamResult(
+            (function () {
+                yield 'Assistant ';
+                yield 'response';
+            })(),
+        );
+
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($result), $this->createStub(RawResultInterface::class)));
+
+        // Invoke but do NOT consume the stream
+        $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
+
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], []);
+        $dataCollector->lateCollect();
+
+        $this->assertCount(1, $dataCollector->getPlatformCalls());
+        $this->assertNull($dataCollector->getPlatformCalls()[0]['result']);
+    }
+
     public function testCollectsDataForMessageStore()
     {
         $traceableMessageStore = new TraceableMessageStore(new InMemoryStore(), new MonotonicClock());
