@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-17T09:57:51Z
+
+In the PR title you talk about making it nullable, but you set an empty string
+
+---------------------------------------------------------------------------
+
+by daFish at 2025-12-17T09:59:51Z
+
+@OskarStark Right, I have updated the title.
