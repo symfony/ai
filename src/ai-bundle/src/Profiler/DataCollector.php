@@ -155,7 +155,8 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
             if (isset($platform->resultCache[$result])) {
                 $call['result'] = $platform->resultCache[$result];
             } else {
-                $call['result'] = $result->getContent();
+                $content = $result->getContent();
+                $call['result'] = $content instanceof \Generator ? null : $content;
             }
 
             $call['metadata'] = $result->getMetadata();
