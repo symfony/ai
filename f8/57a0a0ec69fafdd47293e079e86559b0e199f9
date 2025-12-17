@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by lochmueller at 2025-12-10T14:34:44Z
+
+Hey @OskarStark
+I checked the PR for OpenRouter and saw, that `"symfony/ai-generic-platform": "@dev"` is missing in the composer.json, right? Also checked LMStudio and I think the dependency is missing in all packages that use the new Generic completions integration. Or have I overlooked something?
+Regards,
+Tim
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-16T22:28:40Z
+
+i'm worried - what are you going to do tomorrow??
+after large achievement people sometimes fall into a darkness - make sure to give me a call if you need to hear a voice
+
+anyhow, well done! - thanks a lot! :clap: :tada: :partying_face:
