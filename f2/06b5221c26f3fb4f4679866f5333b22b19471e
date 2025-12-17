@@ -1,0 +1,103 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-15T08:18:01Z
+
+I tend more and more to require the logger
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-11-15T08:28:58Z
+
+> I tend more and more to require the logger
+
+Me too, I feel like we’re making things unnecessarily complicated  😂
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-16T15:41:54Z
+
+Makes sense, open for a PR bringing in some tests?
+
+---------------------------------------------------------------------------
+
+by WebMamba at 2025-11-16T15:50:07Z
+
+But yes, to sum up my thought, you can either:
+- require Monolog
+- or if Monolog is not installed, instantiate a NullLogger
+
+After some reflection, I’m leaning more toward the NullLogger option 😇
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-11-16T16:30:30Z
+
+> But yes, to sum up my thought, you can either:
+>
+> * require Monolog
+> * or if Monolog is not installed, instantiate a NullLogger
+>
+> After some reflection, I’m leaning more toward the NullLogger option 😇
+
+  Maybe wait the review of https://github.com/modelcontextprotocol/php-sdk/pull/152 ? If it's merged, I can pass the logger (which can be null via `ContainerInterface::NULL_ON_INVALID_REFERENCE`) directly to the transport without ternary operators.
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-11-16T17:05:26Z
+
+> Makes sense, open for a PR bringing in some tests?
+
+@OskarStark Shouldn't lint:container have caught this? I'm not sure if it's possible to run it independently on each bundle though - they each have their own dependencies, right?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-23T21:06:34Z
+
+Hey @camilleislasse, what's the status here? revisit after merge of https://github.com/modelcontextprotocol/php-sdk/pull/152?
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-11-24T09:56:43Z
+
+> Hey @camilleislasse, what's the status here? revisit after merge of [modelcontextprotocol/php-sdk#152](https://github.com/modelcontextprotocol/php-sdk/pull/152)?
+
+Hey, yes exactly, I'll try to watch it tonight, I'm a bit busy
+
+---------------------------------------------------------------------------
+
+by derrabus at 2025-12-04T07:40:00Z
+
+Would it make sense to inject the generic `logger` service instead (which should always be present) and use the `monolog.logger` tag to indicate the channel?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-04T08:21:26Z
+
+Do we need to wait for a new mcp sdk tag?
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-12-06T21:09:42Z
+
+  @derrabus Is the last commit what you had in mind?
+  @OskarStark If so, we no longer need to wait for a new MCP SDK tag, we always inject a valid logger now, never null. And anyway, the nullable logger (mcp/sdk#152) was already included in v0.1.0.
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2025-12-17T06:58:35Z
+
+@derrabus If you have time to confirm
+
+---------------------------------------------------------------------------
+
+by derrabus at 2025-12-17T08:30:52Z
+
+> @derrabus Is the last commit what you had in mind?
+
+Yes.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-17T08:51:35Z
+
+CI failure is related and rebase is needed
