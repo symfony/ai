@@ -21,7 +21,7 @@ require_once __DIR__.'/bootstrap.php';
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
 
-$platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client(), eventDispatcher: $dispatcher);
+$platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), httpClient: adc_aware_http_client(), eventDispatcher: $dispatcher);
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),
