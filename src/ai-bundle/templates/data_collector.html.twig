@@ -119,8 +119,10 @@
                                                             {% for item in message.content %}
                                                                 {% if item.text is defined %}
                                                                     {{ item.text|nl2br }}
-                                                                {% else %}
-                                                                    <img src="{{ item.url }}" />
+                                                                {% elseif item.type is defined and item.type == "image" %}
+                                                                    <img src="{{ item.url }}" style="max-width: 100%;"/>
+                                                                {% elseif item.url is defined and item.url %}
+                                                                    <a href="{{ item.url }}" download="{{ item.name ?? 'View File' }}">{{ item.name ?? 'View File' }}</a>
                                                                 {% endif %}
                                                             {% endfor %}
                                                         {% else %}

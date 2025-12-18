@@ -94,4 +94,16 @@ class File implements ContentInterface
     {
         return null === $this->path ? null : basename($this->path);
     }
+
+    /**
+     * @return array{type: string, url: string|null, name: string|null}
+     */
+    public function __serialize(): array
+    {
+        return [
+            'type' => 'file',
+            'url' => $this->asDataUrl(),
+            'name' => $this->getFilename(),
+        ];
+    }
 }
