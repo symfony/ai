@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 
 require_once __DIR__.'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), env('GOOGLE_CLOUD_VERTEX_API_KEY'), httpClient: adc_aware_http_client());
+$platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), env('GOOGLE_CLOUD_VERTEX_API_KEY'));
 
 $messages = new MessageBag(
     Message::forSystem('You are an expert assistant in geography.'),
