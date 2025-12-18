@@ -33,7 +33,7 @@ final class PlatformFactory
     public static function create(
         string $location,
         string $projectId,
-        ?string $apiKey = null,
+        #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
