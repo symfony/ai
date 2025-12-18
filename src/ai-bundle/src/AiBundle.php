@@ -484,8 +484,8 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('bedrock' === $type) {
-            if (!ContainerBuilder::willBeAvailable('symfony/bedrock-platform', BedrockFactory::class, ['symfony/ai-bundle'])) {
-                throw new RuntimeException('Bedrock platform configuration requires "symfony/bedrock-platform" package. Try running "composer require symfony/bedrock-platform".');
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-bedrock-platform', BedrockFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Bedrock platform configuration requires "symfony/ai-bedrock-platform" package. Try running "composer require symfony/ai-bedrock-platform".');
             }
 
             foreach ($platform as $name => $config) {
