@@ -49,7 +49,7 @@ final class ModelClient implements ModelClientInterface
         );
 
         if (null !== $this->apiKey) {
-            $url .= '?key=' . $this->apiKey;
+            $url .= '?key='.$this->apiKey;
         }
 
         $modelOptions = $model->getOptions();

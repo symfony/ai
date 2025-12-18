@@ -54,7 +54,7 @@ final class ModelClient implements ModelClientInterface
         );
 
         if (null !== $this->apiKey) {
-            $url .= '?key=' . $this->apiKey;
+            $url .= '?key='.$this->apiKey;
         }
 
         if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
