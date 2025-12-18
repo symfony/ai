@@ -33,13 +33,17 @@ use Symfony\AI\Platform\Platform;
 final class PlatformFactory
 {
     public static function create(
-        BedrockRuntimeClient $bedrockRuntimeClient = new BedrockRuntimeClient(),
+        ?BedrockRuntimeClient $bedrockRuntimeClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         if (!class_exists(BedrockRuntimeClient::class)) {
             throw new RuntimeException('For using the Bedrock platform, the async-aws/bedrock-runtime package is required. Try running "composer require async-aws/bedrock-runtime".');
+        }
+
+        if (null === $bedrockRuntimeClient) {
+            $bedrockRuntimeClient = new BedrockRuntimeClient();
         }
 
         return new Platform(

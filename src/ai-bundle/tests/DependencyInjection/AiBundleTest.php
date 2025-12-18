@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\AiBundle\Tests\DependencyInjection;
 
+use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use Codewithkyrian\ChromaDB\Client;
 use MongoDB\Client as MongoDbClient;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
@@ -7062,6 +7063,7 @@ class AiBundleTest extends TestCase
         $container->setParameter('kernel.environment', 'dev');
         $container->setParameter('kernel.build_dir', 'public');
         $container->setDefinition(ClockInterface::class, new Definition(MonotonicClock::class));
+        $container->setDefinition('async_aws.client.bedrock_us', new Definition(BedrockRuntimeClient::class));
 
         $extension = (new AiBundle())->getContainerExtension();
         $extension->load($configuration, $container);
@@ -7096,6 +7098,12 @@ class AiBundleTest extends TestCase
                             'base_url' => 'myazure2.openai.azure.com/',
                             'deployment' => 'gpt-4',
                             'api_version' => '2024-02-15-preview',
+                        ],
+                    ],
+                    'bedrock' => [
+                        'default' => [],
+                        'us' => [
+                            'bedrock_runtime_client' => 'async_aws.client.bedrock_us',
                         ],
                     ],
                     'cache' => [
