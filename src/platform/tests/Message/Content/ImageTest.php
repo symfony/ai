@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Tests\Message\Content;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Content\Image;
 
 final class ImageTest extends TestCase
