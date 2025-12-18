@@ -51,6 +51,11 @@ Advanced Example with Multiple Agents
                     deployment: '%env(AZURE_OPENAI_GPT)%'
                     api_key: '%env(AZURE_OPENAI_KEY)%'
                     api_version: '%env(AZURE_GPT_VERSION)%'
+            bedrock:
+                # multiple instances possible - for example region depending
+                default: ~
+                eu:
+                    bedrock_runtime_client: 'async_aws.client.bedrock_runtime_eu'
             eleven_labs:
                 host: '%env(ELEVEN_LABS_HOST)%'
                 api_key: '%env(ELEVEN_LABS_API_KEY)%'
@@ -99,6 +104,10 @@ Advanced Example with Multiple Agents
             audio:
                 platform: 'ai.platform.eleven_labs'
                 model: 'text-to-speech'
+                tools: false
+            nova:
+                platform: 'ai.platform.bedrock_default
+                model: 'nova-pro'
                 tools: false
         store:
             chromadb:

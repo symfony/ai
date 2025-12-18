@@ -495,12 +495,12 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->addTag('proxy', ['interface' => PlatformInterface::class])
                     ->setArguments([
-                        new Reference($config['bedrock_runtime_client']),
-                        new Reference('ai.platform.model_catalog.bedrock'),
-                        $config['model_catalog'] ? new Reference($config['model_catalog']) : null,
+                        $config['bedrock_runtime_client'] ? new Reference($config['bedrock_runtime_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE) : null,
+                        $config['model_catalog'] ? new Reference($config['model_catalog']) : new Reference('ai.platform.model_catalog.bedrock'),
+                        null,
                         new Reference('event_dispatcher'),
                     ])
-                    ->addTag('ai.platform', ['name' => 'bedrock.'.$name]);
+                    ->addTag('ai.platform', ['name' => 'bedrock .'.$name]);
 
                 $container->setDefinition($platformId, $definition);
             }
