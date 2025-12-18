@@ -33,30 +33,23 @@ final class RawHttpResult implements RawResultInterface
     public function getDataStream(): iterable
     {
         foreach ((new EventSourceHttpClient())->stream($this->response) as $chunk) {
-            if ($chunk->isFirst() || $chunk->isLast() || ($chunk instanceof ServerSentEvent && '[DONE]' === $chunk->getData())) {
+            // Handle only complete events (no need for handle DataChunk`s)
+            if (!$chunk instanceof ServerSentEvent) {
                 continue;
             }
 
-            $jsonDelta = $chunk instanceof ServerSentEvent ? $chunk->getData() : $chunk->getContent();
-
-            // Remove leading/trailing brackets
-            if (str_starts_with($jsonDelta, '[') || str_starts_with($jsonDelta, ',')) {
-                $jsonDelta = substr($jsonDelta, 1);
+            // Do not handle: Init, Terminate, Errors, Comments and openAI specific termination via DONE
+            if (
+                $chunk->isFirst()
+                || $chunk->isLast()
+                || null !== $chunk->getError()
+                || str_starts_with($chunk->getContent(), ':')
+                || '[DONE]' === $chunk->getData()
+            ) {
+                continue;
             }
-            if (str_ends_with($jsonDelta, ']')) {
-                $jsonDelta = substr($jsonDelta, 0, -1);
-            }
 
-            // Split in case of multiple JSON objects
-            $deltas = explode(",\r\n", $jsonDelta);
-
-            foreach ($deltas as $delta) {
-                if ('' === trim($delta)) {
-                    continue;
-                }
-
-                yield json_decode($delta, true, flags: \JSON_THROW_ON_ERROR);
-            }
+            yield $chunk->getArrayData();
         }
     }
 
