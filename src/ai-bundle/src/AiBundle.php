@@ -470,7 +470,7 @@ final class AiBundle extends AbstractBundle
                         $config['deployment'],
                         $config['api_version'],
                         $config['api_key'],
-                        new Reference($config['http_client']),
+                        new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         new Reference('ai.platform.model_catalog.azure.openai'),
                         new Reference('ai.platform.contract.openai'),
                         new Reference('event_dispatcher'),
@@ -495,7 +495,7 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->addTag('proxy', ['interface' => PlatformInterface::class])
                     ->setArguments([
-                        new Reference($config['bedrock_runtime_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                        new Reference($config['bedrock_runtime_client']),
                         new Reference('ai.platform.model_catalog.bedrock'),
                         $config['model_catalog'] ? new Reference($config['model_catalog']) : null,
                         new Reference('event_dispatcher'),
