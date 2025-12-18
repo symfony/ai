@@ -470,7 +470,7 @@ final class AiBundle extends AbstractBundle
                         $config['deployment'],
                         $config['api_version'],
                         $config['api_key'],
-                        new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                        new Reference($config['http_client']),
                         new Reference('ai.platform.model_catalog.azure.openai'),
                         new Reference('ai.platform.contract.openai'),
                         new Reference('event_dispatcher'),
