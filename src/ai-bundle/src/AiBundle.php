@@ -177,7 +177,7 @@ final class AiBundle extends AbstractBundle
                     ->setDecoratedService($platform)
                     ->setArguments([new Reference('.inner')])
                     ->addTag('ai.traceable_platform');
-                $suffix = u($platform)->replace('ai.platform.', '')->toString();
+                $suffix = u($platform)->afterLast('.')->toString();
                 $builder->setDefinition('ai.traceable_platform.'.$suffix, $traceablePlatformDefinition);
             }
         }
