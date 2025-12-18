@@ -33,7 +33,7 @@ use Symfony\AI\Platform\Platform;
 final class PlatformFactory
 {
     public static function create(
-        BedrockRuntimeClient $bedrockRuntimeClient = new BedrockRuntimeClient(),
+        BedrockRuntimeClient $bedrockRuntimeClient,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
