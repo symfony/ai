@@ -157,6 +157,7 @@ return static function (DefinitionConfigurator $configurator): void {
                         ->children()
                             ->stringNode('location')->isRequired()->end()
                             ->stringNode('project_id')->isRequired()->end()
+                            ->stringNode('api_key')->defaultNull()->end()
                         ->end()
                     ->end()
                     ->arrayNode('openai')
