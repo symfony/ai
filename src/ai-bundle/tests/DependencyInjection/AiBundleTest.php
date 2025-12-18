@@ -92,7 +92,7 @@ class AiBundleTest extends TestCase
     {
         $container = $this->buildContainer($this->getFullConfig());
 
-        // Mock services that are used as platform create arguments, but should not be testet here or are not available.
+        // Mock services that are used as platform create arguments, but should not be tested here or are not available.
         $container->set('event_dispatcher', $this->createMock(EventDispatcherInterface::class));
         $container->getDefinition('ai.platform.vertexai')->replaceArgument(3, $this->createMock(HttpClientInterface::class));
 
