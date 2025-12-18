@@ -7023,6 +7023,7 @@ class AiBundleTest extends TestCase
                     'vertexai' => [
                         'location' => 'global',
                         'project_id' => '123',
+                        'api_key' => 'vertex_key_full',
                     ],
                     'dockermodelrunner' => [
                         'host_url' => 'http://127.0.0.1:12434',
