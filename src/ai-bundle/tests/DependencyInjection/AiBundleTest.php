@@ -6942,7 +6942,7 @@ class AiBundleTest extends TestCase
         $container->setParameter('kernel.environment', 'dev');
         $container->setParameter('kernel.build_dir', 'public');
         $container->setDefinition(ClockInterface::class, new Definition(MonotonicClock::class));
-        $container->setDefinition('async_aws.client.bedrock', new Definition(BedrockRuntimeClient::class));
+        $container->setDefinition('async_aws.client.bedrock_us', new Definition(BedrockRuntimeClient::class));
 
         $extension = (new AiBundle())->getContainerExtension();
         $extension->load($configuration, $container);
@@ -6980,8 +6980,9 @@ class AiBundleTest extends TestCase
                         ],
                     ],
                     'bedrock' => [
-                        'default' => [
-                            'bedrock_runtime_client' => 'async_aws.client.bedrock',
+                        'default' => [],
+                        'us' => [
+                            'bedrock_runtime_client' => 'async_aws.client.bedrock_us',
                         ],
                     ],
                     'cache' => [

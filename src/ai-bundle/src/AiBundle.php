@@ -177,7 +177,7 @@ final class AiBundle extends AbstractBundle
                     ->setDecoratedService($platform)
                     ->setArguments([new Reference('.inner')])
                     ->addTag('ai.traceable_platform');
-                $suffix = u($platform)->afterLast('.')->toString();
+                $suffix = u($platform)->replace('ai.platform.', '')->toString();
                 $builder->setDefinition('ai.traceable_platform.'.$suffix, $traceablePlatformDefinition);
             }
         }
@@ -415,18 +415,18 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($platform as $name => $config) {
-                $platformId = 'ai.platform.bedrock.'.$name;
+                $platformId = 'ai.platform.bedrock_'.$name;
                 $definition = (new Definition(Platform::class))
                     ->setFactory(BedrockFactory::class.'::create')
                     ->setLazy(true)
                     ->addTag('proxy', ['interface' => PlatformInterface::class])
                     ->setArguments([
-                        new Reference($config['bedrock_runtime_client']),
-                        new Reference('ai.platform.model_catalog.bedrock'),
-                        $config['model_catalog'] ? new Reference($config['model_catalog']) : null,
+                        $config['bedrock_runtime_client'] ? new Reference($config['bedrock_runtime_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE) : null,
+                        $config['model_catalog'] ? new Reference($config['model_catalog']) : new Reference('ai.platform.model_catalog.bedrock'),
+                        null,
                         new Reference('event_dispatcher'),
                     ])
-                    ->addTag('ai.platform', ['name' => 'bedrock.'.$name]);
+                    ->addTag('ai.platform', ['name' => 'bedrock_'.$name]);
 
                 $container->setDefinition($platformId, $definition);
             }

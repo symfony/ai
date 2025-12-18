@@ -67,7 +67,7 @@ return static function (DefinitionConfigurator $configurator): void {
                         ->arrayPrototype()
                             ->children()
                                 ->stringNode('bedrock_runtime_client')
-                                    ->isRequired()
+                                    ->defaultNull()
                                     ->info('Service ID of the Bedrock runtime client to use')
                                 ->end()
                                 ->stringNode('model_catalog')->defaultNull()->end()
