@@ -12,20 +12,20 @@
 namespace Symfony\AI\Platform\Tests\Message\Content;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\Message\Content\File;
 
-final class ImageTest extends TestCase
+final class FileTest extends TestCase
 {
     public function testConstructWithValidDataUrl()
     {
-        $image = Image::fromDataUrl('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABKklEQVR42mNk+A8AAwMhIv9n+X');
+        $image = File::fromDataUrl('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABKklEQVR42mNk+A8AAwMhIv9n+X');
 
         $this->assertStringStartsWith('data:image/png;base64', $image->asDataUrl());
     }
 
     public function testWithValidFile()
     {
-        $image = Image::fromFile(\dirname(__DIR__, 5).'/fixtures/image.jpg');
+        $image = File::fromFile(\dirname(__DIR__, 5).'/fixtures/image.jpg');
 
         $this->assertStringStartsWith('data:image/jpeg;base64,', $image->asDataUrl());
     }
@@ -34,12 +34,12 @@ final class ImageTest extends TestCase
     {
         $this->expectExceptionMessage('The file "foo.jpg" does not exist or is not readable.');
 
-        Image::fromFile('foo.jpg');
+        File::fromFile('foo.jpg');
     }
 
     public function testCanBeSerialized(): void
     {
-        $audio = Image::fromFile(\dirname(__DIR__, 5).'/fixtures/image.jpg');
+        $audio = File::fromFile(\dirname(__DIR__, 5).'/fixtures/image.jpg');
 
         $serialized = serialize($audio);
         $this->assertIsString($serialized);
