@@ -37,11 +37,18 @@ final class ImageTest extends TestCase
         Image::fromFile('foo.jpg');
     }
 
-    public function testCanBeSerialized(): void
+    public function testCanBeSerialized()
     {
         $audio = Image::fromFile(\dirname(__DIR__, 5).'/fixtures/image.jpg');
 
         $serialized = serialize($audio);
-        $this->assertIsString($serialized);
+        $unserialized = unserialize($serialized);
+        $this->assertIsArray($unserialized);
+        $this->assertArrayHasKey('type', $unserialized);
+        $this->assertEquals('image', $unserialized['type']);
+        $this->assertArrayHasKey('name', $unserialized);
+        $this->assertEquals('image.jpg', $unserialized['name']);
+        $this->assertArrayHasKey('url', $unserialized);
+        $this->assertIsString($unserialized['url']);
     }
 }

@@ -57,11 +57,18 @@ final class AudioTest extends TestCase
         Audio::fromFile('foo.mp3');
     }
 
-    public function testCanBeSerialized(): void
+    public function testCanBeSerialized()
     {
         $audio = Audio::fromFile(\dirname(__DIR__, 5).'/fixtures/audio.mp3');
 
         $serialized = serialize($audio);
-        $this->assertIsString($serialized);
+        $unserialized = unserialize($serialized);
+        $this->assertIsArray($unserialized);
+        $this->assertArrayHasKey('type', $unserialized);
+        $this->assertEquals('file', $unserialized['type']);
+        $this->assertArrayHasKey('name', $unserialized);
+        $this->assertEquals('audio.mp3', $unserialized['name']);
+        $this->assertArrayHasKey('url', $unserialized);
+        $this->assertIsString($unserialized['url']);
     }
 }

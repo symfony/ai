@@ -28,6 +28,18 @@ class File implements ContentInterface
     ) {
     }
 
+    /**
+     * @return array{type: string, url: string|null, name: string|null}
+     */
+    public function __serialize(): array
+    {
+        return [
+            'type' => 'file',
+            'url' => $this->asDataUrl(),
+            'name' => $this->getFilename(),
+        ];
+    }
+
     public static function fromDataUrl(string $dataUrl): static
     {
         if (!str_starts_with($dataUrl, 'data:')) {
@@ -93,17 +105,5 @@ class File implements ContentInterface
     public function getFilename(): ?string
     {
         return null === $this->path ? null : basename($this->path);
-    }
-
-    /**
-     * @return array{type: string, url: string|null, name: string|null}
-     */
-    public function __serialize(): array
-    {
-        return [
-            'type' => 'file',
-            'url' => $this->asDataUrl(),
-            'name' => $this->getFilename(),
-        ];
     }
 }

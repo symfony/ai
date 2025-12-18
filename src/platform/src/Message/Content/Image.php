@@ -16,9 +16,6 @@ namespace Symfony\AI\Platform\Message\Content;
  */
 final class Image extends File
 {
-    /**
-     * {@inheritDoc}
-     */
     public function __serialize(): array
     {
         return [
