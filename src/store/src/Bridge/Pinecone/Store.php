@@ -16,23 +16,46 @@ use Probots\Pinecone\Resources\Data\VectorResource;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class Store implements StoreInterface
+final class Store implements ManagedStoreInterface, StoreInterface
 {
     /**
      * @param array<string, mixed> $filter
      */
     public function __construct(
         private readonly Client $pinecone,
+        private readonly ?string $indexName = null,
         private readonly ?string $namespace = null,
         private readonly array $filter = [],
         private readonly int $topK = 3,
     ) {
+    }
+
+    public function setup(array $options = []): void
+    {
+        if (null === $this->indexName) {
+            throw new \InvalidArgumentException('You need to configure and index name for the Pinecone store.');
+        }
+
+        if (false === isset($options['dimension'])) {
+            throw new \InvalidArgumentException('No supported options.');
+        }
+
+        $this->pinecone
+            ->control()
+            ->index($this->indexName)
+            ->createServerless(
+                $options['dimension'],
+                $options['metric'] ?? null,
+                $options['cloud'] ?? null,
+                $options['region'] ?? null,
+            );
     }
 
     public function add(VectorDocument ...$documents): void
@@ -71,6 +94,18 @@ final class Store implements StoreInterface
                 score: $match['score'],
             );
         }
+    }
+
+    public function drop(array $options = []): void
+    {
+        if (null === $this->indexName) {
+            throw new \InvalidArgumentException('You need to configure and index name for the Pinecone store.');
+        }
+
+        $this->pinecone
+            ->control()
+            ->index($this->indexName)
+            ->delete();
     }
 
     private function getVectors(): VectorResource
