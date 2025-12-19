@@ -37,7 +37,7 @@ array of options::
     // Platform instantiation
 
     $agent = new Agent($platform, $model);
-    $input = new MessageBag(
+    $messages = new MessageBag(
         Message::forSystem('You are a helpful chatbot answering questions about LLM agent.'),
         Message::ofUser('Hello, how are you?'),
     );
