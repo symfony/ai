@@ -68,3 +68,4 @@ CHANGELOG
  * Allow beta feature flags to be passed into Anthropic model options
  * Add Ollama streaming output support
  * Add multimodal embedding support for Voyage AI
+ * Use Responses API for Scaleway platform when using gpt-oss-120b

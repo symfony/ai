@@ -85,6 +85,57 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(['arg1' => 'value1'], $toolCalls[0]->getArguments());
     }
 
+    public function testConvertResponseOutputText()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                [
+                    'role' => 'assistant',
+                    'type' => 'message',
+                    'content' => [
+                        [
+                            'type' => 'output_text',
+                            'text' => 'Hello',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('Hello', $result->getContent());
+    }
+
+    public function testConvertResponseFunctionCall()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                [
+                    'role' => 'assistant',
+                    'type' => 'function_call',
+                    'call_id' => 'call_123',
+                    'name' => 'test_function',
+                    'arguments' => '{"arg1": "value1"}',
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(ToolCallResult::class, $result);
+        $toolCalls = $result->getContent();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('call_123', $toolCalls[0]->getId());
+        $this->assertSame('test_function', $toolCalls[0]->getName());
+        $this->assertSame(['arg1' => 'value1'], $toolCalls[0]->getArguments());
+    }
+
     public function testConvertMultipleChoices()
     {
         $converter = new ResultConverter();
@@ -144,6 +195,23 @@ final class ResultConverterTest extends TestCase
 
         $this->expectException(ContentFilterException::class);
         $this->expectExceptionMessage('Content was filtered');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsExceptionOnApiError()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'error' => [
+                'type' => 'invalid_request_error',
+                'message' => 'Invalid model specified',
+            ],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Error "invalid_request_error": "Invalid model specified"');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
