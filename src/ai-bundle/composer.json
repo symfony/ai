@@ -3,44 +3,6 @@
     "description": "Integration bundle for Symfony AI components",
     "license": "MIT",
     "type": "symfony-bundle",
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../chat/src/Bridge/Cache"
-        },
-        {
-            "type": "path",
-            "url": "../chat/src/Bridge/Cloudflare"
-        },
-        {
-            "type": "path",
-            "url": "../chat/src/Bridge/Doctrine"
-        },
-        {
-            "type": "path",
-            "url": "../chat/src/Bridge/Meilisearch"
-        },
-        {
-            "type": "path",
-            "url": "../chat/src/Bridge/MongoDb"
-        },
-        {
-            "type": "path",
-            "url": "../chat/src/Bridge/Pogocache"
-        },
-        {
-            "type": "path",
-            "url": "../chat/src/Bridge/Redis"
-        },
-        {
-            "type": "path",
-            "url": "../chat/src/Bridge/Session"
-        },
-        {
-            "type": "path",
-            "url": "../chat/src/Bridge/SurrealDb"
-        }
-    ],
     "authors": [
         {
             "name": "Christopher Hertel",
