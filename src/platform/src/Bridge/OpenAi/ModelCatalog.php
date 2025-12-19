@@ -228,6 +228,18 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
+            'gpt-5.2' => [
+                'class' => Gpt::class,
+                'capabilities' => [
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_PDF,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::OUTPUT_TEXT,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
             'text-embedding-ada-002' => [
                 'class' => Embeddings::class,
                 'capabilities' => [Capability::INPUT_TEXT],
