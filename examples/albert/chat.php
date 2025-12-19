@@ -39,6 +39,6 @@ $messages = new MessageBag(
     Message::ofUser('Summarize the main objectives of France\'s AI strategy in one sentence.'),
 );
 
-$result = $platform->invoke('albert-small', $messages);
+$result = $platform->invoke('openweight-small', $messages);
 
 echo $result->asText().\PHP_EOL;
