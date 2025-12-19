@@ -138,9 +138,6 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0"
     },
-    "conflict": {
-        "mongodb/mongodb": "<1.21"
-    },
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
