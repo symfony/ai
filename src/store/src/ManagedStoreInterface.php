@@ -21,5 +21,8 @@ interface ManagedStoreInterface
      */
     public function setup(array $options = []): void;
 
-    public function drop(): void;
+    /**
+     * @param array<mixed> $options
+     */
+    public function drop(array $options = []): void;
 }
