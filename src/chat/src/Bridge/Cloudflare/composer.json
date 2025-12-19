@@ -2,7 +2,7 @@
     "name": "symfony/ai-cloudflare-message-store",
     "description": "Cloudflare KV message store bridge for Symfony AI Chat",
     "license": "MIT",
-    "type": "symfony-ai-chat",
+    "type": "symfony-ai-message-store",
     "keywords": [
         "ai",
         "bridge",
