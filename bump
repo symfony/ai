@@ -1,0 +1,86 @@
+#!/usr/bin/env php
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+require __DIR__.'/vendor/autoload.php';
+
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
+
+/**
+ * Bumps the version constraint for symfony/ai-* dependencies across the monorepo.
+ *
+ * @author Christopher Hertel <mail@christopher-hertel.de>
+ */
+
+$version = $argv[1] ?? null;
+
+if (!$version) {
+    echo 'Bumps the version constraint for symfony/ai-* dependencies across the monorepo.'.PHP_EOL.PHP_EOL;
+    echo "Usage: $argv[0] <version-constraint>".PHP_EOL.PHP_EOL;
+    echo 'Examples:'.PHP_EOL;
+    echo "  $argv[0] ^0.1".PHP_EOL;
+    echo "  $argv[0] ~0.1.0".PHP_EOL;
+    echo "  $argv[0] @dev".PHP_EOL.PHP_EOL;
+    exit(1);
+}
+
+$filesystem = new Filesystem();
+$totalUpdates = 0;
+
+// Find all composer.json files in src, demo, and examples directories
+$finder = new Finder();
+$finder->files()
+    ->name('composer.json')
+    ->in([__DIR__.'/src', __DIR__.'/demo', __DIR__.'/examples'])
+    ->exclude('vendor');
+
+echo sprintf('Found %d composer.json files to process:'.PHP_EOL, $finder->count());
+
+foreach ($finder as $file) {
+    $composerFile = $file->getRealPath();
+    $content = $file->getContents();
+    $data = json_decode($content, true);
+
+    if (!$data) {
+        echo \sprintf(' ⚠ Skipping "%s" (invalid JSON)'.PHP_EOL, $file->getRelativePathname());
+        continue;
+    }
+
+    $modified = false;
+    $fileUpdates = 0;
+
+    foreach ($data['require'] ?? [] as $package => $constraint) {
+        if (str_starts_with($package, 'symfony/ai-')) {
+            $data['require'][$package] = $version;
+            $modified = true;
+            ++$fileUpdates;
+        }
+    }
+
+    foreach ($data['require-dev'] ?? [] as $package => $constraint) {
+        if (str_starts_with($package, 'symfony/ai-')) {
+            $data['require-dev'][$package] = $version;
+            $modified = true;
+            ++$fileUpdates;
+        }
+    }
+
+    // Write back if modified
+    if ($modified) {
+        $newContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";
+        $filesystem->dumpFile($composerFile, $newContent);
+        $totalUpdates += $fileUpdates;
+        echo \sprintf(' ✓ Saved "%s" with %d change(s)'.PHP_EOL, str_replace(__DIR__.'/', '', $file->getRealPath()), $fileUpdates);
+    }
+}
+
+echo PHP_EOL.sprintf('✅ Successfully updated %d dependency constraints in %d files to "%s".'.PHP_EOL, $totalUpdates, $finder->count(), $version);
