@@ -91,7 +91,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         yield from $this->distanceCalculator->calculate($vectorDocuments, $vector, $options['maxItems'] ?? null);
     }
 
-    public function drop(): void
+    public function drop(array $options = []): void
     {
         $this->cache->clear();
     }
