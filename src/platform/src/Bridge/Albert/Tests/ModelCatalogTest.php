@@ -25,9 +25,10 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 {
     public static function modelsProvider(): iterable
     {
-        yield 'albert-small' => ['albert-small', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
-        yield 'albert-large' => ['albert-large', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
-        yield 'embeddings-small' => ['embeddings-small', EmbeddingsModel::class, [Capability::INPUT_TEXT]];
+        yield 'openweight-small' => ['openweight-small', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
+        yield 'openweight-medium' => ['openweight-medium', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
+        yield 'openweight-large' => ['openweight-large', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
+        yield 'openweight-embeddings' => ['openweight-embeddings', EmbeddingsModel::class, [Capability::INPUT_TEXT]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface
