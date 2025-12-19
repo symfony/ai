@@ -13,6 +13,8 @@ namespace Symfony\AI\Store\Bridge\Pinecone\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Probots\Pinecone\Client;
+use Probots\Pinecone\Resources\Control\IndexResource;
+use Probots\Pinecone\Resources\ControlResource;
 use Probots\Pinecone\Resources\Data\VectorResource;
 use Probots\Pinecone\Resources\DataResource;
 use Saloon\Http\Response;
@@ -20,6 +22,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Pinecone\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
@@ -53,10 +56,8 @@ final class StoreTest extends TestCase
                 null,
             );
 
-        $store = new Store($client);
-
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]), new Metadata(['title' => 'Test Document']));
-        $store->add($document);
+        self::createStore($client)->add($document);
     }
 
     public function testAddMultipleDocuments()
@@ -94,12 +95,10 @@ final class StoreTest extends TestCase
                 null,
             );
 
-        $store = new Store($client);
-
         $document1 = new VectorDocument($uuid1, new Vector([0.1, 0.2, 0.3]));
         $document2 = new VectorDocument($uuid2, new Vector([0.4, 0.5, 0.6]), new Metadata(['title' => 'Second Document']));
 
-        $store->add($document1, $document2);
+        self::createStore($client)->add($document1, $document2);
     }
 
     public function testAddWithNamespace()
@@ -131,10 +130,8 @@ final class StoreTest extends TestCase
                 'test-namespace',
             );
 
-        $store = new Store($client, 'test-namespace');
-
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]));
-        $store->add($document);
+        self::createStore($client, namespace: 'test-namespace')->add($document);
     }
 
     public function testAddWithEmptyDocuments()
@@ -144,8 +141,7 @@ final class StoreTest extends TestCase
         $client->expects($this->never())
             ->method('data');
 
-        $store = new Store($client);
-        $store->add();
+        self::createStore($client)->add();
     }
 
     public function testQueryReturnsDocuments()
@@ -194,9 +190,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn($response);
 
-        $store = new Store($client);
-
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array(self::createStore($client)->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(2, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -239,9 +233,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn($response);
 
-        $store = new Store($client, 'test-namespace', ['category' => 'test'], 5);
-
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array(self::createStore($client, namespace: 'test-namespace', filter: ['category' => 'test'], topK: 5)->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(0, $results);
     }
@@ -276,9 +268,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn($response);
 
-        $store = new Store($client);
-
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array(self::createStore($client)->query(new Vector([0.1, 0.2, 0.3]), [
             'namespace' => 'custom-namespace',
             'filter' => ['type' => 'document'],
             'topK' => 10,
@@ -310,10 +300,74 @@ final class StoreTest extends TestCase
             ->method('query')
             ->willReturn($response);
 
-        $store = new Store($client);
-
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array(self::createStore($client)->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(0, $results);
+    }
+
+    public function testSetup()
+    {
+        $indexResource = $this->createMock(IndexResource::class);
+        $controlResource = $this->createMock(ControlResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('control')
+            ->willReturn($controlResource);
+
+        $controlResource->expects($this->once())
+            ->method('index')
+            ->with('my-index')
+            ->willReturn($indexResource);
+
+        $indexResource->expects($this->once())
+            ->method('createServerless')
+            ->with(1536, 'cosine', 'aws', 'us-east-1');
+
+        self::createStore($client, indexName: 'my-index')->setup([
+            'dimension' => 1536,
+            'metric' => 'cosine',
+            'cloud' => 'aws',
+            'region' => 'us-east-1',
+        ]);
+    }
+
+    public function testSetupThrowsExceptionWithoutDimension()
+    {
+        $client = $this->createMock(Client::class);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "dimension" option is required.');
+
+        self::createStore($client, indexName: 'my-index')->setup([]);
+    }
+
+    public function testDrop()
+    {
+        $indexResource = $this->createMock(IndexResource::class);
+        $controlResource = $this->createMock(ControlResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('control')
+            ->willReturn($controlResource);
+
+        $controlResource->expects($this->once())
+            ->method('index')
+            ->with('my-index')
+            ->willReturn($indexResource);
+
+        $indexResource->expects($this->once())
+            ->method('delete');
+
+        self::createStore($client, indexName: 'my-index')->drop();
+    }
+
+    /**
+     * @param array<string, mixed> $filter
+     */
+    private static function createStore(Client $client, string $indexName = 'test-index', ?string $namespace = null, array $filter = [], int $topK = 3): Store
+    {
+        return new Store($client, $indexName, $namespace, $filter, $topK);
     }
 }

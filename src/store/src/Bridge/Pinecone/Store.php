@@ -16,23 +16,51 @@ use Probots\Pinecone\Resources\Data\VectorResource;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class Store implements StoreInterface
+final class Store implements ManagedStoreInterface, StoreInterface
 {
     /**
      * @param array<string, mixed> $filter
      */
     public function __construct(
         private readonly Client $pinecone,
+        private readonly string $indexName,
         private readonly ?string $namespace = null,
         private readonly array $filter = [],
         private readonly int $topK = 3,
     ) {
+    }
+
+    /**
+     * @param array{
+     *     dimension?: int,
+     *     metric?: string,
+     *     cloud?: string,
+     *     region?: string,
+     * } $options
+     */
+    public function setup(array $options = []): void
+    {
+        if (false === isset($options['dimension'])) {
+            throw new InvalidArgumentException('The "dimension" option is required.');
+        }
+
+        $this->pinecone
+            ->control()
+            ->index($this->indexName)
+            ->createServerless(
+                $options['dimension'],
+                $options['metric'] ?? null,
+                $options['cloud'] ?? null,
+                $options['region'] ?? null,
+            );
     }
 
     public function add(VectorDocument ...$documents): void
@@ -71,6 +99,14 @@ final class Store implements StoreInterface
                 score: $match['score'],
             );
         }
+    }
+
+    public function drop(array $options = []): void
+    {
+        $this->pinecone
+            ->control()
+            ->index($this->indexName)
+            ->delete();
     }
 
     private function getVectors(): VectorResource

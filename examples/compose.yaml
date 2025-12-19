@@ -146,6 +146,15 @@ services:
         ports:
             - '9201:9200'
 
+    pinecone:
+        image: ghcr.io/pinecone-io/pinecone-local:latest
+        platform: linux/amd64
+        environment:
+            PORT: 5080
+            PINECONE_HOST: localhost
+        ports:
+            - '5080-5090:5080-5090'
+
     opensearch:
         image: opensearchproject/opensearch
         environment:

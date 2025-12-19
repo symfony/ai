@@ -14,6 +14,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 use MongoDB\Client as MongoDbClient;
+use Probots\Pinecone\Client as PineconeClient;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
@@ -24,6 +25,7 @@ use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
+use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
@@ -97,6 +99,10 @@ $factories = [
     // 'opensearch' => static fn (): OpenSearchStore => new OpenSearchStore(
     //     http_client(),
     //     env('OPENSEARCH_ENDPOINT'),
+    //     'symfony',
+    // ),
+    // 'pinecone' => static fn (): PineconeStore => new PineconeStore(
+    //     new PineconeClient(env('PINECONE_API_KEY'), env('PINECONE_HOST')),
     //     'symfony',
     // ),
     'postgres' => static fn (): PostgresStore => PostgresStore::fromDbal(

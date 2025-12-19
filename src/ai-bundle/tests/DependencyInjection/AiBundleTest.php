@@ -2375,119 +2375,8 @@ class AiBundleTest extends TestCase
             'ai' => [
                 'store' => [
                     'pinecone' => [
-                        'my_pinecone_store' => [],
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertTrue($container->hasDefinition('ai.store.pinecone.my_pinecone_store'));
-
-        $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
-        $this->assertSame(PineconeStore::class, $definition->getClass());
-
-        $this->assertTrue($definition->isLazy());
-        $this->assertCount(3, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
-        $this->assertSame('my_pinecone_store', $definition->getArgument(1));
-        $this->assertSame([], $definition->getArgument(2));
-
-        $this->assertTrue($definition->hasTag('proxy'));
-        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
-        $this->assertTrue($definition->hasTag('ai.store'));
-
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myPineconeStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $pinecone_my_pinecone_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $pineconeMyPineconeStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
-    }
-
-    public function testPineconeStoreWithCustomNamespaceCanBeConfigured()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'store' => [
-                    'pinecone' => [
                         'my_pinecone_store' => [
-                            'namespace' => 'my_namespace',
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertTrue($container->hasDefinition('ai.store.pinecone.my_pinecone_store'));
-
-        $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
-        $this->assertSame(PineconeStore::class, $definition->getClass());
-
-        $this->assertTrue($definition->isLazy());
-        $this->assertCount(3, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
-        $this->assertSame('my_namespace', $definition->getArgument(1));
-        $this->assertSame([], $definition->getArgument(2));
-
-        $this->assertTrue($definition->hasTag('proxy'));
-        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
-        $this->assertTrue($definition->hasTag('ai.store'));
-
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myPineconeStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $pinecone_my_pinecone_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $pineconeMyPineconeStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
-    }
-
-    public function testPineconeStoreWithCustomClientCanBeConfigured()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'store' => [
-                    'pinecone' => [
-                        'my_pinecone_store' => [
-                            'client' => 'foo',
-                            'namespace' => 'my_namespace',
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertTrue($container->hasDefinition('ai.store.pinecone.my_pinecone_store'));
-
-        $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
-        $this->assertSame(PineconeStore::class, $definition->getClass());
-
-        $this->assertTrue($definition->isLazy());
-        $this->assertCount(3, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('foo', (string) $definition->getArgument(0));
-        $this->assertSame('my_namespace', $definition->getArgument(1));
-        $this->assertSame([], $definition->getArgument(2));
-
-        $this->assertTrue($definition->hasTag('proxy'));
-        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
-        $this->assertTrue($definition->hasTag('ai.store'));
-
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myPineconeStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $pinecone_my_pinecone_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $pineconeMyPineconeStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
-    }
-
-    public function testPineconeStoreWithTopKCanBeConfigured()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'store' => [
-                    'pinecone' => [
-                        'my_pinecone_store' => [
-                            'namespace' => 'my_namespace',
-                            'top_k' => 100,
+                            'index_name' => 'my_index',
                         ],
                     ],
                 ],
@@ -2503,12 +2392,51 @@ class AiBundleTest extends TestCase
         $this->assertCount(4, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
-        $this->assertSame('my_namespace', $definition->getArgument(1));
-        $this->assertSame([], $definition->getArgument(2));
-        $this->assertSame(100, $definition->getArgument(3));
+        $this->assertSame('my_index', $definition->getArgument(1));
+        $this->assertSame('my_pinecone_store', $definition->getArgument(2));
+        $this->assertSame([], $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
-        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertSame([['interface' => StoreInterface::class], ['interface' => ManagedStoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myPineconeStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $pinecone_my_pinecone_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $pineconeMyPineconeStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testPineconeStoreWithCustomIndexNameCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'pinecone' => [
+                        'my_pinecone_store' => [
+                            'index_name' => 'custom_index',
+                            'namespace' => 'my_namespace',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.pinecone.my_pinecone_store'));
+
+        $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
+        $this->assertSame(PineconeStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
+        $this->assertSame('custom_index', $definition->getArgument(1));
+        $this->assertSame('my_namespace', $definition->getArgument(2));
+        $this->assertSame([], $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => StoreInterface::class], ['interface' => ManagedStoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
@@ -7317,15 +7245,18 @@ class AiBundleTest extends TestCase
                     ],
                     'pinecone' => [
                         'my_pinecone_store' => [
+                            'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
                             'top_k' => 10,
                         ],
                         'my_pinecone_store_with_filter' => [
+                            'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
                         ],
                         'my_pinecone_store_with_top_k' => [
+                            'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
                             'top_k' => 10,

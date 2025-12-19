@@ -29,7 +29,7 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = new Store(Pinecone::client(env('PINECONE_API_KEY'), env('PINECONE_HOST')));
+$store = new Store(Pinecone::client(env('PINECONE_API_KEY'), env('PINECONE_HOST')), 'symfony');
 
 // create embeddings and documents
 $documents = [];
