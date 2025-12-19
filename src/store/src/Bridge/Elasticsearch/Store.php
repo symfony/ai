@@ -54,7 +54,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
-    public function drop(): void
+    public function drop(array $options = []): void
     {
         $indexExistResponse = $this->httpClient->request('HEAD', \sprintf('%s/%s', $this->endpoint, $this->indexName));
 
