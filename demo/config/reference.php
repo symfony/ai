@@ -159,10 +159,16 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *             version: string,
  *             http_client?: string, // Service ID of the HTTP client to use // Default: "http_client"
  *         },
+ *         decart?: array{
+ *             api_key: string,
+ *             host?: string, // Default: "https://api.decart.ai/v1"
+ *             http_client?: string, // Service ID of the HTTP client to use // Default: "http_client"
+ *         },
  *         elevenlabs?: array{
  *             api_key: string,
  *             host?: string, // Default: "https://api.elevenlabs.io/v1"
  *             http_client?: string, // Service ID of the HTTP client to use // Default: "http_client"
+ *             api_catalog?: bool, // If set, the ElevenLabs API will be used to build the catalog and retrieve models information, using this option leads to additional HTTP calls
  *         },
  *         gemini?: array{
  *             api_key: string,
@@ -236,7 +242,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         }>>,
  *     agent?: array<string, array{ // Default: []
  *         platform?: string, // Service name of platform // Default: "Symfony\\AI\\Platform\\PlatformInterface"
- *         track_token_usage?: bool, // Enable tracking of token usage for the agent // Default: true
  *         model?: mixed,
  *         memory?: mixed, // Memory configuration: string for static memory, or array with "service" key for service reference // Default: null
  *         prompt?: string|array{ // The system prompt configuration
@@ -354,6 +359,14 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *             dimensions?: int, // Default: 1536
  *             distance?: string, // Default: "cosine"
  *             quantization?: bool,
+ *         }>,
+ *         elasticsearch?: array<string, array{ // Default: []
+ *             endpoint?: string,
+ *             index_name?: string,
+ *             vectors_field?: string, // Default: "_vectors"
+ *             dimensions?: int, // Default: 1536
+ *             similarity?: string, // Default: "cosine"
+ *             http_client?: string, // Default: "http_client"
  *         }>,
  *         opensearch?: array<string, array{ // Default: []
  *             endpoint?: string,
