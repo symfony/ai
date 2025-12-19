@@ -72,16 +72,18 @@ $indexer->index();
 $vector = $vectorizer->vectorize('technology artificial intelligence');
 $results = $store->query($vector);
 
+$filteredDocuments = 0;
 foreach ($results as $i => $document) {
     $title = $document->metadata['title'] ?? 'Unknown';
     $category = $document->metadata['category'] ?? 'Unknown';
     echo sprintf("%d. %s [%s]\n", $i + 1, $title, $category);
     echo sprintf("   Content: %s\n", substr($document->metadata->getText() ?? 'No content', 0, 80).'...');
     echo sprintf("   ID: %s\n\n", substr($document->id, 0, 8).'...');
+    ++$filteredDocuments;
 }
 
 echo "=== Results Summary ===\n";
 echo sprintf("Original documents: %d\n", count($documents));
-echo sprintf("Documents after filtering: %d\n", count($results));
-echo sprintf("Filtered out: %d documents\n", count($documents) - count($results));
+echo sprintf("Documents after filtering: %d\n", ++$filteredDocuments);
+echo sprintf("Filtered out: %d documents\n", count($documents) - $filteredDocuments);
 echo "\nThe 'Week of Symfony' newsletter and SPAM advertisement were successfully filtered out!\n";

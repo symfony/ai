@@ -44,10 +44,10 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'gemma2' => ['gemma2', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED]];
         yield 'gemma' => ['gemma', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED]];
         yield 'llama2' => ['llama2', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED]];
-        yield 'nomic-embed-text' => ['nomic-embed-text', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::INPUT_MULTIPLE]];
-        yield 'bge-m3' => ['bge-m3', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::INPUT_MULTIPLE]];
-        yield 'all-minilm' => ['all-minilm', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::INPUT_MULTIPLE]];
-        yield 'all-minilm:33m' => ['all-minilm:33m', Ollama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::INPUT_MULTIPLE]];
+        yield 'nomic-embed-text' => ['nomic-embed-text', Ollama::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS, Capability::INPUT_MULTIPLE]];
+        yield 'bge-m3' => ['bge-m3', Ollama::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS, Capability::INPUT_MULTIPLE]];
+        yield 'all-minilm' => ['all-minilm', Ollama::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS, Capability::INPUT_MULTIPLE]];
+        yield 'all-minilm:33m' => ['all-minilm:33m', Ollama::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS, Capability::INPUT_MULTIPLE]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface
