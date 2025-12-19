@@ -21,9 +21,9 @@ $messages = new MessageBag(
     Message::forSystem('Just give short answers.'),
     Message::ofUser('What is your favorite color?'),
 );
-$result = $platform->invoke('mistral-large-latest', $messages, [
+$result = $platform->invoke('mistral-small-latest', $messages, [
     'temperature' => 1.5,
-    'n' => 10,
+    'n' => 5,
 ]);
 
 foreach ($result->getResult()->getContent() as $key => $choice) {

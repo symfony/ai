@@ -11,12 +11,10 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Ollama\TokenUsageExtractor;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
-use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class TokenUsageExtractorTest extends TestCase
 {
@@ -37,7 +35,13 @@ final class TokenUsageExtractorTest extends TestCase
     public function testItExtractsTokenUsage()
     {
         $extractor = new TokenUsageExtractor();
-        $result = new InMemoryRawResult([], object: $this->createResponseObject());
+        $result = new InMemoryRawResult([
+            'model' => 'foo',
+            'response' => 'Hello World!',
+            'done' => true,
+            'prompt_eval_count' => 10,
+            'eval_count' => 10,
+        ]);
 
         $tokenUsage = $extractor->extract($result);
 
@@ -63,26 +67,12 @@ final class TokenUsageExtractorTest extends TestCase
                 'prompt_eval_count' => 10,
                 'eval_count' => 10,
             ],
-        ], object: $this->createResponseObject());
+        ]);
 
         $tokenUsage = $extractor->extract($result, ['stream' => true]);
 
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertSame(10, $tokenUsage->getCompletionTokens());
-    }
-
-    private function createResponseObject(): ResponseInterface|MockObject
-    {
-        $response = $this->createStub(ResponseInterface::class);
-        $response->method('toArray')->willReturn([
-            'model' => 'foo',
-            'response' => 'Hello World!',
-            'done' => true,
-            'prompt_eval_count' => 10,
-            'eval_count' => 10,
-        ]);
-
-        return $response;
     }
 }

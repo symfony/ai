@@ -101,7 +101,10 @@ function print_token_usage(Metadata $metadata): void
 {
     $tokenUsage = $metadata->get('token_usage');
 
-    assert($tokenUsage instanceof TokenUsage);
+    if (!$tokenUsage instanceof TokenUsage) {
+        output()->writeln('<error>No token usage information available.</error>');
+        exit(1);
+    }
 
     $na = '<comment>n/a</comment>';
     $table = new Table(output());
