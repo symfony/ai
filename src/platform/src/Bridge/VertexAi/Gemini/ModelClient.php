@@ -53,8 +53,9 @@ final class ModelClient implements ModelClientInterface
             $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent',
         );
 
+        $query = [];
         if (null !== $this->apiKey) {
-            $url .= '?key='.$this->apiKey;
+            $query['key'] = $this->apiKey;
         }
 
         if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
@@ -112,6 +113,7 @@ final class ModelClient implements ModelClientInterface
                 $url,
                 [
                     'json' => array_merge($options, $payload),
+                    'query' => $query,
                 ]
             )
         );

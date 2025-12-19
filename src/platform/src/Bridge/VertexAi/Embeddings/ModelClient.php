@@ -48,8 +48,9 @@ final class ModelClient implements ModelClientInterface
             'predict',
         );
 
+        $query = [];
         if (null !== $this->apiKey) {
-            $url .= '?key='.$this->apiKey;
+            $query['key'] = $this->apiKey;
         }
 
         $modelOptions = $model->getOptions();
@@ -76,6 +77,7 @@ final class ModelClient implements ModelClientInterface
                         'Content-Type' => 'application/json',
                     ],
                     'json' => array_merge($payload, $modelOptions),
+                    'query' => $query,
                 ]
             )
         );
