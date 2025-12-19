@@ -192,28 +192,25 @@ final class ModelCatalog extends AbstractModelCatalog
             'nomic-embed-text' => [
                 'class' => Ollama::class,
                 'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STRUCTURED,
+                    Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,
+                    Capability::EMBEDDINGS,
                 ],
             ],
             'bge-m3' => [
                 'class' => Ollama::class,
                 'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STRUCTURED,
+                    Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,
+                    Capability::EMBEDDINGS,
                 ],
             ],
             'all-minilm' => [
                 'class' => Ollama::class,
                 'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STRUCTURED,
+                    Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,
+                    Capability::EMBEDDINGS,
                 ],
             ],
         ];

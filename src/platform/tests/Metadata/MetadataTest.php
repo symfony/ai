@@ -76,6 +76,19 @@ final class MetadataTest extends TestCase
         $this->assertSame(['key2' => 'value2', 'key3' => 'value3'], $metadata->all());
     }
 
+    public function testItCanMergeMetadataArrays()
+    {
+        $metadata = new Metadata(['key0' => 'value0', 'key1' => 'value1']);
+        $metadata->merge(['key2' => 'value2', 'key1' => 'newValue1']);
+
+        $this->assertTrue($metadata->has('key0'));
+        $this->assertTrue($metadata->has('key1'));
+        $this->assertTrue($metadata->has('key2'));
+        $this->assertSame('value0', $metadata->get('key0'));
+        $this->assertSame('newValue1', $metadata->get('key1'));
+        $this->assertSame('value2', $metadata->get('key2'));
+    }
+
     public function testItImplementsJsonSerializable()
     {
         $metadata = new Metadata(['key' => 'value']);

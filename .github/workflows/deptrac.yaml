@@ -1,4 +1,4 @@
-name: deptrac
+name: Dependency Analysis
 
 on:
     push:
@@ -14,6 +14,9 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
     cancel-in-progress: true
 
+env:
+    REQUIRED_PHP_EXTENSIONS: 'mongodb, redis'
+
 jobs:
     deptrac:
         name: deptrac
@@ -25,12 +28,13 @@ jobs:
             - name: Configure environment
               run: |
                   echo COLUMNS=120 >> $GITHUB_ENV
-                  echo COMPOSER_UP='composer update --prefer-lowest --no-progress --no-interaction --ansi --ignore-platform-req=ext-mongodb' >> $GITHUB_ENV
+                  echo COMPOSER_UP='composer update --prefer-lowest --no-progress --no-interaction --ansi' >> $GITHUB_ENV
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
                   php-version: '8.5'
+                  extensions: "${{ env.REQUIRED_PHP_EXTENSIONS }}"
 
             - name: Get composer cache directory
               id: composer-cache

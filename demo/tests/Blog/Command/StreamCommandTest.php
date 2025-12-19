@@ -26,7 +26,7 @@ class StreamCommandTest extends TestCase
 {
     public function testStreamCommandOutputsStreamedContentAndSuccess()
     {
-        $mockAgent = $this->createMock(AgentInterface::class);
+        $mockAgent = $this->createStub(AgentInterface::class);
         $mockAgent
             ->method('call')
             ->with($this->isInstanceOf(MessageBag::class), ['stream' => true])

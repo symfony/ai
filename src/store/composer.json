@@ -9,6 +9,7 @@
         "chromadb",
         "clickhouse",
         "cloudflare",
+        "elasticsearch",
         "mariadb",
         "meilisearch",
         "milvus",
@@ -48,20 +49,12 @@
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
-        "codewithkyrian/chromadb-php": "^1.0",
-        "doctrine/dbal": "^3.3|^4.0",
-        "mongodb/mongodb": "^1.21|^2.0",
-        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5",
-        "probots-io/pinecone-php": "^1.0",
-        "symfony/cache": "^6.4|^7.1",
+        "phpunit/phpunit": "^11.5.46",
         "symfony/console": "^6.4|^7.1",
         "symfony/dependency-injection": "^6.4|^7.1",
         "symfony/dom-crawler": "^6.4|^7.1"
-    },
-    "conflict": {
-        "mongodb/mongodb": "<1.21"
     },
     "minimum-stability": "dev",
     "autoload": {

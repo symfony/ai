@@ -37,7 +37,7 @@ array of options::
     // Platform instantiation
 
     $agent = new Agent($platform, $model);
-    $input = new MessageBag(
+    $messages = new MessageBag(
         Message::forSystem('You are a helpful chatbot answering questions about LLM agent.'),
         Message::ofUser('Hello, how are you?'),
     );
@@ -452,11 +452,11 @@ Retrieval Augmented Generation (RAG)
 In combination with the `Store Component`_, the Agent component can be used to build agents that perform Retrieval
 Augmented Generation (RAG). This allows the agent to retrieve relevant documents from a store and use them to generate
 more accurate and context-aware results. Therefore, the component provides a built-in tool called
-:class:`Symfony\\AI\\Agent\\Toolbox\\Tool\\SimilaritySearch`::
+:class:`Symfony\\AI\\Agent\\Bridge\\SimilaritySearch\\SimilaritySearch`::
 
     use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
     use Symfony\AI\Agent\Toolbox\AgentProcessor;
-    use Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch;
     use Symfony\AI\Agent\Toolbox\Toolbox;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;

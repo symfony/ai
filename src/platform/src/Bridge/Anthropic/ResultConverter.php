@@ -77,6 +77,11 @@ class ResultConverter implements ResultConverterInterface
         return new TextResult($data['content'][0]['text']);
     }
 
+    public function getTokenUsageExtractor(): TokenUsageExtractor
+    {
+        return new TokenUsageExtractor();
+    }
+
     private function convertStream(RawResultInterface $result): \Generator
     {
         foreach ($result->getDataStream() as $data) {

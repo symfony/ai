@@ -5,6 +5,10 @@ deptrac:
     - '#.*test.*#i'
     - '#.*vendor.*#'
   layers:
+    - name: Fixtures
+      collectors:
+        - type: classLike
+          value: ^Symfony\\AI\\Fixtures\\.*
     - name: AgentComponent
       collectors:
         - type: classLike
@@ -69,10 +73,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Chat\\Bridge\\Doctrine\\.*
-    - name: ChatHttpFoundationBridge
+    - name: ChatSessionBridge
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Chat\\Bridge\\HttpFoundation\\.*
+          value: Symfony\\AI\\Chat\\Bridge\\Session\\.*
     - name: ChatMeilisearchBridge
       collectors:
         - type: classLike
@@ -96,7 +100,111 @@ deptrac:
     - name: PlatformComponent
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Platform.*
+          value: ^Symfony\\AI\\Platform\\(?!Bridge\\).*
+    - name: AiMlApiPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\AiMlApi\\.*
+    - name: AlbertPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Albert\\.*
+    - name: AnthropicPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Anthropic\\.*
+    - name: AzurePlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Azure\\.*
+    - name: BedrockPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Bedrock\\.*
+    - name: CartesiaPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Cartesia\\.*
+    - name: CerebrasPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Cerebras\\.*
+    - name: DecartPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Decart\\.*
+    - name: DeepSeekPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\DeepSeek\\.*
+    - name: DockerModelRunnerPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\DockerModelRunner\\.*
+    - name: ElevenLabsPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\ElevenLabs\\.*
+    - name: GeminiPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Gemini\\.*
+    - name: GenericPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Generic\\.*
+    - name: HuggingFacePlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\HuggingFace\\.*
+    - name: LmStudioPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\LmStudio\\.*
+    - name: MetaPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Meta\\.*
+    - name: MistralPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Mistral\\.*
+    - name: OllamaPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Ollama\\.*
+    - name: OpenAiPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\OpenAi\\.*
+    - name: OpenRouterPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\OpenRouter\\.*
+    - name: PerplexityPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Perplexity\\.*
+    - name: ReplicatePlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Replicate\\.*
+    - name: ScalewayPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Scaleway\\.*
+    - name: TransformersPhpPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\TransformersPhp\\.*
+    - name: VertexAiPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\VertexAi\\.*
+    - name: VoyagePlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Voyage\\.*
     - name: StoreComponent
       collectors:
         - type: classLike
@@ -182,6 +290,7 @@ deptrac:
         - type: classLike
           value: Symfony\\AI\\Store\\Bridge\\Weaviate\\.*
   ruleset:
+    Fixtures: ~
     AgentComponent:
       - PlatformComponent
       - StoreComponent
@@ -223,7 +332,7 @@ deptrac:
     ChatDoctrineBridge:
       - ChatComponent
       - PlatformComponent
-    ChatHttpFoundationBridge:
+    ChatSessionBridge:
       - ChatComponent
       - PlatformComponent
     ChatMeilisearchBridge:
@@ -242,6 +351,69 @@ deptrac:
       - ChatComponent
       - PlatformComponent
     PlatformComponent: ~
+    AiMlApiPlatform:
+      - PlatformComponent
+      - GenericPlatform
+    AlbertPlatform:
+      - PlatformComponent
+      - GenericPlatform
+    AnthropicPlatform:
+      - PlatformComponent
+    AzurePlatform:
+      - PlatformComponent
+      - OpenAiPlatform
+      - GenericPlatform
+      - MetaPlatform
+    BedrockPlatform:
+      - PlatformComponent
+      - MetaPlatform
+      - AnthropicPlatform
+    CartesiaPlatform:
+      - PlatformComponent
+    CerebrasPlatform:
+      - PlatformComponent
+    DecartPlatform:
+      - PlatformComponent
+    DeepSeekPlatform:
+      - PlatformComponent
+    DockerModelRunnerPlatform:
+      - PlatformComponent
+    ElevenLabsPlatform:
+      - PlatformComponent
+    GeminiPlatform:
+      - PlatformComponent
+    GenericPlatform:
+      - PlatformComponent
+    HuggingFacePlatform:
+      - PlatformComponent
+    LmStudioPlatform:
+      - PlatformComponent
+      - GenericPlatform
+    MetaPlatform:
+      - PlatformComponent
+    MistralPlatform:
+      - PlatformComponent
+    OllamaPlatform:
+      - PlatformComponent
+    OpenAiPlatform:
+      - PlatformComponent
+    OpenRouterPlatform:
+      - PlatformComponent
+      - GenericPlatform
+    PerplexityPlatform:
+      - PlatformComponent
+    ReplicatePlatform:
+      - PlatformComponent
+      - MetaPlatform
+    ScalewayPlatform:
+      - PlatformComponent
+    TransformersPhpPlatform:
+      - PlatformComponent
+    VertexAiPlatform:
+      - PlatformComponent
+      - GeminiPlatform
+    VoyagePlatform:
+      - PlatformComponent
     StoreComponent:
       - PlatformComponent
     AzureSearchStore:
@@ -304,13 +476,3 @@ deptrac:
     WeaviateStore:
       - StoreComponent
       - PlatformComponent
-  # Baseline of known violations to be skipped for now
-  skip_violations:
-    Symfony\AI\Platform\Bridge\Anthropic\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
-    Symfony\AI\Platform\Bridge\DeepSeek\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
-    Symfony\AI\Platform\Bridge\Gemini\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
-    Symfony\AI\Platform\Bridge\Mistral\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
-    Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
-    Symfony\AI\Platform\Bridge\Perplexity\SearchResultProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
-    Symfony\AI\Platform\Bridge\Perplexity\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]
-    Symfony\AI\Platform\Bridge\VertexAi\TokenOutputProcessor: [Symfony\AI\Agent\OutputProcessorInterface, Symfony\AI\Agent\Output]

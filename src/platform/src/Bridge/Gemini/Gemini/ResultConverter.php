@@ -67,6 +67,11 @@ final class ResultConverter implements ResultConverterInterface
         return 1 === \count($choices) ? $choices[0] : new ChoiceResult(...$choices);
     }
 
+    public function getTokenUsageExtractor(): TokenUsageExtractor
+    {
+        return new TokenUsageExtractor();
+    }
+
     private function convertStream(RawResultInterface $result): \Generator
     {
         foreach ($result->getDataStream() as $data) {

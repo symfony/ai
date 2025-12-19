@@ -9,9 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory;
-use Symfony\AI\Platform\Bridge\Perplexity\SearchResultProcessor;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -19,7 +17,6 @@ use Symfony\AI\Platform\Message\MessageBag;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('PERPLEXITY_API_KEY'), http_client());
-$agent = new Agent($platform, 'sonar', outputProcessors: [new SearchResultProcessor()]);
 
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
@@ -28,9 +25,9 @@ $messages = new MessageBag(
         new ImageUrl('https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Webysther_20160423_-_Elephpant.svg/350px-Webysther_20160423_-_Elephpant.svg.png'),
     ),
 );
-$result = $agent->call($messages);
+$result = $platform->invoke('sonar', $messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;
 
 perplexity_print_search_results($result->getMetadata());
 perplexity_print_citations($result->getMetadata());

@@ -25,6 +25,6 @@ $messages = new MessageBag(
         Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'),
     ),
 );
-$result = $platform->invoke('google/gemma-3-27b-it', $messages);
+$result = $platform->invoke('google/gemini-2.5-pro', $messages);
 
 echo $result->asText().\PHP_EOL;

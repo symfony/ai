@@ -29,21 +29,13 @@
         "symfony/ai-platform": "@dev"
     },
     "require-dev": {
-        "ext-redis": "*",
-        "doctrine/dbal": "^3.3|^4.0",
-        "mongodb/mongodb": "^1.21|^2.0",
-        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.13",
-        "psr/cache": "^3.0",
+        "phpunit/phpunit": "^11.5.46",
         "symfony/clock": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
         "symfony/dependency-injection": "^7.3|^8.0",
-        "symfony/http-foundation": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0"
-    },
-    "conflict": {
-        "mongodb/mongodb": "<1.21"
     },
     "minimum-stability": "dev",
     "autoload": {

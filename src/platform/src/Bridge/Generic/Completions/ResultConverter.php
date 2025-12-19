@@ -27,6 +27,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
  * This default implementation is based on the OpenAI GPT completion API.
@@ -80,6 +81,11 @@ class ResultConverter implements ResultConverterInterface
         $choices = array_map($this->convertChoice(...), $data['choices']);
 
         return 1 === \count($choices) ? $choices[0] : new ChoiceResult(...$choices);
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
     }
 
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator

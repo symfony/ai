@@ -39,4 +39,9 @@ final class LlamaResultConverter implements ResultConverterInterface
 
         return new TextResult(implode('', $data['output']));
     }
+
+    public function getTokenUsageExtractor(): null
+    {
+        return null;
+    }
 }

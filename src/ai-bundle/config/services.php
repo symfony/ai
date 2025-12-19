@@ -28,7 +28,7 @@ use Symfony\AI\Platform\Bridge\AiMlApi\ModelCatalog as AiMlApiModelCatalog;
 use Symfony\AI\Platform\Bridge\Albert\ModelCatalog as AlbertModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;
-use Symfony\AI\Platform\Bridge\Anthropic\TokenOutputProcessor as AnthropicTokenOutputProcessor;
+use Symfony\AI\Platform\Bridge\Azure\OpenAi\ModelCatalog as AzureOpenAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Cartesia\ModelCatalog as CartesiaModelCatalog;
 use Symfony\AI\Platform\Bridge\Cerebras\ModelCatalog as CerebrasModelCatalog;
 use Symfony\AI\Platform\Bridge\Decart\ModelCatalog as DecartModelCatalog;
@@ -37,32 +37,31 @@ use Symfony\AI\Platform\Bridge\DockerModelRunner\ModelCatalog as DockerModelRunn
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\Gemini\ModelCatalog as GeminiModelCatalog;
-use Symfony\AI\Platform\Bridge\Gemini\TokenOutputProcessor as GeminiTokenOutputProcessor;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\HuggingFaceContract;
 use Symfony\AI\Platform\Bridge\HuggingFace\ModelCatalog as HuggingFaceModelCatalog;
 use Symfony\AI\Platform\Bridge\LmStudio\ModelCatalog as LmStudioModelCatalog;
 use Symfony\AI\Platform\Bridge\Meta\ModelCatalog as MetaModelCatalog;
 use Symfony\AI\Platform\Bridge\Mistral\ModelCatalog as MistralModelCatalog;
-use Symfony\AI\Platform\Bridge\Mistral\TokenOutputProcessor as MistralTokenOutputProcessor;
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
 use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog as OllamaModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog as OpenAiModelCatalog;
-use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor as OpenAiTokenOutputProcessor;
 use Symfony\AI\Platform\Bridge\OpenRouter\ModelCatalog as OpenRouterModelCatalog;
 use Symfony\AI\Platform\Bridge\Perplexity\Contract\PerplexityContract;
 use Symfony\AI\Platform\Bridge\Perplexity\ModelCatalog as PerplexityModelCatalog;
 use Symfony\AI\Platform\Bridge\Perplexity\SearchResultProcessor as PerplexitySearchResultProcessor;
-use Symfony\AI\Platform\Bridge\Perplexity\TokenOutputProcessor as PerplexityTokenOutputProcessor;
 use Symfony\AI\Platform\Bridge\Replicate\ModelCatalog as ReplicateModelCatalog;
 use Symfony\AI\Platform\Bridge\Scaleway\ModelCatalog as ScalewayModelCatalog;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract as VertexAiGeminiContract;
 use Symfony\AI\Platform\Bridge\VertexAi\ModelCatalog as VertexAiModelCatalog;
-use Symfony\AI\Platform\Bridge\VertexAi\TokenOutputProcessor as VertexAiTokenOutputProcessor;
 use Symfony\AI\Platform\Bridge\Voyage\ModelCatalog as VoyageModelCatalog;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
+use Symfony\AI\Platform\EventListener\TemplateRendererListener;
+use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
+use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
+use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Serializer\StructuredOutputSerializer;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
@@ -72,6 +71,7 @@ use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
 use Symfony\AI\Store\Command\RetrieveCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
+use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
@@ -95,6 +95,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.aimlapi', AiMlApiModelCatalog::class)
         ->set('ai.platform.model_catalog.albert', AlbertModelCatalog::class)
         ->set('ai.platform.model_catalog.anthropic', AnthropicModelCatalog::class)
+        ->set('ai.platform.model_catalog.azure.openai', AzureOpenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.cartesia', CartesiaModelCatalog::class)
         ->set('ai.platform.model_catalog.cerebras', CerebrasModelCatalog::class)
         ->set('ai.platform.model_catalog.decart', DecartModelCatalog::class)
@@ -116,6 +117,30 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.scaleway', ScalewayModelCatalog::class)
         ->set('ai.platform.model_catalog.vertexai.gemini', VertexAiModelCatalog::class)
         ->set('ai.platform.model_catalog.voyage', VoyageModelCatalog::class)
+
+        // message templates
+        ->set('ai.platform.template_renderer.string', StringTemplateRenderer::class)
+            ->tag('ai.platform.template_renderer');
+
+    if (class_exists(ExpressionLanguage::class)) {
+        $container->services()
+            ->set('ai.platform.template_renderer.expression', ExpressionLanguageTemplateRenderer::class)
+                ->args([
+                    service('expression_language')->nullOnInvalid(),
+                ])
+                ->tag('ai.platform.template_renderer');
+    }
+
+    $container->services()
+        ->set('ai.platform.template_renderer_registry', TemplateRendererRegistry::class)
+            ->args([
+                tagged_iterator('ai.platform.template_renderer'),
+            ])
+        ->set('ai.platform.template_renderer_listener', TemplateRendererListener::class)
+            ->args([
+                service('ai.platform.template_renderer_registry'),
+            ])
+            ->tag('kernel.event_subscriber')
 
         // structured output
         ->set('ai.agent.response_format_factory', ResponseFormatFactory::class)
@@ -188,14 +213,6 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('ai.traceable_chat'),
             ])
             ->tag('data_collector')
-
-        // token usage processors
-        ->set('ai.platform.token_usage_processor.anthropic', AnthropicTokenOutputProcessor::class)
-        ->set('ai.platform.token_usage_processor.gemini', GeminiTokenOutputProcessor::class)
-        ->set('ai.platform.token_usage_processor.mistral', MistralTokenOutputProcessor::class)
-        ->set('ai.platform.token_usage_processor.openai', OpenAiTokenOutputProcessor::class)
-        ->set('ai.platform.token_usage_processor.perplexity', PerplexityTokenOutputProcessor::class)
-        ->set('ai.platform.token_usage_processor.vertexai', VertexAiTokenOutputProcessor::class)
 
         // search result processors
         ->set('ai.platform.search_result_processor.perplexity', PerplexitySearchResultProcessor::class)

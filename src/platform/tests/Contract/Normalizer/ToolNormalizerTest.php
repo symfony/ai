@@ -13,10 +13,10 @@ namespace Symfony\AI\Platform\Tests\Contract\Normalizer;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Fixtures\Tool\ToolException;
-use Symfony\AI\Fixtures\Tool\ToolNoParams;
-use Symfony\AI\Fixtures\Tool\ToolOptionalParam;
-use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolException;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOptionalParam;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Platform\Contract\Normalizer\ToolNormalizer;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;

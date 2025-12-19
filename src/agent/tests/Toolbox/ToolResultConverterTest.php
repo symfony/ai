@@ -15,8 +15,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
-use Symfony\AI\Fixtures\StructuredOutput\UserWithConstructor;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithConstructor;
 
 final class ToolResultConverterTest extends TestCase
 {

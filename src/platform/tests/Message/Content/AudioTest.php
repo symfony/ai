@@ -36,7 +36,7 @@ final class AudioTest extends TestCase
     public function testFromDataUrlWithInvalidUrl()
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid audio data URL format.');
+        $this->expectExceptionMessage('Invalid file data URL format.');
 
         Audio::fromDataUrl('invalid-url');
     }
@@ -55,5 +55,15 @@ final class AudioTest extends TestCase
         $this->expectExceptionMessage('The file "foo.mp3" does not exist or is not readable.');
 
         Audio::fromFile('foo.mp3');
+    }
+
+    public function testCanBeSerialized()
+    {
+        $audio = Audio::fromFile(\dirname(__DIR__, 5).'/fixtures/audio.mp3');
+
+        $serialized = serialize($audio);
+        $unserialized = unserialize($serialized);
+        $this->assertInstanceOf(Audio::class, $unserialized);
+        $this->assertSame('audio.mp3', $unserialized->getFilename());
     }
 }

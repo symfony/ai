@@ -67,7 +67,6 @@ Advanced Example with Multiple Agents
         agent:
             rag:
                 platform: 'ai.platform.azure.gpt_deployment'
-                track_token_usage: true # Enable tracking of token usage for the agent, default is true
                 model: 'gpt-4o-mini'
                 memory: 'You have access to conversation history and user preferences' # Optional: static memory content
                 prompt: # The system prompt configuration
@@ -83,7 +82,7 @@ Advanced Example with Multiple Agents
                       description: 'Provides the name of your company'
                       method: 'foo' # Optional with default value '__invoke'
 
-                    # Referencing a agent => agent in agent 🤯
+                    # Referencing an agent => agent in agent 🤯
                     - agent: 'research'
                       name: 'wikipedia_research'
                       description: 'Can research on Wikipedia'
@@ -869,7 +868,7 @@ To inject only specific tools, list them in the configuration:
         agent:
             my_agent:
                 tools:
-                    - 'Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch'
+                    - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
 
 To restrict the access to a tool, you can use the :class:`Symfony\\AI\\Agent\\Attribute\\IsGrantedTool` attribute, which
 works similar to :class:`Symfony\\Component\\Security\\Http\\Attribute\\IsGranted` attribute in `symfony/security-http`. For this to work,
@@ -899,8 +898,8 @@ Token Usage Tracking
 Token usage tracking is a feature provided by some of the Platform's bridges, for monitoring and analyzing the
 consumption of tokens by your agents. This feature is particularly useful for understanding costs and performance.
 
-When enabled, the agent will automatically track token usage information and add it
-to the result metadata. The tracked information includes:
+In case a Platform bridge supports token usage tracking, the Platform will automatically track token usage information
+and add it to the result metadata. The tracked information includes:
 
 * **Prompt tokens**: Number of tokens used in the input/prompt
 * **Completion tokens**: Number of tokens generated in the response
@@ -931,19 +930,6 @@ The token usage information can be accessed from the result metadata::
             return $result->getMetadata()->get('token_usage');
         }
     }
-
-Disable Tracking
-~~~~~~~~~~~~~~~~
-
-To disable token usage tracking for an agent, set the ``track_token_usage`` option to ``false``:
-
-.. code-block:: yaml
-
-    ai:
-        agent:
-            my_agent:
-                model: 'gpt-4o-mini'
-                track_token_usage: false
 
 Vectorizers
 -----------

@@ -34,7 +34,9 @@
         "symfony/http-client": "^7.3|^8.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^11.5.13"
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.46"
     },
     "minimum-stability": "dev",
     "autoload": {
@@ -44,7 +46,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Symfony\\AI\\Agent\\Bridge\\Youtube\\Tests\\": "Tests/"
+            "Symfony\\AI\\Agent\\Bridge\\Youtube\\Tests\\": "Tests/",
+            "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/"
         }
     },
     "config": {

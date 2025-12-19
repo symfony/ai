@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
  * @see https://platform.openai.com/docs/api-reference/images/create
@@ -51,5 +52,10 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         return new ImageResult($image['revised_prompt'] ?? null, ...$images);
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
     }
 }

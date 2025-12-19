@@ -14,8 +14,8 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
 use Symfony\AI\Platform\Metadata\Metadata;
-use Symfony\AI\Platform\Metadata\TokenUsage;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Store\Exception\ExceptionInterface as StoreException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -101,21 +101,24 @@ function print_token_usage(Metadata $metadata): void
 {
     $tokenUsage = $metadata->get('token_usage');
 
-    assert($tokenUsage instanceof TokenUsage);
+    if (!$tokenUsage instanceof TokenUsage) {
+        output()->writeln('<error>No token usage information available.</error>');
+        exit(1);
+    }
 
     $na = '<comment>n/a</comment>';
     $table = new Table(output());
     $table->setHeaderTitle('Token Usage');
     $table->setRows([
-        ['Prompt tokens', $tokenUsage->promptTokens ?? $na],
-        ['Completion tokens', $tokenUsage->completionTokens ?? $na],
-        ['Thinking tokens', $tokenUsage->thinkingTokens ?? $na],
-        ['Tool tokens', $tokenUsage->toolTokens ?? $na],
-        ['Cached tokens', $tokenUsage->cachedTokens ?? $na],
-        ['Remaining tokens minute', $tokenUsage->remainingTokensMinute ?? $na],
-        ['Remaining tokens month', $tokenUsage->remainingTokensMonth ?? $na],
-        ['Remaining tokens', $tokenUsage->remainingTokens ?? $na],
-        ['Utilized tokens', $tokenUsage->totalTokens ?? $na],
+        ['Prompt tokens', $tokenUsage->getPromptTokens() ?? $na],
+        ['Completion tokens', $tokenUsage->getCompletionTokens() ?? $na],
+        ['Thinking tokens', $tokenUsage->getThinkingTokens() ?? $na],
+        ['Tool tokens', $tokenUsage->getToolTokens() ?? $na],
+        ['Cached tokens', $tokenUsage->getCachedTokens() ?? $na],
+        ['Remaining tokens minute', $tokenUsage->getRemainingTokensMinute() ?? $na],
+        ['Remaining tokens month', $tokenUsage->getRemainingTokensMonth() ?? $na],
+        ['Remaining tokens', $tokenUsage->getRemainingTokens() ?? $na],
+        ['Total tokens', $tokenUsage->getTotalTokens() ?? $na],
     ]);
     $table->render();
 }
@@ -146,11 +149,11 @@ function perplexity_print_search_results(Metadata $metadata): void
 
     foreach ($searchResults as $i => $searchResult) {
         echo 'Result #'.($i + 1).':'.\PHP_EOL;
-        echo $searchResult['title'].\PHP_EOL;
-        echo $searchResult['url'].\PHP_EOL;
-        echo $searchResult['date'].\PHP_EOL;
-        echo $searchResult['last_updated'] ? $searchResult['last_updated'].\PHP_EOL : '';
-        echo $searchResult['snippet'] ? $searchResult['snippet'].\PHP_EOL : '';
+        echo isset($searchResult['title']) ? ' Title: '.$searchResult['title'].\PHP_EOL : '';
+        echo isset($searchResult['url']) ? ' URL: '.$searchResult['url'].\PHP_EOL : '';
+        echo isset($searchResult['date']) ? ' Date: '.$searchResult['date'].\PHP_EOL : '';
+        echo isset($searchResult['last_updated']) ? ' Last Updated: '.$searchResult['last_updated'].\PHP_EOL : '';
+        echo isset($searchResult['snippet']) ? ' Snippet: '.$searchResult['snippet'].\PHP_EOL : '';
         echo \PHP_EOL;
     }
 }
@@ -173,7 +176,7 @@ function perplexity_print_citations(Metadata $metadata): void
 
     foreach ($citations as $i => $citation) {
         echo 'Citation #'.($i + 1).':'.\PHP_EOL;
-        echo $citation.\PHP_EOL;
+        echo ' '.$citation.\PHP_EOL;
         echo \PHP_EOL;
     }
 }

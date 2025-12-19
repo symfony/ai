@@ -32,4 +32,9 @@ final class PlainConverter implements ResultConverterInterface
     {
         return $this->result;
     }
+
+    public function getTokenUsageExtractor(): null
+    {
+        return null;
+    }
 }

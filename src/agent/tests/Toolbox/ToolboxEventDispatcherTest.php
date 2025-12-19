@@ -13,13 +13,13 @@ namespace Symfony\AI\Agent\Tests\Toolbox;
 
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolCustomException;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolException;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallFailed;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallSucceeded;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Fixtures\Tool\ToolCustomException;
-use Symfony\AI\Fixtures\Tool\ToolException;
-use Symfony\AI\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 

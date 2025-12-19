@@ -11,7 +11,6 @@
 
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Platform\Bridge\OpenAi\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -19,7 +18,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
-$agent = new Agent($platform, 'gpt-4o-mini', outputProcessors: [new TokenOutputProcessor()]);
+$agent = new Agent($platform, 'gpt-4o-mini');
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),

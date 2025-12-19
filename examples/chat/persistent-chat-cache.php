@@ -10,7 +10,7 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Chat\Bridge\Cache\Store as CacheStore;
+use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheStore;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;

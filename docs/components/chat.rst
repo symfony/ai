@@ -66,8 +66,8 @@ for adding messages to the message store, and returning the messages from a stor
 
 This leads to a store implementing two methods::
 
+    use Symfony\AI\Chat\MessageStoreInterface;
     use Symfony\AI\Platform\Message\MessageBag;
-    use Symfony\AI\Store\MessageStoreInterface;
 
     class MyCustomStore implements MessageStoreInterface
     {
@@ -91,8 +91,8 @@ to setup and drop the store.
 
 This leads to a store implementing two methods::
 
-    use Symfony\AI\Store\ManagedStoreInterface;
-    use Symfony\AI\Store\MessageStoreInterface;
+    use Symfony\AI\Chat\ManagedStoreInterface;
+    use Symfony\AI\Chat\MessageStoreInterface;
 
     class MyCustomStore implements ManagedStoreInterface, MessageStoreInterface
     {
@@ -146,7 +146,7 @@ store and ``bin/console ai:message-store:drop`` to clean up the message store:
 .. _`Cloudflare`: https://developers.cloudflare.com/kv/
 .. _`Doctrine DBAL`: https://www.doctrine-project.org/projects/dbal.html
 .. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
-.. _`HttpFoundation session`: https://developers.cloudflare.com/vectorize/
+.. _`HttpFoundation session`: https://symfony.com/doc/current/session.html
 .. _`Meilisearch`: https://www.meilisearch.com/
 .. _`MongoDb`: https://www.mongodb.com/
 .. _`Pogocache`: https://pogocache.com/

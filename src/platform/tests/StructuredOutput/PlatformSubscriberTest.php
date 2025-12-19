@@ -13,16 +13,6 @@ namespace Symfony\AI\Platform\Tests\StructuredOutput;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Fixtures\SomeStructure;
-use Symfony\AI\Fixtures\StructuredOutput\MathReasoning;
-use Symfony\AI\Fixtures\StructuredOutput\MathReasoningWithAttributes;
-use Symfony\AI\Fixtures\StructuredOutput\PolymorphicType\ListItemAge;
-use Symfony\AI\Fixtures\StructuredOutput\PolymorphicType\ListItemName;
-use Symfony\AI\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
-use Symfony\AI\Fixtures\StructuredOutput\Step;
-use Symfony\AI\Fixtures\StructuredOutput\UnionType\HumanReadableTimeUnion;
-use Symfony\AI\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
-use Symfony\AI\Fixtures\StructuredOutput\UnionType\UnixTimestampUnion;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
@@ -36,6 +26,16 @@ use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\Test\PlainConverter;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoningWithAttributes;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListItemAge;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListItemName;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SomeStructure;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\HumanReadableTimeUnion;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnixTimestampUnion;
 
 final class PlatformSubscriberTest extends TestCase
 {

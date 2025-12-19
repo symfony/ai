@@ -64,4 +64,26 @@ final class BraveTest extends TestCase
 
         $this->assertEmpty($results);
     }
+
+    public function testHandlesMissingDescription()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'web' => [
+                'results' => [
+                    [
+                        'title' => 'Test Title',
+                        'url' => 'https://example.com',
+                    ],
+                ],
+            ],
+        ]));
+        $brave = new Brave($httpClient, 'test-api-key');
+
+        $results = $brave('test query');
+
+        $this->assertCount(1, $results);
+        $this->assertSame('Test Title', $results[0]['title']);
+        $this->assertSame('', $results[0]['description']);
+        $this->assertSame('https://example.com', $results[0]['url']);
+    }
 }

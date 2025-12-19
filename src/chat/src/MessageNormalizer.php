@@ -28,6 +28,9 @@ use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -71,12 +74,18 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             default => throw new LogicException(\sprintf('Unknown message type "%s".', $type)),
         };
 
-        $message->getMetadata()->set([
+        $identifier = $context['identifier'] ?? 'id';
+        /** @var AbstractUid&TimeBasedUidInterface&Uuid $existingUuid */
+        $existingUuid = Uuid::fromString($data[$identifier]);
+
+        $messageWithExistingUuid = $message->withId($existingUuid);
+
+        $messageWithExistingUuid->getMetadata()->set([
             ...$data['metadata'],
             'addedAt' => $data['addedAt'],
         ]);
 
-        return $message;
+        return $messageWithExistingUuid;
     }
 
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool

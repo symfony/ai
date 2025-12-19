@@ -79,7 +79,9 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         ]);
 
         return new MessageBag(...array_map(
-            fn (array $message): MessageInterface => $this->serializer->denormalize($message, MessageInterface::class),
+            fn (array $message): MessageInterface => $this->serializer->denormalize($message, MessageInterface::class, context: [
+                'identifier' => '_id',
+            ]),
             $cursor->toArray(),
         ));
     }

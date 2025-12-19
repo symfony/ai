@@ -1,0 +1,61 @@
+{
+    "name": "symfony/ai-ollama-platform",
+    "description": "Ollama platform bridge for Symfony AI",
+    "license": "MIT",
+    "type": "symfony-ai-platform",
+    "keywords": [
+        "ai",
+        "bridge",
+        "local",
+        "ollama",
+        "platform"
+    ],
+    "authors": [
+        {
+            "name": "Christopher Hertel",
+            "email": "mail@christopher-hertel.de"
+        },
+        {
+            "name": "Oskar Stark",
+            "email": "oskarstark@googlemail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/ai-platform": "@dev",
+        "symfony/http-client": "^7.3|^8.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.46"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Platform\\Bridge\\Ollama\\": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/",
+            "Symfony\\AI\\Platform\\Bridge\\Ollama\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        },
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    }
+}

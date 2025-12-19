@@ -24,7 +24,7 @@ class McpCommand extends Command
 {
     public function __construct(
         private readonly Server $server,
-        private readonly LoggerInterface $logger,
+        private readonly ?LoggerInterface $logger = null,
     ) {
         parent::__construct();
     }

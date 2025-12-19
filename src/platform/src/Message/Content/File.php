@@ -28,10 +28,22 @@ class File implements ContentInterface
     ) {
     }
 
+    /**
+     * @return array{data: string, path: string|null, format: string}
+     */
+    public function __serialize(): array
+    {
+        return [
+            'data' => $this->data instanceof \Closure ? ($this->data)() : $this->data,
+            'format' => $this->format,
+            'path' => $this->path,
+        ];
+    }
+
     public static function fromDataUrl(string $dataUrl): static
     {
         if (!str_starts_with($dataUrl, 'data:')) {
-            throw new InvalidArgumentException('Invalid audio data URL format.');
+            throw new InvalidArgumentException('Invalid file data URL format.');
         }
 
         return new static(

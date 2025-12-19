@@ -54,10 +54,11 @@ final class MessageNormalizerTest extends TestCase
 
     public function testItCanDenormalize()
     {
+        $uuid = Uuid::v7()->toRfc4122();
         $normalizer = new MessageNormalizer();
 
         $message = $normalizer->denormalize([
-            'id' => Uuid::v7()->toRfc4122(),
+            'id' => $uuid,
             'type' => UserMessage::class,
             'content' => '',
             'contentAsBase64' => [
@@ -71,7 +72,23 @@ final class MessageNormalizerTest extends TestCase
             'addedAt' => (new \DateTimeImmutable())->getTimestamp(),
         ], MessageInterface::class);
 
+        $this->assertSame($uuid, $message->getId()->toRfc4122());
         $this->assertSame(Role::User, $message->getRole());
         $this->assertArrayHasKey('addedAt', $message->getMetadata()->all());
+    }
+
+    public function testItCanDenormalizeWithCustomIdentifier()
+    {
+        $normalizer = new MessageNormalizer();
+        $message = Message::ofUser('Hello World');
+
+        // Normalize with _id (like MongoDB)
+        $payload = $normalizer->normalize($message, context: ['identifier' => '_id']);
+        $this->assertArrayHasKey('_id', $payload);
+        $this->assertArrayNotHasKey('id', $payload);
+
+        $denormalized = $normalizer->denormalize($payload, MessageInterface::class, context: ['identifier' => '_id']);
+
+        $this->assertSame($message->getId()->toRfc4122(), $denormalized->getId()->toRfc4122());
     }
 }

@@ -51,19 +51,6 @@ class McpBundleTest extends TestCase
         $this->assertSame('This server provides weather and calendar tools', $container->getParameter('mcp.instructions'));
     }
 
-    public function testMcpLoggerServiceIsCreated()
-    {
-        $container = $this->buildContainer([]);
-
-        $this->assertTrue($container->hasDefinition('monolog.logger.mcp'));
-
-        $definition = $container->getDefinition('monolog.logger.mcp');
-        $this->assertInstanceOf(\Symfony\Component\DependencyInjection\ChildDefinition::class, $definition);
-        $this->assertSame('monolog.logger_prototype', $definition->getParent());
-        $this->assertSame(['mcp'], $definition->getArguments());
-        $this->assertTrue($definition->hasTag('monolog.logger'));
-    }
-
     #[DataProvider('provideClientTransportsConfiguration')]
     public function testClientTransportsConfiguration(array $config, array $expectedServices)
     {

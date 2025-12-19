@@ -10,7 +10,7 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Chat\Bridge\HttpFoundation\SessionStore;
+use Symfony\AI\Chat\Bridge\Session\MessageStore;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -30,7 +30,7 @@ $request->setSession(new Session(new MockArraySessionStorage()));
 $requestStack = new RequestStack();
 $requestStack->push($request);
 
-$store = new SessionStore($requestStack, 'chat');
+$store = new MessageStore($requestStack, 'chat');
 $store->setup();
 
 $agent = new Agent($platform, 'gpt-4o-mini');

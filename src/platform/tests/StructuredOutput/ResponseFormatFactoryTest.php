@@ -12,8 +12,8 @@
 namespace Symfony\AI\Platform\Tests\StructuredOutput;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Fixtures\StructuredOutput\User;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
 
 final class ResponseFormatFactoryTest extends TestCase
 {

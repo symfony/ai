@@ -32,7 +32,7 @@ final class BinaryTest extends TestCase
     public function testThrowsExceptionForInvalidDataUrl()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid audio data URL format.');
+        $this->expectExceptionMessage('Invalid file data URL format.');
 
         File::fromDataUrl('invalid-data-url');
     }

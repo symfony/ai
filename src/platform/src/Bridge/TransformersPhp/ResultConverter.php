@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 
-final readonly class ResultConverter implements ResultConverterInterface
+final class ResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
@@ -36,5 +36,10 @@ final readonly class ResultConverter implements ResultConverterInterface
         }
 
         return new ObjectResult($data);
+    }
+
+    public function getTokenUsageExtractor(): null
+    {
+        return null;
     }
 }

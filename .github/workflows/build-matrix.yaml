@@ -1,0 +1,153 @@
+name: Build Matrix
+
+on:
+    workflow_call:
+        outputs:
+            packages:
+                description: 'List of packages (components and bundles)'
+                value: ${{ jobs.matrix.outputs.packages }}
+            packages-include:
+                description: 'Package includes for test matrix'
+                value: ${{ jobs.matrix.outputs.packages-include }}
+            bridges:
+                description: 'Combined list of all bridges'
+                value: ${{ jobs.matrix.outputs.bridges }}
+            store-bridges:
+                description: 'List of store bridges'
+                value: ${{ jobs.matrix.outputs.store-bridges }}
+            store-bridges-include:
+                description: 'Store bridges includes for test matrix'
+                value: ${{ jobs.matrix.outputs.store-bridges-include }}
+            tool-bridges:
+                description: 'List of tool bridges'
+                value: ${{ jobs.matrix.outputs.tool-bridges }}
+            tool-bridges-include:
+                description: 'Tool bridges includes for test matrix'
+                value: ${{ jobs.matrix.outputs.tool-bridges-include }}
+            platform-bridges:
+                description: 'List of platform bridges'
+                value: ${{ jobs.matrix.outputs.platform-bridges }}
+            platform-bridges-include:
+                description: 'Platform bridges includes for test matrix'
+                value: ${{ jobs.matrix.outputs.platform-bridges-include }}
+            message-store-bridges:
+                description: 'List of message store bridges'
+                value: ${{ jobs.matrix.outputs.message-store-bridges }}
+            message-store-bridges-include:
+                description: 'Message store bridge includes for test matrix'
+                value: ${{ jobs.matrix.outputs.message-store-bridges-include }}
+
+jobs:
+    matrix:
+        name: Build
+        runs-on: ubuntu-latest
+        outputs:
+            packages: ${{ steps.set-matrix.outputs.packages }}
+            packages-include: ${{ steps.set-matrix.outputs.packages-include }}
+            bridges: ${{ steps.set-matrix.outputs.bridges }}
+            store-bridges: ${{ steps.set-matrix.outputs.store-bridges }}
+            store-bridges-include: ${{ steps.set-matrix.outputs.store-bridges-include }}
+            tool-bridges: ${{ steps.set-matrix.outputs.tool-bridges }}
+            tool-bridges-include: ${{ steps.set-matrix.outputs.tool-bridges-include }}
+            platform-bridges: ${{ steps.set-matrix.outputs.platform-bridges }}
+            platform-bridges-include: ${{ steps.set-matrix.outputs.platform-bridges-include }}
+            message-store-bridges: ${{ steps.set-matrix.outputs.message-store-bridges }}
+            message-store-bridges-include: ${{ steps.set-matrix.outputs.message-store-bridges-include }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Set matrix
+              id: set-matrix
+              run: |
+                  # Helper function to convert "ai-bundle" to "AI Bundle"
+                  to_title() {
+                      echo "$1" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)}1' \
+                          | sed 's/\bAi\b/AI/g; s/\bMcp\b/MCP/g'
+                  }
+
+                  # Packages (components and bundles)
+                  PACKAGES="[]"
+                  for pkg in $(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -not -path "*/Bridge/*" | xargs -I{} dirname {} | sed 's|^src/||' | grep -Ev "examples" | sort); do
+                      if [[ "$pkg" == *-bundle ]]; then
+                          type="Bundle"
+                      else
+                          type="Component"
+                      fi
+                      name=$(to_title "$pkg")
+                      PACKAGES=$(echo "$PACKAGES" | jq -c --arg path "$pkg" --arg type "$type" --arg name "$name" '. + [{path: $path, type: $type, name: $name}]')
+                  done
+                  echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+
+                  # Bridges
+                  STORE_BRIDGES=$(ls -1 src/store/src/Bridge/ | sort \
+                      | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({component: "store", type: "Store", bridge: .})')
+                  TOOL_BRIDGES=$(ls -1 src/agent/src/Bridge/ | sort \
+                      | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({component: "agent", type: "Tool", bridge: .})')
+                  PLATFORM_BRIDGES=$(ls -1 src/platform/src/Bridge/ | sort \
+                      | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({component: "platform", type: "Platform", bridge: .})')
+                  MESSAGE_STORE_BRIDGES=$(ls -1 src/chat/src/Bridge/ | sort \
+                      | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({component: "chat", type: "Message Store", bridge: .})')
+
+                  # Combined bridges (for code-quality)
+                  BRIDGES=$(jq -n -c --argjson store "$STORE_BRIDGES" --argjson tool "$TOOL_BRIDGES" --argjson platform "$PLATFORM_BRIDGES" --argjson messageStore "$MESSAGE_STORE_BRIDGES" '$store + $tool + $platform + $messageStore')
+                  echo "bridges=$BRIDGES" >> $GITHUB_OUTPUT
+
+                  # Individual bridges without type (for tests)
+                  echo "store-bridges=$(echo "$STORE_BRIDGES" | jq -c 'map(del(.type))')" >> $GITHUB_OUTPUT
+                  echo "tool-bridges=$(echo "$TOOL_BRIDGES" | jq -c 'map(del(.type))')" >> $GITHUB_OUTPUT
+                  echo "platform-bridges=$(echo "$PLATFORM_BRIDGES" | jq -c 'map({bridge: .bridge})')" >> $GITHUB_OUTPUT
+
+                  # Bridge includes (8.2 lowest, 8.2 highest, 8.5 highest)
+                  STORE_BRIDGES_INCLUDE=$(echo "$STORE_BRIDGES" | jq -c '
+                      . as $bridges |
+                      ($bridges | map({bridge: {component: .component, bridge: .bridge}, "php-version": "8.2", "dependency-version": "lowest"})) +
+                      ($bridges | map({bridge: {component: .component, bridge: .bridge}, "php-version": "8.2", "dependency-version": "highest"})) +
+                      ($bridges | map({bridge: {component: .component, bridge: .bridge}, "php-version": "8.5", "dependency-version": "highest"}))
+                  ')
+                  echo "store-bridges-include=$STORE_BRIDGES_INCLUDE" >> $GITHUB_OUTPUT
+
+                  TOOL_BRIDGES_INCLUDE=$(echo "$TOOL_BRIDGES" | jq -c '
+                      . as $bridges |
+                      ($bridges | map({bridge: {component: .component, bridge: .bridge}, "php-version": "8.2", "dependency-version": "lowest"})) +
+                      ($bridges | map({bridge: {component: .component, bridge: .bridge}, "php-version": "8.2", "dependency-version": "highest"})) +
+                      ($bridges | map({bridge: {component: .component, bridge: .bridge}, "php-version": "8.5", "dependency-version": "highest"}))
+                  ')
+                  echo "tool-bridges-include=$TOOL_BRIDGES_INCLUDE" >> $GITHUB_OUTPUT
+
+                  PLATFORM_BRIDGES_INCLUDE=$(echo "$PLATFORM_BRIDGES" | jq -c '
+                      . as $bridges |
+                      ($bridges | map({bridge: {bridge: .bridge}, "php-version": "8.2", "dependency-version": "lowest"})) +
+                      ($bridges | map({bridge: {bridge: .bridge}, "php-version": "8.2", "dependency-version": "highest"})) +
+                      ($bridges | map({bridge: {bridge: .bridge}, "php-version": "8.5", "dependency-version": "highest"}))
+                  ')
+                  echo "platform-bridges-include=$PLATFORM_BRIDGES_INCLUDE" >> $GITHUB_OUTPUT
+
+                  # Package includes (lowest, Symfony 7.4, Symfony 8.0)
+                  PACKAGES_INCLUDE=$(echo "$PACKAGES" | jq -c '
+                      . as $pkgs |
+                      ($pkgs | map(. + {"php-version": "8.2", "dependency-version": "lowest"})) +
+                      ($pkgs | map(. + {"php-version": "8.2", "symfony-version": "7.4.*"})) +
+                      ($pkgs | map(. + {"php-version": "8.5", "symfony-version": "8.0.*"}))
+                      | map({package: {path: .path, type: .type, name: .name}} + (. | del(.path, .type, .name)))
+                  ')
+                  echo "packages-include=$PACKAGES_INCLUDE" >> $GITHUB_OUTPUT
+
+                  # Message store bridges (for tests)
+                  echo "message-store-bridges=$(echo "$MESSAGE_STORE_BRIDGES" | jq -c 'map(del(.type))')" >> $GITHUB_OUTPUT
+
+                  MESSAGE_STORE_BRIDGES_INCLUDE=$(echo "$MESSAGE_STORE_BRIDGES" | jq -c '
+                      . as $bridges |
+                      ($bridges | map({bridge: {component: .component, bridge: .bridge}, "php-version": "8.2", "dependency-version": "lowest"})) +
+                      ($bridges | map({bridge: {component: .component, bridge: .bridge}, "php-version": "8.2", "dependency-version": "highest"})) +
+                      ($bridges | map({bridge: {component: .component, bridge: .bridge}, "php-version": "8.5", "dependency-version": "highest"}))
+                  ')
+                  echo "message-store-bridges-include=$MESSAGE_STORE_BRIDGES_INCLUDE" >> $GITHUB_OUTPUT
+
+                  # Pretty print
+                  echo "::group::Packages"
+                  echo "$PACKAGES" | jq .
+                  echo "::endgroup::"
+                  echo "::group::Bridges"
+                  echo "$BRIDGES" | jq .
+                  echo "::endgroup::"

@@ -18,9 +18,6 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
-/**
- * @covers \Symfony\AI\McpBundle\DependencyInjection\McpPass
- */
 final class McpPassTest extends TestCase
 {
     public function testCreatesServiceLocatorForAllMcpServices()

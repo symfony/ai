@@ -28,7 +28,7 @@ final class ModelCatalog extends AbstractModelCatalog
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
-            'albert-small' => [
+            'openweight-small' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -36,7 +36,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                 ],
             ],
-            'albert-large' => [
+            'openweight-medium' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -44,7 +44,15 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                 ],
             ],
-            'embeddings-small' => [
+            'openweight-large' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                ],
+            ],
+            'openweight-embeddings' => [
                 'class' => EmbeddingsModel::class,
                 'capabilities' => [Capability::INPUT_TEXT],
             ],

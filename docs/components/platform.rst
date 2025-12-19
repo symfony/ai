@@ -356,11 +356,11 @@ the result back to PHP objects.
 
 To achieve this, the ``Symfony\AI\Platform\StructuredOutput\PlatformSubscriber`` needs to be registered with the platform::
 
-    use Symfony\AI\Fixtures\StructuredOutput\MathReasoning;
     use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
     use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+    use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
     use Symfony\Component\EventDispatcher\EventDispatcher;
 
     $dispatcher = new EventDispatcher();

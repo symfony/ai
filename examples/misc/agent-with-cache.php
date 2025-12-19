@@ -20,7 +20,7 @@ use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
-$cachedPlatform = new CachedPlatform($platform, new TagAwareAdapter(new ArrayAdapter()));
+$cachedPlatform = new CachedPlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
 
 $agent = new Agent($cachedPlatform, 'qwen3:0.6b-q4_K_M');
 $messages = new MessageBag(

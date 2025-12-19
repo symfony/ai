@@ -14,45 +14,34 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
     cancel-in-progress: true
 
+env:
+    PHP_VERSION: '8.5'
+    REQUIRED_PHP_EXTENSIONS: 'mongodb, redis'
+
 jobs:
-    phpstan:
-        name: PHPStan
+    # ===========================================
+    # Build Matrix
+    # ===========================================
+    matrix:
+        name: Matrix
+        uses: ./.github/workflows/build-matrix.yaml
+
+    # ===========================================
+    # PHPStan
+    # ===========================================
+    phpstan-demo:
+        needs: matrix
+        name: PHPStan / Demo
         runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                php-version: [ '8.5' ]
         steps:
             - name: Checkout
               uses: actions/checkout@v6
 
-            - name: Configure environment
-              run: |
-                  echo COLUMNS=120 >> $GITHUB_ENV
-                  echo COMPOSER_UP='composer update --no-progress --no-interaction --no-scripts --ansi --ignore-platform-req=ext-mongodb' >> $GITHUB_ENV
-                  echo PHPSTAN='vendor/bin/phpstan' >> $GITHUB_ENV
-
-                  PACKAGES=$(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -not -path "*/Bridge/*" -printf '%h\n' | sed 's/^src\///' | grep -Ev "examples" | sort |  tr '\n' ' ')
-                  echo "Packages: $PACKAGES"
-                  echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
-
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: ${{ matrix.php-version }}
-
-            - name: Get composer cache directory
-              id: composer-cache
-              run: |
-                  echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-            - name: Cache packages dependencies
-              uses: actions/cache@v4
-              with:
-                  path: ${{ steps.composer-cache.outputs.dir }}
-                  key: ${{ runner.os }}-composer-packages-${{ matrix.php-version }}-${{ hashFiles('src/**/composer.json') }}
-                  restore-keys: |
-                      ${{ runner.os }}-composer-packages-${{ matrix.php-version }}
+                  php-version: ${{ env.PHP_VERSION }}
+                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
               uses: ramsey/composer-install@v3
@@ -60,16 +49,112 @@ jobs:
             - name: Build root packages
               run: php .github/build-packages.php
 
-            - name: Run PHPStan on examples
-              run: |
-                  cd examples/ && $COMPOSER_UP && ../link && $PHPSTAN
+            - name: Install dependencies
+              uses: ramsey/composer-install@v3
+              with:
+                  working-directory: demo
 
-            - name: Run PHPStan on demo
-              run: |
-                  cd demo/ && $COMPOSER_UP && ../link && $PHPSTAN
+            - name: Link packages
+              run: cd demo && ../link
 
-            - name: Run PHPStan on packages
-              run: |
-                  source .github/workflows/.utils.sh
+            - name: Run PHPStan
+              run: cd demo && vendor/bin/phpstan
 
-                  echo "$PACKAGES" | xargs -n1 | parallel -j +3 "_run_task {} '(cd src/{} && $COMPOSER_UP && $PHPSTAN)'"
+    phpstan-examples:
+        needs: matrix
+        name: PHPStan / Examples
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ env.PHP_VERSION }}
+                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v3
+
+            - name: Build root packages
+              run: php .github/build-packages.php
+
+            - name: Install dependencies
+              uses: ramsey/composer-install@v3
+              with:
+                  working-directory: examples
+
+            - name: Link packages
+              run: cd examples && ../link
+
+            - name: Run PHPStan
+              run: cd examples && vendor/bin/phpstan
+
+    phpstan-package:
+        name: PHPStan / ${{ matrix.package.type }} / ${{ matrix.package.name }}
+        needs: matrix
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                package: ${{ fromJson(needs.matrix.outputs.packages) }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ env.PHP_VERSION }}
+                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v3
+
+            - name: Build root packages
+              run: php .github/build-packages.php
+
+            - name: Install dependencies
+              uses: ramsey/composer-install@v3
+              with:
+                  working-directory: src/${{ matrix.package.path }}
+
+            - name: Run PHPStan
+              run: cd src/${{ matrix.package.path }} && vendor/bin/phpstan
+
+    phpstan-bridge:
+        name: PHPStan / ${{ matrix.bridge.type }} / ${{ matrix.bridge.bridge }}
+        needs: matrix
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                bridge: ${{ fromJson(needs.matrix.outputs.bridges) }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ env.PHP_VERSION }}
+                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v3
+
+            - name: Build root packages
+              run: php .github/build-packages.php
+
+            # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
+            - name: Clean vendor folders
+              run: rm -rf vendor src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}/vendor
+
+            - name: Install dependencies
+              uses: ramsey/composer-install@v3
+              with:
+                  working-directory: src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
+
+            - name: Run PHPStan
+              run: cd src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} && vendor/bin/phpstan

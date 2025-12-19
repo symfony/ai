@@ -49,9 +49,9 @@ Step 1: Initialize the Vector Store
 
 First, create a store to hold your vector embeddings::
 
-    use Symfony\AI\Store\Bridge\Local\InMemoryStore;
+    use Symfony\AI\Store\InMemory\Store;
 
-    $store = new InMemoryStore();
+    $store = new Store();
 
 For production use, consider using persistent stores like ChromaDB, Pinecone, or MongoDB Atlas.
 
@@ -110,15 +110,15 @@ Step 4: Configure Similarity Search Tool
 
 Create a tool that performs semantic search on your vector store::
 
+    use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
     use Symfony\AI\Agent\Toolbox\AgentProcessor;
-    use Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch;
     use Symfony\AI\Agent\Toolbox\Toolbox;
 
     $similaritySearch = new SimilaritySearch($vectorizer, $store);
     $toolbox = new Toolbox([$similaritySearch]);
     $processor = new AgentProcessor($toolbox);
 
-The :class:`Symfony\\AI\\Agent\\Toolbox\\Tool\\SimilaritySearch` tool:
+The :class:`Symfony\\AI\\Agent\\Bridge\\SimilaritySearch\\SimilaritySearch` tool:
 
 * Converts the user's query into a vector
 * Searches for similar vectors in the store
@@ -169,9 +169,9 @@ Vector Store Selection
 
 For production environments, use persistent vector stores like ChromaDB::
 
-    use Symfony\AI\Store\Bridge\ChromaDB\ChromaStore;
+    use Symfony\AI\Store\Bridge\ChromaDb\Store;
 
-    $store = new ChromaStore(
+    $store = new Store(
         $httpClient,
         'http://localhost:8000',
         'my_collection'
@@ -305,7 +305,7 @@ When using the AI Bundle, configure RAG with YAML:
                 prompt:
                     text: 'Answer questions using only the SimilaritySearch tool. If you cannot find relevant information, say so.'
                 tools:
-                    - 'Symfony\AI\Agent\Toolbox\Tool\SimilaritySearch'
+                    - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
 
 Then use the indexer command to populate your store:
 

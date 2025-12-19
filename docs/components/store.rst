@@ -139,9 +139,9 @@ for adding vectorized documents to the store, and querying the store for documen
 
 This leads to a store implementing two methods::
 
+    use Symfony\AI\Platform\Vector\Vector;
+    use Symfony\AI\Store\Document\VectorDocument;
     use Symfony\AI\Store\StoreInterface;
-    use Symfony\AI\Store\Vector;
-    use Symfony\AI\Store\VectorDocument;
 
     class MyStore implements StoreInterface
     {
@@ -150,7 +150,7 @@ This leads to a store implementing two methods::
             // Implementation to add a document to the store
         }
 
-        public function query(Vector $vector, array $options = []): array
+        public function query(Vector $vector, array $options = []): iterable
         {
             // Implementation to query the store for documents
             return $documents;

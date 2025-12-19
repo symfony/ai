@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -36,5 +37,10 @@ final class DecartResultConverter implements ResultConverterInterface
         $headers = $response->getHeaders();
 
         return new BinaryResult($response->getContent(), $headers['content-type'][0]);
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
     }
 }

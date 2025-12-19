@@ -12,14 +12,14 @@
 namespace Symfony\AI\Agent\Tests\Toolbox;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
-use Symfony\AI\Fixtures\Tool\ToolNoParams;
-use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;

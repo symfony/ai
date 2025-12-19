@@ -48,6 +48,14 @@ class Metadata implements \JsonSerializable, \Countable, \IteratorAggregate, \Ar
         $this->metadata = $metadata;
     }
 
+    /**
+     * @param array<string, mixed> $metadata
+     */
+    public function merge(array $metadata): void
+    {
+        $this->metadata = array_merge($this->metadata, $metadata);
+    }
+
     public function add(string $key, mixed $value): void
     {
         $this->metadata[$key] = $value;

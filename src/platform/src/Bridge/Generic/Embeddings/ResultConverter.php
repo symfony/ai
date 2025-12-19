@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
@@ -65,5 +66,10 @@ class ResultConverter implements ResultConverterInterface
                 $data['data'],
             ),
         );
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
     }
 }

@@ -1,0 +1,20 @@
+includes:
+    - ../../../../../.phpstan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - MessageStore.php
+        - Tests/
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        -
+            message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
+        -
+            identifier: missingType.iterableValue
+            path: Tests/*
+            reportUnmatched: false
+        -
+            identifier: 'symfonyAi.forbidNativeException'
+            path: Tests/*
+            reportUnmatched: false

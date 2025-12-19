@@ -26,8 +26,12 @@ final class Message
     {
     }
 
-    public static function forSystem(\Stringable|string $content): SystemMessage
+    public static function forSystem(\Stringable|string|Template $content): SystemMessage
     {
+        if ($content instanceof Template) {
+            return new SystemMessage($content);
+        }
+
         return new SystemMessage($content instanceof \Stringable ? (string) $content : $content);
     }
 
@@ -42,7 +46,11 @@ final class Message
     public static function ofUser(\Stringable|string|ContentInterface ...$content): UserMessage
     {
         $content = array_map(
-            static fn (\Stringable|string|ContentInterface $entry) => $entry instanceof ContentInterface ? $entry : (\is_string($entry) ? new Text($entry) : new Text((string) $entry)),
+            static fn (\Stringable|string|ContentInterface $entry) => match (true) {
+                $entry instanceof ContentInterface => $entry,
+                \is_string($entry) => new Text($entry),
+                default => new Text((string) $entry),
+            },
             $content,
         );
 

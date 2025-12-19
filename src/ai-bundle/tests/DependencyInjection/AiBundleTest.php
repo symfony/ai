@@ -32,7 +32,12 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsApiCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
+use Symfony\AI\Platform\CachedPlatform;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\EventListener\TemplateRendererListener;
+use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
+use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
+use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
@@ -70,6 +75,8 @@ use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\RetrieverInterface;
 use Symfony\AI\Store\StoreInterface;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -4012,43 +4019,6 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => ModelCatalogInterface::class]], $modelCatalogDefinition->getTag('proxy'));
     }
 
-    #[TestDox('Token usage processor tags use the correct agent ID')]
-    public function testTokenUsageProcessorTags()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'platform' => [
-                    'openai' => [
-                        'api_key' => 'sk-test_key',
-                    ],
-                ],
-                'agent' => [
-                    'tracked_agent' => [
-                        'platform' => 'ai.platform.openai',
-                        'model' => 'gpt-4',
-                        'track_token_usage' => true,
-                    ],
-                ],
-            ],
-        ]);
-
-        $agentId = 'ai.agent.tracked_agent';
-
-        // Token usage processor must exist for OpenAI platform
-        $tokenUsageProcessor = $container->getDefinition('ai.platform.token_usage_processor.openai');
-        $outputTags = $tokenUsageProcessor->getTag('ai.agent.output_processor');
-
-        $foundTag = false;
-        foreach ($outputTags as $tag) {
-            if (($tag['agent'] ?? '') === $agentId) {
-                $foundTag = true;
-                break;
-            }
-        }
-
-        $this->assertTrue($foundTag, 'Token usage processor should have output tag with full agent ID');
-    }
-
     public function testOpenAiPlatformWithDefaultRegion()
     {
         $container = $this->buildContainer([
@@ -6258,18 +6228,29 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.cache.ollama'));
 
         $definition = $container->getDefinition('ai.platform.cache.ollama');
+
+        $this->assertSame(CachedPlatform::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(3, $definition->getArguments());
+        $this->assertCount(4, $definition->getArguments());
 
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $platformArgument = $definition->getArgument(0);
         $this->assertSame('ai.platform.ollama', (string) $platformArgument);
-
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
-        $cacheArgument = $definition->getArgument(1);
-        $this->assertSame('cache.app', (string) $cacheArgument);
+        $this->assertSame('cache.app', (string) $definition->getArgument(2));
+        $this->assertSame('ollama', $definition->getArgument(3));
 
-        $this->assertSame('ollama', $definition->getArgument(2));
+        $this->assertSame([
+            ['interface' => PlatformInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([
+            ['name' => 'cache.ollama'],
+        ], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Platform\PlatformInterface $cache_ollama'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $cacheOllama'));
     }
 
     public function testCachedPlatformCanBeUsedWithoutCustomCacheKey()
@@ -6293,18 +6274,29 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.cache.ollama'));
 
         $definition = $container->getDefinition('ai.platform.cache.ollama');
+
+        $this->assertSame(CachedPlatform::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(3, $definition->getArguments());
+        $this->assertCount(4, $definition->getArguments());
 
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $platformArgument = $definition->getArgument(0);
         $this->assertSame('ai.platform.ollama', (string) $platformArgument);
-
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
-        $cacheArgument = $definition->getArgument(1);
-        $this->assertSame('cache.app', (string) $cacheArgument);
+        $this->assertSame('cache.app', (string) $definition->getArgument(2));
+        $this->assertSame('ollama', $definition->getArgument(3));
 
-        $this->assertSame('ollama', $definition->getArgument(2));
+        $this->assertSame([
+            ['interface' => PlatformInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([
+            ['name' => 'cache.ollama'],
+        ], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Platform\PlatformInterface $cache_ollama'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $cacheOllama'));
     }
 
     public function testCacheMessageStoreCanBeConfiguredWithCustomKey()
@@ -6978,12 +6970,49 @@ class AiBundleTest extends TestCase
         $this->assertSame([], $definition->getArguments());
     }
 
+    public function testTemplateRendererServicesAreRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'anthropic' => [
+                        'api_key' => 'test_key',
+                    ],
+                ],
+            ],
+        ]);
+
+        // Verify string template renderer is registered
+        $this->assertTrue($container->hasDefinition('ai.platform.template_renderer.string'));
+        $stringRendererDefinition = $container->getDefinition('ai.platform.template_renderer.string');
+        $this->assertSame(StringTemplateRenderer::class, $stringRendererDefinition->getClass());
+        $this->assertTrue($stringRendererDefinition->hasTag('ai.platform.template_renderer'));
+
+        // Verify expression template renderer is registered
+        $this->assertTrue($container->hasDefinition('ai.platform.template_renderer.expression'));
+        $expressionRendererDefinition = $container->getDefinition('ai.platform.template_renderer.expression');
+        $this->assertSame(ExpressionLanguageTemplateRenderer::class, $expressionRendererDefinition->getClass());
+        $this->assertTrue($expressionRendererDefinition->hasTag('ai.platform.template_renderer'));
+
+        // Verify template renderer registry is registered
+        $this->assertTrue($container->hasDefinition('ai.platform.template_renderer_registry'));
+        $registryDefinition = $container->getDefinition('ai.platform.template_renderer_registry');
+        $this->assertSame(TemplateRendererRegistry::class, $registryDefinition->getClass());
+
+        // Verify template renderer listener is registered as event subscriber
+        $this->assertTrue($container->hasDefinition('ai.platform.template_renderer_listener'));
+        $listenerDefinition = $container->getDefinition('ai.platform.template_renderer_listener');
+        $this->assertSame(TemplateRendererListener::class, $listenerDefinition->getClass());
+        $this->assertTrue($listenerDefinition->hasTag('kernel.event_subscriber'));
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', true);
         $container->setParameter('kernel.environment', 'dev');
         $container->setParameter('kernel.build_dir', 'public');
+        $container->setDefinition(ClockInterface::class, new Definition(MonotonicClock::class));
 
         $extension = (new AiBundle())->getContainerExtension();
         $extension->load($configuration, $container);
@@ -7082,7 +7111,6 @@ class AiBundleTest extends TestCase
                                 'nested' => ['options' => ['work' => 'too']],
                             ],
                         ],
-                        'track_token_usage' => true,
                         'prompt' => [
                             'text' => 'You are a helpful assistant.',
                             'include_tools' => true,

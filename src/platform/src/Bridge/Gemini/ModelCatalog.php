@@ -146,6 +146,22 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'gemini-2.5-flash-preview-tts' => [
+                'class' => Gemini::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
+                ],
+            ],
+            'gemini-2.5-pro-preview-tts' => [
+                'class' => Gemini::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
+                ],
+            ],
             'gemini-embedding-exp-03-07' => [
                 'class' => Embeddings::class,
                 'capabilities' => [Capability::INPUT_MULTIPLE],

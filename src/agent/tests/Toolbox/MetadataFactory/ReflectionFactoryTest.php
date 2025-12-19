@@ -12,12 +12,12 @@
 namespace Symfony\AI\Agent\Tests\Toolbox\MetadataFactory;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolMultiple;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWrong;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
-use Symfony\AI\Fixtures\Tool\ToolMultiple;
-use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
-use Symfony\AI\Fixtures\Tool\ToolWrong;
 use Symfony\AI\Platform\Tool\Tool;
 
 final class ReflectionFactoryTest extends TestCase

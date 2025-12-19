@@ -7,7 +7,7 @@ parameters:
         - src/
         - tests/
     excludePaths:
-        - src/Bridge/*/vendor/
+        - src/Bridge/
     ignoreErrors:
         -
             message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
@@ -16,14 +16,9 @@ parameters:
             path: tests/*
             reportUnmatched: false
         -
-            identifier: missingType.iterableValue
-            path: src/Bridge/**/Tests/*
-            reportUnmatched: false
-        -
             identifier: 'symfonyAi.forbidNativeException'
             path: tests/*
             reportUnmatched: false
         -
-            identifier: 'symfonyAi.forbidNativeException'
-            path: src/Bridge/**/Tests/*
+            identifier: trait.unused
             reportUnmatched: false

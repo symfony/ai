@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -57,5 +58,10 @@ final class ResultConverter implements ResultConverterInterface
         $objectResult->getMetadata()->set($innerResult->getMetadata()->all());
 
         return $objectResult;
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return $this->innerConverter->getTokenUsageExtractor();
     }
 }

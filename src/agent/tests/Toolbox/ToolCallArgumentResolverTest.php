@@ -12,13 +12,13 @@
 namespace Symfony\AI\Agent\Tests\Toolbox;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolArray;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolArrayMultidimensional;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
-use Symfony\AI\Fixtures\SomeStructure;
-use Symfony\AI\Fixtures\Tool\ToolArray;
-use Symfony\AI\Fixtures\Tool\ToolArrayMultidimensional;
-use Symfony\AI\Fixtures\Tool\ToolDate;
-use Symfony\AI\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SomeStructure;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 

@@ -25,6 +25,14 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  * @phpstan-import-type PlatformCallData from TraceablePlatform
  * @phpstan-import-type MessageStoreData from TraceableMessageStore
  * @phpstan-import-type ChatData from TraceableChat
+ *
+ * @phpstan-type CollectedPlatformCallData array{
+ *     model: string,
+ *     input: array<mixed>|string|object,
+ *     options: array<string, mixed>,
+ *     result: string|iterable<mixed>|object|null,
+ *     metadata: Metadata,
+ * }
  */
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
 {
@@ -88,7 +96,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     }
 
     /**
-     * @return PlatformCallData[]
+     * @return CollectedPlatformCallData[]
      */
     public function getPlatformCalls(): array
     {
@@ -136,13 +144,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     }
 
     /**
-     * @return array{
-     *     model: string,
-     *     input: array<mixed>|string|object,
-     *     options: array<string, mixed>,
-     *     result: string|iterable<mixed>|object|null,
-     *     metadata: Metadata,
-     * }[]
+     * @return CollectedPlatformCallData[]
      */
     private function awaitCallResults(TraceablePlatform $platform): array
     {
@@ -153,7 +155,8 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
             if (isset($platform->resultCache[$result])) {
                 $call['result'] = $platform->resultCache[$result];
             } else {
-                $call['result'] = $result->getContent();
+                $content = $result->getContent();
+                $call['result'] = $content instanceof \Generator ? null : $content;
             }
 
             $call['metadata'] = $result->getMetadata();

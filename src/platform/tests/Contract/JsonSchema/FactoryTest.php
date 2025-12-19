@@ -12,18 +12,18 @@
 namespace Symfony\AI\Platform\Tests\Contract\JsonSchema;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Fixtures\StructuredOutput\ExampleDto;
-use Symfony\AI\Fixtures\StructuredOutput\MathReasoning;
-use Symfony\AI\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
-use Symfony\AI\Fixtures\StructuredOutput\Step;
-use Symfony\AI\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
-use Symfony\AI\Fixtures\StructuredOutput\User;
-use Symfony\AI\Fixtures\Tool\ToolNoParams;
-use Symfony\AI\Fixtures\Tool\ToolOptionalParam;
-use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
-use Symfony\AI\Fixtures\Tool\ToolWithBackedEnums;
-use Symfony\AI\Fixtures\Tool\ToolWithToolParameterAttribute;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOptionalParam;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithBackedEnums;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithToolParameterAttribute;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
 
 final class FactoryTest extends TestCase
 {

@@ -9,22 +9,19 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory;
-use Symfony\AI\Platform\Bridge\Perplexity\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('PERPLEXITY_API_KEY'), http_client());
-$agent = new Agent($platform, 'sonar', outputProcessors: [new TokenOutputProcessor()]);
 
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $agent->call($messages, [
+$result = $platform->invoke('sonar', $messages, [
     'max_tokens' => 500, // specific options just for this call
 ]);
 

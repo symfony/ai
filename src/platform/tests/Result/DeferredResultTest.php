@@ -14,11 +14,13 @@ namespace Symfony\AI\Platform\Tests\Result;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\BaseResult;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\Test\PlainConverter;
 use Symfony\Contracts\HttpClient\ResponseInterface as SymfonyHttpResponse;
 
 final class DeferredResultTest extends TestCase
@@ -117,6 +119,33 @@ final class DeferredResultTest extends TestCase
 
         $deferredResult = new DeferredResult($resultConverter, $rawHttpResponse, $options);
         $deferredResult->getResult();
+    }
+
+    public function testItKeepsResultMetadata()
+    {
+        $result = new TextResult('Hello World');
+        $result->getMetadata()->add('foo', 'bar');
+        $converter = new PlainConverter($result);
+
+        $deferredResult = new DeferredResult($converter, new InMemoryRawResult());
+        $deferredResult->getMetadata()->add('key', 'value');
+
+        $unwrappedResult = $deferredResult->getResult();
+
+        $this->assertSame('bar', $unwrappedResult->getMetadata()->get('foo'));
+        $this->assertSame('value', $unwrappedResult->getMetadata()->get('key'));
+    }
+
+    public function testMetadataGetsPromotedFromUnwrappedResult()
+    {
+        $result = new TextResult('Hello World');
+        $result->getMetadata()->add('foo', 'bar');
+        $converter = new PlainConverter($result);
+
+        $deferredResult = new DeferredResult($converter, new InMemoryRawResult());
+        $deferredResult->getResult();
+
+        $this->assertSame('bar', $deferredResult->getMetadata()->get('foo'));
     }
 
     /**

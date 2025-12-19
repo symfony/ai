@@ -18,12 +18,13 @@ use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\ResultConverterInterface as BaseResponseConverter;
+use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class ResultConverter implements BaseResponseConverter
+final class ResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
@@ -39,5 +40,10 @@ final class ResultConverter implements BaseResponseConverter
         }
 
         return new BinaryResult($result->getObject()->getContent());
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
     }
 }

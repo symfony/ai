@@ -50,6 +50,11 @@ final class ElevenLabsResultConverter implements ResultConverterInterface
         };
     }
 
+    public function getTokenUsageExtractor(): null
+    {
+        return null;
+    }
+
     private function convertToGenerator(ResponseInterface $response): \Generator
     {
         foreach ($this->httpClient->stream($response) as $chunk) {

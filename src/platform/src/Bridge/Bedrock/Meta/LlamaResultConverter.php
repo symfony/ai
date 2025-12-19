@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
  * @author Björn Altmann
@@ -38,5 +39,10 @@ class LlamaResultConverter implements ResultConverterInterface
         }
 
         return new TextResult($data['generation']);
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
     }
 }

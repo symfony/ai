@@ -36,14 +36,14 @@ use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
-use Symfony\AI\Chat\Bridge\Cache\Store as CacheMessageStore;
+use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
 use Symfony\AI\Chat\Bridge\Cloudflare\MessageStore as CloudflareMessageStore;
 use Symfony\AI\Chat\Bridge\Doctrine\DoctrineDbalMessageStore;
-use Symfony\AI\Chat\Bridge\HttpFoundation\SessionStore;
 use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore as MeilisearchMessageStore;
 use Symfony\AI\Chat\Bridge\MongoDb\MessageStore as MongoDbMessageStore;
 use Symfony\AI\Chat\Bridge\Pogocache\MessageStore as PogocacheMessageStore;
 use Symfony\AI\Chat\Bridge\Redis\MessageStore as RedisMessageStore;
+use Symfony\AI\Chat\Bridge\Session\MessageStore as SessionMessageStore;
 use Symfony\AI\Chat\Bridge\SurrealDb\MessageStore as SurrealDbMessageStore;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\ChatInterface;
@@ -87,6 +87,7 @@ use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
+use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
@@ -331,6 +332,10 @@ final class AiBundle extends AbstractBundle
     private function processPlatformConfig(string $type, array $platform, ContainerBuilder $container): void
     {
         if ('albert' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-albert-platform', AlbertPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Albert platform configuration requires "symfony/ai-albert-platform" package. Try running "composer require symfony/ai-albert-platform".');
+            }
+
             $platformId = 'ai.platform.albert';
             $definition = (new Definition(Platform::class))
                 ->setFactory(AlbertPlatformFactory::class.'::create')
@@ -351,6 +356,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('anthropic' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-anthropic-platform', AnthropicPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Anthropic platform configuration requires "symfony/ai-anthropic-platform" package. Try running "composer require symfony/ai-anthropic-platform".');
+            }
+
             $platformId = 'ai.platform.anthropic';
             $definition = (new Definition(Platform::class))
                 ->setFactory(AnthropicPlatformFactory::class.'::create')
@@ -372,6 +381,10 @@ final class AiBundle extends AbstractBundle
 
         if ('azure' === $type) {
             foreach ($platform as $name => $config) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-azure-platform', AzureOpenAiPlatformFactory::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Azure platform configuration requires "symfony/ai-azure-platform" package. Try running "composer require symfony/ai-azure-platform".');
+                }
+
                 $platformId = 'ai.platform.azure.'.$name;
                 $definition = (new Definition(Platform::class))
                     ->setFactory(AzureOpenAiPlatformFactory::class.'::create')
@@ -383,7 +396,7 @@ final class AiBundle extends AbstractBundle
                         $config['api_version'],
                         $config['api_key'],
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        new Reference('ai.platform.model_catalog.openai'),
+                        new Reference('ai.platform.model_catalog.azure.openai'),
                         new Reference('ai.platform.contract.openai'),
                         new Reference('event_dispatcher'),
                     ])
@@ -401,19 +414,25 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->setArguments([
                         new Reference($cachedPlatformConfig['platform']),
+                        new Reference(ClockInterface::class),
                         new Reference($cachedPlatformConfig['service'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         $cachedPlatformConfig['cache_key'] ?? $name,
                     ])
                     ->addTag('proxy', ['interface' => PlatformInterface::class])
-                    ->addTag('ai.platform', ['name' => 'cache'.$name]);
+                    ->addTag('ai.platform', ['name' => 'cache.'.$name]);
 
                 $container->setDefinition('ai.platform.cache.'.$name, $definition);
+                $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type.'_'.$name);
             }
 
             return;
         }
 
         if ('cartesia' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-cartesia-platform', CartesiaPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Cartesia platform configuration requires "symfony/ai-cartesia-platform" package. Try running "composer require symfony/ai-cartesia-platform".');
+            }
+
             $definition = (new Definition(Platform::class))
                 ->setFactory(CartesiaPlatformFactory::class.'::create')
                 ->setLazy(true)
@@ -455,6 +474,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('elevenlabs' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-eleven-labs-platform', ElevenLabsPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('ElevenLabs platform configuration requires "symfony/ai-eleven-labs-platform" package. Try running "composer require symfony/ai-eleven-labs-platform".');
+            }
+
             if (\array_key_exists('api_catalog', $platform) && $platform['api_catalog']) {
                 $catalogDefinition = (new Definition(ElevenLabsApiCatalog::class))
                     ->setLazy(true)
@@ -489,6 +512,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('gemini' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-gemini-platform', GeminiPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Gemini platform configuration requires "symfony/ai-gemini-platform" package. Try running "composer require symfony/ai-gemini-platform".');
+            }
+
             $platformId = 'ai.platform.gemini';
             $definition = (new Definition(Platform::class))
                 ->setFactory(GeminiPlatformFactory::class.'::create')
@@ -510,6 +537,10 @@ final class AiBundle extends AbstractBundle
 
         if ('generic' === $type) {
             foreach ($platform as $name => $config) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-generic-platform', GenericPlatformFactory::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Generic platform configuration requires "symfony/ai-generic-platform" package. Try running "composer require symfony/ai-generic-platform".');
+                }
+
                 $platformId = 'ai.platform.generic.'.$name;
                 $definition = (new Definition(Platform::class))
                     ->setFactory(GenericPlatformFactory::class.'::create')
@@ -536,6 +567,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('huggingface' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-hugging-face-platform', HuggingFacePlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('HuggingFace platform configuration requires "symfony/ai-hugging-face-platform" package. Try running "composer require symfony/ai-hugging-face-platform".');
+            }
+
             $platformId = 'ai.platform.huggingface';
             $definition = (new Definition(Platform::class))
                 ->setFactory(HuggingFacePlatformFactory::class.'::create')
@@ -557,6 +592,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('vertexai' === $type && isset($platform['location'], $platform['project_id'])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-vertex-ai-platform', VertexAiPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('VertexAI platform configuration requires "symfony/ai-vertex-ai-platform" package. Try running "composer require symfony/ai-vertex-ai-platform".');
+            }
+
             if (!class_exists(ApplicationDefaultCredentials::class)) {
                 throw new RuntimeException('For using the Vertex AI platform, google/auth package is required. Try running "composer require google/auth".');
             }
@@ -598,6 +637,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('openai' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-open-ai-platform', OpenAiPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('OpenAI platform configuration requires "symfony/ai-open-ai-platform" package. Try running "composer require symfony/ai-open-ai-platform".');
+            }
+
             $platformId = 'ai.platform.openai';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OpenAiPlatformFactory::class.'::create')
@@ -619,6 +662,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('openrouter' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-open-router-platform', OpenRouterPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('OpenRouter platform configuration requires "symfony/ai-open-router-platform" package. Try running "composer require symfony/ai-open-router-platform".');
+            }
+
             $platformId = 'ai.platform.openrouter';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OpenRouterPlatformFactory::class.'::create')
@@ -639,6 +686,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('mistral' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-mistral-platform', MistralPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Mistral platform configuration requires "symfony/ai-mistral-platform" package. Try running "composer require symfony/ai-mistral-platform".');
+            }
+
             $platformId = 'ai.platform.mistral';
             $definition = (new Definition(Platform::class))
                 ->setFactory(MistralPlatformFactory::class.'::create')
@@ -659,6 +710,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('lmstudio' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-lm-studio-platform', LmStudioPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('LmStudio platform configuration requires "symfony/ai-lm-studio-platform" package. Try running "composer require symfony/ai-lm-studio-platform".');
+            }
+
             $platformId = 'ai.platform.lmstudio';
             $definition = (new Definition(Platform::class))
                 ->setFactory(LmStudioPlatformFactory::class.'::create')
@@ -679,6 +734,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('ollama' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-ollama-platform', OllamaPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Ollama platform configuration requires "symfony/ai-ollama-platform" package. Try running "composer require symfony/ai-ollama-platform".');
+            }
+
             if (\array_key_exists('api_catalog', $platform)) {
                 $catalogDefinition = (new Definition(OllamaApiCatalog::class))
                     ->setLazy(true)
@@ -711,6 +770,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('cerebras' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-cerebras-platform', CerebrasPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Cerebras platform configuration requires "symfony/ai-cerebras-platform" package. Try running "composer require symfony/ai-cerebras-platform".');
+            }
+
             $platformId = 'ai.platform.cerebras';
             $definition = (new Definition(Platform::class))
                 ->setFactory(CerebrasPlatformFactory::class.'::create')
@@ -731,6 +794,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('deepseek' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-deep-seek-platform', DeepSeekPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('DeepSeek platform configuration requires "symfony/ai-deep-seek-platform" package. Try running "composer require symfony/ai-deep-seek-platform".');
+            }
+
             $platformId = 'ai.platform.deepseek';
             $definition = (new Definition(Platform::class))
                 ->setFactory(DeepSeekPlatformFactory::class.'::create')
@@ -751,6 +818,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('voyage' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-voyage-platform', VoyagePlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Voyage platform configuration requires "symfony/ai-voyage-platform" package. Try running "composer require symfony/ai-voyage-platform".');
+            }
+
             $platformId = 'ai.platform.voyage';
             $definition = (new Definition(Platform::class))
                 ->setFactory(VoyagePlatformFactory::class.'::create')
@@ -771,6 +842,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('perplexity' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-perplexity-platform', PerplexityPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Perplexity platform configuration requires "symfony/ai-perplexity-platform" package. Try running "composer require symfony/ai-perplexity-platform".');
+            }
+
             $platformId = 'ai.platform.perplexity';
             $definition = (new Definition(Platform::class))
                 ->setFactory(PerplexityPlatformFactory::class.'::create')
@@ -791,6 +866,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('dockermodelrunner' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-docker-model-runner-platform', DockerModelRunnerPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Docker Model Runner platform configuration requires "symfony/ai-docker-model-runner-platform" package. Try running "composer require symfony/ai-docker-model-runner-platform".');
+            }
+
             $platformId = 'ai.platform.dockermodelrunner';
             $definition = (new Definition(Platform::class))
                 ->setFactory(DockerModelRunnerPlatformFactory::class.'::create')
@@ -811,6 +890,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('scaleway' === $type && isset($platform['api_key'])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-scaleway-platform', ScalewayPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Scaleway platform configuration requires "symfony/ai-scaleway-platform" package. Try running "composer require symfony/ai-scaleway-platform".');
+            }
+
             $platformId = 'ai.platform.scaleway';
             $definition = (new Definition(Platform::class))
                 ->setFactory(ScalewayPlatformFactory::class.'::create')
@@ -907,28 +990,6 @@ final class AiBundle extends AbstractBundle
                 }
 
                 $toolboxDefinition->replaceArgument(0, $tools);
-            }
-        }
-
-        // TOKEN USAGE TRACKING
-        if ($config['track_token_usage'] ?? true) {
-            $platformServiceId = $config['platform'];
-
-            if ($container->hasAlias($platformServiceId)) {
-                $platformServiceId = (string) $container->getAlias($platformServiceId);
-            }
-
-            if (str_starts_with($platformServiceId, 'ai.platform.')) {
-                $platform = u($platformServiceId)->after('ai.platform.')->toString();
-
-                if (str_contains($platform, 'azure')) {
-                    $platform = 'azure';
-                }
-
-                if ($container->hasDefinition('ai.platform.token_usage_processor.'.$platform)) {
-                    $container->getDefinition('ai.platform.token_usage_processor.'.$platform)
-                        ->addTag('ai.agent.output_processor', ['agent' => $agentId, 'priority' => -30]);
-                }
             }
         }
 
@@ -1386,6 +1447,33 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->setLazy(true)
                     ->setArguments($arguments)
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('elasticsearch' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-elasticsearch-store', ElasticsearchStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Elasticsearch store configuration requires "symfony/ai-elasticsearch-store" package. Try running "composer require symfony/ai-elasticsearch-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(ElasticsearchStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference($store['http_client']),
+                        $store['endpoint'],
+                        $store['index_name'] ?? $name,
+                        $store['vectors_field'],
+                        $store['dimensions'],
+                        $store['similarity'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
@@ -1873,7 +1961,7 @@ final class AiBundle extends AbstractBundle
 
         if ('session' === $type) {
             foreach ($messageStores as $name => $messageStore) {
-                $definition = new Definition(SessionStore::class);
+                $definition = new Definition(SessionMessageStore::class);
                 $definition
                     ->setLazy(true)
                     ->setArguments([

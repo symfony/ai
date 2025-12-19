@@ -44,4 +44,9 @@ final class ResultConverter implements ResultConverterInterface
             ),
         );
     }
+
+    public function getTokenUsageExtractor(): null
+    {
+        return null;
+    }
 }

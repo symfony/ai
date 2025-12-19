@@ -70,12 +70,16 @@ final class Brave implements HasSourcesInterface
 
         foreach ($results as $result) {
             $this->addSource(
-                new Source($result['title'] ?? '', $result['url'] ?? '', $result['description'] ?? '')
+                new Source($result['title'], $result['url'], $result['description'] ?? '')
             );
         }
 
         return array_map(static function (array $result) {
-            return ['title' => $result['title'], 'description' => $result['description'], 'url' => $result['url']];
+            return [
+                'title' => $result['title'],
+                'description' => $result['description'] ?? '',
+                'url' => $result['url'],
+            ];
         }, $data['web']['results'] ?? []);
     }
 }

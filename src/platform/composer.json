@@ -54,7 +54,6 @@
         "psr/log": "^3.0",
         "symfony/clock": "^7.3|^8.0",
         "symfony/event-dispatcher": "^7.3|^8.0",
-        "symfony/http-client": "^7.3|^8.0",
         "symfony/property-access": "^7.3|^8.0",
         "symfony/property-info": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0",
@@ -62,18 +61,16 @@
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
-        "async-aws/bedrock-runtime": "^0.1|^1.0",
-        "codewithkyrian/transformers": "^0.6.2",
-        "google/auth": "^1.47",
         "phpstan/phpstan": "^2.1.17",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpstan/phpstan-symfony": "^2.0.6",
-        "phpunit/phpunit": "^11.5",
-        "symfony/ai-agent": "@dev",
+        "phpunit/phpunit": "^11.5.46",
         "symfony/cache": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
         "symfony/dotenv": "^7.3|^8.0",
+        "symfony/expression-language": "^7.3|^8.0",
         "symfony/finder": "^7.3|^8.0",
+        "symfony/http-client": "^7.3|^8.0",
+        "symfony/http-client-contracts": "^3.5",
         "symfony/process": "^7.3|^8.0",
         "symfony/var-dumper": "^7.3|^8.0"
     },
@@ -85,16 +82,13 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Symfony\\AI\\Agent\\Tests\\": "../agent/tests/",
             "Symfony\\AI\\Fixtures\\": "../../fixtures",
             "Symfony\\AI\\PHPStan\\": "../../.phpstan/",
             "Symfony\\AI\\Platform\\Tests\\": "tests/"
         }
     },
     "config": {
-        "allow-plugins": {
-            "codewithkyrian/platform-package-installer": true,
-            "codewithkyrian/transformers-libsloader": true
-        },
         "sort-packages": true
     },
     "extra": {

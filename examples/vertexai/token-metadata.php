@@ -11,7 +11,6 @@
 
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory;
-use Symfony\AI\Platform\Bridge\VertexAi\TokenOutputProcessor;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -19,7 +18,7 @@ require_once __DIR__.'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), adc_aware_http_client());
 
-$agent = new Agent($platform, 'gemini-2.0-flash-lite', outputProcessors: [new TokenOutputProcessor()]);
+$agent = new Agent($platform, 'gemini-2.0-flash-lite');
 $messages = new MessageBag(
     Message::forSystem('You are an expert assistant in animal study.'),
     Message::ofUser('What does a cat usually eat?'),

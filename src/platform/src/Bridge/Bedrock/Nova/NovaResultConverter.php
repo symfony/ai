@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
  * @author Björn Altmann
@@ -53,5 +54,10 @@ class NovaResultConverter implements ResultConverterInterface
         }
 
         return new TextResult($data['output']['message']['content'][0]['text']);
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
     }
 }

@@ -33,10 +33,6 @@ final class Vector implements VectorInterface
             throw new InvalidArgumentException('Vector must have at least one dimension.');
         }
 
-        if (\is_int($dimensions) && \count($data) !== $dimensions) {
-            throw new InvalidArgumentException(\sprintf('Vector must have %d dimensions', $dimensions));
-        }
-
         if (null === $this->dimensions) {
             $this->dimensions = \count($data);
         }

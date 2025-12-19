@@ -36,7 +36,7 @@ final class EmbeddingProvider implements MemoryProviderInterface
     {
         $messages = $input->getMessageBag()->getMessages();
         /** @var MessageInterface|null $userMessage */
-        $userMessage = $messages[array_key_last($messages)] ?? null;
+        $userMessage = array_last($messages) ?? null;
 
         if (!$userMessage instanceof UserMessage) {
             return [];

@@ -13,8 +13,6 @@ namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\Component\Uid\AbstractUid;
-use Symfony\Component\Uid\TimeBasedUidInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -22,9 +20,8 @@ use Symfony\Component\Uid\Uuid;
  */
 final class ToolCallMessage implements MessageInterface
 {
+    use IdentifierAwareTrait;
     use MetadataAwareTrait;
-
-    private readonly AbstractUid&TimeBasedUidInterface $id;
 
     public function __construct(
         private readonly ToolCall $toolCall,
@@ -36,11 +33,6 @@ final class ToolCallMessage implements MessageInterface
     public function getRole(): Role
     {
         return Role::ToolCall;
-    }
-
-    public function getId(): AbstractUid&TimeBasedUidInterface
-    {
-        return $this->id;
     }
 
     public function getToolCall(): ToolCall

@@ -26,7 +26,7 @@ final class CachedPlatformTest extends TestCase
 {
     public function testPlatformCanReturnCachedResultWhenCalledTwice()
     {
-        $httpResponse = $this->createStub(SymfonyHttpResponse::class);
+        $httpResponse = $this->createMock(SymfonyHttpResponse::class);
         $rawHttpResult = new RawHttpResult($httpResponse);
 
         $resultConverter = self::createMock(ResultConverterInterface::class);
@@ -40,12 +40,14 @@ final class CachedPlatformTest extends TestCase
 
         $cachedPlatform = new CachedPlatform(
             $platform,
-            new TagAwareAdapter(new ArrayAdapter()),
+            cache: new TagAwareAdapter(new ArrayAdapter()),
         );
 
         $deferredResult = $cachedPlatform->invoke('foo', 'bar', [
             'prompt_cache_key' => 'symfony',
         ]);
+
+        $this->assertTrue($deferredResult->getMetadata()->has('cached_at'));
 
         $this->assertSame('test content', $deferredResult->getResult()->getContent());
 
@@ -54,5 +56,7 @@ final class CachedPlatformTest extends TestCase
         ]);
 
         $this->assertSame('test content', $secondDeferredResult->getResult()->getContent());
+        $this->assertTrue($secondDeferredResult->getMetadata()->has('cached_at'));
+        $this->assertSame($deferredResult->getMetadata()->get('cached_at'), $secondDeferredResult->getMetadata()->get('cached_at'));
     }
 }

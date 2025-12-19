@@ -1,12 +1,13 @@
 includes:
     - ../../.phpstan/extension.neon
-    - vendor/phpstan/phpstan-symfony/extension.neon
 
 parameters:
     level: 6
     paths:
         - src/
         - tests/
+    excludePaths:
+        - src/Bridge/
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
         -
@@ -24,14 +25,6 @@ parameters:
             path: tests/*
             reportUnmatched: false
         -
-            identifier: missingType.iterableValue
-            path: src/Bridge/**/Tests/*
-            reportUnmatched: false
-        -
             identifier: 'symfonyAi.forbidNativeException'
             path: tests/*
-            reportUnmatched: false
-        -
-            identifier: 'symfonyAi.forbidNativeException'
-            path: src/Bridge/**/Tests/*
             reportUnmatched: false

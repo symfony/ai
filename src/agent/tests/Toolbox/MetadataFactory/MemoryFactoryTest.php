@@ -12,10 +12,10 @@
 namespace Symfony\AI\Agent\Tests\Toolbox\MetadataFactory;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoAttribute1;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoAttribute2;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
-use Symfony\AI\Fixtures\Tool\ToolNoAttribute1;
-use Symfony\AI\Fixtures\Tool\ToolNoAttribute2;
 use Symfony\AI\Platform\Tool\Tool;
 
 final class MemoryFactoryTest extends TestCase

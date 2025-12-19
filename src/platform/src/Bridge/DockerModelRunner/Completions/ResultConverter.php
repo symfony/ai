@@ -26,6 +26,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
  * @author Mathieu Santostefano <msantostefano@proton.me>
@@ -65,6 +66,11 @@ final class ResultConverter implements ResultConverterInterface
         $choices = array_map($this->convertChoice(...), $data['choices']);
 
         return 1 === \count($choices) ? $choices[0] : new ChoiceResult(...$choices);
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
     }
 
     private function convertStream(RawResultInterface $result): \Generator

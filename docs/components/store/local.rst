@@ -13,9 +13,9 @@ InMemoryStore
 
 Stores vectors in a PHP array. Data is not persisted and is lost when the PHP process ends::
 
-    use Symfony\AI\Store\Bridge\Local\InMemoryStore;
+    use Symfony\AI\Store\InMemory\Store;
 
-    $store = new InMemoryStore();
+    $store = new Store();
     $store->add($document1, $document2);
     $results = $store->query($vector);
 
@@ -24,11 +24,11 @@ CacheStore
 
 Stores vectors using a PSR-6 cache implementation. Persistence depends on the cache adapter used::
 
-    use Symfony\AI\Store\Bridge\Local\CacheStore;
+    use Symfony\AI\Store\Bridge\Cache\Store;
     use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
     $cache = new FilesystemAdapter();
-    $store = new CacheStore($cache);
+    $store = new Store($cache);
     $store->add($document1, $document2);
     $results = $store->query($vector);
 
@@ -39,9 +39,10 @@ Both stores support different distance calculation strategies::
 
     use Symfony\AI\Store\Distance\DistanceCalculator;
     use Symfony\AI\Store\Distance\DistanceStrategy;
+    use Symfony\AI\Store\InMemory\Store;
 
     $calculator = new DistanceCalculator(DistanceStrategy::COSINE_DISTANCE);
-    $store = new InMemoryStore($calculator);
+    $store = new Store($calculator);
 
 Available strategies:
 

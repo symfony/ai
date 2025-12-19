@@ -53,11 +53,6 @@ final class AgentCallCommandTest extends TestCase
         }
     }
 
-    public function testCommandPromptsForAgentSelectionWhenNoneProvided()
-    {
-        $this->markTestSkipped('CommandTester does not properly support interact() method with question helper');
-    }
-
     public function testCommandExecutesWithValidAgent()
     {
         $agent = $this->createMock(AgentInterface::class);

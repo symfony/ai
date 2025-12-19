@@ -38,7 +38,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
         $options = $parsed['options'];
 
         if (!isset($this->models[$catalogKey])) {
-            throw new ModelNotFoundException(\sprintf('Model "%s" not found.', $actualModelName));
+            throw new ModelNotFoundException(\sprintf('Model "%s" not found in %s.', $actualModelName, static::class));
         }
 
         $modelConfig = $this->models[$catalogKey];

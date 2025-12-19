@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -40,5 +41,10 @@ final class CartesiaResultConverter implements ResultConverterInterface
             str_contains($response->getInfo('url'), 'tts') => new BinaryResult($result->getObject()->getContent(), 'audio/mpeg'),
             default => throw new RuntimeException('Unsupported Cartesia response.'),
         };
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
     }
 }

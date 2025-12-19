@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -55,5 +56,10 @@ final class PlatformTestHandler implements ModelClientInterface, ResultConverter
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
         return $this->create ?? new VectorResult(new Vector([1, 2, 3]));
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
     }
 }

@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 require_once dirname(__DIR__).'/bootstrap.php';

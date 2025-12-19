@@ -36,7 +36,9 @@
     },
     "require-dev": {
         "doctrine/dbal": "^3.3|^4.0",
-        "phpunit/phpunit": "^11.5.13"
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.46"
     },
     "minimum-stability": "dev",
     "autoload": {
@@ -46,6 +48,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/",
             "Symfony\\AI\\Store\\Bridge\\Postgres\\Tests\\": "Tests/"
         }
     },

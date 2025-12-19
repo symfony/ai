@@ -31,19 +31,18 @@
         "symfony/ai-platform": "@dev",
         "symfony/clock": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
+        "symfony/polyfill-php85": "^1.33",
         "symfony/property-access": "^7.3|^8.0",
         "symfony/property-info": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0",
         "symfony/type-info": "^7.3|^8.0"
     },
     "require-dev": {
-        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.13",
+        "phpunit/phpunit": "^11.5.46",
         "symfony/ai-store": "@dev",
-        "symfony/cache": "^7.3|^8.0",
         "symfony/event-dispatcher": "^7.3|^8.0",
-        "symfony/http-foundation": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0",
         "symfony/translation-contracts": "^3.6"
     },
@@ -57,7 +56,8 @@
         "psr-4": {
             "Symfony\\AI\\Agent\\Tests\\": "tests/",
             "Symfony\\AI\\Fixtures\\": "../../fixtures",
-            "Symfony\\AI\\PHPStan\\": "../../.phpstan/"
+            "Symfony\\AI\\PHPStan\\": "../../.phpstan/",
+            "Symfony\\AI\\Platform\\Tests\\": "../platform/tests/"
         }
     },
     "config": {

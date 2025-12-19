@@ -12,16 +12,16 @@
 namespace Symfony\AI\Agent\Tests\Toolbox\MetadataFactory;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolMisconfigured;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolMultiple;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoAttribute1;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOptionalParam;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
-use Symfony\AI\Fixtures\Tool\ToolMisconfigured;
-use Symfony\AI\Fixtures\Tool\ToolMultiple;
-use Symfony\AI\Fixtures\Tool\ToolNoAttribute1;
-use Symfony\AI\Fixtures\Tool\ToolOptionalParam;
-use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
 
 final class ChainFactoryTest extends TestCase
 {

@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
@@ -24,6 +26,7 @@ final class CachedPlatform implements PlatformInterface
 {
     public function __construct(
         private readonly PlatformInterface $platform,
+        private readonly ClockInterface $clock = new MonotonicClock(),
         private readonly (CacheInterface&TagAwareAdapterInterface)|null $cache = null,
         private readonly ?string $cacheKey = null,
     ) {
@@ -38,7 +41,7 @@ final class CachedPlatform implements PlatformInterface
 
             unset($options['prompt_cache_key']);
 
-            return $this->cache->get($cacheKey, static function (ItemInterface $item) use ($invokeCall, $model, $input, $options, $cacheKey): DeferredResult {
+            return $this->cache->get($cacheKey, function (ItemInterface $item) use ($invokeCall, $model, $input, $options, $cacheKey): DeferredResult {
                 $item->tag($model);
 
                 $result = $invokeCall($model, $input, $options);
@@ -52,7 +55,7 @@ final class CachedPlatform implements PlatformInterface
                 $result->getMetadata()->set([
                     'cached' => true,
                     'cache_key' => $cacheKey,
-                    'cached_at' => (new \DateTimeImmutable())->getTimestamp(),
+                    'cached_at' => $this->clock->now()->getTimestamp(),
                 ]);
 
                 return $result;

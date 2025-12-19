@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
@@ -46,10 +47,15 @@ final class OllamaResultConverter implements ResultConverterInterface
             : $this->doConvertCompletion($data);
     }
 
+    public function getTokenUsageExtractor(): TokenUsageExtractorInterface
+    {
+        return new TokenUsageExtractor();
+    }
+
     /**
      * @param array<string, mixed> $data
      */
-    public function doConvertCompletion(array $data): ResultInterface
+    private function doConvertCompletion(array $data): ResultInterface
     {
         if (!isset($data['message'])) {
             throw new RuntimeException('Response does not contain message.');
@@ -75,7 +81,7 @@ final class OllamaResultConverter implements ResultConverterInterface
     /**
      * @param array<string, mixed> $data
      */
-    public function doConvertEmbeddings(array $data): ResultInterface
+    private function doConvertEmbeddings(array $data): ResultInterface
     {
         if ([] === $data['embeddings']) {
             throw new RuntimeException('Response does not contain embeddings.');

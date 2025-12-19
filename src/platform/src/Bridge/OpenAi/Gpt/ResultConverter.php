@@ -93,6 +93,11 @@ final class ResultConverter implements ResultConverterInterface
         return 1 === \count($results) ? array_pop($results) : new ChoiceResult(...$results);
     }
 
+    public function getTokenUsageExtractor(): TokenUsageExtractor
+    {
+        return new TokenUsageExtractor();
+    }
+
     /**
      * @param array<OutputMessage|FunctionCall|Reasoning> $output
      *

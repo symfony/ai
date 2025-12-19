@@ -13,11 +13,11 @@ namespace Symfony\AI\Platform\Tests\Contract\JsonSchema;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Fixtures\StructuredOutput\User;
-use Symfony\AI\Fixtures\StructuredOutput\UserWithConstructor;
-use Symfony\AI\Fixtures\Tool\ToolRequiredParams;
-use Symfony\AI\Fixtures\Tool\ToolWithoutDocs;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithoutDocs;
 use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithConstructor;
 
 final class DescriptionParserTest extends TestCase
 {
