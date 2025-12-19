@@ -1519,12 +1519,13 @@ final class AiBundle extends AbstractBundle
             foreach ($stores as $name => $store) {
                 $arguments = [
                     new Reference($store['client']),
+                    $store['index_name'] ?? null,
                     $store['namespace'] ?? $name,
                     $store['filter'],
                 ];
 
                 if (\array_key_exists('top_k', $store)) {
-                    $arguments[3] = $store['top_k'];
+                    $arguments[4] = $store['top_k'];
                 }
 
                 $definition = new Definition(PineconeStore::class);

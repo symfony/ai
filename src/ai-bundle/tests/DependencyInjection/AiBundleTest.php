@@ -2387,11 +2387,12 @@ class AiBundleTest extends TestCase
         $this->assertSame(PineconeStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(3, $definition->getArguments());
+        $this->assertCount(4, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
-        $this->assertSame('my_pinecone_store', $definition->getArgument(1));
-        $this->assertSame([], $definition->getArgument(2));
+        $this->assertNull($definition->getArgument(1));
+        $this->assertSame('my_pinecone_store', $definition->getArgument(2));
+        $this->assertSame([], $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
@@ -2424,11 +2425,12 @@ class AiBundleTest extends TestCase
         $this->assertSame(PineconeStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(3, $definition->getArguments());
+        $this->assertCount(4, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
-        $this->assertSame('my_namespace', $definition->getArgument(1));
-        $this->assertSame([], $definition->getArgument(2));
+        $this->assertNull($definition->getArgument(1));
+        $this->assertSame('my_namespace', $definition->getArgument(2));
+        $this->assertSame([], $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
@@ -2462,11 +2464,51 @@ class AiBundleTest extends TestCase
         $this->assertSame(PineconeStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(3, $definition->getArguments());
+        $this->assertCount(4, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('foo', (string) $definition->getArgument(0));
-        $this->assertSame('my_namespace', $definition->getArgument(1));
-        $this->assertSame([], $definition->getArgument(2));
+        $this->assertNull($definition->getArgument(1));
+        $this->assertSame('my_namespace', $definition->getArgument(2));
+        $this->assertSame([], $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myPineconeStore'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $pinecone_my_pinecone_store'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $pineconeMyPineconeStore'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+    }
+
+    public function testPineconeStoreWithIndexNameCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'pinecone' => [
+                        'my_pinecone_store' => [
+                            'index_name' => 'my_index',
+                            'namespace' => 'my_namespace',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.pinecone.my_pinecone_store'));
+
+        $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
+        $this->assertSame(PineconeStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
+        $this->assertSame('my_index', $definition->getArgument(1));
+        $this->assertSame('my_namespace', $definition->getArgument(2));
+        $this->assertSame([], $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
@@ -2500,12 +2542,13 @@ class AiBundleTest extends TestCase
         $this->assertSame(PineconeStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
-        $this->assertSame('my_namespace', $definition->getArgument(1));
-        $this->assertSame([], $definition->getArgument(2));
-        $this->assertSame(100, $definition->getArgument(3));
+        $this->assertNull($definition->getArgument(1));
+        $this->assertSame('my_namespace', $definition->getArgument(2));
+        $this->assertSame([], $definition->getArgument(3));
+        $this->assertSame(100, $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
