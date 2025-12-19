@@ -16,6 +16,7 @@ use Probots\Pinecone\Resources\Data\VectorResource;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Uid\Uuid;
@@ -40,11 +41,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function setup(array $options = []): void
     {
         if (null === $this->indexName) {
-            throw new \InvalidArgumentException('You need to configure and index name for the Pinecone store.');
+            throw new InvalidArgumentException('You need to configure and index name for the Pinecone store.');
         }
 
         if (false === isset($options['dimension'])) {
-            throw new \InvalidArgumentException('No supported options.');
+            throw new InvalidArgumentException('No supported options.');
         }
 
         $this->pinecone
@@ -99,7 +100,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function drop(array $options = []): void
     {
         if (null === $this->indexName) {
-            throw new \InvalidArgumentException('You need to configure and index name for the Pinecone store.');
+            throw new InvalidArgumentException('You need to configure and index name for the Pinecone store.');
         }
 
         $this->pinecone

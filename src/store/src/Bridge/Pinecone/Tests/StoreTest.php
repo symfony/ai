@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Pinecone\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
@@ -31,7 +32,7 @@ final class StoreTest extends TestCase
         $pinecone = $this->createMock(Client::class);
         $store = new Store($pinecone, 'text-index');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $store->setup();
     }
@@ -41,7 +42,7 @@ final class StoreTest extends TestCase
         $pinecone = $this->createMock(Client::class);
         $store = new Store($pinecone);
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $store->setup(['dimension' => 1536]);
     }
@@ -76,7 +77,7 @@ final class StoreTest extends TestCase
         $pinecone = $this->createMock(Client::class);
         $store = new Store($pinecone);
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $store->drop();
     }
