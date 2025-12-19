@@ -4,4 +4,4 @@ CHANGELOG
 0.1
 ---
 
-* Add the store
+ * Add the bridge
