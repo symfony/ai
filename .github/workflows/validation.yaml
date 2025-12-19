@@ -10,6 +10,7 @@ on:
             - '.github/scripts/validate-bridge-naming.sh'
             - '.github/scripts/validate-bridge-splitsh.sh'
             - '.github/scripts/validate-bridge-files.sh'
+            - '.github/scripts/validate-bridge-type.sh'
     pull_request:
         paths:
             - 'src/*/src/Bridge/**/*'
@@ -19,6 +20,7 @@ on:
             - '.github/scripts/validate-bridge-naming.sh'
             - '.github/scripts/validate-bridge-splitsh.sh'
             - '.github/scripts/validate-bridge-files.sh'
+            - '.github/scripts/validate-bridge-type.sh'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -41,6 +43,9 @@ jobs:
             - name: Validate store bridges have required files
               run: .github/scripts/validate-bridge-files.sh store
 
+            - name: Validate store bridges have correct type
+              run: .github/scripts/validate-bridge-type.sh store
+
     validate_tools:
         name: Tool Bridges
         runs-on: ubuntu-latest
@@ -56,6 +61,9 @@ jobs:
 
             - name: Validate tool bridges have required files
               run: .github/scripts/validate-bridge-files.sh tool agent
+
+            - name: Validate tool bridges have correct type
+              run: .github/scripts/validate-bridge-type.sh tool agent
 
     validate_message_stores:
         name: Message Store Bridges
@@ -73,6 +81,9 @@ jobs:
             - name: Validate message store bridges have required files
               run: .github/scripts/validate-bridge-files.sh message-store chat
 
+            - name: Validate message store bridges have correct type
+              run: .github/scripts/validate-bridge-type.sh message-store chat
+
     validate_platforms:
         name: Platform Bridges
         runs-on: ubuntu-latest
@@ -88,4 +99,7 @@ jobs:
 
             - name: Validate platform bridges have required files
               run: .github/scripts/validate-bridge-files.sh platform
+
+            - name: Validate platform bridges have correct type
+              run: .github/scripts/validate-bridge-type.sh platform
 

@@ -2,7 +2,7 @@
     "name": "symfony/ai-session-message-store",
     "description": "Symfony session message store bridge for Symfony AI Chat",
     "license": "MIT",
-    "type": "symfony-ai-chat",
+    "type": "symfony-ai-message-store",
     "keywords": [
         "ai",
         "bridge",

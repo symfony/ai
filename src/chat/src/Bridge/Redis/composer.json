@@ -2,7 +2,7 @@
     "name": "symfony/ai-redis-message-store",
     "description": "Redis message store bridge for Symfony AI Chat",
     "license": "MIT",
-    "type": "symfony-ai-chat",
+    "type": "symfony-ai-message-store",
     "keywords": [
         "ai",
         "bridge",
