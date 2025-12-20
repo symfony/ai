@@ -44,8 +44,8 @@ final class NovaModelClientTest extends TestCase
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
-                $this->assertEquals('us.amazon.nova-pro-v1:0', $arg->getModelId());
-                $this->assertEquals('application/json', $arg->getContentType());
+                $this->assertSame('us.amazon.nova-pro-v1:0', $arg->getModelId());
+                $this->assertSame('application/json', $arg->getContentType());
                 $this->assertTrue(json_validate($arg->getBody()));
 
                 return true;
@@ -64,7 +64,7 @@ final class NovaModelClientTest extends TestCase
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
-                $this->assertEquals('application/json', $arg->getContentType());
+                $this->assertSame('application/json', $arg->getContentType());
                 $this->assertTrue(json_validate($arg->getBody()));
 
                 $body = json_decode($arg->getBody(), true);
@@ -86,11 +86,11 @@ final class NovaModelClientTest extends TestCase
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
-                $this->assertEquals('application/json', $arg->getContentType());
+                $this->assertSame('application/json', $arg->getContentType());
                 $this->assertTrue(json_validate($arg->getBody()));
 
                 $body = json_decode($arg->getBody(), true);
-                $this->assertEquals(['tools' => ['Tool']], $body['toolConfig']);
+                $this->assertSame(['tools' => ['Tool']], $body['toolConfig']);
 
                 return true;
             }))
@@ -112,12 +112,12 @@ final class NovaModelClientTest extends TestCase
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
-                $this->assertEquals('application/json', $arg->getContentType());
+                $this->assertSame('application/json', $arg->getContentType());
                 $this->assertTrue(json_validate($arg->getBody()));
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertArrayHasKey('inferenceConfig', $body);
-                $this->assertEquals(['temperature' => 0.35], $body['inferenceConfig']);
+                $this->assertSame(['temperature' => 0.35], $body['inferenceConfig']);
 
                 return true;
             }))
@@ -139,12 +139,12 @@ final class NovaModelClientTest extends TestCase
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
-                $this->assertEquals('application/json', $arg->getContentType());
+                $this->assertSame('application/json', $arg->getContentType());
                 $this->assertTrue(json_validate($arg->getBody()));
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertArrayHasKey('inferenceConfig', $body);
-                $this->assertEquals(['maxTokens' => 1000], $body['inferenceConfig']);
+                $this->assertSame(['maxTokens' => 1000], $body['inferenceConfig']);
 
                 return true;
             }))
@@ -166,12 +166,12 @@ final class NovaModelClientTest extends TestCase
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
-                $this->assertEquals('application/json', $arg->getContentType());
+                $this->assertSame('application/json', $arg->getContentType());
                 $this->assertTrue(json_validate($arg->getBody()));
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertArrayHasKey('inferenceConfig', $body);
-                $this->assertEquals(['temperature' => 0.35, 'maxTokens' => 1000], $body['inferenceConfig']);
+                $this->assertSame(['temperature' => 0.35, 'maxTokens' => 1000], $body['inferenceConfig']);
 
                 return true;
             }))
