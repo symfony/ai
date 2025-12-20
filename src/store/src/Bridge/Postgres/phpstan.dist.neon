@@ -4,9 +4,10 @@ includes:
 parameters:
     level: 6
     paths:
-        - Store.php
-        - Distance.php
+        - .
         - Tests/
+    excludePaths:
+        - vendor/
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
         -

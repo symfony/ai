@@ -4,8 +4,10 @@ includes:
 parameters:
     level: 6
     paths:
-        - MessageStore.php
+        - .
         - Tests/
+    excludePaths:
+        - vendor/
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
         -
