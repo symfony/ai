@@ -70,6 +70,9 @@ use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
 use Symfony\AI\Store\Command\RetrieveCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
+use Symfony\AI\Store\Document\Loader\DocumentCollectionLoader;
+use Symfony\AI\Store\Document\Loader\RssFeedLoader;
+use Symfony\AI\Store\Document\Loader\TextFileLoader;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 return static function (ContainerConfigurator $container): void {
@@ -161,6 +164,17 @@ return static function (ContainerConfigurator $container): void {
             ])
             ->tag('kernel.event_subscriber')
 
+        // store source loader
+        ->set('ai.store.source_loader.document_collection', DocumentCollectionLoader::class)
+            ->tag('ai.store.source_loader', ['supports' => DocumentCollectionLoader::supportedSource()])
+        ->set('ai.store.source_loader.rss', RssFeedLoader::class)
+            ->args([
+                service('http_client'),
+            ])
+            ->tag('ai.store.source_loader', ['supports' => RssFeedLoader::supportedSource()])
+        ->set('ai.store.source_loader.text_file', TextFileLoader::class)
+            ->tag('ai.store.source_loader', ['supports' => TextFileLoader::supportedSource()])
+
         // tools
         ->set('ai.toolbox.abstract', Toolbox::class)
             ->abstract()
@@ -237,6 +251,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.command.index', IndexCommand::class)
             ->args([
                 tagged_locator('ai.indexer', 'name'),
+                tagged_locator('ai.indexer.source', 'indexer'),
             ])
             ->tag('console.command')
         ->set('ai.command.retrieve', RetrieveCommand::class)

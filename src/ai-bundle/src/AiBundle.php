@@ -107,6 +107,8 @@ use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
+use Symfony\AI\Store\Document\Loader;
+use Symfony\AI\Store\Document\SourceLoaderInterface;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Indexer;
@@ -361,6 +363,9 @@ final class AiBundle extends AbstractBundle
             ->addTag('ai.platform.model_client');
         $builder->registerForAutoconfiguration(ResultConverterInterface::class)
             ->addTag('ai.platform.result_converter');
+
+        $builder->registerForAutoconfiguration(SourceLoaderInterface::class)
+            ->addTag('ai.store.source_loader');
 
         if (!ContainerBuilder::willBeAvailable('symfony/security-core', AuthorizationCheckerInterface::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.security.is_granted_attribute_listener');
@@ -2138,18 +2143,43 @@ final class AiBundle extends AbstractBundle
             $filters[] = new Reference($filter);
         }
 
+        $loaders = [];
+        if (isset($config['loaders'])) {
+            /** @var class-string<SourceLoaderInterface> $sourceLoader */
+            foreach ($config['loaders'] as $sourceLoader) {
+                $loaders[$sourceLoader::supportedSource()] = new Reference($sourceLoader);
+            }
+        } else {
+            foreach ($container->findTaggedServiceIds('ai.store.source_loader') as $id => $tags) {
+                $loaders[$tags[0]['supports']] = new Reference($id);
+            }
+        }
+        $loader = new Definition(Loader::class, [$loaders]);
+
         $definition = new Definition(Indexer::class, [
-            new Reference($config['loader']),
+            $loader,
             new Reference($config['vectorizer']),
             new Reference($config['store']),
-            $config['source'],
             $filters,
             $transformers,
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
         $definition->addTag('ai.indexer', ['name' => $name]);
 
+        // Register input object for ai:store:index command
+        if (isset($config['input'])) {
+            /** @var class-string<SourceLoaderInterface> $loader */
+            $sourceLoader = $config['input']['loader'];
+            $sourceId = 'ai.indexer.'.$name.'.input';
+            $source = (new Definition($sourceLoader::supportedSource()))
+                ->addTag('ai.indexer.source', ['indexer' => $name])
+                ->setFactory([$sourceLoader, 'createSource'])
+                ->setArguments([$config['input']['source']]);
+            $container->setDefinition($sourceId, $source);
+        }
+
         $serviceId = 'ai.indexer.'.$name;
+        $container->setDefinition($serviceId.'.loader', $loader);
         $container->setDefinition($serviceId, $definition);
         $container->registerAliasForArgument($serviceId, IndexerInterface::class, (new Target((string) $name))->getParsedName());
     }

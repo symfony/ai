@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Command;
 
+use Symfony\AI\Store\Document\SourceInterface;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -35,9 +36,11 @@ final class IndexCommand extends Command
 {
     /**
      * @param ServiceLocator<IndexerInterface> $indexers
+     * @param ServiceLocator<SourceInterface>  $sources
      */
     public function __construct(
         private readonly ServiceLocator $indexers,
+        private readonly ServiceLocator $sources,
     ) {
         parent::__construct();
     }
@@ -88,14 +91,21 @@ EOF
 
         $indexerService = $this->indexers->get($indexer);
 
+        // TODO: HOW TO PROVIDE SOURCE VIA ARGUMENT/OPTION?
         if (null !== $source) {
             $indexerService = $indexerService->withSource($source);
         }
 
+        if (!$this->sources->has($indexer)) {
+            throw new RuntimeException(\sprintf('The indexer "%s" has no source configured.', $indexer));
+        }
+
+        $source = $this->sources->get($indexer);
+
         $io->title(\sprintf('Indexing documents using "%s" indexer', $indexer));
 
         try {
-            $indexerService->index([]);
+            $indexerService->index($source);
 
             $io->success(\sprintf('Documents indexed successfully using "%s" indexer.', $indexer));
         } catch (\Exception $e) {
