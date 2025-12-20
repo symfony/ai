@@ -484,11 +484,11 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('bedrock' === $type) {
-            if (!ContainerBuilder::willBeAvailable('symfony/ai-bedrock-platform', BedrockFactory::class, ['symfony/ai-bundle'])) {
-                throw new RuntimeException('Bedrock platform configuration requires "symfony/ai-bedrock-platform" package. Try running "composer require symfony/ai-bedrock-platform".');
-            }
-
             foreach ($platform as $name => $config) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-bedrock-platform', BedrockFactory::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Bedrock platform configuration requires "symfony/ai-bedrock-platform" package. Try running "composer require symfony/ai-bedrock-platform".');
+                }
+
                 $platformId = 'ai.platform.bedrock.'.$name;
                 $definition = (new Definition(Platform::class))
                     ->setFactory(BedrockFactory::class.'::create')
@@ -500,7 +500,7 @@ final class AiBundle extends AbstractBundle
                         null,
                         new Reference('event_dispatcher'),
                     ])
-                    ->addTag('ai.platform', ['name' => 'bedrock .'.$name]);
+                    ->addTag('ai.platform', ['name' => 'bedrock.'.$name]);
 
                 $container->setDefinition($platformId, $definition);
             }
