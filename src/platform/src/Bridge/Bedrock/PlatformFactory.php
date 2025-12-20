@@ -42,7 +42,7 @@ final class PlatformFactory
             throw new RuntimeException('For using the Bedrock platform, the async-aws/bedrock-runtime package is required. Try running "composer require async-aws/bedrock-runtime".');
         }
 
-        if (!$bedrockRuntimeClient) {
+        if (null === $bedrockRuntimeClient) {
             $bedrockRuntimeClient = new BedrockRuntimeClient();
         }
 
