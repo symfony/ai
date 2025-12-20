@@ -31,13 +31,13 @@ class ModelClientTest extends TestCase
     public function testAnthropicBetaHeaderIsSetWithSingleBetaFeature()
     {
         $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
-            $this->assertEquals('POST', $method);
-            $this->assertEquals('https://api.anthropic.com/v1/messages', $url);
+            self::assertSame('POST', $method);
+            self::assertSame('https://api.anthropic.com/v1/messages', $url);
 
             $headers = $this->parseHeaders($options['headers']);
 
             $this->assertArrayHasKey('anthropic-beta', $headers);
-            $this->assertEquals('feature-1', $headers['anthropic-beta']);
+            self::assertSame('feature-1', $headers['anthropic-beta']);
 
             return new JsonMockResponse('{"success": true}');
         });
@@ -54,7 +54,7 @@ class ModelClientTest extends TestCase
             $headers = $this->parseHeaders($options['headers']);
 
             $this->assertArrayHasKey('anthropic-beta', $headers);
-            $this->assertEquals('feature-1,feature-2,feature-3', $headers['anthropic-beta']);
+            self::assertSame('feature-1,feature-2,feature-3', $headers['anthropic-beta']);
 
             return new JsonMockResponse('{"success": true}');
         });

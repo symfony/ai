@@ -217,14 +217,14 @@ final class AgentCallCommandTest extends TestCase
             // If system prompt is not shown, let's not assert it
             // This happens because the MessageBag is not preserved across calls in our mock
             $this->assertStringContainsString('Response', $output);
-            $this->assertEquals(2, substr_count($output, 'Response'));
+            $this->assertSame(2, substr_count($output, 'Response'));
         } else {
             // System prompt should appear only once (after first message)
-            $this->assertEquals(1, substr_count($output, 'System Prompt'));
+            $this->assertSame(1, substr_count($output, 'System Prompt'));
             $this->assertStringContainsString('System prompt', $output);
 
             // Both responses should be shown
-            $this->assertEquals(2, substr_count($output, 'Response'));
+            $this->assertSame(2, substr_count($output, 'Response'));
         }
     }
 

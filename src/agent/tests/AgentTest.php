@@ -105,7 +105,7 @@ final class AgentTest extends TestCase
 
         $agent = new Agent($platform, 'gpt-4o');
 
-        $this->assertEquals('gpt-4o', $agent->getModel());
+        $this->assertSame('gpt-4o', $agent->getModel());
     }
 
     public function testCallProcessesInputThroughProcessors()

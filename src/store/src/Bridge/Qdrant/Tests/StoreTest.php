@@ -156,7 +156,7 @@ final class StoreTest extends TestCase
 
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($document): JsonMockResponse {
             self::assertArrayHasKey('wait', $options['query']);
-            self::assertEquals('true', $options['query']['wait']);
+            self::assertSame('true', $options['query']['wait']);
 
             return new JsonMockResponse([
                 'time' => 0.002,
@@ -188,7 +188,7 @@ final class StoreTest extends TestCase
 
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options): JsonMockResponse {
             self::assertArrayHasKey('wait', $options['query']);
-            self::assertEquals('false', $options['query']['wait']);
+            self::assertSame('false', $options['query']['wait']);
 
             return new JsonMockResponse([
                 'time' => 0.002,
