@@ -94,6 +94,16 @@ jobs:
                   tools: flex
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v3
+
+            - name: Build packages
+              run: php .github/build-packages.php
+
+            # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
+            - name: Clean vendor folders
+              run: rm -rf vendor src/platform/src/Bridge/${{ matrix.bridge.bridge }}/vendor
+
             - name: Install dependencies
               uses: ramsey/composer-install@v3
               with:
@@ -128,6 +138,16 @@ jobs:
                   tools: flex
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v3
+
+            - name: Build packages
+              run: php .github/build-packages.php
+
+            # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
+            - name: Clean vendor folders
+              run: rm -rf vendor src/platform/src/Bridge/${{ matrix.bridge.bridge }}/vendor
+
             - name: Install dependencies
               uses: ramsey/composer-install@v3
               with:
@@ -161,6 +181,16 @@ jobs:
                   php-version: ${{ matrix.php-version }}
                   tools: flex
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v3
+
+            - name: Build packages
+              run: php .github/build-packages.php
+
+            # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
+            - name: Clean vendor folders
+              run: rm -rf vendor src/platform/src/Bridge/${{ matrix.bridge.bridge }}/vendor
 
             - name: Install dependencies
               uses: ramsey/composer-install@v3
