@@ -1,6 +1,10 @@
-ai.symfony.com @javiereguiluz
+.github @chr-hertel @OskarStark
+.upsun @nicolas-grekas
+ai.symfony.com @chr-hertel @javiereguiluz @OskarStark
 demo @chr-hertel @OskarStark
+docs @chr-hertel @OskarStark
 examples @chr-hertel @OskarStark
 fixtures @chr-hertel @OskarStark
 src @chr-hertel @OskarStark
-src/mcp-bundle @chr-hertel @Nyholm
+src/mate @chr-hertel @Nyholm @OskarStark
+src/mcp-bundle @chr-hertel @Nyholm @OskarStark
