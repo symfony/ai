@@ -31,9 +31,14 @@ class ClearCacheCommand extends Command
         parent::__construct(self::getDefaultName());
     }
 
-    public static function getDefaultName(): ?string
+    public static function getDefaultName(): string
     {
         return 'clear-cache';
+    }
+
+    public static function getDefaultDescription(): string
+    {
+        return 'Clear the MCP server cache';
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

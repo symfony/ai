@@ -31,9 +31,14 @@ class InitCommand extends Command
         parent::__construct(self::getDefaultName());
     }
 
-    public static function getDefaultName(): ?string
+    public static function getDefaultName(): string
     {
         return 'init';
+    }
+
+    public static function getDefaultDescription(): string
+    {
+        return 'Initialize Mate configuration and directory structure';
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

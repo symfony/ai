@@ -36,9 +36,14 @@ class DiscoverCommand extends Command
         parent::__construct(self::getDefaultName());
     }
 
-    public static function getDefaultName(): ?string
+    public static function getDefaultName(): string
     {
         return 'discover';
+    }
+
+    public static function getDefaultDescription(): string
+    {
+        return 'Discover MCP bridges installed via Composer';
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

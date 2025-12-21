@@ -44,9 +44,14 @@ class ServeCommand extends Command
         $this->discovery = new ComposerTypeDiscovery($rootDir, $logger);
     }
 
-    public static function getDefaultName(): ?string
+    public static function getDefaultName(): string
     {
         return 'serve';
+    }
+
+    public static function getDefaultDescription(): string
+    {
+        return 'Starts the MCP server with stdio transport';
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
