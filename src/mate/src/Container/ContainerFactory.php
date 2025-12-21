@@ -20,7 +20,7 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\Dotenv\Dotenv;
 
 /**
- * Factory for building a Symfony DI Container with MCP bridge configurations.
+ * Factory for building a Symfony DI Container with MCP extension configurations.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
@@ -38,9 +38,9 @@ final class ContainerFactory
         $loader = new PhpFileLoader($container, new FileLocator(\dirname(__DIR__)));
         $loader->load('default.config.php');
 
-        $enabledBridges = $this->getEnabledBridges();
+        $enabledExtensions = $this->getEnabledExtensions();
 
-        $container->setParameter('mate.enabled_bridges', $enabledBridges);
+        $container->setParameter('mate.enabled_extensions', $enabledExtensions);
         $container->setParameter('mate.root_dir', $this->rootDir);
 
         $logger = $container->get(LoggerInterface::class);
@@ -48,9 +48,9 @@ final class ContainerFactory
 
         $discovery = new ComposerTypeDiscovery($this->rootDir, $logger);
 
-        if ([] !== $enabledBridges) {
-            foreach ($discovery->discover($enabledBridges) as $packageName => $data) {
-                $this->loadBridgeIncludes($container, $logger, $packageName, $data['includes']);
+        if ([] !== $enabledExtensions) {
+            foreach ($discovery->discover($enabledExtensions) as $packageName => $data) {
+                $this->loadExtensionIncludes($container, $logger, $packageName, $data['includes']);
             }
         }
 
@@ -65,33 +65,33 @@ final class ContainerFactory
     /**
      * @return string[] Package names
      */
-    private function getEnabledBridges(): array
+    private function getEnabledExtensions(): array
     {
-        $bridgesFile = $this->rootDir.'/.mate/bridges.php';
+        $extensionsFile = $this->rootDir.'/.mate/extensions.php';
 
-        if (!file_exists($bridgesFile)) {
+        if (!file_exists($extensionsFile)) {
             return [];
         }
 
-        $bridgesConfig = include $bridgesFile;
-        if (!\is_array($bridgesConfig)) {
+        $extensionsConfig = include $extensionsFile;
+        if (!\is_array($extensionsConfig)) {
             return [];
         }
 
-        $enabledBridges = [];
-        foreach ($bridgesConfig as $packageName => $config) {
+        $enabledExtensions = [];
+        foreach ($extensionsConfig as $packageName => $config) {
             if (\is_string($packageName) && \is_array($config) && ($config['enabled'] ?? false)) {
-                $enabledBridges[] = $packageName;
+                $enabledExtensions[] = $packageName;
             }
         }
 
-        return $enabledBridges;
+        return $enabledExtensions;
     }
 
     /**
      * @param string[] $includeFiles
      */
-    private function loadBridgeIncludes(ContainerBuilder $container, LoggerInterface $logger, string $packageName, array $includeFiles): void
+    private function loadExtensionIncludes(ContainerBuilder $container, LoggerInterface $logger, string $packageName, array $includeFiles): void
     {
         foreach ($includeFiles as $includeFile) {
             if (!file_exists($includeFile)) {
@@ -102,12 +102,12 @@ final class ContainerFactory
                 $loader = new PhpFileLoader($container, new FileLocator(\dirname($includeFile)));
                 $loader->load(basename($includeFile));
 
-                $logger->debug('Loaded bridge include', [
+                $logger->debug('Loaded extension include', [
                     'package' => $packageName,
                     'file' => $includeFile,
                 ]);
             } catch (\Throwable $e) {
-                $logger->warning('Failed to load bridge include', [
+                $logger->warning('Failed to load extension include', [
                     'package' => $packageName,
                     'file' => $includeFile,
                     'error' => $e->getMessage(),

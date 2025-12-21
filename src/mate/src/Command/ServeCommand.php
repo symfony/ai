@@ -65,8 +65,8 @@ class ServeCommand extends Command
         \assert(\is_string($cacheDir));
 
         $discovery = new Discoverer($this->logger);
-        $bridges = $this->getBridgesToLoad();
-        (new ServiceDiscovery())->registerServices($discovery, $this->container, $rootDir, $bridges);
+        $extensions = $this->getExtensionsToLoad();
+        (new ServiceDiscovery())->registerServices($discovery, $this->container, $rootDir, $extensions);
 
         $disabledVendorFeatures = $this->container->getParameter('mate.disabled_features') ?? [];
         \assert(\is_array($disabledVendorFeatures));
@@ -76,7 +76,7 @@ class ServeCommand extends Command
 
         $loader = new FilteredDiscoveryLoader(
             basePath: $rootDir,
-            bridges: $bridges,
+            extensions: $extensions,
             disabledFeatures: $disabledVendorFeatures,
             discoverer: $discovery,
             logger: $this->logger
@@ -104,25 +104,25 @@ class ServeCommand extends Command
     /**
      * @return array<string, array{dirs: string[], includes: string[]}>
      */
-    private function getBridgesToLoad(): array
+    private function getExtensionsToLoad(): array
     {
         $rootDir = $this->container->getParameter('mate.root_dir');
         \assert(\is_string($rootDir));
 
-        $packageNames = $this->container->getParameter('mate.enabled_bridges');
+        $packageNames = $this->container->getParameter('mate.enabled_extensions');
         \assert(\is_array($packageNames));
         /** @var array<int, string> $packageNames */
 
-        /** @var array<string, array{dirs: array<string>, includes: array<string>}> $bridges */
-        $bridges = [];
+        /** @var array<string, array{dirs: array<string>, includes: array<string>}> $extensions */
+        $extensions = [];
 
         foreach ($this->discovery->discover($packageNames) as $packageName => $data) {
-            $bridges[$packageName] = $data;
+            $extensions[$packageName] = $data;
         }
 
-        $bridges['_custom'] = $this->discovery->discoverRootProject();
+        $extensions['_custom'] = $this->discovery->discoverRootProject();
 
-        return $bridges;
+        return $extensions;
     }
 
     /**

@@ -26,12 +26,12 @@ use Psr\Log\LoggerInterface;
 final class FilteredDiscoveryLoader implements LoaderInterface
 {
     /**
-     * @param array<string, array{dirs: string[],includes: string[]}> $bridges
+     * @param array<string, array{dirs: string[],includes: string[]}> $extensions
      * @param array<string, array<string, array{enabled: bool}>>      $disabledFeatures
      */
     public function __construct(
         private string $basePath,
-        private array $bridges,
+        private array $extensions,
         private array $disabledFeatures,
         private Discoverer $discoverer,
         private LoggerInterface $logger,
@@ -45,7 +45,7 @@ final class FilteredDiscoveryLoader implements LoaderInterface
         $allPrompts = [];
         $allResourceTemplates = [];
 
-        foreach ($this->bridges as $packageName => $data) {
+        foreach ($this->extensions as $packageName => $data) {
             $discoveryState = $this->discoverer->discover($this->basePath, $data['dirs']);
 
             foreach ($discoveryState->getTools() as $name => $tool) {

@@ -14,9 +14,9 @@ namespace Symfony\AI\Mate\Discovery;
 use Psr\Log\LoggerInterface;
 
 /**
- * Discovers MCP bridges via extra.ai-mate config in composer.json.
+ * Discovers MCP extensions via extra.ai-mate config in composer.json.
  *
- * Bridges must declare themselves in composer.json:
+ * Extensions must declare themselves in composer.json:
  * {
  *   "extra": {
  *     "ai-mate": {
@@ -46,14 +46,14 @@ final class ComposerTypeDiscovery
     }
 
     /**
-     * @param string[] $enabledBridges
+     * @param string[] $enabledExtensions
      *
      * @return array<string, array{dirs: string[], includes: string[]}>
      */
-    public function discover(array $enabledBridges = []): array
+    public function discover(array $enabledExtensions = []): array
     {
         $installed = $this->getInstalledPackages();
-        $bridges = [];
+        $extensions = [];
 
         foreach ($installed as $package) {
             $packageName = $package['name'];
@@ -63,7 +63,7 @@ final class ComposerTypeDiscovery
                 continue;
             }
 
-            if ([] !== $enabledBridges && !\in_array($packageName, $enabledBridges, true)) {
+            if ([] !== $enabledExtensions && !\in_array($packageName, $enabledExtensions, true)) {
                 $this->logger->debug('Skipping package not enabled', ['package' => $packageName]);
 
                 continue;
@@ -72,14 +72,14 @@ final class ComposerTypeDiscovery
             $scanDirs = $this->extractScanDirs($package, $packageName);
             $includeFiles = $this->extractIncludeFiles($package, $packageName);
             if ([] !== $scanDirs || [] !== $includeFiles) {
-                $bridges[$packageName] = [
+                $extensions[$packageName] = [
                     'dirs' => $scanDirs,
                     'includes' => $includeFiles,
                 ];
             }
         }
 
-        return $bridges;
+        return $extensions;
     }
 
     /**

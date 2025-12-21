@@ -35,7 +35,7 @@ cd ../../.. && vendor/bin/php-cs-fixer fix src/mate/
 # Initialize configuration
 bin/mate init
 
-# Discover bridges
+# Discover extensions
 bin/mate discover
 
 # Start MCP server
@@ -49,15 +49,15 @@ bin/mate clear-cache
 
 ### Core Classes
 - **App**: Console application builder
-- **ContainerFactory**: DI container management with bridge discovery
-- **ComposerTypeDiscovery**: Discovers MCP bridges via `extra.ai-mate` in composer.json
+- **ContainerFactory**: DI container management with extension discovery
+- **ComposerTypeDiscovery**: Discovers MCP extensions via `extra.ai-mate` in composer.json
 - **FilteredDiscoveryLoader**: Loads MCP capabilities with feature filtering
 - **ServiceDiscovery**: Registers discovered services in the DI container
 
 ### Key Directories
 - `src/Command/`: CLI commands (serve, init, discover, clear-cache)
 - `src/Container/`: DI container management
-- `src/Discovery/`: Bridge discovery system
+- `src/Discovery/`: Extension discovery system
 - `src/Capability/`: Built-in MCP tools
 - `src/Bridge/`: Embedded bridge packages (Symfony, Monolog)
 
@@ -74,7 +74,7 @@ The component includes embedded bridge packages:
 - `LogReader`: Reads and filters log files
 
 ### Configuration
-- `.mate/bridges.php`: Enable/disable bridges
+- `.mate/extensions.php`: Enable/disable extensions
 - `.mate/config.php`: Custom service configuration
 - `.mate/.env`: Environment variables for mate configuration
 - `mate/`: Directory for user-defined MCP tools

@@ -30,7 +30,7 @@ final class DiscoverCommandTest extends TestCase
         $this->fixturesDir = __DIR__.'/../Discovery/Fixtures';
     }
 
-    public function testDiscoversBridgesAndCreatesFile()
+    public function testDiscoversExtensionsAndCreatesFile()
     {
         $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
         mkdir($tempDir, 0755, true);
@@ -43,19 +43,19 @@ final class DiscoverCommandTest extends TestCase
             $tester->execute([]);
 
             $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-            $this->assertFileExists($tempDir.'/.mate/bridges.php');
+            $this->assertFileExists($tempDir.'/.mate/extensions.php');
 
-            $bridges = include $tempDir.'/.mate/bridges.php';
-            $this->assertIsArray($bridges);
-            $this->assertArrayHasKey('vendor/package-a', $bridges);
-            $this->assertArrayHasKey('vendor/package-b', $bridges);
-            $this->assertIsArray($bridges['vendor/package-a']);
-            $this->assertIsArray($bridges['vendor/package-b']);
-            $this->assertTrue($bridges['vendor/package-a']['enabled']);
-            $this->assertTrue($bridges['vendor/package-b']['enabled']);
+            $extensions = include $tempDir.'/.mate/extensions.php';
+            $this->assertIsArray($extensions);
+            $this->assertArrayHasKey('vendor/package-a', $extensions);
+            $this->assertArrayHasKey('vendor/package-b', $extensions);
+            $this->assertIsArray($extensions['vendor/package-a']);
+            $this->assertIsArray($extensions['vendor/package-b']);
+            $this->assertTrue($extensions['vendor/package-a']['enabled']);
+            $this->assertTrue($extensions['vendor/package-b']['enabled']);
 
             $output = $tester->getDisplay();
-            $this->assertStringContainsString('Discovered 2 Bridge', $output);
+            $this->assertStringContainsString('Discovered 2 Extension', $output);
             $this->assertStringContainsString('vendor/package-a', $output);
             $this->assertStringContainsString('vendor/package-b', $output);
         } finally {
@@ -69,8 +69,8 @@ final class DiscoverCommandTest extends TestCase
         mkdir($tempDir.'/.mate', 0755, true);
 
         try {
-            // Create existing bridges.php with package-a disabled
-            file_put_contents($tempDir.'/.mate/bridges.php', <<<'PHP'
+            // Create existing extensions.php with package-a disabled
+            file_put_contents($tempDir.'/.mate/extensions.php', <<<'PHP'
 <?php
 return [
     'vendor/package-a' => ['enabled' => false],
@@ -85,12 +85,12 @@ PHP
 
             $tester->execute([]);
 
-            $bridges = include $tempDir.'/.mate/bridges.php';
-            $this->assertIsArray($bridges);
-            $this->assertIsArray($bridges['vendor/package-a']);
-            $this->assertIsArray($bridges['vendor/package-b']);
-            $this->assertFalse($bridges['vendor/package-a']['enabled'], 'Should preserve disabled state');
-            $this->assertTrue($bridges['vendor/package-b']['enabled'], 'Should preserve enabled state');
+            $extensions = include $tempDir.'/.mate/extensions.php';
+            $this->assertIsArray($extensions);
+            $this->assertIsArray($extensions['vendor/package-a']);
+            $this->assertIsArray($extensions['vendor/package-b']);
+            $this->assertFalse($extensions['vendor/package-a']['enabled'], 'Should preserve disabled state');
+            $this->assertTrue($extensions['vendor/package-b']['enabled'], 'Should preserve enabled state');
         } finally {
             $this->removeDirectory($tempDir);
         }
@@ -102,8 +102,8 @@ PHP
         mkdir($tempDir.'/.mate', 0755, true);
 
         try {
-            // Create existing bridges.php with only package-a
-            file_put_contents($tempDir.'/.mate/bridges.php', <<<'PHP'
+            // Create existing extensions.php with only package-a
+            file_put_contents($tempDir.'/.mate/extensions.php', <<<'PHP'
 <?php
 return [
     'vendor/package-a' => ['enabled' => false],
@@ -117,18 +117,18 @@ PHP
 
             $tester->execute([]);
 
-            $bridges = include $tempDir.'/.mate/bridges.php';
-            $this->assertIsArray($bridges);
-            $this->assertIsArray($bridges['vendor/package-a']);
-            $this->assertIsArray($bridges['vendor/package-b']);
-            $this->assertFalse($bridges['vendor/package-a']['enabled'], 'Existing disabled state preserved');
-            $this->assertTrue($bridges['vendor/package-b']['enabled'], 'New package defaults to enabled');
+            $extensions = include $tempDir.'/.mate/extensions.php';
+            $this->assertIsArray($extensions);
+            $this->assertIsArray($extensions['vendor/package-a']);
+            $this->assertIsArray($extensions['vendor/package-b']);
+            $this->assertFalse($extensions['vendor/package-a']['enabled'], 'Existing disabled state preserved');
+            $this->assertTrue($extensions['vendor/package-b']['enabled'], 'New package defaults to enabled');
         } finally {
             $this->removeDirectory($tempDir);
         }
     }
 
-    public function testDisplaysWarningWhenNoBridgesFound()
+    public function testDisplaysWarningWhenNoExtensionsFound()
     {
         $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
         mkdir($tempDir, 0755, true);
@@ -143,7 +143,7 @@ PHP
             $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
 
             $output = $tester->getDisplay();
-            $this->assertStringContainsString('No MCP bridges found', $output);
+            $this->assertStringContainsString('No MCP extensions found', $output);
         } finally {
             $this->removeDirectory($tempDir);
         }

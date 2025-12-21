@@ -19,10 +19,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Discover MCP bridges installed via Composer.
+ * Discover MCP extensions installed via Composer.
  *
  * Scans for packages with extra.ai-mate configuration
- * and generates/updates .mate/bridges.php with discovered bridges.
+ * and generates/updates .mate/extensions.php with discovered extensions.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
@@ -50,51 +50,51 @@ class DiscoverCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->title('MCP Bridge Discovery');
+        $io->title('MCP Extension Discovery');
         $io->text('Scanning for packages with <info>extra.ai-mate</info> configuration...');
         $io->newLine();
 
         $discovery = new ComposerTypeDiscovery($this->rootDir, $this->logger);
 
-        $bridges = $discovery->discover([]);
+        $extensions = $discovery->discover([]);
 
-        $count = \count($bridges);
+        $count = \count($extensions);
         if (0 === $count) {
             $io->warning([
-                'No MCP bridges found.',
+                'No MCP extensions found.',
                 'Packages must have "extra.ai-mate" configuration in their composer.json.',
             ]);
-            $io->note('Run "composer require vendor/package" to install MCP bridges.');
+            $io->note('Run "composer require vendor/package" to install MCP extensions.');
 
             return Command::SUCCESS;
         }
 
-        $bridgesFile = $this->rootDir.'/.mate/bridges.php';
-        $existingBridges = [];
+        $extensionsFile = $this->rootDir.'/.mate/extensions.php';
+        $existingExtensions = [];
         $newPackages = [];
         $removedPackages = [];
-        if (file_exists($bridgesFile)) {
-            $existingBridges = include $bridgesFile;
-            if (!\is_array($existingBridges)) {
-                $existingBridges = [];
+        if (file_exists($extensionsFile)) {
+            $existingExtensions = include $extensionsFile;
+            if (!\is_array($existingExtensions)) {
+                $existingExtensions = [];
             }
         }
 
-        foreach ($bridges as $packageName => $data) {
-            if (!isset($existingBridges[$packageName])) {
+        foreach ($extensions as $packageName => $data) {
+            if (!isset($existingExtensions[$packageName])) {
                 $newPackages[] = $packageName;
             }
         }
 
-        foreach ($existingBridges as $packageName => $data) {
-            if (!isset($bridges[$packageName])) {
+        foreach ($existingExtensions as $packageName => $data) {
+            if (!isset($extensions[$packageName])) {
                 $removedPackages[] = $packageName;
             }
         }
 
-        $io->section(\sprintf('Discovered %d Bridge%s', $count, 1 === $count ? '' : 's'));
+        $io->section(\sprintf('Discovered %d Extension%s', $count, 1 === $count ? '' : 's'));
         $rows = [];
-        foreach ($bridges as $packageName => $data) {
+        foreach ($extensions as $packageName => $data) {
             $isNew = \in_array($packageName, $newPackages, true);
             $status = $isNew ? '<fg=green>NEW</>' : '<fg=gray>existing</>';
             $dirCount = \count($data['dirs']);
@@ -106,39 +106,39 @@ class DiscoverCommand extends Command
         }
         $io->table(['Status', 'Package', 'Scan Directories'], $rows);
 
-        $finalBridges = [];
-        foreach ($bridges as $packageName => $data) {
+        $finalExtensions = [];
+        foreach ($extensions as $packageName => $data) {
             $enabled = true;
-            if (isset($existingBridges[$packageName]) && \is_array($existingBridges[$packageName])) {
-                $enabled = $existingBridges[$packageName]['enabled'] ?? true;
+            if (isset($existingExtensions[$packageName]) && \is_array($existingExtensions[$packageName])) {
+                $enabled = $existingExtensions[$packageName]['enabled'] ?? true;
                 if (!\is_bool($enabled)) {
                     $enabled = true;
                 }
             }
 
-            $finalBridges[$packageName] = [
+            $finalExtensions[$packageName] = [
                 'enabled' => $enabled,
             ];
         }
 
-        $this->writeBridgesFile($bridgesFile, $finalBridges);
+        $this->writeExtensionsFile($extensionsFile, $finalExtensions);
 
-        $io->success(\sprintf('Configuration written to: %s', $bridgesFile));
+        $io->success(\sprintf('Configuration written to: %s', $extensionsFile));
 
         if (\count($newPackages) > 0) {
-            $io->note(\sprintf('Added %d new bridge%s. All bridges are enabled by default.', \count($newPackages), 1 === \count($newPackages) ? '' : 's'));
+            $io->note(\sprintf('Added %d new extension%s. All extensions are enabled by default.', \count($newPackages), 1 === \count($newPackages) ? '' : 's'));
         }
 
         if (\count($removedPackages) > 0) {
             $io->warning([
-                \sprintf('Removed %d bridge%s no longer found:', \count($removedPackages), 1 === \count($removedPackages) ? '' : 's'),
+                \sprintf('Removed %d extension%s no longer found:', \count($removedPackages), 1 === \count($removedPackages) ? '' : 's'),
                 ...array_map(fn ($pkg) => '  • '.$pkg, $removedPackages),
             ]);
         }
 
         $io->comment([
             'Next steps:',
-            '  • Edit .mate/bridges.php to enable/disable specific bridges',
+            '  • Edit .mate/extensions.php to enable/disable specific extensions',
             '  • Run "vendor/bin/mate serve" to start the MCP server',
         ]);
 
@@ -146,9 +146,9 @@ class DiscoverCommand extends Command
     }
 
     /**
-     * @param array<string, array{enabled: bool}> $bridges
+     * @param array<string, array{enabled: bool}> $extensions
      */
-    private function writeBridgesFile(string $filePath, array $bridges): void
+    private function writeExtensionsFile(string $filePath, array $extensions): void
     {
         $dir = \dirname($filePath);
         if (!is_dir($dir)) {
@@ -157,10 +157,10 @@ class DiscoverCommand extends Command
 
         $content = "<?php\n\n";
         $content .= "// This file is managed by 'mate discover'\n";
-        $content .= "// You can manually edit to enable/disable bridges\n\n";
+        $content .= "// You can manually edit to enable/disable extensions\n\n";
         $content .= "return [\n";
 
-        foreach ($bridges as $packageName => $config) {
+        foreach ($extensions as $packageName => $config) {
             $enabled = $config['enabled'] ? 'true' : 'false';
             $content .= "    '$packageName' => ['enabled' => $enabled],\n";
         }

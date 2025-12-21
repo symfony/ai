@@ -35,17 +35,17 @@ final class ComposerTypeDiscoveryTest extends TestCase
             new NullLogger()
         );
 
-        $bridges = $discovery->discover();
+        $extensions = $discovery->discover();
 
-        $this->assertCount(2, $bridges);
-        $this->assertArrayHasKey('vendor/package-a', $bridges);
-        $this->assertArrayHasKey('vendor/package-b', $bridges);
+        $this->assertCount(2, $extensions);
+        $this->assertArrayHasKey('vendor/package-a', $extensions);
+        $this->assertArrayHasKey('vendor/package-b', $extensions);
 
         // Check package-a structure
-        $this->assertArrayHasKey('dirs', $bridges['vendor/package-a']);
-        $this->assertArrayHasKey('includes', $bridges['vendor/package-a']);
+        $this->assertArrayHasKey('dirs', $extensions['vendor/package-a']);
+        $this->assertArrayHasKey('includes', $extensions['vendor/package-a']);
 
-        $this->assertContains('vendor/vendor/package-a/src', $bridges['vendor/package-a']['dirs']);
+        $this->assertContains('vendor/vendor/package-a/src', $extensions['vendor/package-a']['dirs']);
     }
 
     public function testIgnoresPackagesWithoutAiMateConfig()
@@ -55,9 +55,9 @@ final class ComposerTypeDiscoveryTest extends TestCase
             new NullLogger()
         );
 
-        $bridges = $discovery->discover();
+        $extensions = $discovery->discover();
 
-        $this->assertCount(0, $bridges);
+        $this->assertCount(0, $extensions);
     }
 
     public function testIgnoresPackagesWithoutExtraSection()
@@ -67,9 +67,9 @@ final class ComposerTypeDiscoveryTest extends TestCase
             new NullLogger()
         );
 
-        $bridges = $discovery->discover();
+        $extensions = $discovery->discover();
 
-        $this->assertCount(0, $bridges);
+        $this->assertCount(0, $extensions);
     }
 
     public function testWhitelistFiltering()
@@ -79,15 +79,15 @@ final class ComposerTypeDiscoveryTest extends TestCase
             new NullLogger()
         );
 
-        $enabledBridges = [
+        $enabledExtensions = [
             'vendor/package-a',
         ];
 
-        $bridges = $discovery->discover($enabledBridges);
+        $extensions = $discovery->discover($enabledExtensions);
 
-        $this->assertCount(1, $bridges);
-        $this->assertArrayHasKey('vendor/package-a', $bridges);
-        $this->assertArrayNotHasKey('vendor/package-b', $bridges);
+        $this->assertCount(1, $extensions);
+        $this->assertArrayHasKey('vendor/package-a', $extensions);
+        $this->assertArrayNotHasKey('vendor/package-b', $extensions);
     }
 
     public function testWhitelistWithMultiplePackages()
@@ -97,16 +97,16 @@ final class ComposerTypeDiscoveryTest extends TestCase
             new NullLogger()
         );
 
-        $enabledBridges = [
+        $enabledExtensions = [
             'vendor/package-a',
             'vendor/package-b',
         ];
 
-        $bridges = $discovery->discover($enabledBridges);
+        $extensions = $discovery->discover($enabledExtensions);
 
-        $this->assertCount(2, $bridges);
-        $this->assertArrayHasKey('vendor/package-a', $bridges);
-        $this->assertArrayHasKey('vendor/package-b', $bridges);
+        $this->assertCount(2, $extensions);
+        $this->assertArrayHasKey('vendor/package-a', $extensions);
+        $this->assertArrayHasKey('vendor/package-b', $extensions);
     }
 
     public function testExtractsIncludeFiles()
@@ -116,12 +116,12 @@ final class ComposerTypeDiscoveryTest extends TestCase
             new NullLogger()
         );
 
-        $bridges = $discovery->discover();
+        $extensions = $discovery->discover();
 
-        $this->assertCount(1, $bridges);
-        $this->assertArrayHasKey('vendor/package-with-includes', $bridges);
+        $this->assertCount(1, $extensions);
+        $this->assertArrayHasKey('vendor/package-with-includes', $extensions);
 
-        $includes = $bridges['vendor/package-with-includes']['includes'];
+        $includes = $extensions['vendor/package-with-includes']['includes'];
         $this->assertNotEmpty($includes);
         $this->assertStringContainsString('config/config.php', $includes[0]);
     }
@@ -133,9 +133,9 @@ final class ComposerTypeDiscoveryTest extends TestCase
             new NullLogger()
         );
 
-        $bridges = $discovery->discover();
+        $extensions = $discovery->discover();
 
-        $this->assertCount(0, $bridges);
+        $this->assertCount(0, $extensions);
     }
 
     public function testHandlesPackagesWithoutType()
@@ -145,9 +145,9 @@ final class ComposerTypeDiscoveryTest extends TestCase
             new NullLogger()
         );
 
-        $bridges = $discovery->discover();
+        $extensions = $discovery->discover();
 
         // Should discover packages with ai-mate config regardless of type field
-        $this->assertGreaterThanOrEqual(1, $bridges);
+        $this->assertGreaterThanOrEqual(1, $extensions);
     }
 }

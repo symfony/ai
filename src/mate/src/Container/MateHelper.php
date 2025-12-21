@@ -22,10 +22,10 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 class MateHelper
 {
     /**
-     * Disable specific MCP features from one or more bridges.
+     * Disable specific MCP features from one or more extensions.
      *
      * This function allows you to disable specific tools, resources, prompts, or
-     * resource templates from MCP bridges at a granular level. It is useful for
+     * resource templates from MCP extensions at a granular level. It is useful for
      * disabling features that are known to cause issues or are not needed in your
      * project.
      *
@@ -38,7 +38,7 @@ class MateHelper
      *
      * return static function (ContainerConfigurator $container): void {
      *   MateHelper::disableFeatures($container, [
-     *     'vendor/bridge' => ['badTool', 'semiBadTool']
+     *     'vendor/extension' => ['badTool', 'semiBadTool']
      *     'nyholm/example' => ['clock']
      *   ]);
      *
@@ -48,14 +48,14 @@ class MateHelper
      * }
      * ```
      *
-     * @param array<string, list<string>> $bridges
+     * @param array<string, list<string>> $extensions
      */
-    public static function disableFeatures(ContainerConfigurator $container, array $bridges): void
+    public static function disableFeatures(ContainerConfigurator $container, array $extensions): void
     {
         $data = [];
-        foreach ($bridges as $bridge => $features) {
+        foreach ($extensions as $extension => $features) {
             foreach ($features as $feature) {
-                $data[$bridge][$feature] = ['enabled' => false];
+                $data[$extension][$feature] = ['enabled' => false];
             }
         }
 

@@ -1,5 +1,5 @@
 {
-    "name": "symfony/ai-monolog-mate",
+    "name": "symfony/ai-monolog-mate-extension",
     "description": "Monolog bridge for AI Mate - provides log search and analysis tools",
     "license": "MIT",
     "type": "symfony-ai-mate",

@@ -1,5 +1,5 @@
 {
-    "name": "symfony/ai-symfony-mate",
+    "name": "symfony/ai-symfony-mate-extension",
     "description": "Symfony bridge for AI Mate - provides Symfony container introspection tools",
     "license": "MIT",
     "type": "symfony-ai-mate",
