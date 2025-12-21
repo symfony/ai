@@ -33,6 +33,7 @@
     "require-dev": {
         "google/auth": "^1.47",
         "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.46",
         "symfony/ai-ai-ml-api-platform": "@dev",
@@ -53,11 +54,10 @@
         "symfony/ai-deep-seek-platform": "@dev",
         "symfony/ai-docker-model-runner-platform": "@dev",
         "symfony/ai-doctrine-message-store": "@dev",
-        "symfony/ai-eleven-labs-platform": "@dev",
         "symfony/ai-elasticsearch-store": "@dev",
+        "symfony/ai-eleven-labs-platform": "@dev",
         "symfony/ai-gemini-platform": "@dev",
         "symfony/ai-generic-platform": "@dev",
-        "symfony/ai-session-message-store": "@dev",
         "symfony/ai-hugging-face-platform": "@dev",
         "symfony/ai-lm-studio-platform": "@dev",
         "symfony/ai-manticore-search-store": "@dev",
@@ -83,6 +83,7 @@
         "symfony/ai-redis-store": "@dev",
         "symfony/ai-replicate-platform": "@dev",
         "symfony/ai-scaleway-platform": "@dev",
+        "symfony/ai-session-message-store": "@dev",
         "symfony/ai-supabase-store": "@dev",
         "symfony/ai-surreal-db-message-store": "@dev",
         "symfony/ai-surreal-db-store": "@dev",
@@ -109,7 +110,8 @@
     },
     "config": {
         "allow-plugins": {
-            "codewithkyrian/platform-package-installer": true
+            "codewithkyrian/platform-package-installer": true,
+            "php-http/discovery": true
         },
         "sort-packages": true
     },
