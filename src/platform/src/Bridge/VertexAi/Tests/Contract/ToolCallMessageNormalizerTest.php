@@ -42,6 +42,9 @@ final class ToolCallMessageNormalizerTest extends TestCase
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
     }
 
+    /**
+     * @param array{functionResponse: array{name: string, response: array<int|string, mixed>}}[] $expected
+     */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(ToolCallMessage $message, array $expected)
     {

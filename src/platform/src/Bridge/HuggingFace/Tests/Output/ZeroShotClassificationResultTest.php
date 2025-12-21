@@ -48,6 +48,10 @@ final class ZeroShotClassificationResultTest extends TestCase
         $this->assertSame($sequence, $result->sequence);
     }
 
+    /**
+     * @param array<string> $labels
+     * @param array<float>  $scores
+     */
     #[TestDox('Constructor accepts various parameter combinations')]
     #[TestWith([['positive'], [1.0], null])]
     #[TestWith([['a', 'b', 'c'], [0.5, 0.3, 0.2], 'test'])]
@@ -93,6 +97,9 @@ final class ZeroShotClassificationResultTest extends TestCase
         $this->assertSame('The match was exciting to watch', $result->sequence);
     }
 
+    /**
+     * @param array{labels: array<string>, scores: array<float>} $data
+     */
     #[TestDox('fromArray handles optional sequence field correctly')]
     #[TestWith([['labels' => ['a', 'b'], 'scores' => [0.7, 0.3]]])]
     #[TestWith([['labels' => ['test'], 'scores' => [1.0], 'sequence' => '']])]
@@ -106,6 +113,9 @@ final class ZeroShotClassificationResultTest extends TestCase
         $this->assertSame($data['sequence'] ?? null, $result->sequence);
     }
 
+    /**
+     * @param array<string> $labels
+     */
     #[TestDox('fromArray handles various label formats')]
     #[TestWith([['', 'empty', 'UPPERCASE', 'lowercase']])]
     #[TestWith([['with-dashes', 'with_underscores', 'with spaces', '123numeric']])]
@@ -122,6 +132,9 @@ final class ZeroShotClassificationResultTest extends TestCase
         $this->assertCount(\count($labels), $result->labels);
     }
 
+    /**
+     * @param array{labels: array<string>, scores: array<float>} $data
+     */
     #[TestDox('fromArray handles various score formats')]
     #[TestWith([['labels' => ['a'], 'scores' => [0.0]]])]
     #[TestWith([['labels' => ['a'], 'scores' => [1.0]]])]

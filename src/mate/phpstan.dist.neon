@@ -7,18 +7,12 @@ parameters:
     paths:
         - src/
         - tests/
-    excludePaths:
-        - src/Bridge/
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
         -
             message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
         -
             message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
-            reportUnmatched: false
-        -
-            identifier: 'symfonyAi.forbidNativeException'
-            path: tests/*
             reportUnmatched: false
 
 services:

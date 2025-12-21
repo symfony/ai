@@ -27,6 +27,9 @@ use Symfony\Component\Serializer\Serializer;
 
 class AssistantMessageNormalizerTest extends TestCase
 {
+    /**
+     * @param array{role: 'assistant', type: 'message', content: ?string} $expected
+     */
     #[DataProvider('normalizeProvider')]
     public function testNormalize(AssistantMessage $message, array $expected)
     {

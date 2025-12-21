@@ -53,6 +53,9 @@ final class TraceableToolboxTest extends TestCase
     private function createToolbox(array $tools): ToolboxInterface
     {
         return new class($tools) implements ToolboxInterface {
+            /**
+             * @param Tool[] $tools
+             */
             public function __construct(
                 private readonly array $tools,
             ) {

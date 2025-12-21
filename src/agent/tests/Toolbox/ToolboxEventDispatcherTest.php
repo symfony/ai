@@ -26,6 +26,10 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 final class ToolboxEventDispatcherTest extends TestCase
 {
     private Toolbox $toolbox;
+
+    /**
+     * @var array<string>
+     */
     private array $dispatchedEvents = [];
 
     /**

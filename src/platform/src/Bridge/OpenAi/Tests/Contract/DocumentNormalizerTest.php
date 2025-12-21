@@ -41,6 +41,9 @@ final class DocumentNormalizerTest extends TestCase
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
     }
 
+    /**
+     * @param array{type: 'file', file: array{filename: string, file_data: string}} $expected
+     */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(Document $document, array $expected)
     {

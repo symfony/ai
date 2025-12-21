@@ -17,13 +17,20 @@ use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\ToolNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
+/**
+ * @phpstan-import-type JsonSchema from Factory
+ */
 class ToolNormalizerTest extends TestCase
 {
+    /**
+     * @param array{type: 'function', name: string, description: string, parameters?: JsonSchema} $expected
+     */
     #[DataProvider('normalizeProvider')]
     public function testNormalize(array $expected, Tool $tool)
     {

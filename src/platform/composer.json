@@ -62,6 +62,7 @@
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1.17",
+        "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.46",
         "symfony/cache": "^7.3|^8.0",

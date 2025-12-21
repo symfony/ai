@@ -1,4 +1,5 @@
 includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
     - ../../../../../.phpstan/extension.neon
 
 parameters:
@@ -13,10 +14,15 @@ parameters:
         -
             message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
         -
-            identifier: missingType.iterableValue
-            path: Tests/*
+            message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
             reportUnmatched: false
         -
             identifier: 'symfonyAi.forbidNativeException'
             path: Tests/*
             reportUnmatched: false
+
+services:
+    - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x
+        class: PHPStan\Type\PHPUnit\DataProviderReturnTypeIgnoreExtension
+        tags:
+            - phpstan.ignoreErrorExtension

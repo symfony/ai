@@ -33,6 +33,10 @@ use Symfony\AI\Platform\Model;
 
 final class ContractTest extends TestCase
 {
+    /**
+     * @param object|array<string|int, mixed>|string $input
+     * @param array<string, mixed>|string            $expected
+     */
     #[DataProvider('providePayloadTestCases')]
     public function testCreateRequestPayload(Model $model, array|string|object $input, array|string $expected)
     {
@@ -45,7 +49,7 @@ final class ContractTest extends TestCase
 
     /**
      * @return iterable<string, array{
-     *     input: array|string|object,
+     *     input: object|array<string|int, mixed>|string,
      *     expected: array<string, mixed>|string
      * }>
      */
@@ -185,6 +189,9 @@ final class ContractTest extends TestCase
                 return [new Text('This is a custom serializable message.')];
             }
 
+            /**
+             * @return array<string, string>
+             */
             public function jsonSerialize(): array
             {
                 return [

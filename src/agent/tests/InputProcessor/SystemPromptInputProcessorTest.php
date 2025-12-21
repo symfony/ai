@@ -268,6 +268,9 @@ final class SystemPromptInputProcessorTest extends TestCase
     private function getTranslator(): TranslatorInterface
     {
         return new class implements TranslatorInterface {
+            /**
+             * @param array<mixed> $parameters
+             */
             public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
             {
                 $translated = \sprintf('%s cool translated system prompt', $id);

@@ -41,6 +41,9 @@ final class ImageUrlNormalizerTest extends TestCase
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
     }
 
+    /**
+     * @param array{type: 'image_url', image_url: string} $expected
+     */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(ImageUrl $file, array $expected)
     {

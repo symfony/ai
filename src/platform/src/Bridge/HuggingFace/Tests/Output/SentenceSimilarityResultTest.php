@@ -40,6 +40,9 @@ final class SentenceSimilarityResultTest extends TestCase
         $this->assertCount(0, $result->similarities);
     }
 
+    /**
+     * @param array<float> $similarities
+     */
     #[TestDox('Constructor accepts various similarity arrays')]
     #[TestWith([[0.5]])]
     #[TestWith([[0.0, 1.0]])]
@@ -70,6 +73,9 @@ final class SentenceSimilarityResultTest extends TestCase
         $this->assertSame(0.23, $result->similarities[3]);
     }
 
+    /**
+     * @param array<float> $data
+     */
     #[TestDox('fromArray handles various data formats')]
     #[TestWith([[]])] // Empty array
     #[TestWith([[0.999]])] // Single high similarity
@@ -90,6 +96,9 @@ final class SentenceSimilarityResultTest extends TestCase
         }
     }
 
+    /**
+     * @param array<float> $similarities
+     */
     #[TestDox('Special float values are handled correctly')]
     #[TestWith([[0.0, 1.0, 0.5]])] // Boundary values
     #[TestWith([[-1.0, 2.0]])] // Outside normal range

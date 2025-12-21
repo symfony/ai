@@ -46,6 +46,9 @@ final class MessageBagNormalizerTest extends TestCase
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
     }
 
+    /**
+     * @param array{headers: array<'Content-Type', 'application/json'>, json: array{messages: array<string, mixed>}} $expected
+     */
     #[DataProvider('provideMessageBagData')]
     public function testNormalize(MessageBag $bag, array $expected)
     {

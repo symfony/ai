@@ -141,6 +141,9 @@ final class ResultConverterTest extends TestCase
         (new ResultConverter())->convert($result, ['task' => 'unsupported-task']);
     }
 
+    /**
+     * @param array{label: string, score: float} $responseData
+     */
     #[TestDox('Converts classification responses to ObjectResult')]
     #[TestWith([Task::AUDIO_CLASSIFICATION, [['label' => 'speech', 'score' => 0.9]]])]
     #[TestWith([Task::IMAGE_CLASSIFICATION, [['label' => 'cat', 'score' => 0.8]]])]
@@ -156,6 +159,9 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(ObjectResult::class, $convertedResult);
     }
 
+    /**
+     * @param array<mixed> $responseData
+     */
     #[TestDox('Converts text-generating tasks to TextResult with correct content')]
     #[TestWith([Task::AUTOMATIC_SPEECH_RECOGNITION, ['text' => 'Hello world'], 'Hello world'])]
     #[TestWith([Task::CHAT_COMPLETION, ['choices' => [['message' => ['content' => 'Hello there']]]], 'Hello there'])]
@@ -193,6 +199,9 @@ final class ResultConverterTest extends TestCase
         $this->assertEquals([0.1, 0.2, 0.3], $vectors[0]->getData());
     }
 
+    /**
+     * @param array<mixed> $responseData
+     */
     #[TestDox('Converts various tasks to ObjectResult')]
     #[TestWith([Task::FILL_MASK, [['token_str' => 'world', 'token' => 12345, 'score' => 0.8, 'sequence' => 'Hello world']]])]
     #[TestWith([Task::IMAGE_SEGMENTATION, [['label' => 'person', 'mask' => 'mask_data', 'score' => 0.9]]])]

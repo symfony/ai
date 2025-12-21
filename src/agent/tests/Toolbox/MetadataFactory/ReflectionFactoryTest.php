@@ -18,8 +18,12 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWrong;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
+use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Tool\Tool;
 
+/**
+ * @phpstan-import-type JsonSchema from Factory
+ */
 final class ReflectionFactoryTest extends TestCase
 {
     private ReflectionToolFactory $factory;
@@ -125,6 +129,9 @@ final class ReflectionFactoryTest extends TestCase
         );
     }
 
+    /**
+     * @param JsonSchema $parameters
+     */
     private function assertToolConfiguration(Tool $metadata, string $className, string $name, string $description, string $method, array $parameters): void
     {
         $this->assertSame($className, $metadata->getReference()->getClass());

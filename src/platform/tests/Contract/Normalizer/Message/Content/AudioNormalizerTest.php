@@ -36,6 +36,9 @@ final class AudioNormalizerTest extends TestCase
         $this->assertSame([Audio::class => true], $this->normalizer->getSupportedTypes(null));
     }
 
+    /**
+     * @param array<string, mixed> $expected
+     */
     #[DataProvider('provideAudioData')]
     public function testNormalize(string $data, string $format, array $expected)
     {

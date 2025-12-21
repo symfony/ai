@@ -180,6 +180,9 @@ final class ToolboxTest extends TestCase
         $this->toolbox->execute(new ToolCall('call_1234', 'tool_custom_exception'));
     }
 
+    /**
+     * @param array<string, mixed> $toolPayload
+     */
     #[DataProvider('executeProvider')]
     public function testExecute(string $expected, string $toolName, array $toolPayload = [])
     {
