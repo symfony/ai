@@ -51,6 +51,10 @@ class McpBundleTest extends TestCase
         $this->assertSame('This server provides weather and calendar tools', $container->getParameter('mcp.instructions'));
     }
 
+    /**
+     * @param array<string, mixed> $config
+     * @param array<string, bool>  $expectedServices
+     */
     #[DataProvider('provideClientTransportsConfiguration')]
     public function testClientTransportsConfiguration(array $config, array $expectedServices)
     {
@@ -404,6 +408,9 @@ class McpBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('mcp.notification_handler'));
     }
 
+    /**
+     * @param array<string, mixed> $configuration
+     */
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();

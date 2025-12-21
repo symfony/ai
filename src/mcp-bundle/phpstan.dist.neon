@@ -12,3 +12,10 @@ parameters:
             message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
         -
             message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
+            reportUnmatched: false
+
+services:
+    - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x
+        class: PHPStan\Type\PHPUnit\DataProviderReturnTypeIgnoreExtension
+        tags:
+            - phpstan.ignoreErrorExtension
