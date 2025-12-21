@@ -30,7 +30,7 @@ final class ModelClient implements ModelClientInterface
         HttpClientInterface $httpClient,
         private readonly string $location,
         private readonly string $projectId,
-        private readonly ?string $apiKey = null,
+        #[\SensitiveParameter] private readonly ?string $apiKey = null,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
