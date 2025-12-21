@@ -21,7 +21,7 @@ Setup
 Authentication
 ~~~~~~~~~~~~~~
 
-Vertex AI supports 3 different authentication methods:
+Vertex AI supports the following authentication methods:
 
 1. Application Default Credentials (ADC)
 ----------------------------------------
