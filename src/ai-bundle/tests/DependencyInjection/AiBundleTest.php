@@ -6934,6 +6934,45 @@ class AiBundleTest extends TestCase
         $this->assertTrue($listenerDefinition->hasTag('kernel.event_subscriber'));
     }
 
+    public function testTraceablePlatformServiceNamingIncludesPlatformType()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'azure' => [
+                        'eu' => [
+                            'api_key' => 'azure_key',
+                            'base_url' => 'myazure.openai.azure.com/',
+                            'deployment' => 'gpt-35-turbo',
+                            'api_version' => '2024-02-15-preview',
+                        ],
+                        'us' => [
+                            'api_key' => 'azure_key_us',
+                            'base_url' => 'myazure-us.openai.azure.com/',
+                            'deployment' => 'gpt-4',
+                            'api_version' => '2024-02-15-preview',
+                        ],
+                    ],
+                    'anthropic' => [
+                        'api_key' => 'anthropic_key',
+                    ],
+                ],
+            ],
+        ]);
+
+        // Verify that traceable platforms include the full platform type to avoid naming collisions
+        // For multi-instance platforms like azure, the service name should be ai.traceable_platform.azure.{instance}
+        $this->assertTrue($container->hasDefinition('ai.traceable_platform.azure.eu'));
+        $this->assertTrue($container->hasDefinition('ai.traceable_platform.azure.us'));
+
+        // For single-instance platforms like anthropic, the service name should be ai.traceable_platform.anthropic
+        $this->assertTrue($container->hasDefinition('ai.traceable_platform.anthropic'));
+
+        // Verify the old naming pattern (just the suffix) is NOT used - this would have caused collisions
+        $this->assertFalse($container->hasDefinition('ai.traceable_platform.eu'));
+        $this->assertFalse($container->hasDefinition('ai.traceable_platform.us'));
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();
