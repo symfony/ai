@@ -75,7 +75,8 @@ The component includes embedded bridge packages:
 
 ### Configuration
 - `.mate/bridges.php`: Enable/disable bridges
-- `.mate/services.php`: Custom service configuration
+- `.mate/config.php`: Custom service configuration
+- `.mate/.env`: Environment variables for mate configuration
 - `mate/`: Directory for user-defined MCP tools
 
 ## Testing Architecture

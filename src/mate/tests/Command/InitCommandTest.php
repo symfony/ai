@@ -45,7 +45,8 @@ final class InitCommandTest extends TestCase
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $this->assertDirectoryExists($this->tempDir.'/.mate');
         $this->assertFileExists($this->tempDir.'/.mate/bridges.php');
-        $this->assertFileExists($this->tempDir.'/.mate/services.php');
+        $this->assertFileExists($this->tempDir.'/.mate/config.php');
+        $this->assertFileExists($this->tempDir.'/.mate/.env');
         $this->assertFileExists($this->tempDir.'/mcp.json');
         $this->assertTrue(is_link($this->tempDir.'/.mcp.json'));
         $this->assertSame('mcp.json', readlink($this->tempDir.'/.mcp.json'));
@@ -66,7 +67,7 @@ final class InitCommandTest extends TestCase
         $output = $tester->getDisplay();
         $this->assertStringContainsString('AI Mate Initialization', $output);
         $this->assertStringContainsString('bridges.php', $output);
-        $this->assertStringContainsString('services.php', $output);
+        $this->assertStringContainsString('config.php', $output);
         $this->assertStringContainsString('vendor/bin/mate discover', $output);
         $this->assertStringContainsString('Summary', $output);
         $this->assertStringContainsString('Created', $output);
@@ -126,7 +127,7 @@ final class InitCommandTest extends TestCase
         // Directory should be created
         $this->assertDirectoryExists($this->tempDir.'/.mate');
         $this->assertFileExists($this->tempDir.'/.mate/bridges.php');
-        $this->assertFileExists($this->tempDir.'/.mate/services.php');
+        $this->assertFileExists($this->tempDir.'/.mate/config.php');
     }
 
     private function removeDirectory(string $dir): void

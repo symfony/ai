@@ -14,7 +14,7 @@ namespace Symfony\AI\Mate\Container;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 /**
- * Helper methods for configuring AI Mate in services.php.
+ * Helper methods for configuring AI Mate in config.php.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
@@ -31,7 +31,7 @@ class MateHelper
      *
      * Call this method only once. The second call will override the first one.
      *
-     * Example usage in .mate/services.php:
+     * Example usage in .mate/config.php:
      * ```php
      * use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
      * use Symfony\AI\Mate\Container\MateHelper;

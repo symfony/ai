@@ -6,7 +6,7 @@
             "extra": {
                 "ai-mate": {
                     "scan-dirs": ["src"],
-                    "includes": ["config/services.php"]
+                    "includes": ["config/config.php"]
                 }
             }
         }

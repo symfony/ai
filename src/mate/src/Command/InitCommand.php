@@ -57,7 +57,7 @@ class InitCommand extends Command
             $actions[] = ['✓', 'Created', '.mate/ directory'];
         }
 
-        $files = ['.mate/bridges.php', '.mate/services.php', '.mate/.gitignore', 'mcp.json'];
+        $files = ['.mate/bridges.php', '.mate/config.php', '.mate/.env', '.mate/.gitignore', 'mcp.json'];
         foreach ($files as $file) {
             $fullPath = $this->rootDir.'/'.$file;
             if (!file_exists($fullPath)) {
@@ -162,7 +162,7 @@ class InitCommand extends Command
         if (!isset($composerJson['extra']['ai-mate'])) {
             $composerJson['extra']['ai-mate'] = [
                 'scan-dirs' => ['mate'],
-                'includes' => ['services.php'],
+                'includes' => ['config.php'],
             ];
             $modified = true;
             $actions[] = ['✓', 'Added', 'extra.ai-mate configuration'];

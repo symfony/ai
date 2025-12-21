@@ -123,7 +123,7 @@ final class ComposerTypeDiscoveryTest extends TestCase
 
         $includes = $bridges['vendor/package-with-includes']['includes'];
         $this->assertNotEmpty($includes);
-        $this->assertStringContainsString('config/services.php', $includes[0]);
+        $this->assertStringContainsString('config/config.php', $includes[0]);
     }
 
     public function testHandlesMissingInstalledJson()

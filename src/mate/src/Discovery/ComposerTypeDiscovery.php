@@ -21,7 +21,7 @@ use Psr\Log\LoggerInterface;
  *   "extra": {
  *     "ai-mate": {
  *       "scan-dirs": ["src"],
- *       "includes": ["config/services.php"]
+ *       "includes": ["config/config.php"]
  *     }
  *   }
  * }
@@ -260,7 +260,7 @@ final class ComposerTypeDiscovery
      * Extract include files from package extra config.
      *
      * Uses "includes" from extra.ai-mate config, e.g.:
-     * "extra": { "ai-mate": { "includes": ["config/services.php"] } }
+     * "extra": { "ai-mate": { "includes": ["config/config.php"] } }
      *
      * @param array{
      *     name: string,

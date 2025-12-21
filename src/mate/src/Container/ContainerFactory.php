@@ -36,7 +36,7 @@ final class ContainerFactory
     {
         $container = new ContainerBuilder();
         $loader = new PhpFileLoader($container, new FileLocator(\dirname(__DIR__)));
-        $loader->load('default.services.php');
+        $loader->load('default.config.php');
 
         $enabledBridges = $this->getEnabledBridges();
 

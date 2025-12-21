@@ -59,7 +59,7 @@
         },
         "ai-mate": {
             "scan-dirs": ["Capability"],
-            "includes": ["config/services.php"]
+            "includes": ["config/config.php"]
         }
     }
 }
