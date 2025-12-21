@@ -98,21 +98,27 @@ This outputs detailed debug information to stderr, including:
 Log to File
 ~~~~~~~~~~~
 
-Set the ``MATE_FILE_LOG`` environment variable to redirect logs to a file:
+Set the ``MATE_DEBUG_FILE`` environment variable to redirect logs to a file:
 
 .. code-block:: terminal
 
-    $ MATE_FILE_LOG=1 vendor/bin/mate serve
+    $ MATE_DEBUG_FILE=1 vendor/bin/mate serve
 
 This creates a ``dev.log`` file in the current directory with all log output.
 This is particularly useful when running the server through AI assistants (like Claude Code)
 where stderr output may not be easily accessible.
 
+To customize the log file path, use the ``MATE_DEBUG_LOG_FILE`` environment variable:
+
+.. code-block:: terminal
+
+    $ MATE_DEBUG_FILE=1 MATE_DEBUG_LOG_FILE=/var/log/mate/debug.log vendor/bin/mate serve
+
 You can combine both environment variables for debug logging to file:
 
 .. code-block:: terminal
 
-    $ MATE_DEBUG=1 MATE_FILE_LOG=1 vendor/bin/mate serve
+    $ MATE_DEBUG=1 MATE_DEBUG_FILE=1 vendor/bin/mate serve
 
 For AI assistant integration (e.g., Claude Code MCP configuration), add these to the server configuration:
 
@@ -125,7 +131,7 @@ For AI assistant integration (e.g., Claude Code MCP configuration), add these to
                 "args": ["vendor/bin/mate", "serve"],
                 "env": {
                     "MATE_DEBUG": "1",
-                    "MATE_FILE_LOG": "1"
+                    "MATE_DEBUG_FILE": "1"
                 }
             }
         }

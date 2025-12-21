@@ -12,6 +12,7 @@
 namespace Symfony\AI\Mate\Service;
 
 use Psr\Log\AbstractLogger;
+use Symfony\AI\Mate\Exception\FileWriteException;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -19,11 +20,16 @@ use Psr\Log\AbstractLogger;
  */
 class Logger extends AbstractLogger
 {
+    public function __construct(
+        private string $logFile = 'dev.log',
+        private bool $fileLogEnabled = false,
+        private bool $debugEnabled = false,
+    ) {
+    }
+
     public function log($level, \Stringable|string $message, array $context = []): void
     {
-        $debug = $_SERVER['MATE_DEBUG'] ?? false;
-
-        if (!$debug && 'debug' === $level) {
+        if (!$this->debugEnabled && 'debug' === $level) {
             return;
         }
 
@@ -37,11 +43,19 @@ class Logger extends AbstractLogger
             "[%s] %s %s\n",
             strtoupper($levelString),
             $message,
-            ([] === $context || !$debug) ? '' : json_encode($context),
+            ([] === $context || !$this->debugEnabled) ? '' : json_encode($context),
         );
 
-        if (($_SERVER['MATE_FILE_LOG'] ?? false) || !\defined('STDERR')) {
-            file_put_contents('dev.log', $logMessage, \FILE_APPEND);
+        if ($this->fileLogEnabled || !\defined('STDERR')) {
+            $result = @file_put_contents($this->logFile, $logMessage, \FILE_APPEND);
+            if (false === $result) {
+                // Fallback to stderr to ensure message is not lost
+                if (\defined('STDERR')) {
+                    fwrite(\STDERR, $logMessage);
+                }
+
+                throw FileWriteException::forLogFile($this->logFile);
+            }
         } else {
             fwrite(\STDERR, $logMessage);
         }
