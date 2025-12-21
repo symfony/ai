@@ -27,6 +27,9 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 final class App
 {
+    public const NAME = 'Symfony AI Mate';
+    public const VERSION = '0.1.0';
+
     public static function build(ContainerBuilder $container): Application
     {
         $logger = $container->get(LoggerInterface::class);
@@ -38,7 +41,7 @@ final class App
         $cacheDir = $container->getParameter('mate.cache_dir');
         \assert(\is_string($cacheDir));
 
-        $application = new Application('Symfony AI Mate', '0.1.0');
+        $application = new Application(self::NAME, self::VERSION);
 
         self::addCommand($application, new InitCommand($rootDir));
         self::addCommand($application, new ServeCommand($logger, $container));

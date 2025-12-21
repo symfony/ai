@@ -12,10 +12,12 @@
 namespace Symfony\AI\Mate\Command;
 
 use Mcp\Capability\Discovery\Discoverer;
+use Mcp\Schema\Icon;
 use Mcp\Server;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Transport\StdioTransport;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\Mate\App;
 use Symfony\AI\Mate\Discovery\ComposerTypeDiscovery;
 use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\AI\Mate\Discovery\ServiceDiscovery;
@@ -81,7 +83,13 @@ class ServeCommand extends Command
         );
 
         $server = Server::builder()
-            ->setServerInfo('ai-mate', '0.1.0', 'AI development assistant MCP server')
+            ->setServerInfo(
+                App::NAME,
+                App::VERSION,
+                'AI development assistant MCP server',
+                $this->getIcon(),
+                'https://symfony.com/doc/current/ai/components/mate.html',
+            )
             ->setContainer($this->container)
             ->addLoader($loader)
             ->setSession(new FileSessionStore($cacheDir.'/sessions'))
@@ -115,5 +123,21 @@ class ServeCommand extends Command
         $bridges['_custom'] = $this->discovery->discoverRootProject();
 
         return $bridges;
+    }
+
+    /**
+     * @return Icon[]
+     */
+    private function getIcon(): array
+    {
+        $image = file_get_contents(__DIR__.'/../../resources/symfony.ico');
+
+        if (false === $image) {
+            return [];
+        }
+
+        return [
+            new Icon('data:image/x-icon;base64,'.base64_encode($image), 'image/x-icon', ['any']),
+        ];
     }
 }
