@@ -13,15 +13,10 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Anthropic;
 
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
-use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
-use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Result\ToolCallResult;
 
 /**
  * @author Björn Altmann
@@ -58,31 +53,6 @@ final class ClaudeModelClient implements ModelClientInterface
         ];
 
         return new RawBedrockResult($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest($request)));
-    }
-
-    public function convert(InvokeModelResponse $bedrockResponse): ToolCallResult|TextResult
-    {
-        $data = json_decode($bedrockResponse->getBody(), true, 512, \JSON_THROW_ON_ERROR);
-
-        if (!isset($data['content']) || [] === $data['content']) {
-            throw new RuntimeException('Response does not contain any content.');
-        }
-
-        if (!isset($data['content'][0]['text']) && !isset($data['content'][0]['type'])) {
-            throw new RuntimeException('Response content does not contain any text or type.');
-        }
-
-        $toolCalls = [];
-        foreach ($data['content'] as $content) {
-            if ('tool_use' === $content['type']) {
-                $toolCalls[] = new ToolCall($content['id'], $content['name'], $content['input']);
-            }
-        }
-        if ([] !== $toolCalls) {
-            return new ToolCallResult(...$toolCalls);
-        }
-
-        return new TextResult($data['content'][0]['text']);
     }
 
     private function getModelId(Model $model): string
