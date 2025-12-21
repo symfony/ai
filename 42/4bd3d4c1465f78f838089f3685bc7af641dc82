@@ -1,0 +1,177 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-15T19:51:03Z
+
+A special thanks goes to @Nyholm which was a great companion during the prototype phase and discussion partner on the symfony con in amsterdam where this ideas was born
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-15T19:52:34Z
+
+Johannes and I have been working on this together for the past few weeks. The idea of AI Mate is to create a framework agnostic platform where we easily can integrate with Symfony/Sulu/Laravel/Whatever specific features.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-15T20:25:57Z
+
+Coming out of stealth mode - hitting `symfony/ai` repo :tada:
+
+Awesome stuff - thanks for driving that and spinning it up only in two weeks since SymfonyCon - will give it a deeper read, when you ping me :+1:
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-16T20:46:00Z
+
+Hey @wachterjohannes, thanks again, one rather conceptual question.
+
+In understand this PR now like mate would integrate with the dependencies of the main application, right? did you consider installing it as a phar to get rid of that dependency range?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-16T20:56:49Z
+
+> Hey @wachterjohannes, thanks again, one rather conceptual question.
+>
+> In understand this PR now like mate would integrate with the dependencies of the main application, right? did you consider installing it as a phar to get rid of that dependency range?
+
+yes absolutly - this should be a point on the list in the next weeks - but i think for now we could go with that and collect feedback!
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-16T21:49:44Z
+
+@chr-hertel @OskarStark BEFORE we can merge this i have to do a final test in my example repo (https://github.com/wachterjohannes/debug-mcp-symfony-example) as soon as i get the final OK from you guys
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-16T22:15:02Z
+
+@OskarStark @chr-hertel i have moved the directory :)
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-17T21:18:54Z
+
+@chr-hertel @Nyholm @OskarStark i have tested it in my test repository - please take a look at the last 3 commit  which contains a view necessary changes for the final touch.
+
+<img width="796" height="197" alt="image" src="https://github.com/user-attachments/assets/3814a287-6937-4eae-9ff5-4a9fd784826b" />
+
+Not sure why there around 400 checks 😂 but that seems normal
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-18T12:33:44Z
+
+Can you please rebase? Thanks
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-19T19:50:00Z
+
+@OskarStark i have rebased again - and except the open questions there should be fixed everything
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-20T09:03:35Z
+
+I guess "extension" vs "bridge" is some kind of higher level decision we need to take.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-20T10:52:49Z
+
+@OskarStark @chr-hertel i also think that bridge would fit better in this repo. not sure if it makes sense for external developer. But let us try and if we can explain that well it should not be an issue in the future.
+
+@Nyholm is that ok for you?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-20T14:42:46Z
+
+@OskarStark will go on with the extension => bridge renaming after @Nyholm give his opinion about that
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-20T16:38:43Z
+
+No worries 😉
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-20T20:09:00Z
+
+@OskarStark @chr-hertel @Nyholm i have already done the renaming in the latest commit - if you are all happy with it i should give it a last try in my example repo before we can finally merge it
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-20T21:47:11Z
+
+Do you think it is a good idea to add it to the demo application in this repo?
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-20T22:00:34Z
+
+I do believe an "extension" is a more generic term than "bridge". A "bridge" connects two things. An "extension" adds some kind of functionally.
+
+I agree that we should be constant and call it "bridge" in this repo. Ie, we should use the "Bridge" namespace and name our code accordingly. **BUT**, if I create "Tobias private Mate integration"-package, that is for sure an "extension".
+
+So in the AI Mate code, we should refer to "extension".
+
+---------
+
+I see that you changed to "Bridge". I dont think this should be a blocker for merging. We can open an issue and talk about it before the first tag.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-21T06:53:24Z
+
+@Nyholm i also agree to you! as i already mentioned that the term is not so self-explaining.
+
+I have done the renaming in a completly own commit so no worries to revert that.
+
+@OskarStark i also thought about that. but i think that should be part of a follow up pull-request.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-21T08:26:11Z
+
+Ok let's go with bridge and open an issue. Afterwards let's create a PR with extension, but we would need to tackle a lot of scripts etc.
+
+I would also like @fabpot's opinion if extension renaming would have some more side effects
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-21T10:43:46Z
+
+@OskarStark think thats a pragmatic solution! ler us merge it with bridge, merge it and i will create follow up PRs about extension term and example in the next days
+
+---------------------------------------------------------------------------
+
+by fabpot at 2025-12-21T11:12:24Z
+
+> Ok let's go with bridge and open an issue. Afterwards let's create a PR with extension, but we would need to tackle a lot of scripts etc.
+>
+> I would also like @fabpot's opinion if extension renaming would have some more side effects
+
+Anything happening before 1.0 has not big consequences.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-21T14:20:06Z
+
+@OskarStark i tried this in my example repo so also from my side its good to go
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-21T14:24:10Z
+
+As it is quite a new concept of a Symfony component, can you maybe share a small video in the PR header how you use it in PhpStorm or anywhere else?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-21T14:48:36Z
+
+> Good to merge from my side @chr-hertel, please give a final review
+
+on it right now :+1:
