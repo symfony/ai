@@ -40,7 +40,7 @@ final class NovaModelClientTest extends TestCase
 
     public function testPassesModelId()
     {
-        $this->bedrockClient->expects(self::once())
+        $this->bedrockClient->expects($this->once())
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
@@ -60,7 +60,7 @@ final class NovaModelClientTest extends TestCase
 
     public function testUnsetsModelName()
     {
-        $this->bedrockClient->expects(self::once())
+        $this->bedrockClient->expects($this->once())
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
@@ -82,7 +82,7 @@ final class NovaModelClientTest extends TestCase
 
     public function testSetsToolOptionsIfToolsEnabled()
     {
-        $this->bedrockClient->expects(self::once())
+        $this->bedrockClient->expects($this->once())
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
@@ -108,7 +108,7 @@ final class NovaModelClientTest extends TestCase
 
     public function testPassesTemperature()
     {
-        $this->bedrockClient->expects(self::once())
+        $this->bedrockClient->expects($this->once())
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
@@ -135,7 +135,7 @@ final class NovaModelClientTest extends TestCase
 
     public function testPassesMaxTokens()
     {
-        $this->bedrockClient->expects(self::once())
+        $this->bedrockClient->expects($this->once())
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
@@ -162,7 +162,7 @@ final class NovaModelClientTest extends TestCase
 
     public function testPassesBothTemperatureAndMaxTokens()
     {
-        $this->bedrockClient->expects(self::once())
+        $this->bedrockClient->expects($this->once())
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
