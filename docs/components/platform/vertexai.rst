@@ -86,7 +86,6 @@ Basic usage example with API keys::
         $_ENV['GOOGLE_CLOUD_LOCATION'],
         $_ENV['GOOGLE_CLOUD_PROJECT'],
         apiKey: $_ENV['GOOGLE_CLOUD_VERTEX_API_KEY'],
-        httpClient: $httpClient
     );
 
 Model Availability by Location
