@@ -60,6 +60,9 @@ final class FaultTolerantToolboxTest extends TestCase
     {
         $faultyToolbox = $this->createFaultyToolbox(
             static fn () => new class extends \RuntimeException implements ToolExecutionExceptionInterface {
+                /**
+                 * @return array<string, string>
+                 */
                 public function getToolCallResult(): array
                 {
                     return ['error' => 'custom'];

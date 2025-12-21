@@ -23,6 +23,9 @@ use Symfony\AI\Platform\Tool\Tool;
 
 class ToolNormalizerTest extends TestCase
 {
+    /**
+     * @param array<string, mixed> $expected
+     */
     #[DataProvider('provideTools')]
     public function testNormalize(Tool $tool, array $expected)
     {

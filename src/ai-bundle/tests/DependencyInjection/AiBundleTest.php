@@ -6973,6 +6973,9 @@ class AiBundleTest extends TestCase
         $this->assertFalse($container->hasDefinition('ai.traceable_platform.us'));
     }
 
+    /**
+     * @param array<string, mixed> $configuration
+     */
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();

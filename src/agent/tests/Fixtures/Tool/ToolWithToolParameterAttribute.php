@@ -18,14 +18,14 @@ use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 final class ToolWithToolParameterAttribute
 {
     /**
-     * @param string $animal           The animal given to the tool
-     * @param int    $numberOfArticles The number of articles given to the tool
-     * @param string $infoEmail        The info email given to the tool
-     * @param string $locales          The locales given to the tool
-     * @param string $text             The text given to the tool
-     * @param int    $number           The number given to the tool
-     * @param array  $products         The products given to the tool
-     * @param string $shippingAddress  The shipping address given to the tool
+     * @param string       $animal           The animal given to the tool
+     * @param int          $numberOfArticles The number of articles given to the tool
+     * @param string       $infoEmail        The info email given to the tool
+     * @param string       $locales          The locales given to the tool
+     * @param string       $text             The text given to the tool
+     * @param int          $number           The number given to the tool
+     * @param array<mixed> $products         The products given to the tool
+     * @param string       $shippingAddress  The shipping address given to the tool
      */
     public function __invoke(
         #[With(enum: ['dog', 'cat', 'bird'])]

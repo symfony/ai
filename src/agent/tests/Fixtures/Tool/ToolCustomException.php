@@ -20,6 +20,9 @@ final class ToolCustomException
     public function bar(): string
     {
         throw new class('Custom error.') extends \RuntimeException implements ToolExecutionExceptionInterface {
+            /**
+             * @return array<string, mixed>
+             */
             public function getToolCallResult(): array
             {
                 return [

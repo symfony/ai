@@ -20,6 +20,8 @@ class ToolWithBackedEnums
      * @param EnumMode      $mode        The search mode
      * @param EnumPriority  $priority    The search priority
      * @param EnumMode|null $fallback    Optional fallback mode
+     *
+     * @return array<string, mixed>
      */
     public function __invoke(array $searchTerms, EnumMode $mode, EnumPriority $priority, ?EnumMode $fallback = null): array
     {

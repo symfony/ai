@@ -33,6 +33,10 @@ use Symfony\AI\Platform\Model;
 
 final class ContractTest extends TestCase
 {
+    /**
+     * @param object|array<string|int, mixed>|string $input
+     * @param array<string, mixed>|string            $expected
+     */
     #[DataProvider('providePayloadTestCases')]
     public function testCreateRequestPayload(Model $model, array|string|object $input, array|string $expected)
     {
@@ -43,12 +47,6 @@ final class ContractTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    /**
-     * @return iterable<string, array{
-     *     input: array|string|object,
-     *     expected: array<string, mixed>|string
-     * }>
-     */
     public static function providePayloadTestCases(): iterable
     {
         yield 'MessageBag with Gpt' => [
@@ -185,6 +183,9 @@ final class ContractTest extends TestCase
                 return [new Text('This is a custom serializable message.')];
             }
 
+            /**
+             * @return array<string, string>
+             */
             public function jsonSerialize(): array
             {
                 return [

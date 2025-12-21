@@ -55,6 +55,9 @@ final class ToolResultConverterTest extends TestCase
 
         yield 'json_serializable' => [
             new class implements \JsonSerializable {
+                /**
+                 * @return array<string, string>
+                 */
                 public function jsonSerialize(): array
                 {
                     return ['key' => 'value'];
