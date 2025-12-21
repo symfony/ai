@@ -26,7 +26,7 @@ final class ModelClient implements ModelClientInterface
         private readonly HttpClientInterface $httpClient,
         private readonly string $location,
         private readonly string $projectId,
-        private readonly ?string $apiKey = null,
+        #[\SensitiveParameter] private readonly ?string $apiKey = null,
     ) {
     }
 
