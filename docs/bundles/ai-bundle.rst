@@ -106,7 +106,7 @@ Advanced Example with Multiple Agents
                 model: 'text-to-speech'
                 tools: false
             nova:
-                platform: 'ai.platform.bedrock_default'
+                platform: 'ai.platform.bedrock.default'
                 model: 'nova-pro'
                 tools: false
         store:
