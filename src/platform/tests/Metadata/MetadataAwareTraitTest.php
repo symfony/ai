@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Tests\Metadata;
 
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 
 #[CoversTrait(MetadataAwareTrait::class)]
@@ -23,6 +24,7 @@ final class MetadataAwareTraitTest extends TestCase
         $result = $this->createTestClass();
         $metadata = $result->getMetadata();
 
+        $this->assertInstanceOf(Metadata::class, $metadata);
         $this->assertCount(0, $metadata);
 
         $metadata->add('key', 'value');

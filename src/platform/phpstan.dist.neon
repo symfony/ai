@@ -14,6 +14,8 @@ parameters:
         -
             message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
         -
+            message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
+        -
             message: '#supportsNormalization\(\) has parameter \$context with no value type specified in iterable type array#'
             path: src/*
             reportUnmatched: false # only needed for older Symfony versions
@@ -21,10 +23,6 @@ parameters:
             message: '#getSupportedTypes\(\) return type has no value type specified in iterable type array#'
             path: src/*
             reportUnmatched: false # only needed for older Symfony versions
-        -
-            identifier: missingType.iterableValue
-            path: tests/*
-            reportUnmatched: false
         -
             identifier: 'symfonyAi.forbidNativeException'
             path: tests/*

@@ -9,8 +9,6 @@ parameters:
         - tests/
     ignoreErrors:
         -
-            identifier: missingType.iterableValue
-            path: tests/*
-        -
             message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
-            reportUnmatched: false # we don't have tests yet
+        -
+            message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
