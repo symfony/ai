@@ -84,6 +84,8 @@ Similar to the first approach, but instead of authenticating with the `gcloud` c
         apiKey: $_ENV['GOOGLE_CLOUD_VERTEX_API_KEY'],
     );
 
+To get an API key, visit: `Vertex AI Studio (API keys)`_.
+
 Model Availability by Location
 ------------------------------
 
