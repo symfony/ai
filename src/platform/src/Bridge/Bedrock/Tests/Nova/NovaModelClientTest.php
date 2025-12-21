@@ -99,7 +99,7 @@ final class NovaModelClientTest extends TestCase
         $this->modelClient = new NovaModelClient($this->bedrockClient);
 
         $options = [
-            'tools' => ['Tool']
+            'tools' => ['Tool'],
         ];
 
         $response = $this->modelClient->request($this->model, ['message' => 'test'], $options);
@@ -126,7 +126,7 @@ final class NovaModelClientTest extends TestCase
         $this->modelClient = new NovaModelClient($this->bedrockClient);
 
         $options = [
-            'temperature' => 0.35
+            'temperature' => 0.35,
         ];
 
         $response = $this->modelClient->request($this->model, ['message' => 'test'], $options);
@@ -153,7 +153,7 @@ final class NovaModelClientTest extends TestCase
         $this->modelClient = new NovaModelClient($this->bedrockClient);
 
         $options = [
-            'max_tokens' => 1000
+            'max_tokens' => 1000,
         ];
 
         $response = $this->modelClient->request($this->model, ['message' => 'test'], $options);
@@ -181,7 +181,7 @@ final class NovaModelClientTest extends TestCase
 
         $options = [
             'max_tokens' => 1000,
-            'temperature' => 0.35
+            'temperature' => 0.35,
         ];
 
         $response = $this->modelClient->request($this->model, ['message' => 'test'], $options);
