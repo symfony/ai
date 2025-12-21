@@ -415,7 +415,7 @@ final class AiBundle extends AbstractBundle
                     throw new RuntimeException('Bedrock platform configuration requires "symfony/ai-bedrock-platform" package. Try running "composer require symfony/ai-bedrock-platform".');
                 }
 
-                $platformId = 'ai.platform.bedrock_'.$name;
+                $platformId = 'ai.platform.bedrock.'.$name;
                 $definition = (new Definition(Platform::class))
                     ->setFactory(BedrockFactory::class.'::create')
                     ->setLazy(true)
@@ -426,7 +426,7 @@ final class AiBundle extends AbstractBundle
                         null,
                         new Reference('event_dispatcher'),
                     ])
-                    ->addTag('ai.platform', ['name' => 'bedrock_'.$name]);
+                    ->addTag('ai.platform', ['name' => 'bedrock.'.$name]);
 
                 $container->setDefinition($platformId, $definition);
             }
