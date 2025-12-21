@@ -142,3 +142,72 @@ npx @modelcontextprotocol/inspector php bin/console mcp:server
 ```
 
 Which opens a web UI to interactively test the MCP server.
+
+## AI Mate - MCP Development Assistant
+
+[Symfony AI Mate](https://github.com/symfony/ai-mate) is an MCP (Model Context Protocol) server that provides AI
+assistants with Symfony-specific development capabilities.
+
+### Installation & Setup
+
+**This demo is already configured!** For new projects you can set up AI Mate as follows:
+
+```shell
+# Install AI Mate
+composer require --dev symfony/ai-mate
+
+# Initialize configuration
+vendor/bin/mate init
+
+# Discover available tools
+vendor/bin/mate discover
+```
+
+### MCP Client Configuration
+
+The `mcp.json` file in the project root enables automatic MCP client detection:
+
+```json
+{
+  "mcpServers": {
+    "symfony-ai-mate": {
+      "command": "./vendor/bin/mate",
+      "args": ["serve"]
+    }
+  }
+}
+```
+
+For other projects, add AI Mate to your MCP client settings (e.g., `~/.claude/mcp.json`, IDE settings, etc.).
+
+### Custom Capability Example
+
+This demo includes a **`symfony-ai-features`** tool (see `mate/SymfonyAiFeaturesTool.php`) that analyzes the project's
+AI configuration and reports all available platforms, agents, tools, stores, and packages.
+
+**Try it in your MCP-enabled chat:**
+
+> "Which Symfony AI features are available in this demo?"
+>
+> "What AI agents are configured in this project?"
+>
+> "Show me all the Symfony AI tools and their configuration"
+>
+> "What is the current PHP version used in this project?"
+>
+> "Is the php extension intl installed?"
+
+The AI assistant will use the `symfony-ai-features` and other MCP tool to provide detailed information about project
+internals.
+
+### Creating Custom Tools
+
+Create tools in `mate/src/` and register them in `mate/config.php`. See the
+[AI Mate documentation](https://symfony.com/doc/current/ai/components/mate.html) for detailed guides.
+
+### Testing
+
+```shell
+# Test with MCP Inspector
+npx @modelcontextprotocol/inspector ./vendor/bin/mate serve
+```

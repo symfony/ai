@@ -92,6 +92,97 @@ Each chat type follows the pattern:
 ### Session Management
 Chat history stored in Symfony sessions with component-specific keys (e.g., 'blog-chat', 'stream-chat').
 
+## Available MCP Tools
+
+**IMPORTANT**: This project includes the Symfony AI Mate MCP server with powerful debugging and inspection tools. **USE THESE TOOLS PROACTIVELY** whenever working with Symfony AI features, logs, or system information.
+
+### Symfony AI Inspection Tools
+
+**`symfony-ai-features`** - **USE THIS FIRST** when analyzing or modifying AI configuration
+- Detects and lists all AI platforms, agents, tools, stores, vectorizers, indexers, retrievers, and multi-agent setups
+- Provides summary counts and detailed configuration information
+- Analyzes `config/packages/ai.yaml` and `composer.json`
+- Use when: Starting any AI-related task, debugging agent configuration, understanding project AI capabilities
+
+```
+Example: Before modifying agents, call symfony-ai-features to understand current setup
+```
+
+**`symfony-services`** - Get complete list of Symfony services
+- Lists all registered services in the DI container
+- Use when: Debugging dependency injection, finding service IDs, understanding available services
+
+### Monolog/Logging Tools
+
+**`monolog-search`** - Search logs by text term
+- Parameters: `term` (required), `level`, `channel`, `environment`, `from`, `to`, `limit` (default: 100)
+- Use when: Debugging errors, finding specific log messages, tracking events
+
+**`monolog-search-regex`** - Search logs using regex patterns
+- Parameters: `pattern` (required), `level`, `channel`, `environment`, `limit`
+- Use when: Complex log searching, pattern matching, finding formatted data
+
+**`monolog-context-search`** - Search logs by context field
+- Parameters: `key` (required), `value` (required), `level`, `environment`, `limit`
+- Use when: Finding logs with specific context data (user_id, request_id, etc.)
+
+**`monolog-tail`** - Get last N log entries (like `tail -f`)
+- Parameters: `lines` (default: 50), `level`, `environment`
+- Use when: Checking recent activity, monitoring real-time logs, debugging current issues
+
+**`monolog-list-files`** - List available log files
+- Parameters: `environment` (optional)
+- Use when: Finding log locations, checking available environments
+
+**`monolog-list-channels`** - List all log channels
+- Use when: Understanding logging structure, finding channel names for filtering
+
+**`monolog-by-level`** - Filter logs by severity level
+- Parameters: `level` (required: DEBUG, INFO, WARNING, ERROR, CRITICAL, etc.), `environment`, `limit`
+- Use when: Finding errors, warnings, or specific severity issues
+
+### System Information Tools
+
+**`php-version`** - Get PHP version
+- Use when: Checking compatibility, debugging version-specific issues
+
+**`php-extensions`** - List installed PHP extensions
+- Use when: Verifying required extensions, debugging extension-related issues
+
+**`operating-system`** - Get current OS
+- Use when: Platform-specific debugging, environment verification
+
+**`operating-system-family`** - Get OS family (Windows, Linux, Darwin)
+- Use when: Cross-platform compatibility checks
+
+### Tool Usage Guidelines
+
+**Proactive Usage Patterns**:
+1. **Before modifying AI config**: Call `symfony-ai-features` to understand current setup
+2. **When debugging errors**: Use `monolog-tail` and `monolog-search` to find relevant logs
+3. **When analyzing agents**: Use `symfony-ai-features` to see all agents, tools, and configurations
+4. **When troubleshooting**: Combine log tools with system info tools for complete context
+5. **When adding new features**: Check existing services with `symfony-services`
+
+**Example Workflows**:
+
+```bash
+# Investigating AI agent issues
+1. symfony-ai-features (get agent configuration)
+2. monolog-search term:"agent" (find agent-related logs)
+3. monolog-by-level level:"ERROR" (check for errors)
+
+# Debugging application errors
+1. monolog-tail lines:100 (recent activity)
+2. monolog-by-level level:"ERROR" (find errors)
+3. monolog-context-search key:"exception" (error details)
+
+# Understanding project structure
+1. symfony-ai-features (AI capabilities)
+2. symfony-services (available services)
+3. php-extensions (installed extensions)
+```
+
 ## Development Notes
 
 - Uses PHP 8.4+ with strict typing and modern PHP features
