@@ -73,14 +73,10 @@ Similar to the first approach, but instead of authenticating with the `gcloud` c
 
     GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 
-3. API keys
------------
+3. API Key
+----------
 
-To get an API key, visit: `Vertex AI Studio (API keys)`_.
-
-Similar to the first approach, but instead of authenticating with the `gcloud` command, you provide the API keys when creating the Platform:
-
-Basic usage example with API keys::
+Similar to the first approach, but instead of authenticating with the `gcloud` command, you provide the API keys when creating the platform::
 
     $platform = PlatformFactory::create(
         $_ENV['GOOGLE_CLOUD_LOCATION'],
