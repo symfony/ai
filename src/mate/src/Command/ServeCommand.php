@@ -78,7 +78,7 @@ class ServeCommand extends Command
         $server = Server::builder()
             ->setServerInfo('ai-mate', '0.1.0', 'AI development assistant MCP server')
             ->setContainer($this->container)
-            ->addLoaders($loader)
+            ->addLoader($loader)
             ->setSession(new FileSessionStore($cacheDir.'/sessions'))
             ->setLogger($this->logger)
             ->build();
