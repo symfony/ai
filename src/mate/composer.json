@@ -9,7 +9,8 @@
         "model-context-protocol",
         "symfony",
         "debug",
-        "development"
+        "development",
+        "dev"
     ],
     "authors": [
         {

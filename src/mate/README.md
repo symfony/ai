@@ -7,7 +7,7 @@ tools. This is a development tool, not intended for production use.
 ## Installation
 
 ```bash
-composer require symfony/ai-mate
+composer require --dev symfony/ai-mate
 ```
 
 **This repository is a READ-ONLY sub-tree split**. See

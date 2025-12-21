@@ -10,7 +10,7 @@ Installation
 
 .. code-block:: terminal
 
-    $ composer require symfony/ai-mate
+    $ composer require --dev symfony/ai-mate
 
 Purpose
 -------
@@ -33,7 +33,7 @@ Install with composer:
 
 .. code-block:: terminal
 
-    $ composer require symfony/ai-mate
+    $ composer require --dev symfony/ai-mate
 
 Initialize configuration:
 
