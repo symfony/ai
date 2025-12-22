@@ -12,75 +12,187 @@
 
 require __DIR__.'/vendor/autoload.php';
 
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\SingleCommandApplication;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
 /**
- * Bumps the version constraint for symfony/ai-* dependencies across the monorepo.
+ * Bumps the version and updates version constraints for symfony/ai-* dependencies across the monorepo.
+ * Reads the current version from src/mate/src/App.php.
+ *
+ * For release, run this script with one of the following options:
+ * ./bump --major : Bump major version (X.0.0)
+ * ./bump --minor : Bump minor version (x.X.0)
+ * ./bump --patch : Bump patch version (x.x.X)
+ *
+ * This will also update all symfony/ai-* composer constraints to match the new version.
+ *
+ * Alternatively, you can specify an explicit version with:
+ * ./bump --release=1.2.3 : Set explicit release version
+ * ./bump --constraint="^1.2" : Set explicit composer constraint
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 
-$version = $argv[1] ?? null;
+(new SingleCommandApplication())
+    ->setName('Symfony AI Version Bump')
+    ->setDescription('Bumps the version and updates version constraints for symfony/ai-* dependencies across the monorepo.')
+    ->addOption('major', null, InputOption::VALUE_NONE, 'Bump major version (X.0.0)')
+    ->addOption('minor', null, InputOption::VALUE_NONE, 'Bump minor version (x.X.0)')
+    ->addOption('patch', null, InputOption::VALUE_NONE, 'Bump patch version (x.x.X)')
+    ->addOption('release', null, InputOption::VALUE_REQUIRED, 'Set explicit release version (e.g., 1.2.3)')
+    ->addOption('constraint', null, InputOption::VALUE_REQUIRED, 'Set explicit composer constraint (e.g., ^1.2)')
+    ->setCode(function (InputInterface $input, OutputInterface $output): int {
+        $filesystem = new Filesystem();
+        $io = new SymfonyStyle($input, $output);
 
-if (!$version) {
-    echo 'Bumps the version constraint for symfony/ai-* dependencies across the monorepo.'.PHP_EOL.PHP_EOL;
-    echo "Usage: $argv[0] <version-constraint>".PHP_EOL.PHP_EOL;
-    echo 'Examples:'.PHP_EOL;
-    echo "  $argv[0] ^0.1".PHP_EOL;
-    echo "  $argv[0] ~0.1.0".PHP_EOL;
-    echo "  $argv[0] @dev".PHP_EOL.PHP_EOL;
-    exit(1);
-}
+        $isMajor = $input->getOption('major');
+        $isMinor = $input->getOption('minor');
+        $isPatch = $input->getOption('patch');
+        $releaseVersion = $input->getOption('release');
+        $composerConstraint = $input->getOption('constraint');
 
-$filesystem = new Filesystem();
-$totalUpdates = 0;
+        $bumpOptions = array_filter([
+            'major' => $isMajor,
+            'minor' => $isMinor,
+            'patch' => $isPatch,
+            'release' => $releaseVersion,
+        ]);
 
-// Find all composer.json files in src, demo, and examples directories
-$finder = new Finder();
-$finder->files()
-    ->name('composer.json')
-    ->in([__DIR__.'/src', __DIR__.'/demo', __DIR__.'/examples'])
-    ->exclude('vendor');
+        if (1 !== \count($bumpOptions)) {
+            $io->error('You must specify exactly one of --major, --minor, --patch, or --release');
 
-echo sprintf('Found %d composer.json files to process:'.PHP_EOL, $finder->count());
-
-foreach ($finder as $file) {
-    $composerFile = $file->getRealPath();
-    $content = $file->getContents();
-    $data = json_decode($content, true);
-
-    if (!$data) {
-        echo \sprintf(' ⚠ Skipping "%s" (invalid JSON)'.PHP_EOL, $file->getRelativePathname());
-        continue;
-    }
-
-    $modified = false;
-    $fileUpdates = 0;
-
-    foreach ($data['require'] ?? [] as $package => $constraint) {
-        if (str_starts_with($package, 'symfony/ai-')) {
-            $data['require'][$package] = $version;
-            $modified = true;
-            ++$fileUpdates;
+            return Command::FAILURE;
         }
-    }
 
-    foreach ($data['require-dev'] ?? [] as $package => $constraint) {
-        if (str_starts_with($package, 'symfony/ai-')) {
-            $data['require-dev'][$package] = $version;
-            $modified = true;
-            ++$fileUpdates;
+        $appPhpPath = __DIR__.'/src/mate/src/App.php';
+        $appPhpContent = $filesystem->readFile($appPhpPath);
+        if (!preg_match('/public const VERSION = \'([0-9]+\.[0-9]+\.[0-9]+)\';/', $appPhpContent, $matches)) {
+            $io->error('Could not find VERSION constant in App.php');
+
+            return Command::FAILURE;
         }
-    }
 
-    // Write back if modified
-    if ($modified) {
-        $newContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";
-        $filesystem->dumpFile($composerFile, $newContent);
-        $totalUpdates += $fileUpdates;
-        echo \sprintf(' ✓ Saved "%s" with %d change(s)'.PHP_EOL, str_replace(__DIR__.'/', '', $file->getRealPath()), $fileUpdates);
-    }
-}
+        $currentVersion = $matches[1];
+        [$major, $minor, $patch] = explode('.', $currentVersion);
 
-echo PHP_EOL.sprintf('✅ Successfully updated %d dependency constraints in %d files to "%s".'.PHP_EOL, $totalUpdates, $finder->count(), $version);
+        $io->writeln(\sprintf('Current version: <info>%s</info>', $currentVersion));
+
+        // Calculate new version
+        if ($releaseVersion) {
+            $newVersion = $releaseVersion;
+            if (!preg_match('/^[0-9]+\.[0-9]+\.[0-9]+$/', $newVersion)) {
+                $io->error('Version must be in format X.Y.Z (e.g., 1.2.3)');
+
+                return Command::FAILURE;
+            }
+            [$newMajor, $newMinor, $newPatch] = explode('.', $newVersion);
+        } elseif ($isMajor) {
+            $newMajor = (int) $major + 1;
+            $newMinor = 0;
+            $newPatch = 0;
+            $newVersion = \sprintf('%s.%s.%s', $newMajor, $newMinor, $newPatch);
+        } elseif ($isMinor) {
+            $newMajor = (int) $major;
+            $newMinor = (int) $minor + 1;
+            $newPatch = 0;
+            $newVersion = \sprintf('%s.%s.%s', $newMajor, $newMinor, $newPatch);
+        } elseif ($isPatch) {
+            $newMajor = (int) $major;
+            $newMinor = (int) $minor;
+            $newPatch = (int) $patch + 1;
+            $newVersion = \sprintf('%s.%s.%s', $newMajor, $newMinor, $newPatch);
+        }
+
+        $io->writeln(\sprintf('New version: <info>%s</info>', $newVersion));
+
+        // Calculate composer constraint
+        if (!$composerConstraint) {
+            // For patch bumps, keep the current minor version constraint (^X.Y)
+            // For minor bumps, use the new minor version constraint (^X.Y)
+            // For major bumps, use the new major version constraint (^X.0)
+            if ($isPatch) {
+                $composerConstraint = \sprintf('^%s.%s', $newMajor, $newMinor);
+            } elseif ($isMinor || $isMajor) {
+                $composerConstraint = \sprintf('^%s.%s', $newMajor, $newMinor);
+            } elseif ($releaseVersion) {
+                // For explicit version, use ^X.Y
+                $composerConstraint = \sprintf('^%s.%s', $newMajor, $newMinor);
+            }
+        }
+
+        $io->writeln(\sprintf('Composer constraint: <info>%s</info>', $composerConstraint));
+        $io->newLine();
+
+        if (!$io->confirm('Proceed with these changes?')) {
+            $io->warning('Aborted by user.');
+
+            return Command::SUCCESS;
+        }
+
+        $newAppPhpContent = preg_replace(
+            '/public const VERSION = \'[0-9]+\.[0-9]+\.[0-9]+\';/',
+            \sprintf("public const VERSION = '%s';", $newVersion),
+            $appPhpContent
+        );
+        $filesystem->dumpFile($appPhpPath, $newAppPhpContent);
+        $io->writeln('<info>✓</info> Updated VERSION constant in App.php');
+
+        $totalUpdates = 0;
+        $finder = new Finder();
+        $finder->files()
+            ->name('composer.json')
+            ->in([__DIR__.'/src', __DIR__.'/demo', __DIR__.'/examples'])
+            ->exclude('vendor');
+
+        $io->writeln(\sprintf('Found %d composer.json files to process:', $finder->count()));
+
+        foreach ($finder as $file) {
+            $composerFile = $file->getRealPath();
+            $content = $file->getContents();
+            $data = json_decode($content, true);
+
+            if (!$data) {
+                $io->writeln(\sprintf(' <comment>⚠</comment> Skipping "%s" (invalid JSON)', $file->getRelativePathname()));
+                continue;
+            }
+
+            $modified = false;
+            $fileUpdates = 0;
+
+            foreach ($data['require'] ?? [] as $package => $constraint) {
+                if (str_starts_with($package, 'symfony/ai-')) {
+                    $data['require'][$package] = $composerConstraint;
+                    $modified = true;
+                    ++$fileUpdates;
+                }
+            }
+
+            foreach ($data['require-dev'] ?? [] as $package => $constraint) {
+                if (str_starts_with($package, 'symfony/ai-')) {
+                    $data['require-dev'][$package] = $composerConstraint;
+                    $modified = true;
+                    ++$fileUpdates;
+                }
+            }
+
+            // Write back if modified
+            if ($modified) {
+                $newContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";
+                $filesystem->dumpFile($composerFile, $newContent);
+                $totalUpdates += $fileUpdates;
+                $io->writeln(\sprintf(' <info>✓</info> Saved "%s" with %d change(s)', str_replace(__DIR__.'/', '', $file->getRealPath()), $fileUpdates));
+            }
+        }
+
+        $io->newLine();
+        $io->success(\sprintf('Successfully bumped version to %s and updated %d dependency constraints in %d files to "%s".', $newVersion, $totalUpdates, $finder->count(), $composerConstraint));
+
+        return Command::SUCCESS;
+    })
+    ->run();
