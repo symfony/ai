@@ -1,0 +1,43 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-13T06:16:57Z
+
+I think we should add an example how you can configure templates in ai bundle config
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-13T09:35:12Z
+
+@OskarStark in the ai-bundle you can just use it. but documenting how that looks like would make sense!
+
+@chr-hertel should we document how the listener has to be configured when no ai-bundle is used? or link to the exanple?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-13T15:33:43Z
+
+Yes let's be explicit and explain it in the docs
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-21T17:37:34Z
+
+Why closing ?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-21T19:42:32Z
+
+oh, removed the branch on my fork because i thought it's merged ... :D
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-21T20:08:46Z
+
+> I think we should add an example how you can configure templates in ai bundle config
+
+@OskarStark currently there's nothing additional provided in the bundle - i added a section tho that the feature is just available.
+
+> should we document how the listener has to be configured when no ai-bundle is used?
+
+@wachterjohannes there's a "Setup" section in the platform part
