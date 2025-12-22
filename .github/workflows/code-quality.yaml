@@ -147,9 +147,9 @@ jobs:
             - name: Build root packages
               run: php .github/build-packages.php
 
-            # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
+            # Remove bridge vendor to avoid circular symlinks when installing bridge dependencies
             - name: Clean vendor folders
-              run: rm -rf vendor src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}/vendor
+              run: rm -rf src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}/vendor
 
             - name: Install dependencies
               uses: ramsey/composer-install@v3

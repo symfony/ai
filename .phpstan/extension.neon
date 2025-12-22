@@ -6,7 +6,7 @@ parameters:
 
     ignoreErrors:
         -
-            message: "#^Method .*Test::test.*\\(\\) has no return type specified\\.$#"
+            message: "#^Method .*Test(Case)?::test.*\\(\\) has no return type specified\\.$#"
         -
             message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
             reportUnmatched: false
