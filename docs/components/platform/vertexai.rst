@@ -24,7 +24,7 @@ Authentication
 Vertex AI supports the following authentication methods:
 
 1. Application Default Credentials (ADC)
-----------------------------------------
+........................................
 
 Follow the `Google cloud authentication guide`_ to set up your credentials.
 
@@ -65,7 +65,7 @@ Basic usage example::
     echo $result->getContent();
 
 2. Service Account Key
-----------------------
+......................
 
 Similar to the first approach, but instead of authenticating with the `gcloud` command, you provide the service account key directly using an environment variable:
 
@@ -74,7 +74,7 @@ Similar to the first approach, but instead of authenticating with the `gcloud` c
     GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 
 3. API Key
-----------
+..........
 
 Similar to the first approach, but instead of authenticating with the `gcloud` command, you provide the API keys when creating the platform::
 
