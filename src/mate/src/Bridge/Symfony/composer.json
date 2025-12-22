@@ -8,7 +8,8 @@
         "mcp",
         "symfony",
         "debug",
-        "bridge"
+        "bridge",
+        "dev"
     ],
     "authors": [
         {
