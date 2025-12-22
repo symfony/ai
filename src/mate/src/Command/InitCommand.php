@@ -156,8 +156,8 @@ class InitCommand extends Command
         $modified = false;
 
         $composerJson['extra'] = \is_array($composerJson['extra'] ?? null) ? $composerJson['extra'] : [];
-        $composerJson['autoload'] = \is_array($composerJson['autoload'] ?? null) ? $composerJson['autoload'] : [];
-        $composerJson['autoload']['psr-4'] = \is_array($composerJson['autoload']['psr-4'] ?? null) ? $composerJson['autoload']['psr-4'] : [];
+        $composerJson['autoload-dev'] = \is_array($composerJson['autoload-dev'] ?? null) ? $composerJson['autoload-dev'] : [];
+        $composerJson['autoload-dev']['psr-4'] = \is_array($composerJson['autoload-dev']['psr-4'] ?? null) ? $composerJson['autoload-dev']['psr-4'] : [];
 
         if (!isset($composerJson['extra']['ai-mate'])) {
             $composerJson['extra']['ai-mate'] = [
@@ -170,8 +170,8 @@ class InitCommand extends Command
             $actions[] = ['○', 'Exists', 'extra.ai-mate configuration'];
         }
 
-        if (!isset($composerJson['autoload']['psr-4']['App\\Mate\\'])) {
-            $composerJson['autoload']['psr-4']['App\\Mate\\'] = 'mate/src/';
+        if (!isset($composerJson['autoload-dev']['psr-4']['App\\Mate\\'])) {
+            $composerJson['autoload-dev']['psr-4']['App\\Mate\\'] = 'mate/src/';
             $modified = true;
             $actions[] = ['✓', 'Added', 'App\\Mate\\ autoloader'];
         } else {
