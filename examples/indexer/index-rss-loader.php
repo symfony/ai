@@ -26,16 +26,15 @@ $indexer = new Indexer(
     loader: new RssFeedLoader(HttpClient::create()),
     vectorizer: $vectorizer,
     store: $store,
-    source: [
-        'https://feeds.feedburner.com/symfony/blog',
-        'https://www.tagesschau.de/index~rss2.xml',
-    ],
     transformers: [
         new TextSplitTransformer(chunkSize: 500, overlap: 100),
     ],
 );
 
-$indexer->index();
+$indexer->loadAndIndex([
+    'https://feeds.feedburner.com/symfony/blog',
+    'https://www.tagesschau.de/index~rss2.xml',
+]);
 
 $vector = $vectorizer->vectorize('Week of Symfony');
 $results = $store->query($vector);

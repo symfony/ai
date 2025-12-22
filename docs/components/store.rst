@@ -31,7 +31,7 @@ used vector store::
 
     $indexer = new Indexer($platform, $model, $store);
     $document = new TextDocument('This is a sample document.');
-    $indexer->index($document);
+    $indexer->loadAndIndex($document);
 
 You can find more advanced usage in combination with an Agent using the store for RAG in the examples folder.
 
