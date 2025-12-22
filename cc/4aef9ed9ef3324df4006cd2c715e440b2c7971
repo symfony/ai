@@ -1,0 +1,53 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-21T19:28:24Z
+
+so the thinking model would be that the package has bridges, that provide extensions, right? just to make sure i get it right :laughing:
+
+and we keep the `Bridge` namespace and package names, like `symfony/ai-monolog-mate`?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-21T19:43:08Z
+
+@chr-hertel yes i would keep the package-names, the namespaces, and also the tooling - so it would fit into the structure of this repo BUT would be clearer for the user that an extension extends the tool
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-21T20:12:30Z
+
+I am still for Symfony/ai-monolog-mate-extension
+
+I agree that we don't do this for the others, but store tool and platform are common terms, while mate is some kind of unknown.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-21T20:18:49Z
+
+but only unknown _yet_ :laughing:
+
+no strong opinion here
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-21T20:27:38Z
+
+@OskarStark like the extension postfix - would like todo that because i think that would make the intention clearer
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-21T21:25:43Z
+
+@OskarStark @chr-hertel added the suffix :) hope i have also changed all the things needed for the CI - but at least its green 😂
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-22T12:14:33Z
+
+@chr-hertel i have rebased this PR
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-22T14:25:12Z
+
+@chr-hertel @Nyholm @OskarStark so i think we are ready to go!
