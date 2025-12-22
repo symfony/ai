@@ -1,5 +1,4 @@
 includes:
-    - vendor/phpstan/phpstan-phpunit/extension.neon
     - ../../.phpstan/extension.neon
 
 parameters:
@@ -8,11 +7,6 @@ parameters:
         - src/
         - tests/
     ignoreErrors:
-        -
-            message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
-        -
-            message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
-            reportUnmatched: false
         -
             message: '#\\AuthorizationCheckerInterface::isGranted\(\) invoked with 3 parameters, 1-2 required#'
             path: src/*
@@ -24,9 +18,3 @@ parameters:
         -
             identifier: empty.notAllowed
             path: config/options.php
-
-services:
-    - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x
-        class: PHPStan\Type\PHPUnit\DataProviderReturnTypeIgnoreExtension
-        tags:
-            - phpstan.ignoreErrorExtension

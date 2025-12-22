@@ -1,5 +1,21 @@
+includes:
+    - ../vendor/phpstan/phpstan-phpunit/extension.neon
+
 parameters:
     customRulesetUsed: true
+
+    ignoreErrors:
+        -
+            message: "#^Method .*Test::test.*\\(\\) has no return type specified\\.$#"
+        -
+            message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
+            reportUnmatched: false
+        -
+            identifier: 'symfonyAi.forbidNativeException'
+            paths:
+                - tests/*
+                - Tests/*
+            reportUnmatched: false
 
 services:
     -
@@ -18,3 +34,8 @@ services:
         class: Symfony\AI\PHPStan\ForbidTestCoverageAttributesRule
         tags:
             - phpstan.rules.rule
+
+    - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x
+        class: PHPStan\Type\PHPUnit\DataProviderReturnTypeIgnoreExtension
+        tags:
+            - phpstan.ignoreErrorExtension

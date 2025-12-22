@@ -1,5 +1,4 @@
 includes:
-    - vendor/phpstan/phpstan-phpunit/extension.neon
     - ../../.phpstan/extension.neon
 
 parameters:
@@ -12,11 +11,6 @@ parameters:
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
         -
-            message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
-        -
-            message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
-            reportUnmatched: false
-        -
             message: '#supportsNormalization\(\) has parameter \$context with no value type specified in iterable type array#'
             path: src/*
             reportUnmatched: false # only needed for older Symfony versions
@@ -24,13 +18,3 @@ parameters:
             message: '#getSupportedTypes\(\) return type has no value type specified in iterable type array#'
             path: src/*
             reportUnmatched: false # only needed for older Symfony versions
-        -
-            identifier: 'symfonyAi.forbidNativeException'
-            path: tests/*
-            reportUnmatched: false
-
-services:
-    - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x
-        class: PHPStan\Type\PHPUnit\DataProviderReturnTypeIgnoreExtension
-        tags:
-            - phpstan.ignoreErrorExtension
