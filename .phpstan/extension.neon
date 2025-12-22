@@ -7,14 +7,15 @@ parameters:
     ignoreErrors:
         -
             message: "#^Method .*Test(Case)?::test.*\\(\\) has no return type specified\\.$#"
+            reportUnmatched: false
         -
             message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
             reportUnmatched: false
         -
             identifier: 'symfonyAi.forbidNativeException'
             paths:
-                - tests/*
-                - Tests/*
+                - */tests/*
+                - */Tests/*
             reportUnmatched: false
 
 services:
