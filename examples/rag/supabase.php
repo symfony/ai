@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Bridge\Supabase\Store;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
+use Symfony\AI\Store\Document\Loader\DocumentCollectionLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -50,7 +50,7 @@ foreach (Movies::all() as $movie) {
 $platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
 
 $vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'));
-$loader = new InMemoryLoader($documents);
+$loader = new DocumentCollectionLoader($documents);
 $indexer = new Indexer($loader, $vectorizer, $store, logger: logger());
 $indexer->index();
 

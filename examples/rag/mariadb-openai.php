@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Bridge\MariaDb\Store;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
+use Symfony\AI\Store\Document\Loader\DocumentCollectionLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -52,7 +52,7 @@ $store->setup();
 // create embeddings for documents
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
+$indexer = new Indexer(new DocumentCollectionLoader($documents), $vectorizer, $store, logger: logger());
 $indexer->index($documents);
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);

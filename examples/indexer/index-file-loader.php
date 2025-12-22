@@ -10,6 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Store\Document\Loader;
 use Symfony\AI\Store\Document\Loader\TextFileLoader;
 use Symfony\AI\Store\Document\Transformer\TextReplaceTransformer;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
@@ -23,21 +24,22 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $store = new InMemoryStore();
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
 $indexer = new Indexer(
-    loader: new TextFileLoader(),
+    loader: new Loader([TextFileLoader::supportedSource() => new TextFileLoader()]),
     vectorizer: $vectorizer,
     store: $store,
-    source: [
-        dirname(__DIR__, 2).'/fixtures/movies/gladiator.md',
-        dirname(__DIR__, 2).'/fixtures/movies/inception.md',
-        dirname(__DIR__, 2).'/fixtures/movies/jurassic-park.md',
-    ],
     transformers: [
         new TextReplaceTransformer(search: '## Plot', replace: '## Synopsis'),
         new TextSplitTransformer(chunkSize: 500, overlap: 100),
     ],
 );
 
-$indexer->index();
+$sources = TextFileLoader::createSource([
+    dirname(__DIR__, 2).'/fixtures/movies/gladiator.md',
+    dirname(__DIR__, 2).'/fixtures/movies/inception.md',
+    dirname(__DIR__, 2).'/fixtures/movies/jurassic-park.md',
+]);
+
+$indexer->index($sources);
 
 $vector = $vectorizer->vectorize('Roman gladiator revenge');
 $results = $store->query($vector);

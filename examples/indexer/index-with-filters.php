@@ -11,8 +11,10 @@
 
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
+use Symfony\AI\Store\Document\Loader;
+use Symfony\AI\Store\Document\Loader\DocumentCollectionLoader;
 use Symfony\AI\Store\Document\Metadata;
+use Symfony\AI\Store\Document\Source\DocumentCollection;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -27,7 +29,7 @@ $store = new InMemoryStore();
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
 
 // Sample documents with some unwanted content
-$documents = [
+$collection = new DocumentCollection([
     new TextDocument(
         Uuid::v4(),
         'Artificial Intelligence is transforming the way we work and live. Machine learning algorithms can now process vast amounts of data and make predictions with remarkable accuracy.',
@@ -48,7 +50,7 @@ $documents = [
         'Climate change is one of the most pressing challenges of our time. Renewable energy sources like solar and wind power are becoming increasingly important for a sustainable future.',
         new Metadata(['title' => 'Climate Action', 'category' => 'environment'])
     ),
-];
+]);
 
 // Create filters to remove unwanted content
 $filters = [
@@ -57,17 +59,16 @@ $filters = [
 ];
 
 $indexer = new Indexer(
-    loader: new InMemoryLoader($documents),
+    loader: new Loader([DocumentCollectionLoader::supportedSource() => new DocumentCollectionLoader()]),
     vectorizer: $vectorizer,
     store: $store,
-    source: null,
     filters: $filters,
     transformers: [
         new TextTrimTransformer(),
     ],
 );
 
-$indexer->index();
+$indexer->index($collection);
 
 $vector = $vectorizer->vectorize('technology artificial intelligence');
 $results = $store->query($vector);
@@ -83,7 +84,7 @@ foreach ($results as $i => $document) {
 }
 
 echo "=== Results Summary ===\n";
-echo sprintf("Original documents: %d\n", count($documents));
+echo sprintf("Original documents: %d\n", count($collection->getDocuments()));
 echo sprintf("Documents after filtering: %d\n", ++$filteredDocuments);
-echo sprintf("Filtered out: %d documents\n", count($documents) - $filteredDocuments);
+echo sprintf("Filtered out: %d documents\n", count($collection->getDocuments()) - $filteredDocuments);
 echo "\nThe 'Week of Symfony' newsletter and SPAM advertisement were successfully filtered out!\n";
