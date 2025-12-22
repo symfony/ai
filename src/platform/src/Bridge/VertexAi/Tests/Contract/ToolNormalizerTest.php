@@ -18,9 +18,13 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\ToolNormalizer;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
+/**
+ * @phpstan-import-type JsonSchema from Factory
+ */
 final class ToolNormalizerTest extends TestCase
 {
     public function testSupportsNormalization()
@@ -44,6 +48,9 @@ final class ToolNormalizerTest extends TestCase
         $this->assertSame($expected, $normalizer->getSupportedTypes(null));
     }
 
+    /**
+     * @param array{name: string, description: string, parameters: JsonSchema|array{type: 'object'}} $expected
+     */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(Tool $tool, array $expected)
     {

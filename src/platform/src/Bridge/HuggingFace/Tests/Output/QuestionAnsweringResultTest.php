@@ -68,6 +68,9 @@ final class QuestionAnsweringResultTest extends TestCase
         $this->assertSame(0.87, $result->score);
     }
 
+    /**
+     * @param array{answer: string, start: int, end: int, score: float} $data
+     */
     #[TestDox('fromArray handles various data formats')]
     #[TestWith([['answer' => 'Yes', 'start' => 0, 'end' => 3, 'score' => 1.0]])]
     #[TestWith([['answer' => 'No answer found', 'start' => -1, 'end' => -1, 'score' => 0.0]])]

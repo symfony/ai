@@ -27,6 +27,9 @@ use Symfony\Component\Serializer\Serializer;
 
 class CollectionNormalizerTest extends TestCase
 {
+    /**
+     * @param array<string, mixed> $expected
+     */
     #[DataProvider('normalizeProvider')]
     public function testNormalize(mixed $data, array $expected)
     {
@@ -48,6 +51,9 @@ class CollectionNormalizerTest extends TestCase
         $this->assertEquals($expected, $actual);
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
     #[DataProvider('supportsNormalizationProvider')]
     public function testSupportsNormalization(mixed $data, array $context, bool $expected)
     {

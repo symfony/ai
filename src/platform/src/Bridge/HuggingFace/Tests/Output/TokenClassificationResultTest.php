@@ -138,6 +138,9 @@ final class TokenClassificationResultTest extends TestCase
         $this->assertSame('THIRD', $result->tokens[2]->entityGroup);
     }
 
+    /**
+     * @param array{entity_group: string, score: float, word: string, start: int, end: int} $tokenData
+     */
     #[TestDox('fromArray handles various entity group formats')]
     #[TestWith([['entity_group' => '', 'score' => 0.5, 'word' => 'empty', 'start' => 0, 'end' => 5]])]
     #[TestWith([['entity_group' => 'UPPERCASE', 'score' => 0.5, 'word' => 'test', 'start' => 0, 'end' => 4]])]
@@ -157,6 +160,9 @@ final class TokenClassificationResultTest extends TestCase
         $this->assertSame($tokenData['end'], $result->tokens[0]->end);
     }
 
+    /**
+     * @param array{entity_group: string, score: float, word: string, start: int, end: int} $tokenData
+     */
     #[TestDox('fromArray handles various word formats')]
     #[TestWith([['entity_group' => 'PERSON', 'score' => 0.9, 'word' => '', 'start' => 0, 'end' => 0]])]
     #[TestWith([['entity_group' => 'PERSON', 'score' => 0.9, 'word' => 'O\'Connor', 'start' => 0, 'end' => 8]])]

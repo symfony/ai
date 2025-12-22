@@ -23,6 +23,10 @@ use Symfony\AI\Platform\Message\Content\Text;
 
 final class VoyageContractTest extends TestCase
 {
+    /**
+     * @param array<string|int, mixed>|ContentInterface $input
+     * @param array<string, mixed>                      $expected
+     */
     #[DataProvider('createRequestPayloadProvider')]
     public function testCreateMultimodalRequestPayload(array|ContentInterface $input, array $expected)
     {

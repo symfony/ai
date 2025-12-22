@@ -26,6 +26,9 @@ use Symfony\AI\Platform\Result\ToolCall;
 
 final class ContractTest extends TestCase
 {
+    /**
+     * @param array<string, mixed> $expected
+     */
     #[DataProvider('provideMessageBag')]
     public function testConvert(MessageBag $bag, array $expected)
     {

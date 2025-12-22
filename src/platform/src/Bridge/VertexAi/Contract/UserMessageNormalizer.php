@@ -26,7 +26,7 @@ final class UserMessageNormalizer extends ModelContractNormalizer
     /**
      * @param UserMessage $data
      *
-     * @return list<array{inlineData?: array{mimeType: string, data: string}}>
+     * @return list<array{text: string}|array{inlineData: array{mimeType: string, data: string}}>
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
