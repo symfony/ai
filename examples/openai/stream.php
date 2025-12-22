@@ -25,4 +25,7 @@ $result = $platform->invoke('gpt-4o-mini', $messages, [
     'stream' => true, // enable streaming of response text
 ]);
 
-print_stream($result);
+foreach ($result->asStream() as $word) {
+    echo $word;
+}
+echo \PHP_EOL;

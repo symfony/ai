@@ -26,4 +26,7 @@ $result = $platform->invoke('llama3.1-8b', $messages, [
     'stream' => true,
 ]);
 
-print_stream($result);
+foreach ($result->asStream() as $word) {
+    echo $word;
+}
+echo \PHP_EOL;

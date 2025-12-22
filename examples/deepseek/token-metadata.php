@@ -25,4 +25,4 @@ $messages = new MessageBag(
 );
 $result = $agent->call($messages);
 
-print_token_usage($result->getMetadata());
+print_token_usage($result->getMetadata()->get('token_usage'));

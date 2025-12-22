@@ -97,11 +97,9 @@ function output(): ConsoleOutput
     return new ConsoleOutput($verbosity);
 }
 
-function print_token_usage(Metadata $metadata): void
+function print_token_usage(?TokenUsage $tokenUsage): void
 {
-    $tokenUsage = $metadata->get('token_usage');
-
-    if (!$tokenUsage instanceof TokenUsage) {
+    if (null === $tokenUsage) {
         output()->writeln('<error>No token usage information available.</error>');
         exit(1);
     }
@@ -129,64 +127,6 @@ function print_vectors(DeferredResult $result): void
     assert(array_key_exists(0, $result->asVectors()));
 
     output()->writeln(sprintf('Dimensions: %d', $result->asVectors()[0]->getDimensions()));
-}
-
-function perplexity_print_search_results(Metadata $metadata): void
-{
-    $searchResults = $metadata->get('search_results');
-
-    if (null === $searchResults) {
-        return;
-    }
-
-    echo 'Search results:'.\PHP_EOL;
-
-    if (0 === count($searchResults)) {
-        echo 'No search results.'.\PHP_EOL;
-
-        return;
-    }
-
-    foreach ($searchResults as $i => $searchResult) {
-        echo 'Result #'.($i + 1).':'.\PHP_EOL;
-        echo isset($searchResult['title']) ? ' Title: '.$searchResult['title'].\PHP_EOL : '';
-        echo isset($searchResult['url']) ? ' URL: '.$searchResult['url'].\PHP_EOL : '';
-        echo isset($searchResult['date']) ? ' Date: '.$searchResult['date'].\PHP_EOL : '';
-        echo isset($searchResult['last_updated']) ? ' Last Updated: '.$searchResult['last_updated'].\PHP_EOL : '';
-        echo isset($searchResult['snippet']) ? ' Snippet: '.$searchResult['snippet'].\PHP_EOL : '';
-        echo \PHP_EOL;
-    }
-}
-
-function perplexity_print_citations(Metadata $metadata): void
-{
-    $citations = $metadata->get('citations');
-
-    if (null === $citations) {
-        return;
-    }
-
-    echo 'Citations:'.\PHP_EOL;
-
-    if (0 === count($citations)) {
-        echo 'No citations.'.\PHP_EOL;
-
-        return;
-    }
-
-    foreach ($citations as $i => $citation) {
-        echo 'Citation #'.($i + 1).':'.\PHP_EOL;
-        echo ' '.$citation.\PHP_EOL;
-        echo \PHP_EOL;
-    }
-}
-
-function print_stream(DeferredResult $result): void
-{
-    foreach ($result->asStream() as $word) {
-        echo $word;
-    }
-    echo \PHP_EOL;
 }
 
 set_exception_handler(function ($exception) {

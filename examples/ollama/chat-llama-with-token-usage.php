@@ -25,7 +25,7 @@ try {
 
     echo $result->asText().\PHP_EOL;
 
-    print_token_usage($result->getMetadata());
+    print_token_usage($result->getMetadata()->get('token_usage'));
 } catch (InvalidArgumentException $e) {
     echo $e->getMessage()."\nMaybe use a different model?\n";
 }

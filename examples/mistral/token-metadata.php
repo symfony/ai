@@ -30,4 +30,4 @@ $result = $agent->call($messages, [
     'max_tokens' => 500,
 ]);
 
-print_token_usage($result->getMetadata());
+print_token_usage($result->getMetadata()->get('token_usage'));

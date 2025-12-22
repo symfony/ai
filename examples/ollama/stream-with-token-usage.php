@@ -24,5 +24,9 @@ $messages = new MessageBag(
 
 $result = $platform->invoke(env('OLLAMA_LLM'), $messages, ['stream' => true]);
 
-print_stream($result);
-print_token_usage($result->getMetadata());
+foreach ($result->asStream() as $word) {
+    echo $word;
+}
+echo \PHP_EOL;
+
+print_token_usage($result->getMetadata()->get('token_usage'));

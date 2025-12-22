@@ -22,4 +22,7 @@ $result = $platform->invoke('mistral-large-latest', $messages, [
     'stream' => true,
 ]);
 
-print_stream($result);
+foreach ($result->asStream() as $word) {
+    echo $word;
+}
+echo \PHP_EOL;

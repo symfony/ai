@@ -28,4 +28,4 @@ $result = $agent->call($messages);
 $metadata = $result->getMetadata();
 $tokenUsage = $metadata->get('token_usage');
 
-print_token_usage($result->getMetadata());
+print_token_usage($result->getMetadata()->get('token_usage'));

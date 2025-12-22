@@ -13,7 +13,7 @@ use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
-require_once dirname(__DIR__).'/bootstrap.php';
+require_once __DIR__.'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('PERPLEXITY_API_KEY'), http_client());
 
@@ -30,5 +30,5 @@ foreach ($result->asStream() as $word) {
 }
 echo \PHP_EOL;
 
-perplexity_print_search_results($result->getMetadata());
-perplexity_print_citations($result->getMetadata());
+print_search_results($result->getMetadata());
+print_citations($result->getMetadata());

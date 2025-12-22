@@ -13,7 +13,7 @@ use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
-require_once dirname(__DIR__).'/bootstrap.php';
+require_once __DIR__.'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('PERPLEXITY_API_KEY'), http_client());
 
@@ -25,4 +25,7 @@ $result = $platform->invoke('sonar', $messages, [
     'max_tokens' => 500, // specific options just for this call
 ]);
 
-print_token_usage($result->getMetadata());
+// wait for the result to be ready
+$result->getResult();
+
+print_token_usage($result->getMetadata()->get('token_usage'));

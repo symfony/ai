@@ -23,4 +23,7 @@ $messages = new MessageBag(
 );
 $result = $platform->invoke('deepseek-chat', $messages, ['stream' => true]);
 
-print_stream($result);
+foreach ($result->asStream() as $word) {
+    echo $word;
+}
+echo \PHP_EOL;
