@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-22T15:53:09Z
+
+Don't forget to fix tests for `AiBundle`, they're using `connection` instead of `table_name`
