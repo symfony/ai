@@ -47,6 +47,12 @@ final class ContractTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
+    /**
+     * @return iterable<string, array{
+     *     input: object|array<string|int, mixed>|string,
+     *     expected: array<string, mixed>|string
+     * }>
+     */
     public static function providePayloadTestCases(): iterable
     {
         yield 'MessageBag with Gpt' => [
