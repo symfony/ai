@@ -1,0 +1,29 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-22T12:53:52Z
+
+@chr-hertel how can i excclude the resources from adding file headers?
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-22T15:01:29Z
+
+Can you please rebase and then make fabbot happy?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-22T17:24:59Z
+
+yeah will rebase buti cannot make fabpot happy as i wont add the header to the resources 😅 @chr-hertel maybe has an odea how to solve that
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-22T17:34:57Z
+
+Oh. sorry, please ignore fabbot then =)
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-22T18:42:33Z
+
+@Nyholm @chr-hertel rebased and changed the folder to mate/src
