@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-21T20:29:14Z
+
+@chr-hertel @OskarStark here is the demo PR
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-22T12:21:50Z
+
+@OskarStark we have to wait for https://github.com/symfony/ai/pull/1247 and #1239 before merging this
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-22T20:52:22Z
+
+@OskarStark @chr-hertel now this is final 🎉 i have opened another PR with smaller fixes https://github.com/symfony/ai/pull/1255 but this is ready to merge
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-22T21:35:44Z
+
+@chr-hertel fixed
