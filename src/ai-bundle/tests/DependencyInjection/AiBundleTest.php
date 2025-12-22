@@ -6379,11 +6379,10 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.message_store.doctrine.dbal.default');
 
         $this->assertSame('default', (string) $definition->getArgument(0));
-        $this->assertSame('default', (string) $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
-        $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(2));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame('serializer', (string) $definition->getArgument(3));
+        $this->assertSame('serializer', (string) $definition->getArgument(2));
 
         $this->assertSame([
             ['interface' => MessageStoreInterface::class],
@@ -6411,12 +6410,11 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.message_store.doctrine.dbal.default');
 
-        $this->assertSame('default', (string) $definition->getArgument(0));
-        $this->assertSame('foo', (string) $definition->getArgument(1));
+        $this->assertSame('foo', (string) $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
-        $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(2));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame('serializer', (string) $definition->getArgument(3));
+        $this->assertSame('serializer', (string) $definition->getArgument(2));
 
         $this->assertSame([
             ['interface' => MessageStoreInterface::class],

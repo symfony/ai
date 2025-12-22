@@ -1838,7 +1838,6 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->setLazy(true)
                     ->setArguments([
-                        $dbalMessageStore['connection'],
                         $dbalMessageStore['table_name'] ?? $name,
                         new Reference(\sprintf('doctrine.dbal.%s_connection', $dbalMessageStore['connection'])),
                         new Reference('serializer'),
