@@ -62,11 +62,13 @@ return (new PhpCsFixer\Config())
     ->setRiskyAllowed(true)
     ->setFinder(
         (new PhpCsFixer\Finder())
-            ->in(__DIR__.'/{.phpstan,demo,examples,fixtures,src}')
-            ->append([__FILE__])
-            ->exclude('var')
-            ->notPath('demo/config/reference.php')
-            ->notPath('src/mate/resources/mate/extensions.php')
-            ->notPath('src/mate/resources/mate/config.php')
+            ->in(__DIR__)
+            ->exclude(['ai.symfony.com', 'demo/mate', 'var', 'vendor'])
+            ->notPath([
+                'demo/config/bundles.php',
+                'demo/config/reference.php',
+                'src/mate/resources/mate/config.php',
+                'src/mate/resources/mate/extensions.php',
+            ])
     )
-;
+    ;
