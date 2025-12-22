@@ -51,13 +51,13 @@ class InitCommand extends Command
 
         $actions = [];
 
-        $mateDir = $this->rootDir.'/.mate';
+        $mateDir = $this->rootDir.'/mate';
         if (!is_dir($mateDir)) {
             mkdir($mateDir, 0755, true);
-            $actions[] = ['✓', 'Created', '.mate/ directory'];
+            $actions[] = ['✓', 'Created', 'mate/ directory'];
         }
 
-        $files = ['.mate/extensions.php', '.mate/config.php', '.mate/.env', '.mate/.gitignore', 'mcp.json'];
+        $files = ['mate/extensions.php', 'mate/config.php', 'mate/.env', 'mate/.gitignore', 'mcp.json'];
         foreach ($files as $file) {
             $fullPath = $this->rootDir.'/'.$file;
             if (!file_exists($fullPath)) {
@@ -91,13 +91,13 @@ class InitCommand extends Command
             }
         }
 
-        $mateUserDir = $this->rootDir.'/mate';
-        if (!is_dir($mateUserDir)) {
-            mkdir($mateUserDir, 0755, true);
-            file_put_contents($mateUserDir.'/.gitignore', '');
-            $actions[] = ['✓', 'Created', 'mate/ directory (for custom extensions)'];
+        $mateSrcDir = $this->rootDir.'/mate/src';
+        if (!is_dir($mateSrcDir)) {
+            mkdir($mateSrcDir, 0755, true);
+            file_put_contents($mateSrcDir.'/.gitkeep', '');
+            $actions[] = ['✓', 'Created', 'mate/src/ directory (for custom MCP tools)'];
         } else {
-            $actions[] = ['○', 'Exists', 'mate/ directory'];
+            $actions[] = ['○', 'Exists', 'mate/src/ directory'];
         }
 
         $composerActions = $this->updateComposerJson();
@@ -112,7 +112,7 @@ class InitCommand extends Command
             'Next steps:',
             '  1. Run "composer dump-autoload" to update the autoloader',
             '  2. Run "vendor/bin/mate discover" to find MCP extensions',
-            '  3. Add your custom MCP tools/resources/prompts to the mate/ directory',
+            '  3. Add your custom MCP tools/resources/prompts to the mate/src/ directory',
             '  4. Run "vendor/bin/mate serve" to start the MCP server',
         ]);
 
@@ -171,7 +171,7 @@ class InitCommand extends Command
         }
 
         if (!isset($composerJson['autoload']['psr-4']['App\\Mate\\'])) {
-            $composerJson['autoload']['psr-4']['App\\Mate\\'] = 'mate/';
+            $composerJson['autoload']['psr-4']['App\\Mate\\'] = 'mate/src/';
             $modified = true;
             $actions[] = ['✓', 'Added', 'App\\Mate\\ autoloader'];
         } else {

@@ -43,9 +43,9 @@ final class DiscoverCommandTest extends TestCase
             $tester->execute([]);
 
             $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-            $this->assertFileExists($tempDir.'/.mate/extensions.php');
+            $this->assertFileExists($tempDir.'/mate/extensions.php');
 
-            $extensions = include $tempDir.'/.mate/extensions.php';
+            $extensions = include $tempDir.'/mate/extensions.php';
             $this->assertIsArray($extensions);
             $this->assertArrayHasKey('vendor/package-a', $extensions);
             $this->assertArrayHasKey('vendor/package-b', $extensions);
@@ -53,7 +53,6 @@ final class DiscoverCommandTest extends TestCase
             $this->assertIsArray($extensions['vendor/package-b']);
             $this->assertTrue($extensions['vendor/package-a']['enabled']);
             $this->assertTrue($extensions['vendor/package-b']['enabled']);
-
             $output = $tester->getDisplay();
             $this->assertStringContainsString('Discovered 2 Extension', $output);
             $this->assertStringContainsString('vendor/package-a', $output);
@@ -66,11 +65,11 @@ final class DiscoverCommandTest extends TestCase
     public function testPreservesExistingEnabledState()
     {
         $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
-        mkdir($tempDir.'/.mate', 0755, true);
+        mkdir($tempDir.'/mate', 0755, true);
 
         try {
             // Create existing extensions.php with package-a disabled
-            file_put_contents($tempDir.'/.mate/extensions.php', <<<'PHP'
+            file_put_contents($tempDir.'/mate/extensions.php', <<<'PHP'
 <?php
 return [
     'vendor/package-a' => ['enabled' => false],
@@ -85,7 +84,7 @@ PHP
 
             $tester->execute([]);
 
-            $extensions = include $tempDir.'/.mate/extensions.php';
+            $extensions = include $tempDir.'/mate/extensions.php';
             $this->assertIsArray($extensions);
             $this->assertIsArray($extensions['vendor/package-a']);
             $this->assertIsArray($extensions['vendor/package-b']);
@@ -99,11 +98,11 @@ PHP
     public function testNewPackagesDefaultToEnabled()
     {
         $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
-        mkdir($tempDir.'/.mate', 0755, true);
+        mkdir($tempDir.'/mate', 0755, true);
 
         try {
             // Create existing extensions.php with only package-a
-            file_put_contents($tempDir.'/.mate/extensions.php', <<<'PHP'
+            file_put_contents($tempDir.'/mate/extensions.php', <<<'PHP'
 <?php
 return [
     'vendor/package-a' => ['enabled' => false],
@@ -117,7 +116,7 @@ PHP
 
             $tester->execute([]);
 
-            $extensions = include $tempDir.'/.mate/extensions.php';
+            $extensions = include $tempDir.'/mate/extensions.php';
             $this->assertIsArray($extensions);
             $this->assertIsArray($extensions['vendor/package-a']);
             $this->assertIsArray($extensions['vendor/package-b']);

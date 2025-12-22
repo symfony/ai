@@ -43,15 +43,15 @@ final class InitCommandTest extends TestCase
         $tester->execute([]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertDirectoryExists($this->tempDir.'/.mate');
-        $this->assertFileExists($this->tempDir.'/.mate/extensions.php');
-        $this->assertFileExists($this->tempDir.'/.mate/config.php');
-        $this->assertFileExists($this->tempDir.'/.mate/.env');
+        $this->assertDirectoryExists($this->tempDir.'/mate');
+        $this->assertFileExists($this->tempDir.'/mate/extensions.php');
+        $this->assertFileExists($this->tempDir.'/mate/config.php');
+        $this->assertFileExists($this->tempDir.'/mate/.env');
         $this->assertFileExists($this->tempDir.'/mcp.json');
         $this->assertTrue(is_link($this->tempDir.'/.mcp.json'));
         $this->assertSame('mcp.json', readlink($this->tempDir.'/.mcp.json'));
 
-        $content = file_get_contents($this->tempDir.'/.mate/extensions.php');
+        $content = file_get_contents($this->tempDir.'/mate/extensions.php');
         $this->assertIsString($content);
         $this->assertStringContainsString('mate discover', $content);
         $this->assertStringContainsString('enabled', $content);
@@ -79,15 +79,15 @@ final class InitCommandTest extends TestCase
         $tester = new CommandTester($command);
 
         // Create existing file
-        mkdir($this->tempDir.'/.mate', 0755, true);
-        file_put_contents($this->tempDir.'/.mate/extensions.php', '<?php return ["test" => "value"];');
+        mkdir($this->tempDir.'/mate', 0755, true);
+        file_put_contents($this->tempDir.'/mate/extensions.php', '<?php return ["test" => "value"];');
 
         // Execute with 'no' response (twice for both files)
         $tester->setInputs(['no', 'no']);
         $tester->execute([]);
 
         // File should still contain original content
-        $content = file_get_contents($this->tempDir.'/.mate/extensions.php');
+        $content = file_get_contents($this->tempDir.'/mate/extensions.php');
         $this->assertIsString($content);
         $this->assertStringContainsString('test', $content);
         $this->assertStringContainsString('value', $content);
@@ -99,15 +99,15 @@ final class InitCommandTest extends TestCase
         $tester = new CommandTester($command);
 
         // Create existing file
-        mkdir($this->tempDir.'/.mate', 0755, true);
-        file_put_contents($this->tempDir.'/.mate/extensions.php', '<?php return ["test" => "value"];');
+        mkdir($this->tempDir.'/mate', 0755, true);
+        file_put_contents($this->tempDir.'/mate/extensions.php', '<?php return ["test" => "value"];');
 
         // Execute with 'yes' response (twice for both files)
         $tester->setInputs(['yes', 'yes']);
         $tester->execute([]);
 
         // File should be overwritten with template content
-        $content = file_get_contents($this->tempDir.'/.mate/extensions.php');
+        $content = file_get_contents($this->tempDir.'/mate/extensions.php');
         $this->assertIsString($content);
         $this->assertStringNotContainsString('test', $content);
         $this->assertStringContainsString('mate discover', $content);
@@ -119,15 +119,15 @@ final class InitCommandTest extends TestCase
         $command = new InitCommand($this->tempDir);
         $tester = new CommandTester($command);
 
-        // Ensure .mate directory doesn't exist
-        $this->assertDirectoryDoesNotExist($this->tempDir.'/.mate');
+        // Ensure mate directory doesn't exist
+        $this->assertDirectoryDoesNotExist($this->tempDir.'/mate');
 
         $tester->execute([]);
 
         // Directory should be created
-        $this->assertDirectoryExists($this->tempDir.'/.mate');
-        $this->assertFileExists($this->tempDir.'/.mate/extensions.php');
-        $this->assertFileExists($this->tempDir.'/.mate/config.php');
+        $this->assertDirectoryExists($this->tempDir.'/mate');
+        $this->assertFileExists($this->tempDir.'/mate/extensions.php');
+        $this->assertFileExists($this->tempDir.'/mate/config.php');
     }
 
     private function removeDirectory(string $dir): void

@@ -74,10 +74,10 @@ The component includes embedded bridge packages:
 - `LogReader`: Reads and filters log files
 
 ### Configuration
-- `.mate/extensions.php`: Enable/disable extensions
-- `.mate/config.php`: Custom service configuration
-- `.mate/.env`: Environment variables for mate configuration
-- `mate/`: Directory for user-defined MCP tools
+- `mate/extensions.php`: Enable/disable extensions
+- `mate/config.php`: Custom service configuration
+- `mate/.env`: Environment variables for mate configuration
+- `mate/src/`: Directory for user-defined MCP tools
 
 ## Testing Architecture
 

@@ -67,7 +67,7 @@ final class ContainerFactory
      */
     private function getEnabledExtensions(): array
     {
-        $extensionsFile = $this->rootDir.'/.mate/extensions.php';
+        $extensionsFile = $this->rootDir.'/mate/extensions.php';
 
         if (!file_exists($extensionsFile)) {
             return [];
@@ -145,7 +145,7 @@ final class ContainerFactory
         $logger = $container->get(LoggerInterface::class);
         \assert($logger instanceof LoggerInterface);
 
-        $loader = new PhpFileLoader($container, new FileLocator($this->rootDir.'/.mate'));
+        $loader = new PhpFileLoader($container, new FileLocator($this->rootDir.'/mate'));
         foreach ($rootProject['includes'] as $include) {
             try {
                 $loader->load($include);

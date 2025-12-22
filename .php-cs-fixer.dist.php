@@ -66,5 +66,7 @@ return (new PhpCsFixer\Config())
             ->append([__FILE__])
             ->exclude('var')
             ->notPath('demo/config/reference.php')
+            ->notPath('src/mate/resources/mate/extensions.php')
+            ->notPath('src/mate/resources/mate/config.php')
     )
 ;

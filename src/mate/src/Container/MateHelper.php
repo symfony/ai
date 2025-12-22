@@ -31,7 +31,7 @@ class MateHelper
      *
      * Call this method only once. The second call will override the first one.
      *
-     * Example usage in .mate/config.php:
+     * Example usage in mate/config.php:
      * ```php
      * use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
      * use Symfony\AI\Mate\Container\MateHelper;
