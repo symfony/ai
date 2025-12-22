@@ -21,7 +21,7 @@ interface IndexerInterface
     /**
      * Process sources through the complete document pipeline: load → transform → vectorize → store.
      *
-     * @param array{chunk_size?: int} $options Processing options
+     * @param array{chunk_size?: int, platform_options?: array<string, mixed>} $options Processing options
      */
     public function index(array $options = []): void;
 
