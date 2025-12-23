@@ -49,7 +49,6 @@ use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog as OpenAiModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\ModelCatalog as OpenRouterModelCatalog;
 use Symfony\AI\Platform\Bridge\Perplexity\Contract\PerplexityContract;
 use Symfony\AI\Platform\Bridge\Perplexity\ModelCatalog as PerplexityModelCatalog;
-use Symfony\AI\Platform\Bridge\Perplexity\SearchResultProcessor as PerplexitySearchResultProcessor;
 use Symfony\AI\Platform\Bridge\Replicate\ModelCatalog as ReplicateModelCatalog;
 use Symfony\AI\Platform\Bridge\Scaleway\ModelCatalog as ScalewayModelCatalog;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract as VertexAiGeminiContract;
@@ -213,9 +212,6 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('ai.traceable_chat'),
             ])
             ->tag('data_collector')
-
-        // search result processors
-        ->set('ai.platform.search_result_processor.perplexity', PerplexitySearchResultProcessor::class)
 
         // serializer
         ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
