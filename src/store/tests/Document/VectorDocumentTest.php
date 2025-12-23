@@ -26,18 +26,19 @@ use Symfony\Component\Uid\Uuid;
  */
 final class VectorDocumentTest extends TestCase
 {
-    #[TestWith([1])]
-    #[TestWith(['id'])]
-    #[TestWith(['uuid'])]
-    public function testConstructorIdSupportsManyTypes(int|string $id)
+    #[DataProvider('constructorIdDataProvider')]
+    public function testConstructorIdSupportsManyTypes(int|string|Uuid $id)
     {
-        if ('uuid' === $id) {
-            $id = Uuid::v4();
-        }
-
         $document = new VectorDocument($id, new NullVector());
 
         $this->assertSame($id, $document->id);
+    }
+
+    public static function constructorIdDataProvider(): iterable
+    {
+        yield 'int' => [1];
+        yield 'string' => ['id'];
+        yield 'uuid' => [Uuid::v4()];
     }
 
     #[TestDox('Creates document with required parameters only')]
