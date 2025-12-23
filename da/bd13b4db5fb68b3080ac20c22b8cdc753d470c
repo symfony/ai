@@ -1,0 +1,6 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-23T14:46:15Z
+
+I added a new CI step to build demo with no-dev:
+https://github.com/symfony/ai/actions/runs/20463246514/job/58800896505?pr=1268
