@@ -17,6 +17,12 @@
             "homepage": "https://symfony.com/contributors"
         }
     ],
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/Failover"
+        }
+    ],
     "require": {
         "php": ">=8.2",
         "symfony/ai-agent": "@dev",
