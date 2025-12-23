@@ -30,6 +30,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('mate.debug_log_file', $debugLogFile)
         ->set('mate.debug_file_enabled', $debugFileEnabled)
         ->set('mate.debug_enabled', $debugEnabled)
+        ->set('mate.mcp_protocol_version', '2025-03-26')
     ;
 
     $container->services()

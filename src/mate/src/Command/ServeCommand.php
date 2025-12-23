@@ -12,6 +12,7 @@
 namespace Symfony\AI\Mate\Command;
 
 use Mcp\Capability\Discovery\Discoverer;
+use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\Icon;
 use Mcp\Server;
 use Mcp\Server\Session\FileSessionStore;
@@ -83,6 +84,7 @@ class ServeCommand extends Command
         );
 
         $server = Server::builder()
+            ->setProtocolVersion(ProtocolVersion::tryFrom($this->container->getParameter('mate.mcp_protocol_version') ?? ProtocolVersion::V2025_03_26->value) ?? ProtocolVersion::V2025_03_26)
             ->setServerInfo(
                 App::NAME,
                 App::VERSION,
