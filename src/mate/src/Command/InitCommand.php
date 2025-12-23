@@ -94,7 +94,7 @@ class InitCommand extends Command
         $mateSrcDir = $this->rootDir.'/mate/src';
         if (!is_dir($mateSrcDir)) {
             mkdir($mateSrcDir, 0755, true);
-            file_put_contents($mateSrcDir.'/.gitkeep', '');
+            file_put_contents($mateSrcDir.'/.gitignore', '');
             $actions[] = ['✓', 'Created', 'mate/src/ directory (for custom MCP tools)'];
         } else {
             $actions[] = ['○', 'Exists', 'mate/src/ directory'];
