@@ -22,7 +22,7 @@ $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
     Message::ofUser(
         'Describe the image as a comedian would do it.',
-        new ImageUrl('https://christopher-hertel.de/images/projects/llmchain.png'),
+        new ImageUrl('https://raw.githubusercontent.com/symfony/ai/7b7dc8ceaf98f04a447fca46bf8e6a06c5b8868a/fixtures/image.jpg'),
     ),
 );
 $result = $platform->invoke('sonar', $messages);
