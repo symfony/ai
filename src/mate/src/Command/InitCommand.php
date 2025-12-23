@@ -161,7 +161,7 @@ class InitCommand extends Command
 
         if (!isset($composerJson['extra']['ai-mate'])) {
             $composerJson['extra']['ai-mate'] = [
-                'scan-dirs' => ['mate'],
+                'scan-dirs' => ['mate/src'],
                 'includes' => ['config.php'],
             ];
             $modified = true;
