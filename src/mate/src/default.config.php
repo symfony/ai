@@ -39,6 +39,7 @@ return static function (ContainerConfigurator $container): void {
             ->autoconfigure()
 
         ->set(LoggerInterface::class, Logger::class)
+            ->public()
             ->arg('$logFile', '%mate.debug_log_file%')
             ->arg('$fileLogEnabled', '%mate.debug_file_enabled%')
             ->arg('$debugEnabled', '%mate.debug_enabled%')
