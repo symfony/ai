@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-23T10:39:41Z
+
+Can we test this somehow?
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-12-23T11:04:31Z
+
+> Can we test this somehow?
+
+I might add an assertion on the priority, but more complete could be hard I guess!
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-23T11:20:27Z
+
+Lets do this
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2025-12-23T13:04:56Z
+
+Et voila!
+
+(I pushed some tests)
