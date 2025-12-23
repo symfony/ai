@@ -42,7 +42,7 @@
         "php": ">=8.2",
         "ext-fileinfo": "*",
         "psr/log": "^3.0",
-        "symfony/ai-platform": "@dev",
+        "symfony/ai-platform": "^0.1",
         "symfony/clock": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/polyfill-php83": "^1.32",

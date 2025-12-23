@@ -28,7 +28,7 @@
         "phpdocumentor/reflection-docblock": "^5.4",
         "phpstan/phpdoc-parser": "^2.1",
         "psr/log": "^3.0",
-        "symfony/ai-platform": "@dev",
+        "symfony/ai-platform": "^0.1",
         "symfony/clock": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/polyfill-php85": "^1.33",
@@ -42,7 +42,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.46",
-        "symfony/ai-store": "@dev",
+        "symfony/ai-store": "^0.1",
         "symfony/event-dispatcher": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0",
         "symfony/translation-contracts": "^3.6"

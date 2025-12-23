@@ -26,7 +26,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-chat": "@dev",
+        "symfony/ai-chat": "^0.1",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0"
     },

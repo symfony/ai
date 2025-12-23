@@ -30,7 +30,7 @@
         "mrmysql/youtube-transcript": "^0.0.5",
         "nyholm/psr7": "^1.8",
         "php-http/discovery": "^1.19",
-        "symfony/ai-agent": "@dev",
+        "symfony/ai-agent": "^0.1",
         "symfony/http-client": "^7.3|^8.0"
     },
     "require-dev": {

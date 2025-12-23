@@ -30,8 +30,8 @@
         "php": ">=8.2",
         "ext-pdo": "*",
         "oskarstark/enum-helper": "^1.5",
-        "symfony/ai-platform": "@dev",
-        "symfony/ai-store": "@dev",
+        "symfony/ai-platform": "^0.1",
+        "symfony/ai-store": "^0.1",
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {

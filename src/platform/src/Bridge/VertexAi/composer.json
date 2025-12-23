@@ -27,8 +27,8 @@
     "require": {
         "google/auth": "^1.47",
         "php": ">=8.2",
-        "symfony/ai-gemini-platform": "@dev",
-        "symfony/ai-platform": "@dev",
+        "symfony/ai-gemini-platform": "^0.1",
+        "symfony/ai-platform": "^0.1",
         "symfony/http-client": "^7.3|^8.0"
     },
     "require-dev": {
@@ -36,7 +36,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.46",
-        "symfony/ai-agent": "@dev"
+        "symfony/ai-agent": "^0.1"
     },
     "minimum-stability": "dev",
     "autoload": {

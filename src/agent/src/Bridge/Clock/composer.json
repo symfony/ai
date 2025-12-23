@@ -27,7 +27,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-agent": "@dev",
+        "symfony/ai-agent": "^0.1",
         "symfony/clock": "^7.3|^8.0"
     },
     "require-dev": {

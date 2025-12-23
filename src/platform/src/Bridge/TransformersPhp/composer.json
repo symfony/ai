@@ -26,7 +26,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-platform": "@dev",
+        "symfony/ai-platform": "^0.1",
         "codewithkyrian/transformers": "^0.6.2"
     },
     "require-dev": {

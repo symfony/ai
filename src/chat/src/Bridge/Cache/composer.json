@@ -27,7 +27,7 @@
     "require": {
         "php": ">=8.2",
         "symfony/cache": "^7.3|^8.0",
-        "symfony/ai-chat": "@dev"
+        "symfony/ai-chat": "^0.1"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",

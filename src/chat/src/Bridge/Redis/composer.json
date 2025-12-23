@@ -27,7 +27,7 @@
     "require": {
         "php": ">=8.2",
         "ext-redis": "*",
-        "symfony/ai-chat": "@dev",
+        "symfony/ai-chat": "^0.1",
         "symfony/serializer": "^7.3|^8.0"
     },
     "require-dev": {

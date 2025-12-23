@@ -27,7 +27,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-mate": "@dev",
+        "symfony/ai-mate": "^0.1",
         "symfony/dependency-injection": "^7.3|^8.0"
     },
     "require-dev": {
@@ -60,8 +60,12 @@
             "url": "https://github.com/symfony/ai"
         },
         "ai-mate": {
-            "scan-dirs": ["Capability"],
-            "includes": ["config/config.php"]
+            "scan-dirs": [
+                "Capability"
+            ],
+            "includes": [
+                "config/config.php"
+            ]
         }
     }
 }
