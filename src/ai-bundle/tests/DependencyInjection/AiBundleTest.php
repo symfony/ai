@@ -6971,6 +6971,53 @@ class AiBundleTest extends TestCase
         $this->assertFalse($container->hasDefinition('ai.traceable_platform.us'));
     }
 
+    public function testDecoratorPriority()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'anthropic' => [
+                        'api_key' => 'test_key',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'fault_tolerant_toolbox' => true,
+                    ],
+                ],
+                'message_store' => [
+                    'memory' => [
+                        'main' => [
+                            'identifier' => '_memory',
+                        ],
+                    ],
+                ],
+                'chat' => [
+                    'main' => [
+                        'agent' => 'ai.agent.my_agent',
+                        'message_store' => 'ai.message_store.memory.main',
+                    ],
+                ],
+            ],
+        ]);
+
+        $decorators = [
+            'ai.traceable_platform.anthropic',
+            'ai.traceable_toolbox.my_agent',
+            'ai.fault_tolerant_toolbox.my_agent',
+            'ai.traceable_message_store.main',
+            'ai.traceable_chat.main',
+        ];
+
+        foreach ($decorators as $decorator) {
+            $this->assertTrue($container->hasDefinition($decorator), "Container should have definition for decorator: $decorator");
+            $definition = $container->getDefinition($decorator);
+            $this->assertNotNull($definition->getDecoratedService(), "Definition for $decorator should be decorated");
+            $this->assertSame(-1024, $definition->getDecoratedService()[2], "Decorator $decorator should have priority -1024");
+        }
+    }
+
     /**
      * @param array<string, mixed> $configuration
      */

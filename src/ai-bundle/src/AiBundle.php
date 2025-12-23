@@ -173,7 +173,7 @@ final class AiBundle extends AbstractBundle
         if ($builder->getParameter('kernel.debug')) {
             foreach ($platforms as $platform) {
                 $traceablePlatformDefinition = (new Definition(TraceablePlatform::class))
-                    ->setDecoratedService($platform)
+                    ->setDecoratedService($platform, priority: -1024)
                     ->setArguments([new Reference('.inner')])
                     ->addTag('ai.traceable_platform');
                 $suffix = u($platform)->after('ai.platform.')->toString();
@@ -222,7 +222,7 @@ final class AiBundle extends AbstractBundle
         if ($builder->getParameter('kernel.debug')) {
             foreach ($messageStores as $messageStore) {
                 $traceableMessageStoreDefinition = (new Definition(TraceableMessageStore::class))
-                    ->setDecoratedService($messageStore)
+                    ->setDecoratedService($messageStore, priority: -1024)
                     ->setArguments([
                         new Reference('.inner'),
                         new Reference(ClockInterface::class),
@@ -251,7 +251,7 @@ final class AiBundle extends AbstractBundle
         if ($builder->getParameter('kernel.debug')) {
             foreach ($chats as $chat) {
                 $traceableChatDefinition = (new Definition(TraceableChat::class))
-                    ->setDecoratedService($chat)
+                    ->setDecoratedService($chat, priority: -1024)
                     ->setArguments([
                         new Reference('.inner'),
                         new Reference(ClockInterface::class),
@@ -947,14 +947,14 @@ final class AiBundle extends AbstractBundle
             if ($config['fault_tolerant_toolbox']) {
                 $container->setDefinition('ai.fault_tolerant_toolbox.'.$name, new Definition(FaultTolerantToolbox::class))
                     ->setArguments([new Reference('.inner')])
-                    ->setDecoratedService('ai.toolbox.'.$name);
+                    ->setDecoratedService('ai.toolbox.'.$name, priority: -1024);
             }
 
             if ($container->getParameter('kernel.debug')) {
                 $traceableToolboxDefinition = (new Definition('ai.traceable_toolbox.'.$name))
                     ->setClass(TraceableToolbox::class)
                     ->setArguments([new Reference('.inner')])
-                    ->setDecoratedService('ai.toolbox.'.$name)
+                    ->setDecoratedService('ai.toolbox.'.$name, priority: -1024)
                     ->addTag('ai.traceable_toolbox');
                 $container->setDefinition('ai.traceable_toolbox.'.$name, $traceableToolboxDefinition);
             }
