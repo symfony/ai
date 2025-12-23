@@ -17,6 +17,12 @@
             "homepage": "https://symfony.com/contributors"
         }
     ],
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/Failover"
+        }
+    ],
     "require": {
         "php": ">=8.2",
         "symfony/ai-agent": "@dev",
@@ -56,6 +62,7 @@
         "symfony/ai-doctrine-message-store": "@dev",
         "symfony/ai-elasticsearch-store": "@dev",
         "symfony/ai-eleven-labs-platform": "@dev",
+        "symfony/ai-failover-platform": "@dev",
         "symfony/ai-gemini-platform": "@dev",
         "symfony/ai-generic-platform": "@dev",
         "symfony/ai-hugging-face-platform": "@dev",
