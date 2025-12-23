@@ -24,19 +24,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
     public function extract(RawResultInterface $rawResult, array $options = []): ?TokenUsageInterface
     {
         if ($options['stream'] ?? false) {
-            $lastChunk = null;
-
-            foreach ($rawResult->getDataStream() as $chunk) {
-                // Store last event that contains usage metadata
-                if (isset($chunk['usageMetadata'])) {
-                    $lastChunk = $chunk;
-                }
-            }
-
-            if ($lastChunk) {
-                return $this->extractUsageMetadata($lastChunk['usageMetadata']);
-            }
-
+            // Streams have to be handled manually as the tokens are part of the streamed chunks
             return null;
         }
 

@@ -68,21 +68,9 @@ final class TokenUsageExtractorTest extends TestCase
     public function testItHandlesStreamResults()
     {
         $extractor = new TokenUsageExtractor();
-        $result = new InMemoryRawResult(dataStream: [
-            ['content' => 'chunk1'],
-            ['content' => 'chunk2', 'usageMetadata' => [
-                'promptTokenCount' => 15,
-                'candidatesTokenCount' => 25,
-                'totalTokenCount' => 40,
-            ]],
-        ]);
 
-        $tokenUsage = $extractor->extract($result, ['stream' => true]);
+        $tokenUsage = $extractor->extract(new InMemoryRawResult(), ['stream' => true]);
 
-        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
-        $this->assertSame(15, $tokenUsage->getPromptTokens());
-        $this->assertSame(25, $tokenUsage->getCompletionTokens());
-        $this->assertNull($tokenUsage->getThinkingTokens());
-        $this->assertSame(40, $tokenUsage->getTotalTokens());
+        $this->assertNull($tokenUsage);
     }
 }

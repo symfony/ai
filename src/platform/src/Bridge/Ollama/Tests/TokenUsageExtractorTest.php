@@ -54,25 +54,8 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
 
-        $result = new InMemoryRawResult([], [
-            [
-                'model' => 'foo',
-                'response' => 'First chunk',
-                'done' => false,
-            ],
-            [
-                'model' => 'foo',
-                'response' => 'Hello World!',
-                'done' => true,
-                'prompt_eval_count' => 10,
-                'eval_count' => 10,
-            ],
-        ]);
+        $tokenUsage = $extractor->extract(new InMemoryRawResult(), ['stream' => true]);
 
-        $tokenUsage = $extractor->extract($result, ['stream' => true]);
-
-        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
-        $this->assertSame(10, $tokenUsage->getPromptTokens());
-        $this->assertSame(10, $tokenUsage->getCompletionTokens());
+        $this->assertNull($tokenUsage);
     }
 }

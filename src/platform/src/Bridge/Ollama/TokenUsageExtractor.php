@@ -24,15 +24,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
     public function extract(RawResultInterface $rawResult, array $options = []): ?TokenUsageInterface
     {
         if ($options['stream'] ?? false) {
-            foreach ($rawResult->getDataStream() as $chunk) {
-                if ($chunk['done']) {
-                    return new TokenUsage(
-                        $chunk['prompt_eval_count'],
-                        $chunk['eval_count']
-                    );
-                }
-            }
-
+            // Streams have to be handled manually as the tokens are part of the streamed chunks
             return null;
         }
 
