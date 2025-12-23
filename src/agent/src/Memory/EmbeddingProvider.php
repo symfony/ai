@@ -55,15 +55,16 @@ final class EmbeddingProvider implements MemoryProviderInterface
 
         $vectors = $this->platform->invoke($this->model->getName(), $userMessageTextContent->getText())->asVectors();
         $foundEmbeddingContent = $this->vectorStore->query($vectors[0]);
-        if (0 === \count($foundEmbeddingContent)) {
-            return [];
-        }
 
-        $content = '## Dynamic memories fitting user message'.\PHP_EOL.\PHP_EOL;
+        $content = '';
         foreach ($foundEmbeddingContent as $document) {
             $content .= json_encode($document->metadata);
         }
 
-        return [new Memory($content)];
+        if ('' === $content) {
+            return [];
+        }
+
+        return [new Memory('## Dynamic memories fitting user message'.\PHP_EOL.\PHP_EOL.$content)];
     }
 }

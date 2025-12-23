@@ -122,13 +122,14 @@ final class EmbeddingProviderTest extends TestCase
             ->willReturn($deferredResult);
 
         $store = $this->createMock(StoreInterface::class);
+        $generator = (function () {
+            yield (object) ['metadata' => ['fact' => 'The sky is blue']];
+            yield (object) ['metadata' => ['fact' => 'Water is wet']];
+        })();
         $store->expects($this->once())
             ->method('query')
             ->with($vector)
-            ->willReturn([
-                (object) ['metadata' => ['fact' => 'The sky is blue']],
-                (object) ['metadata' => ['fact' => 'Water is wet']],
-            ]);
+            ->willReturn($generator);
 
         $embeddingProvider = new EmbeddingProvider($platform, new Model('text-embedding-3-small'), $store);
 
