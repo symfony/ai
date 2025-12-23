@@ -215,8 +215,8 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $documents);
         $this->assertInstanceOf(VectorDocument::class, $documents[0]);
         $this->assertInstanceOf(VectorDocument::class, $documents[1]);
-        $this->assertEquals($uuid1->toString(), $documents[0]->id);
-        $this->assertEquals($uuid2->toString(), $documents[1]->id);
+        $this->assertEquals($uuid1->toBinary(), $documents[0]->id);
+        $this->assertEquals($uuid2->toBinary(), $documents[1]->id);
         $this->assertSame(0.95, $documents[0]->score);
         $this->assertSame(0.85, $documents[1]->score);
         $this->assertSame('First Document', $documents[0]->metadata['title']);
