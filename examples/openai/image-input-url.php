@@ -22,7 +22,7 @@ $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
     Message::ofUser(
         'Describe the image as a comedian would do it.',
-        new ImageUrl('https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Webysther_20160423_-_Elephpant.svg/350px-Webysther_20160423_-_Elephpant.svg.png'),
+        new ImageUrl('https://christopher-hertel.de/images/projects/llmchain.png'),
     ),
 );
 $result = $platform->invoke('gpt-4o-mini', $messages);
