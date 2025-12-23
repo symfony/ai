@@ -9,6 +9,8 @@ parameters:
         - Tests/
     excludePaths:
         - vendor/
+    scanDirectories:
+        - ../../../../../src/agent/tests/
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
         -

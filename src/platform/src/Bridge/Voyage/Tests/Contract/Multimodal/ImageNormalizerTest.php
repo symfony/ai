@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\Voyage\Tests\Contract\Multimodal;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\Voyage\Contract\Multimodal\CollectionNormalizer;
 use Symfony\AI\Platform\Bridge\Voyage\Contract\Multimodal\ImageNormalizer;
 use Symfony\AI\Platform\Bridge\Voyage\Voyage;
@@ -57,7 +56,7 @@ final class ImageNormalizerTest extends TestCase
         yield 'supported' => [$image, new Voyage('voyage-multimodal-3', [Capability::INPUT_MULTIMODAL]), true];
         yield 'not an image' => [[], new Voyage('voyage-multimodal-3', [Capability::INPUT_MULTIMODAL]), false];
         yield 'non-multimodal model' => [$image, new Voyage('voyage-3.5'), false];
-        yield 'unsupported model' => [$image, new Gpt('gpt-40'), false];
+        yield 'unsupported model' => [$image, new Model('gpt-40'), false];
     }
 
     private static function getFixtureImage(): Image

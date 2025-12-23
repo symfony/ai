@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\Voyage\Tests\Contract\Multimodal;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\Voyage\Contract\Multimodal\CollectionNormalizer;
 use Symfony\AI\Platform\Bridge\Voyage\Contract\Multimodal\ImageUrlNormalizer;
 use Symfony\AI\Platform\Bridge\Voyage\Contract\Multimodal\TextNormalizer;
@@ -23,6 +22,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\Content\Collection;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Model;
 use Symfony\Component\Serializer\Serializer;
 
 class CollectionNormalizerTest extends TestCase
@@ -101,7 +101,7 @@ class CollectionNormalizerTest extends TestCase
         yield 'unsupported model' => [
             new Collection(),
             [
-                Contract::CONTEXT_MODEL => new Gpt('some-model', [Capability::INPUT_MULTIMODAL]),
+                Contract::CONTEXT_MODEL => new Model('some-model', [Capability::INPUT_MULTIMODAL]),
             ],
             false,
         ];

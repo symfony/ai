@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Contract\Gpt\Message\Content;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\Message\Content\ImageNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Capability;
@@ -51,7 +50,7 @@ class ImageNormalizerTest extends TestCase
 
         yield 'supported' => [$image, $gpt, true];
 
-        yield 'unsupported model' => [$image, new Gemini('foo', [Capability::INPUT_IMAGE]), false];
+        yield 'unsupported model' => [$image, new Model('foo', [Capability::INPUT_IMAGE]), false];
 
         yield 'model lacks image input capability' => [$image, new Gpt('o3'), false];
 

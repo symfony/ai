@@ -50,11 +50,11 @@ $factories = [
         env('CLICKHOUSE_DATABASE'),
         env('CLICKHOUSE_TABLE'),
     ),
-    'elasticsearch' => static fn (): ElasticsearchStore => new ElasticsearchStore(
-        http_client(),
-        env('ELASTICSEARCH_ENDPOINT'),
-        'symfony',
-    ),
+    // 'elasticsearch' => static fn (): ElasticsearchStore => new ElasticsearchStore(
+    //     http_client(),
+    //     env('ELASTICSEARCH_ENDPOINT'),
+    //    'symfony',
+    // ),
     'manticoresearch' => static fn (): ManticoreSearchStore => new ManticoreSearchStore(
         http_client(),
         env('MANTICORESEARCH_HOST'),

@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Contract\Gpt\Message\Content;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\Message\Content\TextNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Contract;
@@ -49,7 +48,7 @@ class TextNormalizerTest extends TestCase
 
         yield 'supported' => [$text, $gpt, true];
 
-        yield 'unsupported model' => [$text, new Gemini('foo'), false];
+        yield 'unsupported model' => [$text, new Model('foo'), false];
 
         yield 'unsupported data' => [[], $gpt, false];
     }

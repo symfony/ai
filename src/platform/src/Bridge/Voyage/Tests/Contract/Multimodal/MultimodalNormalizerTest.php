@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\Voyage\Tests\Contract\Multimodal;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\Voyage\Contract\Multimodal\CollectionNormalizer;
 use Symfony\AI\Platform\Bridge\Voyage\Contract\Multimodal\MultimodalNormalizer;
 use Symfony\AI\Platform\Bridge\Voyage\Contract\Multimodal\TextNormalizer;
@@ -99,7 +98,7 @@ class MultimodalNormalizerTest extends TestCase
 
         yield 'unsupported model' => [
             [$text],
-            new Gpt('some-model', [Capability::INPUT_MULTIMODAL]),
+            new Model('some-model', [Capability::INPUT_MULTIMODAL]),
             false,
         ];
 

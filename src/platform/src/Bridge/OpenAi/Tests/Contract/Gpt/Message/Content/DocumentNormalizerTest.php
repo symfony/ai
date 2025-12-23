@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Contract\Gpt\Message\Content;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\Message\Content\DocumentNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Capability;
@@ -52,7 +51,7 @@ class DocumentNormalizerTest extends TestCase
 
         yield 'supported' => [$doc, $gpt, true];
 
-        yield 'unsupported model' => [$doc, new Gemini('foo', [Capability::INPUT_PDF]), false];
+        yield 'unsupported model' => [$doc, new Model('foo', [Capability::INPUT_PDF]), false];
 
         yield 'model lacks image input capability' => [$doc, new Gpt('o3'), false];
 

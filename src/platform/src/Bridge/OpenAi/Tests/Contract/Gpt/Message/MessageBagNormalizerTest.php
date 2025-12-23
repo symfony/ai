@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Contract\Gpt\Message;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\Message\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\Message\MessageBagNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\Message\ToolCallMessageNormalizer;
@@ -107,7 +106,7 @@ class MessageBagNormalizerTest extends TestCase
         $gpt = new Gpt('o3');
 
         yield 'supported' => [$messageBad, $gpt, true];
-        yield 'unsupported model' => [$messageBad, new Gemini('foo'), false];
+        yield 'unsupported model' => [$messageBad, new Model('foo'), false];
         yield 'unsupported data' => [new Text('foo'), $gpt, false];
     }
 }

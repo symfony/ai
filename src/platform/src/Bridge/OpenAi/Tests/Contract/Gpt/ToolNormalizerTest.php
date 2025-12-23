@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Contract\Gpt;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\Gpt\ToolNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Contract;
@@ -82,7 +81,7 @@ class ToolNormalizerTest extends TestCase
         $gpt = new Gpt('o3');
 
         yield 'supported' => [$tool, $gpt, true];
-        yield 'unsupported model' => [$tool, new Gemini('foo'), false];
+        yield 'unsupported model' => [$tool, new Model('foo'), false];
         yield 'unsupported data' => [new Text('foo'), $gpt, false];
     }
 }
