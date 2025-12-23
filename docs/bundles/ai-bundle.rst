@@ -250,7 +250,7 @@ Models can be configured in two different ways to specify model options and para
     ai:
         agent:
             my_agent:
-                model: 'gpt-4o-mini?temperature=0.7&max_tokens=2000&stream=true'
+                model: 'gpt-4o-mini?temperature=0.7&max_output_tokens=2000&stream=true'
 
 Alternatively, you can specify model options in a separate ``options`` section:
 
@@ -263,7 +263,7 @@ Alternatively, you can specify model options in a separate ``options`` section:
                     name: 'gpt-4o-mini'
                     options:
                         temperature: 0.7
-                        max_tokens: 2000
+                        max_output_tokens: 2000
                         stream: true
 
 .. note::

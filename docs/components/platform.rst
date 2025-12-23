@@ -55,7 +55,7 @@ start for vendor-specific models and their capabilities.
 Capabilities are a list of strings defined by :class:`Symfony\\AI\\Platform\\Capability`, which can be used to check if a model
 supports a specific feature, like ``Capability::INPUT_AUDIO`` or ``Capability::OUTPUT_IMAGE``.
 
-Options are additional parameters that can be passed to the model, like ``temperature`` or ``max_tokens``, and are
+Options are additional parameters that can be passed to the model, like ``temperature`` or ``max_output_tokens``, and are
 usually defined by the specific models and their documentation.
 
 Model Size Variants
@@ -171,11 +171,11 @@ Options
 
 The third parameter of the :method:`Symfony\\AI\\Platform\\PlatformInterface::invoke`
 method is an array of options, which basically wraps the options of the corresponding
-model and platform, like ``temperature`` or ``max_tokens``::
+model and platform, like ``temperature`` or ``max_output_tokens``::
 
     $result = $platform->invoke('gpt-4o-mini', $input, [
         'temperature' => 0.7,
-        'max_tokens' => 100,
+        'max_output_tokens' => 100,
     ]);
 
 .. note::
