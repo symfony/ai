@@ -66,7 +66,7 @@ final class Platform implements PlatformInterface
 
         $result = $this->convertResult($model, $this->doInvoke($model, $payload, $options), $options);
 
-        $event = new ResultEvent($model, $result, $options);
+        $event = new ResultEvent($model, $result, $options, $input);
         $this->eventDispatcher?->dispatch($event);
 
         return $event->getDeferredResult();

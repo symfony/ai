@@ -23,12 +23,14 @@ use Symfony\Contracts\EventDispatcher\Event;
 final class ResultEvent extends Event
 {
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>               $options
+     * @param array<string, mixed>|string|object $input
      */
     public function __construct(
         private Model $model,
         private DeferredResult $deferredResult,
         private array $options = [],
+        private array|string|object $input = [],
     ) {
     }
 
@@ -66,5 +68,13 @@ final class ResultEvent extends Event
     public function setOptions(array $options): void
     {
         $this->options = $options;
+    }
+
+    /**
+     * @return array<string, mixed>|string|object
+     */
+    public function getInput(): array|string|object
+    {
+        return $this->input;
     }
 }
