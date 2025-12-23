@@ -285,6 +285,48 @@ jobs:
               working-directory: demo
               run: vendor/bin/phpunit
 
+    demo-no-dev:
+        name: Integration / Demo (no-dev)
+        needs: demo
+        runs-on: ubuntu-latest
+        env:
+            APP_ENV: prod
+
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.4'
+                  tools: flex
+                  extensions: "${{ env.REQUIRED_PHP_EXTENSIONS }}"
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v3
+
+            - name: Build root packages
+              run: php .github/build-packages.php
+
+            - name: Install demo dependencies (no-dev)
+              uses: ramsey/composer-install@v3
+              with:
+                  composer-options: "--no-scripts --no-dev"
+                  working-directory: demo
+
+            - name: Link local packages
+              working-directory: demo
+              run: ../link
+
+            - run: composer run-script auto-scripts --no-interaction
+              working-directory: demo
+
+            - run: bin/console lint:container
+              working-directory: demo
+
+            - run: bin/console cache:clear
+              working-directory: demo
+
     examples:
         name: Integration / Examples / PHP ${{ matrix.php-version }}${{ matrix.dependency-version == 'lowest' && ' / lowest' || '' }}${{ matrix.symfony-version && format(' / Symfony {0}', matrix.symfony-version) || '' }}
         needs: demo

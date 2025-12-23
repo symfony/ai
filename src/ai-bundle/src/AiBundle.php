@@ -181,20 +181,38 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        foreach ($config['agent'] as $agentName => $agent) {
-            $this->processAgentConfig($agentName, $agent, $builder);
-        }
-        if (1 === \count($config['agent']) && isset($agentName)) {
-            $builder->setAlias(AgentInterface::class, 'ai.agent.'.$agentName);
+        if ([] !== ($config['agent'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Agent configuration requires "symfony/ai-agent" package. Try running "composer require symfony/ai-agent".');
+            }
+
+            foreach ($config['agent'] as $agentName => $agent) {
+                $this->processAgentConfig($agentName, $agent, $builder);
+            }
+            if (1 === \count($config['agent']) && isset($agentName)) {
+                $builder->setAlias(AgentInterface::class, 'ai.agent.'.$agentName);
+            }
         }
 
-        foreach ($config['multi_agent'] ?? [] as $multiAgentName => $multiAgent) {
-            $this->processMultiAgentConfig($multiAgentName, $multiAgent, $builder);
+        if ([] !== ($config['multi_agent'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Multi-agent configuration requires "symfony/ai-agent" package. Try running "composer require symfony/ai-agent".');
+            }
+
+            foreach ($config['multi_agent'] as $multiAgentName => $multiAgent) {
+                $this->processMultiAgentConfig($multiAgentName, $multiAgent, $builder);
+            }
         }
 
         $setupStoresOptions = [];
-        foreach ($config['store'] ?? [] as $type => $store) {
-            $this->processStoreConfig($type, $store, $builder, $setupStoresOptions);
+        if ([] !== ($config['store'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-store', StoreInterface::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Store configuration requires "symfony/ai-store" package. Try running "composer require symfony/ai-store".');
+            }
+
+            foreach ($config['store'] as $type => $store) {
+                $this->processStoreConfig($type, $store, $builder, $setupStoresOptions);
+            }
         }
         $builder->getDefinition('ai.command.setup_store')->setArgument(1, $setupStoresOptions);
 
@@ -209,8 +227,14 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.command.drop_store');
         }
 
-        foreach ($config['message_store'] ?? [] as $type => $store) {
-            $this->processMessageStoreConfig($type, $store, $builder);
+        if ([] !== ($config['message_store'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-chat', Chat::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Message store configuration requires "symfony/ai-chat" package. Try running "composer require symfony/ai-chat".');
+            }
+
+            foreach ($config['message_store'] as $type => $store) {
+                $this->processMessageStoreConfig($type, $store, $builder);
+            }
         }
 
         $messageStores = array_keys($builder->findTaggedServiceIds('ai.message_store'));
@@ -238,8 +262,14 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.command.drop_message_store');
         }
 
-        foreach ($config['chat'] ?? [] as $name => $chat) {
-            $this->processChatConfig($name, $chat, $builder);
+        if ([] !== ($config['chat'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-chat', Chat::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Chat configuration requires "symfony/ai-chat" package. Try running "composer require symfony/ai-chat".');
+            }
+
+            foreach ($config['chat'] as $name => $chat) {
+                $this->processChatConfig($name, $chat, $builder);
+            }
         }
 
         $chats = array_keys($builder->findTaggedServiceIds('ai.chat'));
@@ -262,50 +292,70 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        foreach ($config['vectorizer'] ?? [] as $vectorizerName => $vectorizer) {
-            $this->processVectorizerConfig($vectorizerName, $vectorizer, $builder);
+        if ([] !== ($config['vectorizer'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-store', StoreInterface::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Vectorizer configuration requires "symfony/ai-store" package. Try running "composer require symfony/ai-store".');
+            }
+
+            foreach ($config['vectorizer'] as $vectorizerName => $vectorizer) {
+                $this->processVectorizerConfig($vectorizerName, $vectorizer, $builder);
+            }
         }
 
-        foreach ($config['indexer'] as $indexerName => $indexer) {
-            $this->processIndexerConfig($indexerName, $indexer, $builder);
+        if ([] !== ($config['indexer'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-store', StoreInterface::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Indexer configuration requires "symfony/ai-store" package. Try running "composer require symfony/ai-store".');
+            }
+
+            foreach ($config['indexer'] as $indexerName => $indexer) {
+                $this->processIndexerConfig($indexerName, $indexer, $builder);
+            }
+            if (1 === \count($config['indexer']) && isset($indexerName)) {
+                $builder->setAlias(IndexerInterface::class, 'ai.indexer.'.$indexerName);
+            }
         }
-        if (1 === \count($config['indexer']) && isset($indexerName)) {
-            $builder->setAlias(IndexerInterface::class, 'ai.indexer.'.$indexerName);
+
+        if ([] !== ($config['retriever'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-store', StoreInterface::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Retriever configuration requires "symfony/ai-store" package. Try running "composer require symfony/ai-store".');
+            }
+
+            foreach ($config['retriever'] as $retrieverName => $retriever) {
+                $this->processRetrieverConfig($retrieverName, $retriever, $builder);
+            }
+            if (1 === \count($config['retriever']) && isset($retrieverName)) {
+                $builder->setAlias(RetrieverInterface::class, 'ai.retriever.'.$retrieverName);
+            }
         }
 
-        foreach ($config['retriever'] ?? [] as $retrieverName => $retriever) {
-            $this->processRetrieverConfig($retrieverName, $retriever, $builder);
+        if (ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
+            $builder->registerAttributeForAutoconfiguration(AsTool::class, static function (ChildDefinition $definition, AsTool $attribute): void {
+                $definition->addTag('ai.tool', [
+                    'name' => $attribute->name,
+                    'description' => $attribute->description,
+                    'method' => $attribute->method,
+                ]);
+            });
+
+            $builder->registerAttributeForAutoconfiguration(AsInputProcessor::class, static function (ChildDefinition $definition, AsInputProcessor $attribute): void {
+                $definition->addTag('ai.agent.input_processor', [
+                    'agent' => $attribute->agent,
+                    'priority' => $attribute->priority,
+                ]);
+            });
+
+            $builder->registerAttributeForAutoconfiguration(AsOutputProcessor::class, static function (ChildDefinition $definition, AsOutputProcessor $attribute): void {
+                $definition->addTag('ai.agent.output_processor', [
+                    'agent' => $attribute->agent,
+                    'priority' => $attribute->priority,
+                ]);
+            });
+
+            $builder->registerForAutoconfiguration(InputProcessorInterface::class)
+                ->addTag('ai.agent.input_processor', ['tagged_by' => 'interface']);
+            $builder->registerForAutoconfiguration(OutputProcessorInterface::class)
+                ->addTag('ai.agent.output_processor', ['tagged_by' => 'interface']);
         }
-        if (1 === \count($config['retriever'] ?? []) && isset($retrieverName)) {
-            $builder->setAlias(RetrieverInterface::class, 'ai.retriever.'.$retrieverName);
-        }
-
-        $builder->registerAttributeForAutoconfiguration(AsTool::class, static function (ChildDefinition $definition, AsTool $attribute): void {
-            $definition->addTag('ai.tool', [
-                'name' => $attribute->name,
-                'description' => $attribute->description,
-                'method' => $attribute->method,
-            ]);
-        });
-
-        $builder->registerAttributeForAutoconfiguration(AsInputProcessor::class, static function (ChildDefinition $definition, AsInputProcessor $attribute): void {
-            $definition->addTag('ai.agent.input_processor', [
-                'agent' => $attribute->agent,
-                'priority' => $attribute->priority,
-            ]);
-        });
-
-        $builder->registerAttributeForAutoconfiguration(AsOutputProcessor::class, static function (ChildDefinition $definition, AsOutputProcessor $attribute): void {
-            $definition->addTag('ai.agent.output_processor', [
-                'agent' => $attribute->agent,
-                'priority' => $attribute->priority,
-            ]);
-        });
-
-        $builder->registerForAutoconfiguration(InputProcessorInterface::class)
-            ->addTag('ai.agent.input_processor', ['tagged_by' => 'interface']);
-        $builder->registerForAutoconfiguration(OutputProcessorInterface::class)
-            ->addTag('ai.agent.output_processor', ['tagged_by' => 'interface']);
 
         $builder->registerForAutoconfiguration(ModelClientInterface::class)
             ->addTag('ai.platform.model_client');
@@ -323,6 +373,30 @@ final class AiBundle extends AbstractBundle
         if (false === $builder->getParameter('kernel.debug')) {
             $builder->removeDefinition('ai.data_collector');
             $builder->removeDefinition('ai.traceable_toolbox');
+        }
+
+        // Remove service definitions for optional packages that are not installed
+        if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
+            $builder->removeDefinition('ai.command.chat');
+            $builder->removeDefinition('ai.toolbox.abstract');
+            $builder->removeDefinition('ai.tool_factory.abstract');
+            $builder->removeDefinition('ai.tool_factory');
+            $builder->removeDefinition('ai.tool_result_converter');
+            $builder->removeDefinition('ai.tool_call_argument_resolver');
+            $builder->removeDefinition('ai.tool.agent_processor.abstract');
+        }
+
+        if (!ContainerBuilder::willBeAvailable('symfony/ai-store', StoreInterface::class, ['symfony/ai-bundle'])) {
+            $builder->removeDefinition('ai.command.setup_store');
+            $builder->removeDefinition('ai.command.drop_store');
+            $builder->removeDefinition('ai.command.index');
+            $builder->removeDefinition('ai.command.retrieve');
+        }
+
+        if (!ContainerBuilder::willBeAvailable('symfony/ai-chat', Chat::class, ['symfony/ai-bundle'])) {
+            $builder->removeDefinition('ai.chat.message_bag.normalizer');
+            $builder->removeDefinition('ai.command.setup_message_store');
+            $builder->removeDefinition('ai.command.drop_message_store');
         }
     }
 
