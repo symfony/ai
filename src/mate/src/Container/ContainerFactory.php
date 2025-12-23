@@ -145,7 +145,7 @@ final class ContainerFactory
         $logger = $container->get(LoggerInterface::class);
         \assert($logger instanceof LoggerInterface);
 
-        $loader = new PhpFileLoader($container, new FileLocator($this->rootDir.'/mate'));
+        $loader = new PhpFileLoader($container, new FileLocator($this->rootDir));
         foreach ($rootProject['includes'] as $include) {
             try {
                 $loader->load($include);

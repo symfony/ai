@@ -43,8 +43,8 @@ Initialize configuration:
 
 This creates:
 
-* ``.mate/`` directory with configuration files
-* ``mate/`` directory for custom extensions
+* ``mate/`` directory with configuration files
+* ``mate/src`` directory for custom extensions
 * ``mcp.json`` for MCP client configuration
 
 It also updates your ``composer.json`` with the following configuration:
@@ -54,13 +54,13 @@ It also updates your ``composer.json`` with the following configuration:
     {
         "autoload": {
             "psr-4": {
-                "App\\Mate\\": "mate/"
+                "App\\Mate\\": "mate/src"
             }
         },
         "extra": {
             "ai-mate": {
-                "scan-dirs": ["mate"],
-                "includes": ["services.php"]
+                "scan-dirs": ["mate/src"],
+                "includes": ["mate/config.php"]
             }
         }
     }
@@ -86,7 +86,7 @@ Start the MCP server:
 Add Custom Tools
 ----------------
 
-The easiest way to add tools is to create a ``mate`` folder next to your ``src`` and ``tests`` directories,
+The easiest way to add tools is to create a ``mate/src`` folder next to your ``src`` and ``tests`` directories,
 then add a class with a method using the ``#[McpTool]`` attribute::
 
     // mate/MyTool.php
@@ -109,11 +109,11 @@ More about attributes and how to configure Prompts, Resources and more can be fo
 Configuration
 -------------
 
-The configuration folder is called ``.mate`` and is located in your project's root directory.
+The configuration folder is called ``mate`` and is located in your project's root directory.
 It contains two important files:
 
-* ``.mate/extensions.php`` - Enable/disable extensions
-* ``.mate/services.php`` - Configure settings
+* ``mate/extensions.php`` - Enable/disable extensions
+* ``mate/config.php`` - Configure settings
 
 .. tip::
 
@@ -124,7 +124,7 @@ Extensions Configuration
 
 ::
 
-    // .mate/extensions.php
+    // mate/extensions.php
     // This file is managed by 'mate discover'
     // You can manually edit to enable/disable extensions
 
@@ -138,7 +138,7 @@ Services Configuration
 
 ::
 
-    // .mate/services.php
+    // mate/config.php
     use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
     return static function (ContainerConfigurator $container): void {
@@ -184,7 +184,7 @@ Adding Third-Party Extensions
 
        $ composer require vendor/symfony-tools
 
-2. Discover available tools (auto-generates/updates ``.mate/extensions.php``):
+2. Discover available tools (auto-generates/updates ``mate/extensions.php``):
 
    .. code-block:: terminal
 
@@ -192,7 +192,7 @@ Adding Third-Party Extensions
 
 3. Optionally disable specific extensions::
 
-       // .mate/extensions.php
+       // mate/extensions.php
        return [
            'vendor/symfony-tools' => ['enabled' => true],
            'vendor/unwanted-tools' => ['enabled' => false],
@@ -274,13 +274,13 @@ Commands
 --------
 
 ``mate init``
-    Initialize AI Mate configuration and create the ``.mate/`` directory.
+    Initialize AI Mate configuration and create the ``mate/`` directory.
 
 ``mate discover``
     Scan for MCP extensions in installed packages. This command will:
 
     - Scan your vendor directory for packages with ``extra.ai-mate`` configuration
-    - Generate or update ``.mate/extensions.php`` with discovered extensions
+    - Generate or update ``mate/extensions.php`` with discovered extensions
     - Preserve existing enabled/disabled states for known extensions
     - Default new extensions to enabled
 
@@ -294,7 +294,7 @@ Security
 --------
 
 For security, no vendor extensions are enabled by default. You must explicitly enable packages
-in ``.mate/extensions.php`` by setting their ``enabled`` flag to ``true``.
+in ``mate/extensions.php`` by setting their ``enabled`` flag to ``true``.
 
 The local ``mate/`` directory is always enabled for rapid development.
 

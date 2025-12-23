@@ -60,7 +60,7 @@ The ``extra.ai-mate`` section is required for your package to be discovered as a
     $ composer require vendor/my-extension
     $ vendor/bin/mate discover
 
-The ``discover`` command will automatically add your extension to ``.mate/extensions.php``::
+The ``discover`` command will automatically add your extension to ``mate/extensions.php``::
 
     return [
         'vendor/my-extension' => ['enabled' => true],
@@ -136,7 +136,7 @@ Service Includes
 Security
 ~~~~~~~~
 
-Extensions must be explicitly enabled in ``.mate/extensions.php``:
+Extensions must be explicitly enabled in ``mate/extensions.php``:
 
 - The ``discover`` command automatically adds discovered extensions
 - All extensions default to ``enabled: true`` when discovered
@@ -174,7 +174,7 @@ If your extensions aren't being found:
 
    .. code-block:: terminal
 
-       $ cat .mate/extensions.php
+       $ cat mate/extensions.php
 
    Verify your package is listed and ``enabled`` is ``true``.
 
@@ -183,7 +183,7 @@ Extensions Not Loading
 
 If extensions are discovered but not loading:
 
-1. **Check enabled status** in ``.mate/extensions.php``::
+1. **Check enabled status** in ``mate/extensions.php``::
 
        return [
            'vendor/my-extension' => ['enabled' => true],  // Must be true

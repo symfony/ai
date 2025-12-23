@@ -57,7 +57,7 @@ If the server starts but immediately crashes:
 
    .. code-block:: terminal
 
-       $ php -r "require 'vendor/autoload.php'; include '.mate/services.php';"
+       $ php -r "require 'vendor/autoload.php'; include 'mate/config.php';"
 
 3. **Check for circular dependencies** in your service configuration.
 

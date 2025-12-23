@@ -108,7 +108,7 @@
                 "mate/src"
             ],
             "includes": [
-                "config.php"
+                "mate/config.php"
             ]
         }
     },
