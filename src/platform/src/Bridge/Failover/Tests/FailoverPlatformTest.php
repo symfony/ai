@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Failover\Tests;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -30,6 +31,14 @@ use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 
 final class FailoverPlatformTest extends TestCase
 {
+    public function testPlatformCannotBeCreatedWithoutPlatforms()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('"Symfony\AI\Platform\Bridge\Failover\FailoverPlatform" must have at least one platform configured.');
+        $this->expectExceptionCode(0);
+        new FailoverPlatform([], $this->createRateLimiterFactory());
+    }
+
     public function testPlatformCannotPerformInvokeWithoutRemainingPlatform()
     {
         $mainPlatform = $this->createMock(PlatformInterface::class);

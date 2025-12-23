@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Failover;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\AI\Platform\Exception\LogicException;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
@@ -42,7 +42,7 @@ final class FailoverPlatform implements PlatformInterface
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
         if ([] === $platforms) {
-            throw new LogicException(\sprintf('"%s" must have at least one platform configured.', self::class));
+            throw new InvalidArgumentException(\sprintf('"%s" must have at least one platform configured.', self::class));
         }
 
         $this->failedPlatforms = new \WeakMap();
