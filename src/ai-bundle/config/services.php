@@ -34,6 +34,7 @@ use Symfony\AI\Platform\Bridge\Cerebras\ModelCatalog as CerebrasModelCatalog;
 use Symfony\AI\Platform\Bridge\Decart\ModelCatalog as DecartModelCatalog;
 use Symfony\AI\Platform\Bridge\DeepSeek\ModelCatalog as DeepSeekModelCatalog;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\ModelCatalog as DockerModelRunnerModelCatalog;
+use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\Gemini\ModelCatalog as GeminiModelCatalog;
@@ -79,6 +80,8 @@ return static function (ContainerConfigurator $container): void {
             ->factory([OpenAiContract::class, 'create'])
         ->set('ai.platform.contract.anthropic', Contract::class)
             ->factory([AnthropicContract::class, 'create'])
+        ->set('ai.platform.contract.elevenlabs', Contract::class)
+            ->factory([ElevenLabsContract::class, 'create'])
         ->set('ai.platform.contract.gemini', Contract::class)
             ->factory([GeminiContract::class, 'create'])
         ->set('ai.platform.contract.huggingface', Contract::class)
@@ -101,7 +104,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.deepseek', DeepSeekModelCatalog::class)
         ->set('ai.platform.model_catalog.dockermodelrunner', DockerModelRunnerModelCatalog::class)
         ->set('ai.platform.model_catalog.elevenlabs', ElevenLabsModelCatalog::class)
-            ->lazy(true)
+            ->lazy()
             ->tag('proxy', ['interface' => ModelCatalogInterface::class])
         ->set('ai.platform.model_catalog.gemini', GeminiModelCatalog::class)
         ->set('ai.platform.model_catalog.huggingface', HuggingFaceModelCatalog::class)

@@ -59,7 +59,8 @@ use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\DeepSeek\PlatformFactory as DeepSeekPlatformFactory;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory as DockerModelRunnerPlatformFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsApiCatalog;
-use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsClient;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsResultConverter;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory as HuggingFacePlatformFactory;
@@ -118,6 +119,7 @@ use Symfony\AI\Store\RetrieverInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -548,7 +550,7 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('elevenlabs' === $type) {
-            if (!ContainerBuilder::willBeAvailable('symfony/ai-eleven-labs-platform', ElevenLabsPlatformFactory::class, ['symfony/ai-bundle'])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-eleven-labs-platform', ElevenLabsClient::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('ElevenLabs platform configuration requires "symfony/ai-eleven-labs-platform" package. Try running "composer require symfony/ai-eleven-labs-platform".');
             }
 
@@ -565,15 +567,37 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.platform.model_catalog.'.$type, $catalogDefinition);
             }
 
-            $definition = (new Definition(Platform::class))
-                ->setFactory(ElevenLabsPlatformFactory::class.'::create')
+            $clientDefinition = (new Definition(ElevenLabsClient::class))
                 ->setLazy(true)
                 ->setArguments([
                     $platform['api_key'],
                     $platform['host'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('proxy', ['interface' => ModelClientInterface::class])
+                ->addTag('ai.client', ['name' => $type])
+            ;
+
+            $container->setDefinition('ai.client.'.$type, $clientDefinition);
+
+            $resultConverter = (new Definition(ElevenLabsResultConverter::class))
+                ->setLazy(true)
+                ->setArguments([
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('proxy', ['interface' => ResultConverterInterface::class])
+                ->addTag('ai.result_converter', ['name' => $type])
+            ;
+
+            $container->setDefinition('ai.result_converter.'.$type, $resultConverter);
+
+            $definition = (new Definition(Platform::class))
+                ->setLazy(true)
+                ->setArguments([
+                    new TaggedIteratorArgument('ai.client.'.$type, 'name'),
+                    new TaggedIteratorArgument('ai.result_converter.'.$type, 'name'),
                     new Reference('ai.platform.model_catalog.'.$type),
-                    null,
+                    new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
