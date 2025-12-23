@@ -166,7 +166,7 @@ use Symfony\Component\Finder\Finder;
             $fileUpdates = 0;
 
             foreach ($data['require'] ?? [] as $package => $constraint) {
-                if (str_starts_with($package, 'symfony/ai-')) {
+                if (str_starts_with($package, 'symfony/ai-') || 'symfony/mcp-bundle' === $package) {
                     $data['require'][$package] = $composerConstraint;
                     $modified = true;
                     ++$fileUpdates;
@@ -174,7 +174,7 @@ use Symfony\Component\Finder\Finder;
             }
 
             foreach ($data['require-dev'] ?? [] as $package => $constraint) {
-                if (str_starts_with($package, 'symfony/ai-')) {
+                if (str_starts_with($package, 'symfony/ai-') || 'symfony/mcp-bundle' === $package) {
                     $data['require-dev'][$package] = $composerConstraint;
                     $modified = true;
                     ++$fileUpdates;
