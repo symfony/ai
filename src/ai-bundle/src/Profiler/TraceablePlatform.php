@@ -56,8 +56,7 @@ final class TraceablePlatform implements PlatformInterface
         }
 
         if ($options['stream'] ?? false) {
-            $originalStream = $deferredResult->asStream();
-            $deferredResult = new DeferredResult(new PlainConverter($this->createTraceableStreamResult($originalStream)), $deferredResult->getRawResult(), $options);
+            $deferredResult = new DeferredResult(new PlainConverter($this->createTraceableStreamResult($deferredResult)), $deferredResult->getRawResult(), $options);
         }
 
         $this->calls[] = [
@@ -75,15 +74,19 @@ final class TraceablePlatform implements PlatformInterface
         return $this->platform->getModelCatalog();
     }
 
-    private function createTraceableStreamResult(\Generator $originalStream): StreamResult
+    private function createTraceableStreamResult(DeferredResult $originalStream): StreamResult
     {
         return $result = new StreamResult((function () use (&$result, $originalStream) {
             $this->resultCache[$result] = '';
-            foreach ($originalStream as $chunk) {
+            foreach ($originalStream->asStream() as $chunk) {
                 yield $chunk;
                 if (\is_string($chunk)) {
                     $this->resultCache[$result] .= $chunk;
                 }
+            }
+
+            foreach ($originalStream->getResult()->getMetadata() as $key => $value) {
+                $result->getMetadata()->add($key, $value);
             }
         })());
     }
