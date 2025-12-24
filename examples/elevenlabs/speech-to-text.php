@@ -9,15 +9,20 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsClient;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsResultConverter;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog;
 use Symfony\AI\Platform\Message\Content\Audio;
+use Symfony\AI\Platform\Platform;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(
-    apiKey: env('ELEVEN_LABS_API_KEY'),
-    httpClient: http_client()
+$elevenLabsClient = new ElevenLabsClient(
+    env('ELEVEN_LABS_API_KEY'),
+    httpClient: http_client(),
 );
+
+$platform = new Platform([$elevenLabsClient], [new ElevenLabsResultConverter(http_client())], new ModelCatalog());
 
 $result = $platform->invoke('scribe_v1', Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'));
 

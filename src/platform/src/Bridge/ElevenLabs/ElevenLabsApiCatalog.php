@@ -49,7 +49,7 @@ final class ElevenLabsApiCatalog implements ModelCatalogInterface
 
         $models = $response->toArray();
 
-        $capabilities = fn (array $model): array => match (true) {
+        $capabilities = static fn (array $model): array => match (true) {
             $model['can_do_text_to_speech'] => [
                 Capability::TEXT_TO_SPEECH,
                 Capability::INPUT_TEXT,
