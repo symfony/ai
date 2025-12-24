@@ -36,13 +36,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[AsCommand('serve', 'Starts the MCP server with stdio transport')]
 class ServeCommand extends Command
 {
-    private LoggerInterface $logger;
-
     public function __construct(
         private ContainerInterface $container,
+        private LoggerInterface $logger,
     ) {
         parent::__construct(self::getDefaultName());
-        $this->logger = $container->get(LoggerInterface::class);
     }
 
     public static function getDefaultName(): string

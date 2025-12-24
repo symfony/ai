@@ -44,7 +44,7 @@ final class App
         $application = new Application(self::NAME, self::VERSION);
 
         self::addCommand($application, new InitCommand($rootDir));
-        self::addCommand($application, new ServeCommand($container));
+        self::addCommand($application, new ServeCommand($container, $logger));
         self::addCommand($application, new DiscoverCommand($rootDir, $logger));
         self::addCommand($application, new ClearCacheCommand($cacheDir));
 
