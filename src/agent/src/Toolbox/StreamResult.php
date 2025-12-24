@@ -12,8 +12,11 @@
 namespace Symfony\AI\Agent\Toolbox;
 
 use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\BaseResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
+use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
@@ -21,7 +24,7 @@ use Symfony\AI\Platform\Result\ToolCallResult;
 final class StreamResult extends BaseResult
 {
     public function __construct(
-        private readonly \Generator $generator,
+        private readonly \Symfony\AI\Platform\Result\StreamResult $streamResult,
         private readonly \Closure $handleToolCallsCallback,
     ) {
     }
@@ -29,14 +32,9 @@ final class StreamResult extends BaseResult
     public function getContent(): \Generator
     {
         $streamedResult = '';
-        foreach ($this->generator as $value) {
+        foreach ($this->streamResult->getContent() as $value) {
             if ($value instanceof ToolCallResult) {
                 $innerResult = ($this->handleToolCallsCallback)($value, Message::ofAssistant($streamedResult));
-
-                // Propagate metadata from inner result to this result
-                foreach ($innerResult->getMetadata()->all() as $key => $metadataValue) {
-                    $this->getMetadata()->add($key, $metadataValue);
-                }
 
                 $content = $innerResult->getContent();
                 // Strings are iterable in PHP but yield from would iterate character-by-character.
@@ -48,12 +46,29 @@ final class StreamResult extends BaseResult
                     yield from $content;
                 }
 
+                // Propagate metadata from inner result to this result
+                $this->propagateMetadata($innerResult->getMetadata());
+
                 break;
             }
 
             $streamedResult .= $value;
 
             yield $value;
+        }
+
+        $this->propagateMetadata($this->streamResult->getMetadata());
+    }
+
+    private function propagateMetadata(Metadata $source): void
+    {
+        foreach ($source->all() as $key => $value) {
+            if ('usage' === $key && $this->getMetadata()->get('usage') instanceof TokenUsageInterface) {
+                $this->getMetadata()->add('usage', new TokenUsageAggregation($this->getMetadata()->get('usage'), $value));
+                continue;
+            }
+
+            $this->getMetadata()->add($key, $value);
         }
     }
 }

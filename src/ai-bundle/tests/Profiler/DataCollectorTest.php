@@ -100,6 +100,35 @@ class DataCollectorTest extends TestCase
         $this->assertNull($dataCollector->getPlatformCalls()[0]['result']);
     }
 
+    public function testPropagatesMetadataForStreamingResponse(): void
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
+
+        // Original streaming result with metadata set on it
+        $originalStream = new StreamResult(
+            (function () {
+                yield 'foo';
+                yield 'bar';
+            })(),
+        );
+        $originalStream->getMetadata()->add('request_id', 'req-123');
+
+        $platform->method('invoke')->willReturn(
+            new DeferredResult(new PlainConverter($originalStream), $this->createStub(RawResultInterface::class))
+        );
+
+        $deferred = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
+
+        // Consume the stream to trigger propagation of metadata inside TraceablePlatform
+        $this->assertSame('foobar', implode('', iterator_to_array($deferred->asStream())));
+
+        // After consumption, metadata should be copied to the wrapped StreamResult
+        $this->assertTrue($deferred->getResult()->getMetadata()->has('request_id'));
+        $this->assertSame('req-123', $deferred->getResult()->getMetadata()->get('request_id'));
+    }
+
     public function testCollectsDataForMessageStore()
     {
         $traceableMessageStore = new TraceableMessageStore(new InMemoryStore(), new MonotonicClock());
