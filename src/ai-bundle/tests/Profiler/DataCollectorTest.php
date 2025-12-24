@@ -100,7 +100,7 @@ class DataCollectorTest extends TestCase
         $this->assertNull($dataCollector->getPlatformCalls()[0]['result']);
     }
 
-    public function testPropagatesMetadataForStreamingResponse(): void
+    public function testPropagatesMetadataForStreamingResponse()
     {
         $platform = $this->createMock(PlatformInterface::class);
         $traceablePlatform = new TraceablePlatform($platform);
