@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Toolbox;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\BaseResult;
+use Symfony\AI\Platform\Result\StreamResult as PlatformStreamResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
@@ -24,7 +25,7 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 final class StreamResult extends BaseResult
 {
     public function __construct(
-        private readonly \Symfony\AI\Platform\Result\StreamResult $streamResult,
+        private readonly PlatformStreamResult $streamResult,
         private readonly \Closure $handleToolCallsCallback,
     ) {
     }
