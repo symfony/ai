@@ -100,7 +100,16 @@ class ServeCommand extends Command
             ->setLogger($this->logger)
             ->build();
 
-        $server->run(new StdioTransport());
+        // Write pid file
+        $pidFileName = sprintf('%s/server_%d.pid', $cacheDir, getmypid());
+        file_put_contents($pidFileName, getmypid());
+
+        try {
+            $server->run(new StdioTransport());
+        } finally {
+            // Clean up pid file
+            unlink($pidFileName);
+        }
 
         return Command::SUCCESS;
     }
