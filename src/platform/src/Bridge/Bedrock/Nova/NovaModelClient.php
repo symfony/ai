@@ -34,6 +34,8 @@ class NovaModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawBedrockResult
     {
+        unset($payload['model']);
+
         $modelOptions = [];
         if (isset($options['tools'])) {
             $modelOptions['toolConfig']['tools'] = $options['tools'];
