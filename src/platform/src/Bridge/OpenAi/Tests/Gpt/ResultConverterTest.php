@@ -19,8 +19,11 @@ use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -214,5 +217,90 @@ class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Error "invalid_request_error"-invalid_request (model): "The model `gpt-5` does not exist".');
 
         $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testStreamTransmitsUsageToResultMetadata()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            [
+                'type' => 'message.delta.output_text.delta',
+                'delta' => 'Hello',
+            ],
+            [
+                'type' => 'message.delta.output_text.delta',
+                'delta' => ' world',
+            ],
+            [
+                'type' => 'response.completed',
+                'response' => [
+                    'usage' => [
+                        'input_tokens' => 11,
+                        'output_tokens' => 7,
+                        'output_tokens_details' => [
+                            'reasoning_tokens' => 2,
+                        ],
+                        'input_tokens_details' => [
+                            'cached_tokens' => 3,
+                        ],
+                        'total_tokens' => 18,
+                    ],
+                    'output' => [],
+                ],
+            ],
+        ];
+
+        $raw = new class($httpResponse, $events) implements RawResultInterface {
+            /**
+             * @param array<array<string, mixed>> $events
+             */
+            public function __construct(
+                private readonly ResponseInterface $response,
+                private readonly array $events,
+            ) {
+            }
+
+            public function getData(): array
+            {
+                return [];
+            }
+
+            public function getDataStream(): iterable
+            {
+                foreach ($this->events as $event) {
+                    yield $event;
+                }
+            }
+
+            public function getObject(): object
+            {
+                return $this->response;
+            }
+        };
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $streamResult);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            if (\is_string($part)) {
+                $chunks[] = $part;
+            }
+        }
+
+        $this->assertSame(['Hello', ' world'], $chunks);
+
+        $usage = $streamResult->getMetadata()->get('token_usage');
+        $this->assertInstanceOf(TokenUsage::class, $usage);
+        $this->assertSame(11, $usage->getPromptTokens());
+        $this->assertSame(7, $usage->getCompletionTokens());
+        $this->assertSame(2, $usage->getThinkingTokens());
+        $this->assertSame(3, $usage->getCachedTokens());
+        $this->assertSame(18, $usage->getTotalTokens());
     }
 }

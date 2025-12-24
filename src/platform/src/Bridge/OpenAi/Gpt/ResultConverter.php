@@ -27,6 +27,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -71,7 +72,10 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result));
+            // Passes itself by reference to enable the addition of metadata during streaming.
+            $streamResult = new StreamResult($this->convertStream($result, $streamResult));
+
+            return $streamResult;
         }
 
         $data = $result->getData();
@@ -129,10 +133,23 @@ final class ResultConverter implements ResultConverterInterface
         };
     }
 
-    private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
+    private function convertStream(RawResultInterface|RawHttpResult $result, ?StreamResult &$streamResult): \Generator
     {
         foreach ($result->getDataStream() as $event) {
             $type = $event['type'] ?? '';
+
+            if ($streamResult && isset($event['response']['usage'])) {
+                $usage = $event['response']['usage'];
+                $tokenUsage = new TokenUsage(
+                    promptTokens: $usage['input_tokens'] ?? null,
+                    completionTokens: $usage['output_tokens'] ?? null,
+                    thinkingTokens: $usage['output_tokens_details']['reasoning_tokens'] ?? null,
+                    cachedTokens: $usage['input_tokens_details']['cached_tokens'] ?? null,
+                    remainingTokens: null,
+                    totalTokens: $usage['total_tokens'] ?? null,
+                );
+                $streamResult->getMetadata()->add('token_usage', $tokenUsage);
+            }
 
             if (str_contains($type, 'output_text') && isset($event['delta'])) {
                 yield $event['delta'];
