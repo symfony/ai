@@ -256,6 +256,9 @@ class ResultConverterTest extends TestCase
         ];
 
         $raw = new class($httpResponse, $events) implements RawResultInterface {
+            /**
+             * @param array<array<string, mixed>> $events
+             */
             public function __construct(
                 private readonly ResponseInterface $response,
                 private readonly array $events,
