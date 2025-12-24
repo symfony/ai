@@ -11,11 +11,14 @@
 
 namespace Symfony\AI\Mate;
 
+use Mcp\Server\Transport\Stdio\RunnerControl;
+use Mcp\Server\Transport\Stdio\RunnerState;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Command\ClearCacheCommand;
 use Symfony\AI\Mate\Command\DiscoverCommand;
 use Symfony\AI\Mate\Command\InitCommand;
 use Symfony\AI\Mate\Command\ServeCommand;
+use Symfony\AI\Mate\Command\StopCommand;
 use Symfony\AI\Mate\Exception\UnsupportedVersionException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
@@ -46,7 +49,14 @@ final class App
         self::addCommand($application, new InitCommand($rootDir));
         self::addCommand($application, new ServeCommand($container, $logger));
         self::addCommand($application, new DiscoverCommand($rootDir, $logger));
+        self::addCommand($application, new StopCommand((string) $container->getParameter('mate.cache_dir')));
         self::addCommand($application, new ClearCacheCommand($cacheDir));
+
+        if (\defined('SIGUSR1') && class_exists(RunnerControl::class)) {
+            $application->getSignalRegistry()->register(\SIGUSR1, function () {
+                RunnerControl::$state = RunnerState::STOP;
+            });
+        }
 
         return $application;
     }

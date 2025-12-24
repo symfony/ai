@@ -23,6 +23,7 @@ use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -52,8 +53,19 @@ class ServeCommand extends Command
         return 'Starts the MCP server with stdio transport';
     }
 
+    protected function configure(): void
+    {
+        $this->addOption('force-keep-alive', null, InputOption::VALUE_NONE, 'Force a restart of the server if it stops.');
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        if ($input->getOption('force-keep-alive')) {
+            $output->writeln('The option --force-keep-alive requires using the "bin/mate" file. Try running "./vendor/bin/mate serve --force-keep-alive"');
+
+            return Command::INVALID;
+        }
+
         $rootDir = $this->container->getParameter('mate.root_dir');
         \assert(\is_string($rootDir));
 
@@ -91,7 +103,14 @@ class ServeCommand extends Command
             ->setLogger($this->logger)
             ->build();
 
-        $server->run(new StdioTransport());
+        $pidFileName = \sprintf('%s/server_%d.pid', $cacheDir, getmypid());
+        file_put_contents($pidFileName, getmypid());
+
+        try {
+            $server->run(new StdioTransport());
+        } finally {
+            unlink($pidFileName);
+        }
 
         return Command::SUCCESS;
     }
