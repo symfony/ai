@@ -38,6 +38,12 @@ return static function (ContainerConfigurator $container): void {
             ->autowire()
             ->autoconfigure()
 
+        ->set('_build.logger', Logger::class)
+            ->private() // To be removed when we compile
+            ->arg('$logFile', $debugLogFile)
+            ->arg('$fileLogEnabled', $debugFileEnabled)
+            ->arg('$debugEnabled', $debugEnabled)
+
         ->set(LoggerInterface::class, Logger::class)
             ->public()
             ->arg('$logFile', '%mate.debug_log_file%')

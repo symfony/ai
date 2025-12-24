@@ -63,8 +63,7 @@ class ServeCommand extends Command
 
         $cacheDir = $this->container->getParameter('mate.cache_dir');
         \assert(\is_string($cacheDir));
-
-
+        
         $extensions = $this->container->getParameter('mate._extensions') ?? [];
         \assert(\is_array($extensions));
         /* @var array<string, array{dirs: string[], includes: string[]}> $extensions */

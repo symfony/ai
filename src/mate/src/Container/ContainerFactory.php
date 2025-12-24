@@ -47,9 +47,7 @@ final class ContainerFactory
         $container->setParameter('mate.enabled_extensions', $enabledExtensions);
         $container->setParameter('mate.root_dir', $this->rootDir);
 
-        // TODO we cannot get service from before compiling.
-        // $logger = $container->get(LoggerInterface::class);
-        $logger = new NullLogger();
+        $logger = $container->get('_build.logger');
         \assert($logger instanceof LoggerInterface);
 
         $discovery = new ComposerTypeDiscovery($this->rootDir, $logger);
@@ -69,7 +67,9 @@ final class ContainerFactory
         $extensions = $this->getExtensionsToLoad($container, $logger);
         (new ServiceDiscovery())->registerServices($discovery, $container, $this->rootDir, $extensions);
         $container->setParameter('mate._extensions', $extensions);
-
+        
+        // Remove the logger definition, it's not needed anymore'
+        $container->removeDefinition('_build.logger');
         $container->compile(true);
 
         return $container;
