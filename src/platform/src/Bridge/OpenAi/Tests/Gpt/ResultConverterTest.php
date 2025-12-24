@@ -295,7 +295,7 @@ class ResultConverterTest extends TestCase
 
         $this->assertSame(['Hello', ' world'], $chunks);
 
-        $usage = $streamResult->getMetadata()->get('usage');
+        $usage = $streamResult->getMetadata()->get('token_usage');
         $this->assertInstanceOf(TokenUsage::class, $usage);
         $this->assertSame(11, $usage->getPromptTokens());
         $this->assertSame(7, $usage->getCompletionTokens());

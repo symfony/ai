@@ -147,7 +147,7 @@ final class ResultConverter implements ResultConverterInterface
                     remainingTokens: null,
                     totalTokens: $usage['total_tokens'] ?? null,
                 );
-                $streamResult->getMetadata()->add('usage', $tokenUsage);
+                $streamResult->getMetadata()->add('token_usage', $tokenUsage);
             }
 
             if (str_contains($type, 'output_text') && isset($event['delta'])) {

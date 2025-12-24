@@ -63,8 +63,8 @@ final class StreamResult extends BaseResult
     private function propagateMetadata(Metadata $source): void
     {
         foreach ($source->all() as $key => $value) {
-            if ('usage' === $key && $this->getMetadata()->get('usage') instanceof TokenUsageInterface) {
-                $this->getMetadata()->add('usage', new TokenUsageAggregation($this->getMetadata()->get('usage'), $value));
+            if ('token_usage' === $key && $this->getMetadata()->get('token_usage') instanceof TokenUsageInterface && $value instanceof TokenUsageInterface) {
+                $this->getMetadata()->add('token_usage', new TokenUsageAggregation($this->getMetadata()->get('token_usage'), $value));
                 continue;
             }
 

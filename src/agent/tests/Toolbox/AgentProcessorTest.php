@@ -344,7 +344,7 @@ class AgentProcessorTest extends TestCase
         })();
 
         $result = new GenericStreamResult($generator);
-        $result->getMetadata()->add('usage', new TokenUsage(totalTokens: 10));
+        $result->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
 
         $agent = $this->createMock(AgentInterface::class);
         $agent
@@ -352,7 +352,7 @@ class AgentProcessorTest extends TestCase
             ->method('call')
             ->willReturnCallback(function () {
                 $toolResult = new TextResult('Final content after tool');
-                $toolResult->getMetadata()->add('usage', new TokenUsage(totalTokens: 10));
+                $toolResult->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
 
                 return $toolResult;
             });
@@ -366,7 +366,7 @@ class AgentProcessorTest extends TestCase
         // Consume the stream to trigger
         iterator_to_array($output->getResult()->getContent());
 
-        $usage = $output->getResult()->getMetadata()->get('usage');
+        $usage = $output->getResult()->getMetadata()->get('token_usage');
         $this->assertInstanceOf(TokenUsageAggregation::class, $usage);
         $this->assertSame(20, $usage->getTotalTokens());
     }
