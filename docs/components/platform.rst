@@ -615,6 +615,63 @@ This allows fast and isolated testing of AI-powered features without relying on 
 
     This requires `cURL` and the `ext-curl` extension to be installed.
 
+Speech support
+~~~~~~~~~~~~~~
+
+Using speech to send messages / receive answers as audio is a common use case when integrating agents and/or chats.
+
+Speech support can be enable using :class:`Symfony\\AI\\Platform\\Speech\\SpeechListener` (for `tts` in this example)::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsSpeechPlatform;
+    use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Speech\SpeechListener;
+    use Symfony\Component\EventDispatcher\EventDispatcher;
+
+    $elevenLabsPlatform = new ElevenLabsSpeechPlatform(
+        PlatformFactory::create(
+            apiKey: 'foo',
+            httpClient: http_client(),
+        ),
+        [
+            'tts_model' => 'eleven_multilingual_v2',
+            'tts_voice' => 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
+        ],
+    );
+
+    $eventDispatcher = new EventDispatcher();
+    $eventDispatcher->addSubscriber(new SpeechListener([
+        'elevenlabs' => $elevenLabsPlatform,
+    ]));
+
+    $platform = OpenAiPlatformFactory::create('sk-foo', httpClient: http_client(), eventDispatcher: $eventDispatcher);
+
+    $agent = new Agent($platform, 'gpt-4o');
+    $answer = $agent->call(new MessageBag(
+        Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
+    ));
+
+    echo $answer->getSpeech('elevenlabs')->asBinary();
+
+When using the bundle, the configuration allows to configure models and voices::
+
+    ai:
+        platform:
+            elevenlabs:
+                api_key: '%env(ELEVEN_LABS_API_KEY)%'
+                speech:
+                    tts_model: 'eleven_multilingual_v2'
+                    tts_voice: '%env(ELEVEN_LABS_VOICE_IDENTIFIER)%'
+                    tts_extra_options:
+                        foo: bar
+
+.. note::
+
+    Please be aware that enabling speech support requires to define corresponding platforms.
+
 Code Examples
 ~~~~~~~~~~~~~
 

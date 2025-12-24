@@ -63,6 +63,7 @@ use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Serializer\StructuredOutputSerializer;
+use Symfony\AI\Platform\Speech\SpeechListener;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
@@ -259,5 +260,12 @@ return static function (ContainerConfigurator $container): void {
                 tagged_locator('ai.message_store', 'name'),
             ])
             ->tag('console.command')
+
+        // listeners
+        ->set('ai.speech.listener', SpeechListener::class)
+            ->args([
+                tagged_iterator('ai.platform.speech', 'name'),
+            ])
+            ->tag('kernel.event_subscriber')
     ;
 };

@@ -30,7 +30,7 @@ final class ElevenLabsApiCatalogTest extends TestCase
         $modelCatalog = new ElevenLabsApiCatalog($httpClient, 'foo');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The model "foo" cannot be retrieve from the API.');
+        $this->expectExceptionMessage('The model "foo" cannot be retrieved from the API.');
         $this->expectExceptionCode(0);
         $modelCatalog->getModel('foo');
     }

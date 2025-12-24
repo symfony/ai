@@ -29,6 +29,7 @@ use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsApiCatalog;
+use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsSpeechPlatform;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
@@ -41,6 +42,7 @@ use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Speech\SpeechPlatformInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
@@ -144,6 +146,7 @@ class AiBundleTest extends TestCase
             'ai.command.drop_store' => true,
             'ai.command.setup_message_store' => true,
             'ai.command.drop_message_store' => true,
+            'ai.speech.listener' => true,
         ], $container->getRemovedIds());
     }
 
@@ -166,6 +169,7 @@ class AiBundleTest extends TestCase
             'ai.command.drop_store' => true,
             'ai.command.setup_message_store' => true,
             'ai.command.drop_message_store' => true,
+            'ai.speech.listener' => true,
         ], $container->getRemovedIds());
     }
 
@@ -7021,6 +7025,54 @@ class AiBundleTest extends TestCase
     /**
      * @param array<string, mixed> $configuration
      */
+    public function testElevenLabsSpeechPlatformCanBeRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                        'speech' => [
+                            'tts_model' => 'foo',
+                            'tts_voice' => 'bar',
+                            'tts_options' => [
+                                'foo' => 'bar',
+                            ],
+                            'stt_model' => 'foo',
+                            'stt_options' => [
+                                'foo' => 'bar',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+        $this->assertTrue($container->hasDefinition('ai.platform.speech.elevenlabs'));
+
+        $speechPlatformDefinition = $container->getDefinition('ai.platform.speech.elevenlabs');
+        $this->assertSame(ElevenLabsSpeechPlatform::class, $speechPlatformDefinition->getClass());
+        $this->assertTrue($speechPlatformDefinition->isLazy());
+        $this->assertCount(2, $speechPlatformDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $speechPlatformDefinition->getArgument(0));
+        $this->assertSame('.inner', (string) $speechPlatformDefinition->getArgument(0));
+
+        $this->assertTrue($speechPlatformDefinition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => PlatformInterface::class],
+            ['interface' => SpeechPlatformInterface::class],
+        ], $speechPlatformDefinition->getTag('proxy'));
+        $this->assertTrue($speechPlatformDefinition->hasTag('ai.platform.speech'));
+        $this->assertSame([
+            ['name' => 'elevenlabs'],
+        ], $speechPlatformDefinition->getTag('ai.platform.speech'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\Speech\SpeechPlatformInterface $elevenlabs'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $elevenlabs'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface'));
+    }
+
     private function buildContainer(array $configuration): ContainerBuilder
     {
         $container = new ContainerBuilder();
@@ -7082,6 +7134,17 @@ class AiBundleTest extends TestCase
                     'elevenlabs' => [
                         'host' => 'https://api.elevenlabs.io/v1',
                         'api_key' => 'elevenlabs_key_full',
+                        'speech' => [
+                            'tts_model' => 'foo',
+                            'tts_voice' => 'bar',
+                            'tts_options' => [
+                                'foo' => 'bar',
+                            ],
+                            'stt_model' => 'foo',
+                            'stt_options' => [
+                                'foo' => 'bar',
+                            ],
+                        ],
                     ],
                     'gemini' => [
                         'api_key' => 'gemini_key_full',
