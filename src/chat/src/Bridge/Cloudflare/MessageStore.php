@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Chat\Bridge\Cloudflare;
 
-use Symfony\AI\Chat\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
@@ -45,18 +44,9 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
 
     public function setup(array $options = []): void
     {
-        if ([] !== $options) {
-            throw new InvalidArgumentException('No supported options.');
-        }
+        $currentNamespace = $this->retrieveCurrentNamespace();
 
-        $namespaces = $this->request('GET', 'storage/kv/namespaces');
-
-        $filteredNamespaces = array_filter(
-            $namespaces['result'],
-            fn (array $payload): bool => $payload['title'] === $this->namespace,
-        );
-
-        if (0 !== \count($filteredNamespaces)) {
+        if ([] !== $currentNamespace) {
             return;
         }
 
@@ -67,15 +57,19 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
 
     public function drop(): void
     {
-        $currentNamespaceUuid = $this->retrieveCurrentNamespaceUuid();
+        $currentNamespace = $this->retrieveCurrentNamespace();
 
-        $keys = $this->request('GET', \sprintf('storage/kv/namespaces/%s/keys', $currentNamespaceUuid));
+        if ([] === $currentNamespace) {
+            return;
+        }
+
+        $keys = $this->request('GET', \sprintf('storage/kv/namespaces/%s/keys', $currentNamespace['id']));
 
         if ([] === $keys['result']) {
             return;
         }
 
-        $this->request('POST', \sprintf('storage/kv/namespaces/%s/bulk/delete', $currentNamespaceUuid), array_map(
+        $this->request('POST', \sprintf('storage/kv/namespaces/%s/bulk/delete', $currentNamespace['id']), array_map(
             static fn (array $payload): string => $payload['name'],
             $keys['result'],
         ));
@@ -83,9 +77,9 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
 
     public function save(MessageBag $messages): void
     {
-        $currentNamespaceUuid = $this->retrieveCurrentNamespaceUuid();
+        $currentNamespace = $this->retrieveCurrentNamespace();
 
-        $this->request('PUT', \sprintf('storage/kv/namespaces/%s/bulk', $currentNamespaceUuid), array_map(
+        $this->request('PUT', \sprintf('storage/kv/namespaces/%s/bulk', $currentNamespace['id']), array_map(
             fn (MessageInterface $message): array => [
                 'key' => $message->getId()->toRfc4122(),
                 'value' => $this->serializer->serialize($message, 'json'),
@@ -96,11 +90,11 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
 
     public function load(): MessageBag
     {
-        $currentNamespaceUuid = $this->retrieveCurrentNamespaceUuid();
+        $currentNamespace = $this->retrieveCurrentNamespace();
 
-        $keys = $this->request('GET', \sprintf('storage/kv/namespaces/%s/keys', $currentNamespaceUuid));
+        $keys = $this->request('GET', \sprintf('storage/kv/namespaces/%s/keys', $currentNamespace['id']));
 
-        $messages = $this->request('POST', \sprintf('storage/kv/namespaces/%s/bulk/get', $currentNamespaceUuid), [
+        $messages = $this->request('POST', \sprintf('storage/kv/namespaces/%s/bulk/get', $currentNamespace['id']), [
             'keys' => array_map(
                 static fn (array $payload): string => $payload['name'],
                 $keys['result'],
@@ -133,21 +127,36 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         return $response->toArray();
     }
 
-    private function retrieveCurrentNamespaceUuid(): string
+    /**
+     * @return array{
+     *     id: string,
+     *     title: string,
+     *     supports_url_encoding: bool,
+     * }|array{}
+     */
+    private function retrieveCurrentNamespace(?int $page = 1): array
     {
-        $namespaces = $this->request('GET', 'storage/kv/namespaces');
+        $namespaces = $this->request('GET', 1 === $page ? 'storage/kv/namespaces' : \sprintf('storage/kv/namespaces?page=%d', $page));
+
+        if (0 === $namespaces['result_info']['total_count']) {
+            return [];
+        }
 
         $filteredNamespaces = array_filter(
             $namespaces['result'],
             fn (array $payload): bool => $payload['title'] === $this->namespace,
         );
 
-        if (0 === \count($filteredNamespaces)) {
-            throw new InvalidArgumentException('No namespace found.');
+        if (0 === \count($filteredNamespaces) && $page !== $namespaces['result_info']['total_pages']) {
+            return $this->retrieveCurrentNamespace($namespaces['result_info']['page'] + 1);
+        }
+
+        if (0 === \count($filteredNamespaces) && $page === $namespaces['result_info']['total_pages']) {
+            return [];
         }
 
         reset($filteredNamespaces);
 
-        return $filteredNamespaces[0]['id'];
+        return $filteredNamespaces[0];
     }
 }

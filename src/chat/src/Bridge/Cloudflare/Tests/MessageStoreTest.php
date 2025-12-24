@@ -13,7 +13,6 @@ namespace Symfony\AI\Chat\Bridge\Cloudflare\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\Cloudflare\MessageStore;
-use Symfony\AI\Chat\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -27,20 +26,6 @@ use Symfony\Component\Uid\Uuid;
 
 final class MessageStoreTest extends TestCase
 {
-    public function testMessageCannotSetupWithExtraOptions()
-    {
-        $httpClient = new MockHttpClient();
-
-        $messageStore = new MessageStore($httpClient, 'foo', 'bar', 'random');
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No supported options.');
-        $this->expectExceptionCode(0);
-        $messageStore->setup([
-            'foo' => 'bar',
-        ]);
-    }
-
     public function testMessageStoreCannotSetupOnExistingNamespace()
     {
         $httpClient = new MockHttpClient(
@@ -51,6 +36,11 @@ final class MessageStoreTest extends TestCase
                         'title' => 'foo',
                         'supports_url_encoding' => false,
                     ],
+                ],
+                'result_info' => [
+                    'count' => 1,
+                    'total_count' => 1,
+                    'total_pages' => 1,
                 ],
                 'success' => true,
                 'errors' => [],
@@ -64,6 +54,57 @@ final class MessageStoreTest extends TestCase
         $messageStore->setup();
 
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testMessageStoreCannotSetupOnExistingNamespaceOnSecondPage()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'result' => [
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'bar',
+                        'supports_url_encoding' => false,
+                    ],
+                ],
+                'result_info' => [
+                    'count' => 1,
+                    'page' => 1,
+                    'total_count' => 2,
+                    'total_pages' => 2,
+                ],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                'result' => [
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'foo',
+                        'supports_url_encoding' => false,
+                    ],
+                ],
+                'result_info' => [
+                    'count' => 1,
+                    'page' => 2,
+                    'total_count' => 2,
+                    'total_pages' => 2,
+                ],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $messageStore = new MessageStore($httpClient, 'foo', 'bar', 'random');
+        $messageStore->setup();
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
     }
 
     public function testMessageCannotSetupOnInvalidResponse()
@@ -92,11 +133,81 @@ final class MessageStoreTest extends TestCase
         $messageStore->setup();
     }
 
+    public function testMessageStoreCanSetupWhileNamespacesAreDefined()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'result' => [
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'bar',
+                        'supports_url_encoding' => false,
+                    ],
+                ],
+                'result_info' => [
+                    'page' => 1,
+                    'count' => 1,
+                    'total_count' => 2,
+                    'total_pages' => 2,
+                ],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                'result' => [
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'random',
+                        'supports_url_encoding' => false,
+                    ],
+                ],
+                'result_info' => [
+                    'page' => 2,
+                    'count' => 1,
+                    'total_count' => 2,
+                    'total_pages' => 2,
+                ],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                'result' => [
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'foo',
+                        'supports_url_encoding' => false,
+                    ],
+                ],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $messageStore = new MessageStore($httpClient, 'foo', 'bar', 'random');
+        $messageStore->setup();
+
+        $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
     public function testMessageStoreCanSetup()
     {
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
                 'result' => [],
+                'result_info' => [
+                    'count' => 0,
+                    'total_count' => 0,
+                    'total_pages' => 0,
+                ],
                 'success' => true,
                 'errors' => [],
                 'messages' => [],
@@ -130,6 +241,11 @@ final class MessageStoreTest extends TestCase
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
                 'result' => [],
+                'result_info' => [
+                    'page' => 1,
+                    'total_count' => 0,
+                    'total_pages' => 1,
+                ],
                 'success' => true,
                 'errors' => [],
                 'messages' => [],
@@ -140,10 +256,9 @@ final class MessageStoreTest extends TestCase
 
         $messageStore = new MessageStore($httpClient, 'foo', 'bar', 'random');
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No namespace found.');
-        $this->expectExceptionCode(0);
         $messageStore->drop();
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testMessageStoreCannotDropOnEmptyKeys()
@@ -156,6 +271,9 @@ final class MessageStoreTest extends TestCase
                         'title' => 'foo',
                         'supports_url_encoding' => false,
                     ],
+                ],
+                'result_info' => [
+                    'total_count' => 1,
                 ],
                 'success' => true,
                 'errors' => [],
@@ -189,6 +307,12 @@ final class MessageStoreTest extends TestCase
                         'title' => 'foo',
                         'supports_url_encoding' => false,
                     ],
+                ],
+                'result_info' => [
+                    'page' => 1,
+                    'count' => 1,
+                    'total_count' => 1,
+                    'total_pages' => 1,
                 ],
                 'success' => true,
                 'errors' => [],
@@ -226,6 +350,87 @@ final class MessageStoreTest extends TestCase
         $this->assertSame(3, $httpClient->getRequestsCount());
     }
 
+    public function testMessageStoreCanDropWhenNamespaceOnNextPage()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'result' => [
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'bar',
+                        'supports_url_encoding' => false,
+                    ],
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'random',
+                        'supports_url_encoding' => false,
+                    ],
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'third',
+                        'supports_url_encoding' => false,
+                    ],
+                ],
+                'result_info' => [
+                    'page' => 1,
+                    'total_count' => 4,
+                    'total_pages' => 2,
+                ],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                'result' => [
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'foo',
+                        'supports_url_encoding' => false,
+                    ],
+                ],
+                'result_info' => [
+                    'page' => 2,
+                    'total_count' => 4,
+                    'total_pages' => 2,
+                ],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                'result' => [
+                    [
+                        'name' => 'foo',
+                        'expiration' => (new \DateTimeImmutable())->getTimestamp(),
+                        'metadata' => [],
+                    ],
+                ],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                'result' => [],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $messageStore = new MessageStore($httpClient, 'foo', 'bar', 'random');
+        $messageStore->drop();
+
+        $this->assertSame(4, $httpClient->getRequestsCount());
+    }
+
     public function testMessageStoreCanSave()
     {
         $httpClient = new MockHttpClient([
@@ -236,6 +441,9 @@ final class MessageStoreTest extends TestCase
                         'title' => 'foo',
                         'supports_url_encoding' => false,
                     ],
+                ],
+                'result_info' => [
+                    'total_count' => 1,
                 ],
                 'success' => true,
                 'errors' => [],
@@ -282,13 +490,15 @@ final class MessageStoreTest extends TestCase
                         'supports_url_encoding' => false,
                     ],
                 ],
+                'result_info' => [
+                    'total_count' => 1,
+                ],
                 'success' => true,
                 'errors' => [],
                 'messages' => [],
             ], [
                 'http_code' => 200,
             ]),
-
             new JsonMockResponse([
                 'result' => [
                     [
