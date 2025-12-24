@@ -13,7 +13,6 @@ namespace Symfony\AI\Mate\Container;
 
 use Mcp\Capability\Discovery\Discoverer;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Discovery\ComposerTypeDiscovery;
 use Symfony\AI\Mate\Discovery\ServiceDiscovery;
 use Symfony\AI\Mate\Exception\MissingDependencyException;
@@ -59,7 +58,7 @@ final class ContainerFactory
         }
 
         $rootProject = $discovery->discoverRootProject();
-        $this->loadUserServices($rootProject, $container);
+        $this->loadUserServices($rootProject, $container, $logger);
 
         $this->loadUserEnvVar($container);
 
@@ -67,14 +66,13 @@ final class ContainerFactory
         $extensions = $this->getExtensionsToLoad($container, $logger);
         (new ServiceDiscovery())->registerServices($discovery, $container, $this->rootDir, $extensions);
         $container->setParameter('mate._extensions', $extensions);
-        
+
         // Remove the logger definition, it's not needed anymore'
         $container->removeDefinition('_build.logger');
         $container->compile(true);
 
         return $container;
     }
-
 
     /**
      * @return array<string, array{dirs: string[], includes: string[]}>
@@ -179,13 +177,8 @@ final class ContainerFactory
     /**
      * @param array{dirs: array<string>, includes: array<string>} $rootProject
      */
-    private function loadUserServices(array $rootProject, ContainerBuilder $container): void
+    private function loadUserServices(array $rootProject, ContainerBuilder $container, LoggerInterface $logger): void
     {
-        // TODO dont get logger
-        //$logger = $container->get(LoggerInterface::class);
-        $logger = new NullLogger();
-        \assert($logger instanceof LoggerInterface);
-
         $loader = new PhpFileLoader($container, new FileLocator($this->rootDir));
         foreach ($rootProject['includes'] as $include) {
             try {

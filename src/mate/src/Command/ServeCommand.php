@@ -19,14 +19,12 @@ use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Transport\StdioTransport;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\App;
-use Symfony\AI\Mate\Discovery\ComposerTypeDiscovery;
 use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\AI\Mate\Discovery\ServiceDiscovery;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -39,6 +37,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ServeCommand extends Command
 {
     private LoggerInterface $logger;
+
     public function __construct(
         private ContainerInterface $container,
     ) {
@@ -63,7 +62,7 @@ class ServeCommand extends Command
 
         $cacheDir = $this->container->getParameter('mate.cache_dir');
         \assert(\is_string($cacheDir));
-        
+
         $extensions = $this->container->getParameter('mate._extensions') ?? [];
         \assert(\is_array($extensions));
         /* @var array<string, array{dirs: string[], includes: string[]}> $extensions */
