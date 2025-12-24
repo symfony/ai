@@ -224,7 +224,7 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasAlias(AgentInterface::class));
-        $this->assertTrue($container->hasAlias(AgentInterface::class.' $myAgentAgent'));
+        $this->assertTrue($container->hasAlias(AgentInterface::class.' $myAgent'));
     }
 
     public function testInjectionStoreAliasIsRegistered()
@@ -5672,7 +5672,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([['name' => 'support']], $tags['ai.agent']);
 
         // Verify alias is created
-        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\AgentInterface $supportMultiAgent'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\AgentInterface $support'));
     }
 
     public function testMultiAgentWithMultipleHandoffs()
@@ -5997,8 +5997,8 @@ class AiBundleTest extends TestCase
         $this->assertArrayHasKey('ai.agent', $csTags);
         $this->assertSame([['name' => 'customer_support']], $csTags['ai.agent']);
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\AgentInterface $customerSupportMultiAgent'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\AgentInterface $developmentAssistantMultiAgent'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\AgentInterface $customerSupport'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\AgentInterface $developmentAssistant'));
 
         // Test development_assistant multi-agent configuration
         $devAssistantDef = $container->getDefinition('ai.multi_agent.development_assistant');

@@ -1144,7 +1144,7 @@ final class AiBundle extends AbstractBundle
         ;
 
         $container->setDefinition($agentId, $agentDefinition);
-        $container->registerAliasForArgument($agentId, AgentInterface::class, (new Target($name.'Agent'))->getParsedName());
+        $container->registerAliasForArgument($agentId, AgentInterface::class, (new Target($name))->getParsedName());
     }
 
     /**
@@ -2201,7 +2201,7 @@ final class AiBundle extends AbstractBundle
         $multiAgentDefinition->addTag('ai.agent', ['name' => $name]);
 
         $container->setDefinition($multiAgentId, $multiAgentDefinition);
-        $container->registerAliasForArgument($multiAgentId, AgentInterface::class, (new Target($name.'MultiAgent'))->getParsedName());
+        $container->registerAliasForArgument($multiAgentId, AgentInterface::class, (new Target($name))->getParsedName());
     }
 
     /**
