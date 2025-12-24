@@ -127,6 +127,7 @@ services:
     elasticsearch:
         image: docker.elastic.co/elasticsearch/elasticsearch:9.2.2
         environment:
+            cluster.name: 'elasticsearch-cluster'
             discovery.type: 'single-node'
             xpack.security.enabled: false
             ES_JAVA_OPTS: '-Xms512m -Xmx512m'
@@ -138,11 +139,11 @@ services:
                 soft: 65536
                 hard: 65536
         healthcheck:
-            test: [ 'CMD', 'curl', '-f', 'http://127.0.0.1:9200/_cluster/health' ]
-            interval: 30s
+            test: [ 'CMD', 'curl', '-f', 'http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=50s' ]
+            interval: 10s
             start_period: 120s
-            timeout: 20s
-            retries: 3
+            timeout: 60s
+            retries: 5
         ports:
             - '9201:9200'
 
@@ -158,6 +159,7 @@ services:
     opensearch:
         image: opensearchproject/opensearch
         environment:
+            cluster.name: 'opensearch-cluster'
             discovery.type: 'single-node'
             bootstrap.memory_lock: true
             indices.requests.cache.maximum_cacheable_size: 256
