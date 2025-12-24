@@ -226,7 +226,6 @@ class ResultConverterTest extends TestCase
         $httpResponse = self::createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
 
-        // Prepare a fake stream of events simulating OpenAI responses
         $events = [
             [
                 'type' => 'message.delta.output_text.delta',

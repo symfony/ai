@@ -106,7 +106,6 @@ class DataCollectorTest extends TestCase
         $traceablePlatform = new TraceablePlatform($platform);
         $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
 
-        // Original streaming result with metadata set on it
         $originalStream = new StreamResult(
             (function () {
                 yield 'foo';
@@ -121,10 +120,8 @@ class DataCollectorTest extends TestCase
 
         $deferred = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
 
-        // Consume the stream to trigger propagation of metadata inside TraceablePlatform
         $this->assertSame('foobar', implode('', iterator_to_array($deferred->asStream())));
 
-        // After consumption, metadata should be copied to the wrapped StreamResult
         $this->assertTrue($deferred->getResult()->getMetadata()->has('request_id'));
         $this->assertSame('req-123', $deferred->getResult()->getMetadata()->get('request_id'));
     }
