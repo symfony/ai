@@ -35,6 +35,22 @@ final class ContainerFactory
     public function create(): ContainerBuilder
     {
         $container = new ContainerBuilder();
+
+        $this->registerCoreServices($container);
+
+        $logger = $container->get(LoggerInterface::class);
+        \assert($logger instanceof LoggerInterface);
+        $this->loadExtensions($container, $logger);
+
+        $this->registerUserServices($container);
+
+        $this->loadEnvironmentVariables($container);
+
+        return $container;
+    }
+
+    private function registerCoreServices(ContainerBuilder $container): void
+    {
         $loader = new PhpFileLoader($container, new FileLocator(\dirname(__DIR__)));
         $loader->load('default.config.php');
 
@@ -42,24 +58,35 @@ final class ContainerFactory
 
         $container->setParameter('mate.enabled_extensions', $enabledExtensions);
         $container->setParameter('mate.root_dir', $this->rootDir);
+    }
 
+    private function loadExtensions(ContainerBuilder $container, LoggerInterface $logger): void
+    {
+        $enabledExtensions = $container->getParameter('mate.enabled_extensions');
+        if (!\is_array($enabledExtensions)) {
+            $enabledExtensions = [];
+        }
+
+        if ([] === $enabledExtensions) {
+            return;
+        }
+
+        $discovery = new ComposerTypeDiscovery($this->rootDir, $logger);
+
+        foreach ($discovery->discover($enabledExtensions) as $packageName => $data) {
+            $this->loadExtensionIncludes($container, $logger, $packageName, $data['includes']);
+        }
+    }
+
+    private function registerUserServices(ContainerBuilder $container): void
+    {
         $logger = $container->get(LoggerInterface::class);
         \assert($logger instanceof LoggerInterface);
 
         $discovery = new ComposerTypeDiscovery($this->rootDir, $logger);
-
-        if ([] !== $enabledExtensions) {
-            foreach ($discovery->discover($enabledExtensions) as $packageName => $data) {
-                $this->loadExtensionIncludes($container, $logger, $packageName, $data['includes']);
-            }
-        }
-
         $rootProject = $discovery->discoverRootProject();
+
         $this->loadUserServices($rootProject, $container);
-
-        $this->loadUserEnvVar($container);
-
-        return $container;
     }
 
     /**
@@ -116,11 +143,11 @@ final class ContainerFactory
         }
     }
 
-    private function loadUserEnvVar(ContainerBuilder $container): void
+    private function loadEnvironmentVariables(ContainerBuilder $container): void
     {
         $envFile = $container->getParameter('mate.env_file');
 
-        if (null === $envFile || !\is_string($envFile) || '' === $envFile) {
+        if (!\is_string($envFile) || '' === $envFile) {
             return;
         }
 
@@ -129,8 +156,8 @@ final class ContainerFactory
         }
 
         $extra = [];
-        $localFile = $this->rootDir.\DIRECTORY_SEPARATOR.$envFile.\DIRECTORY_SEPARATOR.'.local';
-        if (!file_exists($localFile)) {
+        $localFile = $this->rootDir.\DIRECTORY_SEPARATOR.$envFile.'.local';
+        if (file_exists($localFile)) {
             $extra[] = $localFile;
         }
 
