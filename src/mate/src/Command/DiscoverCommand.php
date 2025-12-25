@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Command;
 
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\ComposerTypeDiscovery;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -27,6 +28,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
+#[AsCommand('discover', 'Discover MCP bridges installed via Composer')]
 class DiscoverCommand extends Command
 {
     public function __construct(

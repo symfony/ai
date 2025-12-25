@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -23,6 +24,7 @@ use Symfony\Component\Finder\Finder;
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
+#[AsCommand('clear-cache', 'Clear the MCP server cache')]
 class ClearCacheCommand extends Command
 {
     public function __construct(

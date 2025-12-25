@@ -22,6 +22,7 @@ use Symfony\AI\Mate\App;
 use Symfony\AI\Mate\Discovery\ComposerTypeDiscovery;
 use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\AI\Mate\Discovery\ServiceDiscovery;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -33,6 +34,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
+#[AsCommand('serve', 'Starts the MCP server with stdio transport')]
 class ServeCommand extends Command
 {
     private ComposerTypeDiscovery $discovery;
