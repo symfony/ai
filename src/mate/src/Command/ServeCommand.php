@@ -101,7 +101,7 @@ class ServeCommand extends Command
             ->build();
 
         // Write pid file
-        $pidFileName = sprintf('%s/server_%d.pid', $cacheDir, getmypid());
+        $pidFileName = \sprintf('%s/server_%d.pid', $cacheDir, getmypid());
         file_put_contents($pidFileName, getmypid());
 
         try {

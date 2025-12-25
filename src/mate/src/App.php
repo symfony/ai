@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\Mate;
 
-use Mcp\Server\Transport\RunnerControl;
-use Mcp\Server\Transport\RunnerState;
+use Mcp\Server\Transport\Stdio\RunnerControl;
+use Mcp\Server\Transport\Stdio\RunnerState;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Command\ClearCacheCommand;
 use Symfony\AI\Mate\Command\DiscoverCommand;
@@ -52,7 +52,7 @@ final class App
         self::addCommand($application, new StopCommand((string) $container->getParameter('mate.cache_dir')));
         self::addCommand($application, new ClearCacheCommand($cacheDir));
 
-        if (defined('SIGUSR1') && class_exists(RunnerControl::class)) {
+        if (\defined('SIGUSR1') && class_exists(RunnerControl::class)) {
             $application->getSignalRegistry()->register(\SIGUSR1, function () {
                 RunnerControl::$state = RunnerState::STOP;
             });

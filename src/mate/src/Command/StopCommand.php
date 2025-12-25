@@ -24,7 +24,8 @@ use Symfony\Component\Finder\Finder;
  */
 class StopCommand extends Command
 {
-    public function __construct(private string $cacheDir,) {
+    public function __construct(private string $cacheDir)
+    {
         parent::__construct(self::getDefaultName());
     }
 
@@ -42,13 +43,15 @@ class StopCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        if (!function_exists('posix_kill')) {
+        if (!\function_exists('posix_kill')) {
             $io->error('The "stop" command require the posix php extension.');
+
             return Command::FAILURE;
         }
 
-        if (!defined('SIGUSR1')) {
+        if (!\defined('SIGUSR1')) {
             $io->error('The "stop" command require the pcntl php extension.');
+
             return Command::FAILURE;
         }
 
