@@ -1,0 +1,5 @@
+[2024-01-15 10:30:45] app.INFO: User logged in {"user_id":123,"ip":"192.168.1.1"} []
+[2024-01-15 10:31:12] app.WARNING: Slow query detected {"query":"SELECT * FROM users","duration":2.5} []
+[2024-01-15 10:32:00] app.ERROR: Database connection failed {"error":"Connection timeout"} []
+[2024-01-15 10:33:15] security.INFO: Authentication successful {"username":"john.doe"} []
+[2024-01-15 10:34:20] request.DEBUG: Request received {"method":"POST","path":"/api/users"} []
