@@ -14,7 +14,6 @@ namespace Symfony\AI\Mate\Container;
 use Mcp\Capability\Discovery\Discoverer;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\ComposerTypeDiscovery;
-use Symfony\AI\Mate\Discovery\ServiceDiscovery;
 use Symfony\AI\Mate\Exception\MissingDependencyException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -38,34 +37,17 @@ final class ContainerFactory
     public function create(): ContainerInterface
     {
         $container = new ContainerBuilder();
-        $loader = new PhpFileLoader($container, new FileLocator(\dirname(__DIR__)));
-        $loader->load('default.config.php');
 
-        $enabledExtensions = $this->getEnabledExtensions();
-
-        $container->setParameter('mate.enabled_extensions', $enabledExtensions);
-        $container->setParameter('mate.root_dir', $this->rootDir);
+        $this->registerCoreServices($container);
 
         $logger = $container->get('_build.logger');
         \assert($logger instanceof LoggerInterface);
 
-        $discovery = new ComposerTypeDiscovery($this->rootDir, $logger);
+        $composerDiscovery = new ComposerTypeDiscovery($this->rootDir, $logger);
 
-        if ([] !== $enabledExtensions) {
-            foreach ($discovery->discover($enabledExtensions) as $packageName => $data) {
-                $this->loadExtensionIncludes($container, $logger, $packageName, $data['includes']);
-            }
-        }
-
-        $rootProject = $discovery->discoverRootProject();
-        $this->loadUserServices($rootProject, $container, $logger);
-
-        $this->loadUserEnvVar($container);
-
-        $discovery = new Discoverer($logger);
-        $extensions = $this->getExtensionsToLoad($container, $logger);
-        (new ServiceDiscovery())->registerServices($discovery, $container, $this->rootDir, $extensions);
-        $container->setParameter('mate._extensions', $extensions);
+        $this->loadExtensions($container, $composerDiscovery, $logger);
+        $this->loadUserServices($container, $composerDiscovery, $logger);
+        $this->loadEnvironmentVariables($container);
 
         // Remove the logger definition, it's not needed anymore'
         $container->removeDefinition('_build.logger');
@@ -74,32 +56,106 @@ final class ContainerFactory
         return $container;
     }
 
-    /**
-     * @return array<string, array{dirs: string[], includes: string[]}>
-     */
-    private function getExtensionsToLoad(ContainerBuilder $container, LoggerInterface $logger): array
+    private function registerCoreServices(ContainerBuilder $container): void
     {
-        $rootDir = $container->getParameter('mate.root_dir');
-        \assert(\is_string($rootDir));
+        $loader = new PhpFileLoader($container, new FileLocator(\dirname(__DIR__)));
+        $loader->load('default.config.php');
+        $container->setParameter('mate.root_dir', $this->rootDir);
+    }
 
-        $packageNames = $container->getParameter('mate.enabled_extensions');
-        \assert(\is_array($packageNames));
-        /** @var array<int, string> $packageNames */
-
-        /** @var array<string, array{dirs: array<string>, includes: array<string>}> $extensions */
-        $extensions = [];
-
-        $discovery = new ComposerTypeDiscovery($rootDir, $logger);
-        foreach ($discovery->discover($packageNames) as $packageName => $data) {
-            $extensions[$packageName] = $data;
+    private function loadExtensions(ContainerBuilder $container, ComposerTypeDiscovery $composerDiscovery, LoggerInterface $logger): void
+    {
+        $enabledExtensions = $this->getEnabledExtensions();
+        if ([] === $enabledExtensions) {
+            return;
         }
 
-        $extensions['_custom'] = $discovery->discoverRootProject();
+        $extensions = [];
+        foreach ($composerDiscovery->discover($enabledExtensions) as $packageName => $data) {
+            $extensions[$packageName] = $data;
+            $this->loadExtensionIncludes($container, $logger, $packageName, $data['includes']);
+        }
 
-        return $extensions;
+        $extensions['_custom'] = $composerDiscovery->discoverRootProject();
+
+        $this->registerServices($container, $extensions, $logger);
+        $container->setParameter('mate._extensions', $extensions);
     }
 
     /**
+     * Pre-register all discovered services in the container.
+     *
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     */
+    private function registerServices(ContainerBuilder $container, array $extensions, LoggerInterface $logger): void
+    {
+        $discoverer = new Discoverer($logger);
+        foreach ($extensions as $data) {
+            $discoveryState = $discoverer->discover($this->rootDir, $data['dirs']);
+            foreach ($discoveryState->getTools() as $tool) {
+                $this->maybeRegisterHandler($container, $tool->handler);
+            }
+
+            foreach ($discoveryState->getResources() as $resource) {
+                $this->maybeRegisterHandler($container, $resource->handler);
+            }
+
+            foreach ($discoveryState->getPrompts() as $prompt) {
+                $this->maybeRegisterHandler($container, $prompt->handler);
+            }
+
+            foreach ($discoveryState->getResourceTemplates() as $template) {
+                $this->maybeRegisterHandler($container, $template->handler);
+            }
+        }
+    }
+
+    /**
+     * @param \Closure|array{0: object|string, 1: string}|string $handler
+     */
+    private function maybeRegisterHandler(ContainerBuilder $container, \Closure|array|string $handler): void
+    {
+        $className = $this->extractClassName($handler);
+        if (null === $className) {
+            return;
+        }
+
+        if ($container->has($className)) {
+            $container->getDefinition($className)
+                ->setPublic(true);
+
+            return;
+        }
+
+        $container->register($className, $className)
+            ->setAutowired(true)
+            ->setPublic(true);
+    }
+
+    /**
+     * @param \Closure|array{0: object|string, 1: string}|string $handler
+     */
+    private function extractClassName(\Closure|array|string $handler): ?string
+    {
+        if ($handler instanceof \Closure) {
+            return null;
+        }
+
+        if (\is_string($handler)) {
+            return class_exists($handler) ? $handler : null;
+        }
+
+        $class = $handler[0];
+        if (\is_object($class)) {
+            return $class::class;
+        }
+
+        return class_exists($class) ? $class : null;
+    }
+
+    /**
+     * Look at the `mate/extensions.php` file in the root directory of the project to find enabled extensions.
+     *
      * @return string[] Package names
      */
     private function getEnabledExtensions(): array
@@ -153,11 +209,10 @@ final class ContainerFactory
         }
     }
 
-    private function loadUserEnvVar(ContainerBuilder $container): void
+    private function loadEnvironmentVariables(ContainerBuilder $container): void
     {
         $envFile = $container->getParameter('mate.env_file');
-
-        if (null === $envFile || !\is_string($envFile) || '' === $envFile) {
+        if (!\is_string($envFile) || '' === $envFile) {
             return;
         }
 
@@ -166,19 +221,18 @@ final class ContainerFactory
         }
 
         $extra = [];
-        $localFile = $this->rootDir.\DIRECTORY_SEPARATOR.$envFile.\DIRECTORY_SEPARATOR.'.local';
-        if (!file_exists($localFile)) {
+        $localFile = $this->rootDir.\DIRECTORY_SEPARATOR.$envFile.'.local';
+        if (file_exists($localFile)) {
             $extra[] = $localFile;
         }
 
         (new Dotenv())->load($this->rootDir.\DIRECTORY_SEPARATOR.$envFile, ...$extra);
     }
 
-    /**
-     * @param array{dirs: array<string>, includes: array<string>} $rootProject
-     */
-    private function loadUserServices(array $rootProject, ContainerBuilder $container, LoggerInterface $logger): void
+    private function loadUserServices(ContainerBuilder $container, ComposerTypeDiscovery $composerDiscovery, LoggerInterface $logger): void
     {
+        $rootProject = $composerDiscovery->discoverRootProject();
+
         $loader = new PhpFileLoader($container, new FileLocator($this->rootDir));
         foreach ($rootProject['includes'] as $include) {
             try {

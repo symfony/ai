@@ -58,7 +58,7 @@ class DiscoverCommand extends Command
 
         $discovery = new ComposerTypeDiscovery($this->rootDir, $this->logger);
 
-        $extensions = $discovery->discover([]);
+        $extensions = $discovery->discover();
 
         $count = \count($extensions);
         if (0 === $count) {

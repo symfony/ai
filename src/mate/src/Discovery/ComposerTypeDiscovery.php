@@ -46,11 +46,11 @@ final class ComposerTypeDiscovery
     }
 
     /**
-     * @param string[] $enabledExtensions
+     * @param string[]|false $includeFilter Only include packages in this list. If false, include all.
      *
      * @return array<string, array{dirs: string[], includes: string[]}>
      */
-    public function discover(array $enabledExtensions = []): array
+    public function discover(array|false $includeFilter = false): array
     {
         $installed = $this->getInstalledPackages();
         $extensions = [];
@@ -63,9 +63,7 @@ final class ComposerTypeDiscovery
                 continue;
             }
 
-            if ([] !== $enabledExtensions && !\in_array($packageName, $enabledExtensions, true)) {
-                $this->logger->debug('Skipping package not enabled', ['package' => $packageName]);
-
+            if (false !== $includeFilter && !\in_array($packageName, $includeFilter, true)) {
                 continue;
             }
 

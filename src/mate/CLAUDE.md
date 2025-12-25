@@ -52,7 +52,6 @@ bin/mate clear-cache
 - **ContainerFactory**: DI container management with extension discovery
 - **ComposerTypeDiscovery**: Discovers MCP extensions via `extra.ai-mate` in composer.json
 - **FilteredDiscoveryLoader**: Loads MCP capabilities with feature filtering
-- **ServiceDiscovery**: Registers discovered services in the DI container
 
 ### Key Directories
 - `src/Command/`: CLI commands (serve, init, discover, clear-cache)
