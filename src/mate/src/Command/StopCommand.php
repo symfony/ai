@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -22,6 +23,7 @@ use Symfony\Component\Finder\Finder;
  *
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
+#[AsCommand('stop', 'Stop running servers')]
 class StopCommand extends Command
 {
     public function __construct(private string $cacheDir)
