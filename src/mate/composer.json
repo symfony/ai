@@ -33,10 +33,10 @@
         "php": ">=8.2",
         "mcp/sdk": "^0.2",
         "psr/log": "^2.0|^3.0",
-        "symfony/config": "^7.3|^8.0",
-        "symfony/console": "^7.3|^8.0",
-        "symfony/dependency-injection": "^7.3|^8.0",
-        "symfony/finder": "^7.3|^8.0"
+        "symfony/config": "^5.4|^6.4|^7.3|^8.0",
+        "symfony/console": "^5.4|^6.4|^7.3|^8.0",
+        "symfony/dependency-injection": "^5.4|^6.4|^7.3|^8.0",
+        "symfony/finder": "^5.4|^6.4|^7.3|^8.0"
     },
     "require-dev": {
         "ext-simplexml": "*",
@@ -44,7 +44,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.46",
-        "symfony/dotenv": "^7.3|^8.0"
+        "symfony/dotenv": "^5.4|^6.4|^7.3|^8.0"
     },
     "minimum-stability": "dev",
     "autoload": {
