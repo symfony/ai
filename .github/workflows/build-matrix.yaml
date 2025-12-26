@@ -36,6 +36,12 @@ on:
             message-store-bridges-include:
                 description: 'Message store bridge includes for test matrix'
                 value: ${{ jobs.matrix.outputs.message-store-bridges-include }}
+            mate-bridges:
+                description: 'List of mate bridges'
+                value: ${{ jobs.matrix.outputs.mate-bridges }}
+            mate-bridges-include:
+                description: 'Mate bridge includes for test matrix'
+                value: ${{ jobs.matrix.outputs.mate-bridges-include }}
 
 jobs:
     matrix:
@@ -53,6 +59,8 @@ jobs:
             platform-bridges-include: ${{ steps.set-matrix.outputs.platform-bridges-include }}
             message-store-bridges: ${{ steps.set-matrix.outputs.message-store-bridges }}
             message-store-bridges-include: ${{ steps.set-matrix.outputs.message-store-bridges-include }}
+            mate-bridges: ${{ steps.set-matrix.outputs.mate-bridges }}
+            mate-bridges-include: ${{ steps.set-matrix.outputs.mate-bridges-include }}
         steps:
             - name: Checkout
               uses: actions/checkout@v6
@@ -88,15 +96,18 @@ jobs:
                       | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({component: "platform", type: "Platform", bridge: .})')
                   MESSAGE_STORE_BRIDGES=$(ls -1 src/chat/src/Bridge/ | sort \
                       | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({component: "chat", type: "Message Store", bridge: .})')
+                  MATE_BRIDGES=$(ls -1 src/mate/src/Bridge/ | sort \
+                      | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({component: "mate", type: "Mate", bridge: .})')
 
                   # Combined bridges (for code-quality)
-                  BRIDGES=$(jq -n -c --argjson store "$STORE_BRIDGES" --argjson tool "$TOOL_BRIDGES" --argjson platform "$PLATFORM_BRIDGES" --argjson messageStore "$MESSAGE_STORE_BRIDGES" '$store + $tool + $platform + $messageStore')
+                  BRIDGES=$(jq -n -c --argjson store "$STORE_BRIDGES" --argjson tool "$TOOL_BRIDGES" --argjson platform "$PLATFORM_BRIDGES" --argjson messageStore "$MESSAGE_STORE_BRIDGES" --argjson mate "$MATE_BRIDGES" '$store + $tool + $platform + $messageStore + $mate')
                   echo "bridges=$BRIDGES" >> $GITHUB_OUTPUT
 
                   # Individual bridges without type (for tests)
                   echo "store-bridges=$(echo "$STORE_BRIDGES" | jq -c 'map(del(.type))')" >> $GITHUB_OUTPUT
                   echo "tool-bridges=$(echo "$TOOL_BRIDGES" | jq -c 'map(del(.type))')" >> $GITHUB_OUTPUT
                   echo "platform-bridges=$(echo "$PLATFORM_BRIDGES" | jq -c 'map({bridge: .bridge})')" >> $GITHUB_OUTPUT
+                  echo "mate-bridges=$(echo "$MATE_BRIDGES" | jq -c 'map({bridge: .bridge})')" >> $GITHUB_OUTPUT
 
                   # Bridge includes (8.2 lowest, 8.2 highest, 8.5 highest)
                   STORE_BRIDGES_INCLUDE=$(echo "$STORE_BRIDGES" | jq -c '
@@ -122,6 +133,14 @@ jobs:
                       ($bridges | map({bridge: {bridge: .bridge}, "php-version": "8.5", "dependency-version": "highest"}))
                   ')
                   echo "platform-bridges-include=$PLATFORM_BRIDGES_INCLUDE" >> $GITHUB_OUTPUT
+
+                  MATE_BRIDGES_INCLUDE=$(echo "$MATE_BRIDGES" | jq -c '
+                      . as $bridges |
+                      ($bridges | map({bridge: {bridge: .bridge}, "php-version": "8.2", "dependency-version": "lowest"})) +
+                      ($bridges | map({bridge: {bridge: .bridge}, "php-version": "8.2", "dependency-version": "highest"})) +
+                      ($bridges | map({bridge: {bridge: .bridge}, "php-version": "8.5", "dependency-version": "highest"}))
+                  ')
+                  echo "mate-bridges-include=$MATE_BRIDGES_INCLUDE" >> $GITHUB_OUTPUT
 
                   # Package includes (lowest, Symfony 7.4, Symfony 8.0)
                   PACKAGES_INCLUDE=$(echo "$PACKAGES" | jq -c '
