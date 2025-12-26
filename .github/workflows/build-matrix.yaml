@@ -150,6 +150,10 @@ jobs:
                       ($pkgs | map(. + {"php-version": "8.5", "symfony-version": "8.0.*"}))
                       | map({package: {path: .path, type: .type, name: .name}} + (. | del(.path, .type, .name)))
                   ')
+
+                  # Add Mate package (Symfony 5.4, Symfony 6.4)
+                  PACKAGES_INCLUDE=$(echo "$PACKAGES_INCLUDE" | jq -c --arg mate "$mate" '. + [{package: {"path":"mate","type":"Component","name":"Mate"}, "php-version": "8.2", "symfony-version": "5.4.*"}]')
+                  PACKAGES_INCLUDE=$(echo "$PACKAGES_INCLUDE" | jq -c --arg mate "$mate" '. + [{package: {"path":"mate","type":"Component","name":"Mate"}, "php-version": "8.2", "symfony-version": "6.4.*"}]')
                   echo "packages-include=$PACKAGES_INCLUDE" >> $GITHUB_OUTPUT
 
                   # Message store bridges (for tests)
