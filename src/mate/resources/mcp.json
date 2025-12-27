@@ -3,7 +3,8 @@
         "symfony-ai-mate": {
             "command": "./vendor/bin/mate",
             "args": [
-                "serve"
+                "serve",
+                "--force-keep-alive"
             ]
         }
     }
