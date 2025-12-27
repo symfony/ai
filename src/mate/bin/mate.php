@@ -15,6 +15,10 @@ $autoloadPaths = [
     __DIR__.'/../vendor/autoload.php', // Package autoloader (fallback)
 ];
 
+if (isset($GLOBALS['_composer_autoload_path'])) {
+    array_unshift($autoloadPaths, $GLOBALS['_composer_autoload_path']);
+}
+
 $root = null;
 foreach ($autoloadPaths as $autoloadPath) {
     if (file_exists($autoloadPath)) {
