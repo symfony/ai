@@ -1,0 +1,31 @@
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-26T17:07:26Z
+
+Blocked by https://github.com/symfony/ai/pull/1291
+
+We do not run the tests on CI
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-26T20:23:56Z
+
+@Nyholm do you guys add a changelog line for such small things?
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-27T08:54:32Z
+
+No. but for "features"
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-27T10:15:44Z
+
+Can you please rebase this PR?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-27T18:34:45Z
+
+@Nyholm done
