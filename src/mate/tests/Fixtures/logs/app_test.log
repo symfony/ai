@@ -1,0 +1,2 @@
+[2024-01-15 15:00:00] test.INFO: Test started {"test":"UserControllerTest"} []
+[2024-01-15 15:00:05] test.INFO: Test completed {"test":"UserControllerTest","status":"passed"} []
