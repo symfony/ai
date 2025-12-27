@@ -30,6 +30,7 @@ final class ModelClient implements ModelClientInterface
         HttpClientInterface $httpClient,
         private readonly string $location,
         private readonly string $projectId,
+        #[\SensitiveParameter] private readonly ?string $apiKey = null,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
@@ -51,6 +52,11 @@ final class ModelClient implements ModelClientInterface
             $model->getName(),
             $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent',
         );
+
+        $query = [];
+        if (null !== $this->apiKey) {
+            $query['key'] = $this->apiKey;
+        }
 
         if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
             $options['generationConfig']['responseMimeType'] = 'application/json';
@@ -107,6 +113,7 @@ final class ModelClient implements ModelClientInterface
                 $url,
                 [
                     'json' => array_merge($options, $payload),
+                    'query' => $query,
                 ]
             )
         );
