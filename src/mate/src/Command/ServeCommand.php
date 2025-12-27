@@ -69,6 +69,7 @@ class ServeCommand extends Command
     {
         if ($input->getOption('force-keep-alive')) {
             $output->writeln('The option --force-keep-alive requires using the "bin/mate" file. Try running "./vendor/bin/mate serve --force-keep-alive"');
+
             return Command::INVALID;
         }
 
