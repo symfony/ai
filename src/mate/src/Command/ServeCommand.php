@@ -19,14 +19,12 @@ use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Transport\StdioTransport;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\App;
-use Symfony\AI\Mate\Discovery\ComposerTypeDiscovery;
 use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
-use Symfony\AI\Mate\Discovery\ServiceDiscovery;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Starts the MCP server with stdio transport.
@@ -37,16 +35,11 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 #[AsCommand('serve', 'Starts the MCP server with stdio transport')]
 class ServeCommand extends Command
 {
-    private ComposerTypeDiscovery $discovery;
-
     public function __construct(
+        private ContainerInterface $container,
         private LoggerInterface $logger,
-        private ContainerBuilder $container,
     ) {
         parent::__construct(self::getDefaultName());
-        $rootDir = $container->getParameter('mate.root_dir');
-        \assert(\is_string($rootDir));
-        $this->discovery = new ComposerTypeDiscovery($rootDir, $logger);
     }
 
     public static function getDefaultName(): string
@@ -67,21 +60,19 @@ class ServeCommand extends Command
         $cacheDir = $this->container->getParameter('mate.cache_dir');
         \assert(\is_string($cacheDir));
 
-        $discovery = new Discoverer($this->logger);
-        $extensions = $this->getExtensionsToLoad();
-        (new ServiceDiscovery())->registerServices($discovery, $this->container, $rootDir, $extensions);
+        $extensions = $this->container->getParameter('mate._extensions') ?? [];
+        \assert(\is_array($extensions));
+        /* @var array<string, array{dirs: string[], includes: string[]}> $extensions */
 
         $disabledVendorFeatures = $this->container->getParameter('mate.disabled_features') ?? [];
         \assert(\is_array($disabledVendorFeatures));
         /* @var array<string, array<string, array{enabled: bool}>> $disabledVendorFeatures */
 
-        $this->container->compile();
-
         $loader = new FilteredDiscoveryLoader(
             basePath: $rootDir,
             extensions: $extensions,
             disabledFeatures: $disabledVendorFeatures,
-            discoverer: $discovery,
+            discoverer: new Discoverer($this->logger),
             logger: $this->logger
         );
 
@@ -103,30 +94,6 @@ class ServeCommand extends Command
         $server->run(new StdioTransport());
 
         return Command::SUCCESS;
-    }
-
-    /**
-     * @return array<string, array{dirs: string[], includes: string[]}>
-     */
-    private function getExtensionsToLoad(): array
-    {
-        $rootDir = $this->container->getParameter('mate.root_dir');
-        \assert(\is_string($rootDir));
-
-        $packageNames = $this->container->getParameter('mate.enabled_extensions');
-        \assert(\is_array($packageNames));
-        /** @var array<int, string> $packageNames */
-
-        /** @var array<string, array{dirs: array<string>, includes: array<string>}> $extensions */
-        $extensions = [];
-
-        foreach ($this->discovery->discover($packageNames) as $packageName => $data) {
-            $extensions[$packageName] = $data;
-        }
-
-        $extensions['_custom'] = $this->discovery->discoverRootProject();
-
-        return $extensions;
     }
 
     /**

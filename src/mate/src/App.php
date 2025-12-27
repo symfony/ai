@@ -19,7 +19,7 @@ use Symfony\AI\Mate\Command\ServeCommand;
 use Symfony\AI\Mate\Exception\UnsupportedVersionException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -30,7 +30,7 @@ final class App
     public const NAME = 'Symfony AI Mate';
     public const VERSION = '0.1.0';
 
-    public static function build(ContainerBuilder $container): Application
+    public static function build(ContainerInterface $container): Application
     {
         $logger = $container->get(LoggerInterface::class);
         \assert($logger instanceof LoggerInterface);
@@ -44,7 +44,7 @@ final class App
         $application = new Application(self::NAME, self::VERSION);
 
         self::addCommand($application, new InitCommand($rootDir));
-        self::addCommand($application, new ServeCommand($logger, $container));
+        self::addCommand($application, new ServeCommand($container, $logger));
         self::addCommand($application, new DiscoverCommand($rootDir, $logger));
         self::addCommand($application, new ClearCacheCommand($cacheDir));
 

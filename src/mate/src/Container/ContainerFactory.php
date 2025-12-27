@@ -11,11 +11,14 @@
 
 namespace Symfony\AI\Mate\Container;
 
+use Mcp\Capability\Discovery\Discoverer;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\ComposerTypeDiscovery;
+use Symfony\AI\Mate\Discovery\ServiceDiscovery;
 use Symfony\AI\Mate\Exception\MissingDependencyException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\Dotenv\Dotenv;
 
@@ -32,7 +35,7 @@ final class ContainerFactory
     ) {
     }
 
-    public function create(): ContainerBuilder
+    public function create(): ContainerInterface
     {
         $container = new ContainerBuilder();
         $loader = new PhpFileLoader($container, new FileLocator(\dirname(__DIR__)));
@@ -43,7 +46,7 @@ final class ContainerFactory
         $container->setParameter('mate.enabled_extensions', $enabledExtensions);
         $container->setParameter('mate.root_dir', $this->rootDir);
 
-        $logger = $container->get(LoggerInterface::class);
+        $logger = $container->get('_build.logger');
         \assert($logger instanceof LoggerInterface);
 
         $discovery = new ComposerTypeDiscovery($this->rootDir, $logger);
@@ -55,11 +58,45 @@ final class ContainerFactory
         }
 
         $rootProject = $discovery->discoverRootProject();
-        $this->loadUserServices($rootProject, $container);
+        $this->loadUserServices($rootProject, $container, $logger);
 
         $this->loadUserEnvVar($container);
 
+        $discovery = new Discoverer($logger);
+        $extensions = $this->getExtensionsToLoad($container, $logger);
+        (new ServiceDiscovery())->registerServices($discovery, $container, $this->rootDir, $extensions);
+        $container->setParameter('mate._extensions', $extensions);
+
+        // Remove the logger definition, it's not needed anymore'
+        $container->removeDefinition('_build.logger');
+        $container->compile(true);
+
         return $container;
+    }
+
+    /**
+     * @return array<string, array{dirs: string[], includes: string[]}>
+     */
+    private function getExtensionsToLoad(ContainerBuilder $container, LoggerInterface $logger): array
+    {
+        $rootDir = $container->getParameter('mate.root_dir');
+        \assert(\is_string($rootDir));
+
+        $packageNames = $container->getParameter('mate.enabled_extensions');
+        \assert(\is_array($packageNames));
+        /** @var array<int, string> $packageNames */
+
+        /** @var array<string, array{dirs: array<string>, includes: array<string>}> $extensions */
+        $extensions = [];
+
+        $discovery = new ComposerTypeDiscovery($rootDir, $logger);
+        foreach ($discovery->discover($packageNames) as $packageName => $data) {
+            $extensions[$packageName] = $data;
+        }
+
+        $extensions['_custom'] = $discovery->discoverRootProject();
+
+        return $extensions;
     }
 
     /**
@@ -140,11 +177,8 @@ final class ContainerFactory
     /**
      * @param array{dirs: array<string>, includes: array<string>} $rootProject
      */
-    private function loadUserServices(array $rootProject, ContainerBuilder $container): void
+    private function loadUserServices(array $rootProject, ContainerBuilder $container, LoggerInterface $logger): void
     {
-        $logger = $container->get(LoggerInterface::class);
-        \assert($logger instanceof LoggerInterface);
-
         $loader = new PhpFileLoader($container, new FileLocator($this->rootDir));
         foreach ($rootProject['includes'] as $include) {
             try {
