@@ -22,7 +22,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final readonly class StreamCommand
 {
     public function __construct(
-        private AgentInterface $blogAgent,
+        private AgentInterface $blog,
     ) {
     }
 
@@ -41,7 +41,7 @@ final readonly class StreamCommand
         $messages = new MessageBag(Message::ofUser($question));
 
         $io->section('Agent Response:');
-        $result = $this->blogAgent->call($messages, ['stream' => true]);
+        $result = $this->blog->call($messages, ['stream' => true]);
 
         \assert($result instanceof StreamResult);
 
