@@ -76,7 +76,7 @@ jobs:
 
                   # Packages (components and bundles)
                   PACKAGES="[]"
-                  for pkg in $(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -not -path "*/Bridge/*" | xargs -I{} dirname {} | sed 's|^src/||' | grep -Ev "examples" | sort); do
+                  for pkg in $(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -not -path "*/Bridge/*" -not -path "*/tests/*" | xargs -I{} dirname {} | sed 's|^src/||' | grep -Ev "examples" | sort); do
                       if [[ "$pkg" == *-bundle ]]; then
                           type="Bundle"
                       else

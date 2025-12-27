@@ -52,7 +52,7 @@ class ServeCommand extends Command
         \assert(\is_string($cacheDir));
         $this->cacheDir = $cacheDir;
 
-        $extensions = $this->container->getParameter('mate._extensions') ?? [];
+        $extensions = $this->container->getParameter('mate.extensions') ?? [];
         \assert(\is_array($extensions));
 
         $disabledFeatures = $this->container->getParameter('mate.disabled_features') ?? [];

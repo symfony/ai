@@ -74,14 +74,14 @@ final class ComposerExtensionDiscoveryTest extends TestCase
 
     public function testWhitelistFiltering()
     {
+        $enabledExtensions = [
+            'vendor/package-a',
+        ];
+
         $discovery = new ComposerExtensionDiscovery(
             $this->fixturesDir.'/with-ai-mate-config',
             new NullLogger()
         );
-
-        $enabledExtensions = [
-            'vendor/package-a',
-        ];
 
         $extensions = $discovery->discover($enabledExtensions);
 
@@ -92,15 +92,15 @@ final class ComposerExtensionDiscoveryTest extends TestCase
 
     public function testWhitelistWithMultiplePackages()
     {
-        $discovery = new ComposerExtensionDiscovery(
-            $this->fixturesDir.'/with-ai-mate-config',
-            new NullLogger()
-        );
-
         $enabledExtensions = [
             'vendor/package-a',
             'vendor/package-b',
         ];
+
+        $discovery = new ComposerExtensionDiscovery(
+            $this->fixturesDir.'/with-ai-mate-config',
+            new NullLogger()
+        );
 
         $extensions = $discovery->discover($enabledExtensions);
 

@@ -130,7 +130,7 @@ final class FilteredDiscoveryLoader implements LoaderInterface
         );
     }
 
-    private function isFeatureAllowed(string $extensionName, string $feature): bool
+    public function isFeatureAllowed(string $extensionName, string $feature): bool
     {
         $data = $this->disabledFeatures[$extensionName][$feature] ?? [];
 

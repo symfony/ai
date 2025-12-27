@@ -43,10 +43,10 @@ final class ContainerFactory
         $logger = $container->get('_build.logger');
         \assert($logger instanceof LoggerInterface);
 
-        $composerDiscovery = new ComposerExtensionDiscovery($this->rootDir, $logger);
+        $extensionDiscovery = new ComposerExtensionDiscovery($this->rootDir, $logger);
 
-        $this->loadExtensions($container, $composerDiscovery, $logger);
-        $this->loadUserServices($container, $composerDiscovery, $logger);
+        $this->loadExtensions($container, $extensionDiscovery, $logger);
+        $this->loadUserServices($container, $extensionDiscovery, $logger);
         $this->loadEnvironmentVariables($container);
 
         // Remove the logger definition, it's not needed anymore'
@@ -63,23 +63,27 @@ final class ContainerFactory
         $container->setParameter('mate.root_dir', $this->rootDir);
     }
 
-    private function loadExtensions(ContainerBuilder $container, ComposerExtensionDiscovery $composerDiscovery, LoggerInterface $logger): void
+    private function loadExtensions(ContainerBuilder $container, ComposerExtensionDiscovery $extensionDiscovery, LoggerInterface $logger): void
     {
         $enabledExtensions = $this->getEnabledExtensions();
         if ([] === $enabledExtensions) {
+            $container->setParameter('mate.extensions', [
+                '_custom' => $extensionDiscovery->discoverRootProject(),
+            ]);
+
             return;
         }
 
         $extensions = [];
-        foreach ($composerDiscovery->discover($enabledExtensions) as $packageName => $data) {
+        foreach ($extensionDiscovery->discover($enabledExtensions) as $packageName => $data) {
             $extensions[$packageName] = $data;
             $this->loadExtensionIncludes($container, $logger, $packageName, $data['includes']);
         }
 
-        $extensions['_custom'] = $composerDiscovery->discoverRootProject();
+        $extensions['_custom'] = $extensionDiscovery->discoverRootProject();
 
         $this->registerServices($container, $extensions, $logger);
-        $container->setParameter('mate._extensions', $extensions);
+        $container->setParameter('mate.extensions', $extensions);
     }
 
     /**
@@ -229,9 +233,9 @@ final class ContainerFactory
         (new Dotenv())->load($this->rootDir.\DIRECTORY_SEPARATOR.$envFile, ...$extra);
     }
 
-    private function loadUserServices(ContainerBuilder $container, ComposerExtensionDiscovery $composerDiscovery, LoggerInterface $logger): void
+    private function loadUserServices(ContainerBuilder $container, ComposerExtensionDiscovery $extensionDiscovery, LoggerInterface $logger): void
     {
-        $rootProject = $composerDiscovery->discoverRootProject();
+        $rootProject = $extensionDiscovery->discoverRootProject();
 
         $loader = new PhpFileLoader($container, new FileLocator($this->rootDir));
         foreach ($rootProject['includes'] as $include) {

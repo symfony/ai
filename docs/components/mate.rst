@@ -290,6 +290,44 @@ Commands
 ``mate clear-cache``
     Clear the MCP server cache.
 
+``mate debug:capabilities``
+    Display all discovered MCP capabilities grouped by extension. This command is useful for:
+
+    - Verifying extension installation and capability registration
+    - Debugging missing or misconfigured extensions
+    - Understanding which package provides each capability
+    - Inspecting available tools during development
+
+    **Options:**
+
+    ``--format=FORMAT``
+        Output format: ``text`` (default) or ``json``
+
+    ``--extension=EXTENSION``
+        Filter by extension package name (e.g., ``symfony/ai-monolog-mate-extension``)
+
+    ``--type=TYPE``
+        Filter by capability type: ``tool``, ``resource``, ``prompt``, or ``template``
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # Show all capabilities
+        $ vendor/bin/mate debug:capabilities
+
+        # Show only tools
+        $ vendor/bin/mate debug:capabilities --type=tool
+
+        # Show capabilities from specific extension
+        $ vendor/bin/mate debug:capabilities --extension=symfony/ai-monolog-mate-extension
+
+        # JSON output for scripting
+        $ vendor/bin/mate debug:capabilities --format=json
+
+        # Root project capabilities
+        $ vendor/bin/mate debug:capabilities --extension=_custom
+
 Security
 --------
 
