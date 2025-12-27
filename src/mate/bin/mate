@@ -1,4 +1,63 @@
 #!/usr/bin/env php
 <?php
 
-include __DIR__ . '/mate.php';
+/*
+ * This script will decide if we should try to keep the process alive or not.
+ * When running ./vendor/bin/mate serve --force-keep-alive, it will spawn a child process.
+ */
+
+$keepAlive = false;
+if (($argv[1] ?? false) === 'serve') {
+    $keepAlive = $argv;
+    // try to detect "--force-keep-alive
+    for ($i = 2; $i < $argc; ++$i) {
+        if ($argv[$i] === '--force-keep-alive') {
+            unset($keepAlive[$i]);
+        }
+    }
+}
+
+if (false === $keepAlive || $argv === $keepAlive) {
+    include __DIR__ . '/mate.php';
+    return;
+}
+
+// Build the command as an array to avoid shell interpretation
+$command = $keepAlive;
+
+while (true) {
+    // Run child attached to parent's STDIN/STDOUT/STDERR so it can read from STDIN
+    // and interact as if it was run directly.
+    $descriptorSpec = [
+        0 => ['file', 'php://stdin', 'r'],
+        1 => ['file', 'php://stdout', 'w'],
+        2 => ['file', 'php://stderr', 'w'],
+    ];
+
+    $process = proc_open($command, $descriptorSpec, $pipes, null, null, [
+        'bypass_shell' => true,
+    ]);
+
+    if (!\is_resource($process)) {
+        fwrite(STDERR, "[mate][keep-alive] Failed to start process.\n");
+        exit(70); // EX_SOFTWARE
+    }
+
+    // Wait for the process to terminate and get its exit code
+    $exitCode = proc_close($process);
+
+    if ($exitCode === 0) {
+        fwrite(STDERR, "[mate][keep-alive] Process exited with code 0, restarting...\n");
+        sleep(1);
+        continue;
+    }
+
+    if ($exitCode >= 129 && $exitCode <= 192) {
+        $signal = $exitCode - 128;
+        fwrite(STDERR, sprintf("[mate][keep-alive] Process terminated by signal %d (exit %d), not restarting.\n", $signal, $exitCode));
+    } else {
+        fwrite(STDERR, sprintf("[mate][keep-alive] Process exited with code %d, not restarting.\n", $exitCode));
+    }
+
+    exit($exitCode);
+}
