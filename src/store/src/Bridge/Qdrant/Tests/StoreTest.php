@@ -147,7 +147,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points?wait=true".');
         $this->expectExceptionCode(400);
-        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
     }
 
     public function testStoreCanAdd()

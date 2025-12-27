@@ -187,8 +187,8 @@ final class StoreTest extends TestCase
         $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
 
         $store->setup();
-        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
-        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
 
         $this->assertSame(3, $httpClient->getRequestsCount());
     }
@@ -286,7 +286,7 @@ final class StoreTest extends TestCase
         $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
 
         $store->setup();
-        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
 
         $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 

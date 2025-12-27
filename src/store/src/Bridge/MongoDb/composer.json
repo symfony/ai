@@ -30,7 +30,7 @@
         "mongodb/mongodb": "^1.21|^2.0",
         "psr/log": "^3.0",
         "symfony/ai-platform": "^0.1",
-        "symfony/ai-store": "^0.1",
+        "symfony/ai-store": "^0.2",
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {

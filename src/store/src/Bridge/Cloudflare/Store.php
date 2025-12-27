@@ -57,8 +57,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('DELETE', \sprintf('vectorize/v2/indexes/%s', $this->index));
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $payload = array_map(
             $this->convertToIndexableArray(...),
             $documents,

@@ -47,8 +47,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->cache->get($this->cacheKey, static fn (): array => []);
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $existingVectors = $this->cache->get($this->cacheKey, static fn (): array => []);
 
         $newVectors = array_map(static fn (VectorDocument $document): array => [

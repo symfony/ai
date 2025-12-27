@@ -51,8 +51,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         foreach ($documents as $document) {
             $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
                 'statement' => \sprintf('CREATE (n:%s {id: $id, metadata: $metadata, %s: $embeddings}) RETURN n', $this->nodeName, $this->embeddingsField),

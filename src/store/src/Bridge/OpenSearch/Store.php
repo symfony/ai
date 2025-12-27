@@ -71,8 +71,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('DELETE', $this->indexName);
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $documentToIndex = fn (VectorDocument $document): array => [
             'index' => [
                 '_index' => $this->indexName,

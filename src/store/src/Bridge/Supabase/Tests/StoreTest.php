@@ -40,7 +40,7 @@ class StoreTest extends TestCase
         $httpClient = new MockHttpClient();
         $store = $this->createStore($httpClient);
 
-        $store->add();
+        $store->add([]);
 
         $this->assertSame(0, $httpClient->getRequestsCount());
     }
@@ -65,10 +65,10 @@ class StoreTest extends TestCase
         $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 201]));
         $store = $this->createStore($httpClient);
 
-        $store->add(
+        $store->add([
             new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2]), new Metadata(['a' => '1'])),
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.4]), new Metadata(['b' => '2'])),
-        );
+        ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -78,10 +78,10 @@ class StoreTest extends TestCase
         $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 201]));
         $store = $this->createStore($httpClient);
 
-        $store->add(
+        $store->add([
             new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2]), new Metadata(['valid' => true])),
             new VectorDocument(Uuid::v4(), new Vector([0.1]), new Metadata(['invalid' => true])),
-        );
+        ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

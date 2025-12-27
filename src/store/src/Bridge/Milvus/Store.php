@@ -92,8 +92,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $this->request('POST', 'v2/vectordb/entities/insert', [
             'collectionName' => $this->collection,
             'data' => array_map($this->convertToIndexableArray(...), $documents),

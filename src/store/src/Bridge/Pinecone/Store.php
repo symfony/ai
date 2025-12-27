@@ -63,8 +63,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
             );
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $vectors = [];
         foreach ($documents as $document) {
             $vectors[] = [

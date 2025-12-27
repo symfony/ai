@@ -151,7 +151,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "https://api.cloudflare.com/client/v4/accounts/foo/vectorize/v2/indexes/random/upsert".');
         $this->expectExceptionCode(400);
-        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
     }
 
     public function testStoreCanAdd()
@@ -174,7 +174,7 @@ final class StoreTest extends TestCase
             'random',
         );
 
-        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
 
         $this->assertSame(1, $mockHttpClient->getRequestsCount());
     }

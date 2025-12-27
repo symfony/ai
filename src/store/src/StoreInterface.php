@@ -19,7 +19,10 @@ use Symfony\AI\Store\Document\VectorDocument;
  */
 interface StoreInterface
 {
-    public function add(VectorDocument ...$documents): void;
+    /**
+     * @param VectorDocument|VectorDocument[] $documents
+     */
+    public function add(VectorDocument|array $documents): void;
 
     /**
      * @param array<string, mixed> $options

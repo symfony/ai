@@ -143,7 +143,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:19530/v2/vectordb/entities/insert".');
         $this->expectExceptionCode(400);
-        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
     }
 
     public function testStoreCanAdd()
@@ -171,7 +171,7 @@ final class StoreTest extends TestCase
             'test',
         );
 
-        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

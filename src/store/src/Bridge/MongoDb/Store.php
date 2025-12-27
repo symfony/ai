@@ -104,8 +104,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->getCollection()->drop();
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $operations = [];
 
         foreach ($documents as $document) {

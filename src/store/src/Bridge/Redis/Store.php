@@ -78,8 +78,12 @@ class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $this->redis->clearLastError();
 
         $pipeline = $this->redis->multi(\Redis::PIPELINE);

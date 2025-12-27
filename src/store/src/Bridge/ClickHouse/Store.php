@@ -53,8 +53,12 @@ class Store implements ManagedStoreInterface, StoreInterface
         $this->execute('POST', 'DROP TABLE IF EXISTS {{ table }}');
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $rows = [];
 
         foreach ($documents as $document) {

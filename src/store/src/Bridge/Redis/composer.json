@@ -29,7 +29,7 @@
         "ext-redis": "*",
         "oskarstark/enum-helper": "^1.5",
         "symfony/ai-platform": "^0.1",
-        "symfony/ai-store": "^0.1",
+        "symfony/ai-store": "^0.2",
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {

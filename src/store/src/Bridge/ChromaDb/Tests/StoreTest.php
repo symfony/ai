@@ -53,7 +53,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($client, 'test-collection');
 
-        $store->add(...$documents);
+        $store->add($documents);
     }
 
     /**

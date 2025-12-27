@@ -37,8 +37,12 @@ final class SearchStore implements StoreInterface
     ) {
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $this->request('index', [
             'value' => array_map([$this, 'convertToIndexableArray'], $documents),
         ]);

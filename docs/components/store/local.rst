@@ -16,7 +16,7 @@ Stores vectors in a PHP array. Data is not persisted and is lost when the PHP pr
     use Symfony\AI\Store\InMemory\Store;
 
     $store = new Store();
-    $store->add($document1, $document2);
+    $store->add([$document1, $document2]);
     $results = $store->query($vector);
 
 CacheStore
@@ -29,7 +29,7 @@ Stores vectors using a PSR-6 cache implementation. Persistence depends on the ca
 
     $cache = new FilesystemAdapter();
     $store = new Store($cache);
-    $store->add($document1, $document2);
+    $store->add([$document1, $document2]);
     $results = $store->query($vector);
 
 Distance Strategies

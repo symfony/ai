@@ -181,7 +181,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/key/test".');
         $this->expectExceptionCode(400);
-        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
     }
 
     public function testStoreCannotAddOnInvalidAddResponse()
@@ -214,7 +214,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/key/test".');
         $this->expectExceptionCode(400);
-        $store->add(new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1))));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1)))]);
     }
 
     public function testStoreCanAdd()
@@ -265,7 +265,7 @@ final class StoreTest extends TestCase
         $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'test');
         $store->setup();
 
-        $store->add(new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1))));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1)))]);
 
         $this->assertSame(3, $httpClient->getRequestsCount());
     }
@@ -321,7 +321,7 @@ final class StoreTest extends TestCase
         $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'test');
         $store->setup();
 
-        $store->add(new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1))));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1)))]);
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/sql".');
@@ -398,7 +398,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'test');
 
-        $store->add(new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1))));
+        $store->add([new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1)))]);
 
         $results = iterator_to_array($store->query(new Vector(array_fill(0, 1275, 0.1))));
 

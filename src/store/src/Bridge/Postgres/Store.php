@@ -104,8 +104,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return self::fromPdo($pdo, $tableName, $vectorFieldName, $distance);
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $statement = $this->connection->prepare(
             \sprintf(
                 'INSERT INTO %1$s (id, metadata, %2$s)

@@ -58,8 +58,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @throws \Random\RandomException {@see random_int()}
      */
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $payload = array_map(
             fn (VectorDocument $document): array => [
                 'insert' => [

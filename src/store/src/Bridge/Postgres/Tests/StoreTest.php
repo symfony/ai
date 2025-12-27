@@ -94,7 +94,7 @@ final class StoreTest extends TestCase
         $document1 = new VectorDocument($uuid1, new Vector([0.1, 0.2, 0.3]));
         $document2 = new VectorDocument($uuid2, new Vector([0.4, 0.5, 0.6]), new Metadata(['title' => 'Second']));
 
-        $store->add($document1, $document2);
+        $store->add([$document1, $document2]);
     }
 
     public function testQueryWithoutMaxScore()

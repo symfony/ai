@@ -41,7 +41,7 @@ final class RetrieverTest extends TestCase
         );
 
         $store = new TestStore();
-        $store->add($document1, $document2);
+        $store->add([$document1, $document2]);
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(

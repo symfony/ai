@@ -54,8 +54,12 @@ class Store implements ManagedStoreInterface, StoreInterface
         ));
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         foreach ($documents as $document) {
             $this->request('POST', \sprintf('key/%s', $this->table), $this->convertToIndexableArray($document));
         }

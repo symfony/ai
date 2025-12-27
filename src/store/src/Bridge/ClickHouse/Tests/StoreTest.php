@@ -107,7 +107,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'test_db', 'test_table');
 
-        $store->add($document1, $document2);
+        $store->add([$document1, $document2]);
     }
 
     public function testAddThrowsExceptionOnHttpError()

@@ -45,8 +45,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
-    public function add(VectorDocument ...$documents): void
+    public function add(VectorDocument|array $documents): void
     {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
         $this->request('POST', 'v1/batch/objects', [
             'fields' => [
                 'ALL',
