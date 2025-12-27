@@ -20,7 +20,6 @@ use Mcp\Server\Transport\StdioTransport;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\App;
 use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
-use Symfony\AI\Mate\Discovery\ServiceDiscovery;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
