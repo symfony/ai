@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate;
 
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Command\ClearCacheCommand;
+use Symfony\AI\Mate\Command\DebugCapabilitiesCommand;
 use Symfony\AI\Mate\Command\DiscoverCommand;
 use Symfony\AI\Mate\Command\InitCommand;
 use Symfony\AI\Mate\Command\ServeCommand;
@@ -46,6 +47,7 @@ final class App
         self::addCommand($application, new InitCommand($rootDir));
         self::addCommand($application, new ServeCommand($logger, $container));
         self::addCommand($application, new DiscoverCommand($rootDir, $logger));
+        self::addCommand($application, new DebugCapabilitiesCommand($logger, $container));
         self::addCommand($application, new ClearCacheCommand($cacheDir));
 
         return $application;

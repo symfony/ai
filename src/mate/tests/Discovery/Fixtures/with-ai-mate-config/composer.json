@@ -1,0 +1,16 @@
+{
+    "name": "test/fixture-project",
+    "description": "Test fixture with ai-mate configuration",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\Mate\\": "mate/src"
+        }
+    },
+    "extra": {
+        "ai-mate": {
+            "scan-dirs": ["mate/src"],
+            "includes": ["mate/config.php"]
+        }
+    }
+}
