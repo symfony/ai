@@ -23,7 +23,6 @@ return static function (ContainerConfigurator $container): void {
         : false;
 
     $container->parameters()
-        ->set('mate.root_dir', '%env(MATE_ROOT_DIR)%')
         ->set('mate.cache_dir', sys_get_temp_dir().'/mate')
         ->set('mate.env_file', null)
         ->set('mate.disabled_features', [])

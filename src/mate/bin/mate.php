@@ -29,9 +29,6 @@ if (!$root) {
     exit(1);
 }
 
-// Set the root directory as an environment variable using $_ENV to be thread-safe
-$_ENV['MATE_ROOT_DIR'] = $root;
-
 use Symfony\AI\Mate\App;
 use Symfony\AI\Mate\Container\ContainerFactory;
 
