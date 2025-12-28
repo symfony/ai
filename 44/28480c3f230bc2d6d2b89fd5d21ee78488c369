@@ -1,0 +1,32 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-23T10:11:12Z
+
+@Nyholm the configureable logger makes totally sense  because when used in a agent environment stderr is gone forever ...
+we dould also set the service instance built from the env vars would be a solution. in all the other services compile has already replaced the env vars - so maybe thats the solution
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-24T11:00:01Z
+
+The PR is updated and the CI is super green
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-24T19:54:47Z
+
+@Nyholm the idea is to have a "temporary" logger for the time before the container is compiled? Why dont we use that logger also later on? do we have any positive aspects when we remove that and add another one?
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-25T07:22:04Z
+
+You cannot configure that logger with env vars in the container.
+
+Also, if we dump the container to file and read the cached file (which we might in the future to optimize), then this logger won't be available.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-25T18:19:35Z
+
+@Nyholm yeah thats right for optimizing it makes absolutly sense
