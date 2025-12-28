@@ -45,7 +45,7 @@ return static function (ContainerConfigurator $container): void {
 
         ->set(LoggerInterface::class, Logger::class)
             ->public()
-            ->arg('$logFile', '%mate.debug_log_file%')
+            ->arg('$logFile', '%mate.root_dir%/%mate.debug_log_file%')
             ->arg('$fileLogEnabled', '%mate.debug_file_enabled%')
             ->arg('$debugEnabled', '%mate.debug_enabled%')
             ->alias(Logger::class, LoggerInterface::class)
