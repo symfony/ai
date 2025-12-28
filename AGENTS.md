@@ -12,6 +12,10 @@ Symfony AI monorepo with independent packages for AI integration in PHP applicat
 - **Platform** (`src/platform/`): Unified AI platform interface (OpenAI, Anthropic, Azure, Gemini, VertexAI)
 - **Agent** (`src/agent/`): AI agent framework for user interaction and task execution
 - **Store** (`src/store/`): Data storage abstraction with vector database support
+- **Mate** (`src/mate/`): AI-powered coding assistant for PHP development
+
+### Bridges
+Each core component has bridges in `src/<component>/src/Bridge/` that provide integrations with specific third-party services. Bridges are separate Composer packages with their own dependencies and can be installed independently.
 
 ### Integration Bundles
 - **AI Bundle** (`src/ai-bundle/`): Symfony integration for Platform, Store, and Agent
@@ -89,7 +93,19 @@ cd demo && symfony server:start
 ## Development Workflow
 
 1. Each `src/` component is independently versioned
-2. Use `@dev` versions for internal dependencies during development
-3. Run PHP-CS-Fixer after code changes
-4. Test component-specific changes in isolation
-5. Use monorepo structure for shared development workflow
+2. Run PHP-CS-Fixer after code changes
+3. Test component-specific changes in isolation
+4. Use monorepo structure for shared development workflow
+
+## Version Documentation
+
+### UPGRADE.md
+- Document breaking changes in the root `UPGRADE.md` file
+- Format: Use version headers like `UPGRADE FROM 0.X to 0.Y` with sections per component
+- Include code examples showing before/after changes with diff syntax
+
+### CHANGELOG.md
+- Each component has its own `CHANGELOG.md` in its root directory
+- Add entries for new features, and deprecations under the appropriate version heading
+- Format entries as bullet points starting with "Add", "Fix", "Deprecate", etc.
+
