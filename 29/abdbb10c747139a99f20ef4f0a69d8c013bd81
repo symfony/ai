@@ -1,0 +1,35 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-26T20:21:22Z
+
+@Nyholm using pcntl_signal (e.g., SIGUSR1/SIGUSR2) for runtime communication works well on Unix-like systems, but it’s not compatible with Windows. Should we implement a fallback mechanism for Windows, or is it acceptable to leave Windows unsupported for this feature?
+
+Since mcp/sdk is the "main" server, we don’t have a straightforward way to hook into its event loop—or am I missing something? Ideally, we could use a file socket (polling for changes in that file) if Unix sockets are not available.
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-27T08:52:50Z
+
+> Should we implement a fallback mechanism for Windows, or is it acceptable to leave Windows unsupported for this feature?
+
+I do know it is not perfect for windows users or users without the required extensions. I'll be happy to work on a different solution to support 100% of the user base once this is merged.
+
+I dont see this as a "nice extra feature". I see this as a requirement for using the Mate package. Ie. I am happy with a solution for 95% of the users right now.
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-27T10:59:40Z
+
+To workaround that Jetbrains AI do not restart the process if it stops, I've added a bunch of extra logic in `bin/mate`. This will do a `while(true)` and restart the child process if they exit with 0
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2025-12-27T15:19:28Z
+
+Wohoo. Not blocked anymore. And the new `bin/mate` script works like a charm
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-27T19:27:42Z
+
+@Nyholm thank you :)
