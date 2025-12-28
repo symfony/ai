@@ -9,7 +9,6 @@
         "php": ">=8.2",
         "deptrac/deptrac": "^4.2",
         "php-cs-fixer/shim": "^3.91.2",
-        "phpstan/phpstan-strict-rules": "^2.0",
         "symfony/console": "^7.4|^8.0",
         "symfony/filesystem": "^7.4|^8.0",
         "symfony/finder": "^7.4|^8.0"
