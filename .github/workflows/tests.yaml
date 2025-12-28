@@ -60,6 +60,11 @@ jobs:
                   tools: flex
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
+            # deptrac does not support Symfony 8 yet
+            - name: Remove deptrac for Symfony 8
+              if: startsWith(matrix.symfony-version, '8.')
+              run: composer remove --dev deptrac/deptrac --no-update
+
             - name: Install dependencies
               uses: ramsey/composer-install@v3
               with:
@@ -416,6 +421,11 @@ jobs:
                   php-version: ${{ matrix.php-version }}
                   tools: flex
                   extensions: "${{ env.REQUIRED_PHP_EXTENSIONS }}"
+
+            # deptrac does not support Symfony 8 yet
+            - name: Remove deptrac for Symfony 8
+              if: startsWith(matrix.symfony-version, '8.')
+              run: composer remove --dev deptrac/deptrac --no-update
 
             - name: Install root dependencies
               uses: ramsey/composer-install@v3
