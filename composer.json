@@ -14,6 +14,7 @@
         "symfony/finder": "^7.4|^8.0"
     },
     "minimum-stability": "dev",
+    "prefer-stable": true,
     "config": {
         "sort-packages": true
     }
