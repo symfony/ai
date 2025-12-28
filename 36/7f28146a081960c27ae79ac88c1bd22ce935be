@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-24T22:38:15Z
+
+Hi @bigdevlarry, thanks for jumping on this! :)
+
+Since we release the v0.1 we need to now also track changes like this in the changelog, so please add this as entry to the changelog of the bundle.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-25T06:42:32Z
+
+Please use 0.2 as headline in the changelog.
+
+Please create an UPGRADE.md file where we show a before and after example. This is helpful for humans, but also for AI tools when upgrading the users codebase
+
+---------------------------------------------------------------------------
+
+by bigdevlarry at 2025-12-25T11:50:30Z
+
+Hi @OskarStark, @chr-hertel give me a shout if there are any further changes needed :)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-28T12:30:10Z
+
+Good to merge after my suggestions
