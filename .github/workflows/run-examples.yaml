@@ -1,7 +1,8 @@
 name: Run Examples
 
 on:
-    pull_request:
+    # Using pull_request_target to access repository secrets for fork PRs
+    pull_request_target:
         types: [labeled]
 
 #permissions:
@@ -19,11 +20,23 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v6
+              with:
+                  # Checkout the PR head to test actual PR code (pull_request_target defaults to base branch)
+                  ref: ${{ github.event.pull_request.head.sha }}
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
                   php-version: '8.2'
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v3
+              with:
+                  working-directory: "."
+
+            - name: Build packages
+              working-directory: .
+              run: php .github/build-packages.php
 
             - name: Install dependencies
               uses: ramsey/composer-install@v3
