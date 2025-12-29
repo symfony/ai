@@ -23,7 +23,6 @@
     ],
     "require": {
         "php": ">=8.2",
-        "doctrine/dbal": "^3.3|^4.0",
         "symfony/ai-agent": "^0.1",
         "symfony/ai-ai-ml-api-platform": "^0.1",
         "symfony/ai-albert-platform": "^0.1",
