@@ -26,7 +26,7 @@ final class MemoryInputProcessorTest extends TestCase
         $memoryProvider = $this->createMock(MemoryProviderInterface::class);
         $memoryProvider->expects($this->never())->method($this->anything());
 
-        $memoryInputProcessor = new MemoryInputProcessor($memoryProvider);
+        $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
         $memoryInputProcessor->processInput(
             $input = new Input('gpt-4', new MessageBag(), ['use_memory' => false]),
         );
@@ -36,7 +36,7 @@ final class MemoryInputProcessorTest extends TestCase
 
     public function testItIsDoingNothingWhenThereAreNoProviders()
     {
-        $memoryInputProcessor = new MemoryInputProcessor();
+        $memoryInputProcessor = new MemoryInputProcessor([]);
         $memoryInputProcessor->processInput(
             $input = new Input('gpt-4', new MessageBag(), ['use_memory' => true]),
         );
@@ -56,10 +56,10 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([]);
 
-        $memoryInputProcessor = new MemoryInputProcessor(
+        $memoryInputProcessor = new MemoryInputProcessor([
             $firstMemoryProvider,
             $secondMemoryProvider,
-        );
+        ]);
 
         $memoryInputProcessor->processInput($input = new Input(
             'gpt-4',
@@ -93,7 +93,7 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([new Memory('First memory content')]);
 
-        $memoryInputProcessor = new MemoryInputProcessor($firstMemoryProvider);
+        $memoryInputProcessor = new MemoryInputProcessor([$firstMemoryProvider]);
 
         $memoryInputProcessor->processInput($input = new Input('gpt-4', new MessageBag(), []));
 
@@ -119,7 +119,7 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([new Memory('First memory content'), new Memory('Second memory content')]);
 
-        $memoryInputProcessor = new MemoryInputProcessor($firstMemoryProvider);
+        $memoryInputProcessor = new MemoryInputProcessor([$firstMemoryProvider]);
 
         $memoryInputProcessor->processInput($input = new Input('gpt-4', new MessageBag(), []));
 
@@ -146,7 +146,7 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([]);
 
-        $memoryInputProcessor = new MemoryInputProcessor($firstMemoryProvider);
+        $memoryInputProcessor = new MemoryInputProcessor([$firstMemoryProvider]);
 
         $memoryInputProcessor->processInput($input = new Input('gpt-4', new MessageBag(), []));
 
