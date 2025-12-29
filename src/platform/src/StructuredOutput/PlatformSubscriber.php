@@ -55,7 +55,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
     {
         $options = $event->getOptions();
 
-        if (!isset($options[self::RESPONSE_FORMAT])) {
+        if (!isset($options[self::RESPONSE_FORMAT]) || !\is_string($options[self::RESPONSE_FORMAT])) {
             return;
         }
 
@@ -63,19 +63,17 @@ final class PlatformSubscriber implements EventSubscriberInterface
             throw new InvalidArgumentException('Streamed responses are not supported for structured output.');
         }
 
-        if (\is_string($options[self::RESPONSE_FORMAT])) {
-            if (!$event->getModel()->supports(Capability::OUTPUT_STRUCTURED)) {
-                throw MissingModelSupportException::forStructuredOutput($event->getModel()::class);
-            }
-
-            if (!class_exists($options[self::RESPONSE_FORMAT])) {
-                throw new InvalidArgumentException(\sprintf('The specified response format class "%s" does not exist.', $options[self::RESPONSE_FORMAT]));
-            }
-
-            $this->outputType = $options[self::RESPONSE_FORMAT];
-
-            $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($options[self::RESPONSE_FORMAT]);
+        if (!$event->getModel()->supports(Capability::OUTPUT_STRUCTURED)) {
+            throw MissingModelSupportException::forStructuredOutput($event->getModel()::class);
         }
+
+        if (!class_exists($options[self::RESPONSE_FORMAT])) {
+            throw new InvalidArgumentException(\sprintf('The specified response format class "%s" does not exist.', $options[self::RESPONSE_FORMAT]));
+        }
+
+        $this->outputType = $options[self::RESPONSE_FORMAT];
+
+        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($options[self::RESPONSE_FORMAT]);
 
         $event->setOptions($options);
     }

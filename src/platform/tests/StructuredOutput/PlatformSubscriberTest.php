@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Tests\StructuredOutput;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
@@ -68,7 +69,7 @@ final class PlatformSubscriberTest extends TestCase
         $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory());
 
         $model = new Model('gpt-3');
-        $event = new InvocationEvent($model, new MessageBag(), ['response_format' => 'SomeStructure']);
+        $event = new InvocationEvent($model, new MessageBag(), ['response_format' => SomeStructure::class]);
 
         $processor->processInput($event);
     }
@@ -78,8 +79,7 @@ final class PlatformSubscriberTest extends TestCase
         $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
 
         $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
-        $options = ['response_format' => SomeStructure::class];
-        $invocationEvent = new InvocationEvent($model, new MessageBag(), $options);
+        $invocationEvent = new InvocationEvent($model, new MessageBag(), ['response_format' => SomeStructure::class]);
         $processor->processInput($invocationEvent);
 
         $converter = new PlainConverter(new TextResult('{"some": "data"}'));
@@ -96,9 +96,10 @@ final class PlatformSubscriberTest extends TestCase
     }
 
     /**
-     * @param class-string $class
+     * @param class-string<MathReasoning|MathReasoningWithAttributes> $class
      */
-    #[DataProvider('complexFormatDataProvider')]
+    #[TestWith([MathReasoning::class])]
+    #[TestWith([MathReasoningWithAttributes::class])]
     public function testProcessOutputWithComplexResponseFormat(string $class)
     {
         $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
@@ -143,6 +144,7 @@ final class PlatformSubscriberTest extends TestCase
 
         $deferredResult = $resultEvent->getDeferredResult();
         $this->assertInstanceOf(ObjectResult::class, $result = $deferredResult->getResult());
+        /* @var MathReasoning|MathReasoningWithAttributes $structure */
         $this->assertInstanceOf($class, $structure = $deferredResult->asObject());
         $this->assertInstanceOf(Metadata::class, $result->getMetadata());
         $this->assertCount(5, $structure->steps);
@@ -153,14 +155,6 @@ final class PlatformSubscriberTest extends TestCase
         $this->assertInstanceOf(Step::class, $structure->steps[4]);
         $this->assertSame('x = -3.75', $structure->finalAnswer);
         $this->assertSame(-3.75, $structure->result);
-    }
-
-    public static function complexFormatDataProvider(): iterable
-    {
-        return [
-            [MathReasoning::class],
-            [MathReasoningWithAttributes::class],
-        ];
     }
 
     /**
