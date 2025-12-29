@@ -14,6 +14,8 @@ ai:
                   name: 'clock'
                   description: 'Provides the current date and time.'
                   method: 'now'
+            memory:
+                service: 'App\Blog\SymfonyVersionsMemory'
         stream:
             platform: 'ai.platform.openai'
             model: 'gpt-4o-mini'
