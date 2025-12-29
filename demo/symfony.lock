@@ -62,15 +62,27 @@
         ]
     },
     "symfony/ai-bundle": {
-        "version": "0.9999999",
+        "version": "0.1",
         "recipe": {
             "repo": "github.com/symfony/recipes",
             "branch": "main",
             "version": "0.1",
-            "ref": "05cfb98b7551d4647c6a9b6f777a8a697642eb9e"
+            "ref": "917b2a3da78a22e9488e99e1847d1f019d18da76"
         },
         "files": [
             "config/packages/ai.yaml"
+        ]
+    },
+    "symfony/ai-chroma-db-store": {
+        "version": "0.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "70b5179ede32bb6faf93f7f521570d3740f5230e"
+        },
+        "files": [
+            "config/packages/ai_chroma_db_store.yaml"
         ]
     },
     "symfony/ai-clock-tool": {
