@@ -36,11 +36,35 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[AsCommand('serve', 'Starts the MCP server with stdio transport')]
 class ServeCommand extends Command
 {
+    private string $cacheDir;
+    private FilteredDiscoveryLoader $loader;
+
     public function __construct(
         private ContainerInterface $container,
         private LoggerInterface $logger,
     ) {
         parent::__construct(self::getDefaultName());
+
+        $rootDir = $container->getParameter('mate.root_dir');
+        \assert(\is_string($rootDir));
+
+        $cacheDir = $container->getParameter('mate.cache_dir');
+        \assert(\is_string($cacheDir));
+        $this->cacheDir = $cacheDir;
+
+        $extensions = $this->container->getParameter('mate._extensions') ?? [];
+        \assert(\is_array($extensions));
+
+        $disabledFeatures = $this->container->getParameter('mate.disabled_features') ?? [];
+        \assert(\is_array($disabledFeatures));
+
+        $this->loader = new FilteredDiscoveryLoader(
+            basePath: $rootDir,
+            extensions: $extensions,
+            disabledFeatures: $disabledFeatures,
+            discoverer: new Discoverer($logger),
+            logger: $logger
+        );
     }
 
     public static function getDefaultName(): string
@@ -66,30 +90,12 @@ class ServeCommand extends Command
             return Command::INVALID;
         }
 
-        $rootDir = $this->container->getParameter('mate.root_dir');
-        \assert(\is_string($rootDir));
-
-        $cacheDir = $this->container->getParameter('mate.cache_dir');
-        \assert(\is_string($cacheDir));
-
-        $extensions = $this->container->getParameter('mate._extensions') ?? [];
-        \assert(\is_array($extensions));
-        /* @var array<string, array{dirs: string[], includes: string[]}> $extensions */
-
-        $disabledVendorFeatures = $this->container->getParameter('mate.disabled_features') ?? [];
-        \assert(\is_array($disabledVendorFeatures));
-        /* @var array<string, array<string, array{enabled: bool}>> $disabledVendorFeatures */
-
-        $loader = new FilteredDiscoveryLoader(
-            basePath: $rootDir,
-            extensions: $extensions,
-            disabledFeatures: $disabledVendorFeatures,
-            discoverer: new Discoverer($this->logger),
-            logger: $this->logger
-        );
-
         $server = Server::builder()
-            ->setProtocolVersion(ProtocolVersion::tryFrom($this->container->getParameter('mate.mcp_protocol_version') ?? ProtocolVersion::V2025_03_26->value) ?? ProtocolVersion::V2025_03_26)
+            ->setProtocolVersion(
+                ProtocolVersion::tryFrom(
+                    $this->container->getParameter('mate.mcp_protocol_version') ?? ProtocolVersion::V2025_03_26->value
+                ) ?? ProtocolVersion::V2025_03_26
+            )
             ->setServerInfo(
                 App::NAME,
                 App::VERSION,
@@ -98,12 +104,12 @@ class ServeCommand extends Command
                 'https://symfony.com/doc/current/ai/components/mate.html',
             )
             ->setContainer($this->container)
-            ->addLoader($loader)
-            ->setSession(new FileSessionStore($cacheDir.'/sessions'))
+            ->addLoader($this->loader)
+            ->setSession(new FileSessionStore($this->cacheDir.'/sessions'))
             ->setLogger($this->logger)
             ->build();
 
-        $pidFileName = \sprintf('%s/server_%d.pid', $cacheDir, getmypid());
+        $pidFileName = \sprintf('%s/server_%d.pid', $this->cacheDir, getmypid());
         file_put_contents($pidFileName, getmypid());
 
         try {

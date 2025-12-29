@@ -40,83 +40,99 @@ final class FilteredDiscoveryLoader implements LoaderInterface
 
     public function load(RegistryInterface $registry): void
     {
-        $allTools = [];
-        $allResources = [];
-        $allPrompts = [];
-        $allResourceTemplates = [];
+        $filteredState = new DiscoveryState();
 
         foreach ($this->extensions as $packageName => $data) {
-            $discoveryState = $this->discoverer->discover($this->basePath, $data['dirs']);
-
-            foreach ($discoveryState->getTools() as $name => $tool) {
-                if (!$this->isFeatureAllowed($packageName, $name)) {
-                    $this->logger->debug('Excluding tool by feature filter', [
-                        'package' => $packageName,
-                        'tool' => $name,
-                    ]);
-                    continue;
-                }
-
-                $allTools[$name] = $tool;
-            }
-
-            foreach ($discoveryState->getResources() as $uri => $resource) {
-                if (!$this->isFeatureAllowed($packageName, $uri)) {
-                    $this->logger->debug('Excluding resource by feature filter', [
-                        'package' => $packageName,
-                        'resource' => $uri,
-                    ]);
-                    continue;
-                }
-
-                $allResources[$uri] = $resource;
-            }
-
-            foreach ($discoveryState->getPrompts() as $name => $prompt) {
-                if (!$this->isFeatureAllowed($packageName, $name)) {
-                    $this->logger->debug('Excluding prompt by feature filter', [
-                        'package' => $packageName,
-                        'prompt' => $name,
-                    ]);
-                    continue;
-                }
-
-                $allPrompts[$name] = $prompt;
-            }
-
-            foreach ($discoveryState->getResourceTemplates() as $uriTemplate => $template) {
-                if (!$this->isFeatureAllowed($packageName, $uriTemplate)) {
-                    $this->logger->debug('Excluding resource template by feature filter', [
-                        'package' => $packageName,
-                        'template' => $uriTemplate,
-                    ]);
-                    continue;
-                }
-
-                $allResourceTemplates[$uriTemplate] = $template;
-            }
+            $discoveryState = $this->loadByExtension($packageName, $data);
+            $filteredState = new DiscoveryState(
+                array_merge($filteredState->getTools(), $discoveryState->getTools()),
+                array_merge($filteredState->getResources(), $discoveryState->getResources()),
+                array_merge($filteredState->getPrompts(), $discoveryState->getPrompts()),
+                array_merge($filteredState->getResourceTemplates(), $discoveryState->getResourceTemplates()),
+            );
         }
-
-        $filteredState = new DiscoveryState(
-            $allTools,
-            $allResources,
-            $allPrompts,
-            $allResourceTemplates,
-        );
 
         $registry->setDiscoveryState($filteredState);
 
         $this->logger->info('Loaded filtered capabilities', [
-            'tools' => \count($allTools),
-            'resources' => \count($allResources),
-            'prompts' => \count($allPrompts),
-            'resourceTemplates' => \count($allResourceTemplates),
+            'tools' => \count($filteredState->getTools()),
+            'resources' => \count($filteredState->getResources()),
+            'prompts' => \count($filteredState->getPrompts()),
+            'resourceTemplates' => \count($filteredState->getResourceTemplates()),
         ]);
     }
 
-    private function isFeatureAllowed(string $packageName, string $feature): bool
+    /**
+     * @param array{dirs: string[], includes: string[]} $extension
+     */
+    public function loadByExtension(string $extensionName, array $extension): DiscoveryState
     {
-        $data = $this->disabledFeatures[$packageName][$feature] ?? [];
+        $tools = [];
+        $resources = [];
+        $prompts = [];
+        $resourceTemplates = [];
+
+        $discoveryState = $this->discoverer->discover($this->basePath, $extension['dirs']);
+
+        foreach ($discoveryState->getTools() as $name => $tool) {
+            if (!$this->isFeatureAllowed($extensionName, $name)) {
+                $this->logger->debug('Excluding tool by feature filter', [
+                    'extension' => $extensionName,
+                    'tool' => $name,
+                ]);
+                continue;
+            }
+
+            $tools[$name] = $tool;
+        }
+
+        foreach ($discoveryState->getResources() as $uri => $resource) {
+            if (!$this->isFeatureAllowed($extensionName, $uri)) {
+                $this->logger->debug('Excluding resource by feature filter', [
+                    'extension' => $extensionName,
+                    'resource' => $uri,
+                ]);
+                continue;
+            }
+
+            $resources[$uri] = $resource;
+        }
+
+        foreach ($discoveryState->getPrompts() as $name => $prompt) {
+            if (!$this->isFeatureAllowed($extensionName, $name)) {
+                $this->logger->debug('Excluding prompt by feature filter', [
+                    'extension' => $extensionName,
+                    'prompt' => $name,
+                ]);
+                continue;
+            }
+
+            $prompts[$name] = $prompt;
+        }
+
+        foreach ($discoveryState->getResourceTemplates() as $uriTemplate => $template) {
+            if (!$this->isFeatureAllowed($extensionName, $uriTemplate)) {
+                $this->logger->debug('Excluding resource template by feature filter', [
+                    'extension' => $extensionName,
+                    'template' => $uriTemplate,
+                ]);
+                continue;
+            }
+
+            $resourceTemplates[$uriTemplate] = $template;
+        }
+
+        return new DiscoveryState(
+            $tools,
+            $resources,
+            $prompts,
+            $resourceTemplates,
+        );
+    }
+
+    private function isFeatureAllowed(string $extensionName, string $feature): bool
+    {
+        $data = $this->disabledFeatures[$extensionName][$feature] ?? [];
 
         return $data['enabled'] ?? true;
     }

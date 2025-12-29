@@ -31,11 +31,15 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand('discover', 'Discover MCP bridges installed via Composer')]
 class DiscoverCommand extends Command
 {
+    private ComposerExtensionDiscovery $extensionDiscovery;
+
     public function __construct(
         private string $rootDir,
         private LoggerInterface $logger,
     ) {
         parent::__construct(self::getDefaultName());
+
+        $this->extensionDiscovery = new ComposerExtensionDiscovery($this->rootDir, $this->logger);
     }
 
     public static function getDefaultName(): string
@@ -56,9 +60,7 @@ class DiscoverCommand extends Command
         $io->text('Scanning for packages with <info>extra.ai-mate</info> configuration...');
         $io->newLine();
 
-        $discovery = new ComposerExtensionDiscovery($this->rootDir, $this->logger);
-
-        $extensions = $discovery->discover();
+        $extensions = $this->extensionDiscovery->discover();
 
         $count = \count($extensions);
         if (0 === $count) {
