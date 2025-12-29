@@ -42,6 +42,11 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
         $endpoint = Task::TRANSCRIPTION === $task ? 'transcriptions' : 'translations';
         unset($options['task']);
 
+        if ($options['verbose'] ?? false) {
+            $options['response_format'] = 'verbose_json';
+            unset($options['verbose']);
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/v1/audio/%s', self::getBaseUrl($this->region), $endpoint), [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'multipart/form-data'],

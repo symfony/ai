@@ -65,6 +65,11 @@ final class WhisperModelClient implements ModelClientInterface
 
         unset($options['task']);
 
+        if ($options['verbose'] ?? false) {
+            $options['response_format'] = 'verbose_json';
+            unset($options['verbose']);
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', $url, [
             'headers' => [
                 'api-key' => $this->apiKey,

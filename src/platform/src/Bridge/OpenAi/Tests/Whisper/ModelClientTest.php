@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Whisper\ModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Task;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class ModelClientTest extends TestCase
@@ -144,6 +145,48 @@ final class ModelClientTest extends TestCase
 
         $client = new ModelClient($httpClient, 'sk-test-key', $region);
         $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testItSkipsResponseFormatUnlessVerbose()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): MockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('https://api.openai.com/v1/audio/transcriptions', $url);
+                $this->assertArrayHasKey('body', $options);
+                $body = $options['body']();
+                $this->assertStringNotContainsString('response_format', $body);
+                $this->assertStringNotContainsString('verbose_json', $body);
+
+                return new JsonMockResponse(['text' => 'Hello World']);
+            },
+        ]);
+
+        $client = new ModelClient($httpClient, 'sk-test-key');
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testItUsesResponseFormatIfVerbose()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): MockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('https://api.openai.com/v1/audio/transcriptions', $url);
+                $this->assertArrayHasKey('body', $options);
+                $body = $options['body']();
+                $this->assertStringContainsString('response_format', $body);
+                $this->assertStringContainsString('verbose_json', $body);
+
+                return new JsonMockResponse(['text' => 'Hello World']);
+            },
+        ]);
+
+        $client = new ModelClient($httpClient, 'sk-test-key');
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['verbose' => true]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
