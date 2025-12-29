@@ -13,13 +13,13 @@ namespace Symfony\AI\Mate\Tests\Discovery;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Symfony\AI\Mate\Discovery\ComposerTypeDiscovery;
+use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-final class ComposerTypeDiscoveryTest extends TestCase
+final class ComposerExtensionDiscoveryTest extends TestCase
 {
     private string $fixturesDir;
 
@@ -30,7 +30,7 @@ final class ComposerTypeDiscoveryTest extends TestCase
 
     public function testDiscoverPackagesWithAiMateConfig()
     {
-        $discovery = new ComposerTypeDiscovery(
+        $discovery = new ComposerExtensionDiscovery(
             $this->fixturesDir.'/with-ai-mate-config',
             new NullLogger()
         );
@@ -50,7 +50,7 @@ final class ComposerTypeDiscoveryTest extends TestCase
 
     public function testIgnoresPackagesWithoutAiMateConfig()
     {
-        $discovery = new ComposerTypeDiscovery(
+        $discovery = new ComposerExtensionDiscovery(
             $this->fixturesDir.'/without-ai-mate-config',
             new NullLogger()
         );
@@ -62,7 +62,7 @@ final class ComposerTypeDiscoveryTest extends TestCase
 
     public function testIgnoresPackagesWithoutExtraSection()
     {
-        $discovery = new ComposerTypeDiscovery(
+        $discovery = new ComposerExtensionDiscovery(
             $this->fixturesDir.'/no-extra-section',
             new NullLogger()
         );
@@ -74,7 +74,7 @@ final class ComposerTypeDiscoveryTest extends TestCase
 
     public function testWhitelistFiltering()
     {
-        $discovery = new ComposerTypeDiscovery(
+        $discovery = new ComposerExtensionDiscovery(
             $this->fixturesDir.'/with-ai-mate-config',
             new NullLogger()
         );
@@ -92,7 +92,7 @@ final class ComposerTypeDiscoveryTest extends TestCase
 
     public function testWhitelistWithMultiplePackages()
     {
-        $discovery = new ComposerTypeDiscovery(
+        $discovery = new ComposerExtensionDiscovery(
             $this->fixturesDir.'/with-ai-mate-config',
             new NullLogger()
         );
@@ -111,7 +111,7 @@ final class ComposerTypeDiscoveryTest extends TestCase
 
     public function testExtractsIncludeFiles()
     {
-        $discovery = new ComposerTypeDiscovery(
+        $discovery = new ComposerExtensionDiscovery(
             $this->fixturesDir.'/with-includes',
             new NullLogger()
         );
@@ -128,7 +128,7 @@ final class ComposerTypeDiscoveryTest extends TestCase
 
     public function testHandlesMissingInstalledJson()
     {
-        $discovery = new ComposerTypeDiscovery(
+        $discovery = new ComposerExtensionDiscovery(
             $this->fixturesDir.'/no-installed-json',
             new NullLogger()
         );
@@ -140,7 +140,7 @@ final class ComposerTypeDiscoveryTest extends TestCase
 
     public function testHandlesPackagesWithoutType()
     {
-        $discovery = new ComposerTypeDiscovery(
+        $discovery = new ComposerExtensionDiscovery(
             $this->fixturesDir.'/mixed-types',
             new NullLogger()
         );
@@ -149,5 +149,81 @@ final class ComposerTypeDiscoveryTest extends TestCase
 
         // Should discover packages with ai-mate config regardless of type field
         $this->assertGreaterThanOrEqual(1, $extensions);
+    }
+
+    public function testDiscoverRootProjectReturnsEmptyWhenComposerJsonDoesNotExist()
+    {
+        $discovery = new ComposerExtensionDiscovery(
+            $this->fixturesDir.'/no-composer-json',
+            new NullLogger()
+        );
+
+        $result = $discovery->discoverRootProject();
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('dirs', $result);
+        $this->assertArrayHasKey('includes', $result);
+        $this->assertSame([], $result['dirs']);
+        $this->assertSame([], $result['includes']);
+    }
+
+    public function testDiscoverRootProjectWithAiMateConfig()
+    {
+        // Create a temporary directory with a composer.json that has ai-mate config
+        $tempDir = sys_get_temp_dir().'/mate-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        $composerJson = [
+            'name' => 'test/project',
+            'extra' => [
+                'ai-mate' => [
+                    'scan-dirs' => ['src', 'lib'],
+                    'includes' => ['config/mate.php'],
+                ],
+            ],
+        ];
+
+        file_put_contents($tempDir.'/composer.json', json_encode($composerJson));
+
+        try {
+            $discovery = new ComposerExtensionDiscovery($tempDir, new NullLogger());
+            $result = $discovery->discoverRootProject();
+
+            $this->assertIsArray($result);
+            $this->assertArrayHasKey('dirs', $result);
+            $this->assertArrayHasKey('includes', $result);
+            $this->assertSame(['src', 'lib'], $result['dirs']);
+            $this->assertSame(['config/mate.php'], $result['includes']);
+        } finally {
+            unlink($tempDir.'/composer.json');
+            rmdir($tempDir);
+        }
+    }
+
+    public function testDiscoverRootProjectWithoutAiMateConfig()
+    {
+        // Create a temporary directory with a composer.json without ai-mate config
+        $tempDir = sys_get_temp_dir().'/mate-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        $composerJson = [
+            'name' => 'test/project',
+        ];
+
+        file_put_contents($tempDir.'/composer.json', json_encode($composerJson));
+
+        try {
+            $discovery = new ComposerExtensionDiscovery($tempDir, new NullLogger());
+            $result = $discovery->discoverRootProject();
+
+            $this->assertIsArray($result);
+            $this->assertArrayHasKey('dirs', $result);
+            $this->assertArrayHasKey('includes', $result);
+            $this->assertSame([], $result['dirs']);
+            $this->assertSame([], $result['includes']);
+        } finally {
+            unlink($tempDir.'/composer.json');
+            rmdir($tempDir);
+        }
     }
 }

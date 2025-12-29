@@ -13,7 +13,7 @@ namespace Symfony\AI\Mate\Container;
 
 use Mcp\Capability\Discovery\Discoverer;
 use Psr\Log\LoggerInterface;
-use Symfony\AI\Mate\Discovery\ComposerTypeDiscovery;
+use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\AI\Mate\Exception\MissingDependencyException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -43,7 +43,7 @@ final class ContainerFactory
         $logger = $container->get('_build.logger');
         \assert($logger instanceof LoggerInterface);
 
-        $composerDiscovery = new ComposerTypeDiscovery($this->rootDir, $logger);
+        $composerDiscovery = new ComposerExtensionDiscovery($this->rootDir, $logger);
 
         $this->loadExtensions($container, $composerDiscovery, $logger);
         $this->loadUserServices($container, $composerDiscovery, $logger);
@@ -63,7 +63,7 @@ final class ContainerFactory
         $container->setParameter('mate.root_dir', $this->rootDir);
     }
 
-    private function loadExtensions(ContainerBuilder $container, ComposerTypeDiscovery $composerDiscovery, LoggerInterface $logger): void
+    private function loadExtensions(ContainerBuilder $container, ComposerExtensionDiscovery $composerDiscovery, LoggerInterface $logger): void
     {
         $enabledExtensions = $this->getEnabledExtensions();
         if ([] === $enabledExtensions) {
@@ -229,7 +229,7 @@ final class ContainerFactory
         (new Dotenv())->load($this->rootDir.\DIRECTORY_SEPARATOR.$envFile, ...$extra);
     }
 
-    private function loadUserServices(ContainerBuilder $container, ComposerTypeDiscovery $composerDiscovery, LoggerInterface $logger): void
+    private function loadUserServices(ContainerBuilder $container, ComposerExtensionDiscovery $composerDiscovery, LoggerInterface $logger): void
     {
         $rootProject = $composerDiscovery->discoverRootProject();
 

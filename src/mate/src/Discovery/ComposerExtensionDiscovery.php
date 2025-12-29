@@ -29,7 +29,7 @@ use Psr\Log\LoggerInterface;
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-final class ComposerTypeDiscovery
+final class ComposerExtensionDiscovery
 {
     /**
      * @var array<string, array{
@@ -85,7 +85,15 @@ final class ComposerTypeDiscovery
      */
     public function discoverRootProject(): array
     {
-        $composerContent = file_get_contents($this->rootDir.'/composer.json');
+        $composerPath = $this->rootDir.'/composer.json';
+        if (!file_exists($composerPath)) {
+            return [
+                'dirs' => [],
+                'includes' => [],
+            ];
+        }
+
+        $composerContent = file_get_contents($composerPath);
         if (false === $composerContent) {
             return [
                 'dirs' => [],
