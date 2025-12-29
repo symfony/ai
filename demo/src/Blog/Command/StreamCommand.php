@@ -22,7 +22,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final readonly class StreamCommand
 {
     public function __construct(
-        private AgentInterface $blog,
+        private AgentInterface $blogAgent,
     ) {
     }
 
