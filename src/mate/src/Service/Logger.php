@@ -54,7 +54,7 @@ class Logger extends AbstractLogger
                     fwrite(\STDERR, $logMessage);
                 }
 
-                throw FileWriteException::forLogFile($this->logFile);
+                throw new FileWriteException(\sprintf('Failed to write to log file: "%s"', $this->logFile));
             }
         } else {
             fwrite(\STDERR, $logMessage);

@@ -89,7 +89,7 @@ final class LogReader
     public function readFile(string $filePath, ?SearchCriteria $criteria = null): \Generator
     {
         if (!file_exists($filePath)) {
-            throw LogFileNotFoundException::forPath($filePath);
+            throw new LogFileNotFoundException(\sprintf('Log file not found: "%s"', $filePath));
         }
 
         yield from $this->readFiles([$filePath], $criteria);

@@ -76,7 +76,7 @@ final class App
         } elseif (method_exists($application, 'add')) {
             $application->add($command);
         } else {
-            throw UnsupportedVersionException::forConsole();
+            throw new UnsupportedVersionException('Unsupported version of symfony/console. We cannot add commands.');
         }
     }
 }

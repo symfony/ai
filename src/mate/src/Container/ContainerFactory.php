@@ -222,7 +222,7 @@ final class ContainerFactory
         }
 
         if (!class_exists(Dotenv::class)) {
-            throw MissingDependencyException::forDotenv();
+            throw new MissingDependencyException('Cannot load any environment file with out Symfony Dotenv. Please run run "composer require symfony/dotenv" and try again.');
         }
 
         $extra = [];
