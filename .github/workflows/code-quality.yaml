@@ -141,16 +141,16 @@ jobs:
                   php-version: ${{ env.PHP_VERSION }}
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
-            - name: Isolate Bridge
-              run: |
-                  mkdir -p tmp/${{ matrix.bridge.component }}/src/Bridge
-                  mv src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} tmp/${{ matrix.bridge.component }}/src/Bridge
-
             - name: Install root dependencies
               uses: ramsey/composer-install@v3
 
             - name: Build root packages
               run: php .github/build-packages.php
+
+            - name: Isolate Bridge
+              run: |
+                  mkdir -p tmp/${{ matrix.bridge.component }}/src/Bridge
+                  mv src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} tmp/${{ matrix.bridge.component }}/src/Bridge
 
             - name: Install dependencies
               uses: ramsey/composer-install@v3
