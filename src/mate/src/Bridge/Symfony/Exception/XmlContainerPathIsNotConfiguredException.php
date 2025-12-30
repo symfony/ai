@@ -11,15 +11,17 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Exception;
 
+use Symfony\AI\Mate\Exception\InvalidArgumentException;
+
 /**
  * @internal
  *
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-class XmlContainerPathIsNotConfiguredException extends XmlContainerCouldNotBeLoadedException
+class XmlContainerPathIsNotConfiguredException extends InvalidArgumentException
 {
-    public static function emptyPath(): self
+    public function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null)
     {
-        return new self('Failed to configure path to Symfony container. You passed an empty string');
+        parent::__construct($message, $code, $previous);
     }
 }

@@ -20,27 +20,4 @@ namespace Symfony\AI\Mate\Exception;
  */
 class InvalidArgumentException extends \InvalidArgumentException implements ExceptionInterface
 {
-    /**
-     * @param array<string> $available
-     */
-    public static function forExtensionNotFound(string $extension, array $available): self
-    {
-        return new self(\sprintf(
-            'Extension "%s" not found. Available: %s',
-            $extension,
-            implode(', ', $available)
-        ));
-    }
-
-    /**
-     * @param array<string> $validTypes
-     */
-    public static function forInvalidType(string $type, array $validTypes): self
-    {
-        return new self(\sprintf(
-            'Invalid type "%s". Valid types: %s',
-            $type,
-            implode(', ', $validTypes)
-        ));
-    }
 }
