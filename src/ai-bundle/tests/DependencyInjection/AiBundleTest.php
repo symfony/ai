@@ -6874,6 +6874,40 @@ class AiBundleTest extends TestCase
         $this->assertArrayHasKey('my-custom-vertex-model', $arguments[0]);
     }
 
+    #[TestDox('VertexAI platform uses custom http_client when configured')]
+    public function testVertexAiPlatformUsesCustomHttpClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'vertexai' => [
+                        'location' => 'us-central1',
+                        'project_id' => 'my-project',
+                        'http_client' => 'my_custom_http_client',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.vertexai'));
+
+        $definition = $container->getDefinition('ai.platform.vertexai');
+        $arguments = $definition->getArguments();
+
+        $this->assertSame('us-central1', $arguments[0]);
+        $this->assertSame('my-project', $arguments[1]);
+
+        // Argument 2 is the http client definition which uses the configured http_client service
+        $httpClientDefinition = $arguments[2];
+        $this->assertInstanceOf(Definition::class, $httpClientDefinition);
+
+        $factory = $httpClientDefinition->getFactory();
+        $this->assertIsArray($factory);
+        $this->assertInstanceOf(Reference::class, $factory[0]);
+        $this->assertSame('my_custom_http_client', (string) $factory[0]);
+        $this->assertSame('withOptions', $factory[1]);
+    }
+
     #[TestDox('Model configuration is ignored for unknown platform')]
     public function testModelConfigurationIsIgnoredForUnknownPlatform()
     {

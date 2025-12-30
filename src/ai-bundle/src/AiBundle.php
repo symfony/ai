@@ -684,7 +684,7 @@ final class AiBundle extends AbstractBundle
             $credentialsObject = new Definition(\ArrayObject::class, [(new Definition('array'))->setFactory([$credentials, 'fetchAuthToken'])]);
 
             $httpClient = (new Definition(HttpClientInterface::class))
-                ->setFactory([HttpClient::class, 'create'])
+                ->setFactory([new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE), 'withOptions'])
                 ->setArgument(0, [
                     'auth_bearer' => (new Definition('string', ['access_token']))->setFactory([$credentialsObject, 'offsetGet']),
                 ])
