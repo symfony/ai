@@ -129,5 +129,82 @@ final class ToolNormalizerTest extends TestCase
                 'parameters' => null,
             ],
         ];
+
+        yield 'call with nullable parameter' => [
+            new Tool(
+                new ExecutionReference(ToolRequiredParams::class, 'bar'),
+                'tool_nullable_param',
+                'A tool with nullable parameter',
+                // @phpstan-ignore argument.type (testing array-style nullable types that get normalized)
+                [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => [
+                            'type' => ['string', 'null'],
+                            'description' => 'A nullable name',
+                        ],
+                    ],
+                    'additionalProperties' => false,
+                ],
+            ),
+            [
+                'description' => 'A tool with nullable parameter',
+                'name' => 'tool_nullable_param',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => [
+                            'type' => 'string',
+                            'nullable' => true,
+                            'description' => 'A nullable name',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'call with nested nullable parameter' => [
+            new Tool(
+                new ExecutionReference(ToolRequiredParams::class, 'bar'),
+                'tool_nested_nullable',
+                'A tool with nested nullable parameter',
+                // @phpstan-ignore argument.type (testing array-style nullable types that get normalized)
+                [
+                    'type' => 'object',
+                    'properties' => [
+                        'user' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'age' => [
+                                    'type' => ['integer', 'null'],
+                                    'description' => 'User age',
+                                ],
+                            ],
+                            'additionalProperties' => false,
+                        ],
+                    ],
+                    'additionalProperties' => false,
+                ],
+            ),
+            [
+                'description' => 'A tool with nested nullable parameter',
+                'name' => 'tool_nested_nullable',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'user' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'age' => [
+                                    'type' => 'integer',
+                                    'nullable' => true,
+                                    'description' => 'User age',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
     }
 }
