@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-27T19:31:40Z
+
+@Nyholm i have refactored lots of stuff - so i have to retest everything in the demo and with the extensions - so wait for my hint to review again
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-29T21:17:20Z
+
+@Nyholm extracted also the refactoring code https://github.com/symfony/ai/pull/1293/files
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2025-12-29T21:25:01Z
+
+renaming of `mate._extensions ` done in this PR
