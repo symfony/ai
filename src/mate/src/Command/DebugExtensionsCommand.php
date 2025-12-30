@@ -1,0 +1,269 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Mate\Command;
+
+use Psr\Log\LoggerInterface;
+use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+
+/**
+ * Display detailed information about discovered and loaded MCP extensions.
+ *
+ * @phpstan-type ExtensionData array{dirs: string[], includes: string[]}
+ *
+ * @author Johannes Wachter <johannes@sulu.io>
+ */
+#[AsCommand('debug:extensions', 'Display detailed information about discovered and loaded MCP extensions')]
+class DebugExtensionsCommand extends Command
+{
+    /**
+     * @var array<string, ExtensionData>
+     */
+    private array $discoveredExtensions;
+
+    /**
+     * @var ExtensionData
+     */
+    private array $rootProjectConfig;
+
+    /**
+     * @var string[]
+     */
+    private array $enabledExtensions;
+
+    /**
+     * @var array<string, ExtensionData>
+     */
+    private array $loadedExtensions;
+
+    private string $rootDir;
+
+    public function __construct(
+        LoggerInterface $logger,
+        ContainerInterface $container,
+    ) {
+        parent::__construct(self::getDefaultName());
+
+        $this->rootDir = $container->getParameter('mate.root_dir');
+        \assert(\is_string($this->rootDir));
+
+        $this->enabledExtensions = $container->getParameter('mate.enabled_extensions') ?? [];
+        \assert(\is_array($this->enabledExtensions));
+
+        $this->loadedExtensions = $container->getParameter('mate.extensions') ?? [];
+        \assert(\is_array($this->loadedExtensions));
+
+        $extensionDiscovery = new ComposerExtensionDiscovery($this->rootDir, $logger);
+        $this->discoveredExtensions = $extensionDiscovery->discover();
+        $this->rootProjectConfig = $extensionDiscovery->discoverRootProject();
+    }
+
+    public static function getDefaultName(): string
+    {
+        return 'debug:extensions';
+    }
+
+    public static function getDefaultDescription(): string
+    {
+        return 'Display detailed information about discovered and loaded MCP extensions';
+    }
+
+    protected function configure(): void
+    {
+        $this
+            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json)', 'text')
+            ->addOption('show-all', null, InputOption::VALUE_NONE, 'Show all discovered extensions including disabled ones')
+            ->setHelp(<<<'HELP'
+The <info>%command.name%</info> command displays detailed information about MCP extension
+discovery and loading.
+
+<info>Usage Examples:</info>
+
+  <comment># Show enabled extensions</comment>
+  %command.full_name%
+
+  <comment># Show all discovered extensions (including disabled)</comment>
+  %command.full_name% --show-all
+
+  <comment># JSON output for scripting</comment>
+  %command.full_name% --format=json
+
+<info>Extension Information:</info>
+
+  • Discovery status (discovered vs enabled)
+  • Scan directories being monitored
+  • Include files being loaded
+  • Whether extension provides any capabilities
+  • Configuration source (composer.json extra.ai-mate)
+
+<info>Extension Types:</info>
+
+  • <fg=green>Enabled</>: Active and loaded into container
+  • <fg=yellow>Disabled</>: Discovered but disabled in mate/extensions.php
+  • <fg=cyan>Root Project</>: Project-specific capabilities from mate/src/
+HELP
+            );
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+
+        $showAll = $input->getOption('show-all');
+        $format = $input->getOption('format');
+        \assert(\is_string($format));
+
+        if ('json' === $format) {
+            $this->outputJson($output);
+        } else {
+            $this->outputText($showAll, $io);
+        }
+
+        return Command::SUCCESS;
+    }
+
+    private function outputText(bool $showAll, SymfonyStyle $io): void
+    {
+        $io->title('MCP Extension Discovery');
+
+        $io->section('Root Project');
+        $this->displayExtensionDetails($io, '_custom', $this->rootProjectConfig, true, true);
+
+        $enabledCount = 0;
+        $disabledCount = 0;
+
+        $enabledExtensions = [];
+        $disabledExtensions = [];
+
+        foreach ($this->discoveredExtensions as $packageName => $data) {
+            $isEnabled = \in_array($packageName, $this->enabledExtensions, true);
+
+            if ($isEnabled) {
+                ++$enabledCount;
+                $enabledExtensions[$packageName] = $data;
+            } else {
+                ++$disabledCount;
+                $disabledExtensions[$packageName] = $data;
+            }
+        }
+
+        if (\count($enabledExtensions) > 0) {
+            $io->section(\sprintf('Enabled Extensions (%d)', $enabledCount));
+            foreach ($enabledExtensions as $packageName => $data) {
+                $isLoaded = isset($this->loadedExtensions[$packageName]);
+                $this->displayExtensionDetails($io, $packageName, $data, true, $isLoaded);
+            }
+        }
+
+        if ($showAll && \count($disabledExtensions) > 0) {
+            $io->section(\sprintf('Disabled Extensions (%d)', $disabledCount));
+            foreach ($disabledExtensions as $packageName => $data) {
+                $isLoaded = isset($this->loadedExtensions[$packageName]);
+                $this->displayExtensionDetails($io, $packageName, $data, false, $isLoaded);
+            }
+        }
+
+        $io->section('Summary');
+        $io->text(\sprintf('Total discovered: %d', \count($this->discoveredExtensions) + 1)); // +1 for root project
+        $io->text(\sprintf('Enabled: %d', $enabledCount + 1)); // +1 for root project
+        $io->text(\sprintf('Disabled: %d', $disabledCount));
+        $io->text(\sprintf('Loaded: %d', \count($this->loadedExtensions)));
+
+        if (!$showAll && $disabledCount > 0) {
+            $io->note(\sprintf('Use --show-all to see %d disabled extension%s', $disabledCount, 1 === $disabledCount ? '' : 's'));
+        }
+    }
+
+    /**
+     * @param array{dirs: string[], includes: string[]} $data
+     */
+    private function displayExtensionDetails(
+        SymfonyStyle $io,
+        string $packageName,
+        array $data,
+        bool $isEnabled,
+        bool $isLoaded,
+    ): void {
+        $status = $isEnabled ? '<fg=green>enabled</>' : '<fg=yellow>disabled</>';
+        $loadedStatus = $isLoaded ? '<fg=green>loaded</>' : '<fg=red>not loaded</>';
+
+        $io->text(\sprintf('<info>%s</info> [%s] [%s]', $packageName, $status, $loadedStatus));
+
+        if (\count($data['dirs']) > 0) {
+            $io->text(\sprintf('  Scan directories (%d):', \count($data['dirs'])));
+            foreach ($data['dirs'] as $dir) {
+                $io->text(\sprintf('    • %s', $dir));
+            }
+        } else {
+            $io->text('  <fg=gray>No scan directories</>');
+        }
+
+        if (\count($data['includes']) > 0) {
+            $io->text(\sprintf('  Include files (%d):', \count($data['includes'])));
+            foreach ($data['includes'] as $file) {
+                $io->text(\sprintf('    • %s', $file));
+            }
+        } else {
+            $io->text('  <fg=gray>No include files</>');
+        }
+
+        $io->newLine();
+    }
+
+    private function outputJson(OutputInterface $output): void
+    {
+        $extensions = [];
+
+        $extensions['_custom'] = [
+            'type' => 'root_project',
+            'status' => 'enabled',
+            'loaded' => true,
+            'scan_dirs' => $this->rootProjectConfig['dirs'],
+            'includes' => $this->rootProjectConfig['includes'],
+        ];
+
+        foreach ($this->discoveredExtensions as $packageName => $data) {
+            $isEnabled = \in_array($packageName, $this->enabledExtensions, true);
+            $isLoaded = isset($this->loadedExtensions[$packageName]);
+
+            $extensions[$packageName] = [
+                'type' => 'vendor_extension',
+                'status' => $isEnabled ? 'enabled' : 'disabled',
+                'loaded' => $isLoaded,
+                'scan_dirs' => $data['dirs'],
+                'includes' => $data['includes'],
+            ];
+        }
+
+        $enabledCount = array_reduce($extensions, fn ($count, $ext) => 'enabled' === $ext['status'] ? $count + 1 : $count, 0);
+        $disabledCount = \count($extensions) - $enabledCount;
+        $loadedCount = array_reduce($extensions, fn ($count, $ext) => $ext['loaded'] ? $count + 1 : $count, 0);
+
+        $result = [
+            'extensions' => $extensions,
+            'summary' => [
+                'total_discovered' => \count($extensions),
+                'enabled' => $enabledCount,
+                'disabled' => $disabledCount,
+                'loaded' => $loadedCount,
+            ],
+        ];
+
+        $output->writeln(json_encode($result, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+    }
+}

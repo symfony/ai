@@ -26,6 +26,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Display all MCP capabilities grouped by extension.
  *
  * @phpstan-import-type Capabilities from CapabilityCollector
+ * @phpstan-import-type ExtensionData from DebugExtensionsCommand
  *
  * @phpstan-type CapabilitiesByExtension array<string, Capabilities>
  *
@@ -37,7 +38,7 @@ class DebugCapabilitiesCommand extends Command
     private CapabilityCollector $collector;
 
     /**
-     * @var array<string, array{dirs: string[], includes: string[]}>
+     * @var array<string, ExtensionData>
      */
     private array $extensions;
 

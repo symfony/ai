@@ -66,6 +66,7 @@ final class ContainerFactory
     private function loadExtensions(ContainerBuilder $container, ComposerExtensionDiscovery $extensionDiscovery, LoggerInterface $logger): void
     {
         $enabledExtensions = $this->getEnabledExtensions();
+        $container->setParameter('mate.enabled_extensions', $enabledExtensions);
         if ([] === $enabledExtensions) {
             $container->setParameter('mate.extensions', [
                 '_custom' => $extensionDiscovery->discoverRootProject(),

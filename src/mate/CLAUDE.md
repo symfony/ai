@@ -43,6 +43,10 @@ bin/mate serve
 
 # Clear cache
 bin/mate clear-cache
+
+# Debug commands
+bin/mate debug:capabilities      # Show all MCP capabilities
+bin/mate debug:extensions        # Show extension discovery and loading status
 ```
 
 ## Architecture
@@ -54,7 +58,7 @@ bin/mate clear-cache
 - **FilteredDiscoveryLoader**: Loads MCP capabilities with feature filtering
 
 ### Key Directories
-- `src/Command/`: CLI commands (serve, init, discover, clear-cache)
+- `src/Command/`: CLI commands (serve, init, discover, clear-cache, debug:capabilities, debug:extensions)
 - `src/Container/`: DI container management
 - `src/Discovery/`: Extension discovery system
 - `src/Capability/`: Built-in MCP tools

@@ -16,6 +16,7 @@ use Mcp\Server\Transport\Stdio\RunnerState;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Command\ClearCacheCommand;
 use Symfony\AI\Mate\Command\DebugCapabilitiesCommand;
+use Symfony\AI\Mate\Command\DebugExtensionsCommand;
 use Symfony\AI\Mate\Command\DiscoverCommand;
 use Symfony\AI\Mate\Command\InitCommand;
 use Symfony\AI\Mate\Command\ServeCommand;
@@ -52,6 +53,7 @@ final class App
         self::addCommand($application, new DiscoverCommand($rootDir, $logger));
         self::addCommand($application, new StopCommand((string) $container->getParameter('mate.cache_dir')));
         self::addCommand($application, new DebugCapabilitiesCommand($logger, $container));
+        self::addCommand($application, new DebugExtensionsCommand($logger, $container));
         self::addCommand($application, new ClearCacheCommand($cacheDir));
 
         if (\defined('SIGUSR1') && class_exists(RunnerControl::class)) {
