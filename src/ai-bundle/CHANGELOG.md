@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
 * [BC BREAK] Remove `Agent` and `MultiAgent` suffixes from injection aliases.
+* Add `http_client` option to VertexAI platform configuration
 
 0.1
 ---
