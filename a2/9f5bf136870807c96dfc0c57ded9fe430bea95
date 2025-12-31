@@ -1,0 +1,33 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-31T08:51:22Z
+
+Uh, that's pretty cool! We could reuse that for some object detection demo as well :)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-31T08:56:08Z
+
+And after the demo we should mention it on the website in ai.symfony.com website.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-31T09:15:27Z
+
+> And after the demo we should mention it on the website in ai.symfony.com website.
+
+Totally, i also feel like we need more content in our cookbook - like more complex demos explained in a small article - we could render that on ai.symfony.com then :)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-31T12:13:38Z
+
+Should we add imagick as extension to composer.json ?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-31T16:04:09Z
+
+> Should we add imagick as extension to composer.json ?
+
+I'd say the check for the exception with that error is sufficient - we don't need it for every other example.
