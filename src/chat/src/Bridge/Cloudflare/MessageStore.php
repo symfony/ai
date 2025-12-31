@@ -157,6 +157,6 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
 
         reset($filteredNamespaces);
 
-        return $filteredNamespaces[0];
+        return array_values($filteredNamespaces)[0];
     }
 }
