@@ -56,6 +56,62 @@ final class MessageStoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testMessageStoreCannotSetupOnExistingNamespaceOnSecondPageWithExistingIndices()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'result' => [
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'bar',
+                        'supports_url_encoding' => false,
+                    ],
+                ],
+                'result_info' => [
+                    'count' => 1,
+                    'page' => 1,
+                    'total_count' => 3,
+                    'total_pages' => 2,
+                ],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                'result' => [
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'second',
+                        'supports_url_encoding' => false,
+                    ],
+                    [
+                        'id' => Uuid::v7()->toRfc4122(),
+                        'title' => 'foo',
+                        'supports_url_encoding' => false,
+                    ],
+                ],
+                'result_info' => [
+                    'count' => 2,
+                    'page' => 2,
+                    'total_count' => 3,
+                    'total_pages' => 2,
+                ],
+                'success' => true,
+                'errors' => [],
+                'messages' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $messageStore = new MessageStore($httpClient, 'foo', 'bar', 'random');
+        $messageStore->setup();
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
+
     public function testMessageStoreCannotSetupOnExistingNamespaceOnSecondPage()
     {
         $httpClient = new MockHttpClient([
