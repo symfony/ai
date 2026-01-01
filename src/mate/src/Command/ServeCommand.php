@@ -110,12 +110,16 @@ class ServeCommand extends Command
             ->build();
 
         $pidFileName = \sprintf('%s/server_%d.pid', $this->cacheDir, getmypid());
-        file_put_contents($pidFileName, getmypid());
+        if (false === @file_put_contents($pidFileName, (string) getmypid())) {
+            $this->logger->warning('Failed to create PID file', ['path' => $pidFileName]);
+        }
 
         try {
             $server->run(new StdioTransport());
         } finally {
-            unlink($pidFileName);
+            if (file_exists($pidFileName)) {
+                @unlink($pidFileName);
+            }
         }
 
         return Command::SUCCESS;
