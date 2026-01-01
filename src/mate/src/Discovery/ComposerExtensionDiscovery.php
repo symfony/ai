@@ -95,6 +95,11 @@ final class ComposerExtensionDiscovery
 
         $composerContent = file_get_contents($composerPath);
         if (false === $composerContent) {
+            $this->logger->warning('Failed to read root composer.json', [
+                'path' => $composerPath,
+                'error' => error_get_last()['message'] ?? 'Unknown error',
+            ]);
+
             return [
                 'dirs' => [],
                 'includes' => [],
@@ -109,23 +114,9 @@ final class ComposerExtensionDiscovery
             ];
         }
 
-        $scanDirs = [];
-        if (isset($rootComposer['extra']) && \is_array($rootComposer['extra'])
-            && isset($rootComposer['extra']['ai-mate']) && \is_array($rootComposer['extra']['ai-mate'])
-            && isset($rootComposer['extra']['ai-mate']['scan-dirs']) && \is_array($rootComposer['extra']['ai-mate']['scan-dirs'])) {
-            $scanDirs = array_filter($rootComposer['extra']['ai-mate']['scan-dirs'], 'is_string');
-        }
-
-        $includes = [];
-        if (isset($rootComposer['extra']) && \is_array($rootComposer['extra'])
-            && isset($rootComposer['extra']['ai-mate']) && \is_array($rootComposer['extra']['ai-mate'])
-            && isset($rootComposer['extra']['ai-mate']['includes']) && \is_array($rootComposer['extra']['ai-mate']['includes'])) {
-            $includes = array_filter($rootComposer['extra']['ai-mate']['includes'], 'is_string');
-        }
-
         return [
-            'dirs' => array_values($scanDirs),
-            'includes' => array_values($includes),
+            'dirs' => array_values($this->extractAiMateConfig($rootComposer, 'scan-dirs')),
+            'includes' => array_values($this->extractAiMateConfig($rootComposer, 'includes')),
         ];
     }
 
@@ -152,7 +143,10 @@ final class ComposerExtensionDiscovery
 
         $content = file_get_contents($installedJsonPath);
         if (false === $content) {
-            $this->logger->warning('Could not read installed.json', ['path' => $installedJsonPath]);
+            $this->logger->warning('Could not read installed.json', [
+                'path' => $installedJsonPath,
+                'error' => error_get_last()['message'] ?? 'Unknown error',
+            ]);
 
             return $this->installedPackages = [];
         }
@@ -314,5 +308,24 @@ final class ComposerExtensionDiscovery
         }
 
         return $validFiles;
+    }
+
+    /**
+     * @param array<string, mixed> $composer
+     *
+     * @return string[]
+     */
+    private function extractAiMateConfig(array $composer, string $key): array
+    {
+        if (!isset($composer['extra']['ai-mate'][$key])) {
+            return [];
+        }
+
+        $value = $composer['extra']['ai-mate'][$key];
+        if (!\is_array($value)) {
+            return [];
+        }
+
+        return array_filter($value, 'is_string');
     }
 }
