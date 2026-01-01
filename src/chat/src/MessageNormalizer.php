@@ -15,6 +15,7 @@ use Symfony\AI\Chat\Exception\LogicException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Message\Content\Document;
 use Symfony\AI\Platform\Message\Content\DocumentUrl;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Content\Image;
@@ -125,6 +126,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                     'content' => match ($content::class) {
                         Text::class => $content->getText(),
                         File::class,
+                        Document::class,
                         Image::class,
                         Audio::class => $content->asBase64(),
                         ImageUrl::class,
