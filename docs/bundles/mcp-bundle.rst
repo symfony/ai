@@ -321,10 +321,160 @@ How It Works
 .. note::
 
     The bundle only provides OAuth **discovery**. To actually protect your MCP endpoint,
-    you need to configure Symfony's security layer with an OAuth firewall
-    (e.g., using ``league/oauth2-server-bundle``).
+    you need to configure Symfony's security layer (see next section).
 
 .. _`RFC 9728`: https://datatracker.ietf.org/doc/html/rfc9728
+
+Protecting MCP Endpoints
+------------------------
+
+The MCP Bundle integrates with Symfony's security system to protect your MCP endpoints.
+When ``symfony/security-bundle`` is installed, the bundle automatically enables scope checking.
+
+Configuring Security
+~~~~~~~~~~~~~~~~~~~~
+
+Use Symfony's ``access_token`` authenticator to validate access tokens:
+
+.. code-block:: yaml
+
+    # config/packages/security.yaml
+    security:
+        firewalls:
+            mcp:
+                pattern: ^/_mcp
+                stateless: true
+                access_token:
+                    token_handler: App\Security\McpTokenHandler
+
+        access_control:
+            - { path: ^/_mcp, roles: IS_AUTHENTICATED_FULLY }
+
+Example token handler::
+
+    namespace App\Security;
+
+    use Symfony\Component\Security\Http\AccessToken\AccessTokenHandlerInterface;
+    use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
+
+    class McpTokenHandler implements AccessTokenHandlerInterface
+    {
+        public function getUserBadgeFrom(string $accessToken): UserBadge
+        {
+            // Validate token with your OAuth provider
+            $payload = $this->validateToken($accessToken);
+
+            return new UserBadge(
+                $payload['sub'],
+                fn () => new McpUser($payload['sub'], $payload['scope'] ?? [])
+            );
+        }
+    }
+
+Per-Tool Scope Checking
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the ``#[RequireScope]`` attribute to restrict access to specific tools based on OAuth scopes::
+
+    use Mcp\Capability\Attribute\McpTool;
+    use Symfony\AI\McpBundle\Security\Attribute\RequireScope;
+
+    class AdminTools
+    {
+        #[McpTool(name: 'delete-user')]
+        #[RequireScope('admin')]
+        public function deleteUser(int $userId): string
+        {
+            // Only accessible with 'admin' scope
+        }
+
+        #[McpTool(name: 'list-users')]
+        #[RequireScope(['read', 'write'])]  // Requires ALL scopes
+        public function listUsers(): array
+        {
+            // Requires both scopes
+        }
+    }
+
+Scope Extraction
+~~~~~~~~~~~~~~~~
+
+The bundle needs to know what OAuth scopes the current user has. Since Symfony doesn't have
+a built-in concept of OAuth scopes, you need to provide this information through one of
+two approaches:
+
+**Approach 1: Using Symfony roles (default)**
+
+The default ``RoleScopeExtractor`` reads roles with the ``ROLE_OAUTH2_`` prefix. This is
+compatible with `league/oauth2-server-bundle`_ which uses the same convention.
+
+If you use league/oauth2-server-bundle, scope checking works out of the box - no configuration needed.
+
+For custom token handlers, convert OAuth scopes to Symfony roles::
+
+    class MyTokenHandler implements AccessTokenHandlerInterface
+    {
+        public function getUserBadgeFrom(string $accessToken): UserBadge
+        {
+            $tokenData = $this->validateAndDecodeToken($accessToken);
+
+            // Convert OAuth scopes to Symfony roles (ROLE_OAUTH2_ prefix)
+            $roles = ['ROLE_USER'];
+            foreach ($tokenData['scopes'] as $scope) {
+                $roles[] = 'ROLE_OAUTH2_' . strtoupper($scope);
+            }
+            // ['read', 'admin'] → ['ROLE_USER', 'ROLE_OAUTH2_READ', 'ROLE_OAUTH2_ADMIN']
+
+            return new UserBadge(
+                $tokenData['user_id'],
+                fn () => new InMemoryUser($tokenData['user_id'], null, $roles)
+            );
+        }
+    }
+
+.. _`league/oauth2-server-bundle`: https://github.com/thephpleague/oauth2-server-bundle
+
+**Approach 2: Custom scope extractor**
+
+If you prefer to keep OAuth scopes separate from Symfony roles, implement ``ScopeExtractorInterface``::
+
+    use Symfony\AI\McpBundle\Security\ScopeExtractorInterface;
+    use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+
+    class DirectScopeExtractor implements ScopeExtractorInterface
+    {
+        public function extract(TokenInterface $token): array
+        {
+            // Read scopes directly from token attributes
+            return $token->getAttribute('oauth_scopes') ?? [];
+        }
+    }
+
+Store the scopes in your token handler::
+
+    class MyTokenHandler implements AccessTokenHandlerInterface
+    {
+        public function getUserBadgeFrom(string $accessToken): UserBadge
+        {
+            $tokenData = $this->validateAndDecodeToken($accessToken);
+
+            return new UserBadge(
+                $tokenData['user_id'],
+                fn () => new InMemoryUser($tokenData['user_id'], null, ['ROLE_USER']),
+                // Store scopes in token attributes
+                ['oauth_scopes' => $tokenData['scopes']]
+            );
+        }
+    }
+
+Then register your extractor:
+
+.. code-block:: yaml
+
+    # config/services.yaml
+    services:
+        Symfony\AI\McpBundle\Security\ScopeExtractorInterface:
+            class: App\Security\DirectScopeExtractor
 
 Event System
 ------------

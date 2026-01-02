@@ -52,6 +52,10 @@ final class OAuthUnauthorizedListener
             return;
         }
 
+        if ($response->headers->has('WWW-Authenticate')) {
+            return;
+        }
+
         $baseUrl = $this->getBaseUrl($request);
         $resourceMetadata = \sprintf('%s/.well-known/oauth-protected-resource', $baseUrl);
 

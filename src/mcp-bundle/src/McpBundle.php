@@ -29,6 +29,7 @@ use Symfony\AI\McpBundle\EventListener\OAuthUnauthorizedListener;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
 use Symfony\AI\McpBundle\Profiler\TraceableRegistry;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
+use Symfony\AI\McpBundle\Security\Attribute\RequireScope;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -96,21 +97,47 @@ final class McpBundle extends AbstractBundle
 
     private function registerMcpAttributes(ContainerBuilder $builder): void
     {
-        $mcpAttributes = [
-            McpTool::class => 'mcp.tool',
-            McpPrompt::class => 'mcp.prompt',
-            McpResource::class => 'mcp.resource',
-            McpResourceTemplate::class => 'mcp.resource_template',
-        ];
+        $builder->registerAttributeForAutoconfiguration(
+            McpTool::class,
+            static function (ChildDefinition $definition, McpTool $attribute, \Reflector $reflector): void {
+                $name = $attribute->name ?? ($reflector instanceof \ReflectionMethod ? $reflector->getName() : null);
+                $definition->addTag('mcp.tool', ['name' => $name]);
+            }
+        );
 
-        foreach ($mcpAttributes as $attributeClass => $tag) {
-            $builder->registerAttributeForAutoconfiguration(
-                $attributeClass,
-                static function (ChildDefinition $definition, object $attribute, \Reflector $reflector) use ($tag): void {
-                    $definition->addTag($tag);
-                }
-            );
-        }
+        $builder->registerAttributeForAutoconfiguration(
+            McpPrompt::class,
+            static function (ChildDefinition $definition, McpPrompt $attribute, \Reflector $reflector): void {
+                $name = $attribute->name ?? ($reflector instanceof \ReflectionMethod ? $reflector->getName() : null);
+                $definition->addTag('mcp.prompt', ['name' => $name]);
+            }
+        );
+
+        $builder->registerAttributeForAutoconfiguration(
+            McpResource::class,
+            static function (ChildDefinition $definition, McpResource $attribute, \Reflector $reflector): void {
+                $definition->addTag('mcp.resource', ['uri' => $attribute->uri]);
+            }
+        );
+
+        $builder->registerAttributeForAutoconfiguration(
+            McpResourceTemplate::class,
+            static function (ChildDefinition $definition, McpResourceTemplate $attribute, \Reflector $reflector): void {
+                $definition->addTag('mcp.resource_template', ['uri' => $attribute->uriTemplate]);
+            }
+        );
+
+        // Register RequireScope attribute for scope checking
+        $builder->registerAttributeForAutoconfiguration(
+            RequireScope::class,
+            static function (ChildDefinition $definition, RequireScope $attribute, \Reflector $reflector): void {
+                $method = $reflector instanceof \ReflectionMethod ? $reflector->getName() : '__invoke';
+                $definition->addTag('mcp.require_scope', [
+                    'scopes' => $attribute->scopes,
+                    'method' => $method,
+                ]);
+            }
+        );
     }
 
     /**
@@ -175,7 +202,8 @@ final class McpBundle extends AbstractBundle
             ])
             ->addTag('routing.loader');
 
-        // Configure OAuth discovery endpoints (RFC 9728)
+        $container->setParameter('mcp.http.path', $httpConfig['path']);
+
         if ($oauthEnabled) {
             $this->configureOAuth($oauthConfig, $httpConfig['path'], $container);
         }
