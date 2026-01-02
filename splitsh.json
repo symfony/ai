@@ -32,6 +32,7 @@
             "prefixes": [{ "from": "src/mate", "to": "", "excludes": ["src/Bridge"] }]
         },
         "ai-monolog-mate-extension": "src/mate/src/Bridge/Monolog",
+        "ai-profiler-mate-extension": "src/mate/src/Bridge/Profiler",
         "ai-symfony-mate-extension": "src/mate/src/Bridge/Symfony",
         "mcp-bundle": "src/mcp-bundle",
         "ai-platform": {
