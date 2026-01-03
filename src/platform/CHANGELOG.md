@@ -7,6 +7,7 @@ CHANGELOG
  * Add `StreamListenerInterface` to hook into response streams
  * [BC BREAK] Change `TokenUsageAggregation::__construct()` from variadic to array
  * Add `TokenUsageAggregation::add()` method to add more token usages
+ * [BC BREAK] `CachedPlatform` has been renamed `CachePlatform` and moved as a bridge, please require `symfony/ai-cache-platform` and use `Symfony\AI\Platform\Bridge\Cache\CachePlatform`
 
 0.2
 ---

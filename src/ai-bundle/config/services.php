@@ -30,6 +30,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\ModelCatalog as AzureOpenAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Bedrock\ModelCatalog as BedrockModelCatalog;
+use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Bridge\Cartesia\ModelCatalog as CartesiaModelCatalog;
 use Symfony\AI\Platform\Bridge\Cerebras\ModelCatalog as CerebrasModelCatalog;
 use Symfony\AI\Platform\Bridge\Decart\ModelCatalog as DecartModelCatalog;
@@ -219,6 +220,12 @@ return static function (ContainerConfigurator $container): void {
 
         // serializer
         ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
+            ->tag('serializer.normalizer')
+
+        ->set('ai.platform.cache.result_normalizer', ResultNormalizer::class)
+            ->args([
+                service('serializer.normalizer.object'),
+            ])
             ->tag('serializer.normalizer')
 
         // commands

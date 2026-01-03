@@ -30,6 +30,7 @@ use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsApiCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
@@ -37,7 +38,6 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformF
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
-use Symfony\AI\Platform\CachedPlatform;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
@@ -91,6 +91,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
+use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AiBundleTest extends TestCase
@@ -6219,7 +6220,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('text-embedding-3-small?normalize=false&cache=true&nested%5Bbool%5D=false', $vectorizerDefinition->getArgument(1));
     }
 
-    public function testCachedPlatformCanBeUsed()
+    public function testCachePlatformCanBeUsed()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -6230,8 +6231,6 @@ class AiBundleTest extends TestCase
                     'cache' => [
                         'ollama' => [
                             'platform' => 'ai.platform.ollama',
-                            'service' => 'cache.app',
-                            'cache_key' => 'ollama',
                         ],
                     ],
                 ],
@@ -6239,20 +6238,24 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.platform.cache.ollama'));
+        $this->assertTrue($container->hasDefinition('ai.platform.cache.result_normalizer'));
 
         $definition = $container->getDefinition('ai.platform.cache.ollama');
 
-        $this->assertSame(CachedPlatform::class, $definition->getClass());
+        $this->assertSame(CachePlatform::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
 
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $platformArgument = $definition->getArgument(0);
-        $this->assertSame('ai.platform.ollama', (string) $platformArgument);
-        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertSame('ai.platform.ollama', (string) $definition->getArgument(0));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('cache.app', (string) $definition->getArgument(2));
-        $this->assertSame('ollama', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('serializer', (string) $definition->getArgument(3));
+        $this->assertSame('ollama', $definition->getArgument(4));
+        $this->assertNull($definition->getArgument(5));
 
         $this->assertSame([
             ['interface' => PlatformInterface::class],
@@ -6266,7 +6269,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $cacheOllama'));
     }
 
-    public function testCachedPlatformCanBeUsedWithoutCustomCacheKey()
+    public function testCachePlatformCanBeUsedWithoutCustomCacheKey()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -6288,17 +6291,69 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.platform.cache.ollama');
 
-        $this->assertSame(CachedPlatform::class, $definition->getClass());
+        $this->assertSame(CachePlatform::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
 
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $platformArgument = $definition->getArgument(0);
-        $this->assertSame('ai.platform.ollama', (string) $platformArgument);
-        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertSame('ai.platform.ollama', (string) $definition->getArgument(0));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('cache.app', (string) $definition->getArgument(2));
-        $this->assertSame('ollama', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('serializer', (string) $definition->getArgument(3));
+        $this->assertSame('ollama', $definition->getArgument(4));
+        $this->assertNull($definition->getArgument(5));
+
+        $this->assertSame([
+            ['interface' => PlatformInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([
+            ['name' => 'cache.ollama'],
+        ], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Platform\PlatformInterface $cache_ollama'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $cacheOllama'));
+    }
+
+    public function testCachePlatformCanBeUsedWithCustomTtl()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'host_url' => 'http://127.0.0.1:11434',
+                    ],
+                    'cache' => [
+                        'ollama' => [
+                            'platform' => 'ai.platform.ollama',
+                            'ttl' => 10,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.cache.ollama'));
+
+        $definition = $container->getDefinition('ai.platform.cache.ollama');
+
+        $this->assertSame(CachePlatform::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('ai.platform.ollama', (string) $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('cache.app', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('serializer', (string) $definition->getArgument(3));
+        $this->assertSame('ollama', $definition->getArgument(4));
+        $this->assertSame(10, $definition->getArgument(5));
 
         $this->assertSame([
             ['interface' => PlatformInterface::class],
@@ -7158,6 +7213,7 @@ class AiBundleTest extends TestCase
             ],
             new Definition(InMemoryStorage::class),
         ]));
+        $container->setDefinition('serializer', new Definition(Serializer::class));
 
         $extension = (new AiBundle())->getContainerExtension();
         $extension->load($configuration, $container);
@@ -7203,8 +7259,18 @@ class AiBundleTest extends TestCase
                     'cache' => [
                         'azure' => [
                             'platform' => 'ai.platform.azure.my_azure_instance',
-                            'service' => 'cache.app',
+                        ],
+                        'azure_with_custom_cache' => [
+                            'platform' => 'ai.platform.azure.my_azure_instance',
+                            'service' => 'cache.foo',
+                        ],
+                        'azure_with_custom_cache_key' => [
+                            'platform' => 'ai.platform.azure.my_azure_instance',
                             'cache_key' => 'foo',
+                        ],
+                        'azure_with_custom_ttl' => [
+                            'platform' => 'ai.platform.azure.my_azure_instance',
+                            'ttl' => 10,
                         ],
                     ],
                     'cartesia' => [
