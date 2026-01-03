@@ -208,6 +208,15 @@ Configuration
                 directory: '%kernel.cache_dir%/mcp-sessions' # Directory for file store (default: cache_dir/mcp-sessions)
                 ttl: 3600 # Session TTL in seconds (default: 3600)
 
+        # OAuth 2.0 Discovery (RFC 9728)
+        oauth:
+            enabled: true
+            authorization_servers:
+                - 'https://auth.example.com'
+            scopes_supported:
+                - 'read'
+                - 'write'
+
         # Not supported yet
         servers:
             name:
@@ -271,6 +280,51 @@ The profiler displays:
 - **Resource Templates**: Dynamic resource templates with URI patterns
 
 This makes it easy to inspect and debug your MCP server capabilities during development.
+
+OAuth Discovery
+---------------
+
+The MCP Bundle implements OAuth 2.0 Protected Resource Metadata (`RFC 9728`_) to help MCP clients discover
+how to authenticate with your server.
+
+When OAuth is enabled, the bundle exposes:
+
+- ``/.well-known/oauth-protected-resource`` - Metadata endpoint telling clients where to authenticate
+- ``WWW-Authenticate`` header on 401/403 responses pointing to the discovery endpoint
+
+Configuration
+~~~~~~~~~~~~~
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        oauth:
+            enabled: true
+            authorization_servers:
+                - 'https://auth.example.com'  # Your OAuth authorization server
+            resource: 'https://mcp.example.com/_mcp'  # Optional: canonical URI of your MCP server
+            scopes_supported:
+                - 'read'
+                - 'write'
+
+How It Works
+~~~~~~~~~~~~
+
+1. Client calls your MCP endpoint without authentication
+2. Your security layer returns ``401 Unauthorized``
+3. The bundle adds ``WWW-Authenticate: Bearer resource_metadata=".../.well-known/oauth-protected-resource"``
+4. Client fetches the metadata to discover the authorization server
+5. Client authenticates with the authorization server and obtains a token
+6. Client retries the MCP request with ``Authorization: Bearer <token>``
+
+.. note::
+
+    The bundle only provides OAuth **discovery**. To actually protect your MCP endpoint,
+    you need to configure Symfony's security layer with an OAuth firewall
+    (e.g., using ``league/oauth2-server-bundle``).
+
+.. _`RFC 9728`: https://datatracker.ietf.org/doc/html/rfc9728
 
 Event System
 ------------

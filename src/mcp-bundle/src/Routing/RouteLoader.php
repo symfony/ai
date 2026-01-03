@@ -24,6 +24,7 @@ final class RouteLoader extends Loader
     public function __construct(
         private bool $httpTransportEnabled,
         private string $httpPath,
+        private bool $oauthEnabled = false,
     ) {
         parent::__construct();
     }
@@ -43,6 +44,14 @@ final class RouteLoader extends Loader
         $collection = new RouteCollection();
 
         $collection->add('_mcp_endpoint', new Route($this->httpPath, ['_controller' => 'mcp.server.controller::handle'], methods: [Request::METHOD_GET, Request::METHOD_POST, Request::METHOD_DELETE, Request::METHOD_OPTIONS]));
+
+        if ($this->oauthEnabled) {
+            $collection->add('_mcp_oauth_protected_resource', new Route(
+                '/.well-known/oauth-protected-resource',
+                ['_controller' => 'mcp.oauth.metadata_controller::protectedResource'],
+                methods: [Request::METHOD_GET]
+            ));
+        }
 
         return $collection;
     }

@@ -23,7 +23,9 @@ use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpBundle\Controller\OAuthMetadataController;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
+use Symfony\AI\McpBundle\EventListener\OAuthUnauthorizedListener;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
 use Symfony\AI\McpBundle\Profiler\TraceableRegistry;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
@@ -83,7 +85,7 @@ final class McpBundle extends AbstractBundle
         }
 
         if (isset($config['client_transports'])) {
-            $this->configureClient($config['client_transports'], $config['http'], $builder);
+            $this->configureClient($config['client_transports'], $config['http'], $config['oauth'] ?? [], $builder);
         }
     }
 
@@ -112,14 +114,17 @@ final class McpBundle extends AbstractBundle
     }
 
     /**
-     * @param array{stdio: bool, http: bool}                                                  $transports
-     * @param array{path: string, session: array{store: string, directory: string, ttl: int}} $httpConfig
+     * @param array{stdio: bool, http: bool}                                                                                               $transports
+     * @param array{path: string, session: array{store: string, directory: string, ttl: int}}                                              $httpConfig
+     * @param array{enabled?: bool, authorization_servers?: list<string>, resource?: string|null, scopes_supported?: list<string>}|array{} $oauthConfig
      */
-    private function configureClient(array $transports, array $httpConfig, ContainerBuilder $container): void
+    private function configureClient(array $transports, array $httpConfig, array $oauthConfig, ContainerBuilder $container): void
     {
         if (!$transports['stdio'] && !$transports['http']) {
             return;
         }
+
+        $oauthEnabled = $oauthConfig['enabled'] ?? false;
 
         // Register PSR factories
         $container->register('mcp.psr17_factory', Psr17Factory::class);
@@ -166,8 +171,36 @@ final class McpBundle extends AbstractBundle
             ->setArguments([
                 $transports['http'],
                 $httpConfig['path'],
+                $oauthEnabled,
             ])
             ->addTag('routing.loader');
+
+        // Configure OAuth discovery endpoints (RFC 9728)
+        if ($oauthEnabled) {
+            $this->configureOAuth($oauthConfig, $httpConfig['path'], $container);
+        }
+    }
+
+    /**
+     * @param array{enabled?: bool, authorization_servers?: list<string>, resource?: string|null, scopes_supported?: list<string>} $oauthConfig
+     */
+    private function configureOAuth(array $oauthConfig, string $mcpPath, ContainerBuilder $container): void
+    {
+        // RFC 9728: Protected Resource Metadata controller
+        $container->register('mcp.oauth.metadata_controller', OAuthMetadataController::class)
+            ->setArguments([
+                $oauthConfig['authorization_servers'] ?? [],
+                $oauthConfig['resource'] ?? null,
+                $mcpPath,
+                $oauthConfig['scopes_supported'] ?? [],
+            ])
+            ->setPublic(true)
+            ->addTag('controller.service_arguments');
+
+        // RFC 6750: WWW-Authenticate header on 401 responses
+        $container->register('mcp.oauth.unauthorized_listener', OAuthUnauthorizedListener::class)
+            ->setArguments([$mcpPath])
+            ->addTag('kernel.event_listener', ['event' => 'kernel.response', 'method' => 'onKernelResponse']);
     }
 
     /**

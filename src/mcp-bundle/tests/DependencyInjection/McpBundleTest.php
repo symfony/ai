@@ -408,6 +408,121 @@ class McpBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('mcp.notification_handler'));
     }
 
+    public function testOAuthDisabledByDefault()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+            ],
+        ]);
+
+        // OAuth services should not exist when OAuth is disabled
+        $this->assertFalse($container->hasDefinition('mcp.oauth.metadata_controller'));
+        $this->assertFalse($container->hasDefinition('mcp.oauth.unauthorized_listener'));
+
+        // Route loader should have OAuth disabled
+        $routeLoaderDefinition = $container->getDefinition('mcp.server.route_loader');
+        $arguments = $routeLoaderDefinition->getArguments();
+        $this->assertFalse($arguments[2]); // OAuth disabled
+    }
+
+    public function testOAuthEnabledConfiguration()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'oauth' => [
+                    'enabled' => true,
+                ],
+            ],
+        ]);
+
+        // OAuth services should exist when OAuth is enabled
+        $this->assertTrue($container->hasDefinition('mcp.oauth.metadata_controller'));
+        $this->assertTrue($container->hasDefinition('mcp.oauth.unauthorized_listener'));
+
+        // Route loader should have OAuth enabled
+        $routeLoaderDefinition = $container->getDefinition('mcp.server.route_loader');
+        $arguments = $routeLoaderDefinition->getArguments();
+        $this->assertTrue($arguments[2]); // OAuth enabled
+    }
+
+    public function testOAuthMetadataControllerConfiguration()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'oauth' => [
+                    'enabled' => true,
+                    'authorization_servers' => ['https://auth.example.com'],
+                    'resource' => 'https://mcp.example.com/_mcp',
+                    'scopes_supported' => ['read', 'write'],
+                ],
+            ],
+        ]);
+
+        $metadataControllerDefinition = $container->getDefinition('mcp.oauth.metadata_controller');
+        $arguments = $metadataControllerDefinition->getArguments();
+
+        $this->assertSame(['https://auth.example.com'], $arguments[0]); // authorization_servers
+        $this->assertSame('https://mcp.example.com/_mcp', $arguments[1]); // resource
+        $this->assertSame('/_mcp', $arguments[2]); // mcpPath
+        $this->assertSame(['read', 'write'], $arguments[3]); // scopes_supported
+    }
+
+    public function testOAuthUnauthorizedListenerConfiguration()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'path' => '/custom-mcp',
+                ],
+                'oauth' => [
+                    'enabled' => true,
+                ],
+            ],
+        ]);
+
+        $listenerDefinition = $container->getDefinition('mcp.oauth.unauthorized_listener');
+        $arguments = $listenerDefinition->getArguments();
+
+        $this->assertSame('/custom-mcp', $arguments[0]); // mcpPath
+
+        // Check event listener tag
+        $tags = $listenerDefinition->getTags();
+        $this->assertArrayHasKey('kernel.event_listener', $tags);
+        $this->assertSame('kernel.response', $tags['kernel.event_listener'][0]['event']);
+        $this->assertSame('onKernelResponse', $tags['kernel.event_listener'][0]['method']);
+    }
+
+    public function testOAuthWithoutHttpTransportNotRegistered()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'stdio' => true,
+                    'http' => false,
+                ],
+                'oauth' => [
+                    'enabled' => true,
+                ],
+            ],
+        ]);
+
+        // OAuth services should exist even with stdio-only (they just won't be used)
+        $this->assertTrue($container->hasDefinition('mcp.oauth.metadata_controller'));
+        $this->assertTrue($container->hasDefinition('mcp.oauth.unauthorized_listener'));
+    }
+
     /**
      * @param array<string, mixed> $configuration
      */
