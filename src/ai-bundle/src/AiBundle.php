@@ -55,6 +55,7 @@ use Symfony\AI\Platform\Bridge\Albert\PlatformFactory as AlbertPlatformFactory;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory as BedrockFactory;
+use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Cartesia\PlatformFactory as CartesiaPlatformFactory;
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFactory;
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
@@ -78,7 +79,6 @@ use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory as ScalewayPlatformFacto
 use Symfony\AI\Platform\Bridge\TransformersPhp\PlatformFactory as TransformersPhpPlatformFactory;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
-use Symfony\AI\Platform\CachedPlatform;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\File;
@@ -514,20 +514,26 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('cache' === $type) {
-            foreach ($platform as $name => $cachedPlatformConfig) {
-                $definition = (new Definition(CachedPlatform::class))
+            foreach ($platform as $name => $cachePlatformConfig) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-cache-platform', CachePlatform::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('CachePlatform platform configuration requires "symfony/ai-cache-platform" package. Try running "composer require symfony/ai-cache-platform".');
+                }
+
+                $definition = (new Definition(CachePlatform::class))
                     ->setLazy(true)
                     ->setArguments([
-                        new Reference($cachedPlatformConfig['platform']),
+                        new Reference($cachePlatformConfig['platform']),
                         new Reference(ClockInterface::class),
-                        new Reference($cachedPlatformConfig['service'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        $cachedPlatformConfig['cache_key'] ?? $name,
+                        new Reference($cachePlatformConfig['service'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                        new Reference('serializer'),
+                        $cachePlatformConfig['cache_key'] ?? $name,
+                        $cachePlatformConfig['ttl'] ?? null,
                     ])
                     ->addTag('proxy', ['interface' => PlatformInterface::class])
                     ->addTag('ai.platform', ['name' => 'cache.'.$name]);
 
-                $container->setDefinition('ai.platform.cache.'.$name, $definition);
-                $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type.'_'.$name);
+                $container->setDefinition('ai.platform.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.platform.'.$type.'.'.$name, PlatformInterface::class, $type.'_'.$name);
             }
 
             return;
