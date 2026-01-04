@@ -66,12 +66,38 @@ final class RequestCollectorFormatter implements CollectorFormatterInterface
 
         $class = new \ReflectionClass($collectorData);
         $property = $class->getProperty('data');
-        $property->setAccessible(true);
         $data = $property->getValue($collectorData);
 
         $formatted = $data->getValue(true);
 
         return $this->sanitizeData($formatted);
+    }
+
+    public function getSummary(mixed $collectorData): array
+    {
+        $summary = [];
+
+        if (method_exists($collectorData, 'getMethod')) {
+            $summary['method'] = $collectorData->getMethod();
+        }
+
+        if (method_exists($collectorData, 'getPathInfo')) {
+            $summary['path'] = $collectorData->getPathInfo();
+        }
+
+        if (method_exists($collectorData, 'getRoute')) {
+            $summary['route'] = $collectorData->getRoute();
+        }
+
+        if (method_exists($collectorData, 'getStatusCode')) {
+            $summary['status_code'] = $collectorData->getStatusCode();
+        }
+
+        if (method_exists($collectorData, 'getContentType')) {
+            $summary['content_type'] = $collectorData->getContentType();
+        }
+
+        return $summary;
     }
 
     /**
@@ -167,32 +193,5 @@ final class RequestCollectorFormatter implements CollectorFormatterInterface
         }
 
         return $data;
-    }
-
-    public function getSummary(mixed $collectorData): array
-    {
-        $summary = [];
-
-        if (method_exists($collectorData, 'getMethod')) {
-            $summary['method'] = $collectorData->getMethod();
-        }
-
-        if (method_exists($collectorData, 'getPathInfo')) {
-            $summary['path'] = $collectorData->getPathInfo();
-        }
-
-        if (method_exists($collectorData, 'getRoute')) {
-            $summary['route'] = $collectorData->getRoute();
-        }
-
-        if (method_exists($collectorData, 'getStatusCode')) {
-            $summary['status_code'] = $collectorData->getStatusCode();
-        }
-
-        if (method_exists($collectorData, 'getContentType')) {
-            $summary['content_type'] = $collectorData->getContentType();
-        }
-
-        return $summary;
     }
 }

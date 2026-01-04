@@ -15,7 +15,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Profiler\Exception\InvalidCollectorException;
 use Symfony\AI\Mate\Bridge\Profiler\Exception\ProfileNotFoundException;
 use Symfony\AI\Mate\Bridge\Profiler\Service\CollectorRegistry;
-use Symfony\AI\Mate\Bridge\Profiler\Service\ProfileIndexer;
 use Symfony\AI\Mate\Bridge\Profiler\Service\ProfilerDataProvider;
 use Symfony\Component\HttpKernel\Profiler\Profile;
 

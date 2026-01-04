@@ -7,6 +7,8 @@ parameters:
     paths:
         - src/
         - tests/
+    excludePaths:
+        - src/Bridge/*/vendor
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
         -

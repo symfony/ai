@@ -14,7 +14,6 @@ namespace Symfony\AI\Mate\Bridge\Profiler\Tests\Capability;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Profiler\Capability\ProfilerResourceTemplate;
 use Symfony\AI\Mate\Bridge\Profiler\Service\CollectorRegistry;
-use Symfony\AI\Mate\Bridge\Profiler\Service\ProfileIndexer;
 use Symfony\AI\Mate\Bridge\Profiler\Service\ProfilerDataProvider;
 
 /**

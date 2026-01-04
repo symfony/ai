@@ -16,8 +16,6 @@ use Symfony\AI\Mate\Bridge\Profiler\Service\Formatter\ExceptionCollectorFormatte
 use Symfony\AI\Mate\Bridge\Profiler\Service\Formatter\RequestCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Profiler\Service\ProfilerDataProvider;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symfony\Component\HttpKernel\Profiler\FileProfilerStorage;
-use Symfony\Component\HttpKernel\Profiler\Profile;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;

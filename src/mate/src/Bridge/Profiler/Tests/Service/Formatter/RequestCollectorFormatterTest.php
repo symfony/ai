@@ -203,7 +203,6 @@ final class RequestCollectorFormatterTest extends TestCase
 
         $class = new \ReflectionClass($collector);
         $property = $class->getProperty('data');
-        $property->setAccessible(true);
 
         $mockData = $this->createMock(Data::class);
         $mockData->method('getValue')
