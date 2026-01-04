@@ -71,6 +71,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory as PerplexityPlatformFactory;
 use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory as ScalewayPlatformFactory;
+use Symfony\AI\Platform\Bridge\TransformersPhp\PlatformFactory as TransformersPhpPlatformFactory;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
 use Symfony\AI\Platform\CachedPlatform;
@@ -978,6 +979,27 @@ final class AiBundle extends AbstractBundle
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.scaleway'),
                     null,
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform');
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('transformersphp' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-transformers-php-platform', TransformersPhpPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('TransformersPhp platform configuration requires "symfony/ai-transformers-php-platform" package. Try running "composer require symfony/ai-transformers-php-platform".');
+            }
+
+            $platformId = 'ai.platform.transformersphp';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(TransformersPhpPlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    new Reference('ai.platform.model_catalog.transformersphp'),
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform');
