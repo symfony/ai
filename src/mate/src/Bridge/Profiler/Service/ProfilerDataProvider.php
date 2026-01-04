@@ -16,7 +16,6 @@ use Symfony\AI\Mate\Bridge\Profiler\Exception\ProfileNotFoundException;
 use Symfony\AI\Mate\Bridge\Profiler\Model\ProfileData;
 use Symfony\AI\Mate\Bridge\Profiler\Model\ProfileIndex;
 use Symfony\Component\HttpKernel\Profiler\FileProfilerStorage;
-use Symfony\Component\HttpKernel\Profiler\Profile;
 
 /**
  * Reads and parses profiler data files.
@@ -39,32 +38,13 @@ final class ProfilerDataProvider
     private readonly array $storages;
 
     /**
-     * @param string|array<string, string> $profilerDir Single directory path or array of [context => path]
+     * @param string|array<string, string> $profilerDir
      */
     public function __construct(
         string|array $profilerDir,
         private readonly CollectorRegistry $collectorRegistry,
     ) {
         $this->storages = $this->createStorages($profilerDir);
-    }
-
-    /**
-     * @param string|array<string, string> $profilerDir
-     *
-     * @return array<string|int, FileProfilerStorage>
-     */
-    private function createStorages(string|array $profilerDir): array
-    {
-        if (\is_string($profilerDir)) {
-            return [0 => new FileProfilerStorage('file:'.$profilerDir)];
-        }
-
-        $storages = [];
-        foreach ($profilerDir as $context => $dir) {
-            $storages[$context] = new FileProfilerStorage('file:'.$dir);
-        }
-
-        return $storages;
     }
 
     /**
@@ -75,10 +55,8 @@ final class ProfilerDataProvider
         $allProfiles = [];
 
         foreach ($this->storages as $context => $storage) {
-            // Use find() with minimal filters to get all profiles
             $profiles = $storage->find(null, null, \PHP_INT_MAX, null);
 
-            // Convert to ProfileIndex objects
             foreach ($profiles as $profileData) {
                 $allProfiles[] = new ProfileIndex(
                     token: $profileData['token'],
@@ -94,7 +72,6 @@ final class ProfilerDataProvider
             }
         }
 
-        // Sort by time descending (most recent first)
         usort($allProfiles, fn ($a, $b) => $b->time <=> $a->time);
 
         if (null !== $limit) {
@@ -129,7 +106,6 @@ final class ProfilerDataProvider
     {
         $allResults = [];
 
-        // Convert time strings to timestamps
         $start = isset($criteria['from']) ? strtotime($criteria['from']) : null;
         $end = isset($criteria['to']) ? strtotime($criteria['to']) : null;
 
@@ -144,7 +120,6 @@ final class ProfilerDataProvider
                 statusCode: isset($criteria['statusCode']) ? (string) $criteria['statusCode'] : null,
             );
 
-            // Convert to ProfileIndex and filter by context if needed
             foreach ($profiles as $profileData) {
                 if (isset($criteria['context']) && $criteria['context'] !== $context) {
                     continue;
@@ -164,7 +139,6 @@ final class ProfilerDataProvider
             }
         }
 
-        // Sort by time descending
         usort($allResults, fn ($a, $b) => $b->time <=> $a->time);
 
         return \array_slice($allResults, 0, $limit);
@@ -224,5 +198,24 @@ final class ProfilerDataProvider
         $profiles = $this->readIndex(1);
 
         return $profiles[0] ?? null;
+    }
+
+    /**
+     * @param string|array<string, string> $profilerDir
+     *
+     * @return array<string|int, FileProfilerStorage>
+     */
+    private function createStorages(string|array $profilerDir): array
+    {
+        if (\is_string($profilerDir)) {
+            return [0 => new FileProfilerStorage('file:'.$profilerDir)];
+        }
+
+        $storages = [];
+        foreach ($profilerDir as $context => $dir) {
+            $storages[$context] = new FileProfilerStorage('file:'.$dir);
+        }
+
+        return $storages;
     }
 }

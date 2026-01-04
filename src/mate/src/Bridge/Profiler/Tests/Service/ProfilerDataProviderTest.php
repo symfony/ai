@@ -17,6 +17,7 @@ use Symfony\AI\Mate\Bridge\Profiler\Exception\ProfileNotFoundException;
 use Symfony\AI\Mate\Bridge\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Profiler\Service\ProfileIndexer;
 use Symfony\AI\Mate\Bridge\Profiler\Service\ProfilerDataProvider;
+use Symfony\Component\HttpKernel\Profiler\Profile;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -62,7 +63,7 @@ final class ProfilerDataProviderTest extends TestCase
 
         $this->assertNotNull($profileData);
         $this->assertSame('abc123', $profileData->profile->getToken());
-        $this->assertInstanceOf(\Symfony\Component\HttpKernel\Profiler\Profile::class, $profileData->profile);
+        $this->assertInstanceOf(Profile::class, $profileData->profile);
         $this->assertIsArray($profileData->profile->getCollectors());
     }
 
