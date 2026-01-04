@@ -14,7 +14,6 @@ use Symfony\AI\Mate\Bridge\Profiler\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Profiler\Service\Formatter\ExceptionCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Profiler\Service\Formatter\RequestCollectorFormatter;
-use Symfony\AI\Mate\Bridge\Profiler\Service\ProfileIndexer;
 use Symfony\AI\Mate\Bridge\Profiler\Service\ProfilerDataProvider;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Profiler\FileProfilerStorage;
@@ -31,8 +30,6 @@ return function (ContainerConfigurator $configurator) {
     $services = $configurator->services();
 
     // Core services
-    $services->set(ProfileIndexer::class);
-
     $services->set(CollectorRegistry::class)
         ->args([tagged_iterator('ai_mate.profiler_collector_formatter')]);
 
@@ -40,7 +37,6 @@ return function (ContainerConfigurator $configurator) {
         ->args([
             '%ai_mate_profiler.profiler_dir%',
             service(CollectorRegistry::class),
-            service(ProfileIndexer::class),
         ]);
 
     // Built-in collector formatters (core only)

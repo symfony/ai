@@ -44,7 +44,6 @@ final class ProfilerDataProvider
     public function __construct(
         string|array $profilerDir,
         private readonly CollectorRegistry $collectorRegistry,
-        private readonly ProfileIndexer $indexer,
     ) {
         $this->storages = $this->createStorages($profilerDir);
     }

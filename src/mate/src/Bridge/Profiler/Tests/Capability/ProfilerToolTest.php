@@ -28,9 +28,8 @@ final class ProfilerToolTest extends TestCase
     protected function setUp(): void
     {
         $this->fixtureDir = __DIR__.'/../Fixtures/profiler';
-        $indexer = new ProfileIndexer();
         $registry = new CollectorRegistry([]);
-        $provider = new ProfilerDataProvider($this->fixtureDir, $registry, $indexer);
+        $provider = new ProfilerDataProvider($this->fixtureDir, $registry);
 
         $this->tool = new ProfilerTool($provider);
     }
@@ -42,7 +41,7 @@ final class ProfilerToolTest extends TestCase
         $this->assertCount(3, $profiles);
         $this->assertArrayHasKey('token', $profiles[0]);
         $this->assertArrayHasKey('time_formatted', $profiles[0]);
-        $this->assertSame('abc123', $profiles[0]['token']);
+        $this->assertSame('ghi789', $profiles[0]['token']);
     }
 
     public function testListProfilesWithLimit()
@@ -90,7 +89,7 @@ final class ProfilerToolTest extends TestCase
         $this->assertArrayHasKey('token', $profile);
         $this->assertArrayHasKey('time_formatted', $profile);
         $this->assertArrayHasKey('resource_uri', $profile);
-        $this->assertSame('abc123', $profile['token']);
+        $this->assertSame('ghi789', $profile['token']);
     }
 
     public function testGetLatestProfileIncludesResourceUri()

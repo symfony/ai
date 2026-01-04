@@ -105,12 +105,29 @@ final class ProfilerTool
     #[McpTool('profiler-get', 'Get a specific profile by token. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
     public function getProfile(string $token): array
     {
-        $profile = $this->dataProvider->findProfile($token);
+        $profileData = $this->dataProvider->findProfile($token);
 
-        if (null === $profile) {
+        if (null === $profileData) {
             throw new InvalidArgumentException(\sprintf('Profile with token "%s" not found', $token));
         }
 
-        return $profile->index->toArray();
+        $profile = $profileData->profile;
+        $data = [
+            'token' => $profile->getToken(),
+            'ip' => $profile->getIp(),
+            'method' => $profile->getMethod(),
+            'url' => $profile->getUrl(),
+            'time' => $profile->getTime(),
+            'time_formatted' => date(\DateTimeInterface::ATOM, $profile->getTime()),
+            'status_code' => $profile->getStatusCode(),
+            'parent_token' => $profile->getParentToken(),
+            'resource_uri' => \sprintf('profiler://profile/%s', $profile->getToken()),
+        ];
+
+        if (null !== $profileData->context) {
+            $data['context'] = $profileData->context;
+        }
+
+        return $data;
     }
 }

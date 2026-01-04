@@ -29,13 +29,11 @@ final class ProfilerDataProviderTest extends TestCase
     protected function setUp(): void
     {
         $this->fixtureDir = __DIR__.'/../Fixtures/profiler';
-        $indexer = new ProfileIndexer();
         $registry = new CollectorRegistry([]);
 
         $this->provider = new ProfilerDataProvider(
             $this->fixtureDir,
-            $registry,
-            $indexer
+            $registry
         );
     }
 
@@ -44,9 +42,9 @@ final class ProfilerDataProviderTest extends TestCase
         $profiles = $this->provider->readIndex();
 
         $this->assertCount(3, $profiles);
-        $this->assertSame('abc123', $profiles[0]->token);
+        $this->assertSame('ghi789', $profiles[0]->token);
         $this->assertSame('def456', $profiles[1]->token);
-        $this->assertSame('ghi789', $profiles[2]->token);
+        $this->assertSame('abc123', $profiles[2]->token);
     }
 
     public function testReadIndexWithLimit()
@@ -54,7 +52,7 @@ final class ProfilerDataProviderTest extends TestCase
         $profiles = $this->provider->readIndex(2);
 
         $this->assertCount(2, $profiles);
-        $this->assertSame('abc123', $profiles[0]->token);
+        $this->assertSame('ghi789', $profiles[0]->token);
         $this->assertSame('def456', $profiles[1]->token);
     }
 
@@ -175,28 +173,32 @@ final class ProfilerDataProviderTest extends TestCase
         $profile = $this->provider->getLatestProfile();
 
         $this->assertNotNull($profile);
-        $this->assertSame('abc123', $profile->token);
+        $this->assertSame('ghi789', $profile->token);
     }
 
     public function testGetLatestProfileReturnsNullWhenNoProfiles()
     {
-        $indexer = new ProfileIndexer();
         $registry = new CollectorRegistry([]);
-        $provider = new ProfilerDataProvider('/nonexistent', $registry, $indexer);
+        $emptyDir = sys_get_temp_dir().'/profiler_empty_'.uniqid();
+        mkdir($emptyDir);
 
-        $profile = $provider->getLatestProfile();
+        try {
+            $provider = new ProfilerDataProvider($emptyDir, $registry);
 
-        $this->assertNull($profile);
+            $profile = $provider->getLatestProfile();
+
+            $this->assertNull($profile);
+        } finally {
+            rmdir($emptyDir);
+        }
     }
 
     public function testSupportsMultipleProfilerDirectories()
     {
-        $indexer = new ProfileIndexer();
         $registry = new CollectorRegistry([]);
         $provider = new ProfilerDataProvider(
             ['context1' => $this->fixtureDir],
-            $registry,
-            $indexer
+            $registry
         );
 
         $profiles = $provider->readIndex();

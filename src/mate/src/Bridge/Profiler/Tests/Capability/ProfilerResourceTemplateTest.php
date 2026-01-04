@@ -28,9 +28,8 @@ final class ProfilerResourceTemplateTest extends TestCase
     protected function setUp(): void
     {
         $this->fixtureDir = __DIR__.'/../Fixtures/profiler';
-        $indexer = new ProfileIndexer();
         $registry = new CollectorRegistry([]);
-        $provider = new ProfilerDataProvider($this->fixtureDir, $registry, $indexer);
+        $provider = new ProfilerDataProvider($this->fixtureDir, $registry);
 
         $this->template = new ProfilerResourceTemplate($provider);
     }
