@@ -126,12 +126,9 @@ final class ProfilerDataProvider
         $formatter = $this->collectorRegistry->get($collectorName);
 
         if (null === $formatter) {
-            /** @var array<string, mixed> $data */
-            $data = \is_array($collectorData) ? $collectorData : ['raw' => $collectorData];
-
             return [
                 'name' => $collectorName,
-                'data' => $data,
+                'data' => [],
                 'summary' => [],
             ];
         }
@@ -185,32 +182,16 @@ final class ProfilerDataProvider
         }
 
         $decompressed = gzdecode($data);
-
         if (false === $decompressed) {
             return null;
         }
 
-        // Register a temporary autoloader to handle missing profiler classes
-        // Create a stub class for any missing Symfony profiler classes
-        $autoloader = static function (string $class): void {
-            if (str_contains($class, 'Symfony\\Component\\') || str_contains($class, 'Symfony\\Bridge\\')) {
-                $namespace = substr($class, 0, (int) strrpos($class, '\\'));
-                $className = substr($class, (int) strrpos($class, '\\') + 1);
-                $code = "namespace $namespace { #[\\AllowDynamicProperties] class $className {} }";
-                eval($code);
-            }
-        };
-
-        spl_autoload_register($autoloader);
         try {
             $unserialized = unserialize($decompressed);
+            if (!\is_array($unserialized)) {
+                return null;
+            }
         } catch (\Throwable) {
-            return null;
-        } finally {
-            spl_autoload_unregister($autoloader);
-        }
-
-        if (!\is_array($unserialized)) {
             return null;
         }
 

@@ -264,7 +264,7 @@ Profiler Bridge
 ~~~~~~~~~~~~~~~
 
 The Profiler bridge (``symfony/ai-profiler-mate-extension``) provides MCP tools and resources
-for accessing Symfony HTTP profiler data:
+for accessing Symfony profiler data:
 
 **MCP Tools:**
 
