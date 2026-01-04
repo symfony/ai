@@ -4039,6 +4039,28 @@ class AiBundleTest extends TestCase
         $this->assertSame('ai.platform.contract.perplexity', (string) $arguments[3]);
     }
 
+    public function testTransformersPhpConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'transformersphp' => [],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.transformersphp'));
+
+        $definition = $container->getDefinition('ai.platform.transformersphp');
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(2, $arguments);
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('ai.platform.model_catalog.transformersphp', (string) $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('event_dispatcher', (string) $arguments[1]);
+    }
+
     #[TestDox('System prompt with array structure works correctly')]
     public function testSystemPromptWithArrayStructure()
     {
@@ -7148,6 +7170,7 @@ class AiBundleTest extends TestCase
                     'dockermodelrunner' => [
                         'host_url' => 'http://127.0.0.1:12434',
                     ],
+                    'transformersphp' => [],
                 ],
                 'agent' => [
                     'my_chat_agent' => [

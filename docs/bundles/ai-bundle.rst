@@ -64,6 +64,7 @@ Advanced Example with Multiple Agents
                 project_id: '%env(GOOGLE_CLOUD_PROJECT)%'
             ollama:
                 host_url: '%env(OLLAMA_HOST_URL)%'
+            transformersphp: ~
         agent:
             rag:
                 platform: 'ai.platform.azure.gpt_deployment'
