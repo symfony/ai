@@ -60,12 +60,12 @@ final class ProfilerDataProviderTest extends TestCase
 
     public function testFindProfileReturnsProfileData()
     {
-        $profile = $this->provider->findProfile('abc123');
+        $profileData = $this->provider->findProfile('abc123');
 
-        $this->assertNotNull($profile);
-        $this->assertSame('abc123', $profile->token);
-        $this->assertSame('abc123', $profile->index->token);
-        $this->assertIsArray($profile->collectors);
+        $this->assertNotNull($profileData);
+        $this->assertSame('abc123', $profileData->profile->getToken());
+        $this->assertInstanceOf(\Symfony\Component\HttpKernel\Profiler\Profile::class, $profileData->profile);
+        $this->assertIsArray($profileData->profile->getCollectors());
     }
 
     public function testFindProfileReturnsNullForNonExistentToken()
@@ -79,10 +79,10 @@ final class ProfilerDataProviderTest extends TestCase
     {
         // Token 'abc123': last 2 chars = '23', next-to-last 2 chars = 'c1'
         // Should find file at: profiler/23/c1/abc123
-        $profile = $this->provider->findProfile('abc123');
+        $profileData = $this->provider->findProfile('abc123');
 
-        $this->assertNotNull($profile);
-        $this->assertSame('abc123', $profile->token);
+        $this->assertNotNull($profileData);
+        $this->assertSame('abc123', $profileData->profile->getToken());
     }
 
     public function testSearchProfilesWithoutCriteria()

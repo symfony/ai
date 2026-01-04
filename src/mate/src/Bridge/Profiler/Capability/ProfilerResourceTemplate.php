@@ -42,8 +42,8 @@ final class ProfilerResourceTemplate
     )]
     public function getProfileResource(string $token): array
     {
-        $profile = $this->dataProvider->findProfile($token);
-        if (null === $profile) {
+        $profileData = $this->dataProvider->findProfile($token);
+        if (null === $profileData) {
             return [
                 'uri' => "profiler://profile/{$token}",
                 'mimeType' => 'application/json',
@@ -51,6 +51,7 @@ final class ProfilerResourceTemplate
             ];
         }
 
+        $profile = $profileData->profile;
         $collectors = $this->dataProvider->listAvailableCollectors($token);
 
         $collectorResources = [];
@@ -62,18 +63,18 @@ final class ProfilerResourceTemplate
         }
 
         $data = [
-            'token' => $profile->token,
-            'method' => $profile->index->method,
-            'url' => $profile->index->url,
-            'status_code' => $profile->index->statusCode,
-            'time' => $profile->index->time,
-            'ip' => $profile->index->ip,
-            'parent_profile' => $profile->index->parentToken ? \sprintf('profiler://profile/%s', $profile->index->parentToken) : null,
+            'token' => $profile->getToken(),
+            'method' => $profile->getMethod(),
+            'url' => $profile->getUrl(),
+            'status_code' => $profile->getStatusCode(),
+            'time' => $profile->getTime(),
+            'ip' => $profile->getIp(),
+            'parent_profile' => $profile->getParentToken() ? \sprintf('profiler://profile/%s', $profile->getParentToken()) : null,
             'collectors' => $collectorResources,
         ];
 
-        if (null !== $profile->index->context) {
-            $data['context'] = $profile->index->context;
+        if (null !== $profileData->context) {
+            $data['context'] = $profileData->context;
         }
 
         return [

@@ -11,32 +11,20 @@
 
 namespace Symfony\AI\Mate\Bridge\Profiler\Model;
 
+use Symfony\Component\HttpKernel\Profiler\Profile;
+
 /**
+ * Wrapper around Symfony's Profile class with context tracking for multi-directory support.
+ *
  * @author Johannes Wachter <johannes@sulu.io>
  *
  * @internal
  */
 class ProfileData
 {
-    /**
-     * @param array<string, mixed> $collectors
-     * @param array<string>        $children
-     */
     public function __construct(
-        public readonly string $token,
-        public readonly ProfileIndex $index,
-        public readonly array $collectors,
-        public readonly array $children = [],
+        public readonly Profile $profile,
+        public readonly ?string $context = null,
     ) {
-    }
-
-    public function getCollector(string $name): mixed
-    {
-        return $this->collectors[$name] ?? null;
-    }
-
-    public function hasCollector(string $name): bool
-    {
-        return isset($this->collectors[$name]);
     }
 }

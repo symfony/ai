@@ -13,7 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Profiler\Tests\Model;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Profiler\Model\ProfileData;
-use Symfony\AI\Mate\Bridge\Profiler\Model\ProfileIndex;
+use Symfony\Component\HttpKernel\Profiler\Profile;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -22,151 +22,73 @@ final class ProfileDataTest extends TestCase
 {
     public function testConstructorSetsProperties()
     {
-        $index = new ProfileIndex(
-            token: 'abc123',
-            ip: '127.0.0.1',
-            method: 'GET',
-            url: '/test',
-            time: 1234567890
-        );
-
-        $collectors = ['request' => ['method' => 'GET']];
-        $children = ['child1', 'child2'];
+        $profile = new Profile('abc123');
+        $profile->setMethod('GET');
+        $profile->setUrl('/test');
 
         $profileData = new ProfileData(
-            token: 'abc123',
-            index: $index,
-            collectors: $collectors,
-            children: $children
+            profile: $profile,
+            context: 'website'
         );
 
-        $this->assertSame('abc123', $profileData->token);
-        $this->assertSame($index, $profileData->index);
-        $this->assertSame($collectors, $profileData->collectors);
-        $this->assertSame($children, $profileData->children);
+        $this->assertSame($profile, $profileData->profile);
+        $this->assertSame('website', $profileData->context);
     }
 
-    public function testHasCollectorReturnsTrueForExistingCollector()
+    public function testContextCanBeNull()
     {
-        $index = new ProfileIndex(
-            token: 'abc123',
-            ip: '127.0.0.1',
-            method: 'GET',
-            url: '/test',
-            time: 1234567890
-        );
+        $profile = new Profile('abc123');
 
         $profileData = new ProfileData(
-            token: 'abc123',
-            index: $index,
-            collectors: ['request' => [], 'response' => []],
-            children: []
+            profile: $profile,
+            context: null
         );
 
-        $this->assertTrue($profileData->hasCollector('request'));
-        $this->assertTrue($profileData->hasCollector('response'));
+        $this->assertSame($profile, $profileData->profile);
+        $this->assertNull($profileData->context);
     }
 
-    public function testHasCollectorReturnsFalseForNonExistingCollector()
+    public function testContextDefaultsToNull()
     {
-        $index = new ProfileIndex(
-            token: 'abc123',
-            ip: '127.0.0.1',
-            method: 'GET',
-            url: '/test',
-            time: 1234567890
-        );
+        $profile = new Profile('abc123');
 
         $profileData = new ProfileData(
-            token: 'abc123',
-            index: $index,
-            collectors: ['request' => []],
-            children: []
+            profile: $profile
         );
 
-        $this->assertFalse($profileData->hasCollector('nonexistent'));
+        $this->assertSame($profile, $profileData->profile);
+        $this->assertNull($profileData->context);
     }
 
-    public function testGetCollectorReturnsCollectorData()
+    public function testPropertiesAreReadonly()
     {
-        $index = new ProfileIndex(
-            token: 'abc123',
-            ip: '127.0.0.1',
-            method: 'GET',
-            url: '/test',
-            time: 1234567890
-        );
-
-        $requestData = ['method' => 'GET', 'path' => '/test'];
+        $profile = new Profile('abc123');
         $profileData = new ProfileData(
-            token: 'abc123',
-            index: $index,
-            collectors: ['request' => $requestData],
-            children: []
+            profile: $profile,
+            context: 'admin'
         );
 
-        $this->assertSame($requestData, $profileData->getCollector('request'));
+        $reflection = new \ReflectionClass($profileData);
+
+        $profileProperty = $reflection->getProperty('profile');
+        $this->assertTrue($profileProperty->isReadOnly());
+
+        $contextProperty = $reflection->getProperty('context');
+        $this->assertTrue($contextProperty->isReadOnly());
     }
 
-    public function testGetCollectorReturnsNullForNonExistingCollector()
+    public function testProfileMethodsAreAccessible()
     {
-        $index = new ProfileIndex(
-            token: 'abc123',
-            ip: '127.0.0.1',
-            method: 'GET',
-            url: '/test',
-            time: 1234567890
-        );
+        $profile = new Profile('abc123');
+        $profile->setMethod('POST');
+        $profile->setUrl('/api/users');
+        $profile->setIp('192.168.1.1');
 
-        $profileData = new ProfileData(
-            token: 'abc123',
-            index: $index,
-            collectors: [],
-            children: []
-        );
+        $profileData = new ProfileData(profile: $profile);
 
-        $this->assertNull($profileData->getCollector('nonexistent'));
-    }
-
-    public function testChildrenCanBeEmpty()
-    {
-        $index = new ProfileIndex(
-            token: 'abc123',
-            ip: '127.0.0.1',
-            method: 'GET',
-            url: '/test',
-            time: 1234567890
-        );
-
-        $profileData = new ProfileData(
-            token: 'abc123',
-            index: $index,
-            collectors: [],
-            children: []
-        );
-
-        $this->assertIsArray($profileData->children);
-        $this->assertEmpty($profileData->children);
-    }
-
-    public function testCollectorsCanBeEmpty()
-    {
-        $index = new ProfileIndex(
-            token: 'abc123',
-            ip: '127.0.0.1',
-            method: 'GET',
-            url: '/test',
-            time: 1234567890
-        );
-
-        $profileData = new ProfileData(
-            token: 'abc123',
-            index: $index,
-            collectors: [],
-            children: []
-        );
-
-        $this->assertIsArray($profileData->collectors);
-        $this->assertEmpty($profileData->collectors);
+        $this->assertSame('abc123', $profileData->profile->getToken());
+        $this->assertSame('POST', $profileData->profile->getMethod());
+        $this->assertSame('/api/users', $profileData->profile->getUrl());
+        $this->assertSame('192.168.1.1', $profileData->profile->getIp());
     }
 }

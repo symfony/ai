@@ -15,6 +15,8 @@ use Symfony\AI\Mate\Bridge\Profiler\Exception\InvalidCollectorException;
 use Symfony\AI\Mate\Bridge\Profiler\Exception\ProfileNotFoundException;
 use Symfony\AI\Mate\Bridge\Profiler\Model\ProfileData;
 use Symfony\AI\Mate\Bridge\Profiler\Model\ProfileIndex;
+use Symfony\Component\HttpKernel\Profiler\FileProfilerStorage;
+use Symfony\Component\HttpKernel\Profiler\Profile;
 
 /**
  * Reads and parses profiler data files.
@@ -32,13 +34,38 @@ use Symfony\AI\Mate\Bridge\Profiler\Model\ProfileIndex;
 final class ProfilerDataProvider
 {
     /**
+     * @var array<string|int, FileProfilerStorage>
+     */
+    private readonly array $storages;
+
+    /**
      * @param string|array<string, string> $profilerDir Single directory path or array of [context => path]
      */
     public function __construct(
-        private readonly string|array $profilerDir,
+        string|array $profilerDir,
         private readonly CollectorRegistry $collectorRegistry,
         private readonly ProfileIndexer $indexer,
     ) {
+        $this->storages = $this->createStorages($profilerDir);
+    }
+
+    /**
+     * @param string|array<string, string> $profilerDir
+     *
+     * @return array<string|int, FileProfilerStorage>
+     */
+    private function createStorages(string|array $profilerDir): array
+    {
+        if (\is_string($profilerDir)) {
+            return [0 => new FileProfilerStorage('file:'.$profilerDir)];
+        }
+
+        $storages = [];
+        foreach ($profilerDir as $context => $dir) {
+            $storages[$context] = new FileProfilerStorage('file:'.$dir);
+        }
+
+        return $storages;
     }
 
     /**
@@ -46,25 +73,48 @@ final class ProfilerDataProvider
      */
     public function readIndex(?int $limit = null): array
     {
-        $profiles = $this->indexer->indexProfiles($this->profilerDir);
+        $allProfiles = [];
 
-        if (null !== $limit) {
-            return \array_slice($profiles, 0, $limit);
+        foreach ($this->storages as $context => $storage) {
+            // Use find() with minimal filters to get all profiles
+            $profiles = $storage->find(null, null, \PHP_INT_MAX, null);
+
+            // Convert to ProfileIndex objects
+            foreach ($profiles as $profileData) {
+                $allProfiles[] = new ProfileIndex(
+                    token: $profileData['token'],
+                    ip: $profileData['ip'],
+                    method: $profileData['method'],
+                    url: $profileData['url'],
+                    time: $profileData['time'],
+                    statusCode: $profileData['status_code'] ?? null,
+                    parentToken: $profileData['parent'] ?? null,
+                    context: \is_string($context) ? $context : null,
+                    type: $profileData['virtual_type'] ?? null,
+                );
+            }
         }
 
-        return $profiles;
+        // Sort by time descending (most recent first)
+        usort($allProfiles, fn ($a, $b) => $b->time <=> $a->time);
+
+        if (null !== $limit) {
+            return \array_slice($allProfiles, 0, $limit);
+        }
+
+        return $allProfiles;
     }
 
     public function findProfile(string $token): ?ProfileData
     {
-        foreach ($this->getDirectories() as $context => $dir) {
-            // Symfony stores profiles in nested directories: {last_2_chars}/{next_to_last_2_chars}/{token}
-            $dir1 = substr($token, -2);
-            $dir2 = substr($token, -4, 2);
-            $profileFile = $dir.'/'.$dir1.'/'.$dir2.'/'.$token;
+        foreach ($this->storages as $context => $storage) {
+            $profile = $storage->read($token);
 
-            if (file_exists($profileFile) && is_readable($profileFile)) {
-                return $this->readProfileFile($profileFile, $token, $context);
+            if (null !== $profile) {
+                return new ProfileData(
+                    profile: $profile,
+                    context: \is_string($context) ? $context : null,
+                );
             }
         }
 
@@ -78,33 +128,47 @@ final class ProfilerDataProvider
      */
     public function searchProfiles(array $criteria, int $limit = 20): array
     {
-        $profiles = $this->indexer->indexProfiles($this->profilerDir);
+        $allResults = [];
 
-        if (isset($criteria['context'])) {
-            $profiles = $this->indexer->filterByContext($profiles, $criteria['context']);
+        // Convert time strings to timestamps
+        $start = isset($criteria['from']) ? strtotime($criteria['from']) : null;
+        $end = isset($criteria['to']) ? strtotime($criteria['to']) : null;
+
+        foreach ($this->storages as $context => $storage) {
+            $profiles = $storage->find(
+                ip: $criteria['ip'] ?? null,
+                url: $criteria['url'] ?? null,
+                limit: \PHP_INT_MAX,
+                method: $criteria['method'] ?? null,
+                start: false !== $start ? $start : null,
+                end: false !== $end ? $end : null,
+                statusCode: isset($criteria['statusCode']) ? (string) $criteria['statusCode'] : null,
+            );
+
+            // Convert to ProfileIndex and filter by context if needed
+            foreach ($profiles as $profileData) {
+                if (isset($criteria['context']) && $criteria['context'] !== $context) {
+                    continue;
+                }
+
+                $allResults[] = new ProfileIndex(
+                    token: $profileData['token'],
+                    ip: $profileData['ip'],
+                    method: $profileData['method'],
+                    url: $profileData['url'],
+                    time: $profileData['time'],
+                    statusCode: $profileData['status_code'] ?? null,
+                    parentToken: $profileData['parent'] ?? null,
+                    context: \is_string($context) ? $context : null,
+                    type: $profileData['virtual_type'] ?? null,
+                );
+            }
         }
 
-        if (isset($criteria['method'])) {
-            $profiles = $this->indexer->filterByMethod($profiles, $criteria['method']);
-        }
+        // Sort by time descending
+        usort($allResults, fn ($a, $b) => $b->time <=> $a->time);
 
-        if (isset($criteria['statusCode'])) {
-            $profiles = $this->indexer->filterByStatusCode($profiles, (int) $criteria['statusCode']);
-        }
-
-        if (isset($criteria['url'])) {
-            $profiles = $this->indexer->filterByUrl($profiles, $criteria['url']);
-        }
-
-        if (isset($criteria['ip'])) {
-            $profiles = $this->indexer->filterByIp($profiles, $criteria['ip']);
-        }
-
-        if (isset($criteria['from'], $criteria['to'])) {
-            $profiles = $this->indexer->filterByDateRange($profiles, $criteria['from'], $criteria['to']);
-        }
-
-        return \array_slice($profiles, 0, $limit);
+        return \array_slice($allResults, 0, $limit);
     }
 
     /**
@@ -112,11 +176,13 @@ final class ProfilerDataProvider
      */
     public function getCollectorData(string $token, string $collectorName): array
     {
-        $profile = $this->findProfile($token);
+        $profileData = $this->findProfile($token);
 
-        if (null === $profile) {
+        if (null === $profileData) {
             throw new ProfileNotFoundException(\sprintf('Profile not found for token: "%s"', $token));
         }
+
+        $profile = $profileData->profile;
 
         if (!$profile->hasCollector($collectorName)) {
             throw new InvalidCollectorException(\sprintf('Collector "%s" not found in profile "%s"', $collectorName, $token));
@@ -145,13 +211,13 @@ final class ProfilerDataProvider
      */
     public function listAvailableCollectors(string $token): array
     {
-        $profile = $this->findProfile($token);
+        $profileData = $this->findProfile($token);
 
-        if (null === $profile) {
+        if (null === $profileData) {
             throw new ProfileNotFoundException(\sprintf('Profile not found for token: "%s"', $token));
         }
 
-        return array_keys($profile->collectors);
+        return array_keys($profileData->profile->getCollectors());
     }
 
     public function getLatestProfile(): ?ProfileIndex
@@ -159,81 +225,5 @@ final class ProfilerDataProvider
         $profiles = $this->readIndex(1);
 
         return $profiles[0] ?? null;
-    }
-
-    /**
-     * @return array<string|int, string> Map of context to directory path
-     */
-    private function getDirectories(): array
-    {
-        if (\is_string($this->profilerDir)) {
-            return [0 => $this->profilerDir];
-        }
-
-        return $this->profilerDir;
-    }
-
-    private function readProfileFile(string $filePath, string $token, string|int|null $context): ?ProfileData
-    {
-        $data = file_get_contents($filePath);
-
-        if (false === $data) {
-            return null;
-        }
-
-        $decompressed = gzdecode($data);
-        if (false === $decompressed) {
-            return null;
-        }
-
-        try {
-            $unserialized = unserialize($decompressed);
-            if (!\is_array($unserialized)) {
-                return null;
-            }
-        } catch (\Throwable) {
-            return null;
-        }
-
-        $allProfiles = $this->indexer->indexProfiles($this->profilerDir);
-        $profileIndex = null;
-
-        foreach ($allProfiles as $index) {
-            if ($index->token === $token) {
-                $profileIndex = $index;
-                break;
-            }
-        }
-
-        if (null === $profileIndex) {
-            $profileIndex = new ProfileIndex(
-                token: $token,
-                ip: '',
-                method: '',
-                url: '',
-                time: time(),
-                context: \is_string($context) ? $context : null,
-            );
-        }
-
-        $collectors = [];
-        $children = [];
-
-        if (isset($unserialized['data']) && \is_array($unserialized['data'])) {
-            $collectors = $unserialized['data'];
-        } elseif (isset($unserialized['collectors']) && \is_array($unserialized['collectors'])) {
-            $collectors = $unserialized['collectors'];
-        }
-
-        if (isset($unserialized['children']) && \is_array($unserialized['children'])) {
-            $children = $unserialized['children'];
-        }
-
-        return new ProfileData(
-            token: $token,
-            index: $profileIndex,
-            collectors: $collectors,
-            children: $children,
-        );
     }
 }
