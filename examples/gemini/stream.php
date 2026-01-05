@@ -21,7 +21,7 @@ $messages = new MessageBag(
     Message::forSystem('You are a funny clown that entertains people.'),
     Message::ofUser('What is the purpose of an ant?'),
 );
-$result = $platform->invoke('gemini-2.0-flash', $messages, [
+$result = $platform->invoke('gemini-2.5-flash', $messages, [
     'stream' => true, // enable streaming of response text
 ]);
 

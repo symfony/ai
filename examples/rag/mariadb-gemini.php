@@ -59,7 +59,7 @@ $indexer->index($documents);
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gemini-2.0-flash-lite-preview-02-05', [$processor], [$processor]);
+$agent = new Agent($platform, 'gemini-2.5-flash-lite', [$processor], [$processor]);
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),
