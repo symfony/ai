@@ -87,7 +87,7 @@
         "symfony/ai-supabase-store": "^0.2",
         "symfony/ai-surreal-db-message-store": "^0.1",
         "symfony/ai-surreal-db-store": "^0.2",
-        "symfony/ai-transformers-php-platform": "^0.1",
+        "symfony/ai-transformers-php-platform": "^0.2",
         "symfony/ai-typesense-store": "^0.2",
         "symfony/ai-vertex-ai-platform": "^0.2",
         "symfony/ai-voyage-platform": "^0.1",
