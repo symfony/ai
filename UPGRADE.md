@@ -15,26 +15,41 @@ AI Bundle
    ) {}
    ```
 
+Agent
+-----
+
+ * Constructor of `MemoryInputProcessor` now accepts an iterable of inputs instead of variadic arguments.
+
+   ```php
+   use Symfony\AI\Agent\InputProcessor\MemoryInputProcessor;
+
+   // Before
+   $processor = new MemoryInputProcessor($input1, $input2);
+
+   // After
+   $processor = new MemoryInputProcessor([$input1, $input2]);
+   ```
+
 Store
 -----
 
- * The `StoreInterface::add()` method signature has changed from variadic to accept a single document or an array
+* The `StoreInterface::add()` method signature has changed from variadic to accept a single document or an array
 
-   *Before:*
-   ```php
-   public function add(VectorDocument ...$documents): void;
+  *Before:*
+  ```php
+  public function add(VectorDocument ...$documents): void;
 
-   // Usage
-   $store->add($document1, $document2);
-   $store->add(...$documents);
-   ```
+  // Usage
+  $store->add($document1, $document2);
+  $store->add(...$documents);
+  ```
 
-   *After:*
-   ```php
-   public function add(VectorDocument|array $documents): void;
+  *After:*
+  ```php
+  public function add(VectorDocument|array $documents): void;
 
-   // Usage
-   $store->add($document);
-   $store->add([$document1, $document2]);
-   $store->add($documents);
-   ```
+  // Usage
+  $store->add($document);
+  $store->add([$document1, $document2]);
+  $store->add($documents);
+  ```

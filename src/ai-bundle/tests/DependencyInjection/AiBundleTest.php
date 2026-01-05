@@ -4285,8 +4285,8 @@ class AiBundleTest extends TestCase
         $arguments = $definition->getArguments();
 
         // Check that the memory processor references the static memory provider
-        $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame('ai.agent.test_agent.static_memory_provider', (string) $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[0][0]);
+        $this->assertSame('ai.agent.test_agent.static_memory_provider', (string) $arguments[0][0]);
 
         // Check that the processor has the correct tags with proper priority
         $tags = $definition->getTag('ai.agent.input_processor');
@@ -4364,8 +4364,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.agent.test_agent.static_memory_provider'));
         $memoryDefinition = $container->getDefinition('ai.agent.test_agent.memory_input_processor');
         $memoryArguments = $memoryDefinition->getArguments();
-        $this->assertInstanceOf(Reference::class, $memoryArguments[0]);
-        $this->assertSame('ai.agent.test_agent.static_memory_provider', (string) $memoryArguments[0]);
+        $this->assertInstanceOf(Reference::class, $memoryArguments[0][0]);
+        $this->assertSame('ai.agent.test_agent.static_memory_provider', (string) $memoryArguments[0][0]);
 
         // Verify memory processor has highest priority (runs first)
         $memoryTags = $memoryDefinition->getTag('ai.agent.input_processor');
@@ -4434,7 +4434,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.agent.agent_with_memory.static_memory_provider'));
         $firstMemoryDef = $container->getDefinition('ai.agent.agent_with_memory.memory_input_processor');
         $firstMemoryArgs = $firstMemoryDef->getArguments();
-        $this->assertSame('ai.agent.agent_with_memory.static_memory_provider', (string) $firstMemoryArgs[0]);
+        $this->assertSame('ai.agent.agent_with_memory.static_memory_provider', (string) $firstMemoryArgs[0][0]);
 
         // Second agent should not have memory processor
         $this->assertFalse($container->hasDefinition('ai.agent.agent_without_memory.memory_input_processor'));
@@ -4444,7 +4444,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.agent.agent_with_different_memory.static_memory_provider'));
         $thirdMemoryDef = $container->getDefinition('ai.agent.agent_with_different_memory.memory_input_processor');
         $thirdMemoryArgs = $thirdMemoryDef->getArguments();
-        $this->assertSame('ai.agent.agent_with_different_memory.static_memory_provider', (string) $thirdMemoryArgs[0]);
+        $this->assertSame('ai.agent.agent_with_different_memory.static_memory_provider', (string) $thirdMemoryArgs[0][0]);
 
         // Verify that each memory processor is tagged for the correct agent
         $firstTags = $firstMemoryDef->getTag('ai.agent.input_processor');
@@ -4575,8 +4575,8 @@ class AiBundleTest extends TestCase
 
         $memoryProcessor = $container->getDefinition('ai.agent.test_agent.memory_input_processor');
         $arguments = $memoryProcessor->getArguments();
-        $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame('my_custom_memory_service', (string) $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[0][0]);
+        $this->assertSame('my_custom_memory_service', (string) $arguments[0][0]);
     }
 
     #[TestDox('Memory configuration preserves correct processor priority ordering')]
@@ -4635,8 +4635,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.agent.test_agent.static_memory_provider'));
         $arguments = $definition->getArguments();
         $this->assertCount(1, $arguments);
-        $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame('ai.agent.test_agent.static_memory_provider', (string) $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[0][0]);
+        $this->assertSame('ai.agent.test_agent.static_memory_provider', (string) $arguments[0][0]);
 
         // Check proper tagging
         $tags = $definition->getTag('ai.agent.input_processor');
@@ -4678,8 +4678,8 @@ class AiBundleTest extends TestCase
 
         $memoryProcessor = $container->getDefinition('ai.agent.test_agent.memory_input_processor');
         $arguments = $memoryProcessor->getArguments();
-        $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame('existing_memory_service', (string) $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[0][0]);
+        $this->assertSame('existing_memory_service', (string) $arguments[0][0]);
     }
 
     #[TestDox('Memory with non-existing service creates StaticMemoryProvider')]
@@ -4712,8 +4712,8 @@ class AiBundleTest extends TestCase
         // Check that memory processor uses the StaticMemoryProvider
         $memoryProcessor = $container->getDefinition('ai.agent.test_agent.memory_input_processor');
         $memoryProcessorArgs = $memoryProcessor->getArguments();
-        $this->assertInstanceOf(Reference::class, $memoryProcessorArgs[0]);
-        $this->assertSame('ai.agent.test_agent.static_memory_provider', (string) $memoryProcessorArgs[0]);
+        $this->assertInstanceOf(Reference::class, $memoryProcessorArgs[0][0]);
+        $this->assertSame('ai.agent.test_agent.static_memory_provider', (string) $memoryProcessorArgs[0][0]);
     }
 
     #[TestDox('Memory with service alias uses alias correctly')]
@@ -4750,8 +4750,8 @@ class AiBundleTest extends TestCase
 
         $memoryProcessor = $container->getDefinition('ai.agent.test_agent.memory_input_processor');
         $arguments = $memoryProcessor->getArguments();
-        $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame('memory_alias', (string) $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[0][0]);
+        $this->assertSame('memory_alias', (string) $arguments[0][0]);
     }
 
     #[TestDox('Different agents can use different memory types')]
@@ -4793,8 +4793,8 @@ class AiBundleTest extends TestCase
 
         $serviceMemoryProcessor = $container->getDefinition('ai.agent.agent_with_service.memory_input_processor');
         $serviceArgs = $serviceMemoryProcessor->getArguments();
-        $this->assertInstanceOf(Reference::class, $serviceArgs[0]);
-        $this->assertSame('dynamic_memory_service', (string) $serviceArgs[0]);
+        $this->assertInstanceOf(Reference::class, $serviceArgs[0][0]);
+        $this->assertSame('dynamic_memory_service', (string) $serviceArgs[0][0]);
 
         // Second agent uses StaticMemoryProvider
         $this->assertTrue($container->hasDefinition('ai.agent.agent_with_static.memory_input_processor'));

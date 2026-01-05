@@ -28,7 +28,7 @@ $personalFacts = new StaticMemoryProvider(
     'I wish to be a swiss national hero',
     'I am struggling with hitting apples but want to be professional with the bow and arrow',
 );
-$memoryProcessor = new MemoryInputProcessor($personalFacts);
+$memoryProcessor = new MemoryInputProcessor([$personalFacts]);
 
 $agent = new Agent($platform, 'gpt-4o-mini', [$systemPromptProcessor, $memoryProcessor]);
 $messages = new MessageBag(Message::ofUser('What do we do today?'));

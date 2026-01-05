@@ -29,14 +29,11 @@ final class MemoryInputProcessor implements InputProcessorInterface
         MARKDOWN;
 
     /**
-     * @var MemoryProviderInterface[]
+     * @param iterable<MemoryProviderInterface> $memoryProviders
      */
-    private readonly array $memoryProviders;
-
     public function __construct(
-        MemoryProviderInterface ...$memoryProviders,
+        private readonly iterable $memoryProviders,
     ) {
-        $this->memoryProviders = $memoryProviders;
     }
 
     public function processInput(Input $input): void

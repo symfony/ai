@@ -1130,7 +1130,7 @@ final class AiBundle extends AbstractBundle
             }
 
             $memoryInputProcessorDefinition = (new Definition(MemoryInputProcessor::class))
-                ->setArguments([$memoryProviderReference])
+                ->setArguments([[$memoryProviderReference]])
                 ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -40]);
 
             $container->setDefinition('ai.agent.'.$name.'.memory_input_processor', $memoryInputProcessorDefinition);
