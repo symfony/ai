@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Result;
 
+use Symfony\Component\HttpClient\Chunk\DataChunk;
 use Symfony\Component\HttpClient\Chunk\ServerSentEvent;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -33,23 +34,39 @@ final class RawHttpResult implements RawResultInterface
     public function getDataStream(): iterable
     {
         foreach ((new EventSourceHttpClient())->stream($this->response) as $chunk) {
-            // Handle only complete events (no need for handle DataChunk`s)
-            if (!$chunk instanceof ServerSentEvent) {
-                continue;
-            }
-
-            // Do not handle: Init, Terminate, Errors, Comments and openAI specific termination via DONE
+            // Do not handle: First, Last, Error, Comments and API Specific "[DONE]"
             if (
                 $chunk->isFirst()
                 || $chunk->isLast()
                 || null !== $chunk->getError()
                 || str_starts_with($chunk->getContent(), ':')
-                || '[DONE]' === $chunk->getData()
+                || ($chunk instanceof ServerSentEvent && '[DONE]' === $chunk->getData())
             ) {
                 continue;
             }
 
-            yield $chunk->getArrayData();
+            if ($chunk instanceof ServerSentEvent) {
+                // handle complete SSE
+                yield $chunk->getArrayData();
+            } elseif ($chunk instanceof DataChunk) {
+                // Handle single delta arrays
+                $jsonDelta = $chunk->getContent();
+
+                // Remove leading/trailing brackets
+                if (str_starts_with($jsonDelta, '[') || str_starts_with($jsonDelta, ',')) {
+                    $jsonDelta = substr($jsonDelta, 1);
+                }
+                if (str_ends_with($jsonDelta, ']')) {
+                    $jsonDelta = substr($jsonDelta, 0, -1);
+                }
+
+                $deltas = explode(",\r\n", $jsonDelta);
+                $deltas = array_map(function ($string) { return trim($string); }, $deltas);
+                $deltas = array_filter($deltas, function ($item) { return '' !== $item; });
+                foreach ($deltas as $delta) {
+                    yield json_decode($delta, true, flags: \JSON_THROW_ON_ERROR);
+                }
+            }
         }
     }
 
