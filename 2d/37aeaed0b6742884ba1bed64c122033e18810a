@@ -1,0 +1,200 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-15T17:37:41Z
+
+Please add tests
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2025-12-15T19:58:49Z
+
+> Please add tests
+
+Sure. Before I spend more time on tests, can you review that the approach/solution is correct? I'm relatively new to the symfony/ai project and not sure how other Bridges handle this.
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2025-12-15T21:13:09Z
+
+> Looks good to me. WDYT @chr-hertel ?
+>
+> @nicodemuz can you please check if it is also supported for Gemini. This should also be configurable via the AiBundle config
+
+@OskarStark You mean to configure whether the key should be sent via a query parameter or the headers? For Gemini, I think the API key is sent via HTTP headers:
+
+https://github.com/symfony/ai/blob/5b89765ce6c9262de20bee86a1d69d9d23a405a5/src/platform/src/Bridge/Gemini/Gemini/ModelClient.php#L81-L86
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-16T06:40:18Z
+
+> @OskarStark You mean to configure whether the key should be sent via a query parameter or the headers? For Gemini, I think the API key is sent via HTTP headers:
+
+Thanks for double checking
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2025-12-18T21:17:09Z
+
+> Please add tests
+
+@OskarStark I'm trying to fix the tests, and there's one test failing with:
+
+```
+1) Symfony\AI\AiBundle\Tests\DependencyInjection\AiBundleTest::testExtensionLoadDoesNotThrow
+Failed to load platform service "ai.platform.vertexai" or call getModelCatalog(). Original error: Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory::create(): Argument #3 ($httpClient) must be of type ?Symfony\Contracts\HttpClient\HttpClientInterface, string given, called in /home/runner/work/ai/ai/src/ai-bundle/vendor/symfony/dependency-injection/ContainerBuilder.php on line 1178 (in /home/runner/work/ai/ai/src/ai-bundle/vendor/symfony/ai-vertex-ai-platform/PlatformFactory.php:33)
+
+/home/runner/work/ai/ai/src/ai-bundle/tests/DependencyInjection/AiBundleTest.php:123
+```
+
+Is it trying to run code from some other repo/branch? Since it's referring to `ai-vertex-ai-platform/PlatformFactory.php:33`? How do I fix this?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-18T21:20:31Z
+
+Tests still needed
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-19T05:30:10Z
+
+It looks like your committer email is not associated with your GitHub account
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2025-12-19T11:31:57Z
+
+> Yes, we def need this - thanks @nicodemuz!
+>
+> only minor comments but broken pipeline
+
+Any ideas about the broken pipeline? See my comment here:
+
+https://github.com/symfony/ai/pull/1139#issuecomment-3672261703
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2025-12-19T18:31:35Z
+
+> It looks like your committer email is not associated with your GitHub account
+
+Will this prevent from the PR getting merged? I remember getting a lot of spam after entering my email address in public repos.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-20T09:15:22Z
+
+> Will this prevent from the PR getting merged? I remember getting a lot of spam after entering my email address in public repos.
+
+No it will not
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-20T09:15:54Z
+
+Can you please check the tests? They look related
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2025-12-20T09:25:07Z
+
+> Can you please check the tests? They look related
+
+@OskarStark Regarding the error mentioned in here https://github.com/symfony/ai/actions/runs/20368930248/job/58530711175?pr=1139:
+
+> Failed to load platform service "ai.platform.vertexai" or call getModelCatalog(). Original error: Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory::create(): Argument 3 ($httpClient) must be of type ?Symfony\Contracts\HttpClient\HttpClientInterface, string given, called in /home/runner/work/ai/ai/src/ai-bundle/vendor/symfony/dependency-injection/ContainerBuilder.php on line 1178 (in /home/runner/work/ai/ai/src/ai-bundle/vendor/symfony/ai-vertex-ai-platform/PlatformFactory.php:33)
+
+I have updated the 3rd parameter of `PlatformFactory::create()` to accept the $apiKey:
+https://github.com/nicodemuz/ai/blob/c5bd3ec2282d73688189c8836437cdf20a9e4e16/src/platform/src/Bridge/VertexAi/PlatformFactory.php#L36
+
+And I have updated code to also pass the 3rd parameter as the apiKey:
+https://github.com/nicodemuz/ai/blob/c5bd3ec2282d73688189c8836437cdf20a9e4e16/src/ai-bundle/src/AiBundle.php#L589
+
+I'm a bit confused why it's calling an outdated PlatformFacory via the vendor folder:
+```
+in /home/runner/work/ai/ai/src/ai-bundle/vendor/symfony/ai-vertex-ai-platform/PlatformFactory.php:33
+```
+
+How should I address this? Should I add the new parameter as the last parameter in `PlatformFactory::create()`?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-21T10:34:37Z
+
+> How should I address this? Should I add the new parameter as the last parameter in PlatformFactory::create()?
+
+Did you rebased properly?
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2025-12-21T12:53:23Z
+
+> > How should I address this? Should I add the new parameter as the last parameter in PlatformFactory::create()?
+>
+> Did you rebased properly?
+
+@OskarStark I have rebased just now with the `main` branch of `symfony/ai`. The tests are still failing:
+
+> Symfony\AI\AiBundle\Tests\DependencyInjection\AiBundleTest::testExtensionLoadDoesNotThrow
+Failed to load platform service "ai.platform.vertexai" or call getModelCatalog(). Original error: Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory::create(): Argument 3 ($httpClient) must be of type ?Symfony\Contracts\HttpClient\HttpClientInterface, string given, called in /home/runner/work/ai/ai/src/ai-bundle/vendor/symfony/dependency-injection/ContainerBuilder.php on line 1174 (in /home/runner/work/ai/ai/src/ai-bundle/vendor/symfony/ai-vertex-ai-platform/PlatformFactory.php:36)
+>
+> /home/runner/work/ai/ai/src/ai-bundle/tests/DependencyInjection/AiBundleTest.php:123
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-21T13:38:52Z
+
+Looks like the Order of the arguments is wrong.
+
+IIRC @Guikingone had the same issue in the past, right?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-21T18:27:53Z
+
+Yes, was related to the arguments sent into the factory (don't forget about the `null` for the contract/event dispatcher).
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2025-12-21T20:04:50Z
+
+> Yes, was related to the arguments sent into the factory (don't forget about the `null` for the contract/event dispatcher).
+
+@Guikingone But I have already updated code to also pass the 3rd parameter as the apiKey:
+https://github.com/nicodemuz/ai/blob/c5bd3ec2282d73688189c8836437cdf20a9e4e16/src/ai-bundle/src/AiBundle.php#L589
+
+Can you advice where exactly should I add any other additional updates?
+
+I'm still a bit confused why it's calling an outdated PlatformFacory via the vendor folder:
+```
+in /home/runner/work/ai/ai/src/ai-bundle/vendor/symfony/ai-vertex-ai-platform/PlatformFactory.php:33
+```
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-30T21:19:42Z
+
+Can you please rebase?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-30T21:20:45Z
+
+Please require package version ^0.2 in ai-bundle composer.json
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2026-01-03T10:11:57Z
+
+> Can you please rebase?
+
+I have rebased.
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2026-01-03T10:30:50Z
+
+> Please require package version ^0.2 in ai-bundle composer.json
+
+This seems to already be 0.2: https://github.com/nicodemuz/ai/blob/8efa78a4acb0fb1c5d5e613bcf9462da5ca598e1/src/ai-bundle/composer.json#L92
