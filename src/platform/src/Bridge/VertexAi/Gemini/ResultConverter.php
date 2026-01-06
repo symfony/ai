@@ -64,7 +64,7 @@ final class ResultConverter implements ResultConverterInterface
 
         $choices = array_map($this->convertChoice(...), $data['candidates']);
 
-        return 1 === \count($choices) ? $choices[0] : new ChoiceResult(...$choices);
+        return 1 === \count($choices) ? $choices[0] : new ChoiceResult($choices);
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractor
@@ -85,7 +85,7 @@ final class ResultConverter implements ResultConverterInterface
             }
 
             if (1 !== \count($choices)) {
-                yield new ChoiceResult(...$choices);
+                yield new ChoiceResult($choices);
                 continue;
             }
 

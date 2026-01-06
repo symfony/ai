@@ -90,7 +90,7 @@ final class ResultConverter implements ResultConverterInterface
 
         $results = $this->convertOutputArray($data[self::KEY_OUTPUT]);
 
-        return 1 === \count($results) ? array_pop($results) : new ChoiceResult(...$results);
+        return 1 === \count($results) ? array_pop($results) : new ChoiceResult($results);
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractor
