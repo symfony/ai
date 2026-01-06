@@ -45,7 +45,7 @@ final class ResultConverter implements ResultConverterInterface
 
         $choices = array_map($this->convertChoice(...), $data['choices']);
 
-        $result = 1 === \count($choices) ? $choices[0] : new ChoiceResult(...$choices);
+        $result = 1 === \count($choices) ? $choices[0] : new ChoiceResult($choices);
 
         $metadata = $result->getMetadata();
 

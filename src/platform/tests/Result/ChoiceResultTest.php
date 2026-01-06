@@ -20,9 +20,7 @@ final class ChoiceResultTest extends TestCase
 {
     public function testChoiceResultCreation()
     {
-        $choice1 = new TextResult('choice1');
-        $choice3 = new TextResult('choice2');
-        $result = new ChoiceResult($choice1, $choice3);
+        $result = new ChoiceResult([new TextResult('choice1'), new TextResult('choice2')]);
 
         $this->assertCount(2, $result->getContent());
         $this->assertSame('choice1', $result->getContent()[0]->getContent());
@@ -34,6 +32,14 @@ final class ChoiceResultTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('A choice result must contain at least two results.');
 
-        new ChoiceResult();
+        new ChoiceResult([]);
+    }
+
+    public function testChoiceResultWithOneChoice()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A choice result must contain at least two results.');
+
+        new ChoiceResult([new TextResult('choice1')]);
     }
 }
