@@ -9,12 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Test;
+namespace Symfony\AI\Platform;
 
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\ResultConverterInterface;
 
 final class PlainConverter implements ResultConverterInterface
 {

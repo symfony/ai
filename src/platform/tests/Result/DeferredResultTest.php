@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Tests\Result;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\Result\BaseResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
@@ -20,7 +21,6 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\AI\Platform\Test\PlainConverter;
 use Symfony\Contracts\HttpClient\ResponseInterface as SymfonyHttpResponse;
 
 final class DeferredResultTest extends TestCase
