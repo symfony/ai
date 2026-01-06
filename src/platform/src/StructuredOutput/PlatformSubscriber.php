@@ -64,7 +64,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
         }
 
         if (!$event->getModel()->supports(Capability::OUTPUT_STRUCTURED)) {
-            throw MissingModelSupportException::forStructuredOutput($event->getModel()::class);
+            throw MissingModelSupportException::forStructuredOutput($event->getModel());
         }
 
         if (!class_exists($options[self::RESPONSE_FORMAT])) {
