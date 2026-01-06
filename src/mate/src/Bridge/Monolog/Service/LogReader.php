@@ -173,29 +173,7 @@ final class LogReader
             return [];
         }
 
-        $entries = [];
-        $allLines = file($file, \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES);
-        if (false === $allLines) {
-            return [];
-        }
-
-        $relativePath = $this->getRelativePath($file);
-        $totalLines = \count($allLines);
-
-        for ($i = $totalLines - 1; $i >= 0 && \count($entries) < $lines; --$i) {
-            $entry = $this->parser->parse($allLines[$i], $relativePath, $i + 1);
-            if (null === $entry) {
-                continue;
-            }
-
-            if (null !== $level && strtoupper($level) !== $entry->level) {
-                continue;
-            }
-
-            $entries[] = $entry;
-        }
-
-        return array_reverse($entries);
+        return $this->tailFromFile($file, $lines, $level);
     }
 
     /**
@@ -210,6 +188,51 @@ final class LogReader
         }
 
         return array_keys($channels);
+    }
+
+    /**
+     * @return LogEntry[]
+     */
+    private function tailFromFile(string $file, int $lines, ?string $level = null): array
+    {
+        $handle = fopen($file, 'r');
+        if (false === $handle) {
+            return [];
+        }
+
+        try {
+            $buffer = [];
+            $lineNumber = 0;
+            $relativePath = $this->getRelativePath($file);
+
+            while (false !== ($line = fgets($handle))) {
+                ++$lineNumber;
+                $buffer[] = ['line' => $line, 'number' => $lineNumber];
+
+                // Keep buffer size at 2x the requested lines to account for filtered entries
+                if (\count($buffer) > $lines * 2) {
+                    array_shift($buffer);
+                }
+            }
+
+            $entries = [];
+            for ($i = \count($buffer) - 1; $i >= 0 && \count($entries) < $lines; --$i) {
+                $entry = $this->parser->parse($buffer[$i]['line'], $relativePath, $buffer[$i]['number']);
+                if (null === $entry) {
+                    continue;
+                }
+
+                if (null !== $level && strtoupper($level) !== $entry->level) {
+                    continue;
+                }
+
+                $entries[] = $entry;
+            }
+
+            return array_reverse($entries);
+        } finally {
+            fclose($handle);
+        }
     }
 
     private function getRelativePath(string $filePath): string
