@@ -146,7 +146,7 @@ HELP
     private function filterExtensions(array $all, string $filter): array
     {
         if (!isset($all[$filter])) {
-            throw InvalidArgumentException::forExtensionNotFound($filter, array_keys($all));
+            throw new InvalidArgumentException(\sprintf('Extension "%s" not found. Available: "%s"', $filter, implode(', ', array_keys($all))));
         }
 
         return [$filter => $all[$filter]];
@@ -161,7 +161,7 @@ HELP
     {
         $validTypes = ['tool', 'resource', 'prompt', 'template'];
         if (!\in_array($type, $validTypes, true)) {
-            throw InvalidArgumentException::forInvalidType($type, $validTypes);
+            throw new InvalidArgumentException(\sprintf('Invalid type "%s". Valid types: "%s"', $type, implode(', ', $validTypes)));
         }
 
         $typeMap = [

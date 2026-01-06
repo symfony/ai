@@ -19,8 +19,8 @@ namespace Symfony\AI\Mate\Exception;
  */
 class UnsupportedVersionException extends RuntimeException
 {
-    public static function forConsole(): self
+    public function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null)
     {
-        return new self('Unsupported version of symfony/console. We cannot add commands.');
+        parent::__construct($message, $code, $previous);
     }
 }

@@ -89,7 +89,7 @@ final class LoggerTest extends TestCase
         $logger = new Logger($invalidPath, fileLogEnabled: true);
 
         $this->expectException(FileWriteException::class);
-        $this->expectExceptionMessage('Failed to write to log file: /invalid/path/that/does/not/exist/test.log');
+        $this->expectExceptionMessage('Failed to write to log file: "/invalid/path/that/does/not/exist/test.log"');
 
         $logger->info('This should fail');
     }

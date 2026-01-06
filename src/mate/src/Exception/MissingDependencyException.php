@@ -19,8 +19,8 @@ namespace Symfony\AI\Mate\Exception;
  */
 class MissingDependencyException extends RuntimeException
 {
-    public static function forDotenv(): self
+    public function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null)
     {
-        return new self('Cannot load any environment file with out Symfony Dotenv. Please run run "composer require symfony/dotenv" and try again.');
+        parent::__construct($message, $code, $previous);
     }
 }
