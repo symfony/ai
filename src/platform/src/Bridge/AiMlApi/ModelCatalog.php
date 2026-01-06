@@ -809,6 +809,16 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_IMAGE,
                 ],
             ],
+            'gemini-2.5-flash' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::INPUT_IMAGE,
+                ],
+            ],
             'google/gemini-2.5-flash-lite-preview' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
