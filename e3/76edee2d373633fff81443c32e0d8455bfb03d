@@ -1,0 +1,28 @@
+---------------------------------------------------------------------------
+
+by uerka at 2025-12-18T20:01:36Z
+
+It seems like to run tests successfully for ai-bundle link call would be needed (at least it helped for me locally). Is it possible or should i search for another approach?
+Also not sure i understand why demo tests are failing - as far as i see there is nothing related bedrock.
+
+could someone help me out with those ?
+
+PS big thanks for quick merge of previous issue, it was my first one contribution, so pardon me for silly questions))
+
+---------------------------------------------------------------------------
+
+by carsonbot at 2025-12-19T12:22:41Z
+
+It looks like you unchecked the "Allow edits from maintainer" box. That is fine, but please note that if you have multiple commits, you'll need to squash your commits into one before this can be merged. Or, you can check the "Allow edits from maintainers" box and the maintainer can squash for you.
+
+Cheers!
+
+Carsonbot
+
+---------------------------------------------------------------------------
+
+by nicodemuz at 2025-12-19T13:18:04Z
+
+I noticed your tests are failing cause of similar reasons as in my PR: https://github.com/symfony/ai/pull/1139
+
+Any idea how to fix these type of issues? Do we need to add new method parameters as last to avoid breaking BC?
