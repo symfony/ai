@@ -49,12 +49,14 @@ class Logger extends AbstractLogger
         if ($this->fileLogEnabled || !\defined('STDERR')) {
             $result = @file_put_contents($this->logFile, $logMessage, \FILE_APPEND);
             if (false === $result) {
+                $errorMessage = \sprintf('Failed to write to log file: "%s"', $this->logFile);
                 // Fallback to stderr to ensure message is not lost
                 if (\defined('STDERR')) {
+                    fwrite(\STDERR, "[ERROR] {$errorMessage}\n");
                     fwrite(\STDERR, $logMessage);
                 }
 
-                throw new FileWriteException(\sprintf('Failed to write to log file: "%s"', $this->logFile));
+                throw new FileWriteException($errorMessage);
             }
         } else {
             fwrite(\STDERR, $logMessage);
