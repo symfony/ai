@@ -101,6 +101,14 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
                 }
             }
 
+            // Streaming is allowed for any model: https://openrouter.ai/docs/api/reference/streaming
+            $capabilities[] = Capability::OUTPUT_STREAMING;
+
+            // Structured Output via PlatformSubscriber
+            if (\in_array('structured_outputs', $model['supported_parameters'] ?? [])) {
+                $capabilities[] = Capability::OUTPUT_STRUCTURED;
+            }
+
             yield $model['id'] => [
                 'class' => CompletionsModel::class,
                 'capabilities' => $capabilities,
