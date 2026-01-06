@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-06T13:02:36Z
+
+I wonder if tailing should just be the default - no size checks, only one scalable implementation - WDYT?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-06T18:53:53Z
+
+> I wonder if tailing should just be the default - no size checks, only one scalable implementation - WDYT?
+
+good point will change that
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-06T20:00:32Z
+
+@chr-hertel its done
