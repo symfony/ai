@@ -208,7 +208,8 @@ final class AiBundle extends AbstractBundle
 
         $setupStoresOptions = [];
         if ([] !== ($config['store'] ?? [])) {
-            if (!ContainerBuilder::willBeAvailable('symfony/ai-store', StoreInterface::class, ['symfony/ai-bundle'])) {
+            $storeConfigured = \count($config['store']) !== \count($config['store'], \COUNT_RECURSIVE);
+            if ($storeConfigured && !ContainerBuilder::willBeAvailable('symfony/ai-store', StoreInterface::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('Store configuration requires "symfony/ai-store" package. Try running "composer require symfony/ai-store".');
             }
 
