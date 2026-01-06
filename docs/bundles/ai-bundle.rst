@@ -67,6 +67,7 @@ Advanced Example with Multiple Agents
             vertexai:
                 location: '%env(GOOGLE_CLOUD_LOCATION)%'
                 project_id: '%env(GOOGLE_CLOUD_PROJECT)%'
+                api_key: '%env(GOOGLE_CLOUD_VERTEX_API_KEY)%' # Only needed if authenticating with API keys
             ollama:
                 host_url: '%env(OLLAMA_HOST_URL)%'
             transformersphp: ~
