@@ -21,7 +21,7 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $platform->invoke('gemini-2.0-flash', $messages, [
+$result = $platform->invoke('gemini-2.5-flash', $messages, [
     'max_tokens' => 500, // specific options just for this call
 ]);
 

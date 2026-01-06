@@ -21,6 +21,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $platform->invoke('gemini-2.0-flash', $messages);
+$result = $platform->invoke('gemini-2.5-flash', $messages);
 
 echo $result->asText().\PHP_EOL;
