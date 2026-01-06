@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.3
+---
+
+ * Support token usage extraction for streamed responses
+
 0.2
 ---
 

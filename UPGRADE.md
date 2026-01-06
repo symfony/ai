@@ -1,3 +1,12 @@
+UPGRADE FROM 0.2 to 0.3
+=======================
+
+Agent
+-----
+
+  * The `StreamResult` class has been removed in favor of a `StreamListener`. Checks should now target
+    `Symfony\AI\Platform\Result\StreamResult` instead.
+
 UPGRADE FROM 0.1 to 0.2
 =======================
 

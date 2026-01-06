@@ -15,6 +15,8 @@ use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\StreamListener;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
@@ -48,6 +50,11 @@ final class DeferredResult
             if (null === $this->convertedResult->getRawResult()) {
                 // Fallback to set the raw result when it was not handled by the ResultConverter itself
                 $this->convertedResult->setRawResult($this->rawResult);
+            }
+
+            if ($this->convertedResult instanceof StreamResult) {
+                // Register listener to promote TokenUsage to metadata
+                $this->convertedResult->addListener(new StreamListener());
             }
 
             $metadata = $this->convertedResult->getMetadata();

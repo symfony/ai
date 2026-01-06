@@ -288,19 +288,17 @@ class ResultConverterTest extends TestCase
 
         $chunks = [];
         foreach ($streamResult->getContent() as $part) {
-            if (\is_string($part)) {
-                $chunks[] = $part;
-            }
+            $chunks[] = $part;
         }
 
-        $this->assertSame(['Hello', ' world'], $chunks);
+        $this->assertSame('Hello', $chunks[0]);
+        $this->assertSame(' world', $chunks[1]);
 
-        $usage = $streamResult->getMetadata()->get('token_usage');
-        $this->assertInstanceOf(TokenUsage::class, $usage);
-        $this->assertSame(11, $usage->getPromptTokens());
-        $this->assertSame(7, $usage->getCompletionTokens());
-        $this->assertSame(2, $usage->getThinkingTokens());
-        $this->assertSame(3, $usage->getCachedTokens());
-        $this->assertSame(18, $usage->getTotalTokens());
+        $this->assertInstanceOf(TokenUsage::class, $chunks[2]);
+        $this->assertSame(11, $chunks[2]->getPromptTokens());
+        $this->assertSame(7, $chunks[2]->getCompletionTokens());
+        $this->assertSame(2, $chunks[2]->getThinkingTokens());
+        $this->assertSame(3, $chunks[2]->getCachedTokens());
+        $this->assertSame(18, $chunks[2]->getTotalTokens());
     }
 }
