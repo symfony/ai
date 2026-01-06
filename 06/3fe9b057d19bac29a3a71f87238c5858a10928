@@ -1,0 +1,28 @@
+---------------------------------------------------------------------------
+
+by lochmueller at 2026-01-06T13:30:02Z
+
+@chr-hertel
+Example is added. You are right... streaming works before, because there is no check, if the model support streaming - neither before the request, nor after the response (converter).
+Regards,
+Tim
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-06T13:42:56Z
+
+> @chr-hertel Example is added.
+
+@lochmueller Please push :)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-01-06T14:06:15Z
+
+Ask Claude to SSH into his machine and push it on your own 😂
+
+---------------------------------------------------------------------------
+
+by lochmueller at 2026-01-06T14:15:51Z
+
+Here we go ;) Next time I share my SSH key ;)
