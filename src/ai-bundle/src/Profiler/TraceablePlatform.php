@@ -14,11 +14,11 @@ namespace Symfony\AI\AiBundle\Profiler;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
-use Symfony\AI\Platform\Test\PlainConverter;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
