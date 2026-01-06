@@ -11,32 +11,34 @@
 
 namespace Symfony\AI\Platform\Exception;
 
+use Symfony\AI\Platform\Model;
+
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class MissingModelSupportException extends RuntimeException
 {
-    private function __construct(string $model, string $support)
+    private function __construct(Model $model, string $support)
     {
-        parent::__construct(\sprintf('Model "%s" does not support "%s".', $model, $support));
+        parent::__construct(\sprintf('Model "%s" (%s) does not support "%s".', $model->getName(), $model::class, $support));
     }
 
-    public static function forToolCalling(string $model): self
+    public static function forToolCalling(Model $model): self
     {
         return new self($model, 'tool calling');
     }
 
-    public static function forAudioInput(string $model): self
+    public static function forAudioInput(Model $model): self
     {
         return new self($model, 'audio input');
     }
 
-    public static function forImageInput(string $model): self
+    public static function forImageInput(Model $model): self
     {
         return new self($model, 'image input');
     }
 
-    public static function forStructuredOutput(string $model): self
+    public static function forStructuredOutput(Model $model): self
     {
         return new self($model, 'structured output');
     }
