@@ -2281,6 +2281,7 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
                     Capability::INPUT_IMAGE,
                     Capability::INPUT_PDF,
                     Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STRUCTURED,
                 ],
             ],
             'openai/gpt-4o-mini-2024-07-18' => [
@@ -2763,6 +2764,11 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
 
         if (!class_exists($modelClass)) {
             throw new InvalidArgumentException(\sprintf('Model class "%s" does not exist.', $modelClass));
+        }
+
+        if (CompletionsModel::class === $modelClass && !\in_array(Capability::OUTPUT_STREAMING, $modelConfig['capabilities'])) {
+            // Streaming is allowed for any model: https://openrouter.ai/docs/api/reference/streaming
+            $modelConfig['capabilities'][] = Capability::OUTPUT_STREAMING;
         }
 
         $model = new $modelClass($actualModelName, $modelConfig['capabilities'], $options);
