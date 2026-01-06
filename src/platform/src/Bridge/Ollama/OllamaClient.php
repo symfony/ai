@@ -24,6 +24,22 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class OllamaClient implements ModelClientInterface
 {
+    private const CHAT_TOP_LEVEL_KEYS = [
+        'stream',
+        'format',
+        'keep_alive',
+        'tools',
+        'think',
+        'logprobs',
+        'top_logprobs',
+    ];
+
+    private const EMBED_TOP_LEVEL_KEYS = [
+        'truncate',
+        'keep_alive',
+        'dimensions',
+    ];
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $hostUrl,
@@ -58,6 +74,8 @@ final class OllamaClient implements ModelClientInterface
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
         }
 
+        $options = $this->normalizeOllamaOptions($options, self::CHAT_TOP_LEVEL_KEYS);
+
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/api/chat', $this->hostUrl), [
             'headers' => ['Content-Type' => 'application/json'],
             'json' => array_merge($options, $payload),
@@ -70,11 +88,43 @@ final class OllamaClient implements ModelClientInterface
      */
     private function doEmbeddingsRequest(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        $options = self::normalizeOllamaOptions($options, self::EMBED_TOP_LEVEL_KEYS);
+
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/api/embed', $this->hostUrl), [
             'json' => array_merge($options, [
                 'model' => $model->getName(),
                 'input' => $payload,
             ]),
         ]));
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     * @param array<string>        $topLevelKeys
+     *
+     * @return array<string, mixed>
+     */
+    private static function normalizeOllamaOptions(array $options, array $topLevelKeys): array
+    {
+        $topLevelOptions = [];
+        $nested = [];
+
+        if (isset($options['options']) && \is_array($options['options'])) {
+            $nested = $options['options'];
+        }
+
+        foreach ($options as $key => $value) {
+            if (\in_array($key, $topLevelKeys, true)) {
+                $topLevelOptions[$key] = $value;
+            } else {
+                $nested[$key] ??= $value;
+            }
+        }
+
+        if ([] !== $nested) {
+            $topLevelOptions['options'] = $nested;
+        }
+
+        return $topLevelOptions;
     }
 }
