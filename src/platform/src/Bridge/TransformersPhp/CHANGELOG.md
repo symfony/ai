@@ -4,7 +4,7 @@ CHANGELOG
 0.2
 ---
 
-* Support embeddings
+ * Add support for embeddings
 
 0.1
 ---
