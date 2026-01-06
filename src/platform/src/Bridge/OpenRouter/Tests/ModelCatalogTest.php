@@ -32,6 +32,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
             'openrouter/auto',
             CompletionsModel::class,
             [
+                Capability::OUTPUT_STREAMING,
                 Capability::INPUT_TEXT,
                 Capability::OUTPUT_TEXT,
             ],
@@ -41,6 +42,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
             'anthropic/claude-sonnet-4.5',
             CompletionsModel::class,
             [
+                Capability::OUTPUT_STREAMING,
                 Capability::INPUT_TEXT,
                 Capability::INPUT_IMAGE,
                 Capability::INPUT_PDF,
@@ -52,6 +54,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
             'openai/gpt-5',
             CompletionsModel::class,
             [
+                Capability::OUTPUT_STREAMING,
                 Capability::INPUT_TEXT,
                 Capability::INPUT_IMAGE,
                 Capability::INPUT_PDF,
@@ -63,6 +66,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
             'google/gemini-2.5-flash-image',
             CompletionsModel::class,
             [
+                Capability::OUTPUT_STREAMING,
                 Capability::INPUT_IMAGE,
                 Capability::INPUT_TEXT,
                 Capability::OUTPUT_IMAGE,
@@ -100,7 +104,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         $this->assertInstanceOf(Model::class, $model);
         $this->assertInstanceOf(CompletionsModel::class, $model);
         $this->assertSame('unknown/model', $model->getName());
-        $this->assertSame([], $model->getCapabilities());
+        $this->assertSame([Capability::OUTPUT_STREAMING], $model->getCapabilities());
     }
 
     public function testGetModelWithPreset()
@@ -124,7 +128,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         $this->assertInstanceOf(Model::class, $model);
         $this->assertInstanceOf(CompletionsModel::class, $model);
         $this->assertSame('deepseek/deepseek-v3.1-terminus:exacto', $model->getName());
-        $this->assertSame([Capability::INPUT_TEXT, Capability::OUTPUT_TEXT], $model->getCapabilities());
+        $this->assertSame([Capability::INPUT_TEXT, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING], $model->getCapabilities());
     }
 
     /**
