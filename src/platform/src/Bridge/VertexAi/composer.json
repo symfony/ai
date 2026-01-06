@@ -27,8 +27,8 @@
     "require": {
         "google/auth": "^1.47",
         "php": ">=8.2",
-        "symfony/ai-gemini-platform": "^0.1",
-        "symfony/ai-platform": "^0.1",
+        "symfony/ai-gemini-platform": "^0.2",
+        "symfony/ai-platform": "^0.2",
         "symfony/http-client": "^7.3|^8.0"
     },
     "require-dev": {
