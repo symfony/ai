@@ -45,13 +45,24 @@ final class StoreTest extends TestCase
 
         $uuid = Uuid::v4();
 
+        $statement->expects($this->exactly(3))
+            ->method('bindValue')
+            ->willReturnCallback(function (string $param, string $value) use ($uuid): bool {
+                static $callCount = 0;
+                ++$callCount;
+
+                match ($callCount) {
+                    1 => $this->assertSame([':id', $uuid->toRfc4122()], [$param, $value]),
+                    2 => $this->assertSame([':metadata', json_encode(['title' => 'Test Document'])], [$param, $value]),
+                    3 => $this->assertSame([':vector', '[0.1,0.2,0.3]'], [$param, $value]),
+                    default => $this->fail('Unexpected bindValue call'),
+                };
+
+                return true;
+            });
+
         $statement->expects($this->once())
-            ->method('execute')
-            ->with([
-                'id' => $uuid->toRfc4122(),
-                'metadata' => json_encode(['title' => 'Test Document']),
-                'vector' => '[0.1,0.2,0.3]',
-            ]);
+            ->method('execute');
 
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]), new Metadata(['title' => 'Test Document']));
         $store->add($document);
@@ -71,25 +82,27 @@ final class StoreTest extends TestCase
         $uuid1 = Uuid::v4();
         $uuid2 = Uuid::v4();
 
-        $statement->expects($this->exactly(2))
-            ->method('execute')
-            ->willReturnCallback(function (array $params) use ($uuid1, $uuid2): bool {
-                /** @var int $callCount */
+        $statement->expects($this->exactly(6))
+            ->method('bindValue')
+            ->willReturnCallback(function (string $param, string $value) use ($uuid1, $uuid2): bool {
                 static $callCount = 0;
                 ++$callCount;
 
-                if (1 === $callCount) {
-                    $this->assertSame($uuid1->toRfc4122(), $params['id']);
-                    $this->assertSame('[]', $params['metadata']);
-                    $this->assertSame('[0.1,0.2,0.3]', $params['vector']);
-                } else {
-                    $this->assertSame($uuid2->toRfc4122(), $params['id']);
-                    $this->assertSame(json_encode(['title' => 'Second']), $params['metadata']);
-                    $this->assertSame('[0.4,0.5,0.6]', $params['vector']);
-                }
+                match ($callCount) {
+                    1 => $this->assertSame([':id', $uuid1->toRfc4122()], [$param, $value]),
+                    2 => $this->assertSame([':metadata', '[]'], [$param, $value]),
+                    3 => $this->assertSame([':vector', '[0.1,0.2,0.3]'], [$param, $value]),
+                    4 => $this->assertSame([':id', $uuid2->toRfc4122()], [$param, $value]),
+                    5 => $this->assertSame([':metadata', json_encode(['title' => 'Second'])], [$param, $value]),
+                    6 => $this->assertSame([':vector', '[0.4,0.5,0.6]'], [$param, $value]),
+                    default => $this->fail('Unexpected bindValue call'),
+                };
 
                 return true;
             });
+
+        $statement->expects($this->exactly(2))
+            ->method('execute');
 
         $document1 = new VectorDocument($uuid1, new Vector([0.1, 0.2, 0.3]));
         $document2 = new VectorDocument($uuid2, new Vector([0.4, 0.5, 0.6]), new Metadata(['title' => 'Second']));
@@ -122,8 +135,11 @@ final class StoreTest extends TestCase
         $uuid = Uuid::v4();
 
         $statement->expects($this->once())
-            ->method('execute')
-            ->with(['embedding' => '[0.1,0.2,0.3]']);
+            ->method('bindValue')
+            ->with(':embedding', '[0.1,0.2,0.3]');
+
+        $statement->expects($this->once())
+            ->method('execute');
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -171,8 +187,11 @@ final class StoreTest extends TestCase
         $uuid = Uuid::v4();
 
         $statement->expects($this->once())
-            ->method('execute')
-            ->with(['embedding' => '[0.1,0.2,0.3]']);
+            ->method('bindValue')
+            ->with(':embedding', '[0.1,0.2,0.3]');
+
+        $statement->expects($this->once())
+            ->method('execute');
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -217,12 +236,23 @@ final class StoreTest extends TestCase
             }))
             ->willReturn($statement);
 
+        $statement->expects($this->exactly(2))
+            ->method('bindValue')
+            ->willReturnCallback(function (string $param, mixed $value): bool {
+                static $callCount = 0;
+                ++$callCount;
+
+                match ($callCount) {
+                    1 => $this->assertSame([':embedding', '[0.1,0.2,0.3]'], [$param, $value]),
+                    2 => $this->assertSame([':maxScore', 0.8], [$param, $value]),
+                    default => $this->fail('Unexpected bindValue call'),
+                };
+
+                return true;
+            });
+
         $statement->expects($this->once())
-            ->method('execute')
-            ->with([
-                'embedding' => '[0.1,0.2,0.3]',
-                'maxScore' => 0.8,
-            ]);
+            ->method('execute');
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -256,12 +286,23 @@ final class StoreTest extends TestCase
             }))
             ->willReturn($statement);
 
+        $statement->expects($this->exactly(2))
+            ->method('bindValue')
+            ->willReturnCallback(function (string $param, mixed $value): bool {
+                static $callCount = 0;
+                ++$callCount;
+
+                match ($callCount) {
+                    1 => $this->assertSame([':embedding', '[0.1,0.2,0.3]'], [$param, $value]),
+                    2 => $this->assertSame([':maxScore', 0.8], [$param, $value]),
+                    default => $this->fail('Unexpected bindValue call'),
+                };
+
+                return true;
+            });
+
         $statement->expects($this->once())
-            ->method('execute')
-            ->with([
-                'embedding' => '[0.1,0.2,0.3]',
-                'maxScore' => 0.8,
-            ]);
+            ->method('execute');
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -296,8 +337,11 @@ final class StoreTest extends TestCase
             ->willReturn($statement);
 
         $statement->expects($this->once())
-            ->method('execute')
-            ->with(['embedding' => '[0.7,0.8,0.9]']);
+            ->method('bindValue')
+            ->with(':embedding', '[0.7,0.8,0.9]');
+
+        $statement->expects($this->once())
+            ->method('execute');
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -505,8 +549,11 @@ final class StoreTest extends TestCase
             ->willReturn($statement);
 
         $statement->expects($this->once())
-            ->method('execute')
-            ->with(['embedding' => '[0.1,0.2,0.3]']);
+            ->method('bindValue')
+            ->with(':embedding', '[0.1,0.2,0.3]');
+
+        $statement->expects($this->once())
+            ->method('execute');
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -540,12 +587,23 @@ final class StoreTest extends TestCase
             }))
             ->willReturn($statement);
 
+        $statement->expects($this->exactly(2))
+            ->method('bindValue')
+            ->willReturnCallback(function (string $param, mixed $value): bool {
+                static $callCount = 0;
+                ++$callCount;
+
+                match ($callCount) {
+                    1 => $this->assertSame([':embedding', '[0.1,0.2,0.3]'], [$param, $value]),
+                    2 => $this->assertSame([':maxScore', 0.5], [$param, $value]),
+                    default => $this->fail('Unexpected bindValue call'),
+                };
+
+                return true;
+            });
+
         $statement->expects($this->once())
-            ->method('execute')
-            ->with([
-                'embedding' => '[0.1,0.2,0.3]',
-                'maxScore' => 0.5,
-            ]);
+            ->method('execute');
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -585,13 +643,24 @@ final class StoreTest extends TestCase
         $uuid = Uuid::v4();
         $crawlId = '396af6fe-0dfd-47ed-b222-3dbcced3f38e';
 
+        $statement->expects($this->exactly(3))
+            ->method('bindValue')
+            ->willReturnCallback(function (string $param, mixed $value) use ($crawlId, $uuid): bool {
+                static $callCount = 0;
+                ++$callCount;
+
+                match ($callCount) {
+                    1 => $this->assertSame([':embedding', '[0.1,0.2,0.3]'], [$param, $value]),
+                    2 => $this->assertSame([':crawlId', $crawlId], [$param, $value]),
+                    3 => $this->assertSame([':currentId', $uuid->toRfc4122()], [$param, $value]),
+                    default => $this->fail('Unexpected bindValue call'),
+                };
+
+                return true;
+            });
+
         $statement->expects($this->once())
-            ->method('execute')
-            ->with([
-                'embedding' => '[0.1,0.2,0.3]',
-                'crawlId' => $crawlId,
-                'currentId' => $uuid->toRfc4122(),
-            ]);
+            ->method('execute');
 
         $statement->expects($this->once())
             ->method('fetchAll')

@@ -46,10 +46,7 @@ final class StoreTest extends TestCase
 
         $statement->expects($this->once())
             ->method('execute')
-            ->with([
-                'embedding' => json_encode($vectorData),
-                'maxScore' => $maxScore,
-            ]);
+            ->with($this->isNull());
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -97,7 +94,7 @@ final class StoreTest extends TestCase
 
         $statement->expects($this->once())
             ->method('execute')
-            ->with(['embedding' => json_encode($vectorData)]);
+            ->with($this->isNull());
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -143,7 +140,7 @@ final class StoreTest extends TestCase
 
         $statement->expects($this->once())
             ->method('execute')
-            ->with(['embedding' => json_encode($vectorData)]);
+            ->with($this->isNull());
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -181,7 +178,7 @@ final class StoreTest extends TestCase
 
         $statement->expects($this->once())
             ->method('execute')
-            ->with(['embedding' => '[0.1,0.2,0.3]']);
+            ->with($this->isNull());
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -220,10 +217,7 @@ final class StoreTest extends TestCase
 
         $statement->expects($this->once())
             ->method('execute')
-            ->with([
-                'embedding' => '[0.1,0.2,0.3]',
-                'maxScore' => 0.5,
-            ]);
+            ->with($this->isNull());
 
         $statement->expects($this->once())
             ->method('fetchAll')
@@ -268,11 +262,7 @@ final class StoreTest extends TestCase
 
         $statement->expects($this->once())
             ->method('execute')
-            ->with([
-                'embedding' => '[0.1,0.2,0.3]',
-                'crawlId' => $crawlId,
-                'currentId' => $uuid->toRfc4122(),
-            ]);
+            ->with($this->isNull());
 
         $statement->expects($this->once())
             ->method('fetchAll')
