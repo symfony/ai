@@ -1,0 +1,49 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-17T08:13:27Z
+
+Well, that's a weird one, no changes on my side and the class is not found by the bundle, what the funk is this behavior? 🤔
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-17T09:52:21Z
+
+Please rebase
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-18T22:02:05Z
+
+Please rebase
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-21T18:30:47Z
+
+@OskarStark Tests are failing in `AiBundle` due to the lack of the package, can't be fixed before its published for these ones 🙁
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-22T15:47:59Z
+
+Try to add a path repository to ai bundle composer.json, but AFAIK the `build-packages.php` script should do exactly this 🤔
+
+cc @stof
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-23T10:20:21Z
+
+@OskarStark Regarding the issue with `AiBundle`, it looks like the `build-packages.php` can't be called (it can't find the autoloading file) during unit tests, could this be related to the issue? 🤔
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-23T10:30:13Z
+
+Can you add a path repository for failover platform to composer.json of the AI-Bundle? Thanks
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-01-02T15:33:26Z
+
+Path repository in composer.json should not be needed after the rebase
