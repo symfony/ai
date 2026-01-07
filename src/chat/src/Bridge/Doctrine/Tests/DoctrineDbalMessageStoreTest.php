@@ -19,6 +19,8 @@ use Symfony\AI\Chat\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\SystemMessage;
+use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Serializer;
@@ -123,11 +125,17 @@ final class DoctrineDbalMessageStoreTest extends TestCase
         $messageStore = new DoctrineDbalMessageStore('foo', $connection, $serializer);
         $messageStore->setup();
 
-        $messageStore->save(new MessageBag(Message::ofUser('Hello world')));
+        $messageStore->save(new MessageBag(
+            Message::forSystem('You are an helpful assistant'),
+            Message::ofUser('Hello world'),
+        ));
 
         $messages = $messageStore->load();
 
-        $this->assertCount(1, $messages);
+        $this->assertCount(2, $messages);
+        $this->assertInstanceOf(SystemMessage::class, $messages->getMessages()[0]);
+        $this->assertInstanceOf(UserMessage::class, $messages->getMessages()[1]);
+        $this->assertSame('You are an helpful assistant', $messages->getSystemMessage()->getContent());
         $this->assertSame('Hello world', $messages->getUserMessage()->asText());
     }
 }
