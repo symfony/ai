@@ -44,6 +44,10 @@ class ResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
+        if ($options['stream'] ?? false) {
+            return new StreamResult($this->convertStream($result));
+        }
+
         $response = $result->getObject();
 
         if (401 === $response->getStatusCode()) {
@@ -58,10 +62,6 @@ class ResultConverter implements ResultConverterInterface
 
         if (429 === $response->getStatusCode()) {
             throw new RateLimitExceededException();
-        }
-
-        if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result));
         }
 
         $data = $result->getData();

@@ -35,16 +35,16 @@ class ResultConverter implements ResultConverterInterface
 
     public function convert(RawHttpResult|RawResultInterface $result, array $options = []): ResultInterface
     {
+        if ($options['stream'] ?? false) {
+            return new StreamResult($this->convertStream($result));
+        }
+
         $response = $result->getObject();
 
         if (429 === $response->getStatusCode()) {
             $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
             $retryAfterValue = $retryAfter ? (int) $retryAfter : null;
             throw new RateLimitExceededException($retryAfterValue);
-        }
-
-        if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result));
         }
 
         $data = $result->getData();

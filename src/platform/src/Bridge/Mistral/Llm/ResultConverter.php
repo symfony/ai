@@ -39,11 +39,11 @@ final class ResultConverter implements ResultConverterInterface
      */
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
-        $httpResponse = $result->getObject();
-
         if ($options['stream'] ?? false) {
             return new StreamResult($this->convertStream($result));
         }
+
+        $httpResponse = $result->getObject();
 
         if (200 !== $code = $httpResponse->getStatusCode()) {
             throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $code, $httpResponse->getContent(false)));
