@@ -55,6 +55,7 @@
         "symfony/ai-doctrine-message-store": "^0.1",
         "symfony/ai-elasticsearch-store": "^0.2",
         "symfony/ai-eleven-labs-platform": "^0.1",
+        "symfony/ai-failover-platform": "^0.2",
         "symfony/ai-gemini-platform": "^0.1",
         "symfony/ai-generic-platform": "^0.1",
         "symfony/ai-hugging-face-platform": "^0.1",

@@ -13,6 +13,7 @@ namespace Symfony\AI\AiBundle;
 
 use Google\Auth\ApplicationDefaultCredentials;
 use Google\Auth\FetchAuthTokenInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
@@ -61,6 +62,8 @@ use Symfony\AI\Platform\Bridge\DeepSeek\PlatformFactory as DeepSeekPlatformFacto
 use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory as DockerModelRunnerPlatformFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsApiCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
+use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
+use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory as HuggingFacePlatformFactory;
@@ -609,6 +612,34 @@ final class AiBundle extends AbstractBundle
 
             $container->setDefinition('ai.platform.'.$type, $definition);
             $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type);
+
+            return;
+        }
+
+        if ('failover' === $type) {
+            foreach ($platform as $name => $config) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-failover-platform', FailoverPlatformFactory::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Failover platform configuration requires "symfony/ai-failover-platform" package. Try running "composer require symfony/ai-failover-platform".');
+                }
+
+                $definition = (new Definition(FailoverPlatform::class))
+                    ->setFactory(FailoverPlatformFactory::class.'::create')
+                    ->setLazy(true)
+                    ->setArguments([
+                        array_map(
+                            static fn (string $wrappedPlatform): Reference => new Reference($wrappedPlatform),
+                            $config['platforms'],
+                        ),
+                        new Reference($config['rate_limiter']),
+                        new Reference(ClockInterface::class),
+                        new Reference(LoggerInterface::class),
+                    ])
+                    ->addTag('proxy', ['interface' => PlatformInterface::class])
+                    ->addTag('ai.platform', ['name' => $type]);
+
+                $container->setDefinition('ai.platform.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.platform.'.$type.'.'.$name, PlatformInterface::class, $name);
+            }
 
             return;
         }

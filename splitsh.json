@@ -48,6 +48,7 @@
         "ai-deep-seek-platform": "src/platform/src/Bridge/DeepSeek",
         "ai-docker-model-runner-platform": "src/platform/src/Bridge/DockerModelRunner",
         "ai-eleven-labs-platform": "src/platform/src/Bridge/ElevenLabs",
+        "ai-failover-platform": "src/platform/src/Bridge/Failover",
         "ai-gemini-platform": "src/platform/src/Bridge/Gemini",
         "ai-generic-platform": "src/platform/src/Bridge/Generic",
         "ai-hugging-face-platform": "src/platform/src/Bridge/HuggingFace",
