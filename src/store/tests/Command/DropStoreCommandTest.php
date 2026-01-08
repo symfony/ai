@@ -30,10 +30,15 @@ final class DropStoreCommandTest extends TestCase
 
         $definition = $command->getDefinition();
         $this->assertTrue($definition->hasArgument('store'));
+        $this->assertTrue($definition->hasOption('force'));
 
         $storeArgument = $definition->getArgument('store');
         $this->assertSame('Service name of the store to drop', $storeArgument->getDescription());
         $this->assertTrue($storeArgument->isRequired());
+
+        $forceOption = $definition->getOption('force');
+        $this->assertSame('Force dropping the store even if it contains vectors', $forceOption->getDescription());
+        $this->assertFalse($forceOption->acceptValue());
     }
 
     public function testCommandCannotDropWithoutStores()
