@@ -11,24 +11,30 @@
 
 namespace Symfony\AI\Mate\Bridge\Profiler\Service;
 
+use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
+
 /**
  * Interface for formatting collector data for AI consumption.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  *
- * @internal
+ * @template TCollector of DataCollectorInterface
  */
 interface CollectorFormatterInterface
 {
     public function getName(): string;
 
     /**
+     * @param TCollector $collector
+     *
      * @return array<string, mixed>
      */
-    public function format(mixed $collectorData): array;
+    public function format(DataCollectorInterface $collector): array;
 
     /**
+     * @param TCollector $collector
+     *
      * @return array<string, mixed>
      */
-    public function getSummary(mixed $collectorData): array;
+    public function getSummary(DataCollectorInterface $collector): array;
 }
