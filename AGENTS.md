@@ -1,101 +1,127 @@
-# AGENTS.md
+# CLAUDE.md
 
-This file provides guidance to AI agents when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-Symfony AI monorepo with independent packages for AI integration in PHP applications. Each component in `src/` has its own composer.json, tests, and dependencies.
+This is the Symfony AI monorepo containing multiple components and bundles that integrate AI capabilities into PHP applications. The project is organized as a collection of independent packages under the `src/` directory, each with their own composer.json, tests, and dependencies.
 
 ## Architecture
 
 ### Core Components
-- **Platform** (`src/platform/`): Unified AI platform interface (OpenAI, Anthropic, Azure, Gemini, VertexAI)
-- **Agent** (`src/agent/`): AI agent framework for user interaction and task execution
-- **Store** (`src/store/`): Data storage abstraction with vector database support
+- **Platform** (`src/platform/`): Unified interface to AI platforms (OpenAI, Anthropic, Azure, Gemini, VertexAI, etc.)
+- **Agent** (`src/agent/`): Framework for building AI agents that interact with users and perform tasks
+- **Chat** (`src/chat/`): Chat interface components for building conversational AI applications
+- **Store** (`src/store/`): Data storage abstraction with indexing and retrieval for vector databases
 - **Mate** (`src/mate/`): AI-powered coding assistant for PHP development
 
 ### Bridges
-Each core component has bridges in `src/<component>/src/Bridge/` that provide integrations with specific third-party services. Bridges are separate Composer packages with their own dependencies and can be installed independently.
+Each core component has bridges in `src/<component>/src/Bridge/` that provide integrations with specific third-party services. Bridges are dedicated Composer packages with their own dependencies and can be installed independently.
 
 ### Integration Bundles
-- **AI Bundle** (`src/ai-bundle/`): Symfony integration for Platform, Store, and Agent
+- **AI Bundle** (`src/ai-bundle/`): Symfony integration for Platform, Store, and Agent components
 - **MCP Bundle** (`src/mcp-bundle/`): Symfony integration for official MCP SDK
 
 ### Supporting Directories
-- **Examples** (`examples/`): Standalone usage examples
-- **Demo** (`demo/`): Full Symfony web application demo
-- **Fixtures** (`fixtures/`): Shared multi-modal test fixtures
+- **Examples** (`examples/`): Standalone examples demonstrating component usage across different AI platforms
+- **Demo** (`demo/`): Full Symfony web application showcasing components working together
+- **Fixtures** (`fixtures/`): Shared test fixtures for multi-modal testing (images, audio, PDFs)
 
-## Essential Commands
+## Development Commands
 
 ### Testing
+Each component has its own test suite. Run tests for specific components:
 ```bash
-# Component-specific testing
+# Platform component
 cd src/platform && vendor/bin/phpunit
+
+# Agent component
 cd src/agent && vendor/bin/phpunit
+
+# AI Bundle
 cd src/ai-bundle && vendor/bin/phpunit
+
+# Demo application
 cd demo && vendor/bin/phpunit
 ```
 
 ### Code Quality
+The project uses PHP CS Fixer with Symfony coding standards. Always run from the repository root:
 ```bash
-# Fix code style (always run after changes)
+# Fix code style issues
 vendor/bin/php-cs-fixer fix
 
-# Static analysis (component-specific)
+# Fix specific directories
+vendor/bin/php-cs-fixer fix src/platform/
+```
+
+Static analysis with PHPStan (component-specific):
+```bash
 cd src/platform && vendor/bin/phpstan analyse
 ```
 
-### Development Tools
+### Development Linking
+Use the `./link` script to symlink local development versions:
 ```bash
-# Link components for development
+# Link components to external project
 ./link /path/to/project
 
-# Run examples
-cd examples && php anthropic/chat.php
+# Copy instead of symlink
+./link --copy /path/to/project
 
-# Demo application
-cd demo && symfony server:start
+# Rollback changes
+./link --rollback /path/to/project
 ```
 
-## Code Standards
+### Running Examples
+Examples are self-contained and can be run individually:
+```bash
+cd examples
+php anthropic/chat.php
+php openai/function-calling.php
+```
 
-### PHP Conventions
-- Follow Symfony coding standards with `@Symfony` PHP CS Fixer rules
-- Use project-specific exceptions instead of global ones (`\RuntimeException`, `\InvalidArgumentException`)
-- Define array shapes for parameters and return types
-- Add `@author` tags to new classes
-- Always add newlines at end of files
+Many examples require environment variables (see `.env` files in example directories).
 
-### Testing Guidelines
-- Use **PHPUnit 11+** with component-specific configurations
-- Prefer `MockHttpClient` over response mocking
-- Use `self::assert*` or `$this->assert*` in tests
-- No void return types for test methods
-- Leverage shared fixtures in `/fixtures` for multi-modal content
-- Always fix risky tests
-
-### Git & Commits
-- Never mention AI assistance in commits or PR descriptions
-- Sign commits with GPG
-- Use conventional commit messages
-
-### Variable Naming
-- Name MessageBus variables as `$bus` (not `$messageBus`)
+### Demo Application
+The demo is a full Symfony application:
+```bash
+cd demo
+composer install
+symfony server:start
+```
 
 ## Component Dependencies
 
-- Agent → Platform (AI communication)
-- AI Bundle → Platform + Agent + Store (integration)
-- MCP Bundle → MCP SDK (integration)
-- Store: standalone (often used with Agent for RAG)
+Components are designed to work independently but have these relationships:
+- Agent depends on Platform for AI communication
+- AI Bundle integrates Platform, Agent, and Store
+- MCP Bundle provides official MCP SDK integration
+- Store is standalone but often used with Agent for RAG applications
 
-## Development Workflow
+## Testing Architecture
 
-1. Each `src/` component is independently versioned
-2. Run PHP-CS-Fixer after code changes
-3. Test component-specific changes in isolation
-4. Use monorepo structure for shared development workflow
+Each component uses:
+- **PHPUnit 11+** for testing framework
+- Component-specific `phpunit.xml.dist` configurations
+- Shared fixtures in `/fixtures` for multi-modal content
+- MockHttpClient pattern preferred over response mocking
+
+## Development Notes
+
+- Each component in `src/` is a separate Composer package with its own dependencies
+- Components follow Symfony coding standards and use `@Symfony` PHP CS Fixer rules
+- The monorepo structure allows independent versioning while maintaining shared development workflow
+- Do not use void return type for testcase methods
+- Always run PHP-CS-Fixer to ensure proper code style
+- Always add a newline at the end of the file
+- Prefer self::assert* over $this->assert* in tests
+- Never add Claude as co-author in the commits
+- Add @author tags to newly introduced classes by the user
+- Prefer classic if statements over short-circuit evaluation when possible
+- Define array shapes for parameters and return types
+- Use project specific exceptions instead of global exception classes like \RuntimeException, \InvalidArgumentException etc.
+- NEVER mention Claude as co-author in commits
 
 ## Version Documentation
 
@@ -108,4 +134,3 @@ cd demo && symfony server:start
 - Each component has its own `CHANGELOG.md` in its root directory
 - Add entries for new features, and deprecations under the appropriate version heading
 - Format entries as bullet points starting with "Add", "Fix", "Deprecate", etc.
-

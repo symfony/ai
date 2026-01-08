@@ -11,11 +11,12 @@ This is the Symfony AI monorepo containing multiple components and bundles that 
 ### Core Components
 - **Platform** (`src/platform/`): Unified interface to AI platforms (OpenAI, Anthropic, Azure, Gemini, VertexAI, etc.)
 - **Agent** (`src/agent/`): Framework for building AI agents that interact with users and perform tasks
+- **Chat** (`src/chat/`): Chat interface components for building conversational AI applications
 - **Store** (`src/store/`): Data storage abstraction with indexing and retrieval for vector databases
 - **Mate** (`src/mate/`): AI-powered coding assistant for PHP development
 
 ### Bridges
-Each core component has bridges in `src/<component>/src/Bridge/` that provide integrations with specific third-party services. Bridges are separate Composer packages with their own dependencies and can be installed independently.
+Each core component has bridges in `src/<component>/src/Bridge/` that provide integrations with specific third-party services. Bridges are dedicated Composer packages with their own dependencies and can be installed independently.
 
 ### Integration Bundles
 - **AI Bundle** (`src/ai-bundle/`): Symfony integration for Platform, Store, and Agent components
@@ -45,12 +46,12 @@ cd demo && vendor/bin/phpunit
 ```
 
 ### Code Quality
-The project uses PHP CS Fixer with Symfony coding standards:
+The project uses PHP CS Fixer with Symfony coding standards. Always run from the repository root:
 ```bash
 # Fix code style issues
 vendor/bin/php-cs-fixer fix
 
-# Check specific directories
+# Fix specific directories
 vendor/bin/php-cs-fixer fix src/platform/
 ```
 
