@@ -120,13 +120,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         );
 
         foreach ($documents as $document) {
-            $operation = [
-                'id' => $document->id->toRfc4122(),
-                'metadata' => json_encode($document->metadata->getArrayCopy()),
-                'vector' => json_encode($document->vector->getData()),
-            ];
+            $statement->bindValue(':id', $document->id->toRfc4122());
+            $statement->bindValue(':metadata', json_encode($document->metadata->getArrayCopy()));
+            $statement->bindValue(':vector', json_encode($document->vector->getData()));
 
-            $statement->execute($operation);
+            $statement->execute();
         }
     }
 
@@ -178,7 +176,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $params['maxScore'] = $maxScore;
         }
 
-        $statement->execute($params);
+        foreach ($params as $key => $value) {
+            $statement->bindValue(':'.$key, $value);
+        }
+
+        $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
             yield new VectorDocument(
