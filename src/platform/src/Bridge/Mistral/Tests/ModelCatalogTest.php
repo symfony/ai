@@ -26,6 +26,8 @@ final class ModelCatalogTest extends ModelCatalogTestCase
     public static function modelsProvider(): iterable
     {
         yield 'codestral-latest' => ['codestral-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'devstral-medium-latest' => ['devstral-medium-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'devstral-small-latest' => ['devstral-small-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'mistral-large-latest' => ['mistral-large-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'mistral-medium-latest' => ['mistral-medium-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_IMAGE, Capability::TOOL_CALLING]];
         yield 'mistral-small-latest' => ['mistral-small-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_IMAGE, Capability::TOOL_CALLING]];
