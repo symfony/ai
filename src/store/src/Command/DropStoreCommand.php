@@ -50,7 +50,7 @@ final class DropStoreCommand extends Command
     {
         $this
             ->addArgument('store', InputArgument::REQUIRED, 'Service name of the store to drop')
-            ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force dropping the store even if it contains messages')
+            ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force dropping the store even if it contains vectors')
             ->setHelp(<<<EOF
 The <info>%command.name%</info> command drops the stores:
 
