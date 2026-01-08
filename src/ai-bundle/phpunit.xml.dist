@@ -4,10 +4,11 @@
          bootstrap="vendor/autoload.php"
          cacheDirectory=".phpunit.cache"
          colors="true"
-         executionOrder="depends,defects"
+         executionOrder="random"
          beStrictAboutOutputDuringTests="true"
          failOnRisky="true"
-         failOnWarning="true">
+         failOnWarning="true"
+>
     <testsuites>
         <testsuite name="symfony/ai-bundle">
             <directory>tests</directory>
