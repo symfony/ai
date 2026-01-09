@@ -97,6 +97,30 @@
             "config/packages/ai_clock_tool.yaml"
         ]
     },
+    "symfony/ai-hugging-face-platform": {
+        "version": "0.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "8cd3b775bd6916b51cce9fc7186d01947dc13015"
+        },
+        "files": [
+            "config/packages/ai_hugging_face_platform.yaml"
+        ]
+    },
+    "symfony/ai-open-ai-platform": {
+        "version": "0.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "4f925d48b69c145cde2286e2cabfc7bd5eb4aca9"
+        },
+        "files": [
+            "config/packages/ai_open_ai_platform.yaml"
+        ]
+    },
     "symfony/ai-wikipedia-tool": {
         "version": "0.9999999",
         "recipe": {
