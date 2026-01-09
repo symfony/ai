@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Store;
 
+use Symfony\AI\Store\Document\SourceInterface;
+
 /**
  * Handles the complete document processing pipeline: load → transform → vectorize → store.
  *
@@ -21,14 +23,8 @@ interface IndexerInterface
     /**
      * Process sources through the complete document pipeline: load → transform → vectorize → store.
      *
+     * @param SourceInterface|SourceInterface[] $sources Document sources to process
      * @param array{chunk_size?: int, platform_options?: array<string, mixed>} $options Processing options
      */
-    public function index(array $options = []): void;
-
-    /**
-     * Create a new instance with a different source.
-     *
-     * @param string|array<string> $source Source identifier (file path, URL, etc.) or array of sources
-     */
-    public function withSource(string|array $source): self;
+    public function index(array|SourceInterface $sources, array $options = []): void;
 }

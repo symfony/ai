@@ -498,7 +498,11 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         model?: mixed,
  *     }>,
  *     indexer?: array<string, array{ // Default: []
- *         loader: string, // Service name of loader
+ *         loaders?: array<mixed>,
+ *         input?: array{
+ *             loader?: string, // Reference to loader for source.
+ *             source?: string, // Source identifier (file path, URL, etc.)
+ *         },
  *         source?: mixed, // Source identifier (file path, URL, etc.) or array of sources // Default: null
  *         transformers?: list<scalar|null>,
  *         filters?: list<scalar|null>,
