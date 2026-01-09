@@ -91,6 +91,9 @@ $app = (new SingleCommandApplication('Symfony AI Example Runner'))
 
                     $output = str_replace(PHP_EOL, ' ', $process->getOutput());
                     $output = strlen($output) <= 100 ? $output : substr($output, 0, 100).'...';
+                    if (str_contains($output, "\0")) {
+                        $output = '<fg=gray>[binary output]</>';
+                    }
                     $emptyOutput = 0 === strlen(trim($output));
 
                     $state = 'Running';
