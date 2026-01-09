@@ -5,10 +5,6 @@ on:
     pull_request_target:
         types: [labeled]
 
-defaults:
-    run:
-        working-directory: demo
-
 jobs:
     panther-tests:
         if: github.event.label.name == 'Run demo tests'
@@ -34,7 +30,6 @@ jobs:
                   working-directory: "."
 
             - name: Build packages
-              working-directory: .
               run: php .github/build-packages.php
 
             - name: Install demo dependencies
@@ -43,38 +38,40 @@ jobs:
                   working-directory: "demo"
 
             - name: Link local packages
+              working-directory: demo
               run: ../link
 
             - name: Run auto-scripts
+              working-directory: demo
               run: composer run-script auto-scripts --no-interaction
 
             - name: Setup ChromaDB
               run: docker compose up -d
-              working-directory: .
 
             - name: Wait for ChromaDB to be ready
               run: |
                   timeout 60 bash -c 'until curl -f http://localhost:8000/api/v1/heartbeat 2>/dev/null; do sleep 2; done'
-              working-directory: .
 
             - name: Initialize ChromaDB with blog data
+              working-directory: demo
               run: bin/console ai:store:index blog -vv
               env:
                   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
             - name: Install Chrome Driver
-              run: vendor/bin/bdi driver:chromedriver --install
               working-directory: demo
+              run: vendor/bin/bdi driver:chromedriver --install
 
             - name: Start Symfony server
-              run: symfony server:start -d --port=9080 --no-tls
               working-directory: demo
+              run: symfony server:start -d --port=9080 --no-tls
 
             - name: Wait for server to be ready
               run: |
                   timeout 60 bash -c 'until curl -f http://127.0.0.1:9080 2>/dev/null; do sleep 2; done'
 
             - name: Run Panther tests
+              working-directory: demo
               run: vendor/bin/phpunit --testsuite=panther
               env:
                   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -92,10 +89,9 @@ jobs:
 
             - name: Stop Symfony server
               if: always()
-              run: symfony server:stop
               working-directory: demo
+              run: symfony server:stop
 
             - name: Stop ChromaDB
               if: always()
               run: docker compose down
-              working-directory: .
