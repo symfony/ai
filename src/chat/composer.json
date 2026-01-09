@@ -25,8 +25,8 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-agent": "^0.1",
-        "symfony/ai-platform": "^0.1"
+        "symfony/ai-agent": "^0.2",
+        "symfony/ai-platform": "^0.2"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
@@ -55,7 +55,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.2.x-dev"
+            "dev-main": "0.3.x-dev"
         },
         "thanks": {
             "name": "symfony/ai",

@@ -34,7 +34,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.46",
-        "symfony/ai-agent": "^0.1"
+        "symfony/ai-agent": "^0.2"
     },
     "minimum-stability": "dev",
     "autoload": {
@@ -54,7 +54,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.2.x-dev"
+            "dev-main": "0.3.x-dev"
         },
         "thanks": {
             "name": "symfony/ai",

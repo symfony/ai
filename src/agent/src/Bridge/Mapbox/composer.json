@@ -23,7 +23,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-agent": "^0.1",
+        "symfony/ai-agent": "^0.2",
         "symfony/http-client": "^7.3|^8.0"
     },
     "require-dev": {
@@ -49,7 +49,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.2.x-dev"
+            "dev-main": "0.3.x-dev"
         },
         "thanks": {
             "name": "symfony/ai",
