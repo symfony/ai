@@ -83,15 +83,54 @@ final class LoggerTest extends TestCase
         $this->assertStringContainsString('[ERROR]', $content);
     }
 
+    public function testAutomaticallyCreatesLogDirectory()
+    {
+        $nonExistentDir = $this->tempDir.'/nested/path/to/logs';
+        $logFile = $nonExistentDir.'/app.log';
+
+        $this->assertDirectoryDoesNotExist($nonExistentDir);
+
+        $logger = new Logger($logFile, fileLogEnabled: true, debugEnabled: true);
+        $logger->info('Test message');
+
+        $this->assertDirectoryExists($nonExistentDir);
+        $this->assertFileExists($logFile);
+        $content = file_get_contents($logFile);
+        $this->assertStringContainsString('[INFO] Test message', $content);
+    }
+
     public function testFileWriteFailureThrowsException()
     {
         $invalidPath = '/invalid/path/that/does/not/exist/test.log';
         $logger = new Logger($invalidPath, fileLogEnabled: true);
 
         $this->expectException(FileWriteException::class);
-        $this->expectExceptionMessage('Failed to write to log file: "/invalid/path/that/does/not/exist/test.log"');
+        $this->expectExceptionMessage('Failed to create log directory: "/invalid/path/that/does/not/exist"');
 
         $logger->info('This should fail');
+    }
+
+    public function testThrowsExceptionWhenDirectoryCreationFailsDueToPermissions()
+    {
+        // Skip test on Windows as permission handling is different
+        if ('\\' === \DIRECTORY_SEPARATOR) {
+            $this->markTestSkipped('Permission-based tests are not reliable on Windows');
+        }
+
+        $readOnlyDir = $this->tempDir.'/readonly';
+        mkdir($readOnlyDir, 0444);
+
+        $logFile = $readOnlyDir.'/logs/app.log';
+        $logger = new Logger($logFile, fileLogEnabled: true, debugEnabled: true);
+
+        $this->expectException(FileWriteException::class);
+        $this->expectExceptionMessage('Failed to create log directory');
+
+        try {
+            $logger->info('Test message');
+        } finally {
+            chmod($readOnlyDir, 0755);
+        }
     }
 
     public function testDefaultBehaviorWritesToStderr()
