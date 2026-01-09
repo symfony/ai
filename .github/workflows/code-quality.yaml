@@ -53,9 +53,13 @@ jobs:
               uses: ramsey/composer-install@v3
               with:
                   working-directory: demo
+                  composer-options: "--no-scripts"
 
             - name: Link packages
               run: cd demo && ../link
+
+            - name: Clear the cache
+              run: cd demo && php bin/console cache:clear
 
             - name: Run PHPStan
               run: cd demo && vendor/bin/phpstan
