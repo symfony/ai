@@ -47,6 +47,8 @@ class Logger extends AbstractLogger
         );
 
         if ($this->fileLogEnabled || !\defined('STDERR')) {
+            $this->ensureDirectoryExists($this->logFile);
+
             $result = @file_put_contents($this->logFile, $logMessage, \FILE_APPEND);
             if (false === $result) {
                 $errorMessage = \sprintf('Failed to write to log file: "%s"', $this->logFile);
@@ -60,6 +62,17 @@ class Logger extends AbstractLogger
             }
         } else {
             fwrite(\STDERR, $logMessage);
+        }
+    }
+
+    private function ensureDirectoryExists(string $filePath): void
+    {
+        $directory = \dirname($filePath);
+
+        if (!is_dir($directory)) {
+            if (!@mkdir($directory, 0755, true) && !is_dir($directory)) {
+                throw new FileWriteException(\sprintf('Failed to create log directory: "%s"', $directory));
+            }
         }
     }
 }
