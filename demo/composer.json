@@ -48,7 +48,7 @@
         "twig/twig": "^3.22"
     },
     "require-dev": {
-        "dbrekelmans/bdi": "^2.0",
+        "dbrekelmans/bdi": "^1.4",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^12.1",
@@ -58,7 +58,7 @@
         "symfony/browser-kit": "^8.0",
         "symfony/css-selector": "^8.0",
         "symfony/debug-bundle": "^8.0",
-        "symfony/panther": "^3.0",
+        "symfony/panther": "^2.4",
         "symfony/stopwatch": "^8.0",
         "symfony/web-profiler-bundle": "^8.0"
     },
