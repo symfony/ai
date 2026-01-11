@@ -22,7 +22,7 @@ final class DemoScenariosTest extends PantherTestCase
     public function testIndexPageLoadsSuccessfully()
     {
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/');
+        $client->request('GET', '/');
 
         $this->assertSelectorTextContains('h1', 'Welcome to the Symfony AI Demo');
         $this->assertSelectorCount(8, '.card');
@@ -43,7 +43,7 @@ final class DemoScenariosTest extends PantherTestCase
         $this->requiresOpenAiKey();
         
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/blog');
+        $client->request('GET', '/blog');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h4', 'Retrieval Augmented Generation based on the Symfony blog');
@@ -56,7 +56,7 @@ final class DemoScenariosTest extends PantherTestCase
         $this->requiresOpenAiKey();
         
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/recipe');
+        $client->request('GET', '/recipe');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h4', 'Cooking Recipes');
@@ -69,7 +69,7 @@ final class DemoScenariosTest extends PantherTestCase
         $this->requiresOpenAiKey();
         
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/wikipedia');
+        $client->request('GET', '/wikipedia');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h4', 'Wikipedia Research');
@@ -82,7 +82,7 @@ final class DemoScenariosTest extends PantherTestCase
         $this->requiresOpenAiKey();
         
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/youtube');
+        $client->request('GET', '/youtube');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h4', 'Chat about a YouTube Video');
@@ -96,7 +96,7 @@ final class DemoScenariosTest extends PantherTestCase
         $this->requiresOpenAiKey();
         
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/speech');
+        $client->request('GET', '/speech');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('button'); // Audio recording interface
@@ -108,7 +108,7 @@ final class DemoScenariosTest extends PantherTestCase
         $this->requiresOpenAiKey();
         
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/video');
+        $client->request('GET', '/video');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('video'); // Webcam video element
@@ -119,7 +119,7 @@ final class DemoScenariosTest extends PantherTestCase
         $this->requiresOpenAiKey();
         
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/crop');
+        $client->request('GET', '/crop');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('form');
@@ -130,7 +130,7 @@ final class DemoScenariosTest extends PantherTestCase
         $this->requiresOpenAiKey();
         
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/stream');
+        $client->request('GET', '/stream');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('#chat-submit');

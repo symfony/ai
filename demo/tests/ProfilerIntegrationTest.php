@@ -22,7 +22,7 @@ final class ProfilerIntegrationTest extends PantherTestCase
     public function testProfilerToolbarIsVisible()
     {
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/');
+        $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
         
@@ -46,7 +46,7 @@ final class ProfilerIntegrationTest extends PantherTestCase
     public function testImplementationLinksAreVisible()
     {
         $client = static::createPantherClient();
-        $crawler = $client->request('GET', '/');
+        $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
         
