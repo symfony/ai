@@ -11,9 +11,15 @@
 
 namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 
+use Mcp\Capability\Attribute\McpPrompt;
+use Mcp\Capability\Attribute\McpResource;
+use Mcp\Capability\Attribute\McpResourceTemplate;
+use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Registry\Loader\LoaderInterface;
 use Mcp\Server\Handler\Notification\NotificationHandlerInterface;
 use Mcp\Server\Handler\Request\RequestHandlerInterface;
+use Mcp\Server\Session\FileSessionStore;
+use Mcp\Server\Session\InMemorySessionStore;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\McpBundle;
@@ -28,6 +34,9 @@ class McpBundleTest extends TestCase
 
         $this->assertSame('app', $container->getParameter('mcp.app'));
         $this->assertSame('0.0.1', $container->getParameter('mcp.version'));
+        $this->assertNull($container->getParameter('mcp.description'));
+        $this->assertSame([], $container->getParameter('mcp.icons'));
+        $this->assertNull($container->getParameter('mcp.website_url'));
         $this->assertSame(50, $container->getParameter('mcp.pagination_limit'));
         $this->assertNull($container->getParameter('mcp.instructions'));
         $this->assertSame(['src'], $container->getParameter('mcp.discovery.scan_dirs'));
@@ -40,6 +49,15 @@ class McpBundleTest extends TestCase
             'mcp' => [
                 'app' => 'my-mcp-app',
                 'version' => '1.2.3',
+                'description' => 'My MCP Application',
+                'icons' => [
+                    [
+                        'src' => 'https://example.com/icon.png',
+                        'mime_type' => 'image/png',
+                        'sizes' => ['64x64', '128x128'],
+                    ],
+                ],
+                'website_url' => 'https://example.com/mcp',
                 'pagination_limit' => 25,
                 'instructions' => 'This server provides weather and calendar tools',
             ],
@@ -47,6 +65,15 @@ class McpBundleTest extends TestCase
 
         $this->assertSame('my-mcp-app', $container->getParameter('mcp.app'));
         $this->assertSame('1.2.3', $container->getParameter('mcp.version'));
+        $this->assertSame('My MCP Application', $container->getParameter('mcp.description'));
+        $this->assertSame([
+            [
+                'src' => 'https://example.com/icon.png',
+                'mime_type' => 'image/png',
+                'sizes' => ['64x64', '128x128'],
+            ],
+        ], $container->getParameter('mcp.icons'));
+        $this->assertSame('https://example.com/mcp', $container->getParameter('mcp.website_url'));
         $this->assertSame(25, $container->getParameter('mcp.pagination_limit'));
         $this->assertSame('This server provides weather and calendar tools', $container->getParameter('mcp.instructions'));
     }
@@ -202,7 +229,7 @@ class McpBundleTest extends TestCase
 
         // Test that McpTool attribute is autoconfigured with mcp.tool tag
         $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
-        $this->assertArrayHasKey('Mcp\Capability\Attribute\McpTool', $attributeAutoconfigurators);
+        $this->assertArrayHasKey(McpTool::class, $attributeAutoconfigurators);
     }
 
     public function testMcpPromptAttributeAutoconfiguration()
@@ -217,7 +244,7 @@ class McpBundleTest extends TestCase
 
         // Test that McpPrompt attribute is autoconfigured with mcp.prompt tag
         $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
-        $this->assertArrayHasKey('Mcp\Capability\Attribute\McpPrompt', $attributeAutoconfigurators);
+        $this->assertArrayHasKey(McpPrompt::class, $attributeAutoconfigurators);
     }
 
     public function testMcpResourceAttributeAutoconfiguration()
@@ -232,7 +259,7 @@ class McpBundleTest extends TestCase
 
         // Test that McpResource attribute is autoconfigured with mcp.resource tag
         $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
-        $this->assertArrayHasKey('Mcp\Capability\Attribute\McpResource', $attributeAutoconfigurators);
+        $this->assertArrayHasKey(McpResource::class, $attributeAutoconfigurators);
     }
 
     public function testMcpResourceTemplateAttributeAutoconfiguration()
@@ -247,7 +274,7 @@ class McpBundleTest extends TestCase
 
         // Test that McpResourceTemplate attribute is autoconfigured with mcp.resource_template tag
         $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
-        $this->assertArrayHasKey('Mcp\Capability\Attribute\McpResourceTemplate', $attributeAutoconfigurators);
+        $this->assertArrayHasKey(McpResourceTemplate::class, $attributeAutoconfigurators);
     }
 
     public function testHttpConfigurationDefaults()
@@ -270,7 +297,7 @@ class McpBundleTest extends TestCase
         // Test session store defaults (file store)
         $this->assertTrue($container->hasDefinition('mcp.session.store'));
         $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
-        $this->assertSame('Mcp\Server\Session\FileSessionStore', $sessionStoreDefinition->getClass());
+        $this->assertSame(FileSessionStore::class, $sessionStoreDefinition->getClass());
         $sessionArguments = $sessionStoreDefinition->getArguments();
         $this->assertSame('%kernel.cache_dir%/mcp-sessions', $sessionArguments[0]); // Default directory
         $this->assertSame(3600, $sessionArguments[1]); // Default TTL
@@ -301,7 +328,7 @@ class McpBundleTest extends TestCase
 
         // Test custom session store (memory)
         $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
-        $this->assertSame('Mcp\Server\Session\InMemorySessionStore', $sessionStoreDefinition->getClass());
+        $this->assertSame(InMemorySessionStore::class, $sessionStoreDefinition->getClass());
         $sessionArguments = $sessionStoreDefinition->getArguments();
         $this->assertSame(7200, $sessionArguments[0]); // Custom TTL for memory store
     }
@@ -324,7 +351,7 @@ class McpBundleTest extends TestCase
         ]);
 
         $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
-        $this->assertSame('Mcp\Server\Session\FileSessionStore', $sessionStoreDefinition->getClass());
+        $this->assertSame(FileSessionStore::class, $sessionStoreDefinition->getClass());
         $arguments = $sessionStoreDefinition->getArguments();
         $this->assertSame('/var/cache/mcp', $arguments[0]); // Custom directory
         $this->assertSame(1800, $arguments[1]); // Custom TTL
