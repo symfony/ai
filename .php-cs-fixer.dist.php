@@ -71,4 +71,4 @@ return (new PhpCsFixer\Config())
                 'src/mate/resources/mate/extensions.php',
             ])
     )
-    ;
+;
