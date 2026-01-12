@@ -32,6 +32,9 @@ $text = <<<TEXT
     country was very peaceful and prosperous. The people lived happily ever after.
     TEXT;
 
-$result = $platform->invoke('Xenova/all-MiniLM-L6-v2', $text, ['task' => Task::Embeddings]);
+$result = $platform->invoke('Xenova/all-MiniLM-L6-v2', $text, [
+    'task' => Task::Embeddings,
+    'input_options' => ['pooling' => 'mean', 'normalize' => true],
+]);
 
 print_vectors($result);

@@ -30,6 +30,8 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException('The task option is required.');
         }
 
+        $inputOptions = $options['input_options'] ?? [];
+
         $pipeline = pipeline(
             $task,
             $model->getName(),
@@ -40,6 +42,6 @@ final class ModelClient implements ModelClientInterface
             $options['modelFilename'] ?? null,
         );
 
-        return new RawPipelineResult(new PipelineExecution($pipeline, $payload));
+        return new RawPipelineResult(new PipelineExecution($pipeline, $payload, $inputOptions));
     }
 }
