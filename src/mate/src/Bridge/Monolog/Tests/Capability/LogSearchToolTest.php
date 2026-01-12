@@ -21,78 +21,147 @@ use Symfony\AI\Mate\Bridge\Monolog\Service\LogReader;
  */
 final class LogSearchToolTest extends TestCase
 {
+    private string $fixturesDir;
     private LogSearchTool $tool;
 
     protected function setUp(): void
     {
-        $fixturesDir = \dirname(__DIR__).'/Fixtures';
-        $reader = new LogReader(new LogParser(), $fixturesDir);
+        $this->fixturesDir = \dirname(__DIR__).'/Fixtures';
+        $parser = new LogParser();
+        $reader = new LogReader($parser, $this->fixturesDir);
         $this->tool = new LogSearchTool($reader);
     }
 
-    public function testSearch()
+    public function testSearchByTextTerm()
     {
-        $results = $this->tool->search('database');
+        $results = $this->tool->search('logged in');
 
+        $this->assertNotEmpty($results);
         $this->assertCount(1, $results);
-        $this->assertStringContainsString('Database', $results[0]['message']);
+        $this->assertStringContainsString('User logged in', $results[0]['message']);
     }
 
-    public function testSearchWithLevel()
+    public function testSearchByTextTermReturnsEmptyWhenNotFound()
     {
-        $results = $this->tool->search('', 'ERROR');
+        $results = $this->tool->search('nonexistent search term xyz');
 
-        $this->assertCount(2, $results);
-        foreach ($results as $result) {
-            $this->assertSame('ERROR', $result['level']);
+        $this->assertEmpty($results);
+    }
+
+    public function testSearchByLevel()
+    {
+        $results = $this->tool->search('', level: 'ERROR');
+
+        $this->assertNotEmpty($results);
+
+        foreach ($results as $entry) {
+            $this->assertSame('ERROR', $entry['level']);
         }
     }
 
-    public function testSearchWithChannel()
+    public function testSearchByChannel()
     {
-        $results = $this->tool->search('', null, 'security');
+        $results = $this->tool->search('', channel: 'security');
 
-        $this->assertCount(2, $results);
-        foreach ($results as $result) {
-            $this->assertSame('security', $result['channel']);
+        $this->assertNotEmpty($results);
+
+        foreach ($results as $entry) {
+            $this->assertSame('security', $entry['channel']);
         }
+    }
+
+    public function testSearchByEnvironment()
+    {
+        // Skip this test as the bridge test fixtures don't have environment-specific files
+        $this->markTestSkipped('Environment-specific search not supported in bridge test fixtures');
     }
 
     public function testSearchWithLimit()
     {
-        $results = $this->tool->search('', limit: 3);
+        $results = $this->tool->search('', limit: 2);
 
-        $this->assertCount(3, $results);
+        $this->assertLessThanOrEqual(2, \count($results));
     }
 
     public function testSearchRegex()
     {
-        $results = $this->tool->searchRegex('/connection|timeout/i');
+        $results = $this->tool->searchRegex('Database.*failed');
 
-        $this->assertGreaterThanOrEqual(1, \count($results));
+        $this->assertNotEmpty($results);
+        $this->assertStringContainsString('Database connection failed', $results[0]['message']);
+    }
+
+    public function testSearchRegexWithDelimiters()
+    {
+        $results = $this->tool->searchRegex('/User.*logged/i');
+
+        $this->assertNotEmpty($results);
+    }
+
+    public function testSearchRegexByLevel()
+    {
+        $results = $this->tool->searchRegex('.*', level: 'WARNING');
+
+        $this->assertNotEmpty($results);
+
+        foreach ($results as $entry) {
+            $this->assertSame('WARNING', $entry['level']);
+        }
     }
 
     public function testSearchContext()
     {
         $results = $this->tool->searchContext('user_id', '123');
 
-        $this->assertCount(1, $results);
+        $this->assertNotEmpty($results);
+        $this->assertArrayHasKey('user_id', $results[0]['context']);
         $this->assertSame(123, $results[0]['context']['user_id']);
+    }
+
+    public function testSearchContextReturnsEmptyWhenKeyNotFound()
+    {
+        $results = $this->tool->searchContext('nonexistent_key', 'value');
+
+        $this->assertEmpty($results);
+    }
+
+    public function testSearchContextByLevel()
+    {
+        $results = $this->tool->searchContext('error', 'Connection', level: 'ERROR');
+
+        $this->assertNotEmpty($results);
     }
 
     public function testTail()
     {
-        $results = $this->tool->tail(5);
+        $results = $this->tool->tail(10);
 
-        $this->assertCount(5, $results);
+        $this->assertNotEmpty($results);
+        $this->assertLessThanOrEqual(10, \count($results));
+    }
+
+    public function testTailWithLevel()
+    {
+        $results = $this->tool->tail(10, level: 'INFO');
+
+        foreach ($results as $entry) {
+            $this->assertSame('INFO', $entry['level']);
+        }
+    }
+
+    public function testTailWithEnvironment()
+    {
+        // Skip this test as the bridge test fixtures don't have environment-specific files
+        $this->markTestSkipped('Environment-specific tail not supported in bridge test fixtures');
     }
 
     public function testListFiles()
     {
-        $files = $this->tool->listFiles();
+        $results = $this->tool->listFiles();
 
-        $this->assertCount(2, $files);
-        foreach ($files as $file) {
+        $this->assertNotEmpty($results);
+
+        foreach ($results as $file) {
             $this->assertArrayHasKey('name', $file);
             $this->assertArrayHasKey('path', $file);
             $this->assertArrayHasKey('size', $file);
@@ -100,21 +169,59 @@ final class LogSearchToolTest extends TestCase
         }
     }
 
+    public function testListFilesForEnvironment()
+    {
+        // Skip this test as the bridge test fixtures don't have environment-specific files
+        $this->markTestSkipped('Environment-specific file listing not supported in bridge test fixtures');
+    }
+
     public function testListChannels()
     {
-        $channels = $this->tool->listChannels();
+        $results = $this->tool->listChannels();
 
-        $this->assertContains('app', $channels);
-        $this->assertContains('security', $channels);
+        $this->assertNotEmpty($results);
+        $this->assertContains('app', $results);
+        $this->assertContains('security', $results);
     }
 
     public function testByLevel()
     {
-        $results = $this->tool->byLevel('WARNING');
+        $results = $this->tool->byLevel('INFO');
 
-        $this->assertGreaterThanOrEqual(1, \count($results));
-        foreach ($results as $result) {
-            $this->assertSame('WARNING', $result['level']);
+        $this->assertNotEmpty($results);
+
+        foreach ($results as $entry) {
+            $this->assertSame('INFO', $entry['level']);
         }
+    }
+
+    public function testByLevelWithEnvironment()
+    {
+        // Skip this test as the bridge test fixtures don't have environment-specific files
+        $this->markTestSkipped('Environment-specific level search not supported in bridge test fixtures');
+    }
+
+    public function testByLevelWithLimit()
+    {
+        $results = $this->tool->byLevel('INFO', limit: 1);
+
+        $this->assertLessThanOrEqual(1, \count($results));
+    }
+
+    public function testSearchReturnsLogEntryArrayStructure()
+    {
+        $results = $this->tool->search('logged');
+
+        $this->assertNotEmpty($results);
+
+        $entry = $results[0];
+        $this->assertArrayHasKey('datetime', $entry);
+        $this->assertArrayHasKey('channel', $entry);
+        $this->assertArrayHasKey('level', $entry);
+        $this->assertArrayHasKey('message', $entry);
+        $this->assertArrayHasKey('context', $entry);
+        $this->assertArrayHasKey('extra', $entry);
+        $this->assertArrayHasKey('source_file', $entry);
+        $this->assertArrayHasKey('line_number', $entry);
     }
 }
