@@ -18,5 +18,8 @@ use Symfony\AI\Platform\Result\DeferredResult;
  */
 interface ScorerInterface
 {
+    /**
+     * @param array<string, mixed> $options
+     */
     public function score(DeferredResult $deferredResult, array $options = []): float;
 }

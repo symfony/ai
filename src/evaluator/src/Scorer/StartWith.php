@@ -25,6 +25,9 @@ final class StartWith extends AbstractScorer
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     public function score(DeferredResult $deferredResult, array $options = []): float
     {
         $text = $deferredResult->asText();

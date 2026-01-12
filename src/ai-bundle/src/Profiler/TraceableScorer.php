@@ -45,6 +45,9 @@ final class TraceableScorer implements ScorerInterface
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     public function score(DeferredResult $deferredResult, array $options = []): float
     {
         $score = $this->scorer->score($deferredResult, $options);

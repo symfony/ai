@@ -11,15 +11,9 @@
 
 namespace Symfony\AI\Evaluator;
 
-use Symfony\AI\Platform\Result\DeferredResult;
-
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-interface EvaluatorInterface
+enum EvaluatorStrategy: string
 {
-    /**
-     * @param array<string, mixed> $options
-     */
-    public function evaluate(DeferredResult $deferredResult, array $options = []): float;
 }

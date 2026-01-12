@@ -13,18 +13,18 @@ namespace Symfony\AI\Evaluator\Tests\Scorer;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Evaluator\Scorer\StartWith;
+use Symfony\AI\Evaluator\Scorer\EndWith;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\TextResult;
 
-final class StartWithTest extends TestCase
+final class EndWithTest extends TestCase
 {
     #[DataProvider('provideContext')]
     public function testScore(DeferredResult $deferredResult, float $expectedScore)
     {
-        $scorer = new StartWith('bar');
+        $scorer = new EndWith('bar');
 
         $score = $scorer->score($deferredResult);
 

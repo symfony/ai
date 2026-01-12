@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.1
----
+0.12
+----
 
  * Add the component

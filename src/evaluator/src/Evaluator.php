@@ -19,12 +19,16 @@ use Symfony\AI\Platform\Result\DeferredResult;
 final class Evaluator implements EvaluatorInterface
 {
     /**
-     * @var ScorerInterface[]
+     * @param iterable<ScorerInterface> $scorers
      */
-    public function __construct(private readonly iterable $scorers)
-    {
+    public function __construct(
+        private readonly iterable $scorers,
+    ) {
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     public function evaluate(DeferredResult $deferredResult, array $options = []): float
     {
         $score = 0.0;

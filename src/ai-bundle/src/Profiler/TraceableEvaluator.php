@@ -26,6 +26,9 @@ use Symfony\Component\Clock\MonotonicClock;
  */
 final class TraceableEvaluator implements EvaluatorInterface
 {
+    /**
+     * @var EvaluatorData|array{}
+     */
     public array $data = [];
 
     public function __construct(
@@ -34,6 +37,9 @@ final class TraceableEvaluator implements EvaluatorInterface
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     public function evaluate(DeferredResult $deferredResult, array $options = []): float
     {
         $score = $this->evaluator->evaluate($deferredResult, $options);
