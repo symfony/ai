@@ -16,12 +16,12 @@ use Symfony\AI\Platform\Result\DeferredResult;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final readonly class Evaluator implements EvaluatorInterface
+final class Evaluator implements EvaluatorInterface
 {
     /**
      * @var ScorerInterface[]
      */
-    public function __construct(private iterable $scorers)
+    public function __construct(private readonly iterable $scorers)
     {
     }
 
