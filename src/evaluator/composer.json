@@ -34,7 +34,9 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Symfony\\AI\\Evaluator\\Tests\\": "tests/"
+            "Symfony\\AI\\Evaluator\\Tests\\": "tests/",
+            "Symfony\\AI\\Fixtures\\": "../../fixtures",
+            "Symfony\\AI\\PHPStan\\": "../../.phpstan/"
         }
     },
     "config": {
