@@ -7,11 +7,16 @@
     ],
     "require-dev": {
         "php": ">=8.2",
-        "deptrac/deptrac": "^4.2",
         "php-cs-fixer/shim": "^3.91.2",
+        "phpat/phpat": "^0.12",
         "symfony/console": "^5.4|^6.4|^7.4|^8.0",
         "symfony/filesystem": "^5.4|^6.4|^7.4|^8.0",
         "symfony/finder": "^5.4|^6.4|^7.4|^8.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\Tests\\": "tests/"
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true,

@@ -18,8 +18,8 @@ env:
     REQUIRED_PHP_EXTENSIONS: 'mongodb, redis'
 
 jobs:
-    deptrac:
-        name: deptrac
+    phpat:
+        name: phpat
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -28,7 +28,6 @@ jobs:
             - name: Configure environment
               run: |
                   echo COLUMNS=120 >> $GITHUB_ENV
-                  echo COMPOSER_UP='composer update --prefer-lowest --no-progress --no-interaction --ansi' >> $GITHUB_ENV
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
@@ -55,5 +54,5 @@ jobs:
             - name: Build root packages
               run: php .github/build-packages.php
 
-            - name: Run deptrac/deptrac
-              run: $COMPOSER_UP && vendor/bin/deptrac
+            - name: Run phpat/phpat
+              run: vendor/bin/phpstan analyse -c phpstan-architecture.neon --no-progress
