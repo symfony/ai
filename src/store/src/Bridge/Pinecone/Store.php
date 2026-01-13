@@ -84,6 +84,34 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->getVectors()->upsert($vectors, $this->namespace);
     }
 
+    /**
+     * @param array{
+     *     deleteAll?: bool,
+     * } $options
+     */
+    public function remove(string|array $ids, array $options = []): void
+    {
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        // The API allows a maximum of 1000 ids per request
+        $chunksIds = array_chunk($ids, 1000);
+
+        $vectorResource = $this->pinecone
+            ->data()
+            ->vectors();
+
+        foreach ($chunksIds as $chunkIds) {
+            $vectorResource->delete(
+                $chunkIds,
+                $this->namespace,
+                $options['deleteAll'] ?? false,
+                $this->filter,
+            );
+        }
+    }
+
     public function query(Vector $vector, array $options = []): iterable
     {
         $result = $this->getVectors()->query(

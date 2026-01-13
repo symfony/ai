@@ -15,6 +15,7 @@ use Codewithkyrian\ChromaDB\Client;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -51,6 +52,11 @@ final class Store implements StoreInterface
 
         // @phpstan-ignore argument.type (chromadb-php library has incorrect PHPDoc type for $metadatas parameter)
         $collection->add($ids, $vectors, $metadata, $originalDocuments);
+    }
+
+    public function remove(string|array $ids, array $options = []): void
+    {
+        throw new LogicException('Method not implemented yet.');
     }
 
     /**
