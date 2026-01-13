@@ -12,7 +12,6 @@
 namespace Symfony\AI\Store\Bridge\Pinecone;
 
 use Probots\Pinecone\Client;
-use Probots\Pinecone\Requests\Exceptions\MissingHostException;
 use Probots\Pinecone\Resources\Data\VectorResource;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;

@@ -26,8 +26,7 @@ interface StoreInterface
 
     /**
      * @param VectorDocument|VectorDocument[] $documents
-     *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>            $options
      */
     public function remove(VectorDocument|array $documents, array $options = []): void;
 

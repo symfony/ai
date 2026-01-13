@@ -191,7 +191,7 @@ final class StoreTest extends TestCase
             ->method('delete');
 
         $documents = [];
-        for ($i = 0; $i < 1001; $i++) {
+        for ($i = 0; $i < 1001; ++$i) {
             $documents[] = new VectorDocument(Uuid::v4(), new NullVector());
         }
 
