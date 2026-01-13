@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.3
+---
+
+ * Add `ToolsListCommand` to list all available tools
+
 0.2
 ---
 

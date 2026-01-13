@@ -47,6 +47,11 @@ bin/mate clear-cache
 # Debug commands
 bin/mate debug:capabilities      # Show all MCP capabilities
 bin/mate debug:extensions        # Show extension discovery and loading status
+
+# Tool introspection
+bin/mate mcp:tools:list          # List all available MCP tools
+bin/mate mcp:tools:list --filter="search*"  # Filter tools by name pattern
+bin/mate mcp:tools:list --format=json       # Output in JSON format
 ```
 
 ## Architecture
@@ -58,7 +63,7 @@ bin/mate debug:extensions        # Show extension discovery and loading status
 - **FilteredDiscoveryLoader**: Loads MCP capabilities with feature filtering
 
 ### Key Directories
-- `src/Command/`: CLI commands (serve, init, discover, clear-cache, debug:capabilities, debug:extensions)
+- `src/Command/`: CLI commands (serve, init, discover, clear-cache, debug:capabilities, debug:extensions, mcp:tools:list)
 - `src/Container/`: DI container management
 - `src/Discovery/`: Extension discovery system
 - `src/Capability/`: Built-in MCP tools

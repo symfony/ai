@@ -369,6 +369,41 @@ Commands
         # JSON output for scripting
         $ vendor/bin/mate debug:extensions --format=json
 
+``mate mcp:tools:list``
+    List all available MCP tools with their metadata. This command provides a compact
+    overview of tools for quick reference and filtering.
+
+    **Options:**
+
+    ``--filter=PATTERN``
+        Filter tools by name pattern (supports wildcards like ``search*`` or ``*logs``)
+
+    ``--extension=EXTENSION``
+        Filter tools by extension package name
+
+    ``--format=FORMAT``
+        Output format: ``table`` (default) or ``json``
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # List all tools
+        $ vendor/bin/mate mcp:tools:list
+
+        # Filter by name pattern
+        $ vendor/bin/mate mcp:tools:list --filter="monolog*"
+        $ vendor/bin/mate mcp:tools:list --filter="*search"
+
+        # Show tools from specific extension
+        $ vendor/bin/mate mcp:tools:list --extension=symfony/ai-monolog-mate-extension
+
+        # JSON output for scripting
+        $ vendor/bin/mate mcp:tools:list --format=json
+
+        # Combined filters
+        $ vendor/bin/mate mcp:tools:list --extension=symfony/ai-monolog-mate-extension --filter="*search"
+
 Security
 --------
 

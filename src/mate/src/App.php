@@ -21,6 +21,7 @@ use Symfony\AI\Mate\Command\DiscoverCommand;
 use Symfony\AI\Mate\Command\InitCommand;
 use Symfony\AI\Mate\Command\ServeCommand;
 use Symfony\AI\Mate\Command\StopCommand;
+use Symfony\AI\Mate\Command\ToolsListCommand;
 use Symfony\AI\Mate\Exception\UnsupportedVersionException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
@@ -55,6 +56,7 @@ final class App
         self::addCommand($application, new DebugCapabilitiesCommand($logger, $container));
         self::addCommand($application, new DebugExtensionsCommand($logger, $container));
         self::addCommand($application, new ClearCacheCommand($cacheDir));
+        self::addCommand($application, new ToolsListCommand($logger, $container));
 
         if (\defined('SIGUSR1') && class_exists(RunnerControl::class)) {
             $application->getSignalRegistry()->register(\SIGUSR1, function () {
