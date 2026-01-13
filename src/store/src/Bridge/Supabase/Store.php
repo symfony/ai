@@ -93,6 +93,11 @@ final class Store implements StoreInterface
         }
     }
 
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        // TODO: Implement remove() method.
+    }
+
     /**
      * @param array{
      *      max_items?: int,

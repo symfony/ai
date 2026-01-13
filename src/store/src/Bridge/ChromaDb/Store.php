@@ -54,6 +54,11 @@ final class Store implements StoreInterface
         $collection->add($ids, $vectors, $metadata, $originalDocuments);
     }
 
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        // TODO: Implement remove() method.
+    }
+
     /**
      * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, queryTexts?: array<string>} $options
      */

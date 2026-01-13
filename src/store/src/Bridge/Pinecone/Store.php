@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Pinecone;
 
 use Probots\Pinecone\Client;
+use Probots\Pinecone\Requests\Exceptions\MissingHostException;
 use Probots\Pinecone\Resources\Data\VectorResource;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
@@ -83,6 +84,42 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $this->getVectors()->upsert($vectors, $this->namespace);
+    }
+
+    /**
+     * @param array{
+     *     deleteAll?: bool,
+     * } $options
+     */
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
+        if ([] === $documents) {
+            return;
+        }
+
+        $ids = array_map(function (VectorDocument $document) {
+            return (string) $document->id;
+        }, $documents);
+
+        // The API allows a maximum of 1000 ids per request
+        $chunksIds = array_chunk($ids, 1000);
+
+        $vectorResource = $this->pinecone
+            ->data()
+            ->vectors();
+
+        foreach ($chunksIds as $chunkIds) {
+            $vectorResource->delete(
+                $chunkIds,
+                $this->namespace,
+                $options['deleteAll'] ?? false,
+                $this->filter,
+            );
+        }
     }
 
     public function query(Vector $vector, array $options = []): iterable

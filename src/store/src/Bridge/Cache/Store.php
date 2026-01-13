@@ -71,6 +71,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->cache->save($cacheItem);
     }
 
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        // TODO: Implement remove() method.
+    }
+
     /**
      * @param array{
      *     maxItems?: positive-int,

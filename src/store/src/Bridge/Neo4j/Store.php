@@ -69,6 +69,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        // TODO: Implement remove() method.
+    }
+
     public function query(Vector $vector, array $options = []): iterable
     {
         $response = $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
