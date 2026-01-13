@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Mate\Tests\Discovery;
 
-use Mcp\Capability\Discovery\Discoverer;
+use Mcp\Capability\Discovery\DiscovererInterface;
 use Mcp\Capability\Discovery\DiscoveryState;
 use Mcp\Capability\Registry\PromptReference;
 use Mcp\Capability\Registry\ResourceReference;
@@ -40,7 +40,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             tools: ['tool1' => $tool1, 'tool2' => $tool2],
         );
 
-        $discoverer = $this->createMock(Discoverer::class);
+        $discoverer = $this->createMock(DiscovererInterface::class);
         $discoverer->expects($this->once())
             ->method('discover')
             ->with('/base/path', ['src'])
@@ -82,7 +82,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             tools: ['tool1' => $tool1, 'tool2' => $tool2],
         );
 
-        $discoverer = $this->createMock(Discoverer::class);
+        $discoverer = $this->createMock(DiscovererInterface::class);
         $discoverer->expects($this->once())
             ->method('discover')
             ->willReturn($discoveryState);
@@ -131,7 +131,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             tools: ['tool1' => $tool1, 'tool2' => $tool2, 'tool3' => $tool3],
         );
 
-        $discoverer = $this->createMock(Discoverer::class);
+        $discoverer = $this->createMock(DiscovererInterface::class);
         $discoverer->expects($this->once())
             ->method('discover')
             ->willReturn($discoveryState);
@@ -181,7 +181,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             resources: ['config://resource1' => $resource1, 'config://resource2' => $resource2],
         );
 
-        $discoverer = $this->createMock(Discoverer::class);
+        $discoverer = $this->createMock(DiscovererInterface::class);
         $discoverer->expects($this->once())
             ->method('discover')
             ->willReturn($discoveryState);
@@ -228,7 +228,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             prompts: ['prompt1' => $prompt1, 'prompt2' => $prompt2],
         );
 
-        $discoverer = $this->createMock(Discoverer::class);
+        $discoverer = $this->createMock(DiscovererInterface::class);
         $discoverer->expects($this->once())
             ->method('discover')
             ->willReturn($discoveryState);
@@ -275,7 +275,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             resourceTemplates: ['template1' => $template1, 'template2' => $template2],
         );
 
-        $discoverer = $this->createMock(Discoverer::class);
+        $discoverer = $this->createMock(DiscovererInterface::class);
         $discoverer->expects($this->once())
             ->method('discover')
             ->willReturn($discoveryState);
@@ -321,7 +321,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             tools: ['tool1' => $tool],
         );
 
-        $discoverer = $this->createMock(Discoverer::class);
+        $discoverer = $this->createMock(DiscovererInterface::class);
         $discoverer->expects($this->once())
             ->method('discover')
             ->willReturn($discoveryState);
@@ -361,7 +361,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
         $discoveryStateA = new DiscoveryState(tools: ['tool1' => $tool1]);
         $discoveryStateB = new DiscoveryState(tools: ['tool2' => $tool2]);
 
-        $discoverer = $this->createMock(Discoverer::class);
+        $discoverer = $this->createMock(DiscovererInterface::class);
         $discoverer->expects($this->exactly(2))
             ->method('discover')
             ->willReturnOnConsecutiveCalls($discoveryStateA, $discoveryStateB);
@@ -405,7 +405,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             tools: ['tool1' => $tool],
         );
 
-        $discoverer = $this->createMock(Discoverer::class);
+        $discoverer = $this->createMock(DiscovererInterface::class);
         $discoverer->expects($this->once())
             ->method('discover')
             ->willReturn($discoveryState);

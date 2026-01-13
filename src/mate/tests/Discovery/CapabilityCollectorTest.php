@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Tests\Discovery;
 
+use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
@@ -29,11 +30,13 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesReturnsStructure()
     {
+        $logger = new NullLogger();
         $collector = new CapabilityCollector(
             $this->fixturesDir.'/with-ai-mate-config',
             [],
             [],
-            new NullLogger()
+            new Discoverer($logger),
+            $logger
         );
 
         $extension = [
@@ -51,11 +54,13 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesWithEmptyDirectories()
     {
+        $logger = new NullLogger();
         $collector = new CapabilityCollector(
             $this->fixturesDir.'/with-ai-mate-config',
             [],
             [],
-            new NullLogger()
+            new Discoverer($logger),
+            $logger
         );
 
         $extension = [
@@ -74,11 +79,13 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesWithIncludes()
     {
+        $logger = new NullLogger();
         $collector = new CapabilityCollector(
             $this->fixturesDir.'/with-ai-mate-config',
             [],
             [],
-            new NullLogger()
+            new Discoverer($logger),
+            $logger
         );
 
         $extension = [
@@ -96,11 +103,13 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesFormatsTools()
     {
+        $logger = new NullLogger();
         $collector = new CapabilityCollector(
             $this->fixturesDir.'/with-ai-mate-config',
             [],
             [],
-            new NullLogger()
+            new Discoverer($logger),
+            $logger
         );
 
         $extension = [
@@ -122,11 +131,13 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesFormatsResources()
     {
+        $logger = new NullLogger();
         $collector = new CapabilityCollector(
             $this->fixturesDir.'/with-ai-mate-config',
             [],
             [],
-            new NullLogger()
+            new Discoverer($logger),
+            $logger
         );
 
         $extension = [
@@ -149,11 +160,13 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesFormatsPrompts()
     {
+        $logger = new NullLogger();
         $collector = new CapabilityCollector(
             $this->fixturesDir.'/with-ai-mate-config',
             [],
             [],
-            new NullLogger()
+            new Discoverer($logger),
+            $logger
         );
 
         $extension = [
@@ -175,11 +188,13 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesFormatsResourceTemplates()
     {
+        $logger = new NullLogger();
         $collector = new CapabilityCollector(
             $this->fixturesDir.'/with-ai-mate-config',
             [],
             [],
-            new NullLogger()
+            new Discoverer($logger),
+            $logger
         );
 
         $extension = [
