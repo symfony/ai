@@ -1,0 +1,21 @@
+includes:
+    - vendor/phpat/phpat/extension.neon
+
+parameters:
+    customRulesetUsed: true
+    paths:
+        - src
+        - tests/Architecture
+    excludePaths:
+        - src/*/tests/*
+        - src/*/src/Bridge/*/tests/*
+    phpat:
+        ignore_doc_comments: false
+        ignore_built_in_classes: true
+        show_rule_names: true
+
+services:
+    -
+        class: Symfony\AI\Tests\Architecture\ArchitectureTest
+        tags:
+            - phpat.test
