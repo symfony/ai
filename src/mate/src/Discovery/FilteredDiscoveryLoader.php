@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Mate\Discovery;
 
-use Mcp\Capability\Discovery\Discoverer;
+use Mcp\Capability\Discovery\DiscovererInterface;
 use Mcp\Capability\Discovery\DiscoveryState;
 use Mcp\Capability\Registry\Loader\LoaderInterface;
 use Mcp\Capability\RegistryInterface;
@@ -33,7 +33,7 @@ final class FilteredDiscoveryLoader implements LoaderInterface
         private string $basePath,
         private array $extensions,
         private array $disabledFeatures,
-        private Discoverer $discoverer,
+        private DiscovererInterface $discoverer,
         private LoggerInterface $logger,
     ) {
     }

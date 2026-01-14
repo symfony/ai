@@ -31,7 +31,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "mcp/sdk": "^0.2",
+        "mcp/sdk": "^0.3",
         "psr/log": "^2.0|^3.0",
         "symfony/config": "^5.4|^6.4|^7.3|^8.0",
         "symfony/console": "^5.4|^6.4|^7.3|^8.0",
