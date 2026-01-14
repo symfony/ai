@@ -14,7 +14,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
 use Symfony\AI\Platform\Result\DeferredResult;
-use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\AI\Store\Exception\ExceptionInterface as StoreException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -96,7 +96,7 @@ function output(): ConsoleOutput
     return new ConsoleOutput($verbosity);
 }
 
-function print_token_usage(?TokenUsage $tokenUsage): void
+function print_token_usage(?TokenUsageInterface $tokenUsage): void
 {
     if (null === $tokenUsage) {
         output()->writeln('<error>No token usage information available.</error>');

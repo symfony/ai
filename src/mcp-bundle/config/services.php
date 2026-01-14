@@ -23,7 +23,13 @@ return static function (ContainerConfigurator $container): void {
 
         ->set('mcp.server.builder', Builder::class)
             ->factory([Server::class, 'builder'])
-            ->call('setServerInfo', [param('mcp.app'), param('mcp.version')])
+            ->call('setServerInfo', [
+                param('mcp.app'),
+                param('mcp.version'),
+                param('mcp.description'),
+                param('mcp.icons'),
+                param('mcp.website_url'),
+            ])
             ->call('setPaginationLimit', [param('mcp.pagination_limit')])
             ->call('setInstructions', [param('mcp.instructions')])
             ->call('setEventDispatcher', [service('event_dispatcher')])

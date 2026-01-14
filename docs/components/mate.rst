@@ -369,6 +369,68 @@ Commands
         # JSON output for scripting
         $ vendor/bin/mate debug:extensions --format=json
 
+``mate mcp:tools:list``
+    List all available MCP tools with their metadata. This command provides a compact
+    overview of tools for quick reference and filtering.
+
+    **Options:**
+
+    ``--filter=PATTERN``
+        Filter tools by name pattern (supports wildcards like ``search*`` or ``*logs``)
+
+    ``--extension=EXTENSION``
+        Filter tools by extension package name
+
+    ``--format=FORMAT``
+        Output format: ``table`` (default) or ``json``
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # List all tools
+        $ vendor/bin/mate mcp:tools:list
+
+        # Filter by name pattern
+        $ vendor/bin/mate mcp:tools:list --filter="monolog*"
+        $ vendor/bin/mate mcp:tools:list --filter="*search"
+
+        # Show tools from specific extension
+        $ vendor/bin/mate mcp:tools:list --extension=symfony/ai-monolog-mate-extension
+
+        # JSON output for scripting
+        $ vendor/bin/mate mcp:tools:list --format=json
+
+        # Combined filters
+        $ vendor/bin/mate mcp:tools:list --extension=symfony/ai-monolog-mate-extension --filter="*search"
+
+``mate mcp:tools:inspect``
+    Display detailed information about a specific MCP tool including its full JSON schema.
+    This command is useful for understanding tool parameters and requirements.
+
+    **Arguments:**
+
+    ``tool-name``
+        Name of the tool to inspect (required)
+
+    **Options:**
+
+    ``--format=FORMAT``
+        Output format: ``text`` (default) or ``json``
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # Inspect a specific tool
+        $ vendor/bin/mate mcp:tools:inspect php-version
+
+        # Inspect extension tool
+        $ vendor/bin/mate mcp:tools:inspect search-logs
+
+        # JSON output for scripting
+        $ vendor/bin/mate mcp:tools:inspect php-version --format=json
+
 Security
 --------
 
