@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.2
+0.3
 ---
 
  * Add profiler data access capabilities

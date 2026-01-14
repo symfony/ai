@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter;
 
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
+use Symfony\Component\HttpKernel\DataCollector\ExceptionDataCollector;
 
 /**
  * Formats exception collector data.
@@ -21,7 +22,7 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
  *
  * @internal
  *
- * @implements CollectorFormatterInterface<DataCollectorInterface>
+ * @implements CollectorFormatterInterface<ExceptionDataCollector>
  */
 final class ExceptionCollectorFormatter implements CollectorFormatterInterface
 {
@@ -30,71 +31,46 @@ final class ExceptionCollectorFormatter implements CollectorFormatterInterface
         return 'exception';
     }
 
-    public function format(DataCollectorInterface $collectorData): array
+    public function format(DataCollectorInterface $collector): array
     {
-        if (!method_exists($collectorData, 'hasException') || !$collectorData->hasException()) {
+        \assert($collector instanceof ExceptionDataCollector);
+
+        if (!$collector->hasException()) {
             return [
                 'has_exception' => false,
             ];
         }
 
-        $formatted = [
+        $exception = $collector->getException();
+
+        return [
             'has_exception' => true,
+            'message' => $collector->getMessage(),
+            'status_code' => $collector->getStatusCode(),
+            'class' => $exception->getClass(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'trace' => $this->formatTrace($exception->getTrace()),
         ];
-
-        if (method_exists($collectorData, 'getMessage')) {
-            $formatted['message'] = $collectorData->getMessage();
-        }
-
-        if (method_exists($collectorData, 'getException')) {
-            $exception = $collectorData->getException();
-            if (\is_object($exception)) {
-                if (method_exists($exception, 'getClass')) {
-                    $formatted['class'] = $exception->getClass();
-                }
-                if (method_exists($exception, 'getFile')) {
-                    $formatted['file'] = $exception->getFile();
-                }
-                if (method_exists($exception, 'getLine')) {
-                    $formatted['line'] = $exception->getLine();
-                }
-                if (method_exists($exception, 'getTrace')) {
-                    $formatted['trace'] = $this->formatTrace($exception->getTrace());
-                }
-            }
-        }
-
-        if (method_exists($collectorData, 'getStatusCode')) {
-            $formatted['status_code'] = $collectorData->getStatusCode();
-        }
-
-        return $formatted;
     }
 
-    public function getSummary(DataCollectorInterface $collectorData): array
+    public function getSummary(DataCollectorInterface $collector): array
     {
-        if (!method_exists($collectorData, 'hasException') || !$collectorData->hasException()) {
+        \assert($collector instanceof ExceptionDataCollector);
+
+        if (!$collector->hasException()) {
             return [
                 'has_exception' => false,
             ];
         }
 
-        $summary = [
+        $exception = $collector->getException();
+
+        return [
             'has_exception' => true,
+            'message' => $collector->getMessage(),
+            'class' => $exception->getClass(),
         ];
-
-        if (method_exists($collectorData, 'getMessage')) {
-            $summary['message'] = $collectorData->getMessage();
-        }
-
-        if (method_exists($collectorData, 'getException')) {
-            $exception = $collectorData->getException();
-            if (\is_object($exception) && method_exists($exception, 'getClass')) {
-                $summary['class'] = $exception->getClass();
-            }
-        }
-
-        return $summary;
     }
 
     /**

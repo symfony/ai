@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter;
 
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
+use Symfony\Component\HttpKernel\DataCollector\RequestDataCollector;
 
 /**
  * Formats HTTP request collector data with security sanitization.
@@ -27,7 +28,7 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
  *
  * @internal
  *
- * @implements CollectorFormatterInterface<DataCollectorInterface>
+ * @implements CollectorFormatterInterface<RequestDataCollector>
  */
 final class RequestCollectorFormatter implements CollectorFormatterInterface
 {
@@ -63,6 +64,8 @@ final class RequestCollectorFormatter implements CollectorFormatterInterface
 
     public function format(DataCollectorInterface $collectorData): array
     {
+        \assert($collectorData instanceof RequestDataCollector);
+
         $class = new \ReflectionClass($collectorData);
         $property = $class->getProperty('data');
         $data = $property->getValue($collectorData);
@@ -74,29 +77,15 @@ final class RequestCollectorFormatter implements CollectorFormatterInterface
 
     public function getSummary(DataCollectorInterface $collectorData): array
     {
-        $summary = [];
+        \assert($collectorData instanceof RequestDataCollector);
 
-        if (method_exists($collectorData, 'getMethod')) {
-            $summary['method'] = $collectorData->getMethod();
-        }
-
-        if (method_exists($collectorData, 'getPathInfo')) {
-            $summary['path'] = $collectorData->getPathInfo();
-        }
-
-        if (method_exists($collectorData, 'getRoute')) {
-            $summary['route'] = $collectorData->getRoute();
-        }
-
-        if (method_exists($collectorData, 'getStatusCode')) {
-            $summary['status_code'] = $collectorData->getStatusCode();
-        }
-
-        if (method_exists($collectorData, 'getContentType')) {
-            $summary['content_type'] = $collectorData->getContentType();
-        }
-
-        return $summary;
+        return [
+            'method' => $collectorData->getMethod(),
+            'path' => $collectorData->getPathInfo(),
+            'route' => $collectorData->getRoute(),
+            'status_code' => $collectorData->getStatusCode(),
+            'content_type' => $collectorData->getContentType(),
+        ];
     }
 
     /**
