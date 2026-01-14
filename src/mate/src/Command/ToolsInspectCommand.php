@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use Mcp\Capability\Discovery\Discoverer;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -63,7 +64,7 @@ class ToolsInspectCommand extends Command
         $disabledFeatures = $this->container->getParameter('mate.disabled_features') ?? [];
         \assert(\is_array($disabledFeatures));
 
-        $this->collector = new CapabilityCollector($rootDir, $extensions, $disabledFeatures, $logger);
+        $this->collector = new CapabilityCollector($rootDir, $extensions, $disabledFeatures, new Discoverer($logger), $logger);
     }
 
     public static function getDefaultName(): string
