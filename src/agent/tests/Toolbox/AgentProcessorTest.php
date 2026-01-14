@@ -31,6 +31,8 @@ use Symfony\AI\Platform\Result\StreamResult as GenericStreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
@@ -281,5 +283,91 @@ class AgentProcessorTest extends TestCase
         $this->assertTrue($metadata->has('sources'));
         $this->assertCount(2, $metadata->get('sources'));
         $this->assertSame([$source1, $source2], $metadata->get('sources'));
+    }
+
+    public function testMetadataGetsPropagatedInStreamingWithToolCalls()
+    {
+        $toolCall = new ToolCall('call_meta_1', 'tool_meta', ['foo' => 'bar']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $messageBag = new MessageBag();
+
+        $generator = (function () use ($toolCall) {
+            yield 'partial-1';
+            yield 'partial-2';
+            yield new ToolCallResult($toolCall);
+        })();
+
+        $result = new GenericStreamResult($generator);
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturnCallback(function () {
+                $final = new TextResult('Final content after tool');
+                $final->getMetadata()->add('foo', 'bar');
+
+                return $final;
+            });
+
+        $processor = new AgentProcessor($toolbox);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+        iterator_to_array($output->getResult()->getContent());
+
+        $metadata = $output->getResult()->getMetadata();
+        $this->assertTrue($metadata->has('foo'));
+        $this->assertSame('bar', $metadata->get('foo'));
+    }
+
+    public function testUsageMetadataGetsPropagatedInStreaming()
+    {
+        $toolCall = new ToolCall('call_meta_1', 'tool_meta', ['foo' => 'bar']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $generator = (function () use ($toolCall) {
+            yield 'partial-1';
+            yield 'partial-2';
+            yield new ToolCallResult($toolCall);
+        })();
+
+        $result = new GenericStreamResult($generator);
+        $result->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturnCallback(function () {
+                $toolResult = new TextResult('Final content after tool');
+                $toolResult->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+                return $toolResult;
+            });
+
+        $processor = new AgentProcessor($toolbox);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, new MessageBag());
+        $processor->processOutput($output);
+
+        // Consume the stream to trigger
+        iterator_to_array($output->getResult()->getContent());
+
+        $usage = $output->getResult()->getMetadata()->get('token_usage');
+        $this->assertInstanceOf(TokenUsageAggregation::class, $usage);
+        $this->assertSame(20, $usage->getTotalTokens());
     }
 }

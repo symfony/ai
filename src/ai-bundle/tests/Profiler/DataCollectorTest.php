@@ -100,6 +100,32 @@ class DataCollectorTest extends TestCase
         $this->assertNull($dataCollector->getPlatformCalls()[0]['result']);
     }
 
+    public function testPropagatesMetadataForStreamingResponse()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
+
+        $originalStream = new StreamResult(
+            (function () {
+                yield 'foo';
+                yield 'bar';
+            })(),
+        );
+        $originalStream->getMetadata()->add('request_id', 'req-123');
+
+        $platform->method('invoke')->willReturn(
+            new DeferredResult(new PlainConverter($originalStream), $this->createStub(RawResultInterface::class))
+        );
+
+        $deferred = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
+
+        $this->assertSame('foobar', implode('', iterator_to_array($deferred->asStream())));
+
+        $this->assertTrue($deferred->getResult()->getMetadata()->has('request_id'));
+        $this->assertSame('req-123', $deferred->getResult()->getMetadata()->get('request_id'));
+    }
+
     public function testCollectsDataForMessageStore()
     {
         $traceableMessageStore = new TraceableMessageStore(new InMemoryStore(), new MonotonicClock());

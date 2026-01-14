@@ -81,7 +81,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         if ($result instanceof GenericStreamResponse) {
             $output->setResult(
                 new ToolboxStreamResponse(
-                    $result->getContent(),
+                    $result,
                     fn (ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null) => $this->handleToolCallsCallback($output, $result, $streamedAssistantResponse)
                 )
             );
