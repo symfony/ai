@@ -208,7 +208,7 @@ HELP
             return;
         }
 
-        $table = new Table($output = $io);
+        $table = new Table($io);
         $table->setHeaders(['Tool Name', 'Description', 'Handler', 'Extension']);
 
         foreach ($tools as $toolName => $toolData) {
