@@ -1935,6 +1935,10 @@ final class AiBundle extends AbstractBundle
     private function processMessageStoreConfig(string $type, array $messageStores, ContainerBuilder $container): void
     {
         if ('cache' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-cache-message-store', CacheMessageStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Cache message store configuration requires "symfony/ai-cache-message-store" package. Try running "composer require symfony/ai-cache-message-store".');
+            }
+
             foreach ($messageStores as $name => $messageStore) {
                 $arguments = [
                     new Reference($messageStore['service']),
@@ -1960,6 +1964,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('cloudflare' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-cloudflare-message-store', CloudflareMessageStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Cloudflare message store configuration requires "symfony/ai-cloudflare-message-store" package. Try running "composer require symfony/ai-cloudflare-message-store".');
+            }
+
             foreach ($messageStores as $name => $messageStore) {
                 $arguments = [
                     new Reference('http_client'),
@@ -1988,6 +1996,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('doctrine' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-doctrine-message-store', DoctrineDbalMessageStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Doctrine Dbal message store configuration requires "symfony/ai-doctrine-message-store" package. Try running "composer require symfony/ai-doctrine-message-store".');
+            }
+
             foreach ($messageStores['dbal'] ?? [] as $name => $dbalMessageStore) {
                 $definition = new Definition(DoctrineDbalMessageStore::class);
                 $definition
@@ -2008,6 +2020,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('meilisearch' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-meilisearch-message-store', MeilisearchMessageStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Meilisearch message store configuration requires "symfony/ai-meilisearch-message-store" package. Try running "composer require symfony/ai-meilisearch-message-store".');
+            }
+
             foreach ($messageStores as $name => $messageStore) {
                 $definition = new Definition(MeilisearchMessageStore::class);
                 $definition
@@ -2046,6 +2062,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('mongodb' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-mongo-db-message-store', MongoDbMessageStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('MongoDb message store configuration requires "symfony/ai-mongo-db-message-store" package. Try running "composer require symfony/ai-mongo-db-message-store".');
+            }
+
             foreach ($messageStores as $name => $messageStore) {
                 $definition = new Definition(MongoDbMessageStore::class);
                 $definition
@@ -2067,6 +2087,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('pogocache' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-pogocache-message-store', PogocacheMessageStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Pogocache message store configuration requires "symfony/ai-pogocache-message-store" package. Try running "composer require symfony/ai-pogocache-message-store".');
+            }
+
             foreach ($messageStores as $name => $messageStore) {
                 $definition = new Definition(PogocacheMessageStore::class);
                 $definition
@@ -2089,6 +2113,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('redis' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-redis-message-store', RedisMessageStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Redis message store configuration requires "symfony/ai-redis-message-store" package. Try running "composer require symfony/ai-redis-message-store".');
+            }
+
             foreach ($messageStores as $name => $messageStore) {
                 if (isset($messageStore['client'])) {
                     $redisClient = new Reference($messageStore['client']);
@@ -2116,6 +2144,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('session' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-session-message-store', SessionMessageStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Session message store configuration requires "symfony/ai-session-message-store" package. Try running "composer require symfony/ai-session-message-store".');
+            }
+
             foreach ($messageStores as $name => $messageStore) {
                 $definition = new Definition(SessionMessageStore::class);
                 $definition
@@ -2135,6 +2167,10 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('surrealdb' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-surreal-db-message-store', SurrealDbMessageStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('SurrealDb message store configuration requires "symfony/ai-surreal-db-message-store" package. Try running "composer require symfony/ai-surreal-db-message-store".');
+            }
+
             foreach ($messageStores as $name => $messageStore) {
                 $arguments = [
                     new Reference('http_client'),
