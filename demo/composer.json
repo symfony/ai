@@ -103,6 +103,7 @@
             "require": "8.0.*"
         },
         "ai-mate": {
+            "extension": false,
             "scan-dirs": [
                 "mate/src"
             ],

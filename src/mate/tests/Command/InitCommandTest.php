@@ -130,6 +130,34 @@ final class InitCommandTest extends TestCase
         $this->assertFileExists($this->tempDir.'/mate/config.php');
     }
 
+    public function testSetsExtensionFalseByDefault()
+    {
+        // Create composer.json without ai-mate config
+        file_put_contents($this->tempDir.'/composer.json', json_encode(['name' => 'test/package']));
+
+        $command = new InitCommand($this->tempDir);
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+        // Verify composer.json has extension: false by default
+        $composerContent = file_get_contents($this->tempDir.'/composer.json');
+        $this->assertIsString($composerContent);
+        $composerJson = json_decode($composerContent, true);
+        $this->assertIsArray($composerJson);
+        $this->assertArrayHasKey('extra', $composerJson);
+        $this->assertArrayHasKey('ai-mate', $composerJson['extra']);
+        $this->assertArrayHasKey('extension', $composerJson['extra']['ai-mate']);
+        $this->assertFalse($composerJson['extra']['ai-mate']['extension']);
+
+        // Verify note is displayed
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('extension: false', $output);
+        $this->assertStringContainsString('By default', $output);
+    }
+
     private function removeDirectory(string $dir): void
     {
         if (!is_dir($dir)) {
