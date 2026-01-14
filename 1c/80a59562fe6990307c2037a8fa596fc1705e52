@@ -1,0 +1,85 @@
+---------------------------------------------------------------------------
+
+by oesteve at 2025-12-07T00:17:38Z
+
+@chr-hertel , thanks for the feedback. Your approach with `TokenUsageAggregation` looks much cleaner and allows for the reuse of `token_usage`. 
+
+On the other side, the `TokenOutputProcessor` works well with regular results, but I can’t see how to make an `OutputProcessorInterface` work with streams. The usage is received at the end of the stream after the `processOutput` has been called.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-07T00:32:37Z
+
+Yeah, makes sense - that looks tricky - you needed to do the metadata handling at various places.
+Can we go for some kind of middle way tho - maybe skipping the processor but dropping that extra option (is it interpreted anyways?) and provide an aggregated object as `token_usage` on high level for the devs?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-20T07:57:16Z
+
+open to finish this PR @oesteve ?
+
+---------------------------------------------------------------------------
+
+by oesteve at 2025-12-20T22:04:02Z
+
+@OskarStark  Yes, I'd like to get back to this. I'll have some free time this season to make the changes. If it's a priority for you and you want to open an alternative PR, that's fine to me.
+
+---------------------------------------------------------------------------
+
+by oesteve at 2025-12-25T17:40:30Z
+
+@OskarStark @chr-hertel Finally, I had some time to come back to this. I've practically rewritten the PR. I hope this approach is interesting for you. What do you think?
+
+I also have some doubts about whether the example provides real value or just noise, since the approach is quite similar for the non-stream calls.
+
+---------------------------------------------------------------------------
+
+by oesteve at 2026-01-02T18:55:44Z
+
+Thank you for your comments, being able to contribute is truly inspiring 🙂
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-06T20:52:45Z
+
+Hi @oesteve, your work, especially the your comment about handling the cases while streaming, solved it for me:
+
+this snippet:
+```php
+        foreach ($this->generator as $chunk) {
+            if ($chunk instanceof TokenUsageInterface) {
+                $this->getMetadata()->add('token_usage', $chunk);
+                continue;
+            }
+
+            yield $chunk;
+        }
+```
+
+in the end became: https://github.com/oesteve/ai/compare/main...chr-hertel:ai:stream-listener
+(not completely done yet, but i'm quite happy how that transforms the issue, and makes it easier managable for tokens and toolcalls)
+
+---
+
+So much about "truly inspiring" - thanks for that! :pray:
+
+---------------------------------------------------------------------------
+
+by oesteve at 2026-01-08T18:21:32Z
+
+@chr-hertel, that looks really promising. An event-driven interface add more flexiblility from my point of view.
+
+It would be great to have access from the Agent layer to add a listener and receive Platform events.
+
+I'm not really sure in which direction the Agent component is going ... but implementing certain uncommon use cases like this requires forking and sending a PR. Access to these low-level events enables external implementation and simplifies the Agent logic.
+
+One last thought, could it make sense to be close to symfony/event-dispatcher-contracts?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-09T15:25:57Z
+
+@oesteve yea, thought about the EventDispatcher interface, but was a bit reluctant - injecting the dispatcher to the stream would also add a larger service dependency. maybe it's a rather small step, but i feels dangerous to enable easy container integration since the stream is something quite easy to break and performance sensitive ... but maybe that's only a documentation concern and provide users with the freedom to shoot themselves in the foot :grimacing:
+
+anyhow, that could be an easy follow-up. will wrap that up, merge your work and mine as follow up :+1:
