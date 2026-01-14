@@ -63,6 +63,11 @@ final class ComposerExtensionDiscovery
                 continue;
             }
 
+            // Skip if explicitly marked as non-extension
+            if (isset($aiMateConfig['extension']) && false === $aiMateConfig['extension']) {
+                continue;
+            }
+
             if (false !== $includeFilter && !\in_array($packageName, $includeFilter, true)) {
                 continue;
             }

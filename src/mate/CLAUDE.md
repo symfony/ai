@@ -87,6 +87,28 @@ The component includes embedded bridge packages:
 - `mate/.env`: Environment variables for mate configuration
 - `mate/src/`: Directory for user-defined MCP tools
 
+### Extension Exclusion
+
+**By default**, when you run `mate init`, the command sets `extension: false` in `composer.json`:
+
+```json
+{
+  "extra": {
+    "ai-mate": {
+      "extension": false,
+      "scan-dirs": ["mate/src"],
+      "includes": ["mate/config.php"]
+    }
+  }
+}
+```
+
+**Use Case:** This is useful when a vendor package (e.g., `sulu/sulu`) uses Mate for internal development tooling but should not be detected as a user-facing extension. When the package is installed in other projects, it will be completely hidden from extension discovery.
+
+**Creating a Mate Extension:** If you want your package to BE a Mate extension that other projects can discover and use, either:
+- Set `"extension": true` in your `composer.json`, or
+- Remove the `"extension"` field entirely (defaults to being discovered)
+
 ## Testing Architecture
 
 - Uses PHPUnit 11+ with strict configuration

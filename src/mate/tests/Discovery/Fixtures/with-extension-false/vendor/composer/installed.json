@@ -1,0 +1,22 @@
+{
+    "packages": [
+        {
+            "name": "vendor/excluded-package",
+            "extra": {
+                "ai-mate": {
+                    "extension": false,
+                    "scan-dirs": ["src"],
+                    "includes": ["config/config.php"]
+                }
+            }
+        },
+        {
+            "name": "vendor/normal-package",
+            "extra": {
+                "ai-mate": {
+                    "scan-dirs": ["src"]
+                }
+            }
+        }
+    ]
+}
