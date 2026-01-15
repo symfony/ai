@@ -93,6 +93,8 @@ final class ElevenLabsClient implements ModelClientInterface
             ? \sprintf('%s/text-to-speech/%s/stream', $this->hostUrl, $voice)
             : \sprintf('%s/text-to-speech/%s', $this->hostUrl, $voice);
 
+        unset($options['voice'], $options['stream']);
+
         return new RawHttpResult($this->httpClient->request('POST', $url, [
             'headers' => [
                 'xi-api-key' => $this->apiKey,
@@ -100,6 +102,7 @@ final class ElevenLabsClient implements ModelClientInterface
             'json' => [
                 'text' => $payload['text'],
                 'model_id' => $model->getName(),
+                ...$options,
             ],
         ]));
     }
