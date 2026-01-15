@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Metadata;
+namespace Symfony\AI\Platform\Tests\TokenUsage;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
