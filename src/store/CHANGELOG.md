@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.3
+---
+
+ * Add support for more types (`int`, `string`) on `VectorDocument` and `TextDocument`
+ * [BC BREAK] Store Bridges don't auto-cast the document `$id` property to `uuid` anymore
+
 0.2
 ---
 
