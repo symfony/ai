@@ -239,8 +239,7 @@ class AgentProcessorTest extends TestCase
 
     public function testSourcesEndUpInResultMetadataWithStreaming()
     {
-        $this->markTestSkipped('Broken with #1394 - to be fixed in a follow-up.');
-        $toolCall = new ToolCall('call_1234', 'tool_sources', ['arg1' => 'value1']); /** @phpstan-ignore deadCode.unreachable */
+        $toolCall = new ToolCall('call_1234', 'tool_sources', ['arg1' => 'value1']);
         $source1 = new Source('Relevant Article 1', 'http://example.com/article1', 'Content of article about the topic');
         $source2 = new Source('Relevant Article 2', 'http://example.com/article2', 'More content of article about the topic');
         $toolbox = $this->createMock(ToolboxInterface::class);
@@ -288,8 +287,7 @@ class AgentProcessorTest extends TestCase
 
     public function testMetadataGetsPropagatedInStreamingWithToolCalls()
     {
-        $this->markTestSkipped('Broken with #1394 - to be fixed in a follow-up.');
-        $toolCall = new ToolCall('call_meta_1', 'tool_meta', ['foo' => 'bar']); /** @phpstan-ignore deadCode.unreachable */
+        $toolCall = new ToolCall('call_meta_1', 'tool_meta', ['foo' => 'bar']);
         $toolbox = $this->createMock(ToolboxInterface::class);
         $toolbox
             ->expects($this->once())
@@ -332,8 +330,7 @@ class AgentProcessorTest extends TestCase
 
     public function testUsageMetadataGetsPropagatedInStreaming()
     {
-        $this->markTestSkipped('Broken with #1394 - to be fixed in a follow-up.');
-        $toolCall = new ToolCall('call_meta_1', 'tool_meta', ['foo' => 'bar']); /** @phpstan-ignore deadCode.unreachable */
+        $toolCall = new ToolCall('call_meta_1', 'tool_meta', ['foo' => 'bar']);
         $toolbox = $this->createMock(ToolboxInterface::class);
         $toolbox
             ->expects($this->once())
