@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.3
+---
+
+ * Add `StreamListenerInterface` to hook into response streams
+
 0.2
 ---
 

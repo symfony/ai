@@ -19,8 +19,10 @@ use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Contracts\HttpClient\ResponseInterface as SymfonyHttpResponse;
 
 final class DeferredResultTest extends TestCase
@@ -146,6 +148,22 @@ final class DeferredResultTest extends TestCase
         $deferredResult->getResult();
 
         $this->assertSame('bar', $deferredResult->getMetadata()->get('foo'));
+    }
+
+    public function testTokenUsageGetsPromotedFromStream()
+    {
+        $result = new StreamResult((function () {
+            yield 'part 1';
+            yield 'part 2';
+            yield new TokenUsage(123456);
+        })());
+
+        $deferredResult = new DeferredResult(new PlainConverter($result), new InMemoryRawResult());
+        $converted = $deferredResult->getResult();
+        iterator_to_array($converted->getContent());
+
+        $this->assertInstanceOf(TokenUsage::class, $tokenUsage = $converted->getMetadata()->get('token_usage'));
+        $this->assertSame(123456, $tokenUsage->getPromptTokens());
     }
 
     /**

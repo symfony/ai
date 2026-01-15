@@ -19,11 +19,10 @@ use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
 use Symfony\AI\Agent\Toolbox\Source\Source;
-use Symfony\AI\Agent\Toolbox\StreamResult as ToolboxStreamResponse;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\Result\StreamResult as GenericStreamResponse;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -78,12 +77,9 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
     {
         $result = $output->getResult();
 
-        if ($result instanceof GenericStreamResponse) {
-            $output->setResult(
-                new ToolboxStreamResponse(
-                    $result,
-                    fn (ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null) => $this->handleToolCallsCallback($output, $result, $streamedAssistantResponse)
-                )
+        if ($result instanceof StreamResult) {
+            $result->addListener(new StreamListener(
+                fn (ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null) => $this->handleToolCallsCallback($output, $result, $streamedAssistantResponse))
             );
 
             return;
