@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Metadata;
+namespace Symfony\AI\Platform\Tests\TokenUsage;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
@@ -68,9 +68,7 @@ class TokenUsageAggregationTest extends TestCase
 
     public function testHandlesOnlyNullValues()
     {
-        $usage1 = new TokenUsage();
-        $usage2 = new TokenUsage();
-        $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
+        $aggregation = new TokenUsageAggregation([new TokenUsage(), new TokenUsage()]);
 
         $this->assertNull($aggregation->getPromptTokens());
         $this->assertNull($aggregation->getCompletionTokens());
