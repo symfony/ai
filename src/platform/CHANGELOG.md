@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `StreamListenerInterface` to hook into response streams
+ * [BC BREAK] Change `TokenUsageAggregation::__construct()` from variadic to array
 
 0.2
 ---
