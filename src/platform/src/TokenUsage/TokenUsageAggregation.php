@@ -17,14 +17,11 @@ namespace Symfony\AI\Platform\TokenUsage;
 final class TokenUsageAggregation implements TokenUsageInterface
 {
     /**
-     * @var TokenUsageInterface[]
+     * @param TokenUsageInterface[] $tokenUsages
      */
-    private readonly array $tokenUsages;
-
     public function __construct(
-        TokenUsageInterface ...$tokenUsages,
+        private readonly array $tokenUsages,
     ) {
-        $this->tokenUsages = $tokenUsages;
     }
 
     public function getPromptTokens(): ?int

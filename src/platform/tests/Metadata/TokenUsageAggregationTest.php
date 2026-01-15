@@ -41,7 +41,7 @@ class TokenUsageAggregationTest extends TestCase
             remainingTokensMonth: 900,
             totalTokens: 21
         );
-        $aggregation = new TokenUsageAggregation($usage1, $usage2);
+        $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
 
         $this->assertSame(15, $aggregation->getPromptTokens());
         $this->assertSame(30, $aggregation->getCompletionTokens());
@@ -58,7 +58,7 @@ class TokenUsageAggregationTest extends TestCase
     {
         $usage1 = new TokenUsage(promptTokens: null, completionTokens: null, remainingTokens: null, totalTokens: null);
         $usage2 = new TokenUsage(promptTokens: 5, completionTokens: 10, remainingTokens: 25, totalTokens: 21);
-        $aggregation = new TokenUsageAggregation($usage1, $usage2);
+        $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
 
         $this->assertSame(5, $aggregation->getPromptTokens());
         $this->assertSame(10, $aggregation->getCompletionTokens());
@@ -70,7 +70,7 @@ class TokenUsageAggregationTest extends TestCase
     {
         $usage1 = new TokenUsage();
         $usage2 = new TokenUsage();
-        $aggregation = new TokenUsageAggregation($usage1, $usage2);
+        $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
 
         $this->assertNull($aggregation->getPromptTokens());
         $this->assertNull($aggregation->getCompletionTokens());

@@ -7,6 +7,16 @@ Agent
   * The `Symfony\AI\Agent\Toolbox\StreamResult` class has been removed in favor of a `StreamListener`. Checks should now target
     `Symfony\AI\Platform\Result\StreamResult` instead.
 
+Platform
+--------
+
+ * The `TokenUsageAggregation::__construct()` method signature has changed from variadic to accept an array of `TokenUsageInterface`
+
+   ```diff
+   -$aggregation = new TokenUsageAggregation($usage1, $usage2);
+   +$aggregation = new TokenUsageAggregation([$usage1, $usage2]);
+   ```
+
 UPGRADE FROM 0.1 to 0.2
 =======================
 
