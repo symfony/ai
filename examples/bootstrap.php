@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\AI\Store\Exception\ExceptionInterface as StoreException;
 use Symfony\Component\Console\Helper\Table;
@@ -118,6 +119,10 @@ function print_token_usage(?TokenUsageInterface $tokenUsage): void
         ['Total tokens', $tokenUsage->getTotalTokens() ?? $na],
     ]);
     $table->render();
+
+    if ($tokenUsage instanceof TokenUsageAggregation) {
+        output()->writeln(sprintf('<comment>Aggregated token usage from %d calls.</comment>', $tokenUsage->count()));
+    }
 }
 
 function print_vectors(DeferredResult $result): void
