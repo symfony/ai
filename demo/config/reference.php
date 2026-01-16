@@ -526,6 +526,13 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  * @psalm-type McpConfig = array{
  *     app?: scalar|null|Param, // Default: "app"
  *     version?: scalar|null|Param, // Default: "0.0.1"
+ *     description?: scalar|null|Param, // Default: null
+ *     icons?: list<array{ // Default: []
+ *         src: scalar|null|Param,
+ *         mime_type?: scalar|null|Param, // Default: null
+ *         sizes?: list<scalar|null|Param>,
+ *     }>,
+ *     website_url?: scalar|null|Param, // Default: null
  *     pagination_limit?: int|Param, // Default: 50
  *     instructions?: scalar|null|Param, // Default: null
  *     client_transports?: array{
