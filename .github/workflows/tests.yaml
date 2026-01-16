@@ -167,7 +167,6 @@ jobs:
               with:
                   working-directory: src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
                   dependency-versions: ${{ matrix.dependency-version }}
-                  ignore-cache: 'yes'
 
             - name: Run PHPUnit
               run: cd src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} && vendor/bin/phpunit
