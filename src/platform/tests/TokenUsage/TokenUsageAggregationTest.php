@@ -75,4 +75,17 @@ class TokenUsageAggregationTest extends TestCase
         $this->assertNull($aggregation->getRemainingTokens());
         $this->assertNull($aggregation->getTotalTokens());
     }
+
+    public function testCountMethod()
+    {
+        $aggregation = new TokenUsageAggregation([new TokenUsage(), new TokenUsage()]);
+
+        $this->assertSame(2, $aggregation->count());
+
+        $aggregation->add(new TokenUsage());
+        $this->assertSame(3, $aggregation->count());
+
+        $aggregation->add(new TokenUsageAggregation([new TokenUsage(), new TokenUsage()]));
+        $this->assertSame(5, $aggregation->count());
+    }
 }

@@ -20,8 +20,26 @@ final class TokenUsageAggregation implements TokenUsageInterface
      * @param TokenUsageInterface[] $tokenUsages
      */
     public function __construct(
-        private readonly array $tokenUsages,
+        private array $tokenUsages = [],
     ) {
+    }
+
+    public function add(TokenUsageInterface $tokenUsage): void
+    {
+        $this->tokenUsages[] = $tokenUsage;
+    }
+
+    public function count(): int
+    {
+        $total = 0;
+        foreach ($this->tokenUsages as $usage) {
+            ++$total;
+            if ($usage instanceof self) {
+                $total += $usage->count() - 1;
+            }
+        }
+
+        return $total;
     }
 
     public function getPromptTokens(): ?int
