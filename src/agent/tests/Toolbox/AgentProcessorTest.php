@@ -27,7 +27,7 @@ use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
-use Symfony\AI\Platform\Result\StreamResult as GenericStreamResult;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
@@ -142,7 +142,6 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', [$source1, $source2]));
 
-        $messageBag = new MessageBag();
         $result = new ToolCallResult($toolCall);
 
         $agent = $this->createMock(AgentInterface::class);
@@ -154,7 +153,7 @@ class AgentProcessorTest extends TestCase
         $processor = new AgentProcessor($toolbox, includeSources: true);
         $processor->setAgent($agent);
 
-        $output = new Output('gpt-4', $result, $messageBag);
+        $output = new Output('gpt-4', $result, new MessageBag());
 
         $processor->processOutput($output);
 
@@ -175,7 +174,6 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', [$source1, $source2]));
 
-        $messageBag = new MessageBag();
         $result = new ToolCallResult($toolCall);
 
         $agent = $this->createMock(AgentInterface::class);
@@ -187,7 +185,7 @@ class AgentProcessorTest extends TestCase
         $processor = new AgentProcessor($toolbox, includeSources: false);
         $processor->setAgent($agent);
 
-        $output = new Output('gpt-4', $result, $messageBag);
+        $output = new Output('gpt-4', $result, new MessageBag());
 
         $processor->processOutput($output);
 
@@ -211,7 +209,6 @@ class AgentProcessorTest extends TestCase
                 new ToolResult($toolCall2, 'Response based on the second article.', [$source2])
             );
 
-        $messageBag = new MessageBag();
         $result = new ToolCallResult($toolCall1);
 
         $platform = $this->createMock(PlatformInterface::class);
@@ -227,7 +224,7 @@ class AgentProcessorTest extends TestCase
         $agent = new Agent($platform, 'foo-bar', [$processor], [$processor]);
         $processor->setAgent($agent);
 
-        $output = new Output('gpt-4', $result, $messageBag);
+        $output = new Output('gpt-4', $result, new MessageBag());
 
         $processor->processOutput($output);
 
@@ -248,16 +245,11 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', [$source1, $source2]));
 
-        $messageBag = new MessageBag();
-
-        // Create a generator that yields chunks and then a ToolCallResult
-        $generator = (function () use ($toolCall) {
+        $result = new StreamResult((function () use ($toolCall) {
             yield 'chunk1';
             yield 'chunk2';
             yield new ToolCallResult($toolCall);
-        })();
-
-        $result = new GenericStreamResult($generator);
+        })());
 
         $agent = $this->createMock(AgentInterface::class);
         $agent
@@ -268,17 +260,10 @@ class AgentProcessorTest extends TestCase
         $processor = new AgentProcessor($toolbox, includeSources: true);
         $processor->setAgent($agent);
 
-        $output = new Output('gpt-4', $result, $messageBag);
-
+        $output = new Output('gpt-4', $result, new MessageBag());
         $processor->processOutput($output);
+        iterator_to_array($output->getResult()->getContent());
 
-        // Consume the stream
-        $content = '';
-        foreach ($output->getResult()->getContent() as $chunk) {
-            $content .= $chunk;
-        }
-
-        // After consuming the stream, metadata should be available
         $metadata = $output->getResult()->getMetadata();
         $this->assertTrue($metadata->has('sources'));
         $this->assertCount(2, $metadata->get('sources'));
@@ -294,15 +279,11 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Tool responded'));
 
-        $messageBag = new MessageBag();
-
-        $generator = (function () use ($toolCall) {
+        $result = new StreamResult((function () use ($toolCall) {
             yield 'partial-1';
             yield 'partial-2';
             yield new ToolCallResult($toolCall);
-        })();
-
-        $result = new GenericStreamResult($generator);
+        })());
 
         $agent = $this->createMock(AgentInterface::class);
         $agent
@@ -318,8 +299,7 @@ class AgentProcessorTest extends TestCase
         $processor = new AgentProcessor($toolbox);
         $processor->setAgent($agent);
 
-        $output = new Output('gpt-4', $result, $messageBag);
-
+        $output = new Output('gpt-4', $result, new MessageBag());
         $processor->processOutput($output);
         iterator_to_array($output->getResult()->getContent());
 
@@ -337,13 +317,11 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Tool responded'));
 
-        $generator = (function () use ($toolCall) {
+        $result = new StreamResult((function () use ($toolCall) {
             yield 'partial-1';
             yield 'partial-2';
             yield new ToolCallResult($toolCall);
-        })();
-
-        $result = new GenericStreamResult($generator);
+        })());
         $result->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
 
         $agent = $this->createMock(AgentInterface::class);
@@ -362,8 +340,6 @@ class AgentProcessorTest extends TestCase
 
         $output = new Output('gpt-4', $result, new MessageBag());
         $processor->processOutput($output);
-
-        // Consume the stream to trigger
         iterator_to_array($output->getResult()->getContent());
 
         $usage = $output->getResult()->getMetadata()->get('token_usage');
