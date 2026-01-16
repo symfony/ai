@@ -14,7 +14,7 @@ Installation
 Basic Usage
 -----------
 
-To initiate a chat, you need to instantiate the ``Symfony\AI\Chat\Chat`` along
+To initiate a chat, you need to instantiate the :class:`Symfony\\AI\\Chat\\Chat` along
 with a ``Symfony\AI\Agent\AgentInterface`` and a ``Symfony\AI\Chat\MessageStoreInterface``::
 
     use Symfony\AI\Agent\Agent;
@@ -58,10 +58,61 @@ Supported Message stores
 * `Redis`_
 * `SurrealDb`_
 
+Storing Messages
+----------------
+
+When dealing with long-term context conversations, messages must be store using a dedicated identifier that can be used
+to retrieve messages later and keep the flow of messages, to do so, the :class:`Symfony\\AI\\Chat\\Chat` can receive
+a third argument::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Chat\Chat;
+    use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
+    use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+
+    $platform = PlatformFactory::create($apiKey);
+
+    $agent = new Agent($platform, 'gpt-4o-mini');
+    $chat = new Chat($agent, new InMemoryStore(), 'symfony');
+
+    $chat->submit(Message::ofUser('Hello'));
+
+.. note::
+
+    When using the configuration from the bundle, the name is set when creating the chat.
+
+Branching conversations
+-----------------------
+
+Some conversations might lead to messages that must be stored under specific identifiers without impacting current messages,
+these conversations can be labelled as "forked" from the main chat, to branch the current messages stream,
+the :class:`Symfony\\AI\\Chat\\Chat` expose a :method:.....``branch`` method::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Chat\Chat;
+    use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
+    use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+
+    $platform = PlatformFactory::create($apiKey);
+
+    $agent = new Agent($platform, 'gpt-4o-mini');
+    $chat = new Chat($agent, new InMemoryStore(), 'symfony');
+
+    $chat->submit(Message::ofUser('Hello'));
+
+    $forkedChat = $chat->branch('forked');
+    $forkedChat->submit(new MessageBag(
+        Message::ofUser('Hello there'),
+    ));
+
 Implementing a Bridge
 ---------------------
 
-The main extension points of the Chat component is the ``Symfony\AI\Chat\MessageStoreInterface``, that defines the methods
+The main extension points of the Chat component is the :class:`Symfony\\AI\\Chat\\MessageStoreInterface`, that defines the methods
 for adding messages to the message store, and returning the messages from a store.
 
 This leads to a store implementing two methods::
@@ -86,7 +137,7 @@ Managing a store
 ----------------
 
 Some store might requires to create table, indexes and so on before storing messages,
-the ``Symfony\AI\Chat\ManagedStoreInterface`` defines the methods
+the :class:`Symfony\\AI\\Chat\\ManagedStoreInterface` defines the methods
 to setup and drop the store.
 
 This leads to a store implementing two methods::

@@ -16,42 +16,37 @@ use Symfony\AI\Chat\Bridge\Session\MessageStore;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 final class MessageStoreTest extends TestCase
 {
     public function testSetupStoresEmptyMessageBag()
     {
-        $session = $this->createMock(SessionInterface::class);
         $requestStack = $this->createMock(RequestStack::class);
 
         $requestStack->expects($this->once())
             ->method('getSession')
-            ->willReturn($session);
-
-        $session->expects($this->once())
-            ->method('set')
-            ->with('messages', $this->isInstanceOf(MessageBag::class));
+            ->willReturn(new Session(new MockArraySessionStorage()));
 
         $store = new MessageStore($requestStack, 'messages');
         $store->setup();
+
+        $this->assertCount(0, $store->load());
     }
 
     public function testSetupWithCustomSessionKey()
     {
-        $session = $this->createMock(SessionInterface::class);
         $requestStack = $this->createMock(RequestStack::class);
 
         $requestStack->expects($this->once())
             ->method('getSession')
-            ->willReturn($session);
-
-        $session->expects($this->once())
-            ->method('set')
-            ->with('custom_key', $this->isInstanceOf(MessageBag::class));
+            ->willReturn(new Session(new MockArraySessionStorage()));
 
         $store = new MessageStore($requestStack, 'custom_key');
         $store->setup();
+
+        $this->assertCount(0, $store->load());
     }
 
     public function testSaveStoresMessageBag()
@@ -59,19 +54,16 @@ final class MessageStoreTest extends TestCase
         $messageBag = new MessageBag();
         $messageBag->add(Message::ofUser('Test message'));
 
-        $session = $this->createMock(SessionInterface::class);
         $requestStack = $this->createMock(RequestStack::class);
 
         $requestStack->expects($this->once())
             ->method('getSession')
-            ->willReturn($session);
-
-        $session->expects($this->once())
-            ->method('set')
-            ->with('messages', $messageBag);
+            ->willReturn(new Session(new MockArraySessionStorage()));
 
         $store = new MessageStore($requestStack, 'messages');
         $store->save($messageBag);
+
+        $this->assertCount(1, $store->load());
     }
 
     public function testLoadReturnsStoredMessages()
@@ -79,38 +71,28 @@ final class MessageStoreTest extends TestCase
         $messageBag = new MessageBag();
         $messageBag->add(Message::ofUser('Session message'));
 
-        $session = $this->createMock(SessionInterface::class);
         $requestStack = $this->createMock(RequestStack::class);
 
         $requestStack->expects($this->once())
             ->method('getSession')
-            ->willReturn($session);
-
-        $session->expects($this->once())
-            ->method('get')
-            ->with('messages', $this->isInstanceOf(MessageBag::class))
-            ->willReturn($messageBag);
+            ->willReturn(new Session(new MockArraySessionStorage()));
 
         $store = new MessageStore($requestStack, 'messages');
+        $store->save($messageBag);
+
         $result = $store->load();
 
-        $this->assertSame($messageBag, $result);
+        $this->assertSame($messageBag->getId()->toRfc4122(), $result->getId()->toRfc4122());
         $this->assertCount(1, $result);
     }
 
     public function testLoadReturnsEmptyMessageBagWhenNotSet()
     {
-        $session = $this->createMock(SessionInterface::class);
         $requestStack = $this->createMock(RequestStack::class);
 
         $requestStack->expects($this->once())
             ->method('getSession')
-            ->willReturn($session);
-
-        $session->expects($this->once())
-            ->method('get')
-            ->with('messages', $this->isInstanceOf(MessageBag::class))
-            ->willReturn(new MessageBag());
+            ->willReturn(new Session(new MockArraySessionStorage()));
 
         $store = new MessageStore($requestStack, 'messages');
         $result = $store->load();
@@ -121,18 +103,23 @@ final class MessageStoreTest extends TestCase
 
     public function testDropRemovesSessionKey()
     {
-        $session = $this->createMock(SessionInterface::class);
+        $messageBag = new MessageBag();
+        $messageBag->add(Message::ofUser('Session message'));
+
         $requestStack = $this->createMock(RequestStack::class);
 
         $requestStack->expects($this->once())
             ->method('getSession')
-            ->willReturn($session);
-
-        $session->expects($this->once())
-            ->method('remove')
-            ->with('messages');
+            ->willReturn(new Session(new MockArraySessionStorage()));
 
         $store = new MessageStore($requestStack, 'messages');
+
+        $store->save($messageBag);
+
+        $this->assertCount(1, $store->load());
+
         $store->drop();
+
+        $this->assertCount(0, $store->load());
     }
 }
