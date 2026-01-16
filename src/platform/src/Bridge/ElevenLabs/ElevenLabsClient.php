@@ -100,6 +100,7 @@ final class ElevenLabsClient implements ModelClientInterface
             'json' => [
                 'text' => $payload['text'],
                 'model_id' => $model->getName(),
+                ...(isset($options['voice_settings']) ? ['voice_settings' => $options['voice_settings']] : []),
             ],
         ]));
     }
