@@ -48,6 +48,11 @@ final class SearchStore implements StoreInterface
         ]);
     }
 
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        // TODO: Implement remove() method.
+    }
+
     public function query(Vector $vector, array $options = []): iterable
     {
         $result = $this->request('search', [

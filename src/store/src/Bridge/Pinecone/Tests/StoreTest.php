@@ -18,6 +18,7 @@ use Probots\Pinecone\Resources\ControlResource;
 use Probots\Pinecone\Resources\Data\VectorResource;
 use Probots\Pinecone\Resources\DataResource;
 use Saloon\Http\Response;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Pinecone\Store;
 use Symfony\AI\Store\Document\Metadata;
@@ -142,6 +143,69 @@ final class StoreTest extends TestCase
             ->method('data');
 
         self::createStore($client)->add([]);
+    }
+
+    public function testRemoveSingleDocument()
+    {
+        $vectorResource = $this->createMock(VectorResource::class);
+        $dataResource = $this->createMock(DataResource::class);
+        $client = $this->createMock(Client::class);
+
+        $dataResource->expects($this->once())
+            ->method('vectors')
+            ->willReturn($vectorResource);
+
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($dataResource);
+
+        $uuid = Uuid::v4();
+
+        $vectorResource->expects($this->once())
+            ->method('delete')
+            ->with([(string) $uuid],
+                'test-namespace',
+                false,
+                [],
+            );
+
+        $document = new VectorDocument($uuid, new NullVector());
+        self::createStore($client, namespace: 'test-namespace')->remove($document);
+    }
+
+    public function testRemoveMultipleDocuments()
+    {
+        $vectorResource = $this->createMock(VectorResource::class);
+        $dataResource = $this->createMock(DataResource::class);
+        $client = $this->createMock(Client::class);
+
+        $dataResource->expects($this->once())
+            ->method('vectors')
+            ->willReturn($vectorResource);
+
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($dataResource);
+
+        $vectorResource->expects($this->exactly(2))
+            ->method('delete');
+
+        $documents = [];
+        for ($i = 0; $i < 1001; ++$i) {
+            $documents[] = new VectorDocument(Uuid::v4(), new NullVector());
+        }
+
+        self::createStore($client)->remove($documents);
+    }
+
+    public function testRemoveWithEmptyDocuments()
+    {
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->never())
+            ->method('data');
+
+        self::createStore($client)->remove([]);
     }
 
     public function testQueryReturnsDocuments()

@@ -90,6 +90,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         });
     }
 
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        // TODO: Implement remove() method.
+    }
+
     public function query(Vector $vector, array $options = []): iterable
     {
         $k = $options['k'] ?? 100;

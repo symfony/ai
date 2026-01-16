@@ -51,6 +51,11 @@ class Store implements ManagedStoreInterface, StoreInterface
         array_push($this->documents, ...$documents);
     }
 
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        // TODO: Implement remove() method.
+    }
+
     /**
      * @param array{
      *     maxItems?: positive-int,

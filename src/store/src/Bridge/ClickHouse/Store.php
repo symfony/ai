@@ -68,6 +68,11 @@ class Store implements ManagedStoreInterface, StoreInterface
         $this->insertBatch($rows);
     }
 
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        // TODO: Implement remove() method.
+    }
+
     public function query(Vector $vector, array $options = [], ?float $minScore = null): iterable
     {
         $sql = <<<'SQL'

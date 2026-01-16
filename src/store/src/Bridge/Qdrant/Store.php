@@ -73,6 +73,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         );
     }
 
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        // TODO: Implement remove() method.
+    }
+
     /**
      * @param array{
      *     filter?: array<string, mixed>,

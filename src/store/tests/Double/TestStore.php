@@ -34,6 +34,11 @@ final class TestStore implements StoreInterface
         $this->documents = array_merge($this->documents, $documents);
     }
 
+    public function remove(VectorDocument|array $documents, array $options = []): void
+    {
+        // TODO: Implement remove() method.
+    }
+
     public function query(Vector $vector, array $options = []): iterable
     {
         return $this->documents;
