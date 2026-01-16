@@ -54,6 +54,10 @@ bin/mate mcp:tools:list --filter="search*"  # Filter tools by name pattern
 bin/mate mcp:tools:list --format=json       # Output in JSON format
 bin/mate mcp:tools:inspect php-version      # Inspect specific tool with schema
 bin/mate mcp:tools:inspect php-version --format=json  # Output in JSON format
+
+# Tool execution
+bin/mate mcp:tools:call php-version '{}'    # Execute tool with parameters
+bin/mate mcp:tools:call php-version '{}' --format=json    # JSON output format
 ```
 
 ## Architecture
@@ -65,7 +69,7 @@ bin/mate mcp:tools:inspect php-version --format=json  # Output in JSON format
 - **FilteredDiscoveryLoader**: Loads MCP capabilities with feature filtering
 
 ### Key Directories
-- `src/Command/`: CLI commands (serve, init, discover, clear-cache, debug:capabilities, debug:extensions, mcp:tools:list, mcp:tools:inspect)
+- `src/Command/`: CLI commands (serve, init, discover, clear-cache, debug:capabilities, debug:extensions, mcp:tools:list, mcp:tools:inspect, mcp:tools:call)
 - `src/Container/`: DI container management
 - `src/Discovery/`: Extension discovery system
 - `src/Capability/`: Built-in MCP tools

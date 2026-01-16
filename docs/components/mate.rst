@@ -431,6 +431,36 @@ Commands
         # JSON output for scripting
         $ vendor/bin/mate mcp:tools:inspect php-version --format=json
 
+``mate mcp:tools:call``
+    Execute MCP tools via JSON input parameters. This command allows you to test and
+    debug tools by executing them directly from the command line.
+
+    **Arguments:**
+
+    ``tool-name``
+        Name of the tool to execute (required)
+
+    ``json-input``
+        JSON object with tool parameters (required)
+
+    **Options:**
+
+    ``--format=FORMAT``
+        Output format: ``pretty`` (default) or ``json``
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # Execute tool with empty parameters
+        $ vendor/bin/mate mcp:tools:call php-version '{}'
+
+        # Execute tool with parameters
+        $ vendor/bin/mate mcp:tools:call search-logs '{"query": "error", "level": "error"}'
+
+        # JSON output format
+        $ vendor/bin/mate mcp:tools:call php-version '{}' --format=json
+
 Security
 --------
 

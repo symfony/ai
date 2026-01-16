@@ -7,6 +7,7 @@ CHANGELOG
  * Add support for `extension: false` flag in `extra.ai-mate` composer.json configuration to exclude packages from being discovered as extensions
  * Add `ToolsInspectCommand` to inspect a specific tool
  * Add `ToolsListCommand` to list all available tools
+ * Add `ToolsCallCommand` to call a specific tool with input
 
 0.2
 ---
