@@ -30,12 +30,33 @@ final class ElevenLabsApiCatalogTest extends TestCase
         $modelCatalog = new ElevenLabsApiCatalog($httpClient, 'foo');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The model "foo" cannot be retrieve from the API.');
+        $this->expectExceptionMessage('The model "foo" cannot be retrieved from the API.');
         $this->expectExceptionCode(0);
         $modelCatalog->getModel('foo');
     }
 
-    public function testModelCatalogCanReturnModelFromApi()
+    public function testModelCatalogCannotReturnUnsupportedModelFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                [
+                    'model_id' => 'foo',
+                    'name' => 'foo',
+                    'can_do_text_to_speech' => false,
+                    'can_do_voice_conversion' => false,
+                ],
+            ]),
+        ]);
+
+        $modelCatalog = new ElevenLabsApiCatalog($httpClient, 'foo');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The model "foo" is not supported, please check the ElevenLabs API.');
+        $this->expectExceptionCode(0);
+        $modelCatalog->getModel('foo');
+    }
+
+    public function testModelCatalogCanReturnSpecificTtsModelFromApi()
     {
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
@@ -44,6 +65,12 @@ final class ElevenLabsApiCatalogTest extends TestCase
                     'name' => 'foo',
                     'can_do_text_to_speech' => true,
                     'can_do_voice_conversion' => false,
+                ],
+                [
+                    'model_id' => 'bar',
+                    'name' => 'bar',
+                    'can_do_text_to_speech' => false,
+                    'can_do_voice_conversion' => true,
                 ],
             ]),
         ]);
@@ -62,6 +89,33 @@ final class ElevenLabsApiCatalogTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testModelCatalogCanReturnSpecificSttModelFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                [
+                    'model_id' => 'foo',
+                    'name' => 'foo',
+                    'can_do_text_to_speech' => false,
+                    'can_do_voice_conversion' => true,
+                ],
+            ]),
+        ]);
+
+        $modelCatalog = new ElevenLabsApiCatalog($httpClient, 'foo');
+
+        $model = $modelCatalog->getModel('foo');
+
+        $this->assertSame('foo', $model->getName());
+        $this->assertSame([
+            Capability::SPEECH_TO_TEXT,
+            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_TEXT,
+        ], $model->getCapabilities());
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testModelCatalogCanReturnModelsFromApi()
     {
         $httpClient = new MockHttpClient([
@@ -69,6 +123,12 @@ final class ElevenLabsApiCatalogTest extends TestCase
                 [
                     'model_id' => 'foo',
                     'name' => 'foo',
+                    'can_do_text_to_speech' => false,
+                    'can_do_voice_conversion' => true,
+                ],
+                [
+                    'model_id' => 'bar',
+                    'name' => 'bar',
                     'can_do_text_to_speech' => true,
                     'can_do_voice_conversion' => false,
                 ],
@@ -79,14 +139,22 @@ final class ElevenLabsApiCatalogTest extends TestCase
 
         $models = $modelCatalog->getModels();
 
-        $this->assertCount(1, $models);
+        $this->assertCount(2, $models);
         $this->assertArrayHasKey('foo', $models);
+        $this->assertArrayHasKey('bar', $models);
         $this->assertSame(ElevenLabs::class, $models['foo']['class']);
         $this->assertCount(3, $models['foo']['capabilities']);
+        $this->assertSame([
+            Capability::SPEECH_TO_TEXT,
+            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_TEXT,
+        ], $models['foo']['capabilities']);
+        $this->assertSame(ElevenLabs::class, $models['bar']['class']);
+        $this->assertCount(3, $models['bar']['capabilities']);
         $this->assertSame([
             Capability::TEXT_TO_SPEECH,
             Capability::INPUT_TEXT,
             Capability::OUTPUT_AUDIO,
-        ], $models['foo']['capabilities']);
+        ], $models['bar']['capabilities']);
     }
 }
