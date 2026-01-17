@@ -21,7 +21,7 @@ final class StreamListener extends AbstractStreamListener
 {
     public function onChunk(ChunkEvent $event): void
     {
-        $chunk = $event->getStream()->current();
+        $chunk = $event->getChunk();
         if ($chunk instanceof TokenUsageInterface) {
             $event->getResult()->getMetadata()->add('token_usage', $chunk);
             $event->skipChunk();
