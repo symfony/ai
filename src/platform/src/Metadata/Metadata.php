@@ -48,16 +48,25 @@ class Metadata implements \JsonSerializable, \Countable, \IteratorAggregate, \Ar
         $this->metadata = $metadata;
     }
 
-    /**
-     * @param array<string, mixed> $metadata
-     */
-    public function merge(array $metadata): void
+    public function merge(self $metadata): void
     {
-        $this->metadata = array_merge($this->metadata, $metadata);
+        foreach ($metadata->all() as $key => $value) {
+            $this->add($key, $value);
+        }
     }
 
+    /**
+     * Adds a metadata entry. If an entry with the same key already exists and its value is mergeable,
+     * the values will be merged, e.g. SourceCollection or TokenUsage.
+     */
     public function add(string $key, mixed $value): void
     {
+        $existing = $this->get($key);
+
+        if ($existing instanceof MergeableMetadataInterface) {
+            $value = $existing->merge($value);
+        }
+
         $this->metadata[$key] = $value;
     }
 

@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Agent\Toolbox;
 
-use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Platform\Result\ToolCall;
 
@@ -37,11 +36,8 @@ final class ToolResult
         return $this->result;
     }
 
-    /**
-     * @return Source[]
-     */
-    public function getSources(): array
+    public function getSources(): ?SourceCollection
     {
-        return $this->sources?->all() ?? [];
+        return $this->sources;
     }
 }

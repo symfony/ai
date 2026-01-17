@@ -295,7 +295,7 @@ final class ToolboxTest extends TestCase
         $result = $toolbox->execute(new ToolCall('call_1234', 'tool_sources', ['query' => 'random']));
 
         $this->assertCount(1, $result->getSources());
-        $this->assertInstanceOf(Source::class, $source = $result->getSources()[0]);
+        $this->assertInstanceOf(Source::class, $source = $result->getSources()->all()[0]);
         $this->assertSame('Relevant Article', $source->getName());
         $this->assertSame('https://example.com/relevant-article', $source->getReference());
         $this->assertSame('Content of that relevant article.', $source->getContent());

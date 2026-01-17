@@ -19,7 +19,7 @@ use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
-use Symfony\AI\Agent\Toolbox\Source\Source;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -38,10 +38,8 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
     /**
      * Sources get collected during tool calls on class level to be able to handle consecutive tool calls.
      * They get added to the result metadata and reset when the outermost agent call is finished via nesting level.
-     *
-     * @var Source[]
      */
-    private array $sources = [];
+    private SourceCollection $sources;
 
     /**
      * Tracks the nesting level of agent calls.
@@ -56,6 +54,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         private readonly bool $includeSources = false,
         private readonly ?int $maxToolCalls = null,
     ) {
+        $this->sources = new SourceCollection();
     }
 
     public function processInput(Input $input): void
@@ -124,7 +123,9 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             foreach ($toolCalls as $toolCall) {
                 $results[] = $toolResult = $this->toolbox->execute($toolCall);
                 $messages->add(Message::ofToolCall($toolCall, $this->resultConverter->convert($toolResult)));
-                array_push($this->sources, ...$toolResult->getSources());
+                if ($this->includeSources && null !== $toolResult->getSources()) {
+                    $this->sources = $this->sources->merge($toolResult->getSources());
+                }
             }
 
             $event = new ToolCallsExecuted(...$results);
@@ -136,7 +137,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         --$this->nestingLevel;
         if ($this->includeSources && 0 === $this->nestingLevel) {
             $result->getMetadata()->add('sources', $this->sources);
-            $this->sources = [];
+            $this->sources = new SourceCollection();
         }
 
         return $result;
