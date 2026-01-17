@@ -1,0 +1,3 @@
+abc123,127.0.0.1,GET,/api/users,1704448800,,200,request
+def456,192.168.1.1,POST,/api/users,1704448900,,201,request
+ghi789,127.0.0.1,GET,/api/posts,1704449000,,404,request

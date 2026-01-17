@@ -1,11 +1,12 @@
 {
     "name": "symfony/ai-symfony-mate-extension",
-    "description": "Symfony bridge for AI Mate - provides Symfony container introspection tools",
+    "description": "Symfony bridge for AI Mate - provides Symfony container introspection and optional profiler data access tools",
     "license": "MIT",
     "type": "symfony-ai-mate",
     "keywords": [
         "ai",
         "mcp",
+        "profiler",
         "symfony",
         "debug",
         "bridge",
@@ -34,7 +35,14 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.46"
+        "phpunit/phpunit": "^11.5.46",
+        "symfony/http-kernel": "^7.3|^8.0",
+        "symfony/var-dumper": "^7.3|^8.0",
+        "symfony/web-profiler-bundle": "^7.3|^8.0"
+    },
+    "suggest": {
+        "symfony/http-kernel": "Required for profiler data access tools",
+        "symfony/web-profiler-bundle": "Required for profiler data access tools"
     },
     "minimum-stability": "dev",
     "autoload": {
