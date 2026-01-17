@@ -15,6 +15,8 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\ChunkEvent;
+use Symfony\AI\Platform\Result\Stream\CompleteEvent;
+use Symfony\AI\Platform\Result\Stream\StartEvent;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
@@ -33,7 +35,7 @@ final class StreamListener extends AbstractStreamListener
     ) {
     }
 
-    public function onStreamStart(): void
+    public function onStart(StartEvent $event): void
     {
         $this->buffer = '';
         $this->toolHandled = false;
@@ -46,7 +48,7 @@ final class StreamListener extends AbstractStreamListener
             $event->skipChunk();
         }
 
-        $chunk = $event->getStream()->current();
+        $chunk = $event->getChunk();
 
         // Build up assistant message for tool call response.
         if (\is_string($chunk)) {
@@ -64,7 +66,7 @@ final class StreamListener extends AbstractStreamListener
         $this->toolHandled = true;
     }
 
-    public function onStreamComplete(): void
+    public function onComplete(CompleteEvent $event): void
     {
         $this->buffer = '';
         $this->toolHandled = false;

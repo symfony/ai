@@ -20,17 +20,11 @@ abstract class Event
 {
     public function __construct(
         private readonly StreamResult $result,
-        private \Generator $stream,
     ) {
     }
 
     public function getResult(): StreamResult
     {
         return $this->result;
-    }
-
-    public function getStream(): \Generator
-    {
-        return $this->stream;
     }
 }

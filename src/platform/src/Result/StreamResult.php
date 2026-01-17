@@ -38,35 +38,30 @@ final class StreamResult extends BaseResult
     public function getContent(): \Generator
     {
         foreach ($this->listeners as $listener) {
-            $listener->onStart(new StartEvent($this, $this->generator));
+            $listener->onStart(new StartEvent($this));
         }
 
         foreach ($this->generator as $chunk) {
-            $event = new ChunkEvent($this, $this->generator);
+            $event = new ChunkEvent($this, $chunk);
             foreach ($this->listeners as $listener) {
                 $listener->onChunk($event);
-            }
-
-            if ($event->hasChunk()) {
-                $chunk = $event->getChunk();
-
-                if (null === $chunk || !is_iterable($chunk)) {
-                    yield $chunk;
-                } else {
-                    yield from $chunk;
-                }
-                continue;
             }
 
             if ($event->isChunkSkipped()) {
                 continue;
             }
 
-            yield $chunk;
+            $chunk = $event->getChunk();
+
+            if (null === $chunk || !is_iterable($chunk)) {
+                yield $chunk;
+            } else {
+                yield from $chunk;
+            }
         }
 
         foreach ($this->listeners as $listener) {
-            $listener->onComplete(new CompleteEvent($this, $this->generator));
+            $listener->onComplete(new CompleteEvent($this));
         }
     }
 }

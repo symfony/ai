@@ -11,22 +11,25 @@
 
 namespace Symfony\AI\Platform\Result\Stream;
 
+use Symfony\AI\Platform\Result\StreamResult;
+
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class ChunkEvent extends Event
 {
     private bool $skipChunk = false;
-    private mixed $chunk = null;
+
+    public function __construct(
+        StreamResult $result,
+        private mixed $chunk,
+    ) {
+        parent::__construct($result);
+    }
 
     public function setChunk(mixed $chunk): void
     {
         $this->chunk = $chunk;
-    }
-
-    public function hasChunk(): bool
-    {
-        return null !== $this->chunk;
     }
 
     public function getChunk(): mixed
