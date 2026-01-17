@@ -20,6 +20,9 @@ final class ChunkEvent extends Event
 {
     private bool $skipChunk = false;
 
+    /** @var \Closure(): void|null */
+    private ?\Closure $afterChunkConsumedCallback = null;
+
     public function __construct(
         StreamResult $result,
         private mixed $chunk,
@@ -35,6 +38,27 @@ final class ChunkEvent extends Event
     public function getChunk(): mixed
     {
         return $this->chunk;
+    }
+
+    /**
+     * Registers a callback to be invoked after the replacement chunk is fully consumed.
+     *
+     * This is useful for propagating metadata from nested results after their
+     * content has been yielded.
+     *
+     * @param \Closure(): void $callback
+     */
+    public function afterChunkConsumed(\Closure $callback): void
+    {
+        $this->afterChunkConsumedCallback = $callback;
+    }
+
+    /**
+     * @internal
+     */
+    public function getAfterChunkConsumedCallback(): ?\Closure
+    {
+        return $this->afterChunkConsumedCallback;
     }
 
     public function skipChunk(): void

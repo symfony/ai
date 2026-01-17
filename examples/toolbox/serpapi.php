@@ -37,11 +37,13 @@ $prompt = <<<PROMPT
     given in the context - don't make up information.
     PROMPT;
 
-$result = $agent->call(new MessageBag(Message::ofUser($prompt)));
+$result = $agent->call(new MessageBag(Message::ofUser($prompt)), ['stream' => true]);
 
-echo $result->getContent().\PHP_EOL.\PHP_EOL;
+foreach ($result->getContent() as $chunk) {
+    echo $chunk;
+}
 
-echo 'Used sources:'.\PHP_EOL;
+echo \PHP_EOL.\PHP_EOL.'Used sources:'.\PHP_EOL;
 foreach ($result->getMetadata()->get('sources', []) as $source) {
     echo sprintf(' - %s (%s)', $source->getName(), $source->getReference()).\PHP_EOL;
 }

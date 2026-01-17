@@ -58,6 +58,11 @@ final class StreamResult extends BaseResult
             } else {
                 yield from $chunk;
             }
+
+            // Invoke callback after chunk content is fully consumed
+            if (null !== $callback = $event->getAfterChunkConsumedCallback()) {
+                $callback();
+            }
         }
 
         foreach ($this->listeners as $listener) {

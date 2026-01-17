@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent\Toolbox;
 
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Metadata\Metadata;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\ChunkEvent;
 use Symfony\AI\Platform\Result\Stream\CompleteEvent;
@@ -46,6 +47,8 @@ final class StreamListener extends AbstractStreamListener
         // Skip further processing if a tool call has already been handled
         if ($this->toolHandled) {
             $event->skipChunk();
+
+            return;
         }
 
         $chunk = $event->getChunk();
@@ -60,8 +63,10 @@ final class StreamListener extends AbstractStreamListener
         }
 
         $result = ($this->handleToolCallsCallback)($chunk, Message::ofAssistant($this->buffer));
-        $this->propagateMetadata($result->getMetadata(), $event->getResult()->getMetadata());
+        $targetMetadata = $event->getResult()->getMetadata();
+
         $event->setChunk($result->getContent());
+        $event->afterChunkConsumed(fn () => $this->propagateMetadata($result, $targetMetadata));
 
         $this->toolHandled = true;
     }
@@ -72,11 +77,16 @@ final class StreamListener extends AbstractStreamListener
         $this->toolHandled = false;
     }
 
-    private function propagateMetadata(Metadata $source, Metadata $target): void
+    private function propagateMetadata(ResultInterface $source, Metadata $target): void
     {
-        foreach ($source->all() as $key => $value) {
+        foreach ($source->getMetadata()->all() as $key => $value) {
             if ('token_usage' === $key && $target->get('token_usage') instanceof TokenUsageInterface && $value instanceof TokenUsageInterface) {
                 $target->add('token_usage', new TokenUsageAggregation([$target->get('token_usage'), $value]));
+                continue;
+            }
+
+            if ('sources' === $key && \is_array($target->get('sources')) && \is_array($value)) {
+                $target->add('sources', array_merge($target->get('sources'), $value));
                 continue;
             }
 
