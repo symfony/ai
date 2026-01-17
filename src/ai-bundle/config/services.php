@@ -64,6 +64,7 @@ use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRende
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\Serializer\ResultNormalizer;
 use Symfony\AI\Platform\Serializer\StructuredOutputSerializer;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
@@ -219,6 +220,12 @@ return static function (ContainerConfigurator $container): void {
 
         // serializer
         ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
+            ->tag('serializer.normalizer')
+
+        ->set('ai.platform.result_normalizer', ResultNormalizer::class)
+            ->args([
+                service('serializer.normalizer.object'),
+            ])
             ->tag('serializer.normalizer')
 
         // commands

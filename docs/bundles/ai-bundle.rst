@@ -195,7 +195,6 @@ this platform allows to reduce network calls / resource consumption:
                 api_key: '%env(OPENAI_API_KEY)%'
             cache:
                 platform: 'ai.platform.openai'
-                service: 'cache.app'
 
         agent:
             openai:

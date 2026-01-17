@@ -526,15 +526,17 @@ Cached Platform Calls
 
 Thanks to Symfony's Cache component, platform calls can be cached to reduce calls and resources consumption::
 
-    use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
-    use Symfony\AI\Platform\CachedPlatform;
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Platform\Bridge\Cache\CachedPlatform;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
     use Symfony\Component\Cache\Adapter\ArrayAdapter;
     use Symfony\Component\Cache\Adapter\TagAwareAdapter;
+    use Symfony\Component\HttpClient\HttpClient;
 
-    $platform = PlatformFactory::create($apiKey, eventDispatcher: $dispatcher);
-    $cachedPlatform = new CachedPlatform($platform, new TagAwareAdapter(new ArrayAdapter());
+    $platform = PlatformFactory::create($apiKey, HttpClient::create());
+    $cachedPlatform = new CachedPlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
 
     $firstResult = $cachedPlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
 
@@ -557,6 +559,7 @@ the :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform` can be us
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\Component\HttpClient\HttpClient;
     use Symfony\Component\RateLimiter\RateLimiterFactory;
     use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 
@@ -569,8 +572,8 @@ the :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform` can be us
 
     // # Ollama will fail as 'gpt-4o' is not available in the catalog
     $platform = new FailoverPlatform([
-        OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), http_client()),
-        OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), http_client()),
+        OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), HttpClient::create()),
+        OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), HttpClient::create()),
     ], $rateLimiter);
 
     $result = $platform->invoke('gpt-4o', new MessageBag(

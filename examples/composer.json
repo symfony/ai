@@ -32,6 +32,7 @@
         "symfony/ai-bedrock-platform": "^0.2",
         "symfony/ai-brave-tool": "^0.2",
         "symfony/ai-cache-message-store": "^0.2",
+        "symfony/ai-cache-platform": "^0.2",
         "symfony/ai-cache-store": "^0.2",
         "symfony/ai-cartesia-platform": "^0.2",
         "symfony/ai-cerebras-platform": "^0.2",
