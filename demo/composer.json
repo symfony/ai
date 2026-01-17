@@ -48,6 +48,7 @@
         "twig/twig": "^3.22"
     },
     "require-dev": {
+        "mcp/sdk": "0.3.0 as 0.2.3",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^12.1",
