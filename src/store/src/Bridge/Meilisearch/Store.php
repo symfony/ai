@@ -18,7 +18,6 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -134,7 +133,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     private function convertToIndexableArray(VectorDocument $document): array
     {
         return array_merge([
-            'id' => $document->id->toRfc4122(),
+            'id' => $document->id,
             $this->vectorFieldName => [
                 $this->embedder => [
                     'embeddings' => $document->vector->getData(),
@@ -158,6 +157,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         unset($data['id'], $data[$this->vectorFieldName], $data['_rankingScore']);
 
-        return new VectorDocument(Uuid::fromString($id), $vector, new Metadata($data), $score);
+        return new VectorDocument($id, $vector, new Metadata($data), $score);
     }
 }

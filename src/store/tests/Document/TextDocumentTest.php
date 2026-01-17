@@ -22,6 +22,21 @@ use Symfony\Component\Uid\Uuid;
 
 final class TextDocumentTest extends TestCase
 {
+    #[DataProvider('constructorIdDataProvider')]
+    public function testConstructorIdSupportsManyTypes(int|string|Uuid $id)
+    {
+        $document = new TextDocument($id, 'content');
+
+        $this->assertSame($id, $document->getId());
+    }
+
+    public static function constructorIdDataProvider(): iterable
+    {
+        yield 'int' => [1];
+        yield 'string' => ['id'];
+        yield 'uuid' => [Uuid::v4()];
+    }
+
     #[TestDox('Creates document with valid content and metadata')]
     public function testConstructorWithValidContent()
     {

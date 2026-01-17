@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -25,6 +26,21 @@ use Symfony\Component\Uid\Uuid;
  */
 final class VectorDocumentTest extends TestCase
 {
+    #[DataProvider('constructorIdDataProvider')]
+    public function testConstructorIdSupportsManyTypes(int|string|Uuid $id)
+    {
+        $document = new VectorDocument($id, new NullVector());
+
+        $this->assertSame($id, $document->id);
+    }
+
+    public static function constructorIdDataProvider(): iterable
+    {
+        yield 'int' => [1];
+        yield 'string' => ['id'];
+        yield 'uuid' => [Uuid::v4()];
+    }
+
     #[TestDox('Creates document with required parameters only')]
     public function testConstructorWithRequiredParameters()
     {

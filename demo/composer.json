@@ -15,7 +15,7 @@
         "symfony/ai-agent": "^0.2",
         "symfony/ai-bundle": "^0.2",
         "symfony/ai-chat": "^0.2",
-        "symfony/ai-chroma-db-store": "^0.2",
+        "symfony/ai-chroma-db-store": "^0.3",
         "symfony/ai-clock-tool": "^0.2",
         "symfony/ai-hugging-face-platform": "^0.2",
         "symfony/ai-open-ai-platform": "^0.2",

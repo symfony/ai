@@ -17,7 +17,6 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -141,7 +140,7 @@ final class Store implements StoreInterface
             $metadata = \is_array($record['metadata']) ? $record['metadata'] : json_decode($record['metadata'], true, 512, \JSON_THROW_ON_ERROR);
 
             yield new VectorDocument(
-                id: Uuid::fromString($record['id']),
+                id: $record['id'],
                 vector: new Vector($embedding),
                 metadata: new Metadata($metadata),
                 score: (float) $record['score'],
