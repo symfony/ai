@@ -7,7 +7,7 @@
     ],
     "require-dev": {
         "php": ">=8.2",
-        "deptrac/deptrac": "^4.2",
+        "deptrac/deptrac": "^4.4",
         "php-cs-fixer/shim": "^3.91.2",
         "symfony/console": "^5.4|^6.4|^7.4|^8.0",
         "symfony/filesystem": "^5.4|^6.4|^7.4|^8.0",
