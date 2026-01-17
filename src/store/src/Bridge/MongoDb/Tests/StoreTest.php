@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Store\Bridge\MongoDb\Tests;
 
-use MongoDB\BSON\Binary;
 use MongoDB\Client;
 use MongoDB\Collection;
 use MongoDB\Driver\CursorInterface;
@@ -40,12 +39,12 @@ final class StoreTest extends TestCase
             ->willReturn($collection);
 
         $uuid = Uuid::v4();
-        $expectedBinary = new Binary($uuid->toBinary(), Binary::TYPE_UUID);
+        $expectedId = $uuid->toString();
 
         $collection->expects($this->once())
             ->method('replaceOne')
             ->with(
-                ['_id' => $expectedBinary],
+                ['_id' => $expectedId],
                 [
                     'metadata' => ['title' => 'Test Document'],
                     'vector' => [0.1, 0.2, 0.3],
@@ -111,7 +110,7 @@ final class StoreTest extends TestCase
             ->with([
                 [
                     'replaceOne' => [
-                        ['_id' => new Binary($uuid1->toBinary(), Binary::TYPE_UUID)],
+                        ['_id' => $uuid1->toString()],
                         [
                             'vector' => [0.1, 0.2, 0.3],
                         ],
@@ -120,7 +119,7 @@ final class StoreTest extends TestCase
                 ],
                 [
                     'replaceOne' => [
-                        ['_id' => new Binary($uuid2->toBinary(), Binary::TYPE_UUID)],
+                        ['_id' => $uuid2->toString()],
                         [
                             'metadata' => ['title' => 'Test'],
                             'vector' => [0.4, 0.5, 0.6],
@@ -160,13 +159,13 @@ final class StoreTest extends TestCase
 
         $results = [
             [
-                '_id' => new Binary($uuid1->toBinary(), Binary::TYPE_UUID),
+                '_id' => $uuid1->toString(),
                 'vector' => [0.1, 0.2, 0.3],
                 'metadata' => ['title' => 'First Document'],
                 'score' => 0.95,
             ],
             [
-                '_id' => new Binary($uuid2->toBinary(), Binary::TYPE_UUID),
+                '_id' => $uuid2->toString(),
                 'vector' => [0.4, 0.5, 0.6],
                 'metadata' => ['title' => 'Second Document'],
                 'score' => 0.85,
@@ -215,8 +214,8 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $documents);
         $this->assertInstanceOf(VectorDocument::class, $documents[0]);
         $this->assertInstanceOf(VectorDocument::class, $documents[1]);
-        $this->assertEquals($uuid1, $documents[0]->id);
-        $this->assertEquals($uuid2, $documents[1]->id);
+        $this->assertEquals($uuid1->toString(), $documents[0]->id);
+        $this->assertEquals($uuid2->toString(), $documents[1]->id);
         $this->assertSame(0.95, $documents[0]->score);
         $this->assertSame(0.85, $documents[1]->score);
         $this->assertSame('First Document', $documents[0]->metadata['title']);
@@ -511,7 +510,7 @@ final class StoreTest extends TestCase
 
         $results = [
             [
-                '_id' => new Binary($uuid->toBinary(), Binary::TYPE_UUID),
+                '_id' => $uuid->toString(),
                 'custom_embeddings' => [0.1, 0.2, 0.3],
                 'metadata' => ['title' => 'Document'],
                 'score' => 0.95,

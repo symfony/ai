@@ -203,7 +203,7 @@ Document Loading Strategies
     $articles = $articleRepository->findAll();
     $documents = array_map(
         fn($article) => new TextDocument(
-            id: Uuid::fromString($article->getId()),
+            id: $article->getId(),
             content: $article->getTitle().PHP_EOL.$article->getContent(),
             metadata: new Metadata(['author' => $article->getAuthor()])
         ),

@@ -18,7 +18,6 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -80,7 +79,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $documentToIndex = fn (VectorDocument $document): array => [
             'index' => [
                 '_index' => $this->indexName,
-                '_id' => $document->id->toRfc4122(),
+                '_id' => $document->id,
             ],
         ];
 
@@ -157,6 +156,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ? new NullVector()
             : new Vector($document['_source'][$this->vectorsField]);
 
-        return new VectorDocument(Uuid::fromString($id), $vector, new Metadata(json_decode($document['_source']['metadata'], true)), $document['_score'] ?? null);
+        return new VectorDocument($id, $vector, new Metadata(json_decode($document['_source']['metadata'], true)), $document['_score'] ?? null);
     }
 }

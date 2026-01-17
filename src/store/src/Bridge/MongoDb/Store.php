@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Store\Bridge\MongoDb;
 
-use MongoDB\BSON\Binary;
 use MongoDB\Client;
 use MongoDB\Collection;
 use MongoDB\Driver\Exception\CommandException;
@@ -23,7 +22,6 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * @see https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/
@@ -114,7 +112,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         foreach ($documents as $document) {
             $operation = [
-                ['_id' => $this->toBinary($document->id)], // we use binary for the id, because of storage efficiency
+                ['_id' => (string) $document->id],
                 array_filter([
                     'metadata' => $document->metadata->getArrayCopy(),
                     $this->vectorFieldName => $document->vector->getData(),
@@ -183,7 +181,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         foreach ($results as $result) {
             yield new VectorDocument(
-                id: $this->toUuid($result['_id']),
+                id: $result['_id'],
                 vector: new Vector($result[$this->vectorFieldName]),
                 metadata: new Metadata($result['metadata'] ?? []),
                 score: $result['score'],
@@ -194,15 +192,5 @@ final class Store implements ManagedStoreInterface, StoreInterface
     private function getCollection(): Collection
     {
         return $this->client->getCollection($this->databaseName, $this->collectionName);
-    }
-
-    private function toBinary(Uuid $uuid): Binary
-    {
-        return new Binary($uuid->toBinary(), Binary::TYPE_UUID);
-    }
-
-    private function toUuid(Binary $binary): Uuid
-    {
-        return Uuid::fromString($binary->getData());
     }
 }

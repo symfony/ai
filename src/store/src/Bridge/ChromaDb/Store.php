@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -87,7 +86,7 @@ final class Store implements StoreInterface
             }
 
             yield new VectorDocument(
-                id: Uuid::fromString($queryResponse->ids[0][$i]),
+                id: $queryResponse->ids[0][$i],
                 vector: new Vector($queryResponse->embeddings[0][$i]),
                 metadata: $metaData,
                 score: $queryResponse->distances[0][$i] ?? null,
