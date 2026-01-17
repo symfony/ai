@@ -23,10 +23,13 @@ use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpBundle\Controller\OAuthMetadataController;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
+use Symfony\AI\McpBundle\EventListener\OAuthUnauthorizedListener;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
 use Symfony\AI\McpBundle\Profiler\TraceableRegistry;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
+use Symfony\AI\McpBundle\Security\Attribute\RequireScope;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -86,7 +89,7 @@ final class McpBundle extends AbstractBundle
         }
 
         if (isset($config['client_transports'])) {
-            $this->configureClient($config['client_transports'], $config['http'], $builder);
+            $this->configureClient($config['client_transports'], $config['http'], $config['oauth'] ?? [], $builder);
         }
     }
 
@@ -97,32 +100,61 @@ final class McpBundle extends AbstractBundle
 
     private function registerMcpAttributes(ContainerBuilder $builder): void
     {
-        $mcpAttributes = [
-            McpTool::class => 'mcp.tool',
-            McpPrompt::class => 'mcp.prompt',
-            McpResource::class => 'mcp.resource',
-            McpResourceTemplate::class => 'mcp.resource_template',
-        ];
+        $builder->registerAttributeForAutoconfiguration(
+            McpTool::class,
+            static function (ChildDefinition $definition, McpTool $attribute, \Reflector $reflector): void {
+                $name = $attribute->name ?? ($reflector instanceof \ReflectionMethod ? $reflector->getName() : null);
+                $definition->addTag('mcp.tool', ['name' => $name]);
+            }
+        );
 
-        foreach ($mcpAttributes as $attributeClass => $tag) {
-            $builder->registerAttributeForAutoconfiguration(
-                $attributeClass,
-                static function (ChildDefinition $definition, object $attribute, \Reflector $reflector) use ($tag): void {
-                    $definition->addTag($tag);
-                }
-            );
-        }
+        $builder->registerAttributeForAutoconfiguration(
+            McpPrompt::class,
+            static function (ChildDefinition $definition, McpPrompt $attribute, \Reflector $reflector): void {
+                $name = $attribute->name ?? ($reflector instanceof \ReflectionMethod ? $reflector->getName() : null);
+                $definition->addTag('mcp.prompt', ['name' => $name]);
+            }
+        );
+
+        $builder->registerAttributeForAutoconfiguration(
+            McpResource::class,
+            static function (ChildDefinition $definition, McpResource $attribute, \Reflector $reflector): void {
+                $definition->addTag('mcp.resource', ['uri' => $attribute->uri]);
+            }
+        );
+
+        $builder->registerAttributeForAutoconfiguration(
+            McpResourceTemplate::class,
+            static function (ChildDefinition $definition, McpResourceTemplate $attribute, \Reflector $reflector): void {
+                $definition->addTag('mcp.resource_template', ['uri' => $attribute->uriTemplate]);
+            }
+        );
+
+        // Register RequireScope attribute for scope checking
+        $builder->registerAttributeForAutoconfiguration(
+            RequireScope::class,
+            static function (ChildDefinition $definition, RequireScope $attribute, \Reflector $reflector): void {
+                $method = $reflector instanceof \ReflectionMethod ? $reflector->getName() : '__invoke';
+                $definition->addTag('mcp.require_scope', [
+                    'scopes' => $attribute->scopes,
+                    'method' => $method,
+                ]);
+            }
+        );
     }
 
     /**
-     * @param array{stdio: bool, http: bool}                                                  $transports
-     * @param array{path: string, session: array{store: string, directory: string, ttl: int}} $httpConfig
+     * @param array{stdio: bool, http: bool}                                                                                               $transports
+     * @param array{path: string, session: array{store: string, directory: string, ttl: int}}                                              $httpConfig
+     * @param array{enabled?: bool, authorization_servers?: list<string>, resource?: string|null, scopes_supported?: list<string>}|array{} $oauthConfig
      */
-    private function configureClient(array $transports, array $httpConfig, ContainerBuilder $container): void
+    private function configureClient(array $transports, array $httpConfig, array $oauthConfig, ContainerBuilder $container): void
     {
         if (!$transports['stdio'] && !$transports['http']) {
             return;
         }
+
+        $oauthEnabled = $oauthConfig['enabled'] ?? false;
 
         // Register PSR factories
         $container->register('mcp.psr17_factory', Psr17Factory::class);
@@ -169,8 +201,37 @@ final class McpBundle extends AbstractBundle
             ->setArguments([
                 $transports['http'],
                 $httpConfig['path'],
+                $oauthEnabled,
             ])
             ->addTag('routing.loader');
+
+        $container->setParameter('mcp.http.path', $httpConfig['path']);
+
+        if ($oauthEnabled) {
+            $this->configureOAuth($oauthConfig, $httpConfig['path'], $container);
+        }
+    }
+
+    /**
+     * @param array{enabled?: bool, authorization_servers?: list<string>, resource?: string|null, scopes_supported?: list<string>} $oauthConfig
+     */
+    private function configureOAuth(array $oauthConfig, string $mcpPath, ContainerBuilder $container): void
+    {
+        // RFC 9728: Protected Resource Metadata controller
+        $container->register('mcp.oauth.metadata_controller', OAuthMetadataController::class)
+            ->setArguments([
+                $oauthConfig['authorization_servers'] ?? [],
+                $oauthConfig['resource'] ?? null,
+                $mcpPath,
+                $oauthConfig['scopes_supported'] ?? [],
+            ])
+            ->setPublic(true)
+            ->addTag('controller.service_arguments');
+
+        // RFC 6750: WWW-Authenticate header on 401 responses
+        $container->register('mcp.oauth.unauthorized_listener', OAuthUnauthorizedListener::class)
+            ->setArguments([$mcpPath])
+            ->addTag('kernel.event_listener', ['event' => 'kernel.response', 'method' => 'onKernelResponse']);
     }
 
     /**

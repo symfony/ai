@@ -135,4 +135,63 @@ final class McpPassTest extends TestCase
         $this->assertInstanceOf(Reference::class, $services['tool_service']->getValues()[0]);
         $this->assertInstanceOf(Reference::class, $services['prompt_service']->getValues()[0]);
     }
+
+    public function testDoesNotRegisterScopeCheckerWhenNoMcpAttributes()
+    {
+        $container = new ContainerBuilder();
+
+        $container->setDefinition('mcp.server.builder', new Definition());
+        $container->setDefinition('mcp.server.controller', new Definition());
+        $container->setDefinition('security.token_storage', new Definition());
+
+        // Using stdClass won't have MCP attributes, so scope checker won't be registered
+        $container->setDefinition('App\Tool\AdminTool', (new Definition(\stdClass::class))
+            ->addTag('mcp.tool')
+            ->addTag('mcp.require_scope', ['scopes' => ['admin'], 'method' => 'execute'])
+        );
+
+        $pass = new McpPass();
+        $pass->process($container);
+
+        // No scope checker because stdClass has no MCP attributes
+        $this->assertFalse($container->hasDefinition('mcp.security.scope_checker'));
+    }
+
+    public function testDoesNotProcessScopesWhenControllerNotDefined()
+    {
+        $container = new ContainerBuilder();
+
+        $container->setDefinition('mcp.server.builder', new Definition());
+        $container->setDefinition('security.token_storage', new Definition());
+        // No mcp.server.controller
+
+        $container->setDefinition('App\Tool\AdminTool', (new Definition())
+            ->addTag('mcp.tool')
+            ->addTag('mcp.require_scope', ['scopes' => ['admin'], 'method' => 'execute'])
+        );
+
+        $pass = new McpPass();
+        $pass->process($container);
+
+        $this->assertFalse($container->hasDefinition('mcp.security.scope_checker'));
+    }
+
+    public function testDoesNotProcessScopesWhenNoSecurityTokenStorage()
+    {
+        $container = new ContainerBuilder();
+
+        $container->setDefinition('mcp.server.builder', new Definition());
+        $container->setDefinition('mcp.server.controller', new Definition());
+        // No security.token_storage
+
+        $container->setDefinition('App\Tool\AdminTool', (new Definition())
+            ->addTag('mcp.tool')
+            ->addTag('mcp.require_scope', ['scopes' => ['admin'], 'method' => 'execute'])
+        );
+
+        $pass = new McpPass();
+        $pass->process($container);
+
+        $this->assertFalse($container->hasDefinition('mcp.security.scope_checker'));
+    }
 }

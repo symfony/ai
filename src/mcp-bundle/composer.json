@@ -26,11 +26,15 @@
         "symfony/routing": "^7.3|^8.0"
     },
     "require-dev": {
+        "nyholm/psr7": "^1.8",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.46",
-        "symfony/monolog-bundle": "^3.10 || ^4.0"
+        "symfony/browser-kit": "^7.3|^8.0",
+        "symfony/monolog-bundle": "^3.10 || ^4.0",
+        "symfony/security-bundle": "^7.3|^8.0",
+        "symfony/security-core": "^7.3|^8.0"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
@@ -41,6 +45,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Symfony\\AI\\McpBundle\\Tests\\": "tests/",
             "Symfony\\AI\\PHPStan\\": "../../.phpstan"
         }
     },
