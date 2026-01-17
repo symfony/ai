@@ -1,0 +1,9 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-17T17:26:08Z
+
+not really happy with
+* callback as extension point
+* `Symfony\AI\Agent\Toolbox\StreamListener` needs to be aware of `token_usage` and `sources`
+
+=> follow up: better metadata registration on streams
