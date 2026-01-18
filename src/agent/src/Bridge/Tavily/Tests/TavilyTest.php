@@ -59,7 +59,7 @@ final class TavilyTest extends TestCase
 
         $tavily->search('test query');
 
-        $sources = $tavily->getSourceMap()->getSources();
+        $sources = $tavily->getSourceCollection()->all();
         $this->assertCount(2, $sources);
         $this->assertSame('AI breakthrough announced', $sources[0]->getName());
         $this->assertSame('https://example.com/ai-news', $sources[0]->getReference());
@@ -103,7 +103,7 @@ final class TavilyTest extends TestCase
 
         $tavily->extract(['https://example.com/article']);
 
-        $sources = $tavily->getSourceMap()->getSources();
+        $sources = $tavily->getSourceCollection()->all();
         $this->assertCount(1, $sources);
         $this->assertSame('Example Article', $sources[0]->getName());
         $this->assertSame('https://example.com/article', $sources[0]->getReference());
@@ -116,7 +116,7 @@ final class TavilyTest extends TestCase
 
         $tavily->search('query with no results');
 
-        $sources = $tavily->getSourceMap()->getSources();
+        $sources = $tavily->getSourceCollection()->all();
         $this->assertEmpty($sources);
     }
 
@@ -127,7 +127,7 @@ final class TavilyTest extends TestCase
 
         $tavily->extract(['https://nonexistent.com']);
 
-        $sources = $tavily->getSourceMap()->getSources();
+        $sources = $tavily->getSourceCollection()->all();
         $this->assertEmpty($sources);
     }
 }

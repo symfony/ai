@@ -13,5 +13,5 @@ namespace Symfony\AI\Agent\Toolbox\Source;
 
 interface HasSourcesInterface
 {
-    public function setSourceMap(SourceMap $sourceMap): void;
+    public function setSourceCollection(SourceCollection $sourceMap): void;
 }

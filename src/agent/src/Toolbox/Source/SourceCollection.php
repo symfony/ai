@@ -11,22 +11,25 @@
 
 namespace Symfony\AI\Agent\Toolbox\Source;
 
-final class SourceMap
+final class SourceCollection
 {
     /**
-     * @var Source[]
+     * @param Source[] $sources
      */
-    private array $sources = [];
+    public function __construct(
+        private array $sources = [],
+    ) {
+    }
 
     /**
      * @return Source[]
      */
-    public function getSources(): array
+    public function all(): array
     {
         return $this->sources;
     }
 
-    public function addSource(Source $source): void
+    public function add(Source $source): void
     {
         $this->sources[] = $source;
     }

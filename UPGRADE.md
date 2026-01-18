@@ -6,6 +6,10 @@ Agent
 
   * The `Symfony\AI\Agent\Toolbox\StreamResult` class has been removed in favor of a `StreamListener`. Checks should now target
     `Symfony\AI\Platform\Result\StreamResult` instead.
+  * The `Symfony\AI\Agent\Toolbox\Source\SourceMap` class has been renamed to `SourceCollection`. Its methods have also been renamed:
+    * `getSources()` is now `all()`
+    * `addSource()` is now `add()`
+  * The third argument of the `Symfony\AI\Agent\Toolbox\ToolResult::__construct()` method now expects a `SourceCollection` instead of an `array<int, Source>`
 
 Platform
 --------
