@@ -13,20 +13,20 @@ namespace Symfony\AI\Agent\Toolbox\Source;
 
 trait HasSourcesTrait
 {
-    private SourceMap $sourceMap;
+    private SourceCollection $sourceCollection;
 
-    public function setSourceMap(SourceMap $sourceMap): void
+    public function setSourceCollection(SourceCollection $sourceCollection): void
     {
-        $this->sourceMap = $sourceMap;
+        $this->sourceCollection = $sourceCollection;
     }
 
-    public function getSourceMap(): SourceMap
+    public function getSourceCollection(): SourceCollection
     {
-        return $this->sourceMap ??= new SourceMap();
+        return $this->sourceCollection ??= new SourceCollection();
     }
 
     private function addSource(Source $source): void
     {
-        $this->getSourceMap()->addSource($source);
+        $this->getSourceCollection()->add($source);
     }
 }

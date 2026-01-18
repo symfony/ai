@@ -18,6 +18,7 @@ use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Source\Source;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Message\AssistantMessage;
@@ -140,7 +141,7 @@ class AgentProcessorTest extends TestCase
         $toolbox
             ->expects($this->once())
             ->method('execute')
-            ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', [$source1, $source2]));
+            ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', new SourceCollection([$source1, $source2])));
 
         $result = new ToolCallResult($toolCall);
 
@@ -172,7 +173,7 @@ class AgentProcessorTest extends TestCase
         $toolbox
             ->expects($this->once())
             ->method('execute')
-            ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', [$source1, $source2]));
+            ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', new SourceCollection([$source1, $source2])));
 
         $result = new ToolCallResult($toolCall);
 
@@ -205,8 +206,8 @@ class AgentProcessorTest extends TestCase
             ->expects($this->exactly(2))
             ->method('execute')
             ->willReturnOnConsecutiveCalls(
-                new ToolResult($toolCall1, 'Response based on the first article.', [$source1]),
-                new ToolResult($toolCall2, 'Response based on the second article.', [$source2])
+                new ToolResult($toolCall1, 'Response based on the first article.', new SourceCollection([$source1])),
+                new ToolResult($toolCall2, 'Response based on the second article.', new SourceCollection([$source2]))
             );
 
         $result = new ToolCallResult($toolCall1);
@@ -243,7 +244,7 @@ class AgentProcessorTest extends TestCase
         $toolbox
             ->expects($this->once())
             ->method('execute')
-            ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', [$source1, $source2]));
+            ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', new SourceCollection([$source1, $source2])));
 
         $result = new StreamResult((function () use ($toolCall) {
             yield 'chunk1';
