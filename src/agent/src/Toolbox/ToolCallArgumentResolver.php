@@ -25,7 +25,7 @@ use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 /**
  * @author Valtteri R <valtzu@gmail.com>
  */
-final class ToolCallArgumentResolver
+final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterface
 {
     private readonly TypeResolver $typeResolver;
 
