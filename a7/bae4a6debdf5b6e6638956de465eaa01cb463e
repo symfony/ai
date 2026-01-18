@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-01-15T12:33:18Z
+
+Please add a test case and use the same table for the PR header like done in other PRs, thanks
+
+---------------------------------------------------------------------------
+
+by laszlo-karpati at 2026-01-15T13:27:27Z
+
+> Please add a test case and use the same table for the PR header like done in other PRs, thanks
+
+Hi @OskarStark ! I’ve added a test case for `voice_options` and updated the PR header to use the same request table as in the other PRs.
