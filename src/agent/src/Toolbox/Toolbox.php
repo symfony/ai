@@ -51,7 +51,7 @@ final class Toolbox implements ToolboxInterface
     public function __construct(
         iterable $tools,
         private readonly ToolFactoryInterface $toolFactory = new ReflectionToolFactory(),
-        private readonly ToolCallArgumentResolver $argumentResolver = new ToolCallArgumentResolver(),
+        private readonly ToolCallArgumentResolverInterface $argumentResolver = new ToolCallArgumentResolver(),
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
