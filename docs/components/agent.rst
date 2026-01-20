@@ -77,7 +77,7 @@ Tool calling can be enabled by registering the processors in the agent::
 
 Custom tools can basically be any class, but must configure by the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute::
 
-    use Symfony\AI\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
     #[AsTool('company_name', 'Provides the name of your company')]
     final class CompanyName
@@ -99,7 +99,7 @@ Tool Methods
 
 You can configure the method to be called by the LLM with the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute and have multiple tools per class::
 
-    use Symfony\AI\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
     #[AsTool(
         name: 'weather_current',
