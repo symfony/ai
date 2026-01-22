@@ -1,0 +1,56 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-06T12:50:29Z
+
+Looking at this growing (and i guess it's necessary), and seeing failover going into a separate bridge, and that `symfony/string` check, i wonder if this should be a dedicated bridge as well - WDYT?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-01-06T14:07:00Z
+
+Yes makes sense
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-01-06T14:20:50Z
+
+Make sense, what about the name? Was tempted to call it `Cache` 😅
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-01-12T08:14:03Z
+
+you mention ` + fix for storage` in the PR title, is it still true? If no, please update, if yes, can we extract to not mix things here? Thanks
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-01-12T08:16:47Z
+
+The fix is part of the PR, the first goal of this PR was to fix the storage aspect but as we also introduce the "split" for the platform, it's more a "new feature" to be honest, I'll update the name of the PR 😅
+
+I'll take a look at your comments 👍🏻
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-01-21T16:17:15Z
+
+The CI is failing like the one on `main`, not related to the tests.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-01-22T06:05:01Z
+
+Lets fix it in `main` before merging this PR, it is related to something merged recently in symfony/symfony regarding phpdocumentor
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-01-22T06:32:26Z
+
+Rebase unlocked, CI fixed in
+* #1426
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-01-22T08:31:51Z
+
+And we're green, thanks for the fix @OskarStark 👍🏻
