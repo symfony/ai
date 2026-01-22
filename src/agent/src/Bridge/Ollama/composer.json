@@ -1,0 +1,59 @@
+{
+    "name": "symfony/ai-ollama-tool",
+    "description": "Ollama AI tool bridge for Symfony applications.",
+    "license": "MIT",
+    "type": "symfony-ai-tool",
+    "keywords": [
+        "ai",
+        "bridge",
+        "ollama",
+        "agent",
+        "tool",
+        "web-search"
+    ],
+    "authors": [
+        {
+            "name": "Guillaume Loulier",
+            "email": "personal@guillaumeloulier.fr"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/ai-agent": "^0.2",
+        "symfony/http-client": "^7.3|^8.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.46"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Agent\\Bridge\\Ollama\\": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\Agent\\Bridge\\Ollama\\Tests\\": "Tests/",
+            "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.3.x-dev"
+        },
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    }
+}

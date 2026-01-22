@@ -8,6 +8,7 @@
         "ai-clock-tool": "src/agent/src/Bridge/Clock",
         "ai-firecrawl-tool": "src/agent/src/Bridge/Firecrawl",
         "ai-mapbox-tool": "src/agent/src/Bridge/Mapbox",
+        "ai-ollama-tool": "src/agent/src/Bridge/Ollama",
         "ai-open-meteo-tool": "src/agent/src/Bridge/OpenMeteo",
         "ai-scraper-tool": "src/agent/src/Bridge/Scraper",
         "ai-serp-api-tool": "src/agent/src/Bridge/SerpApi",
