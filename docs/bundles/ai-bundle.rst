@@ -715,7 +715,7 @@ The ``ai:store:setup`` command prepares the required infrastructure for a store 
 
 .. note::
 
-    This command only works with stores that implement ``ManagedStoreInterface``.
+    This command only works with stores that implement :class:`Symfony\\AI\\Store\\ManagedStoreInterface`.
     Not all store types support or require setup operations.
 
 ``ai:store:drop``
@@ -737,7 +737,7 @@ The ``ai:store:drop`` command drops the infrastructure for a store (e.g., remove
 
 .. note::
 
-    This command only works with stores that implement ``ManagedStoreInterface``.
+    This command only works with stores that implement :class:`Symfony\\AI\\Store\\ManagedStoreInterface`.
     Not all store types support drop operations.
 
 ``ai:store:index``
@@ -797,8 +797,8 @@ Register Processors
 By default, all services implementing the :class:`Symfony\\AI\\Agent\\InputProcessorInterface` or the
 :class:`Symfony\\AI\\Agent\\OutputProcessorInterface` interfaces are automatically applied to every :class:`Symfony\\AI\\Agent\\Agent`.
 
-This behavior can be overridden/configured with the :class:`Symfony\\AI\\AiBundle\\Attribute\\AsInputProcessor` and
-the :class:`Symfony\\AI\\AiBundle\\Attribute\\AsOutputProcessor` attributes::
+This behavior can be overridden/configured with the :class:`Symfony\\AI\\Agent\\Attribute\\AsInputProcessor` and
+the :class:`Symfony\\AI\\Agent\\Attribute\\AsOutputProcessor` attributes::
 
     use Symfony\AI\Agent\Input;
     use Symfony\AI\Agent\InputProcessorInterface;
@@ -889,13 +889,13 @@ To inject only specific tools, list them in the configuration:
                 tools:
                     - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
 
-To restrict the access to a tool, you can use the :class:`Symfony\\AI\\Agent\\Attribute\\IsGrantedTool` attribute, which
+To restrict the access to a tool, you can use the :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` attribute, which
 works similar to :class:`Symfony\\Component\\Security\\Http\\Attribute\\IsGranted` attribute in `symfony/security-http`. For this to work,
 make sure you have `symfony/security-core` installed in your project.
 
 ::
 
-    use Symfony\AI\Agent\Attribute\IsGrantedTool;
+    use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 
     #[IsGrantedTool('ROLE_ADMIN')]
     #[AsTool('company_name', 'Provides the name of your company')]
@@ -907,7 +907,7 @@ make sure you have `symfony/security-core` installed in your project.
         }
     }
 
-The attribute :class:`Symfony\\AI\\Agent\\Attribute\\IsGrantedTool` can be added on class- or method-level - even multiple
+The attribute :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` can be added on class- or method-level - even multiple
 times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
 
@@ -1038,7 +1038,7 @@ Retrievers are defined in the ``retriever`` section of your configuration:
 Using Retrievers
 ~~~~~~~~~~~~~~~~
 
-The retriever can be injected into your services using the ``RetrieverInterface``::
+The retriever can be injected into your services using the :class:`Symfony\\AI\\Store\\RetrieverInterface`::
 
     use Symfony\AI\Store\RetrieverInterface;
 

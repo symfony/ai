@@ -671,7 +671,7 @@ Binary Results
 Raw Results
 ~~~~~~~~~~~
 
-The platform automatically uses the ``getRawResult()`` from any ``ResultInterface`` returned by closures. For string results, it creates an ``InMemoryRawResult`` to simulate real API response metadata.
+The platform automatically uses the :method:`Symfony\\AI\\Platform\\Result\\ResultInterface::getRawResult` from any :class:`Symfony\\AI\\Platform\\Result\\ResultInterface` returned by closures. For string results, it creates an :class:`Symfony\\AI\\Platform\\Result\\InMemoryRawResult` to simulate real API response metadata.
 
 This allows fast and isolated testing of AI-powered features without relying on live providers or HTTP requests.
 
