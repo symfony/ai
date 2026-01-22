@@ -21,6 +21,12 @@ Platform
    +$aggregation = new TokenUsageAggregation([$usage1, $usage2]);
    ```
 
+ * The `Symfony\AI\Platform\CachedPlatform` has been renamed `Symfony\AI\Platform\Bridge\Cache\CachePlatform`
+   * To use it, consider the following steps:
+     * Run `composer require symfony/ai-cache-platform`
+     * Change `Symfony\AI\Platform\CachedPlatform` namespace usages to `Symfony\AI\Platform\Bridge\Cache\CachePlatform`
+     * The `ttl` option can be used in the configuration
+
 UPGRADE FROM 0.1 to 0.2
 =======================
 
