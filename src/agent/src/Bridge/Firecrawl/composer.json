@@ -33,7 +33,8 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.46"
+        "phpunit/phpunit": "^11.5.46",
+        "symfony/ai-platform": "^0.2"
     },
     "minimum-stability": "dev",
     "autoload": {
