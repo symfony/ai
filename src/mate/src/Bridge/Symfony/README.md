@@ -1,7 +1,7 @@
 Symfony Bridge
 ==============
 
-Provides Symfony container introspection tools for Symfony AI Mate.
+Provides Symfony container introspection and profiler data access tools for Symfony AI Mate.
 
 Resources
 ---------
