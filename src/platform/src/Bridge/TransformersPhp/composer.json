@@ -26,7 +26,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-platform": "^0.2",
+        "symfony/ai-platform": "^0.3",
         "codewithkyrian/transformers": "^0.6.2"
     },
     "require-dev": {
@@ -56,7 +56,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.3.x-dev"
+            "dev-main": "0.4.x-dev"
         },
         "thanks": {
             "name": "symfony/ai",

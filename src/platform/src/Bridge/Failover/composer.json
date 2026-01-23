@@ -24,7 +24,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-platform": "^0.2",
+        "symfony/ai-platform": "^0.3",
         "symfony/clock": "^7.3|^8.0",
         "symfony/rate-limiter": "^7.3|^8.0"
     },
@@ -51,7 +51,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.3.x-dev"
+            "dev-main": "0.4.x-dev"
         },
         "thanks": {
             "name": "symfony/ai",
