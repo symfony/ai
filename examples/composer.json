@@ -96,6 +96,7 @@
         "symfony/dotenv": "^7.4|^8.0",
         "symfony/finder": "^7.4|^8.0",
         "symfony/http-foundation": "^7.4|^8.0",
+        "symfony/rate-limiter": "^7.4|^8.0",
         "symfony/process": "^7.4|^8.0",
         "symfony/var-dumper": "^7.4|^8.0"
     },

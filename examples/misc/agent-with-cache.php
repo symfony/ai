@@ -22,7 +22,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
 
-$agent = new Agent($cachedPlatform, 'gpt-5o-mini');
+$agent = new Agent($cachedPlatform, 'gpt-4o-mini');
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
