@@ -76,4 +76,36 @@ final class SourceCollectionTest extends TestCase
 
         $this->assertSame($sources, $collection->all());
     }
+
+    public function testCountReturnsZeroWhenNoSourcesAdded()
+    {
+        $collection = new SourceCollection();
+
+        $this->assertCount(0, $collection);
+    }
+
+    public function testCountReturnsNumberOfAddedSources()
+    {
+        $collection = new SourceCollection();
+        $collection->add(new Source('name1', 'reference1', 'content1'));
+        $collection->add(new Source('name2', 'reference2', 'content2'));
+
+        $this->assertCount(2, $collection);
+    }
+
+    public function testGetIteratorReturnsTraversableOfSources()
+    {
+        $collection = new SourceCollection();
+        $source1 = new Source('name1', 'reference1', 'content1');
+        $source2 = new Source('name2', 'reference2', 'content2');
+
+        $collection->add($source1);
+        $collection->add($source2);
+
+        $iterator = $collection->getIterator();
+        $this->assertInstanceOf(\Traversable::class, $iterator);
+
+        $sources = iterator_to_array($iterator);
+        $this->assertSame([$source1, $source2], $sources);
+    }
 }
