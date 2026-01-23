@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-21T19:58:50Z
+
+@chr-hertel this feature helps the agent (e.g. claude-code) to know more about the tools and extension (see https://github.com/MatesOfMate/.github/pull/8 and especially the newly generated CLAUDE.md in the demo)
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-23T18:38:40Z
+
+@chr-hertel fixed
