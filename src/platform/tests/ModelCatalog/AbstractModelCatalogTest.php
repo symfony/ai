@@ -158,6 +158,104 @@ final class AbstractModelCatalogTest extends TestCase
         $this->assertFalse($options['a']['e']);
     }
 
+    public function testGetModelWithPeriodInQueryParameterKey()
+    {
+        $catalog = $this->createTestCatalog();
+        $model = $catalog->getModel('test-model?reasoning.effort=medium');
+
+        $this->assertSame('test-model', $model->getName());
+        $options = $model->getOptions();
+
+        $this->assertArrayHasKey('reasoning.effort', $options);
+        $this->assertSame('medium', $options['reasoning.effort']);
+    }
+
+    public function testGetModelWithMultiplePeriodQueryParameters()
+    {
+        $catalog = $this->createTestCatalog();
+        $model = $catalog->getModel('test-model?reasoning.effort=medium&model.type=advanced&max_tokens=500');
+
+        $this->assertSame('test-model', $model->getName());
+        $options = $model->getOptions();
+
+        $this->assertArrayHasKey('reasoning.effort', $options);
+        $this->assertSame('medium', $options['reasoning.effort']);
+        $this->assertArrayHasKey('model.type', $options);
+        $this->assertSame('advanced', $options['model.type']);
+        $this->assertArrayHasKey('max_tokens', $options);
+        $this->assertSame(500, $options['max_tokens']);
+    }
+
+    public function testBuildQueryStringWithSimpleOptions()
+    {
+        $options = ['max_tokens' => 500, 'temperature' => 0.7];
+        $queryString = AbstractModelCatalog::buildQueryString($options);
+
+        $this->assertSame('max_tokens=500&temperature=0.7', $queryString);
+    }
+
+    public function testBuildQueryStringWithNestedArrays()
+    {
+        $options = [
+            'reasoning' => [
+                'effort' => 'medium',
+            ],
+            'max_tokens' => 500,
+        ];
+        $queryString = AbstractModelCatalog::buildQueryString($options);
+
+        $this->assertSame('reasoning.effort=medium&max_tokens=500', $queryString);
+    }
+
+    public function testBuildQueryStringWithDeeplyNestedArrays()
+    {
+        $options = [
+            'options' => [
+                'metadata' => [
+                    'version' => 1,
+                    'type' => 'test',
+                ],
+                'max_tokens' => 500,
+            ],
+        ];
+        $queryString = AbstractModelCatalog::buildQueryString($options);
+
+        $this->assertSame('options.metadata.version=1&options.metadata.type=test&options.max_tokens=500', $queryString);
+    }
+
+    public function testParseQueryStringPreservesPeriods()
+    {
+        $queryString = 'reasoning.effort=medium&model.type=advanced';
+        $parsed = AbstractModelCatalog::parseQueryString($queryString);
+
+        $this->assertArrayHasKey('reasoning.effort', $parsed);
+        $this->assertSame('medium', $parsed['reasoning.effort']);
+        $this->assertArrayHasKey('model.type', $parsed);
+        $this->assertSame('advanced', $parsed['model.type']);
+    }
+
+    public function testParseQueryStringHandlesArrayNotation()
+    {
+        $queryString = 'options[max_tokens]=500&options[temperature]=0.7';
+        $parsed = AbstractModelCatalog::parseQueryString($queryString);
+
+        $this->assertIsArray($parsed['options']);
+        $this->assertSame('500', $parsed['options']['max_tokens']);
+        $this->assertSame('0.7', $parsed['options']['temperature']);
+    }
+
+    public function testParseQueryStringHandlesMixedNotation()
+    {
+        $queryString = 'reasoning.effort=medium&options[max_tokens]=500&simple=value';
+        $parsed = AbstractModelCatalog::parseQueryString($queryString);
+
+        $this->assertArrayHasKey('reasoning.effort', $parsed);
+        $this->assertSame('medium', $parsed['reasoning.effort']);
+        $this->assertIsArray($parsed['options']);
+        $this->assertSame('500', $parsed['options']['max_tokens']);
+        $this->assertSame('value', $parsed['simple']);
+    }
+
     private function createTestCatalog(): AbstractModelCatalog
     {
         return new class extends AbstractModelCatalog {
