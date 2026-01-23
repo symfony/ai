@@ -249,7 +249,7 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', new SourceCollection([$source1, $source2])));
 
-        $result = new StreamResult((function () use ($toolCall) {
+        $result = new StreamResult((static function () use ($toolCall) {
             yield 'chunk1';
             yield 'chunk2';
             yield new ToolCallResult($toolCall);
@@ -284,7 +284,7 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Tool responded'));
 
-        $result = new StreamResult((function () use ($toolCall) {
+        $result = new StreamResult((static function () use ($toolCall) {
             yield 'partial-1';
             yield 'partial-2';
             yield new ToolCallResult($toolCall);
@@ -294,7 +294,7 @@ class AgentProcessorTest extends TestCase
         $agent
             ->expects($this->once())
             ->method('call')
-            ->willReturnCallback(function () {
+            ->willReturnCallback(static function () {
                 $final = new TextResult('Final content after tool');
                 $final->getMetadata()->add('foo', 'bar');
 
@@ -322,7 +322,7 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Tool responded'));
 
-        $result = new StreamResult((function () use ($toolCall) {
+        $result = new StreamResult((static function () use ($toolCall) {
             yield 'partial-1';
             yield 'partial-2';
             yield new ToolCallResult($toolCall);
@@ -333,7 +333,7 @@ class AgentProcessorTest extends TestCase
         $agent
             ->expects($this->once())
             ->method('call')
-            ->willReturnCallback(function () {
+            ->willReturnCallback(static function () {
                 $toolResult = new TextResult('Final content after tool');
                 $toolResult->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
 

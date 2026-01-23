@@ -174,7 +174,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
-            'filter' => fn (VectorDocument $doc) => 'products' === $doc->metadata['category'],
+            'filter' => static fn (VectorDocument $doc) => 'products' === $doc->metadata['category'],
         ]));
 
         $this->assertCount(2, $result);
@@ -193,7 +193,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
-            'filter' => fn (VectorDocument $doc) => 'products' === $doc->metadata['category'],
+            'filter' => static fn (VectorDocument $doc) => 'products' === $doc->metadata['category'],
             'maxItems' => 2,
         ]));
 
@@ -212,7 +212,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
-            'filter' => fn (VectorDocument $doc) => $doc->metadata['price'] <= 150 && $doc->metadata['stock'] > 0,
+            'filter' => static fn (VectorDocument $doc) => $doc->metadata['price'] <= 150 && $doc->metadata['stock'] > 0,
         ]));
 
         $this->assertCount(2, $result);
@@ -228,7 +228,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
-            'filter' => fn (VectorDocument $doc) => 'S' === $doc->metadata['options']['size'],
+            'filter' => static fn (VectorDocument $doc) => 'S' === $doc->metadata['options']['size'],
         ]));
 
         $this->assertCount(2, $result);
@@ -247,7 +247,7 @@ final class StoreTest extends TestCase
 
         $allowedBrands = ['Nike', 'Adidas', 'Puma'];
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
-            'filter' => fn (VectorDocument $doc) => \in_array($doc->metadata['brand'] ?? '', $allowedBrands, true),
+            'filter' => static fn (VectorDocument $doc) => \in_array($doc->metadata['brand'] ?? '', $allowedBrands, true),
         ]));
 
         $this->assertCount(2, $result);

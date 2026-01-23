@@ -29,7 +29,7 @@ final class FaultTolerantToolboxTest extends TestCase
     public function testFaultyToolExecution()
     {
         $faultyToolbox = $this->createFaultyToolbox(
-            fn (ToolCall $toolCall) => ToolExecutionException::executionFailed($toolCall, new \Exception('error'))
+            static fn (ToolCall $toolCall) => ToolExecutionException::executionFailed($toolCall, new \Exception('error'))
         );
 
         $faultTolerantToolbox = new FaultTolerantToolbox($faultyToolbox);
@@ -44,7 +44,7 @@ final class FaultTolerantToolboxTest extends TestCase
     public function testFaultyToolCall()
     {
         $faultyToolbox = $this->createFaultyToolbox(
-            fn (ToolCall $toolCall) => ToolNotFoundException::notFoundForToolCall($toolCall)
+            static fn (ToolCall $toolCall) => ToolNotFoundException::notFoundForToolCall($toolCall)
         );
 
         $faultTolerantToolbox = new FaultTolerantToolbox($faultyToolbox);

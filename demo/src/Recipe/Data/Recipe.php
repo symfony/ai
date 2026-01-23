@@ -50,7 +50,7 @@ final class Recipe
 
     public function toString(): string
     {
-        $ingredients = implode(\PHP_EOL, array_map(fn (Ingredient $ing) => $ing->toString(), $this->ingredients));
+        $ingredients = implode(\PHP_EOL, array_map(static fn (Ingredient $ing) => $ing->toString(), $this->ingredients));
         $steps = implode(\PHP_EOL, $this->steps);
 
         return <<<RECIPE

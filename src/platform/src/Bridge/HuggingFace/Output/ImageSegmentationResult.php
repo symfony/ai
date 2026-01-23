@@ -30,7 +30,7 @@ final class ImageSegmentationResult
     public static function fromArray(array $data): self
     {
         return new self(
-            array_map(fn (array $item) => new ImageSegment($item['label'], $item['score'], $item['mask']), $data)
+            array_map(static fn (array $item) => new ImageSegment($item['label'], $item['score'], $item['mask']), $data)
         );
     }
 }

@@ -154,7 +154,7 @@ final class StreamingAgentToolCallTest extends TestCase
 
     private function createStreamResultWithToolCall(string $text, ToolCall $toolCall, TokenUsage $tokenUsage): StreamResult
     {
-        $result = new StreamResult((function () use ($text, $toolCall) {
+        $result = new StreamResult((static function () use ($text, $toolCall) {
             yield $text;
             yield new ToolCallResult($toolCall);
         })());

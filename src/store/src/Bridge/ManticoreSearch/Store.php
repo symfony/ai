@@ -78,7 +78,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $documents,
         );
 
-        $this->request('bulk', function () use ($payload) {
+        $this->request('bulk', static function () use ($payload) {
             foreach ($payload as $document) {
                 yield json_encode($document).\PHP_EOL;
             }

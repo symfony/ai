@@ -52,7 +52,7 @@ final class ClientTest extends TestCase
 
     public function testRequestAuthenticationHeader()
     {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) {
             self::assertSame('Authorization: Bearer secret-key', $options['normalized_headers']['authorization'][0]);
 
             return new MockResponse('{"status": "succeeded"}');
@@ -64,7 +64,7 @@ final class ClientTest extends TestCase
 
     public function testRequestUrl()
     {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) {
             self::assertSame('POST', $method);
             self::assertSame('https://api.replicate.com/v1/models/meta/llama-3.1-405b-instruct/predictions', $url);
 

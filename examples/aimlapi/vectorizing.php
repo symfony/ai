@@ -25,5 +25,5 @@ printf(
     "String: %s\nVector dimensions: %d\nFirst 5 values: [%s]\n",
     $string,
     $vector->getDimensions(),
-    implode(', ', array_map(fn ($val) => number_format($val, 6), array_slice($vector->getData(), 0, 5)))
+    implode(', ', array_map(static fn ($val) => number_format($val, 6), array_slice($vector->getData(), 0, 5)))
 );

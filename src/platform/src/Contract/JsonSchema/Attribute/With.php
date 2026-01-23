@@ -54,7 +54,7 @@ final class With
     ) {
         if (\is_array($enum)) {
             /* @phpstan-ignore-next-line function.alreadyNarrowedType */
-            if (array_filter($enum, fn (mixed $item) => null === $item || \is_int($item) || \is_float($item) || \is_string($item)) !== $enum) {
+            if (array_filter($enum, static fn (mixed $item) => null === $item || \is_int($item) || \is_float($item) || \is_string($item)) !== $enum) {
                 throw new InvalidArgumentException('All enum values must be float, integer, strings, or null.');
             }
         }

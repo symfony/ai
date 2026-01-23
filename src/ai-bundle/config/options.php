@@ -311,13 +311,13 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->defaultValue(Model::class)
                                 ->cannotBeEmpty()
                                 ->validate()
-                                    ->ifTrue(function ($v) {
+                                    ->ifTrue(static function ($v) {
                                         return !class_exists($v);
                                     })
                                     ->thenInvalid('The model class "%s" does not exist.')
                                 ->end()
                                 ->validate()
-                                    ->ifTrue(function ($v) {
+                                    ->ifTrue(static function ($v) {
                                         return !is_a($v, Model::class, true);
                                     })
                                     ->thenInvalid('The model class "%s" must extend '.Model::class.'.')
@@ -348,13 +348,13 @@ return static function (DefinitionConfigurator $configurator): void {
                         ->end()
                         ->variableNode('model')
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     return !\is_string($v) && (!\is_array($v) || !isset($v['name']));
                                 })
                                 ->thenInvalid('Model must be a string or an array with a "name" key.')
                             ->end()
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     // Check if both query parameters and options array are provided
                                     if (\is_array($v) && isset($v['name']) && isset($v['options']) && [] !== $v['options']) {
                                         return str_contains($v['name'], '?');
@@ -365,7 +365,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->thenInvalid('Cannot use both query parameters in model name and options array.')
                             ->end()
                             ->beforeNormalization()
-                                ->always(function ($v) {
+                                ->always(static function ($v) {
                                     if (\is_string($v)) {
                                         return $v;
                                     }
@@ -416,19 +416,19 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Memory configuration: string for static memory, or array with "service" key for service reference')
                             ->defaultNull()
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     return \is_string($v) && '' === $v;
                                 })
                                 ->thenInvalid('Memory cannot be empty.')
                             ->end()
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     return \is_array($v) && !isset($v['service']);
                                 })
                                 ->thenInvalid('Memory array configuration must contain a "service" key.')
                             ->end()
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     return \is_array($v) && isset($v['service']) && '' === $v['service'];
                                 })
                                 ->thenInvalid('Memory service cannot be empty.')
@@ -438,12 +438,12 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('The system prompt configuration')
                             ->beforeNormalization()
                                 ->ifString()
-                                ->then(function (string $v) {
+                                ->then(static function (string $v) {
                                     return ['text' => $v];
                                 })
                             ->end()
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     if (!\is_array($v)) {
                                         return false;
                                     }
@@ -454,25 +454,25 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->thenInvalid('Either "text" or "file" must be configured for prompt.')
                             ->end()
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     return \is_array($v) && isset($v['text']) && isset($v['file']);
                                 })
                                 ->thenInvalid('Cannot use both "text" and "file" for prompt. Choose one.')
                             ->end()
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     return \is_array($v) && isset($v['text']) && '' === trim($v['text']);
                                 })
                                 ->thenInvalid('The "text" cannot be empty.')
                             ->end()
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     return \is_array($v) && isset($v['file']) && '' === trim($v['file']);
                                 })
                                 ->thenInvalid('The "file" cannot be empty.')
                             ->end()
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     return \is_array($v) && ($v['enabled'] ?? false) && !interface_exists(TranslatorInterface::class);
                                 })
                                 ->thenInvalid('System prompt translation is enabled, but no translator is present. Try running `composer require symfony/translation`.')
@@ -505,7 +505,7 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->treatNullLike(['enabled' => true])
                             ->beforeNormalization()
                                 ->ifArray()
-                                ->then(function (array $v): array {
+                                ->then(static function (array $v): array {
                                     return [
                                         'enabled' => $v['enabled'] ?? true,
                                         'services' => $v['services'] ?? $v,
@@ -525,7 +525,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                         ->end()
                                         ->beforeNormalization()
                                             ->ifString()
-                                            ->then(function (string $v) {
+                                            ->then(static function (string $v) {
                                                 return ['service' => $v];
                                             })
                                         ->end()
@@ -1150,13 +1150,13 @@ return static function (DefinitionConfigurator $configurator): void {
                         ->end()
                         ->variableNode('model')
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     return !\is_string($v) && (!\is_array($v) || !isset($v['name']));
                                 })
                                 ->thenInvalid('Model must be a string or an array with a "name" key.')
                             ->end()
                             ->validate()
-                                ->ifTrue(function ($v) {
+                                ->ifTrue(static function ($v) {
                                     // Check if both query parameters and options array are provided
                                     if (\is_array($v) && isset($v['name']) && isset($v['options']) && [] !== $v['options']) {
                                         return str_contains($v['name'], '?');
@@ -1167,7 +1167,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->thenInvalid('Cannot use both query parameters in model name and options array.')
                             ->end()
                             ->beforeNormalization()
-                                ->always(function ($v) {
+                                ->always(static function ($v) {
                                     if (\is_string($v) || null === $v) {
                                         return $v;
                                     }
@@ -1268,7 +1268,7 @@ return static function (DefinitionConfigurator $configurator): void {
             ->end()
         ->end()
         ->validate()
-            ->ifTrue(function ($v) {
+            ->ifTrue(static function ($v) {
                 if (!isset($v['agent']) || !isset($v['multi_agent'])) {
                     return false;
                 }
@@ -1279,7 +1279,7 @@ return static function (DefinitionConfigurator $configurator): void {
 
                 return !empty($duplicates);
             })
-            ->then(function ($v) {
+            ->then(static function ($v) {
                 $agentNames = array_keys($v['agent'] ?? []);
                 $multiAgentNames = array_keys($v['multi_agent'] ?? []);
                 $duplicates = array_intersect($agentNames, $multiAgentNames);
@@ -1288,7 +1288,7 @@ return static function (DefinitionConfigurator $configurator): void {
             })
         ->end()
         ->validate()
-            ->ifTrue(function ($v) {
+            ->ifTrue(static function ($v) {
                 if (!isset($v['multi_agent']) || !isset($v['agent'])) {
                     return false;
                 }
@@ -1316,7 +1316,7 @@ return static function (DefinitionConfigurator $configurator): void {
 
                 return false;
             })
-            ->then(function ($v) {
+            ->then(static function ($v) {
                 $agentNames = array_keys($v['agent']);
 
                 foreach ($v['multi_agent'] as $multiAgentName => $multiAgent) {

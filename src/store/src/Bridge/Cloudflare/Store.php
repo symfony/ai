@@ -67,7 +67,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $documents,
         );
 
-        $this->request('POST', \sprintf('vectorize/v2/indexes/%s/upsert', $this->index), function () use ($payload) {
+        $this->request('POST', \sprintf('vectorize/v2/indexes/%s/upsert', $this->index), static function () use ($payload) {
             foreach ($payload as $entry) {
                 yield json_encode($entry).\PHP_EOL;
             }

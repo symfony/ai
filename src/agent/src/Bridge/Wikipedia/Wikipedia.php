@@ -44,7 +44,7 @@ final class Wikipedia implements HasSourcesInterface
             'srsearch' => $query,
         ], $this->locale);
 
-        $titles = array_map(fn (array $item) => $item['title'], $result['query']['search']);
+        $titles = array_map(static fn (array $item) => $item['title'], $result['query']['search']);
 
         if ([] === $titles) {
             return 'No articles were found on Wikipedia.';

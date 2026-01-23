@@ -27,13 +27,13 @@ final class StreamListenerTest extends TestCase
 {
     public function testGetContentWithOnlyStringValues()
     {
-        $streamResult = new StreamResult((function (): \Generator {
+        $streamResult = new StreamResult((static function (): \Generator {
             yield 'Hello ';
             yield 'World';
         })());
 
         $callbackCalled = false;
-        $handleToolCallsCallback = function () use (&$callbackCalled) {
+        $handleToolCallsCallback = static function () use (&$callbackCalled) {
             $callbackCalled = true;
         };
 
@@ -47,7 +47,7 @@ final class StreamListenerTest extends TestCase
     public function testGetContentWithToolCallResultAfterStringValues()
     {
         $toolCallResult = new ToolCallResult(new ToolCall('test-id', 'test_tool'));
-        $streamResult = new StreamResult((function () use ($toolCallResult): \Generator {
+        $streamResult = new StreamResult((static function () use ($toolCallResult): \Generator {
             yield 'Initial ';
             yield 'content ';
             yield $toolCallResult;
@@ -55,7 +55,7 @@ final class StreamListenerTest extends TestCase
 
         $capturedAssistantMessage = null;
         $capturedToolCallResult = null;
-        $handleToolCallsCallback = function (ToolCallResult $tcr, AssistantMessage $msg) use (&$capturedAssistantMessage, &$capturedToolCallResult) {
+        $handleToolCallsCallback = static function (ToolCallResult $tcr, AssistantMessage $msg) use (&$capturedAssistantMessage, &$capturedToolCallResult) {
             $capturedToolCallResult = $tcr;
             $capturedAssistantMessage = $msg;
 
@@ -74,12 +74,12 @@ final class StreamListenerTest extends TestCase
 
     public function testGetContentWithToolCallResultAsFirstValue()
     {
-        $streamResult = new StreamResult((function (): \Generator {
+        $streamResult = new StreamResult((static function (): \Generator {
             yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
         })());
 
         $capturedAssistantMessage = null;
-        $handleToolCallsCallback = function (ToolCallResult $tcr, AssistantMessage $msg) use (&$capturedAssistantMessage) {
+        $handleToolCallsCallback = static function (ToolCallResult $tcr, AssistantMessage $msg) use (&$capturedAssistantMessage) {
             $capturedAssistantMessage = $msg;
 
             return new TextResult('Immediate tool response');
@@ -95,16 +95,16 @@ final class StreamListenerTest extends TestCase
 
     public function testGetContentWithToolCallResultReturningGenerator()
     {
-        $streamResult = new StreamResult((function (): \Generator {
+        $streamResult = new StreamResult((static function (): \Generator {
             yield 'Start';
             yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
         })());
 
         $capturedAssistantMessage = null;
-        $handleToolCallsCallback = function (ToolCallResult $tcr, AssistantMessage $msg) use (&$capturedAssistantMessage) {
+        $handleToolCallsCallback = static function (ToolCallResult $tcr, AssistantMessage $msg) use (&$capturedAssistantMessage) {
             $capturedAssistantMessage = $msg;
 
-            return new StreamResult((function (): \Generator {
+            return new StreamResult((static function (): \Generator {
                 yield 'Part 1';
                 yield 'Part 2';
                 yield 'Part 3';
@@ -120,14 +120,14 @@ final class StreamListenerTest extends TestCase
 
     public function testGetContentStopsAfterToolCallResult()
     {
-        $streamResult = new StreamResult((function (): \Generator {
+        $streamResult = new StreamResult((static function (): \Generator {
             yield 'Before';
             yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
             yield 'After'; // This should not be yielded
         })());
 
         $innerResult = new TextResult('Tool output');
-        $handleToolCallsCallback = fn () => $innerResult;
+        $handleToolCallsCallback = static fn () => $innerResult;
 
         $streamResult->addListener(new StreamListener($handleToolCallsCallback));
         $result = iterator_to_array($streamResult->getContent(), false);
@@ -137,7 +137,7 @@ final class StreamListenerTest extends TestCase
 
     public function testMetadataPropagationFromTextResult()
     {
-        $streamResult = new StreamResult((function (): \Generator {
+        $streamResult = new StreamResult((static function (): \Generator {
             yield 'Before tool';
             yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
         })());
@@ -146,7 +146,7 @@ final class StreamListenerTest extends TestCase
         $innerResult = new TextResult('Tool response');
         $innerResult->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 200, completionTokens: 20, totalTokens: 220));
 
-        $streamResult->addListener(new StreamListener(fn () => $innerResult));
+        $streamResult->addListener(new StreamListener(static fn () => $innerResult));
         iterator_to_array($streamResult->getContent());
 
         $this->assertTrue($streamResult->getMetadata()->has('token_usage'));
@@ -158,19 +158,19 @@ final class StreamListenerTest extends TestCase
     {
         $innerTokenUsage = new TokenUsage(promptTokens: 200, completionTokens: 20, totalTokens: 220);
 
-        $streamResult = new StreamResult((function (): \Generator {
+        $streamResult = new StreamResult((static function (): \Generator {
             yield 'Before tool';
             yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
         })());
         $streamResult->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 100, completionTokens: 10, totalTokens: 110));
 
-        $innerResult = new StreamResult((function (): \Generator {
+        $innerResult = new StreamResult((static function (): \Generator {
             yield 'Part 1';
             yield 'Part 2';
         })());
         $innerResult->getMetadata()->add('token_usage', $innerTokenUsage);
 
-        $streamResult->addListener(new StreamListener(fn () => $innerResult));
+        $streamResult->addListener(new StreamListener(static fn () => $innerResult));
         iterator_to_array($streamResult->getContent());
 
         $this->assertTrue($streamResult->getMetadata()->has('token_usage'));
@@ -180,13 +180,13 @@ final class StreamListenerTest extends TestCase
 
     public function testMetadataPropagationFromNestedStreamResultWithLazyMetadata()
     {
-        $streamResult = new StreamResult((function (): \Generator {
+        $streamResult = new StreamResult((static function (): \Generator {
             yield 'Before tool';
             yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
         })());
         $streamResult->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 100, completionTokens: 10, totalTokens: 110));
 
-        $innerResult = new StreamResult((function (): \Generator {
+        $innerResult = new StreamResult((static function (): \Generator {
             yield 'Part 1';
             yield 'Part 2';
         })());
@@ -199,7 +199,7 @@ final class StreamListenerTest extends TestCase
             }
         });
 
-        $streamResult->addListener(new StreamListener(fn () => $innerResult));
+        $streamResult->addListener(new StreamListener(static fn () => $innerResult));
         iterator_to_array($streamResult->getContent());
 
         $this->assertTrue($streamResult->getMetadata()->has('token_usage'));

@@ -122,7 +122,7 @@ final class EmbeddingProviderTest extends TestCase
             ->willReturn($deferredResult);
 
         $store = $this->createMock(StoreInterface::class);
-        $generator = (function () {
+        $generator = (static function () {
             yield (object) ['metadata' => ['fact' => 'The sky is blue']];
             yield (object) ['metadata' => ['fact' => 'Water is wet']];
         })();
