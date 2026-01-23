@@ -58,7 +58,9 @@ Tools
 -----
 
 To integrate LLMs with your application, Symfony AI supports tool calling out of the box. Tools are services that can be
-called by the LLM to provide additional features or process data.
+called by the LLM to provide additional features or process data. The LLM is capable of making an arbitrary number of
+tool calls. To control token costs or prevent infinite loops, you can limit the number of tool calls by using the
+`maxToolCalls` parameter of the :class:`Symfony\\AI\\Agent\\Toolbox\\AgentProcessor`.
 
 Tool calling can be enabled by registering the processors in the agent::
 

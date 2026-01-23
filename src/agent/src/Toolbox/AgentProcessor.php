@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent\Toolbox;
 
 use Symfony\AI\Agent\AgentAwareInterface;
 use Symfony\AI\Agent\AgentAwareTrait;
+use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
@@ -53,6 +54,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
         private readonly bool $keepToolMessages = false,
         private readonly bool $includeSources = false,
+        private readonly ?int $maxToolCalls = null,
     ) {
     }
 
@@ -109,7 +111,12 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             $messages->add($streamedAssistantResponse);
         }
 
+        $iterations = 0;
         do {
+            if (null !== $this->maxToolCalls && ++$iterations > $this->maxToolCalls) {
+                throw new MaxIterationsExceededException($this->maxToolCalls);
+            }
+
             $toolCalls = $result->getContent();
             $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
 

@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Tests\Toolbox;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
@@ -346,5 +347,67 @@ class AgentProcessorTest extends TestCase
         $usage = $output->getResult()->getMetadata()->get('token_usage');
         $this->assertInstanceOf(TokenUsageAggregation::class, $usage);
         $this->assertSame(20, $usage->getTotalTokens());
+    }
+
+    public function testThrowsExceptionWhenMaxIterationsExceeded()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Test response'));
+
+        $messageBag = new MessageBag();
+        $result = new ToolCallResult($toolCall);
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->method('call')
+            ->willReturn(new ToolCallResult($toolCall)); // Always returns tool call, causing infinite loop
+
+        $processor = new AgentProcessor($toolbox, maxToolCalls: 3);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $this->expectException(MaxIterationsExceededException::class);
+        $this->expectExceptionMessage('Maximum number of tool calling iterations (3) exceeded.');
+
+        $processor->processOutput($output);
+    }
+
+    public function testCustomMaxIterationsLimitAllowsConfiguredIterations()
+    {
+        $toolCall1 = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolCall2 = new ToolCall('id2', 'tool2', ['arg1' => 'value2']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->method('execute')
+            ->willReturnOnConsecutiveCalls(
+                new ToolResult($toolCall1, 'Response 1'),
+                new ToolResult($toolCall2, 'Response 2')
+            );
+
+        $messageBag = new MessageBag();
+        $result = new ToolCallResult($toolCall1);
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->exactly(2))
+            ->method('call')
+            ->willReturnOnConsecutiveCalls(
+                new ToolCallResult($toolCall2),
+                new TextResult('Final response after two tool calls.')
+            );
+
+        // Allow up to 5 iterations, we only need 2
+        $processor = new AgentProcessor($toolbox, maxToolCalls: 5);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        $this->assertInstanceOf(TextResult::class, $output->getResult());
     }
 }
