@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
+use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 
@@ -46,8 +47,8 @@ final class ProfilerResourceTemplate
         if (null === $profileData) {
             return [
                 'uri' => "symfony-profiler://profile/{$token}",
-                'mimeType' => 'application/json',
-                'text' => json_encode(['error' => 'Profile not found'], \JSON_PRETTY_PRINT) ?: '{}',
+                'mimeType' => 'text/plain',
+                'text' => Toon::encode(['error' => 'Profile not found']),
             ];
         }
 
@@ -79,8 +80,8 @@ final class ProfilerResourceTemplate
 
         return [
             'uri' => "symfony-profiler://profile/{$token}",
-            'mimeType' => 'application/json',
-            'text' => json_encode($data, \JSON_PRETTY_PRINT) ?: '{}',
+            'mimeType' => 'text/plain',
+            'text' => Toon::encode($data),
         ];
     }
 
@@ -99,14 +100,14 @@ final class ProfilerResourceTemplate
 
             return [
                 'uri' => "symfony-profiler://profile/{$token}/{$collector}",
-                'mimeType' => 'application/json',
-                'text' => json_encode($data, \JSON_PRETTY_PRINT) ?: '{}',
+                'mimeType' => 'text/plain',
+                'text' => Toon::encode($data),
             ];
         } catch (\Throwable $e) {
             return [
                 'uri' => "symfony-profiler://profile/{$token}/{$collector}",
-                'mimeType' => 'application/json',
-                'text' => json_encode(['error' => $e->getMessage()]) ?: '{}',
+                'mimeType' => 'text/plain',
+                'text' => Toon::encode(['error' => $e->getMessage()]),
             ];
         }
     }

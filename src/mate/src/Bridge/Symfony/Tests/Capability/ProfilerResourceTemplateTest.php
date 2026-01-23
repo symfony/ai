@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Capability;
 
+use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
@@ -41,14 +42,14 @@ final class ProfilerResourceTemplateTest extends TestCase
         $this->assertArrayHasKey('mimeType', $resource);
         $this->assertArrayHasKey('text', $resource);
         $this->assertSame('symfony-profiler://profile/abc123', $resource['uri']);
-        $this->assertSame('application/json', $resource['mimeType']);
+        $this->assertSame('text/plain', $resource['mimeType']);
     }
 
     public function testGetProfileResourceIncludesMetadata()
     {
         $resource = $this->template->getProfileResource('abc123');
 
-        $data = json_decode($resource['text'], true);
+        $data = Toon::decode($resource['text']);
         $this->assertIsArray($data);
 
         $this->assertArrayHasKey('token', $data);
@@ -64,7 +65,7 @@ final class ProfilerResourceTemplateTest extends TestCase
     {
         $resource = $this->template->getProfileResource('abc123');
 
-        $data = json_decode($resource['text'], true);
+        $data = Toon::decode($resource['text']);
         $this->assertIsArray($data);
 
         $this->assertArrayHasKey('collectors', $data);
@@ -83,7 +84,7 @@ final class ProfilerResourceTemplateTest extends TestCase
     {
         $resource = $this->template->getProfileResource('nonexistent');
 
-        $data = json_decode($resource['text'], true);
+        $data = Toon::decode($resource['text']);
         $this->assertIsArray($data);
 
         $this->assertArrayHasKey('error', $data);
@@ -100,11 +101,11 @@ final class ProfilerResourceTemplateTest extends TestCase
         $this->assertSame('symfony-profiler://profile/abc123/request', $resource['uri']);
     }
 
-    public function testGetCollectorResourceReturnsJsonContent()
+    public function testGetCollectorResourceReturnsToonContent()
     {
         $resource = $this->template->getCollectorResource('abc123', 'request');
 
-        $data = json_decode($resource['text'], true);
+        $data = Toon::decode($resource['text']);
 
         $this->assertIsArray($data);
         $this->assertArrayHasKey('name', $data);
@@ -129,7 +130,7 @@ final class ProfilerResourceTemplateTest extends TestCase
         $resource = $this->template->getCollectorResource('nonexistent', 'request');
 
         $this->assertArrayHasKey('text', $resource);
-        $data = json_decode($resource['text'], true);
+        $data = Toon::decode($resource['text']);
         $this->assertIsArray($data);
         $this->assertArrayHasKey('error', $data);
     }
