@@ -26,6 +26,7 @@ Platform
      * Run `composer require symfony/ai-cache-platform`
      * Change `Symfony\AI\Platform\CachedPlatform` namespace usages to `Symfony\AI\Platform\Bridge\Cache\CachePlatform`
      * The `ttl` option can be used in the configuration
+ * Adopt usage of class `Symfony\AI\Platform\Serializer\StructuredOuputSerializer` to `Symfony\AI\Platform\StructuredOutput\Serializer`
 
 UPGRADE FROM 0.1 to 0.2
 =======================
