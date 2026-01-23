@@ -409,7 +409,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                         }
                                     });
 
-                                    return $model.'?'.AbstractModelCatalog::buildQueryString($options);
+                                    return $model.'?'.http_build_query($options);
                                 })
                             ->end()
                         ->end()
@@ -1211,7 +1211,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                         }
                                     });
 
-                                    return $model.'?'.AbstractModelCatalog::buildQueryString($options);
+                                    return $model.'?'.http_build_query($options);
                                 })
                             ->end()
                         ->end()

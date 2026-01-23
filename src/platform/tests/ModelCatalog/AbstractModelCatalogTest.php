@@ -186,43 +186,6 @@ final class AbstractModelCatalogTest extends TestCase
         $this->assertSame(500, $options['max_tokens']);
     }
 
-    public function testBuildQueryStringWithSimpleOptions()
-    {
-        $options = ['max_tokens' => 500, 'temperature' => 0.7];
-        $queryString = AbstractModelCatalog::buildQueryString($options);
-
-        $this->assertSame('max_tokens=500&temperature=0.7', $queryString);
-    }
-
-    public function testBuildQueryStringWithNestedArrays()
-    {
-        $options = [
-            'reasoning' => [
-                'effort' => 'medium',
-            ],
-            'max_tokens' => 500,
-        ];
-        $queryString = AbstractModelCatalog::buildQueryString($options);
-
-        $this->assertSame('reasoning.effort=medium&max_tokens=500', $queryString);
-    }
-
-    public function testBuildQueryStringWithDeeplyNestedArrays()
-    {
-        $options = [
-            'options' => [
-                'metadata' => [
-                    'version' => 1,
-                    'type' => 'test',
-                ],
-                'max_tokens' => 500,
-            ],
-        ];
-        $queryString = AbstractModelCatalog::buildQueryString($options);
-
-        $this->assertSame('options.metadata.version=1&options.metadata.type=test&options.max_tokens=500', $queryString);
-    }
-
     public function testParseQueryStringPreservesPeriods()
     {
         $queryString = 'reasoning.effort=medium&model.type=advanced';

@@ -5032,60 +5032,6 @@ class AiBundleTest extends TestCase
         $this->assertSame('gpt-5?reasoning.effort=medium', $agentDefinition->getArgument(1));
     }
 
-    #[TestDox('Model configuration with nested array options converts to dot notation')]
-    public function testModelConfigurationWithNestedArrayOptions()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'agent' => [
-                    'test' => [
-                        'model' => [
-                            'name' => 'gpt-5',
-                            'options' => [
-                                'reasoning' => [
-                                    'effort' => 'medium',
-                                ],
-                                'max_tokens' => 500,
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $agentDefinition = $container->getDefinition('ai.agent.test');
-        // Nested arrays should be converted to dot notation
-        $this->assertSame('gpt-5?reasoning.effort=medium&max_tokens=500', $agentDefinition->getArgument(1));
-    }
-
-    #[TestDox('Model configuration with deeply nested array options converts to dot notation')]
-    public function testModelConfigurationWithDeeplyNestedArrayOptions()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'agent' => [
-                    'test' => [
-                        'model' => [
-                            'name' => 'gpt-4',
-                            'options' => [
-                                'config' => [
-                                    'reasoning' => [
-                                        'effort' => 'high',
-                                    ],
-                                    'max_tokens' => 1000,
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $agentDefinition = $container->getDefinition('ai.agent.test');
-        // Deeply nested arrays should be converted to dot notation
-        $this->assertSame('gpt-4?config.reasoning.effort=high&config.max_tokens=1000', $agentDefinition->getArgument(1));
-    }
-
     #[TestDox('Vectorizer model configuration with period in option key works correctly')]
     public function testVectorizerModelConfigurationWithPeriodInOptionKey()
     {

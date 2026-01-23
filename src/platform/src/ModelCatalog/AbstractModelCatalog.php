@@ -105,34 +105,6 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
     }
 
     /**
-     * Builds a query string from an array of options.
-     * Converts nested arrays to dot notation (e.g., ['key' => ['subkey' => 'value']] becomes "key.subkey=value").
-     *
-     * @param array<string, mixed> $options The options array to convert
-     * @param string               $prefix  Internal parameter for recursion, represents the current key prefix
-     *
-     * @return string The query string
-     */
-    public static function buildQueryString(array $options, string $prefix = ''): string
-    {
-        $parts = [];
-
-        foreach ($options as $key => $value) {
-            $fullKey = '' === $prefix ? $key : $prefix.'.'.$key;
-
-            if (\is_array($value)) {
-                // Recursively build query string for nested arrays
-                $parts[] = self::buildQueryString($value, $fullKey);
-            } else {
-                // URL encode both key and value
-                $parts[] = urlencode($fullKey).'='.urlencode((string) $value);
-            }
-        }
-
-        return implode('&', $parts);
-    }
-
-    /**
      * Extracts model name and options from a model name string that may contain query parameters.
      * Also resolves size variants (e.g., "model:23b") to their base model for catalog lookup.
      *
