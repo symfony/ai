@@ -28,6 +28,7 @@
     ],
     "require": {
         "php": ">=8.2",
+        "helgesverre/toon": "^3.1",
         "symfony/ai-mate": "^0.2",
         "symfony/dependency-injection": "^7.3|^8.0"
     },

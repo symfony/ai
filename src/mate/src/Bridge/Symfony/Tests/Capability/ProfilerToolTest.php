@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Capability;
 
+use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
@@ -35,7 +36,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesReturnsAllProfiles()
     {
-        $profiles = $this->tool->listProfiles();
+        $profiles = Toon::decode($this->tool->listProfiles());
 
         $this->assertCount(3, $profiles);
         $this->assertArrayHasKey('token', $profiles[0]);
@@ -45,14 +46,14 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesWithLimit()
     {
-        $profiles = $this->tool->listProfiles(limit: 2);
+        $profiles = Toon::decode($this->tool->listProfiles(limit: 2));
 
         $this->assertCount(2, $profiles);
     }
 
     public function testListProfilesFilterByMethod()
     {
-        $profiles = $this->tool->listProfiles(method: 'POST');
+        $profiles = Toon::decode($this->tool->listProfiles(method: 'POST'));
 
         $this->assertCount(1, $profiles);
         $this->assertSame('def456', $profiles[0]['token']);
@@ -60,7 +61,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByStatusCode()
     {
-        $profiles = $this->tool->listProfiles(statusCode: 404);
+        $profiles = Toon::decode($this->tool->listProfiles(statusCode: 404));
 
         $this->assertCount(1, $profiles);
         $this->assertSame('ghi789', $profiles[0]['token']);
@@ -68,21 +69,21 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByUrl()
     {
-        $profiles = $this->tool->listProfiles(url: 'users');
+        $profiles = Toon::decode($this->tool->listProfiles(url: 'users'));
 
         $this->assertCount(2, $profiles);
     }
 
     public function testListProfilesFilterByIp()
     {
-        $profiles = $this->tool->listProfiles(ip: '127.0.0.1');
+        $profiles = Toon::decode($this->tool->listProfiles(ip: '127.0.0.1'));
 
         $this->assertCount(2, $profiles);
     }
 
     public function testGetLatestProfileReturnsFirstProfile()
     {
-        $profile = $this->tool->getLatestProfile();
+        $profile = Toon::decode($this->tool->getLatestProfile());
 
         $this->assertNotNull($profile);
         $this->assertArrayHasKey('token', $profile);
@@ -93,7 +94,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testGetLatestProfileIncludesResourceUri()
     {
-        $profile = $this->tool->getLatestProfile();
+        $profile = Toon::decode($this->tool->getLatestProfile());
 
         $this->assertNotNull($profile);
         $this->assertArrayHasKey('resource_uri', $profile);
@@ -105,21 +106,21 @@ final class ProfilerToolTest extends TestCase
 
     public function testSearchProfilesWithoutCriteria()
     {
-        $profiles = $this->tool->searchProfiles();
+        $profiles = Toon::decode($this->tool->searchProfiles());
 
         $this->assertCount(3, $profiles);
     }
 
     public function testSearchProfilesByMethod()
     {
-        $profiles = $this->tool->searchProfiles(method: 'GET');
+        $profiles = Toon::decode($this->tool->searchProfiles(method: 'GET'));
 
         $this->assertCount(2, $profiles);
     }
 
     public function testSearchProfilesByStatusCode()
     {
-        $profiles = $this->tool->searchProfiles(statusCode: 200);
+        $profiles = Toon::decode($this->tool->searchProfiles(statusCode: 200));
 
         $this->assertCount(1, $profiles);
         $this->assertSame('abc123', $profiles[0]['token']);
@@ -127,21 +128,21 @@ final class ProfilerToolTest extends TestCase
 
     public function testSearchProfilesByRoute()
     {
-        $profiles = $this->tool->searchProfiles(route: '/api/users');
+        $profiles = Toon::decode($this->tool->searchProfiles(route: '/api/users'));
 
         $this->assertCount(2, $profiles);
     }
 
     public function testSearchProfilesWithLimit()
     {
-        $profiles = $this->tool->searchProfiles(limit: 1);
+        $profiles = Toon::decode($this->tool->searchProfiles(limit: 1));
 
         $this->assertCount(1, $profiles);
     }
 
     public function testGetProfileReturnsProfileWithResourceUri()
     {
-        $profile = $this->tool->getProfile('abc123');
+        $profile = Toon::decode($this->tool->getProfile('abc123'));
 
         $this->assertArrayHasKey('token', $profile);
         $this->assertArrayHasKey('resource_uri', $profile);
@@ -159,7 +160,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesIncludesResourceUri()
     {
-        $profiles = $this->tool->listProfiles();
+        $profiles = Toon::decode($this->tool->listProfiles());
 
         $this->assertCount(3, $profiles);
         foreach ($profiles as $profile) {
@@ -174,7 +175,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testSearchProfilesIncludesResourceUri()
     {
-        $profiles = $this->tool->searchProfiles();
+        $profiles = Toon::decode($this->tool->searchProfiles());
 
         foreach ($profiles as $profile) {
             $this->assertArrayHasKey('resource_uri', $profile);
@@ -184,7 +185,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesReturnsIntegerKeys()
     {
-        $profiles = $this->tool->listProfiles();
+        $profiles = Toon::decode($this->tool->listProfiles());
 
         $keys = array_keys($profiles);
         $this->assertSame([0, 1, 2], $keys);
@@ -192,7 +193,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testSearchProfilesReturnsIntegerKeys()
     {
-        $profiles = $this->tool->searchProfiles();
+        $profiles = Toon::decode($this->tool->searchProfiles());
 
         $keys = array_keys($profiles);
         $this->assertSame([0, 1, 2], $keys);

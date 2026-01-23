@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
+use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Attribute\McpTool;
 use Symfony\AI\Mate\Bridge\Symfony\Model\Container;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
@@ -26,15 +27,12 @@ class ServiceTool
     ) {
     }
 
-    /**
-     * @return array<string, class-string|null>
-     */
     #[McpTool('symfony-services', 'Get a list of all symfony services')]
-    public function getAllServices(): array
+    public function getAllServices(): string
     {
         $container = $this->readContainer();
         if (null === $container) {
-            return [];
+            return Toon::encode([]);
         }
 
         $output = [];
@@ -42,7 +40,7 @@ class ServiceTool
             $output[$service->id] = $service->class;
         }
 
-        return $output;
+        return Toon::encode($output);
     }
 
     private function readContainer(): ?Container

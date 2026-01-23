@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Capability;
 
+use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Attribute\McpTool;
 
 /**
@@ -37,12 +38,9 @@ class ServerInfo
         return \PHP_OS_FAMILY;
     }
 
-    /**
-     * @return string[]
-     */
     #[McpTool('php-extensions', 'Get a list of PHP extensions')]
-    public function extensions(): array
+    public function extensions(): string
     {
-        return get_loaded_extensions();
+        return Toon::encode(get_loaded_extensions());
     }
 }
