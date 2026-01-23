@@ -150,8 +150,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         }>,
  *         cache?: array<string, array{ // Default: []
  *             platform: string|Param,
- *             service: string|Param, // The cache service id as defined under the "cache" configuration key
+ *             service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *             cache_key?: string|Param, // Key used to store platform results, if not set, the current platform name will be used, the "prompt_cache_key" can be set during platform call to override this value
+ *             ttl?: int|Param,
  *         }>,
  *         cartesia?: array{
  *             api_key: string|Param,
@@ -526,6 +527,13 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  * @psalm-type McpConfig = array{
  *     app?: scalar|null|Param, // Default: "app"
  *     version?: scalar|null|Param, // Default: "0.0.1"
+ *     description?: scalar|null|Param, // Default: null
+ *     icons?: list<array{ // Default: []
+ *         src: scalar|null|Param,
+ *         mime_type?: scalar|null|Param, // Default: null
+ *         sizes?: list<scalar|null|Param>,
+ *     }>,
+ *     website_url?: scalar|null|Param, // Default: null
  *     pagination_limit?: int|Param, // Default: 50
  *     instructions?: scalar|null|Param, // Default: null
  *     client_transports?: array{
