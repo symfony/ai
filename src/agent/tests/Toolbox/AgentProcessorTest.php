@@ -161,8 +161,9 @@ class AgentProcessorTest extends TestCase
 
         $metadata = $output->getResult()->getMetadata();
         $this->assertTrue($metadata->has('sources'));
-        $this->assertCount(2, $metadata->get('sources'));
-        $this->assertSame([$source1, $source2], $metadata->get('sources'));
+        $this->assertInstanceOf(SourceCollection::class, $sources = $metadata->get('sources'));
+        $this->assertCount(2, $sources);
+        $this->assertSame([$source1, $source2], iterator_to_array($sources));
     }
 
     public function testSourcesDoNotEndUpInResultMetadataWithSettingOff()
@@ -232,8 +233,9 @@ class AgentProcessorTest extends TestCase
 
         $metadata = $output->getResult()->getMetadata();
         $this->assertTrue($metadata->has('sources'));
-        $this->assertCount(2, $metadata->get('sources'));
-        $this->assertSame([$source1, $source2], $metadata->get('sources'));
+        $this->assertInstanceOf(SourceCollection::class, $sources = $metadata->get('sources'));
+        $this->assertCount(2, $sources);
+        $this->assertSame([$source1, $source2], iterator_to_array($sources));
     }
 
     public function testSourcesEndUpInResultMetadataWithStreaming()
@@ -268,8 +270,9 @@ class AgentProcessorTest extends TestCase
 
         $metadata = $output->getResult()->getMetadata();
         $this->assertTrue($metadata->has('sources'));
-        $this->assertCount(2, $metadata->get('sources'));
-        $this->assertSame([$source1, $source2], $metadata->get('sources'));
+        $this->assertInstanceOf(SourceCollection::class, $sources = $metadata->get('sources'));
+        $this->assertCount(2, $sources);
+        $this->assertSame([$source1, $source2], iterator_to_array($sources));
     }
 
     public function testMetadataGetsPropagatedInStreamingWithToolCalls()

@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface as SymfonyHttpResponse;
 
 final class DeferredResultTest extends TestCase
@@ -162,7 +163,7 @@ final class DeferredResultTest extends TestCase
         $converted = $deferredResult->getResult();
         iterator_to_array($converted->getContent());
 
-        $this->assertInstanceOf(TokenUsage::class, $tokenUsage = $converted->getMetadata()->get('token_usage'));
+        $this->assertInstanceOf(TokenUsageInterface::class, $tokenUsage = $converted->getMetadata()->get('token_usage'));
         $this->assertSame(123456, $tokenUsage->getPromptTokens());
     }
 

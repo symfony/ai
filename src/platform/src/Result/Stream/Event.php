@@ -11,13 +11,17 @@
 
 namespace Symfony\AI\Platform\Result\Stream;
 
+use Symfony\AI\Platform\Metadata\MetadataAwareInterface;
+use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\StreamResult;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-abstract class Event
+abstract class Event implements MetadataAwareInterface
 {
+    use MetadataAwareTrait;
+
     public function __construct(
         private readonly StreamResult $result,
     ) {

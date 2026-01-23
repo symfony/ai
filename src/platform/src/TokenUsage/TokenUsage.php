@@ -11,10 +11,13 @@
 
 namespace Symfony\AI\Platform\TokenUsage;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Metadata\MergeableMetadataInterface;
+
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
  */
-final class TokenUsage implements TokenUsageInterface
+final class TokenUsage implements MergeableMetadataInterface, TokenUsageInterface
 {
     public function __construct(
         private readonly ?int $promptTokens = null,
@@ -27,6 +30,15 @@ final class TokenUsage implements TokenUsageInterface
         private readonly ?int $remainingTokensMonth = null,
         private readonly ?int $totalTokens = null,
     ) {
+    }
+
+    public function merge(MergeableMetadataInterface $metadata): TokenUsageAggregation
+    {
+        if (!$metadata instanceof TokenUsageInterface) {
+            throw new InvalidArgumentException(\sprintf('Cannot merge "%s" with "%s".', self::class, $metadata::class));
+        }
+
+        return new TokenUsageAggregation([$this, $metadata]);
     }
 
     public function getPromptTokens(): ?int

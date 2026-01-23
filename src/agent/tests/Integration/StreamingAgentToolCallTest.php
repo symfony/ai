@@ -16,6 +16,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Clock\Clock;
 use Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -54,7 +55,7 @@ final class StreamingAgentToolCallTest extends TestCase
 
         $this->assertSame(4, $invocationCount);
         $this->assertTrue($metadata->has('sources'));
-        $this->assertIsArray($sources = $metadata->get('sources'));
+        $this->assertInstanceOf(SourceCollection::class, $sources = $metadata->get('sources'));
         $this->assertCount(2, $sources);
     }
 

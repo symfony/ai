@@ -37,15 +37,18 @@ final class StreamResult extends BaseResult
 
     public function getContent(): \Generator
     {
+        $event = new StartEvent($this);
         foreach ($this->listeners as $listener) {
-            $listener->onStart(new StartEvent($this));
+            $listener->onStart($event);
         }
+        $this->getMetadata()->merge($event->getMetadata());
 
         foreach ($this->generator as $chunk) {
             $event = new ChunkEvent($this, $chunk);
             foreach ($this->listeners as $listener) {
                 $listener->onChunk($event);
             }
+            $this->getMetadata()->merge($event->getMetadata());
 
             if ($event->isChunkSkipped()) {
                 continue;
@@ -58,15 +61,12 @@ final class StreamResult extends BaseResult
             } else {
                 yield from $chunk;
             }
-
-            // Invoke callback after chunk content is fully consumed
-            if (null !== $callback = $event->getAfterChunkConsumedCallback()) {
-                $callback();
-            }
         }
 
+        $event = new CompleteEvent($this);
         foreach ($this->listeners as $listener) {
-            $listener->onComplete(new CompleteEvent($this));
+            $listener->onComplete($event);
         }
+        $this->getMetadata()->merge($event->getMetadata());
     }
 }

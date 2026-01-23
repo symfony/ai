@@ -41,7 +41,7 @@ final class ToolResultTest extends TestCase
         $toolCall = new ToolCall('123', 'my_tool');
         $toolResult = new ToolResult($toolCall, 'result');
 
-        $this->assertSame([], $toolResult->getSources());
+        $this->assertNull($toolResult->getSources());
     }
 
     public function testGetSourcesWithEmptySourceCollection()
@@ -50,7 +50,7 @@ final class ToolResultTest extends TestCase
         $sourceCollection = new SourceCollection();
         $toolResult = new ToolResult($toolCall, 'result', $sourceCollection);
 
-        $this->assertSame([], $toolResult->getSources());
+        $this->assertSame([], $toolResult->getSources()->all());
     }
 
     public function testGetSourcesWithPopulatedSourceCollection()
@@ -61,7 +61,7 @@ final class ToolResultTest extends TestCase
         $sourceCollection = new SourceCollection([$source1, $source2]);
         $toolResult = new ToolResult($toolCall, 'result', $sourceCollection);
 
-        $sources = $toolResult->getSources();
+        $sources = $toolResult->getSources()->all();
 
         $this->assertCount(2, $sources);
         $this->assertSame($source1, $sources[0]);

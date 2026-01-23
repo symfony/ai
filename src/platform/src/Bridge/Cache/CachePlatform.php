@@ -107,7 +107,7 @@ final class CachePlatform implements PlatformInterface
             $options,
         );
 
-        $result->getMetadata()->merge($restoredResult->getMetadata()->all());
+        $result->getMetadata()->merge($restoredResult->getMetadata());
 
         return $result;
     }

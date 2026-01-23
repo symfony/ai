@@ -12,15 +12,12 @@
 namespace Symfony\AI\Agent\Toolbox;
 
 use Symfony\AI\Platform\Message\Message;
-use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\ChunkEvent;
 use Symfony\AI\Platform\Result\Stream\CompleteEvent;
 use Symfony\AI\Platform\Result\Stream\StartEvent;
 use Symfony\AI\Platform\Result\ToolCallResult;
-use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
-use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
@@ -29,6 +26,7 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 final class StreamListener extends AbstractStreamListener
 {
     private string $buffer = '';
+    private ?ResultInterface $result = null;
     private bool $toolHandled = false;
 
     public function __construct(
@@ -62,11 +60,8 @@ final class StreamListener extends AbstractStreamListener
             return;
         }
 
-        $result = ($this->handleToolCallsCallback)($chunk, Message::ofAssistant($this->buffer));
-        $targetMetadata = $event->getResult()->getMetadata();
-
-        $event->setChunk($result->getContent());
-        $event->afterChunkConsumed(fn () => $this->propagateMetadata($result, $targetMetadata));
+        $this->result = ($this->handleToolCallsCallback)($chunk, Message::ofAssistant($this->buffer));
+        $event->setChunk($this->result->getContent());
 
         $this->toolHandled = true;
     }
@@ -75,22 +70,9 @@ final class StreamListener extends AbstractStreamListener
     {
         $this->buffer = '';
         $this->toolHandled = false;
-    }
 
-    private function propagateMetadata(ResultInterface $source, Metadata $target): void
-    {
-        foreach ($source->getMetadata()->all() as $key => $value) {
-            if ('token_usage' === $key && $target->get('token_usage') instanceof TokenUsageInterface && $value instanceof TokenUsageInterface) {
-                $target->add('token_usage', new TokenUsageAggregation([$target->get('token_usage'), $value]));
-                continue;
-            }
-
-            if ('sources' === $key && \is_array($target->get('sources')) && \is_array($value)) {
-                $target->add('sources', array_merge($target->get('sources'), $value));
-                continue;
-            }
-
-            $target->add($key, $value);
+        if (null !== $this->result) {
+            $event->getMetadata()->merge($this->result->getMetadata());
         }
     }
 }
