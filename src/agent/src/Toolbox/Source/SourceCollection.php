@@ -11,7 +11,12 @@
 
 namespace Symfony\AI\Agent\Toolbox\Source;
 
-final class SourceCollection
+/**
+ * @implements \IteratorAggregate<int, Source>
+ *
+ * @author Christopher Hertel <mail@christopher-hertel.de>
+ */
+final class SourceCollection implements \IteratorAggregate, \Countable
 {
     /**
      * @param Source[] $sources
@@ -32,5 +37,15 @@ final class SourceCollection
     public function add(Source $source): void
     {
         $this->sources[] = $source;
+    }
+
+    public function getIterator(): \Traversable
+    {
+        return new \ArrayIterator($this->sources);
+    }
+
+    public function count(): int
+    {
+        return \count($this->sources);
     }
 }
