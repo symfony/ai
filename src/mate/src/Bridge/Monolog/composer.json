@@ -27,8 +27,9 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-mate": "^0.2",
-        "monolog/monolog": "^2.0|^3.0"
+        "helgesverre/toon": "^3.1",
+        "monolog/monolog": "^2.0|^3.0",
+        "symfony/ai-mate": "^0.2"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",

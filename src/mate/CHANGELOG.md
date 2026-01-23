@@ -4,6 +4,7 @@ CHANGELOG
 0.3
 ---
 
+ * Add TOON format encoding for `ServerInfo::extensions()` to reduce token consumption
  * Add support for `instructions` field in extension composer.json to provide AI agent guidance
  * Add support for `extension: false` flag in `extra.ai-mate` composer.json configuration to exclude packages from being discovered as extensions
  * Add `ToolsInspectCommand` to inspect a specific tool

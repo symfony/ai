@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
+use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Attribute\McpTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileIndex;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
@@ -20,8 +21,6 @@ use Symfony\AI\Mate\Exception\InvalidArgumentException;
  * MCP tools for accessing Symfony profiler data.
  *
  * @author Johannes Wachter <johannes@sulu.io>
- *
- * @phpstan-import-type ProfileIndexData from ProfileIndex
  */
 final class ProfilerTool
 {
@@ -30,9 +29,6 @@ final class ProfilerTool
     ) {
     }
 
-    /**
-     * @return list<ProfileIndexData>
-     */
     #[McpTool('symfony-profiler-list', 'List available profiler profiles. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
     public function listProfiles(
         int $limit = 20,
@@ -41,7 +37,7 @@ final class ProfilerTool
         ?string $ip = null,
         ?int $statusCode = null,
         ?string $context = null,
-    ): array {
+    ): string {
         $criteria = [
             'context' => $context,
             'method' => $method,
@@ -52,26 +48,20 @@ final class ProfilerTool
 
         $profiles = $this->dataProvider->searchProfiles(array_filter($criteria), $limit);
 
-        return array_values(array_map(
+        return Toon::encode(array_values(array_map(
             static fn (ProfileIndex $profile): array => $profile->toArray(),
             $profiles,
-        ));
+        )));
     }
 
-    /**
-     * @return ProfileIndexData|null
-     */
     #[McpTool('symfony-profiler-latest', 'Get the latest profiler profile. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
-    public function getLatestProfile(): ?array
+    public function getLatestProfile(): string
     {
         $profile = $this->dataProvider->getLatestProfile();
 
-        return $profile?->toArray();
+        return Toon::encode($profile?->toArray());
     }
 
-    /**
-     * @return list<ProfileIndexData>
-     */
     #[McpTool('symfony-profiler-search', 'Search profiles by criteria. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
     public function searchProfiles(
         ?string $route = null,
@@ -81,7 +71,7 @@ final class ProfilerTool
         ?string $to = null,
         ?string $context = null,
         int $limit = 20,
-    ): array {
+    ): string {
         $criteria = [
             'context' => $context,
             'url' => $route,
@@ -93,17 +83,14 @@ final class ProfilerTool
 
         $profiles = $this->dataProvider->searchProfiles(array_filter($criteria), $limit);
 
-        return array_values(array_map(
+        return Toon::encode(array_values(array_map(
             static fn (ProfileIndex $profile): array => $profile->toArray(),
             $profiles,
-        ));
+        )));
     }
 
-    /**
-     * @return ProfileIndexData
-     */
     #[McpTool('symfony-profiler-get', 'Get a specific profile by token. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
-    public function getProfile(string $token): array
+    public function getProfile(string $token): string
     {
         $profileData = $this->dataProvider->findProfile($token);
 
@@ -128,6 +115,6 @@ final class ProfilerTool
             $data['context'] = $profileData->context;
         }
 
-        return $data;
+        return Toon::encode($data);
     }
 }

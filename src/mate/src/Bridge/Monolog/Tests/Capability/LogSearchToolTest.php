@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Mate\Bridge\Monolog\Tests\Capability;
 
+use HelgeSverre\Toon\DecodeOptions;
+use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Monolog\Capability\LogSearchTool;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogParser;
@@ -34,7 +36,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchByTextTerm()
     {
-        $results = $this->tool->search('logged in');
+        $results = Toon::decode($this->tool->search('logged in'));
 
         $this->assertNotEmpty($results);
         $this->assertCount(1, $results);
@@ -43,14 +45,14 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchByTextTermReturnsEmptyWhenNotFound()
     {
-        $results = $this->tool->search('nonexistent search term xyz');
+        $results = Toon::decode($this->tool->search('nonexistent search term xyz'), DecodeOptions::lenient());
 
         $this->assertEmpty($results);
     }
 
     public function testSearchByLevel()
     {
-        $results = $this->tool->search('', level: 'ERROR');
+        $results = Toon::decode($this->tool->search('', level: 'ERROR'));
 
         $this->assertNotEmpty($results);
 
@@ -61,7 +63,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchByChannel()
     {
-        $results = $this->tool->search('', channel: 'security');
+        $results = Toon::decode($this->tool->search('', channel: 'security'));
 
         $this->assertNotEmpty($results);
 
@@ -70,22 +72,16 @@ final class LogSearchToolTest extends TestCase
         }
     }
 
-    public function testSearchByEnvironment()
-    {
-        // Skip this test as the bridge test fixtures don't have environment-specific files
-        $this->markTestSkipped('Environment-specific search not supported in bridge test fixtures');
-    }
-
     public function testSearchWithLimit()
     {
-        $results = $this->tool->search('', limit: 2);
+        $results = Toon::decode($this->tool->search('', limit: 2));
 
         $this->assertLessThanOrEqual(2, \count($results));
     }
 
     public function testSearchRegex()
     {
-        $results = $this->tool->searchRegex('Database.*failed');
+        $results = Toon::decode($this->tool->searchRegex('Database.*failed'));
 
         $this->assertNotEmpty($results);
         $this->assertStringContainsString('Database connection failed', $results[0]['message']);
@@ -93,14 +89,14 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchRegexWithDelimiters()
     {
-        $results = $this->tool->searchRegex('/User.*logged/i');
+        $results = Toon::decode($this->tool->searchRegex('/User.*logged/i'));
 
         $this->assertNotEmpty($results);
     }
 
     public function testSearchRegexByLevel()
     {
-        $results = $this->tool->searchRegex('.*', level: 'WARNING');
+        $results = Toon::decode($this->tool->searchRegex('.*', level: 'WARNING'));
 
         $this->assertNotEmpty($results);
 
@@ -111,7 +107,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchContext()
     {
-        $results = $this->tool->searchContext('user_id', '123');
+        $results = Toon::decode($this->tool->searchContext('user_id', '123'));
 
         $this->assertNotEmpty($results);
         $this->assertArrayHasKey('user_id', $results[0]['context']);
@@ -120,21 +116,21 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchContextReturnsEmptyWhenKeyNotFound()
     {
-        $results = $this->tool->searchContext('nonexistent_key', 'value');
+        $results = Toon::decode($this->tool->searchContext('nonexistent_key', 'value'), DecodeOptions::lenient());
 
         $this->assertEmpty($results);
     }
 
     public function testSearchContextByLevel()
     {
-        $results = $this->tool->searchContext('error', 'Connection', level: 'ERROR');
+        $results = Toon::decode($this->tool->searchContext('error', 'Connection', level: 'ERROR'));
 
         $this->assertNotEmpty($results);
     }
 
     public function testTail()
     {
-        $results = $this->tool->tail(10);
+        $results = Toon::decode($this->tool->tail(10));
 
         $this->assertNotEmpty($results);
         $this->assertLessThanOrEqual(10, \count($results));
@@ -142,22 +138,16 @@ final class LogSearchToolTest extends TestCase
 
     public function testTailWithLevel()
     {
-        $results = $this->tool->tail(10, level: 'INFO');
+        $results = Toon::decode($this->tool->tail(10, level: 'INFO'));
 
         foreach ($results as $entry) {
             $this->assertSame('INFO', $entry['level']);
         }
     }
 
-    public function testTailWithEnvironment()
-    {
-        // Skip this test as the bridge test fixtures don't have environment-specific files
-        $this->markTestSkipped('Environment-specific tail not supported in bridge test fixtures');
-    }
-
     public function testListFiles()
     {
-        $results = $this->tool->listFiles();
+        $results = Toon::decode($this->tool->listFiles());
 
         $this->assertNotEmpty($results);
 
@@ -169,15 +159,9 @@ final class LogSearchToolTest extends TestCase
         }
     }
 
-    public function testListFilesForEnvironment()
-    {
-        // Skip this test as the bridge test fixtures don't have environment-specific files
-        $this->markTestSkipped('Environment-specific file listing not supported in bridge test fixtures');
-    }
-
     public function testListChannels()
     {
-        $results = $this->tool->listChannels();
+        $results = Toon::decode($this->tool->listChannels());
 
         $this->assertNotEmpty($results);
         $this->assertContains('app', $results);
@@ -186,7 +170,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testByLevel()
     {
-        $results = $this->tool->byLevel('INFO');
+        $results = Toon::decode($this->tool->byLevel('INFO'));
 
         $this->assertNotEmpty($results);
 
@@ -195,22 +179,16 @@ final class LogSearchToolTest extends TestCase
         }
     }
 
-    public function testByLevelWithEnvironment()
-    {
-        // Skip this test as the bridge test fixtures don't have environment-specific files
-        $this->markTestSkipped('Environment-specific level search not supported in bridge test fixtures');
-    }
-
     public function testByLevelWithLimit()
     {
-        $results = $this->tool->byLevel('INFO', limit: 1);
+        $results = Toon::decode($this->tool->byLevel('INFO', limit: 1));
 
         $this->assertLessThanOrEqual(1, \count($results));
     }
 
     public function testSearchReturnsLogEntryArrayStructure()
     {
-        $results = $this->tool->search('logged');
+        $results = Toon::decode($this->tool->search('logged'));
 
         $this->assertNotEmpty($results);
 
