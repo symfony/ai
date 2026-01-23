@@ -18,5 +18,5 @@ return static function (ContainerConfigurator $container): void {
     $container->services()
         ->set(SymfonyAiFeaturesTool::class)
         ->arg('$projectDir', param('mate.root_dir'))
-        ->tag('mcp.capability');
+        ->public();
 };
