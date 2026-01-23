@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Bridge\Perplexity;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -34,7 +33,7 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result));
+            return new StreamResult($this->convertStream($result), [new StreamListener()]);
         }
 
         $data = $result->getData();
@@ -67,26 +66,19 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertStream(RawResultInterface $result): \Generator
     {
-        $searchResults = $citations = [];
-        /** @var Metadata $metadata */
-        $metadata = yield;
-
         foreach ($result->getDataStream() as $data) {
             if (isset($data['choices'][0]['delta']['content'])) {
                 yield $data['choices'][0]['delta']['content'];
             }
-
-            if (isset($data['search_results'])) {
-                $searchResults = $data['search_results'];
-            }
-
-            if (isset($data['citations'])) {
-                $citations = $data['citations'];
-            }
         }
 
-        $metadata->add('search_results', $searchResults);
-        $metadata->add('citations', $citations);
+        if (isset($data['search_results'])) {
+            yield ['search_results' => $data['search_results']];
+        }
+
+        if (isset($data['citations'])) {
+            yield ['citations' => $data['citations']];
+        }
     }
 
     /**
