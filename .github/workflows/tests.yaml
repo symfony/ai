@@ -60,9 +60,9 @@ jobs:
                   tools: flex
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
-            # deptrac does not support Symfony 5.4, 6.4, and 8 yet
+            # deptrac does not support Symfony 5.4
             - name: Remove deptrac for unsupported Symfony versions
-              if: startsWith(matrix.symfony-version, '5.4') || startsWith(matrix.symfony-version, '6.4') || startsWith(matrix.symfony-version, '8.')
+              if: startsWith(matrix.symfony-version, '5.4')
               run: composer remove --dev deptrac/deptrac --no-update
 
             - name: Install root dependencies
@@ -433,7 +433,7 @@ jobs:
 
             # deptrac does not support Symfony 5.4, 6.4, and 8 yet
             - name: Remove deptrac for unsupported Symfony versions
-              if: startsWith(matrix.symfony-version, '5.4') || startsWith(matrix.symfony-version, '6.4') || startsWith(matrix.symfony-version, '8.')
+              if: startsWith(matrix.symfony-version, '5.4')
               run: composer remove --dev deptrac/deptrac --no-update
 
             - name: Install root dependencies
