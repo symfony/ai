@@ -48,7 +48,7 @@ final class MultimodalNormalizer implements NormalizerInterface, NormalizerAware
             return false;
         }
 
-        return \is_array($data) && [] === array_filter($data, fn ($item) => !$item instanceof ContentInterface);
+        return \is_array($data) && [] === array_filter($data, static fn ($item) => !$item instanceof ContentInterface);
     }
 
     public function getSupportedTypes(?string $format): array

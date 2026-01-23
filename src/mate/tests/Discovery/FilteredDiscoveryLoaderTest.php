@@ -49,7 +49,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
         $registry = $this->createMock(RegistryInterface::class);
         $registry->expects($this->once())
             ->method('setDiscoveryState')
-            ->with($this->callback(function (DiscoveryState $state) {
+            ->with($this->callback(static function (DiscoveryState $state) {
                 return 2 === \count($state->getTools());
             }));
 
@@ -90,7 +90,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
         $registry = $this->createMock(RegistryInterface::class);
         $registry->expects($this->once())
             ->method('setDiscoveryState')
-            ->with($this->callback(function (DiscoveryState $state) {
+            ->with($this->callback(static function (DiscoveryState $state) {
                 $tools = $state->getTools();
 
                 // Only tool1 should be present (tool2 is disabled)
@@ -139,7 +139,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
         $registry = $this->createMock(RegistryInterface::class);
         $registry->expects($this->once())
             ->method('setDiscoveryState')
-            ->with($this->callback(function (DiscoveryState $state) {
+            ->with($this->callback(static function (DiscoveryState $state) {
                 $tools = $state->getTools();
 
                 // tool1 and tool3 should be present (tool2 is disabled)
@@ -189,7 +189,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
         $registry = $this->createMock(RegistryInterface::class);
         $registry->expects($this->once())
             ->method('setDiscoveryState')
-            ->with($this->callback(function (DiscoveryState $state) {
+            ->with($this->callback(static function (DiscoveryState $state) {
                 $resources = $state->getResources();
 
                 return 1 === \count($resources) && isset($resources['config://resource1']);
@@ -236,7 +236,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
         $registry = $this->createMock(RegistryInterface::class);
         $registry->expects($this->once())
             ->method('setDiscoveryState')
-            ->with($this->callback(function (DiscoveryState $state) {
+            ->with($this->callback(static function (DiscoveryState $state) {
                 $prompts = $state->getPrompts();
 
                 return 1 === \count($prompts) && isset($prompts['prompt1']);
@@ -283,7 +283,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
         $registry = $this->createMock(RegistryInterface::class);
         $registry->expects($this->once())
             ->method('setDiscoveryState')
-            ->with($this->callback(function (DiscoveryState $state) {
+            ->with($this->callback(static function (DiscoveryState $state) {
                 $templates = $state->getResourceTemplates();
 
                 return 1 === \count($templates) && isset($templates['template1']);
@@ -329,7 +329,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
         $registry = $this->createMock(RegistryInterface::class);
         $registry->expects($this->once())
             ->method('setDiscoveryState')
-            ->with($this->callback(function (DiscoveryState $state) {
+            ->with($this->callback(static function (DiscoveryState $state) {
                 return 1 === \count($state->getTools());
             }));
 
@@ -369,7 +369,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
         $registry = $this->createMock(RegistryInterface::class);
         $registry->expects($this->once())
             ->method('setDiscoveryState')
-            ->with($this->callback(function (DiscoveryState $state) {
+            ->with($this->callback(static function (DiscoveryState $state) {
                 return 2 === \count($state->getTools());
             }));
 
@@ -413,7 +413,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
         $registry = $this->createMock(RegistryInterface::class);
         $registry->expects($this->once())
             ->method('setDiscoveryState')
-            ->with($this->callback(function (DiscoveryState $state) {
+            ->with($this->callback(static function (DiscoveryState $state) {
                 // tool1 should still be present even though nonexistent_tool is configured
                 return 1 === \count($state->getTools()) && isset($state->getTools()['tool1']);
             }));

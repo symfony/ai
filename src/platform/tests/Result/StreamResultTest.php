@@ -37,7 +37,7 @@ final class StreamResultTest extends TestCase
 
     public function testGetChunk()
     {
-        $result = new StreamResult((function () {
+        $result = new StreamResult((static function () {
             yield 'chunk1';
             yield 'chunk2';
         })());
@@ -62,7 +62,7 @@ final class StreamResultTest extends TestCase
 
     public function testListenerCanAddMetadataDuringStreaming()
     {
-        $result = new StreamResult((function () {
+        $result = new StreamResult((static function () {
             yield 'chunk1';
             yield 'chunk2';
         })());

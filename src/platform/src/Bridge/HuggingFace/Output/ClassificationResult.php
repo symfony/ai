@@ -30,7 +30,7 @@ final class ClassificationResult
     public static function fromArray(array $data): self
     {
         return new self(
-            array_map(fn (array $item) => new Classification($item['label'], $item['score']), $data)
+            array_map(static fn (array $item) => new Classification($item['label'], $item['score']), $data)
         );
     }
 }

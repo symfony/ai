@@ -16,7 +16,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
-return function (ContainerConfigurator $configurator) {
+return static function (ContainerConfigurator $configurator) {
     $configurator->parameters()
         ->set('ai_mate_monolog.log_dir', '%mate.root_dir%/var/log');
 

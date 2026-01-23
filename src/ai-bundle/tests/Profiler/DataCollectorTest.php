@@ -58,7 +58,7 @@ class DataCollectorTest extends TestCase
         $traceablePlatform = new TraceablePlatform($platform);
         $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
         $result = new StreamResult(
-            (function () {
+            (static function () {
                 yield 'Assistant ';
                 yield 'response';
             })(),
@@ -82,7 +82,7 @@ class DataCollectorTest extends TestCase
         $traceablePlatform = new TraceablePlatform($platform);
         $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
         $result = new StreamResult(
-            (function () {
+            (static function () {
                 yield 'Assistant ';
                 yield 'response';
             })(),
@@ -107,7 +107,7 @@ class DataCollectorTest extends TestCase
         $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
 
         $originalStream = new StreamResult(
-            (function () {
+            (static function () {
                 yield 'foo';
                 yield 'bar';
             })(),

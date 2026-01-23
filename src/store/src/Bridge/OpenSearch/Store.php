@@ -88,7 +88,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'metadata' => json_encode($document->metadata->getArrayCopy()),
         ];
 
-        $this->request('POST', '_bulk', function () use ($documents, $documentToIndex, $documentToPayload) {
+        $this->request('POST', '_bulk', static function () use ($documents, $documentToIndex, $documentToPayload) {
             foreach ($documents as $document) {
                 yield json_encode($documentToIndex($document)).\PHP_EOL.json_encode($documentToPayload($document)).\PHP_EOL;
             }

@@ -443,7 +443,7 @@ final class StoreTest extends TestCase
                 $this->anything(),
                 $this->anything(),
                 'query_vector',
-                $this->callback(function ($vectorBytes) {
+                $this->callback(static function ($vectorBytes) {
                     // Vector [0.1, 0.2, 0.3] packed as 32-bit floats
                     $expected = pack('f', 0.1).pack('f', 0.2).pack('f', 0.3);
 

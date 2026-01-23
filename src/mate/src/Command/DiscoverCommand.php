@@ -136,7 +136,7 @@ class DiscoverCommand extends Command
         if (\count($removedPackages) > 0) {
             $io->warning([
                 \sprintf('Removed %d extension%s no longer found:', \count($removedPackages), 1 === \count($removedPackages) ? '' : 's'),
-                ...array_map(fn ($pkg) => '  • '.$pkg, $removedPackages),
+                ...array_map(static fn ($pkg) => '  • '.$pkg, $removedPackages),
             ]);
         }
 

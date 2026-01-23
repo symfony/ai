@@ -21,7 +21,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $app = (new SingleCommandApplication('Albert API Model Listing'))
     ->setDescription('Lists all available models on Albert API')
-    ->setCode(function (InputInterface $input, OutputInterface $output) {
+    ->setCode(static function (InputInterface $input, OutputInterface $output) {
         $io = new SymfonyStyle($input, $output);
         $io->title('Albert API Model Listing');
 
@@ -35,7 +35,7 @@ $app = (new SingleCommandApplication('Albert API Model Listing'))
         }
 
         $io->listing(
-            array_map(fn (Model $model) => $model->getName(), $models)
+            array_map(static fn (Model $model) => $model->getName(), $models)
         );
 
         return Command::SUCCESS;

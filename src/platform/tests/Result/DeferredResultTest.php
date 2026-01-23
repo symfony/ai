@@ -153,7 +153,7 @@ final class DeferredResultTest extends TestCase
 
     public function testTokenUsageGetsPromotedFromStream()
     {
-        $result = new StreamResult((function () {
+        $result = new StreamResult((static function () {
             yield 'part 1';
             yield 'part 2';
             yield new TokenUsage(123456);

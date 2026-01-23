@@ -56,47 +56,47 @@ final class TokenUsageAggregation implements TokenUsageInterface, MergeableMetad
 
     public function getPromptTokens(): ?int
     {
-        return $this->sum(fn (TokenUsageInterface $usage) => $usage->getPromptTokens());
+        return $this->sum(static fn (TokenUsageInterface $usage) => $usage->getPromptTokens());
     }
 
     public function getCompletionTokens(): ?int
     {
-        return $this->sum(fn (TokenUsageInterface $usage) => $usage->getCompletionTokens());
+        return $this->sum(static fn (TokenUsageInterface $usage) => $usage->getCompletionTokens());
     }
 
     public function getThinkingTokens(): ?int
     {
-        return $this->sum(fn (TokenUsageInterface $usage) => $usage->getThinkingTokens());
+        return $this->sum(static fn (TokenUsageInterface $usage) => $usage->getThinkingTokens());
     }
 
     public function getToolTokens(): ?int
     {
-        return $this->sum(fn (TokenUsageInterface $usage) => $usage->getToolTokens());
+        return $this->sum(static fn (TokenUsageInterface $usage) => $usage->getToolTokens());
     }
 
     public function getCachedTokens(): ?int
     {
-        return $this->sum(fn (TokenUsageInterface $usage) => $usage->getCachedTokens());
+        return $this->sum(static fn (TokenUsageInterface $usage) => $usage->getCachedTokens());
     }
 
     public function getRemainingTokens(): ?int
     {
-        return $this->min(fn (TokenUsageInterface $usage) => $usage->getRemainingTokens());
+        return $this->min(static fn (TokenUsageInterface $usage) => $usage->getRemainingTokens());
     }
 
     public function getRemainingTokensMinute(): ?int
     {
-        return $this->min(fn (TokenUsageInterface $usage) => $usage->getRemainingTokensMinute());
+        return $this->min(static fn (TokenUsageInterface $usage) => $usage->getRemainingTokensMinute());
     }
 
     public function getRemainingTokensMonth(): ?int
     {
-        return $this->min(fn (TokenUsageInterface $usage) => $usage->getRemainingTokensMonth());
+        return $this->min(static fn (TokenUsageInterface $usage) => $usage->getRemainingTokensMonth());
     }
 
     public function getTotalTokens(): ?int
     {
-        return $this->sum(fn (TokenUsageInterface $usage) => $usage->getTotalTokens());
+        return $this->sum(static fn (TokenUsageInterface $usage) => $usage->getTotalTokens());
     }
 
     private function sum(\Closure $mapFunction): ?int

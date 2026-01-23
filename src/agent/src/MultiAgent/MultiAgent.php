@@ -73,7 +73,7 @@ final class MultiAgent implements AgentInterface
         $userText = $userMessage->asText();
         $this->logger->debug('MultiAgent: Processing user message', ['user_text' => $userText]);
 
-        $this->logger->debug('MultiAgent: Available agents for routing', ['agents' => array_map(fn ($handoff) => [
+        $this->logger->debug('MultiAgent: Available agents for routing', ['agents' => array_map(static fn ($handoff) => [
             'to' => $handoff->getTo()->getName(),
             'when' => $handoff->getWhen(),
         ], $this->handoffs)]);

@@ -67,7 +67,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         $options = $input->getOptions();
         // only filter tool map if list of strings is provided as option
         if (isset($options['tools']) && $this->isFlatStringArray($options['tools'])) {
-            $toolMap = array_values(array_filter($toolMap, fn (Tool $tool) => \in_array($tool->getName(), $options['tools'], true)));
+            $toolMap = array_values(array_filter($toolMap, static fn (Tool $tool) => \in_array($tool->getName(), $options['tools'], true)));
         }
 
         $options['tools'] = $toolMap;
@@ -98,7 +98,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
      */
     private function isFlatStringArray(array $tools): bool
     {
-        return array_reduce($tools, fn (bool $carry, mixed $item) => $carry && \is_string($item), true);
+        return array_reduce($tools, static fn (bool $carry, mixed $item) => $carry && \is_string($item), true);
     }
 
     private function handleToolCallsCallback(Output $output, ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null): ResultInterface

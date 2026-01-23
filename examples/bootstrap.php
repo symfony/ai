@@ -74,7 +74,7 @@ function logger(): LoggerInterface
             // Add context display for debug verbosity
             if ($this->output->getVerbosity() >= ConsoleOutput::VERBOSITY_DEBUG && [] !== $context) {
                 // Filter out special keys that are already handled
-                $displayContext = array_filter($context, function ($key) {
+                $displayContext = array_filter($context, static function ($key) {
                     return !in_array($key, ['exception', 'error', 'object'], true);
                 }, \ARRAY_FILTER_USE_KEY);
 
@@ -160,7 +160,7 @@ function print_vectors(DeferredResult $result): void
     output()->writeln(sprintf('Dimensions: %d', $result->asVectors()[0]->getDimensions()));
 }
 
-set_exception_handler(function ($exception) {
+set_exception_handler(static function ($exception) {
     if ($exception instanceof AgentException || $exception instanceof PlatformException || $exception instanceof StoreException) {
         output()->writeln(sprintf('<error>%s</error>', $exception->getMessage()));
 

@@ -61,7 +61,7 @@ final class MessageBagNormalizerTest extends TestCase
 
         $mockNormalizer = $this->createMock(NormalizerInterface::class);
         $mockNormalizer->method('normalize')
-            ->willReturnCallback(function ($message) use ($userMessageNormalizer, $assistantMessageNormalizer): ?array {
+            ->willReturnCallback(static function ($message) use ($userMessageNormalizer, $assistantMessageNormalizer): ?array {
                 if ($message instanceof UserMessage) {
                     return $userMessageNormalizer->normalize($message);
                 }

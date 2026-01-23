@@ -93,7 +93,7 @@ final class McpPassTest extends TestCase
 
         // Should not create any service locator
         $serviceIds = array_keys($container->getDefinitions());
-        $serviceLocators = array_filter($serviceIds, fn ($id) => str_contains($id, 'service_locator'));
+        $serviceLocators = array_filter($serviceIds, static fn ($id) => str_contains($id, 'service_locator'));
 
         $this->assertEmpty($serviceLocators);
     }

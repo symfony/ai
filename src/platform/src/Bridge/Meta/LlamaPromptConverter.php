@@ -33,7 +33,7 @@ final class LlamaPromptConverter
             $messages[] = self::convertMessage($message);
         }
 
-        $messages = array_filter($messages, fn ($message) => '' !== $message);
+        $messages = array_filter($messages, static fn ($message) => '' !== $message);
 
         return trim(implode(\PHP_EOL.\PHP_EOL, $messages)).\PHP_EOL.\PHP_EOL.'<|start_header_id|>assistant<|end_header_id|>';
     }

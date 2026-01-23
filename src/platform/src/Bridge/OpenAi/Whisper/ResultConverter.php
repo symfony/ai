@@ -68,7 +68,7 @@ final class ResultConverter implements ResultConverterInterface
             $data['text'],
             $data['language'],
             $data['duration'],
-            array_map(fn (array $segment) => new Segment($segment['start'], $segment['end'], $segment['text']), $data['segments']),
+            array_map(static fn (array $segment) => new Segment($segment['start'], $segment['end'], $segment['text']), $data['segments']),
         ));
     }
 }

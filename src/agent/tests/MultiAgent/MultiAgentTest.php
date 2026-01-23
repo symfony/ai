@@ -245,7 +245,7 @@ class MultiAgentTest extends TestCase
             ->method('call')
             ->with(
                 $this->isInstanceOf(MessageBag::class),
-                $this->callback(fn ($opts) => isset($opts['temperature']) && 0.7 === $opts['temperature']
+                $this->callback(static fn ($opts) => isset($opts['temperature']) && 0.7 === $opts['temperature']
                     && isset($opts['max_tokens']) && 100 === $opts['max_tokens']
                     && isset($opts['response_format']) && Decision::class === $opts['response_format']
                 )
@@ -352,7 +352,7 @@ class MultiAgentTest extends TestCase
         $orchestrator->expects($this->once())
             ->method('call')
             ->with(
-                $this->callback(function (MessageBag $messages) {
+                $this->callback(static function (MessageBag $messages) {
                     $userMessage = $messages->getUserMessage();
                     $text = $userMessage?->asText();
 

@@ -63,7 +63,7 @@ final class App
         self::addCommand($application, new ToolsCallCommand($logger, $container));
 
         if (\defined('SIGUSR1') && class_exists(RunnerControl::class)) {
-            $application->getSignalRegistry()->register(\SIGUSR1, function () {
+            $application->getSignalRegistry()->register(\SIGUSR1, static function () {
                 RunnerControl::$state = RunnerState::STOP;
             });
         }
