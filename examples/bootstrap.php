@@ -12,12 +12,14 @@
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\AI\Store\Exception\ExceptionInterface as StoreException;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Dotenv\Dotenv;
@@ -95,6 +97,31 @@ function output(): ConsoleOutput
     };
 
     return new ConsoleOutput($verbosity);
+}
+
+function print_sources(?SourceCollection $sources): void
+{
+    if (null === $sources || 0 === $sources->count()) {
+        output()->writeln('<error>No sources available.</error>');
+
+        return;
+    }
+
+    $table = new Table(output());
+    $table->setHeaderTitle('Tool Sources');
+    $table->setHeaders(['Name (Reference)', 'Content']);
+    foreach ($sources as $source) {
+        $name = $source->getName();
+        $reference = $source->getReference();
+        $content = $source->getContent();
+        $table->addRow([
+            '<comment>'.(strlen($name) <= 50 ? $name : substr($name, 0, 50).'...').'</comment>'.\PHP_EOL.
+            '<fg=gray>'.(strlen($reference) <= 50 ? $reference : substr($reference, 0, 50).'...').'</>',
+            strlen($content) <= 100 ? $content : substr($content, 0, 100).'...',
+        ]);
+        $table->addRow(new TableSeparator());
+    }
+    $table->render();
 }
 
 function print_token_usage(?TokenUsageInterface $tokenUsage): void
