@@ -18,6 +18,7 @@ use Mcp\Server;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Transport\StdioTransport;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\Mate\Agent\AgentInstructionsAggregator;
 use Symfony\AI\Mate\App;
 use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -38,6 +39,7 @@ class ServeCommand extends Command
 {
     private string $cacheDir;
     private FilteredDiscoveryLoader $loader;
+    private AgentInstructionsAggregator $instructionsAggregator;
 
     public function __construct(
         private ContainerInterface $container,
@@ -65,6 +67,12 @@ class ServeCommand extends Command
             discoverer: new Discoverer($logger),
             logger: $logger
         );
+
+        $this->instructionsAggregator = new AgentInstructionsAggregator(
+            rootDir: $rootDir,
+            extensions: $extensions,
+            logger: $logger
+        );
     }
 
     public static function getDefaultName(): string
@@ -90,7 +98,7 @@ class ServeCommand extends Command
             return Command::INVALID;
         }
 
-        $server = Server::builder()
+        $serverBuilder = Server::builder()
             ->setProtocolVersion(
                 ProtocolVersion::tryFrom(
                     $this->container->getParameter('mate.mcp_protocol_version') ?? ProtocolVersion::V2025_03_26->value
@@ -106,8 +114,14 @@ class ServeCommand extends Command
             ->setContainer($this->container)
             ->addLoader($this->loader)
             ->setSession(new FileSessionStore($this->cacheDir.'/sessions'))
-            ->setLogger($this->logger)
-            ->build();
+            ->setLogger($this->logger);
+
+        $instructions = $this->instructionsAggregator->aggregate();
+        if (null !== $instructions) {
+            $serverBuilder->setInstructions($instructions);
+        }
+
+        $server = $serverBuilder->build();
 
         $pidFileName = \sprintf('%s/server_%d.pid', $this->cacheDir, getmypid());
         if (false === @file_put_contents($pidFileName, (string) getmypid())) {

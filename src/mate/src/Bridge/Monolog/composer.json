@@ -65,7 +65,8 @@
             ],
             "includes": [
                 "config/config.php"
-            ]
+            ],
+            "instructions": "INSTRUCTIONS.md"
         }
     }
 }
