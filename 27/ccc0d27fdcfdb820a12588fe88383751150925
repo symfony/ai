@@ -1,0 +1,424 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-12-30T09:21:09Z
+
+The README is too long, let's move it to the docs folder using rst
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-02T21:35:10Z
+
+will not include them but i wanted to document the existing collectors - this should go into an issue after merging to track the state of the implementation
+
+<img width="728" height="503" alt="image" src="https://github.com/user-attachments/assets/af8a3e96-9340-4377-b9bb-8f91834280ee" />
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-02T21:51:15Z
+
+@chr-hertel @OskarStark i reduced the formatters to request and exception - so that the review is easier - we can add the other important collectors later
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-02T21:51:52Z
+
+@chr-hertel @OskarStark @Nyholm its ready for review 🎉
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-02T21:57:07Z
+
+this is an example run in claude.
+
+<details>
+<summary>Claude Code Session</summary>
+
+```
+
+ * ▐▛███▜▌ *   Claude Code v2.0.76
+* ▝▜█████▛▘ *  Sonnet 4.5 · Claude Max
+ *  ▘▘ ▝▝  *   ~/Development/ai/symfony-ai/demo
+
+> analyse the latest profile
+
+∴ Thinking…
+
+  The user wants me to analyze the latest profiler profile. Based on the project context, this is a Symfony application
+  with the Symfony AI Mate MCP server available, which includes profiler-related tools.
+
+  Looking at the available MCP tools, I can see:
+  - profiler-latest - Get the latest profiler profile
+  - profiler-get - Get a specific profile by token
+  - profiler-list - List available profiler profiles
+  - profiler-search - Search profiles by criteria
+
+  The user wants to analyze the "latest profile", so I should use the profiler-latest tool to fetch it.
+
+  According to the system reminder and MCP tool documentation, I should use these tools proactively. This is exactly the
+  kind of task where I should leverage the Symfony AI Mate MCP server.
+
+  Let me call the profiler-latest tool to get the most recent profiler profile.
+
+⏺ I'll fetch and analyze the latest profiler profile for you.
+  ⎿  {
+         "token": "32d11b",
+         "ip": "127.0.0.1",
+         "method": "GET",
+         "url": "https://127.0.0.1:8001/",
+         "time": 1767386385,
+         "time_formatted": "2026-01-02T20:39:45+00:00",
+         "status_code": 200,
+         "parent_token": null,
+         "resource_uri": "profiler://profile/32d11b"
+     }
+
+∴ Thinking…
+
+  The tool returned a summary of the latest profile. According to the documentation, this returns "summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors".
+
+  I need to use the ReadMcpResourceTool to fetch the full profile details using the resource_uri. The resource_uri is "profiler://profile/32d11b" and the server is "symfony-ai-mate".
+
+⏺ Now let me fetch the full profile details including all collectors:
+
+⏺ readMcpResource(Read resource "profiler://profile/32d11b" from server "symfony-ai-mate")
+  ⎿ {
+      "contents": [
+        {
+          "uri": "profiler://profile/32d11b",
+          "mimeType": "application/json",
+          "text": "{\n    \"token\": \"32d11b\",\n    \"method\": \"GET\",\n    \"url\": \"https:\\/\\/127.0.0.1:8001\\/\",\n    \"status_code\": 200,\n    \"time\": 1767386385,\n    \"ip\": \"127.0.0.1\",\n    \"parent_profile\": null,\n
+      \"collectors\": [\n        {\n            \"name\": \"request\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/request\"\n        },\n        {\n            \"name\": \"command\",\n            \"uri\":
+    \"profiler:\\/\\/profile\\/32d11b\\/command\"\n        },\n        {\n            \"name\": \"time\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/time\"\n        },\n        {\n            \"name\": \"memory\",\n
+      \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/memory\"\n        },\n        {\n            \"name\": \"ajax\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/ajax\"\n        },\n        {\n            \"name\": \"form\",\n
+              \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/form\"\n        },\n        {\n            \"name\": \"exception\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/exception\"\n        },\n        {\n
+    \"name\": \"logger\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/logger\"\n        },\n        {\n            \"name\": \"events\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/events\"\n        },\n
+    {\n            \"name\": \"router\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/router\"\n        },\n        {\n            \"name\": \"cache\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/cache\"\n
+    },\n        {\n            \"name\": \"twig\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/twig\"\n        },\n        {\n            \"name\": \"twig_component\",\n            \"uri\":
+    \"profiler:\\/\\/profile\\/32d11b\\/twig_component\"\n        },\n        {\n            \"name\": \"http_client\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/http_client\"\n        },\n        {\n            \"name\":
+    \"dump\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/dump\"\n        },\n        {\n            \"name\": \"Symfony\\\\AI\\\\AiBundle\\\\Profiler\\\\DataCollector\",\n            \"uri\":
+    \"profiler:\\/\\/profile\\/32d11b\\/Symfony\\\\AI\\\\AiBundle\\\\Profiler\\\\DataCollector\"\n        },\n        {\n            \"name\": \"Symfony\\\\AI\\\\McpBundle\\\\Profiler\\\\DataCollector\",\n            \"uri\":
+    \"profiler:\\/\\/profile\\/32d11b\\/Symfony\\\\AI\\\\McpBundle\\\\Profiler\\\\DataCollector\"\n        },\n        {\n            \"name\": \"serializer\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/serializer\"\n
+    },\n        {\n            \"name\": \"config\",\n            \"uri\": \"profiler:\\/\\/profile\\/32d11b\\/config\"\n        }\n    ]\n}"
+        }
+      ]
+    }
+
+∴ Thinking…
+
+  Good! I now have the full profile with all available collectors. This is a GET request to the homepage (https://127.0.0.1:8001/) with a 200 status code. I can see there are 19 collectors available, including some interesting ones:
+
+  - Standard Symfony collectors: request, time, memory, exception, logger, events, router, cache, twig
+  - Twig LiveComponent collector
+  - AI-specific collectors: Symfony\AI\AiBundle\Profiler\DataCollector and Symfony\AI\McpBundle\Profiler\DataCollector
+
+  Let me fetch the most important collectors to provide a comprehensive analysis. I should focus on:
+  1. Time (performance)
+  2. Memory (resource usage)
+  3. Request (basic info)
+  4. Exception (any errors)
+  5. Logger (any logged messages)
+  6. AI Bundle collector (AI-specific data)
+  7. MCP Bundle collector (MCP-specific data)
+
+  Let me fetch these key collectors in parallel.
+
+⏺ Let me fetch the key collectors to provide a comprehensive analysis:
+
+⏺ readMcpResource(Read resource "profiler://profile/32d11b/time" from server "symfony-ai-mate")
+  ⎿  {
+       "contents": [
+         {
+           "uri": "profiler://profile/32d11b/time",
+           "mimeType": "application/json",
+           "text": "{\n    \"name\": \"time\",\n    \"data\": {\n        \"raw\": {}\n    },\n    \"summary\": []\n}"
+         }
+       ]
+     }
+
+⏺ readMcpResource(Read resource "profiler://profile/32d11b/memory" from server "symfony-ai-mate")
+  ⎿  {
+       "contents": [
+         {
+           "uri": "profiler://profile/32d11b/memory",
+           "mimeType": "application/json",
+           "text": "{\n    \"name\": \"memory\",\n    \"data\": {\n        \"raw\": {}\n    },\n    \"summary\": []\n}"
+         }
+       ]
+     }
+
+⏺ readMcpResource(Read resource "profiler://profile/32d11b/request" from server "symfony-ai-mate")
+  ⎿ {
+      "contents": [
+        {
+          "uri": "profiler://profile/32d11b/request",
+          "mimeType": "application/json",
+          "text": "{\n    \"name\": \"request\",\n    \"data\": {\n        \"request\": {\n            \"method\": \"GET\",\n            \"path\": \"\\/\",\n            \"headers\": {\n                \"sec-fetch-site\": {},\n
+      \"sec-ch-ua-mobile\": {},\n                \"user-agent\": {},\n                \"cache-control\": {},\n                \"upgrade-insecure-requests\": {},\n                \"cookie\": {},\n                \"priority\": {},\n
+          \"accept\": {},\n                \"sec-ch-ua-platform\": {},\n                \"accept-language\": {},\n                \"host\": {},\n                \"accept-encoding\": {},\n                \"sec-fetch-user\": {},\n
+        \"mod-rewrite\": {},\n                \"sec-ch-ua\": {},\n                \"sec-fetch-dest\": {},\n                \"sec-fetch-mode\": {},\n                \"x-php-ob-level\": {}\n            },\n            \"request_parameters\":
+    [],\n            \"query_parameters\": [],\n            \"attributes\": {\n                \"_stopwatch_token\": {},\n                \"_route\": {},\n                \"template\": {},\n                \"_controller\": {},\n
+        \"_route_params\": {}\n            },\n            \"cookies\": {\n                \"admin_deauth_profile_token\": \"[REDACTED]\"\n            },\n            \"server\": {\n                \"PWD\": {},\n
+    \"__CFBundleIdentifier\": {},\n                \"SHELL\": {},\n                \"TERM_SESSION_ID\": {},\n                \"LaunchInstanceID\": {},\n                \"COMMAND_MODE\": {},\n                \"KUBECONFIG\": {},\n
+        \"USER\": {},\n                \"COLORTERM\": {},\n                \"NVM_INC\": {},\n                \"XPC_FLAGS\": {},\n                \"LANG\": {},\n                \"ITERM_PROFILE\": {},\n                \"SECURITYSESSIONID\":
+    {},\n                \"HOME\": {},\n                \"__CF_USER_TEXT_ENCODING\": {},\n                \"XPC_SERVICE_NAME\": {},\n                \"LC_TERMINAL_VERSION\": {},\n                \"SSH_AUTH_SOCK\": {},\n
+    \"PARCEL_WORKERS\": {},\n                \"TERM\": {},\n                \"TMPDIR\": {},\n                \"SHLVL\": {},\n                \"NVM_DIR\": {},\n                \"TERM_PROGRAM_VERSION\": {},\n
+    \"PHP_CS_FIXER_IGNORE_ENV\": {},\n                \"TERM_PROGRAM\": {},\n                \"COLORFGBG\": {},\n                \"PKG_CONFIG_PATH\": {},\n                \"JAVA_HOME\": {},\n                \"LC_TERMINAL\": {},\n
+         \"CPPFLAGS\": {},\n                \"TERMINFO_DIRS\": {},\n                \"NVM_BIN\": {},\n                \"ITERM_SESSION_ID\": {},\n                \"PATH\": {},\n                \"USE_GKE_GCLOUD_AUTH_PLUGIN\": {},\n
+         \"TERM_FEATURES\": {},\n                \"PARCEL_MAX_CONCURRENT_CALLS\": {},\n                \"LDFLAGS\": {},\n                \"ANDROID_HOME\": {},\n                \"NVM_CD_FLAGS\": {},\n                \"LOGNAME\": {},\n
+             \"SYMFONY_TUNNEL\": {},\n                \"SYMFONY_TUNNEL_ENV\": {},\n                \"SYMFONY_TUNNEL_BRAND\": {},\n                \"SYMFONY_DOCKER_ENV\": {},\n                \"PHP_BINARY\": {},\n
+    \"PHP_PATH\": {},\n                \"PHP_PEAR_PHP_BIN\": {},\n                \"LC_ALL\": {},\n                \"PGGSSENCMODE\": {},\n                \"SYMFONY_APPLICATION_DEFAULT_ROUTE_SCHEME\": {},\n
+    \"HTTP_SEC_FETCH_SITE\": {},\n                \"SYMFONY_PROJECT_DEFAULT_ROUTE_PORT\": {},\n                \"SCRIPT_NAME\": {},\n                \"REMOTE_ADDR\": {},\n                \"REQUEST_URI\": {},\n
+    \"SYMFONY_PROJECT_DEFAULT_ROUTE_URL\": {},\n                \"HTTP_SEC_CH_UA_MOBILE\": {},\n                \"HTTP_USER_AGENT\": {},\n                \"CONTENT_TYPE\": {},\n                \"HTTP_CACHE_CONTROL\": {},\n
+    \"SYMFONY_DEFAULT_ROUTE_SCHEME\": {},\n                \"REDIRECT_STATUS\": {},\n                \"SYMFONY_PROJECT_DEFAULT_ROUTE_SCHEME\": {},\n                \"HTTP_UPGRADE_INSECURE_REQUESTS\": {},\n
+    \"SYMFONY_DEFAULT_ROUTE_PATH\": {},\n                \"HTTP_COOKIE\": {},\n                \"GATEWAY_INTERFACE\": {},\n                \"HTTP_PRIORITY\": {},\n                \"SYMFONY_APPLICATION_DEFAULT_ROUTE_URL\": {},\n
+       \"X_FORWARDED_PORT\": {},\n                \"HTTP_ACCEPT\": {},\n                \"HTTP_SEC_CH_UA_PLATFORM\": {},\n                \"HTTP_ACCEPT_LANGUAGE\": {},\n                \"CONTENT_LENGTH\": {},\n                \"HTTP_HOST\":
+     {},\n                \"SYMFONY_DEFAULT_ROUTE_URL\": {},\n                \"SCRIPT_FILENAME\": {},\n                \"SYMFONY_PROJECT_DEFAULT_ROUTE_HOST\": {},\n                \"DOCUMENT_ROOT\": {},\n                \"HTTPS\": {},\n
+                 \"HTTP_ACCEPT_ENCODING\": {},\n                \"HTTP_SEC_FETCH_USER\": {},\n                \"SYMFONY_PROJECT_DEFAULT_ROUTE_PATH\": {},\n                \"REMOTE_PORT\": {},\n                \"SERVER_PROTOCOL\": {},\n
+               \"HTTP_MOD_REWRITE\": {},\n                \"PATH_INFO\": {},\n                \"SYMFONY_APPLICATION_DEFAULT_ROUTE_HOST\": {},\n                \"HTTP_SEC_CH_UA\": {},\n                \"SYMFONY_DEFAULT_ROUTE_PORT\": {},\n
+                 \"QUERY_STRING\": {},\n                \"SYMFONY_APPLICATION_DEFAULT_ROUTE_PORT\": {},\n                \"SYMFONY_APPLICATION_DEFAULT_ROUTE_PATH\": {},\n                \"SERVER_SOFTWARE\": {},\n
+    \"SERVER_NAME\": {},\n                \"SYMFONY_DEFAULT_ROUTE_HOST\": {},\n                \"HTTP_SEC_FETCH_DEST\": {},\n                \"HTTP_SEC_FETCH_MODE\": {},\n                \"REQUEST_METHOD\": {},\n
+    \"DOCUMENT_URI\": {},\n                \"SERVER_PORT\": {},\n                \"FCGI_ROLE\": {},\n                \"PHP_SELF\": {},\n                \"REQUEST_TIME_FLOAT\": {},\n                \"REQUEST_TIME\": {},\n
+    \"APP_RUNTIME_OPTIONS\": {},\n                \"APP_RUNTIME\": {},\n                \"APP_PROJECT_DIR\": {},\n                \"SYMFONY_DOTENV_PATH\": {},\n                \"APP_ENV\": {},\n                \"APP_SECRET\": {},\n
+           \"HUGGINGFACE_API_KEY\": {},\n                \"OPENAI_API_KEY\": {},\n                \"SYMFONY_DOTENV_VARS\": {},\n                \"APP_DEBUG\": {}\n            },\n            \"files\": [],\n            \"format\":
+    \"html\",\n            \"locale\": \"en\"\n        },\n        \"response\": {\n            \"status_code\": 200,\n            \"status_text\": \"OK\",\n            \"content_type\": \"text\\/html; charset=UTF-8\",\n
+    \"headers\": {\n                \"cache-control\": {},\n                \"date\": {},\n                \"content-type\": {},\n                \"x-debug-token\": {}\n            },\n            \"cookies\": []\n        },\n
+    \"session\": {\n            \"metadata\": [],\n            \"attributes\": [],\n            \"usages\": [],\n            \"stateless\": false,\n            \"flashes\": []\n        },\n        \"routing\": {\n            \"route\":
+    \"index\",\n            \"params\": {\n                \"template\": {}\n            },\n            \"controller\": \"array (count=4)\"\n        },\n        \"dotenv_vars\": {\n            \"APP_ENV\": {},\n            \"APP_SECRET\":
+    {},\n            \"HUGGINGFACE_API_KEY\": {},\n            \"OPENAI_API_KEY\": {}\n        }\n    },\n    \"summary\": {\n        \"method\": \"GET\",\n        \"path\": \"\\/\",\n        \"route\": \"index\",\n        \"status_code\":
+    200,\n        \"content_type\": \"text\\/html; charset=UTF-8\"\n    }\n}"
+        }
+      ]
+    }
+
+⏺ readMcpResource(Read resource "profiler://profile/32d11b/exception" from server "symfony-ai-mate")
+  ⎿  {
+       "contents": [
+         {
+           "uri": "profiler://profile/32d11b/exception",
+           "mimeType": "application/json",
+           "text": "{\n    \"name\": \"exception\",\n    \"data\": {\n        \"has_exception\": false\n    },\n    \"summary\": {\n        \"has_exception\": false\n    }\n}"
+         }
+       ]
+     }
+
+⏺ readMcpResource(Read resource "profiler://profile/32d11b/logger" from server "symfony-ai-mate")
+  ⎿  {
+       "contents": [
+         {
+           "uri": "profiler://profile/32d11b/logger",
+           "mimeType": "application/json",
+           "text": "{\n    \"name\": \"logger\",\n    \"data\": {\n        \"raw\": {}\n    },\n    \"summary\": []\n}"
+         }
+       ]
+     }
+
+⏺ readMcpResource(Read resource "profiler://profile/32d11b/Symfony\AI\AiBundle\Profiler\DataCollector" from server "symfony-ai-mate")
+  ⎿  {
+       "contents": [
+         {
+           "uri": "profiler://profile/32d11b/Symfony\\AI\\AiBundle\\Profiler\\DataCollector",
+           "mimeType": "application/json",
+           "text": "{\n    \"name\": \"Symfony\\\\AI\\\\AiBundle\\\\Profiler\\\\DataCollector\",\n    \"data\": {\n        \"raw\": {}\n    },\n    \"summary\": []\n}"
+         }
+       ]
+     }
+
+⏺ readMcpResource(Read resource "profiler://profile/32d11b/Symfony\AI\McpBundle\Profiler\DataCollector" from server "symfony-ai-mate")
+  ⎿  {
+       "contents": [
+         {
+           "uri": "profiler://profile/32d11b/Symfony\\AI\\McpBundle\\Profiler\\DataCollector",
+           "mimeType": "application/json",
+           "text": "{\n    \"name\": \"Symfony\\\\AI\\\\McpBundle\\\\Profiler\\\\DataCollector\",\n    \"data\": {\n        \"raw\": {}\n    },\n    \"summary\": []\n}"
+         }
+       ]
+     }
+
+⏺ readMcpResource(Read resource "profiler://profile/32d11b/router" from server "symfony-ai-mate")
+  ⎿  {
+       "contents": [
+         {
+           "uri": "profiler://profile/32d11b/router",
+           "mimeType": "application/json",
+           "text": "{\n    \"name\": \"router\",\n    \"data\": {\n        \"raw\": {}\n    },\n    \"summary\": []\n}"
+         }
+       ]
+     }
+
+∴ Thinking…
+
+  I've collected the key collectors. Let me analyze what I have:
+
+  1. Time collector: Empty raw data - this suggests the time data collection might not be working properly or the data format is different
+  2. Memory collector: Empty raw data - similar issue
+  3. Request collector: Good data! This shows:
+    - GET request to "/"
+    - Route: "index"
+    - Controller: array (count=4)
+    - 200 OK response
+    - Content-Type: text/html; charset=UTF-8
+    - Session is stateless
+    - Environment variables: APP_ENV, APP_SECRET, HUGGINGFACE_API_KEY, OPENAI_API_KEY
+  4. Exception collector: No exceptions (good!)
+  5. Logger collector: Empty raw data
+  6. AI Bundle collector: Empty raw data - no AI activity
+  7. MCP Bundle collector: Empty raw data - no MCP activity
+  8. Router collector: Empty raw data
+
+  The collectors with "raw: {}" seem to indicate no data was collected for those collectors. This might be normal for a simple homepage request where no AI/MCP operations occurred, no logging happened, etc.
+
+  Let me try to fetch the twig_component collector since this is a LiveComponent application, that might have interesting data:
+
+⏺ Let me also check the Twig component collector since this is a LiveComponent application:
+
+⏺ readMcpResource(Read resource "profiler://profile/32d11b/twig_component" from server "symfony-ai-mate")
+  ⎿  {
+       "contents": [
+         {
+           "uri": "profiler://profile/32d11b/twig_component",
+           "mimeType": "application/json",
+           "text": "{\n    \"name\": \"twig_component\",\n    \"data\": {\n        \"raw\": {}\n    },\n    \"summary\": []\n}"
+         }
+       ]
+     }
+
+∴ Thinking…
+
+  Alright, I have enough data to provide a comprehensive analysis. Let me summarize what I found:
+
+  The profile is for a simple GET request to the homepage ("/") that returned a 200 OK response. Most collectors show no activity because this was likely just a page load without any AI operations, logging, exceptions, or complex processing.
+
+  Let me provide a clear, structured analysis for the user.
+
+⏺ Profile Analysis - Token: 32d11b
+
+  Request Overview
+
+  - URL: https://127.0.0.1:8001/
+  - Method: GET
+  - Route: index
+  - Status: 200 OK
+  - Time: 2026-01-02 20:39:45 UTC
+  - IP: 127.0.0.1
+
+  Key Findings
+
+  ✅ Request Details (demo/CLAUDE.md:1)
+  - Path: / (homepage)
+  - Controller: Array-based controller
+  - Content-Type: text/html; charset=UTF-8
+  - Format: HTML
+  - Locale: en
+
+  ✅ No Errors (demo/CLAUDE.md:1)
+  - Exception collector reports: has_exception: false
+  - Clean request with no errors or warnings
+
+  ✅ Session State (demo/CLAUDE.md:1)
+  - Session is stateless
+  - No flash messages
+  - No session attributes or metadata
+  - Cookie: admin_deauth_profile_token (redacted)
+
+  ✅ Environment Configuration (demo/CLAUDE.md:1)
+  - APP_ENV configured
+  - APP_SECRET configured
+  - HUGGINGFACE_API_KEY configured
+  - OPENAI_API_KEY configured
+
+  Inactive Collectors
+
+  The following collectors show no activity (empty raw data):
+  - Time: No timing data captured
+  - Memory: No memory metrics captured
+  - Logger: No log messages during this request
+  - AI Bundle: No AI operations performed
+  - MCP Bundle: No MCP tool calls made
+  - Twig Component: No LiveComponent interactions
+  - Router: No additional routing data
+
+  Analysis Summary
+
+  This appears to be a simple homepage load without any:
+  - AI agent interactions
+  - MCP tool usage
+  - LiveComponent rendering
+  - Database queries
+  - Logging activity
+  - Exceptions or errors
+
+  The request executed cleanly and returned the index template successfully. The empty collectors suggest this was likely the initial page load before any user interaction with the chat interfaces or AI features.
+
+  Recommendation: To see more interesting profiler data, trigger a request that involves AI chat, streaming, or MCP tool usage (e.g., /blog, /stream, /youtube routes).
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+> list recent profiles                                                                                                                                                                                                                        ↵ send
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                                                                                                                                      55453 tokens
+
+```
+</details>
+
+I dont like the empty returns for none registered formatters - but for the first implementation i think its ok - also this should to into an issue.
+
+---------------------------------------------------------------------------
+
+by Nyholm at 2026-01-03T07:50:54Z
+
+This looks nice, but can we merge this with the SymfonyBridge?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-03T13:22:30Z
+
+@Nyholm also considered this, but the profiler makes more sense as its own extension. This way, it can be enabled and configured independently, adding context to the prompt without coupling it to other extensions.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-04T20:18:02Z
+
+Open Points are:
+
+- [ ] Other Collectors ([Link to comment](https://github.com/symfony/ai/pull/1320#issuecomment-3706264898)) - will go to an own issue after merge https://github.com/symfony/ai/issues/1440
+- [ ] Empty Data for none fomatted collectors ([Link to comment](https://github.com/symfony/ai/pull/1320#issuecomment-3706291075)) - will go to an own issue after merge https://github.com/symfony/ai/issues/1441
+- [x] Decission: Merge Profiler Extension with Symfony Extension ([Link to comment](https://github.com/symfony/ai/pull/1320#issuecomment-3706871550)) - needs a decission before merge
+- [x] Throwables ([Link to comment](https://github.com/symfony/ai/pull/1320#discussion_r2659888628)) - @chr-hertel are the catches OK? discussed with @chr-hertel in slack and its ok in that case
+- [x] Using FileProfilerStorage instead of Reimplementing it ([Link to comment](https://github.com/symfony/ai/pull/1320#discussion_r2651831080))
+
+@Nyholm @chr-hertel
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-08T20:17:07Z
+
+@sonnymilton thanks for the feedback - i have done that now
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-11T19:51:51Z
+
+@chr-hertel @Nyholm i merged the tools into the symfony bridge - you can review it BUT before merging i have to take a deeper test in the demo application - was not able todo this today
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-12T18:24:08Z
+
+@chr-hertel @Nyholm tested and OK for the first release :) see it here https://asciinema.org/a/paNQKKiSIQyOolsx
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-19T19:18:13Z
+
+@chr-hertel fixed you latest review
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-23T19:54:35Z
+
+@chr-hertel this is green 🎉 and i also updated the INSTRUCTIONS.md
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-23T20:23:35Z
+
+i have also created the follow up issues
