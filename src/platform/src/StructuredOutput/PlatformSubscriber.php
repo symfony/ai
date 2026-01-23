@@ -17,7 +17,6 @@ use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Result\DeferredResult;
-use Symfony\AI\Platform\Serializer\StructuredOutputSerializer;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -36,7 +35,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
         private readonly ResponseFormatFactoryInterface $responseFormatFactory = new ResponseFormatFactory(),
         ?SerializerInterface $serializer = null,
     ) {
-        $this->serializer = $serializer ?? new StructuredOutputSerializer();
+        $this->serializer = $serializer ?? new Serializer();
     }
 
     public static function getSubscribedEvents(): array
