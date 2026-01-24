@@ -27,7 +27,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-mate": "^0.2",
+        "symfony/ai-mate": "^0.3",
         "monolog/monolog": "^2.0|^3.0"
     },
     "require-dev": {
@@ -53,7 +53,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.3.x-dev"
+            "dev-main": "0.4.x-dev"
         },
         "thanks": {
             "name": "symfony/ai",
