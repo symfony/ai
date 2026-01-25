@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-01-25T19:47:46Z
+
+Hi @chr-hertel 👋🏻
+
+I would have inverted the condition by registering the normalizer in the condition related to the `cache` platform (this remove the lines from `services.php`) in `processPlatform...` method 🤔
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-25T19:57:24Z
+
+yea this is not super intuitive, but mostly how we do it right now - for now it's more consistent, but will look at this later again to optimize a bit how we handle that bridge specific stuff - similar to #1448
