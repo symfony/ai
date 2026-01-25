@@ -538,6 +538,9 @@ final class AiBundle extends AbstractBundle
 
             return;
         }
+        if (!ContainerBuilder::willBeAvailable('symfony/ai-cache-platform', CachePlatform::class, ['symfony/ai-bundle'])) {
+            $container->removeDefinition('ai.platform.cache.result_normalizer');
+        }
 
         if ('cartesia' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-cartesia-platform', CartesiaPlatformFactory::class, ['symfony/ai-bundle'])) {
