@@ -42,7 +42,6 @@ $indexer = new Indexer(
     loader: new InMemoryLoader($documents),
     vectorizer: $vectorizer,
     store: $store,
-    source: null,
     transformers: [
         new TextSplitTransformer(chunkSize: 100, overlap: 20),
     ],

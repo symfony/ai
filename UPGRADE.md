@@ -1,3 +1,37 @@
+UPGRADE FROM 0.3 to 0.4
+=======================
+
+Store
+-----
+
+ * The `Indexer` class is now stateless. The `$source` constructor parameter and `withSource()` method have been removed.
+   Source is now passed directly to the `index()` method:
+
+   ```diff
+   -$indexer = new Indexer($loader, $vectorizer, $store, '/path/to/source');
+   -$indexer->index();
+   +$indexer = new Indexer($loader, $vectorizer, $store);
+   +$indexer->index('/path/to/source');
+   ```
+
+ * The `IndexerInterface::withSource()` method has been removed. Use the `$source` parameter of `index()` instead:
+
+   ```diff
+   -$indexer->withSource('/new/source')->index();
+   +$indexer->index('/new/source');
+   ```
+
+ * The `Indexer` constructor parameter order has changed. Filters and transformers have shifted positions:
+
+   ```diff
+   -new Indexer($loader, $vectorizer, $store, $source, $filters, $transformers, $logger);
+   +new Indexer($loader, $vectorizer, $store, $filters, $transformers, $logger);
+   ```
+
+ * For bundle users: If you configured a `source` in your indexer configuration, the bundle now wraps the indexer
+   with a `ConfiguredIndexer` decorator. This is transparent - the configured source is still used by default,
+   but can be overridden by passing a source to `index()`.
+
 UPGRADE FROM 0.2 to 0.3
 =======================
 

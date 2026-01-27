@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.4
+---
+
+ * [BC BREAK] Make `Indexer` stateless - `$source` constructor parameter and `withSource()` method removed
+ * Add `ConfiguredIndexer` decorator for pre-configuring default sources
+
 0.3
 ---
 

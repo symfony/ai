@@ -26,18 +26,17 @@ $indexer = new Indexer(
     loader: new TextFileLoader(),
     vectorizer: $vectorizer,
     store: $store,
-    source: [
-        dirname(__DIR__, 2).'/fixtures/movies/gladiator.md',
-        dirname(__DIR__, 2).'/fixtures/movies/inception.md',
-        dirname(__DIR__, 2).'/fixtures/movies/jurassic-park.md',
-    ],
     transformers: [
         new TextReplaceTransformer(search: '## Plot', replace: '## Synopsis'),
         new TextSplitTransformer(chunkSize: 500, overlap: 100),
     ],
 );
 
-$indexer->index();
+$indexer->index([
+    dirname(__DIR__, 2).'/fixtures/movies/gladiator.md',
+    dirname(__DIR__, 2).'/fixtures/movies/inception.md',
+    dirname(__DIR__, 2).'/fixtures/movies/jurassic-park.md',
+]);
 
 $vector = $vectorizer->vectorize('Roman gladiator revenge');
 $results = $store->query($vector);

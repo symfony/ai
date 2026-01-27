@@ -26,47 +26,32 @@ use Symfony\AI\Store\Document\VectorizerInterface;
 class Indexer implements IndexerInterface
 {
     /**
-     * @var array<string|null>
-     */
-    private array $sources = [];
-
-    /**
-     * @param string|array<string>|null $source       Source identifier(s) for data loading (file paths, URLs, etc.)
-     * @param FilterInterface[]         $filters      Filters to apply after loading documents to remove unwanted content
-     * @param TransformerInterface[]    $transformers Transformers to mutate documents after filtering (chunking, cleaning, etc.)
+     * @param FilterInterface[]      $filters      Filters to apply after loading documents to remove unwanted content
+     * @param TransformerInterface[] $transformers Transformers to mutate documents after filtering (chunking, cleaning, etc.)
      */
     public function __construct(
         private LoaderInterface $loader,
         private VectorizerInterface $vectorizer,
         private StoreInterface $store,
-        string|array|null $source = null,
         private array $filters = [],
         private array $transformers = [],
         private LoggerInterface $logger = new NullLogger(),
     ) {
-        $this->sources = null === $source ? [] : (array) $source;
     }
 
-    public function withSource(string|array $source): self
+    public function index(string|array|null $source = null, array $options = []): void
     {
-        return new self($this->loader, $this->vectorizer, $this->store, $source, $this->filters, $this->transformers, $this->logger);
-    }
+        $sources = null === $source ? [null] : (array) $source;
 
-    public function index(array $options = []): void
-    {
-        $this->logger->debug('Starting document processing', ['sources' => $this->sources, 'options' => $options]);
+        $this->logger->debug('Starting document processing', ['sources' => $sources, 'options' => $options]);
 
         $documents = [];
-        if ([] === $this->sources) {
-            $documents = $this->loadSource(null);
-        } else {
-            foreach ($this->sources as $singleSource) {
-                $documents = array_merge($documents, $this->loadSource($singleSource));
-            }
+        foreach ($sources as $singleSource) {
+            $documents = array_merge($documents, $this->loadSource($singleSource));
         }
 
         if ([] === $documents) {
-            $this->logger->debug('No documents to process', ['sources' => $this->sources]);
+            $this->logger->debug('No documents to process', ['sources' => $sources]);
 
             return;
         }
