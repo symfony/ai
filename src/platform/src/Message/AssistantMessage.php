@@ -24,10 +24,11 @@ final class AssistantMessage implements MessageInterface
     use MetadataAwareTrait;
 
     /**
-     * @param ?ToolCall[] $toolCalls
+     * @param \JsonSerializable|\Stringable|object|string|null $content
+     * @param ?ToolCall[]                                      $toolCalls
      */
     public function __construct(
-        private ?string $content = null,
+        private object|string|null $content = null,
         private ?array $toolCalls = null,
     ) {
         $this->id = Uuid::v7();
@@ -51,7 +52,10 @@ final class AssistantMessage implements MessageInterface
         return $this->toolCalls;
     }
 
-    public function getContent(): ?string
+    /**
+     * @return \JsonSerializable|\Stringable|object|string|null
+     */
+    public function getContent(): object|string|null
     {
         return $this->content;
     }
