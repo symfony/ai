@@ -146,4 +146,65 @@ final class AssistantMessageNormalizerTest extends TestCase
         $this->assertSame($expectedToolCalls, $result['tool_calls']);
         $this->assertSame('Reasoning about tool usage', $result['reasoning_content']);
     }
+
+    public function testNormalizeWithJsonSerializableContent()
+    {
+        $content = new class implements \JsonSerializable {
+            /**
+             * @return array{title: string, ingredients: list<string>}
+             */
+            public function jsonSerialize(): array
+            {
+                return ['title' => 'Test Recipe', 'ingredients' => ['flour', 'sugar']];
+            }
+        };
+        $message = new AssistantMessage($content);
+
+        $expected = [
+            'role' => 'assistant',
+            'content' => '{"title":"Test Recipe","ingredients":["flour","sugar"]}',
+        ];
+
+        $this->assertSame($expected, $this->normalizer->normalize($message));
+    }
+
+    public function testNormalizeWithStringableContent()
+    {
+        $content = new class implements \Stringable {
+            public function __toString(): string
+            {
+                return 'Stringable content here';
+            }
+        };
+        $message = new AssistantMessage($content);
+
+        $expected = [
+            'role' => 'assistant',
+            'content' => 'Stringable content here',
+        ];
+
+        $this->assertSame($expected, $this->normalizer->normalize($message));
+    }
+
+    public function testNormalizeWithObjectContent()
+    {
+        $content = new \stdClass();
+        $content->property = 'value';
+        $message = new AssistantMessage($content);
+
+        $innerNormalizer = $this->createMock(NormalizerInterface::class);
+        $innerNormalizer->expects($this->once())
+            ->method('normalize')
+            ->with($content, null, [])
+            ->willReturn(['property' => 'value']);
+
+        $this->normalizer->setNormalizer($innerNormalizer);
+
+        $expected = [
+            'role' => 'assistant',
+            'content' => '{"property":"value"}',
+        ];
+
+        $this->assertSame($expected, $this->normalizer->normalize($message));
+    }
 }
