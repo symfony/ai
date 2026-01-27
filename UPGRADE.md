@@ -1,4 +1,4 @@
-UPGRADE FROM 0.2 to 0.3
+UPGRADE FROM 0.3 to 0.4
 =======================
 
 Store
@@ -31,6 +31,9 @@ Store
  * For bundle users: If you configured a `source` in your indexer configuration, the bundle now wraps the indexer
    with a `ConfiguredIndexer` decorator. This is transparent - the configured source is still used by default,
    but can be overridden by passing a source to `index()`.
+
+UPGRADE FROM 0.2 to 0.3
+=======================
 
 Agent
 -----
