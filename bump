@@ -47,7 +47,6 @@ use Symfony\Component\Finder\Finder;
     ->addOption('patch', null, InputOption::VALUE_NONE, 'Bump patch version (x.x.X)')
     ->addOption('release', null, InputOption::VALUE_REQUIRED, 'Set explicit release version (e.g., 1.2.3)')
     ->addOption('constraint', null, InputOption::VALUE_REQUIRED, 'Set explicit composer constraint (e.g., ^1.2)')
-    ->addOption('alias', null, InputOption::VALUE_REQUIRED, 'Set alias version for dev branches (e.g., 0.4.x-dev)')
     ->setCode(function (InputInterface $input, OutputInterface $output): int {
         $filesystem = new Filesystem();
         $io = new SymfonyStyle($input, $output);
@@ -57,7 +56,6 @@ use Symfony\Component\Finder\Finder;
         $isPatch = $input->getOption('patch');
         $releaseVersion = $input->getOption('release');
         $composerConstraint = $input->getOption('constraint');
-        $aliasVersion = $input->getOption('alias');
 
         $bumpOptions = array_filter([
             'major' => $isMajor,
@@ -129,13 +127,6 @@ use Symfony\Component\Finder\Finder;
         }
 
         $io->writeln(\sprintf('Composer constraint: <info>%s</info>', $composerConstraint));
-
-        // Calculate alias version for branch-alias (next minor version with .x-dev suffix)
-        if (!$aliasVersion) {
-            $aliasVersion = \sprintf('%s.%s.x-dev', $newMajor, (int) $newMinor + 1);
-        }
-
-        $io->writeln(\sprintf('Branch alias: <info>%s</info>', $aliasVersion));
         $io->newLine();
 
         if (!$io->confirm('Proceed with these changes?')) {
@@ -188,13 +179,6 @@ use Symfony\Component\Finder\Finder;
                     $modified = true;
                     ++$fileUpdates;
                 }
-            }
-
-            // Update branch-alias if present
-            if (isset($data['extra']['branch-alias']['dev-main'])) {
-                $data['extra']['branch-alias']['dev-main'] = $aliasVersion;
-                $modified = true;
-                ++$fileUpdates;
             }
 
             // Write back if modified
