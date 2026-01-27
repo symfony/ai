@@ -57,6 +57,7 @@
         "ai-lm-studio-platform": "src/platform/src/Bridge/LmStudio",
         "ai-meta-platform": "src/platform/src/Bridge/Meta",
         "ai-mistral-platform": "src/platform/src/Bridge/Mistral",
+        "ai-mini-max-platform": "src/platform/src/Bridge/MiniMax",
         "ai-ollama-platform": "src/platform/src/Bridge/Ollama",
         "ai-open-ai-platform": "src/platform/src/Bridge/OpenAi",
         "ai-open-router-platform": "src/platform/src/Bridge/OpenRouter",
