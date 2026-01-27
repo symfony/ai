@@ -467,7 +467,7 @@ more accurate and context-aware results. Therefore, the component provides a bui
 
     $similaritySearch = new SimilaritySearch($model, $store);
     $toolbox = new Toolbox([$similaritySearch]);
-    $processor = new Agent($toolbox);
+    $processor = new AgentProcessor($toolbox);
     $agent = new Agent($platform, $model, [$processor], [$processor]);
 
     $messages = new MessageBag(
