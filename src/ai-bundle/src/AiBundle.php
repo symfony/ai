@@ -110,6 +110,7 @@ use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
+use Symfony\AI\Store\ConfiguredIndexer;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -2264,18 +2265,30 @@ final class AiBundle extends AbstractBundle
             $filters[] = new Reference($filter);
         }
 
-        $definition = new Definition(Indexer::class, [
+        $indexerDefinition = new Definition(Indexer::class, [
             new Reference($config['loader']),
             new Reference($config['vectorizer']),
             new Reference($config['store']),
-            $config['source'],
             $filters,
             $transformers,
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
-        $definition->addTag('ai.indexer', ['name' => $name]);
 
         $serviceId = 'ai.indexer.'.$name;
+
+        if (null !== $config['source']) {
+            $innerServiceId = 'ai.indexer.'.$name.'.inner';
+            $container->setDefinition($innerServiceId, $indexerDefinition);
+
+            $definition = new Definition(ConfiguredIndexer::class, [
+                new Reference($innerServiceId),
+                $config['source'],
+            ]);
+        } else {
+            $definition = $indexerDefinition;
+        }
+
+        $definition->addTag('ai.indexer', ['name' => $name]);
         $container->setDefinition($serviceId, $definition);
         $container->registerAliasForArgument($serviceId, IndexerInterface::class, (new Target((string) $name))->getParsedName());
     }

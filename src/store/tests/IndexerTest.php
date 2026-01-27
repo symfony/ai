@@ -75,32 +75,22 @@ final class IndexerTest extends TestCase
         $this->assertSame(['key' => 'value'], $store->documents[0]->metadata->getArrayCopy());
     }
 
-    public function testWithSource()
+    public function testIndexWithSource()
     {
         $document1 = new TextDocument(Uuid::v4(), 'Document 1');
         $vector = new Vector([0.1, 0.2, 0.3]);
 
-        // InMemoryLoader doesn't use source parameter, so we'll test withSource method's immutability
+        // InMemoryLoader doesn't use source parameter, but we test that source is passed correctly
         $loader = new InMemoryLoader([$document1]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), 'source1');
+        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore());
+        $indexer->index('source1');
 
-        $indexerWithNewSource = $indexer->withSource('source2');
-
-        $this->assertNotSame($indexer, $indexerWithNewSource);
-
-        // Both can index successfully
-        $indexer->index();
         $this->assertCount(1, $store->documents);
-
-        $store2 = new TestStore();
-        $indexer2 = new Indexer($loader, $vectorizer, $store2, 'source2');
-        $indexer2->index();
-        $this->assertCount(1, $store2->documents);
     }
 
-    public function testWithSourceArray()
+    public function testIndexWithSourceArray()
     {
         $document1 = new TextDocument(Uuid::v4(), 'Document 1');
         $document2 = new TextDocument(Uuid::v4(), 'Document 2');
@@ -108,32 +98,20 @@ final class IndexerTest extends TestCase
         $vector2 = new Vector([0.4, 0.5, 0.6]);
         $vector3 = new Vector([0.7, 0.8, 0.9]);
         $vector4 = new Vector([1.0, 1.1, 1.2]);
-        $vector5 = new Vector([1.3, 1.4, 1.5]);
-        $vector6 = new Vector([1.6, 1.7, 1.8]);
 
         // InMemoryLoader returns all documents regardless of source
         $loader = new InMemoryLoader([$document1, $document2]);
-        // Need 6 vectors total: 2 for first indexer, then 2 for each source in the second indexer (2 sources * 2 docs = 4)
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2, $vector3, $vector4, $vector5, $vector6)), 'test-embedding-model');
+        // Need 4 vectors total: 2 for each source in the array (2 sources * 2 docs = 4)
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2, $vector3, $vector4)), 'test-embedding-model');
 
-        // Create indexer with single source
-        $indexer = new Indexer($loader, $vectorizer, $store1 = new TestStore(), 'source1');
+        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore());
 
-        $indexerWithMultipleSources = $indexer->withSource(['source2', 'source3']);
-
-        $this->assertNotSame($indexer, $indexerWithMultipleSources);
-
-        // Since InMemoryLoader ignores source, both will index all documents
-        $indexer->index();
-        $this->assertCount(2, $store1->documents);
-
-        $store2 = new TestStore();
-        $indexer2 = new Indexer($loader, $vectorizer, $store2, ['source2', 'source3']);
-        $indexer2->index();
         // With array sources, loadSource is called for each source
         // Since InMemoryLoader ignores source, it returns all docs each time
         // So with 2 sources and 2 docs each time = 4 documents total
-        $this->assertCount(4, $store2->documents);
+        $indexer->index(['source1', 'source2']);
+
+        $this->assertCount(4, $store->documents);
     }
 
     public function testIndexWithTextContainsFilter()
@@ -150,7 +128,7 @@ final class IndexerTest extends TestCase
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
         $filter = new TextContainsFilter('Week of Symfony');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), null, [$filter]);
+        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), [$filter]);
         $indexer->index();
 
         // Should only have 2 documents (the "Week of Symfony" one should be filtered out)
@@ -175,7 +153,7 @@ final class IndexerTest extends TestCase
             new TextContainsFilter('SPAM'),
         ];
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), null, $filters);
+        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), $filters);
         $indexer->index();
 
         // Should only have 2 documents (filtered out "Week of Symfony" and "SPAM")
@@ -207,7 +185,7 @@ final class IndexerTest extends TestCase
             }
         };
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), null, [$filter], [$transformer]);
+        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), [$filter], [$transformer]);
         $indexer->index();
 
         // Should have 2 documents (filtered out "Week of Symfony"), and transformation should have occurred
@@ -253,7 +231,7 @@ final class IndexerTest extends TestCase
             }
         };
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), null, [$filter], [$transformer]);
+        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), [$filter], [$transformer]);
         $indexer->index();
 
         // Should have 2 documents (one filtered out)
@@ -272,13 +250,13 @@ final class IndexerTest extends TestCase
         $loader = new InMemoryLoader([$document]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), null, []);
+        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), []);
         $indexer->index();
 
         $this->assertCount(1, $store->documents);
     }
 
-    public function testWithSourcePreservesFilters()
+    public function testIndexWithSourceAndFilters()
     {
         $document = new TextDocument(Uuid::v4(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
@@ -286,12 +264,10 @@ final class IndexerTest extends TestCase
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
         $filter = new TextContainsFilter('nonexistent');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), 'source1', [$filter]);
-        $indexerWithNewSource = $indexer->withSource('source2');
+        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), [$filter]);
+        $indexer->index('source1');
 
-        $this->assertNotSame($indexer, $indexerWithNewSource);
-
-        $indexerWithNewSource->index();
-        $this->assertCount(1, $store->documents); // Filter should still work
+        // Filter should still work when source is provided
+        $this->assertCount(1, $store->documents);
     }
 }
