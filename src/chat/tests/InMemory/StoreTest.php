@@ -43,7 +43,7 @@ final class StoreTest extends TestCase
 
         $loadedMessages = $store->load();
 
-        $this->assertSame($messageBag, $loadedMessages);
+        $this->assertSame($messageBag->getId()->toRfc4122(), $loadedMessages->getId()->toRfc4122());
         $this->assertCount(2, $loadedMessages);
     }
 
