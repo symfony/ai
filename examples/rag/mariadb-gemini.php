@@ -54,7 +54,7 @@ $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 $model = 'gemini-embedding-exp-03-07?dimensions=768&task_type=SEMANTIC_SIMILARITY';
 $vectorizer = new Vectorizer($platform, $model, logger());
 $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
-$indexer->index($documents);
+$indexer->index();
 
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());

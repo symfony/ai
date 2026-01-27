@@ -60,7 +60,6 @@ $indexer = new Indexer(
     loader: new InMemoryLoader($documents),
     vectorizer: $vectorizer,
     store: $store,
-    source: null,
     filters: $filters,
     transformers: [
         new TextTrimTransformer(),
