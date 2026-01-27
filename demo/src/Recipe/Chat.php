@@ -39,12 +39,13 @@ final class Chat
         }
 
         $message = $messages[\count($messages) - 1];
+        $recipe = $message->getContent();
 
-        if (!$message->getMetadata()->has('recipe')) {
+        if (!$recipe instanceof Recipe) {
             throw new \RuntimeException('The last message does not contain a recipe.');
         }
 
-        return $message->getMetadata()->get('recipe');
+        return $recipe;
     }
 
     public function submitMessage(string $message): void
@@ -60,9 +61,7 @@ final class Chat
 
         \assert($recipe instanceof Recipe);
 
-        $assistantMessage = Message::ofAssistant($recipe->toString());
-        $assistantMessage->getMetadata()->add('recipe', $result->getContent());
-        $messages->add($assistantMessage);
+        $messages->add(Message::ofAssistant($recipe));
 
         $this->saveMessages($messages);
     }

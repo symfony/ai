@@ -36,9 +36,10 @@ final class Message
     }
 
     /**
-     * @param ?ToolCall[] $toolCalls
+     * @param \JsonSerializable|\Stringable|object|string|null $content
+     * @param ?ToolCall[]                                      $toolCalls
      */
-    public static function ofAssistant(?string $content = null, ?array $toolCalls = null): AssistantMessage
+    public static function ofAssistant(object|string|null $content = null, ?array $toolCalls = null): AssistantMessage
     {
         return new AssistantMessage($content, $toolCalls);
     }

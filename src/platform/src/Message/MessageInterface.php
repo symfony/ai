@@ -28,9 +28,9 @@ interface MessageInterface
     public function withId(AbstractUid&TimeBasedUidInterface $id): self;
 
     /**
-     * @return string|Template|ContentInterface[]|null
+     * @return string|Template|object|ContentInterface[]|null
      */
-    public function getContent(): string|Template|array|null;
+    public function getContent(): string|object|array|null;
 
     public function getMetadata(): Metadata;
 }
