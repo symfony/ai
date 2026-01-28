@@ -115,7 +115,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $this->request('POST', 'v2/vectordb/entities/delete', [
             'collectionName' => $this->collection,
-            'filter' => \sprintf('id in [%s]', implode(',', array_map(fn ($id) => '"'.$id.'"', $ids))),
+            'filter' => \sprintf('id in [%s]', implode(',', array_map(fn ($id) => '"'.str_replace('"', '\"', $id).'"', $ids))),
         ]);
     }
 

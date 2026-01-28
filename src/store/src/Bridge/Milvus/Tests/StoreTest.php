@@ -280,7 +280,7 @@ final class StoreTest extends TestCase
 
         $store->remove('test-id');
 
-        self::assertSame(1, $httpClient->getRequestsCount());
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testStoreCanRemoveMultipleIds()
@@ -304,7 +304,7 @@ final class StoreTest extends TestCase
 
         $store->remove(['test-id-1', 'test-id-2', 'test-id-3']);
 
-        self::assertSame(1, $httpClient->getRequestsCount());
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testStoreCanRemoveWithEmptyIds()
@@ -321,6 +321,30 @@ final class StoreTest extends TestCase
 
         $store->remove([]);
 
-        self::assertSame(0, $httpClient->getRequestsCount());
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveIdWithSpecialCharacters()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'code' => 0,
+                'data' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:19530');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:19530',
+            'test',
+            'test',
+            'test',
+        );
+
+        $store->remove('test-id-with-"quotes"');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 }
