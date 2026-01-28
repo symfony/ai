@@ -15,7 +15,6 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 
@@ -54,7 +53,17 @@ class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
+        }
+
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        $this->documents = array_values(array_filter($this->documents, static function (VectorDocument $document) use ($ids): bool {
+            return !\in_array((string) $document->id, $ids, true);
+        }));
     }
 
     /**

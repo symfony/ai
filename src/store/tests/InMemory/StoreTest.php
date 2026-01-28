@@ -251,4 +251,119 @@ final class StoreTest extends TestCase
 
         $this->assertCount(2, $result);
     }
+
+    public function testStoreCanRemoveSingleDocument()
+    {
+        $store = new Store();
+        $id1 = Uuid::v4();
+        $id2 = Uuid::v4();
+        $id3 = Uuid::v4();
+
+        $store->add([
+            new VectorDocument($id1, new Vector([0.1, 0.1, 0.5])),
+            new VectorDocument($id2, new Vector([0.7, -0.3, 0.0])),
+            new VectorDocument($id3, new Vector([0.3, 0.7, 0.1])),
+        ]);
+
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
+        $this->assertCount(3, $result);
+
+        $store->remove((string) $id2);
+
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
+        $this->assertCount(2, $result);
+
+        $ids = array_map(static fn (VectorDocument $doc) => (string) $doc->id, $result);
+        $this->assertContains((string) $id1, $ids);
+        $this->assertContains((string) $id3, $ids);
+        $this->assertNotContains((string) $id2, $ids);
+    }
+
+    public function testStoreCanRemoveMultipleDocuments()
+    {
+        $store = new Store();
+        $id1 = Uuid::v4();
+        $id2 = Uuid::v4();
+        $id3 = Uuid::v4();
+        $id4 = Uuid::v4();
+
+        $store->add([
+            new VectorDocument($id1, new Vector([0.1, 0.1, 0.5])),
+            new VectorDocument($id2, new Vector([0.7, -0.3, 0.0])),
+            new VectorDocument($id3, new Vector([0.3, 0.7, 0.1])),
+            new VectorDocument($id4, new Vector([0.0, 0.1, 0.6])),
+        ]);
+
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
+        $this->assertCount(4, $result);
+
+        $store->remove([(string) $id1, (string) $id3]);
+
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
+        $this->assertCount(2, $result);
+
+        $ids = array_map(static fn (VectorDocument $doc) => (string) $doc->id, $result);
+        $this->assertContains((string) $id2, $ids);
+        $this->assertContains((string) $id4, $ids);
+        $this->assertNotContains((string) $id1, $ids);
+        $this->assertNotContains((string) $id3, $ids);
+    }
+
+    public function testStoreRemoveWithNonExistentIdDoesNothing()
+    {
+        $store = new Store();
+        $id1 = Uuid::v4();
+        $id2 = Uuid::v4();
+
+        $store->add([
+            new VectorDocument($id1, new Vector([0.1, 0.1, 0.5])),
+            new VectorDocument($id2, new Vector([0.7, -0.3, 0.0])),
+        ]);
+
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
+        $this->assertCount(2, $result);
+
+        $store->remove('non-existent-id');
+
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
+        $this->assertCount(2, $result);
+    }
+
+    public function testStoreRemoveReindexesArray()
+    {
+        $store = new Store();
+        $id1 = Uuid::v4();
+        $id2 = Uuid::v4();
+        $id3 = Uuid::v4();
+
+        $store->add([
+            new VectorDocument($id1, new Vector([0.1, 0.1, 0.5])),
+            new VectorDocument($id2, new Vector([0.7, -0.3, 0.0])),
+            new VectorDocument($id3, new Vector([0.3, 0.7, 0.1])),
+        ]);
+
+        $store->remove((string) $id2);
+
+        $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
+        $this->assertCount(2, $result);
+
+        // Verify array is properly indexed (0, 1) not (0, 2)
+        $this->assertArrayHasKey(0, $result);
+        $this->assertArrayHasKey(1, $result);
+    }
+
+    public function testStoreRemoveThrowsExceptionWhenOptionsProvided()
+    {
+        $store = new Store();
+        $id = Uuid::v4();
+
+        $store->add([
+            new VectorDocument($id, new Vector([0.1, 0.1, 0.5])),
+        ]);
+
+        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
+        $this->expectExceptionMessage('No supported options.');
+
+        $store->remove((string) $id, ['unsupported' => 'option']);
+    }
 }
