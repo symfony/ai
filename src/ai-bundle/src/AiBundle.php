@@ -87,6 +87,7 @@ use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
@@ -296,6 +297,12 @@ final class AiBundle extends AbstractBundle
                 $suffix = u($chat)->afterLast('.')->toString();
                 $builder->setDefinition('ai.traceable_chat.'.$suffix, $traceableChatDefinition);
             }
+        }
+
+        $speechPlatforms = array_keys($builder->findTaggedServiceIds('ai.platform.speech'));
+
+        if ([] === $speechPlatforms) {
+            $builder->removeDefinition('ai.speech.listener');
         }
 
         if ([] !== ($config['vectorizer'] ?? [])) {
@@ -547,6 +554,16 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Cartesia platform configuration requires "symfony/ai-cartesia-platform" package. Try running "composer require symfony/ai-cartesia-platform".');
             }
 
+            if (\array_key_exists('speech', $platform) && [] !== $platform['speech']) {
+                $configuration = (new Definition(SpeechConfiguration::class))
+                    ->setArguments([
+                        $platform['speech'],
+                    ])
+                    ->addTag('ai.platform.speech_configuration', ['name' => $type]);
+
+                $container->setDefinition('ai.platform.speech.'.$type.'.configuration', $configuration);
+            }
+
             $definition = (new Definition(Platform::class))
                 ->setFactory(CartesiaPlatformFactory::class.'::create')
                 ->setLazy(true)
@@ -559,6 +576,8 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => 'cartesia']);
 
             $container->setDefinition('ai.platform.cartesia', $definition);
@@ -605,6 +624,16 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.platform.model_catalog.'.$type, $catalogDefinition);
             }
 
+            if (\array_key_exists('speech', $platform) && [] !== $platform['speech']) {
+                $configuration = (new Definition(SpeechConfiguration::class))
+                    ->setArguments([
+                        $platform['speech'],
+                    ])
+                    ->addTag('ai.platform.speech_configuration', ['name' => $type]);
+
+                $container->setDefinition('ai.platform.speech.'.$type.'.configuration', $configuration);
+            }
+
             $definition = (new Definition(Platform::class))
                 ->setFactory(ElevenLabsPlatformFactory::class.'::create')
                 ->setLazy(true)
@@ -617,6 +646,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => $type]);
 
             $container->setDefinition('ai.platform.'.$type, $definition);
@@ -693,7 +723,6 @@ final class AiBundle extends AbstractBundle
                         $config['api_key'],
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         new Reference($config['model_catalog'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        null,
                         new Reference('event_dispatcher'),
                         $config['supports_completions'],
                         $config['supports_embeddings'],

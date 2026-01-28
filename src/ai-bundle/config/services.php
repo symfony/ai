@@ -65,6 +65,7 @@ use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRende
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\Speech\SpeechListener;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
@@ -73,6 +74,7 @@ use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
 use Symfony\AI\Store\Command\RetrieveCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 return static function (ContainerConfigurator $container): void {
@@ -270,5 +272,15 @@ return static function (ContainerConfigurator $container): void {
                 tagged_locator('ai.message_store', 'name'),
             ])
             ->tag('console.command')
+
+        // listeners
+        ->set('ai.speech.listener', SpeechListener::class)
+            ->lazy()
+            ->args([
+                tagged_iterator('ai.platform.speech', 'name'),
+                tagged_iterator('ai.platform.speech_configuration', 'name'),
+            ])
+            ->tag('proxy', ['interface' => EventSubscriberInterface::class])
+            ->tag('kernel.event_subscriber')
     ;
 };
