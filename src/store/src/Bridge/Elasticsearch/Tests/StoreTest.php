@@ -261,4 +261,14 @@ final class StoreTest extends TestCase
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testStoreRemoveWithEmptyArrayDoesNothing()
+    {
+        $httpClient = new MockHttpClient([]);
+
+        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
 }
