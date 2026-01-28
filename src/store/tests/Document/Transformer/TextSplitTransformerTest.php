@@ -273,6 +273,22 @@ final class TextSplitTransformerTest extends TestCase
         $this->assertSame($chunks[1]->getContent(), $chunks[1]->getMetadata()->getText());
     }
 
+    public function testTextMetadataIsOverriddenForSmallDocuments()
+    {
+        // If the original document has KEY_TEXT set to something else,
+        // it should be overridden with the actual content
+        $document = new TextDocument(Uuid::v4(), 'short text', new Metadata([
+            Metadata::KEY_TEXT => 'old value that should be overridden',
+            'custom' => 'data',
+        ]));
+
+        $chunks = iterator_to_array($this->transformer->transform([$document]));
+
+        $this->assertCount(1, $chunks);
+        $this->assertSame('short text', $chunks[0]->getMetadata()->getText());
+        $this->assertSame('data', $chunks[0]->getMetadata()['custom']);
+    }
+
     private function getLongText(): string
     {
         return trim(file_get_contents(\dirname(__DIR__, 5).'/fixtures/lorem.txt'));
