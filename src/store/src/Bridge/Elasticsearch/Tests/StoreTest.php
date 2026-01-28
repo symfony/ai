@@ -193,4 +193,82 @@ final class StoreTest extends TestCase
         $this->assertCount(2, iterator_to_array($results));
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testStoreCanRemoveSingleDocument()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'took' => 100,
+                'errors' => false,
+                'items' => [
+                    [
+                        'delete' => [
+                            '_index' => 'foo',
+                            '_id' => 'test-id-1',
+                            '_version' => 2,
+                            'result' => 'deleted',
+                            '_shards' => [],
+                            'status' => 200,
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store->remove('test-id-1');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveMultipleDocuments()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'took' => 100,
+                'errors' => false,
+                'items' => [
+                    [
+                        'delete' => [
+                            '_index' => 'foo',
+                            '_id' => 'test-id-1',
+                            '_version' => 2,
+                            'result' => 'deleted',
+                            '_shards' => [],
+                            'status' => 200,
+                        ],
+                    ],
+                    [
+                        'delete' => [
+                            '_index' => 'foo',
+                            '_id' => 'test-id-2',
+                            '_version' => 2,
+                            'result' => 'deleted',
+                            '_shards' => [],
+                            'status' => 200,
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store->remove(['test-id-1', 'test-id-2']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreRemoveWithEmptyArrayDoesNothing()
+    {
+        $httpClient = new MockHttpClient([]);
+
+        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
 }
