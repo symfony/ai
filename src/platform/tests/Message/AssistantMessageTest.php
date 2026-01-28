@@ -82,4 +82,42 @@ final class AssistantMessageTest extends TestCase
         $this->assertInstanceOf(TimeBasedUidInterface::class, $message->getId());
         $this->assertInstanceOf(UuidV7::class, $message->getId());
     }
+
+    public function testConstructionWithJsonSerializableContent()
+    {
+        $content = new class implements \JsonSerializable {
+            /**
+             * @return array{key: string}
+             */
+            public function jsonSerialize(): array
+            {
+                return ['key' => 'value'];
+            }
+        };
+        $message = new AssistantMessage($content);
+
+        $this->assertSame($content, $message->getContent());
+    }
+
+    public function testConstructionWithStringableContent()
+    {
+        $content = new class implements \Stringable {
+            public function __toString(): string
+            {
+                return 'stringable content';
+            }
+        };
+        $message = new AssistantMessage($content);
+
+        $this->assertSame($content, $message->getContent());
+    }
+
+    public function testConstructionWithObjectContent()
+    {
+        $content = new \stdClass();
+        $content->property = 'value';
+        $message = new AssistantMessage($content);
+
+        $this->assertSame($content, $message->getContent());
+    }
 }
