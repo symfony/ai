@@ -17,7 +17,6 @@ use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -73,7 +72,28 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
+        }
+
+        $cacheItem = $this->cache->getItem($this->cacheKey);
+
+        if (!$cacheItem->isHit()) {
+            return;
+        }
+
+        if ([] === $existingVectors = $cacheItem->get()) {
+            return;
+        }
+
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        $filteredVectors = array_filter($existingVectors, static fn (array $document) => !\in_array($document['id'], $ids, true));
+
+        $cacheItem->set(array_values($filteredVectors));
+        $this->cache->save($cacheItem);
     }
 
     /**
@@ -86,6 +106,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function query(Vector $vector, array $options = []): iterable
     {
         $documents = $this->cache->get($this->cacheKey, static fn (): array => []);
+
+        if ([] === $documents) {
+            return;
+        }
 
         $vectorDocuments = array_map(static fn (array $document): VectorDocument => new VectorDocument(
             id: $document['id'],
