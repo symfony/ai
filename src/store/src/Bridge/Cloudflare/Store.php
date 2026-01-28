@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -77,7 +76,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        $this->request('POST', \sprintf('vectorize/v2/indexes/%s/delete_by_ids', $this->index), [
+            'ids' => $ids,
+        ]);
     }
 
     public function query(Vector $vector, array $options = []): iterable
