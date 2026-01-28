@@ -309,4 +309,29 @@ final class StoreTest extends TestCase
 
         $this->assertSame(0, $httpClient->getRequestsCount());
     }
+
+    public function testStoreCannotRemoveOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'error' => [
+                    'message' => 'Object not found',
+                ],
+            ], [
+                'http_code' => 404,
+            ]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8080',
+            'test',
+            'test',
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 404 returned for "http://127.0.0.1:8080/v1/objects/non-existent-id".');
+        $this->expectExceptionCode(404);
+        $store->remove('non-existent-id');
+    }
 }

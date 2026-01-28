@@ -68,6 +68,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
+        // Note: This implementation makes one HTTP request per ID.
+        // Future optimization: consider using Weaviate's batch delete API for better performance with large batches.
         foreach ($ids as $id) {
             $this->request('DELETE', \sprintf('v1/objects/%s', $id), []);
         }
