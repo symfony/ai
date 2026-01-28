@@ -52,7 +52,12 @@ final class TextSplitTransformer implements TransformerInterface
 
         foreach ($documents as $document) {
             if (mb_strlen($document->getContent()) <= $chunkSize) {
-                yield $document;
+                $metadata = new Metadata([
+                    Metadata::KEY_TEXT => $document->getContent(),
+                    ...$document->getMetadata(),
+                ]);
+
+                yield new TextDocument($document->getId(), $document->getContent(), $metadata);
 
                 continue;
             }
