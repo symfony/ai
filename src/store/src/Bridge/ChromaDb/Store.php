@@ -15,7 +15,6 @@ use Codewithkyrian\ChromaDB\Client;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -56,7 +55,16 @@ final class Store implements StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $collection = $this->client->getOrCreateCollection($this->collectionName);
+        $collection->delete(ids: $ids);
     }
 
     /**
