@@ -679,4 +679,55 @@ final class StoreTest extends TestCase
         $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
         $this->assertSame(0.123, $documents[0]->score);
     }
+
+    public function testRemoveSingleDocument()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $vectorId = 'vector-id';
+
+        $collection->expects($this->once())
+            ->method('delete')
+            ->with([$vectorId]);
+
+        $store = new Store($client, 'test-collection');
+        $store->remove($vectorId);
+    }
+
+    public function testRemoveMultipleDocuments()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $vectorIds = ['vector-id-1', 'vector-id-2', 'vector-id-3'];
+
+        $collection->expects($this->once())
+            ->method('delete')
+            ->with($vectorIds);
+
+        $store = new Store($client, 'test-collection');
+        $store->remove($vectorIds);
+    }
+
+    public function testRemoveWithEmptyArray()
+    {
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->never())
+            ->method('getOrCreateCollection');
+
+        $store = new Store($client, 'test-collection');
+        $store->remove([]);
+    }
 }
