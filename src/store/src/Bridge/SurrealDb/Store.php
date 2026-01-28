@@ -67,7 +67,17 @@ class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        foreach ($ids as $id) {
+            $this->request('DELETE', \sprintf('key/%s/%s', $this->table, $id), []);
+        }
     }
 
     public function query(Vector $vector, array $options = []): iterable
