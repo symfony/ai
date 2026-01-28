@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Tests\Double;
 
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\StoreInterface;
 
 final class TestStore implements StoreInterface
@@ -32,6 +33,11 @@ final class TestStore implements StoreInterface
 
         ++$this->addCalls;
         $this->documents = array_merge($this->documents, $documents);
+    }
+
+    public function remove(string|array $ids, array $options = []): void
+    {
+        throw new LogicException('Method not implemented yet.');
     }
 
     public function query(Vector $vector, array $options = []): iterable

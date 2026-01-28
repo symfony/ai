@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.4
+---
+
+ * Add `StoreInterface::remove()` method
+
 0.3
 ---
 

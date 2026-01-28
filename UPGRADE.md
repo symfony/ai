@@ -78,6 +78,16 @@ Platform
 Store
 -----
 
+* The `StoreInterface::remove()` method was added to the interface
+
+  ```php
+  public function remove(string|array $ids, array $options = []): void;
+
+  // Usage
+  $store->remove('vector-id-1');
+  $store->remove(['vid-1', 'vid-2']);
+  ```
+
  * The `StoreInterface::add()` method signature has changed from variadic to accept a single document or an array
 
    *Before:*
