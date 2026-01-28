@@ -35,6 +35,8 @@ final class TextSplitTransformerTest extends TestCase
 
         $this->assertCount(1, $chunks);
         $this->assertSame('short text', $chunks[0]->getContent());
+        $this->assertTrue($chunks[0]->getMetadata()->hasText());
+        $this->assertSame('short text', $chunks[0]->getMetadata()->getText());
     }
 
     public function testTextLength()
@@ -148,6 +150,23 @@ final class TextSplitTransformerTest extends TestCase
         $this->assertSame('bar', $chunks[1]->getMetadata()['foo']);
     }
 
+    public function testMetadataIsInheritedForSmallDocuments()
+    {
+        $document = new TextDocument(Uuid::v4(), 'short text', new Metadata([
+            'key' => 'value',
+            'foo' => 'bar',
+        ]));
+
+        $chunks = iterator_to_array($this->transformer->transform([$document]));
+
+        $this->assertCount(1, $chunks);
+        $this->assertSame('short text', $chunks[0]->getContent());
+        $this->assertTrue($chunks[0]->getMetadata()->hasText());
+        $this->assertSame('short text', $chunks[0]->getMetadata()->getText());
+        $this->assertSame('value', $chunks[0]->getMetadata()['key']);
+        $this->assertSame('bar', $chunks[0]->getMetadata()['foo']);
+    }
+
     public function testSplitWithChunkSizeLargerThanText()
     {
         $document = new TextDocument(Uuid::v4(), 'tiny');
@@ -156,6 +175,8 @@ final class TextSplitTransformerTest extends TestCase
 
         $this->assertCount(1, $chunks);
         $this->assertSame('tiny', $chunks[0]->getContent());
+        $this->assertTrue($chunks[0]->getMetadata()->hasText());
+        $this->assertSame('tiny', $chunks[0]->getMetadata()->getText());
     }
 
     public function testSplitWithOverlapGreaterThanChunkSize()
@@ -237,6 +258,55 @@ final class TextSplitTransformerTest extends TestCase
 
         $this->assertCount(12, $chunks);
         $this->assertSame(150, mb_strlen($chunks[0]->getContent()));
+    }
+
+    public function testTextMetadataIsSetForLargeDocuments()
+    {
+        $document = new TextDocument(Uuid::v4(), $this->getLongText());
+
+        $chunks = iterator_to_array($this->transformer->transform([$document]));
+
+        $this->assertCount(2, $chunks);
+        $this->assertTrue($chunks[0]->getMetadata()->hasText());
+        $this->assertTrue($chunks[1]->getMetadata()->hasText());
+        $this->assertSame($chunks[0]->getContent(), $chunks[0]->getMetadata()->getText());
+        $this->assertSame($chunks[1]->getContent(), $chunks[1]->getMetadata()->getText());
+    }
+
+    public function testTextMetadataIsOverriddenForSmallDocuments()
+    {
+        // If the original document has KEY_TEXT set to something else,
+        // it should be overridden with the actual content
+        $document = new TextDocument(Uuid::v4(), 'short text', new Metadata([
+            Metadata::KEY_TEXT => 'old value that should be overridden',
+            'custom' => 'data',
+        ]));
+
+        $chunks = iterator_to_array($this->transformer->transform([$document]));
+
+        $this->assertCount(1, $chunks);
+        $this->assertSame('short text', $chunks[0]->getMetadata()->getText());
+        $this->assertSame('data', $chunks[0]->getMetadata()['custom']);
+    }
+
+    public function testTextMetadataIsOverriddenForLargeDocuments()
+    {
+        // If the original document has KEY_TEXT set to something else,
+        // each chunk should have KEY_TEXT set to the chunk's actual content
+        $document = new TextDocument(Uuid::v4(), $this->getLongText(), new Metadata([
+            Metadata::KEY_TEXT => 'old value that should be overridden',
+            'custom' => 'data',
+        ]));
+
+        $chunks = iterator_to_array($this->transformer->transform([$document]));
+
+        $this->assertCount(2, $chunks);
+        // Each chunk should have KEY_TEXT set to its own content, not the parent's KEY_TEXT
+        $this->assertSame($chunks[0]->getContent(), $chunks[0]->getMetadata()->getText());
+        $this->assertSame($chunks[1]->getContent(), $chunks[1]->getMetadata()->getText());
+        // Custom metadata should be preserved
+        $this->assertSame('data', $chunks[0]->getMetadata()['custom']);
+        $this->assertSame('data', $chunks[1]->getMetadata()['custom']);
     }
 
     private function getLongText(): string
