@@ -247,4 +247,66 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $results);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testStoreCanRemoveSingleId()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 204,
+            ]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8080',
+            'test',
+            'test',
+        );
+
+        $store->remove('test-id-1');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveMultipleIds()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 204,
+            ]),
+            new JsonMockResponse([], [
+                'http_code' => 204,
+            ]),
+            new JsonMockResponse([], [
+                'http_code' => 204,
+            ]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8080',
+            'test',
+            'test',
+        );
+
+        $store->remove(['test-id-1', 'test-id-2', 'test-id-3']);
+
+        $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveWithEmptyArray()
+    {
+        $httpClient = new MockHttpClient([], 'http://127.0.0.1:8080');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8080',
+            'test',
+            'test',
+        );
+
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
 }
