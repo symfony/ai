@@ -283,4 +283,146 @@ final class SearchStoreTest extends TestCase
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
         $this->assertInstanceOf(NullVector::class, $results[0]->vector);
     }
+
+    public function testRemoveWithSingleId()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/index?api-version=2023-11-01', $url);
+
+                $this->assertArrayHasKey('body', $options);
+                $this->assertIsString($options['body']);
+                $body = json_decode($options['body'], true);
+                $this->assertIsArray($body);
+                $this->assertArrayHasKey('value', $body);
+                $this->assertIsArray($body['value']);
+                $this->assertCount(1, $body['value']);
+                $this->assertArrayHasKey('id', $body['value'][0]);
+                $this->assertSame('doc1', $body['value'][0]['id']);
+                $this->assertArrayHasKey('@search.action', $body['value'][0]);
+                $this->assertSame('delete', $body['value'][0]['@search.action']);
+
+                return new JsonMockResponse([
+                    'value' => [
+                        ['key' => 'doc1', 'status' => true, 'errorMessage' => null, 'statusCode' => 200],
+                    ],
+                ], [
+                    'http_code' => 200,
+                ]);
+            },
+        ]);
+
+        $store = new SearchStore(
+            $httpClient,
+            'https://test.search.windows.net',
+            'test-api-key',
+            'test-index',
+            '2023-11-01',
+        );
+
+        $store->remove('doc1');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testRemoveWithMultipleIds()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/index?api-version=2023-11-01', $url);
+
+                $this->assertArrayHasKey('body', $options);
+                $this->assertIsString($options['body']);
+                $body = json_decode($options['body'], true);
+                $this->assertIsArray($body);
+                $this->assertArrayHasKey('value', $body);
+                $this->assertIsArray($body['value']);
+                $this->assertCount(3, $body['value']);
+
+                $this->assertArrayHasKey('id', $body['value'][0]);
+                $this->assertSame('doc1', $body['value'][0]['id']);
+                $this->assertArrayHasKey('@search.action', $body['value'][0]);
+                $this->assertSame('delete', $body['value'][0]['@search.action']);
+
+                $this->assertArrayHasKey('id', $body['value'][1]);
+                $this->assertSame('doc2', $body['value'][1]['id']);
+                $this->assertArrayHasKey('@search.action', $body['value'][1]);
+                $this->assertSame('delete', $body['value'][1]['@search.action']);
+
+                $this->assertArrayHasKey('id', $body['value'][2]);
+                $this->assertSame('doc3', $body['value'][2]['id']);
+                $this->assertArrayHasKey('@search.action', $body['value'][2]);
+                $this->assertSame('delete', $body['value'][2]['@search.action']);
+
+                return new JsonMockResponse([
+                    'value' => [
+                        ['key' => 'doc1', 'status' => true, 'errorMessage' => null, 'statusCode' => 200],
+                        ['key' => 'doc2', 'status' => true, 'errorMessage' => null, 'statusCode' => 200],
+                        ['key' => 'doc3', 'status' => true, 'errorMessage' => null, 'statusCode' => 200],
+                    ],
+                ], [
+                    'http_code' => 200,
+                ]);
+            },
+        ]);
+
+        $store = new SearchStore(
+            $httpClient,
+            'https://test.search.windows.net',
+            'test-api-key',
+            'test-index',
+            '2023-11-01',
+        );
+
+        $store->remove(['doc1', 'doc2', 'doc3']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testRemoveWithEmptyArray()
+    {
+        $httpClient = new MockHttpClient([]);
+
+        $store = new SearchStore(
+            $httpClient,
+            'https://test.search.windows.net',
+            'test-api-key',
+            'test-index',
+            '2023-11-01',
+        );
+
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
+
+    public function testRemoveFailure()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'error' => [
+                    'code' => 'InvalidRequest',
+                    'message' => 'Document not found',
+                ],
+            ], [
+                'http_code' => 404,
+            ]),
+        ]);
+
+        $store = new SearchStore(
+            $httpClient,
+            'https://test.search.windows.net',
+            'test-api-key',
+            'test-index',
+            '2023-11-01',
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 404 returned');
+        $this->expectExceptionCode(404);
+
+        $store->remove('nonexistent-doc');
+    }
 }

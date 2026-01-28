@@ -15,7 +15,6 @@ use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -50,7 +49,22 @@ final class SearchStore implements StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $documents = array_map(static fn (string $id): array => [
+            'id' => $id,
+            '@search.action' => 'delete',
+        ], $ids);
+
+        $this->request('index', [
+            'value' => $documents,
+        ]);
     }
 
     public function query(Vector $vector, array $options = []): iterable
