@@ -112,7 +112,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 <<<'SQL'
                     INSERT INTO %1$s (id, metadata, `%2$s`)
                     VALUES (:id, :metadata, VEC_FromText(:vector))
-                    ON DUPLICATE KEY UPDATE metadata = :metadata, `%2$s` = VEC_FromText(:vector)
+                    ON DUPLICATE KEY UPDATE metadata = :metadata2, `%2$s` = VEC_FromText(:vector2)
                     SQL,
                 $this->tableName,
                 $this->vectorFieldName,
@@ -123,6 +123,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $statement->bindValue(':id', $document->id->toRfc4122());
             $statement->bindValue(':metadata', json_encode($document->metadata->getArrayCopy()));
             $statement->bindValue(':vector', json_encode($document->vector->getData()));
+            $statement->bindValue(':metadata2', json_encode($document->metadata->getArrayCopy()));
+            $statement->bindValue(':vector2', json_encode($document->vector->getData()));
 
             $statement->execute();
         }
