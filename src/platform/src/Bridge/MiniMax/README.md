@@ -1,7 +1,7 @@
-Ollama Platform
-===============
+MiniMax Platform
+================
 
-Ollama platform bridge for Symfony AI.
+MiniMax platform bridge for Symfony AI.
 
 Resources
 ---------

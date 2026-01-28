@@ -22,7 +22,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-platform": "^0.4",
+        "symfony/ai-platform": "^0.3",
         "symfony/http-client": "^7.3|^8.0"
     },
     "require-dev": {
@@ -34,13 +34,13 @@
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "Symfony\\AI\\Platform\\Bridge\\Ollama\\": ""
+            "Symfony\\AI\\Platform\\Bridge\\MiniMax\\": ""
         }
     },
     "autoload-dev": {
         "psr-4": {
             "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/",
-            "Symfony\\AI\\Platform\\Bridge\\Ollama\\Tests\\": "Tests/"
+            "Symfony\\AI\\Platform\\Bridge\\MiniMax\\Tests\\": "Tests/"
         }
     },
     "config": {

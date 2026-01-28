@@ -15,7 +15,7 @@
     </php>
 
     <testsuites>
-        <testsuite name="Symfony AI Ollama Platform Test Suite">
+        <testsuite name="Symfony AI MiniMax Platform Test Suite">
             <directory>./Tests/</directory>
         </testsuite>
     </testsuites>

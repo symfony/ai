@@ -25,8 +25,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class PlatformFactory
 {
     public static function create(
-        string $hostUrl = 'http://localhost:11434',
+        #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,
+        string $hostUrl = 'https://api.minimax.io/v1',
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
@@ -34,7 +35,7 @@ final class PlatformFactory
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [new MiniMaxClient($httpClient, $hostUrl)],
+            [new MiniMaxClient($httpClient, $apiKey, $hostUrl)],
             [new MiniMaxResultConverter()],
             $modelCatalog,
             $contract ?? MiniMaxContract::create(),
