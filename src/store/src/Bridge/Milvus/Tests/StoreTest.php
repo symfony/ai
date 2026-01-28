@@ -280,7 +280,7 @@ final class StoreTest extends TestCase
 
         $store->remove('test-id');
 
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        self::assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testStoreCanRemoveMultipleIds()
@@ -304,7 +304,7 @@ final class StoreTest extends TestCase
 
         $store->remove(['test-id-1', 'test-id-2', 'test-id-3']);
 
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        self::assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testStoreCanRemoveWithEmptyIds()
@@ -321,6 +321,6 @@ final class StoreTest extends TestCase
 
         $store->remove([]);
 
-        $this->assertSame(0, $httpClient->getRequestsCount());
+        self::assertSame(0, $httpClient->getRequestsCount());
     }
 }
