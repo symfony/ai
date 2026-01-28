@@ -420,4 +420,98 @@ final class StoreTest extends TestCase
 
         $this->assertSame(0.5, $body['hybrid']['semanticRatio']);
     }
+
+    public function testStoreCannotRemoveOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'message' => 'error',
+                'code' => 'document_not_found',
+                'type' => 'invalid_request',
+                'link' => 'https://docs.meilisearch.com/errors#document_not_found',
+            ], [
+                'http_code' => 400,
+            ]),
+        ], 'http://127.0.0.1:7700');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:7700',
+            'test',
+            'test',
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7700/indexes/test/documents/delete-batch".');
+        $this->expectExceptionCode(400);
+        $store->remove('doc-id-1');
+    }
+
+    public function testStoreCanRemoveSingleId()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'taskUid' => 3,
+                'indexUid' => 'test',
+                'status' => 'enqueued',
+                'type' => 'documentDeletion',
+                'enqueuedAt' => '2025-01-01T02:00:00Z',
+            ], [
+                'http_code' => 202,
+            ]),
+        ], 'http://127.0.0.1:7700');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:7700',
+            'test',
+            'test',
+        );
+
+        $store->remove('doc-id-1');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveMultipleIds()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'taskUid' => 4,
+                'indexUid' => 'test',
+                'status' => 'enqueued',
+                'type' => 'documentDeletion',
+                'enqueuedAt' => '2025-01-01T03:00:00Z',
+            ], [
+                'http_code' => 202,
+            ]),
+        ], 'http://127.0.0.1:7700');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:7700',
+            'test',
+            'test',
+        );
+
+        $store->remove(['doc-id-1', 'doc-id-2', 'doc-id-3']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveEmptyArray()
+    {
+        $httpClient = new MockHttpClient([], 'http://127.0.0.1:7700');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:7700',
+            'test',
+            'test',
+        );
+
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
 }
