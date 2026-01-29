@@ -75,7 +75,7 @@ To disable an extension, set ``enabled`` to ``false``::
     ];
 
 Adding Custom Commands
------------------------
+----------------------
 
 Extensions can add custom console commands to the ``mate`` CLI. Commands are registered
 via the service container using the ``mate.command`` tag.
@@ -138,7 +138,7 @@ Then reference this file in your ``composer.json``:
     }
 
 Using Dependency Injection in Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Commands can use autowiring and named argument binding for common parameters::
 
@@ -185,7 +185,7 @@ The following parameters are automatically available for binding in your command
 - ``$mcpProtocolVersion`` - MCP protocol version string (from ``%mate.mcp_protocol_version%``)
 
 Verifying Command Registration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After creating and registering your command, verify it's available:
 

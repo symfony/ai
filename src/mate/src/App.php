@@ -32,6 +32,10 @@ final class App
         $application = new Application(self::NAME, self::VERSION);
 
         // Discover all tagged commands from the container
+        if (!method_exists($container, 'findTaggedServiceIds')) {
+            return $application;
+        }
+
         $commandServices = $container->findTaggedServiceIds('mate.command');
 
         foreach (array_keys($commandServices) as $serviceId) {

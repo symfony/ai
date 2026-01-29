@@ -229,13 +229,13 @@ final class DebugExtensionsCommandTest extends TestCase
 
     /**
      * @param array<string>                                            $enabledExtensions
-     * @param array<string, array{dirs: string[], includes: string[]}> $loadedExtensions
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
      */
-    private function createCommand(string $rootDir, array $enabledExtensions, array $loadedExtensions): DebugExtensionsCommand
+    private function createCommand(string $rootDir, array $enabledExtensions, array $extensions): DebugExtensionsCommand
     {
         $logger = new NullLogger();
         $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
 
-        return new DebugExtensionsCommand($rootDir, $enabledExtensions, $loadedExtensions, $discoverer);
+        return new DebugExtensionsCommand($enabledExtensions, $extensions, $discoverer);
     }
 }

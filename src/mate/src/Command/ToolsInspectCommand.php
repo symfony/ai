@@ -43,6 +43,9 @@ class ToolsInspectCommand extends Command
      */
     private array $extensions;
 
+    /**
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     */
     public function __construct(
         array $extensions,
         private CapabilityCollector $collector,

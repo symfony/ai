@@ -38,6 +38,9 @@ class DebugCapabilitiesCommand extends Command
      */
     private array $extensions;
 
+    /**
+     * @param array<string, ExtensionData> $extensions
+     */
     public function __construct(
         array $extensions,
         private CapabilityCollector $collector,

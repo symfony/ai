@@ -49,21 +49,21 @@ class DebugExtensionsCommand extends Command
      */
     private array $extensions;
 
-    private string $rootDir;
-
+    /**
+     * @param string[]                     $enabledExtensions
+     * @param array<string, ExtensionData> $extensions
+     */
     public function __construct(
-        string $rootDir,
         array $enabledExtensions,
         array $extensions,
         private ComposerExtensionDiscovery $extensionDiscovery,
     ) {
         parent::__construct(self::getDefaultName());
 
-        $this->rootDir = $rootDir;
         $this->enabledExtensions = $enabledExtensions;
         $this->extensions = $extensions;
-        $this->discoveredExtensions = $extensionDiscovery->discover();
-        $this->rootProjectConfig = $extensionDiscovery->discoverRootProject();
+        $this->discoveredExtensions = $this->extensionDiscovery->discover();
+        $this->rootProjectConfig = $this->extensionDiscovery->discoverRootProject();
     }
 
     public static function getDefaultName(): string
