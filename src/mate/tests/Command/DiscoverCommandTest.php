@@ -14,6 +14,7 @@ namespace Symfony\AI\Mate\Tests\Command;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\DiscoverCommand;
+use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -37,7 +38,9 @@ final class DiscoverCommandTest extends TestCase
 
         try {
             $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
-            $command = new DiscoverCommand($rootDir, new NullLogger());
+            $logger = new NullLogger();
+            $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
+            $command = new DiscoverCommand($rootDir, $discoverer);
             $tester = new CommandTester($command);
 
             $tester->execute([]);
@@ -79,7 +82,9 @@ PHP
             );
 
             $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
-            $command = new DiscoverCommand($rootDir, new NullLogger());
+            $logger = new NullLogger();
+            $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
+            $command = new DiscoverCommand($rootDir, $discoverer);
             $tester = new CommandTester($command);
 
             $tester->execute([]);
@@ -111,7 +116,9 @@ PHP
             );
 
             $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
-            $command = new DiscoverCommand($rootDir, new NullLogger());
+            $logger = new NullLogger();
+            $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
+            $command = new DiscoverCommand($rootDir, $discoverer);
             $tester = new CommandTester($command);
 
             $tester->execute([]);
@@ -134,7 +141,9 @@ PHP
 
         try {
             $rootDir = $this->createConfiguration($this->fixturesDir.'/without-ai-mate-config', $tempDir);
-            $command = new DiscoverCommand($rootDir, new NullLogger());
+            $logger = new NullLogger();
+            $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
+            $command = new DiscoverCommand($rootDir, $discoverer);
             $tester = new CommandTester($command);
 
             $tester->execute([]);

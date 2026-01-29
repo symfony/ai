@@ -16,7 +16,12 @@ return static function (ContainerConfigurator $container): void {
     ;
 
     $container->services()
+        ->defaults()
+            ->autowire()
+            ->autoconfigure()
+
         ->set(SymfonyAiFeaturesTool::class)
-        ->arg('$projectDir', param('mate.root_dir'))
-        ->public();
+            ->arg('$projectDir', param('mate.root_dir'))
+            ->public()
+    ;
 };

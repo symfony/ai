@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Mate\Command;
 
-use Mcp\Capability\Discovery\Discoverer;
-use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,7 +19,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Display detailed information about a specific MCP tool.
@@ -41,30 +38,20 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[AsCommand('mcp:tools:inspect', 'Display detailed information about a specific MCP tool')]
 class ToolsInspectCommand extends Command
 {
-    private CapabilityCollector $collector;
-
     /**
      * @var array<string, array{dirs: string[], includes: string[]}>
      */
     private array $extensions;
 
+    /**
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     */
     public function __construct(
-        LoggerInterface $logger,
-        private ContainerInterface $container,
+        array $extensions,
+        private CapabilityCollector $collector,
     ) {
         parent::__construct(self::getDefaultName());
-
-        $rootDir = $container->getParameter('mate.root_dir');
-        \assert(\is_string($rootDir));
-
-        $extensions = $this->container->getParameter('mate.extensions') ?? [];
-        \assert(\is_array($extensions));
         $this->extensions = $extensions;
-
-        $disabledFeatures = $this->container->getParameter('mate.disabled_features') ?? [];
-        \assert(\is_array($disabledFeatures));
-
-        $this->collector = new CapabilityCollector($rootDir, $extensions, $disabledFeatures, new Discoverer($logger), $logger);
     }
 
     public static function getDefaultName(): string

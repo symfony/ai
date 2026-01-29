@@ -15,6 +15,7 @@ use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
+use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -30,14 +31,7 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesReturnsStructure()
     {
-        $logger = new NullLogger();
-        $collector = new CapabilityCollector(
-            $this->fixturesDir.'/with-ai-mate-config',
-            [],
-            [],
-            new Discoverer($logger),
-            $logger
-        );
+        $collector = $this->createCollector($this->fixturesDir.'/with-ai-mate-config');
 
         $extension = [
             'dirs' => ['mate/src'],
@@ -54,14 +48,7 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesWithEmptyDirectories()
     {
-        $logger = new NullLogger();
-        $collector = new CapabilityCollector(
-            $this->fixturesDir.'/with-ai-mate-config',
-            [],
-            [],
-            new Discoverer($logger),
-            $logger
-        );
+        $collector = $this->createCollector($this->fixturesDir.'/with-ai-mate-config');
 
         $extension = [
             'dirs' => ['mate/src'],
@@ -79,14 +66,7 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesWithIncludes()
     {
-        $logger = new NullLogger();
-        $collector = new CapabilityCollector(
-            $this->fixturesDir.'/with-ai-mate-config',
-            [],
-            [],
-            new Discoverer($logger),
-            $logger
-        );
+        $collector = $this->createCollector($this->fixturesDir.'/with-ai-mate-config');
 
         $extension = [
             'dirs' => [],
@@ -103,14 +83,7 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesFormatsTools()
     {
-        $logger = new NullLogger();
-        $collector = new CapabilityCollector(
-            $this->fixturesDir.'/with-ai-mate-config',
-            [],
-            [],
-            new Discoverer($logger),
-            $logger
-        );
+        $collector = $this->createCollector($this->fixturesDir.'/with-ai-mate-config');
 
         $extension = [
             'dirs' => ['mate/src'],
@@ -131,14 +104,7 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesFormatsResources()
     {
-        $logger = new NullLogger();
-        $collector = new CapabilityCollector(
-            $this->fixturesDir.'/with-ai-mate-config',
-            [],
-            [],
-            new Discoverer($logger),
-            $logger
-        );
+        $collector = $this->createCollector($this->fixturesDir.'/with-ai-mate-config');
 
         $extension = [
             'dirs' => ['mate/src'],
@@ -160,14 +126,7 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesFormatsPrompts()
     {
-        $logger = new NullLogger();
-        $collector = new CapabilityCollector(
-            $this->fixturesDir.'/with-ai-mate-config',
-            [],
-            [],
-            new Discoverer($logger),
-            $logger
-        );
+        $collector = $this->createCollector($this->fixturesDir.'/with-ai-mate-config');
 
         $extension = [
             'dirs' => ['mate/src'],
@@ -188,14 +147,7 @@ final class CapabilityCollectorTest extends TestCase
 
     public function testCollectCapabilitiesFormatsResourceTemplates()
     {
-        $logger = new NullLogger();
-        $collector = new CapabilityCollector(
-            $this->fixturesDir.'/with-ai-mate-config',
-            [],
-            [],
-            new Discoverer($logger),
-            $logger
-        );
+        $collector = $this->createCollector($this->fixturesDir.'/with-ai-mate-config');
 
         $extension = [
             'dirs' => ['mate/src'],
@@ -212,5 +164,18 @@ final class CapabilityCollectorTest extends TestCase
             $this->assertArrayHasKey('description', $template);
             $this->assertArrayHasKey('handler', $template);
         }
+    }
+
+    /**
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     * @param array<string, array<string, array{enabled: bool}>>       $disabledFeatures
+     */
+    private function createCollector(string $rootDir, array $extensions = [], array $disabledFeatures = []): CapabilityCollector
+    {
+        $logger = new NullLogger();
+        $discoverer = new Discoverer($logger);
+        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
+
+        return new CapabilityCollector($loader);
     }
 }

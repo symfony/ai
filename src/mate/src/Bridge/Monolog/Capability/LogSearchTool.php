@@ -31,7 +31,7 @@ final class LogSearchTool
     }
 
     /**
-     * @phpstan-return list<LogEntryArray>
+     * @phpstan-return array{entries: list<LogEntryArray>}
      */
     #[McpTool('monolog-search', 'Search log entries by text term with optional level, channel, environment, and date filters')]
     public function search(
@@ -52,11 +52,11 @@ final class LogSearchTool
             limit: $limit,
         );
 
-        return $this->collectResults($criteria, $environment);
+        return ['entries' => $this->collectResults($criteria, $environment)];
     }
 
     /**
-     * @phpstan-return list<LogEntryArray>
+     * @phpstan-return array{entries: list<LogEntryArray>}
      */
     #[McpTool('monolog-search-regex', 'Search log entries using a regex pattern')]
     public function searchRegex(
@@ -78,11 +78,11 @@ final class LogSearchTool
             limit: $limit,
         );
 
-        return $this->collectResults($criteria, $environment);
+        return ['entries' => $this->collectResults($criteria, $environment)];
     }
 
     /**
-     * @phpstan-return list<LogEntryArray>
+     * @phpstan-return array{entries: list<LogEntryArray>}
      */
     #[McpTool('monolog-context-search', 'Search logs by context field value')]
     public function searchContext(
@@ -99,27 +99,27 @@ final class LogSearchTool
             limit: $limit,
         );
 
-        return $this->collectResults($criteria, $environment);
+        return ['entries' => $this->collectResults($criteria, $environment)];
     }
 
     /**
-     * @phpstan-return list<LogEntryArray>
+     * @phpstan-return array{entries: list<LogEntryArray>}
      */
     #[McpTool('monolog-tail', 'Get the last N log entries')]
     public function tail(int $lines = 50, ?string $level = null, ?string $environment = null): array
     {
         $entries = $this->reader->tail($lines, $level, $environment);
 
-        return array_values(array_map(static fn ($entry) => $entry->toArray(), $entries));
+        return ['entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $entries))];
     }
 
     /**
-     * @return array<int, array{
+     * @return array{files: array<int, array{
      *     name: string,
      *     path: string,
      *     size: int,
      *     modified: string
-     * }>
+     * }>}
      */
     #[McpTool('monolog-list-files', 'List available log files, optionally filtered by environment')]
     public function listFiles(?string $environment = null): array
@@ -138,22 +138,22 @@ final class LogSearchTool
             ];
         }
 
-        return $result;
+        return ['files' => $result];
     }
 
     /**
-     * @return string[]
+     * @return array{channels: string[]}
      */
     #[McpTool('monolog-list-channels', 'List all log channels found in log files')]
     public function listChannels(): array
     {
-        return $this->reader->getUniqueChannels();
+        return ['channels' => $this->reader->getUniqueChannels()];
     }
 
     /**
      * Get log entries by level (e.g., all ERROR logs).
      *
-     * @phpstan-return list<LogEntryArray>
+     * @phpstan-return array{entries: list<LogEntryArray>}
      */
     #[McpTool('monolog-by-level', 'Get log entries filtered by level (DEBUG, INFO, WARNING, ERROR, etc.)')]
     public function byLevel(string $level, ?string $environment = null, int $limit = 100): array
@@ -163,7 +163,7 @@ final class LogSearchTool
             limit: $limit,
         );
 
-        return $this->collectResults($criteria, $environment);
+        return ['entries' => $this->collectResults($criteria, $environment)];
     }
 
     /**

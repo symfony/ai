@@ -30,7 +30,7 @@ final class FilteredDiscoveryLoader implements LoaderInterface
      * @param array<string, array<string, array{enabled: bool}>>      $disabledFeatures
      */
     public function __construct(
-        private string $basePath,
+        private string $rootDir,
         private array $extensions,
         private array $disabledFeatures,
         private DiscovererInterface $discoverer,
@@ -72,7 +72,7 @@ final class FilteredDiscoveryLoader implements LoaderInterface
         $prompts = [];
         $resourceTemplates = [];
 
-        $discoveryState = $this->discoverer->discover($this->basePath, $extension['dirs']);
+        $discoveryState = $this->discoverer->discover($this->rootDir, $extension['dirs']);
 
         foreach ($discoveryState->getTools() as $name => $tool) {
             if (!$this->isFeatureAllowed($extensionName, $name)) {

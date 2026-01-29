@@ -38,11 +38,11 @@ class ServerInfo
     }
 
     /**
-     * @return string[]
+     * @return array{extensions: string[]}
      */
     #[McpTool('php-extensions', 'Get a list of PHP extensions')]
     public function extensions(): array
     {
-        return get_loaded_extensions();
+        return ['extensions' => get_loaded_extensions()];
     }
 }

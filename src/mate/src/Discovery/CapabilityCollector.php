@@ -11,11 +11,9 @@
 
 namespace Symfony\AI\Mate\Discovery;
 
-use Mcp\Capability\Discovery\DiscovererInterface;
 use Mcp\Capability\Registry\PromptReference;
 use Mcp\Capability\Registry\ResourceTemplateReference;
 use Mcp\Capability\Registry\ToolReference;
-use Psr\Log\LoggerInterface;
 
 /**
  * Collects MCP capabilities from discovered extensions.
@@ -52,28 +50,9 @@ use Psr\Log\LoggerInterface;
  */
 class CapabilityCollector
 {
-    private DiscovererInterface $discoverer;
-    private FilteredDiscoveryLoader $loader;
-
-    /**
-     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
-     * @param array<string, array<string, array{enabled: bool}>>       $disabledFeatures
-     */
     public function __construct(
-        string $rootDir,
-        array $extensions,
-        array $disabledFeatures,
-        DiscovererInterface $discoverer,
-        private LoggerInterface $logger,
+        private FilteredDiscoveryLoader $loader,
     ) {
-        $this->discoverer = $discoverer;
-        $this->loader = new FilteredDiscoveryLoader(
-            $rootDir,
-            $extensions,
-            $disabledFeatures,
-            $this->discoverer,
-            $this->logger,
-        );
     }
 
     /**

@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Mate\Command;
 
-use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -31,15 +30,11 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand('discover', 'Discover MCP bridges installed via Composer')]
 class DiscoverCommand extends Command
 {
-    private ComposerExtensionDiscovery $extensionDiscovery;
-
     public function __construct(
         private string $rootDir,
-        private LoggerInterface $logger,
+        private ComposerExtensionDiscovery $extensionDiscovery,
     ) {
         parent::__construct(self::getDefaultName());
-
-        $this->extensionDiscovery = new ComposerExtensionDiscovery($this->rootDir, $this->logger);
     }
 
     public static function getDefaultName(): string
