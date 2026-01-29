@@ -1,0 +1,31 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-29T13:32:50Z
+
+yup, hunting down something fishy similar to this - kinda easy to mess that up while chaining all those services. no idea to test that properly tho
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2026-01-29T13:34:39Z
+
+It's already tested, right? I mean, I did broke the tests while coding that!
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-29T13:46:18Z
+
+yea, i rather meant the concern that users could easily break that generator behavior that relies on every service involved to respect that.
+
+if there's only one transformer that messes up, it's mostly broken for the entire indexing process and that's not easy to catch by design - or i fail to see how
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2026-01-29T13:50:50Z
+
+I'm not sure to get your point.
+
+I edited my code to throw an exception in a Transformer, and I got this exception.
+
+<img width="1006" height="1157" alt="image" src="https://github.com/user-attachments/assets/70cec160-9e69-416f-8f2f-3df0a84c391e" />
+
+It's quite clean IMHO. We already have such iterator chaining / processing in Symfony or other lib and it's common IMHO
