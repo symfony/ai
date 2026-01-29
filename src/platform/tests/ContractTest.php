@@ -66,7 +66,7 @@ final class ContractTest extends TestCase
                 'messages' => [
                     ['role' => 'system', 'content' => 'System message'],
                     ['role' => 'user', 'content' => 'User message'],
-                    ['role' => 'assistant', 'content' => 'Assistant message'],
+                    ['role' => 'assistant', 'content' => '"Assistant message"'],
                 ],
                 'model' => 'gpt-4o',
             ],
@@ -163,9 +163,9 @@ final class ContractTest extends TestCase
             'expected' => [
                 'messages' => [
                     ['role' => 'system', 'content' => 'My amazing system prompt.'],
-                    ['role' => 'assistant', 'content' => 'It is time to sleep.'],
+                    ['role' => 'assistant', 'content' => '"It is time to sleep."'],
                     ['role' => 'user', 'content' => 'Hello, world!'],
-                    ['role' => 'assistant', 'content' => 'Hello User!'],
+                    ['role' => 'assistant', 'content' => '"Hello User!"'],
                     ['role' => 'user', 'content' => [
                         ['type' => 'text', 'text' => 'My hint for how to analyze an image.'],
                         ['type' => 'image_url', 'image_url' => ['url' => 'http://image-generator.local/my-fancy-image.png']],

@@ -48,12 +48,7 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
 
         $content = $data->getContent();
         if (null !== $content) {
-            $array['content'] = match (true) {
-                \is_string($content) => $content,
-                $content instanceof \Stringable => (string) $content,
-                $content instanceof \JsonSerializable => json_encode($content, \JSON_THROW_ON_ERROR),
-                default => json_encode($this->normalizer->normalize($content, $format, $context), \JSON_THROW_ON_ERROR),
-            };
+            $array['content'] = json_encode($this->normalizer->normalize($content, $format, $context), \JSON_THROW_ON_ERROR);
         }
 
         if ($data->hasToolCalls()) {
