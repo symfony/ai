@@ -34,6 +34,9 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v6
 
+            - name: Fetch base branch for LICENSE validation
+              run: git fetch origin ${{ github.base_ref || 'main' }} --depth=1
+
             - name: Validate store bridge naming conventions
               run: .github/scripts/validate-bridge-naming.sh store store src/ai-bundle/config/options.php
 
@@ -52,6 +55,9 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v6
+
+            - name: Fetch base branch for LICENSE validation
+              run: git fetch origin ${{ github.base_ref || 'main' }} --depth=1
 
             - name: Validate tool bridge naming conventions
               run: .github/scripts/validate-bridge-naming.sh tool agent
@@ -72,6 +78,9 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v6
 
+            - name: Fetch base branch for LICENSE validation
+              run: git fetch origin ${{ github.base_ref || 'main' }} --depth=1
+
             - name: Validate message store bridge naming conventions
               run: .github/scripts/validate-bridge-naming.sh message-store chat
 
@@ -91,6 +100,9 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v6
 
+            - name: Fetch base branch for LICENSE validation
+              run: git fetch origin ${{ github.base_ref || 'main' }} --depth=1
+
             - name: Validate platform bridge naming conventions
               run: .github/scripts/validate-bridge-naming.sh platform platform
 
@@ -109,6 +121,9 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v6
+
+            - name: Fetch base branch for LICENSE validation
+              run: git fetch origin ${{ github.base_ref || 'main' }} --depth=1
 
             - name: Validate Mate bridge naming conventions
               run: .github/scripts/validate-bridge-naming.sh mate-extension mate
