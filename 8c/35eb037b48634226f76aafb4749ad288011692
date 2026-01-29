@@ -1,0 +1,104 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-28T20:09:37Z
+
+Hey @lyrixx, this is closer to your PRs again and also less intrusive than my previous ones.
+Do you see your concerns addressed?
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2026-01-29T09:04:53Z
+
+Hello,
+
+I'm gonna test your PR this morning and I'll report feedback. Thanks !
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-01-29T09:09:59Z
+
+Needs a rebase
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2026-01-29T10:11:57Z
+
+There is still an issue here.
+
+**TL;DR: I want to index a document**
+
+---
+
+My current code is:
+```php
+private function indexCrawlUrl(string $id, string $crawlId, string $url, string $body): void
+{
+    $document = new TextDocument(
+        new Uuid($id),
+        $body,
+        new Metadata([
+            'url' => $url,
+            'crawl_id' => $crawlId,
+        ]),
+    );
+    $this->indexer->index([$document]); // I need to pass an array, but ideally, It would be better to pass the document directly
+}
+```
+
+With the current architecture, it's not possible.
+
+1. A loader is mandatory in the bundle configuration. I thought I could use an `InMemoryLoader`, but it has not be built for that
+2. So I built a passthru loader :
+    ```php
+    <?php
+
+    namespace App\Loader;
+
+    use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+    use Symfony\AI\Store\Document\LoaderInterface;
+
+    final class PassthruLoaderLoader implements LoaderInterface
+    {
+        /**
+         * @param EmbeddableDocumentInterface[] $documents
+         */
+        // ⚠⚠⚠⚠⚠ I HAD TO REMOVE THE TYPE HINT on $documents ⚠⚠⚠⚠⚠
+        public function load($documents = null, array $options = []): iterable
+        {
+            if (is_iterable($documents)) {
+                yield from $documents;
+            } else {
+                yield $documents;
+            }
+        }
+    }
+    ```
+    This code is a bit weird to me :/
+3. Then, I got the following error
+    ```
+      "detail": "Symfony\\AI\\Store\\Indexer::loadSource(): Argument #1 ($source) must be of type ?string, Symfony\\AI\\Store\\Document\\TextDocument given, called in \/app\/server\/ai\/src\/store\/src\/Indexer.php on line 50",
+    ```
+    I fixed it by removing the hint here too
+
+---
+
+This PR is better than the previous version, but it does not fix my initial issue.
+
+To recall, I need to index a **document** (`final class TextDocument implements EmbeddableDocumentInterface`).
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-29T11:34:39Z
+
+okay, true, let's come back to the overloading idea for making the loading part optional then:
+1. you can call `$indexer->index($sources)` with being `string|string[]` of references used by a loader
+2. you can call `$indexer->index($documents)` with TextDocument|TextDocument[]`
+
+but making sure that we don't have to have an awkward loader
+follow up PR to this one tho. sorry for the extra loops, but decoupling those two makes it easier i guess.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-01-29T11:43:13Z
+
+Lets merge it in this state, its a good progress in the right direction!
