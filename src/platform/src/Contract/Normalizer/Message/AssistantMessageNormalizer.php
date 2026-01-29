@@ -42,16 +42,15 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        $content = $data->getContent();
         $array = [
             'role' => $data->getRole()->value,
-            'content' => null === $content ? null : match (true) {
-                \is_string($content) => $content,
-                $content instanceof \Stringable => (string) $content,
-                $content instanceof \JsonSerializable => json_encode($content, \JSON_THROW_ON_ERROR),
-                default => json_encode($this->normalizer->normalize($content, $format, $context), \JSON_THROW_ON_ERROR),
-            },
+            'content' => null,
         ];
+
+        $content = $data->getContent();
+        if (null !== $content) {
+            $array['content'] = json_encode($this->normalizer->normalize($content, $format, $context), \JSON_THROW_ON_ERROR);
+        }
 
         if ($data->hasToolCalls()) {
             $array['tool_calls'] = $this->normalizer->normalize($data->getToolCalls(), $format, $context);
