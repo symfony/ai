@@ -88,14 +88,10 @@ EOF
 
         $indexerService = $this->indexers->get($indexer);
 
-        if (null !== $source) {
-            $indexerService = $indexerService->withSource($source);
-        }
-
         $io->title(\sprintf('Indexing documents using "%s" indexer', $indexer));
 
         try {
-            $indexerService->index([]);
+            $indexerService->index($source);
 
             $io->success(\sprintf('Documents indexed successfully using "%s" indexer.', $indexer));
         } catch (\Exception $e) {
