@@ -74,6 +74,139 @@ To disable an extension, set ``enabled`` to ``false``::
         'vendor/unwanted-extension' => ['enabled' => false],
     ];
 
+Adding Custom Commands
+-----------------------
+
+Extensions can add custom console commands to the ``mate`` CLI. Commands are registered
+via the service container using the ``mate.command`` tag.
+
+Creating a Command
+~~~~~~~~~~~~~~~~~~
+
+Create a Symfony Console command class::
+
+    namespace Vendor\MateExtension\Command;
+
+    use Symfony\Component\Console\Command\Command;
+    use Symfony\Component\Console\Input\InputInterface;
+    use Symfony\Component\Console\Output\OutputInterface;
+
+    class MyCustomCommand extends Command
+    {
+        protected static $defaultName = 'my:custom-command';
+        protected static $defaultDescription = 'Description of what this command does';
+
+        protected function execute(InputInterface $input, OutputInterface $output): int
+        {
+            $output->writeln('Hello from custom command!');
+
+            return Command::SUCCESS;
+        }
+    }
+
+Registering the Command
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Create a configuration file (e.g., ``config/mate.php``) and register your command
+with the ``mate.command`` tag::
+
+    // config/mate.php
+    use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+    use Vendor\MateExtension\Command\MyCustomCommand;
+
+    return static function (ContainerConfigurator $container): void {
+        $container->services()
+            ->set(MyCustomCommand::class)
+                ->autowire()
+                ->autoconfigure()
+                ->public()
+                ->tag('mate.command')
+        ;
+    };
+
+Then reference this file in your ``composer.json``:
+
+.. code-block:: json
+
+    {
+        "extra": {
+            "ai-mate": {
+                "scan-dirs": ["src"],
+                "includes": ["config/mate.php"]
+            }
+        }
+    }
+
+Using Dependency Injection in Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Commands can use autowiring and named argument binding for common parameters::
+
+    namespace Vendor\MateExtension\Command;
+
+    use Psr\Log\LoggerInterface;
+    use Symfony\Component\Console\Command\Command;
+    use Symfony\Component\Console\Input\InputInterface;
+    use Symfony\Component\Console\Output\OutputInterface;
+
+    class AdvancedCommand extends Command
+    {
+        public function __construct(
+            private LoggerInterface $logger,
+            private string $rootDir,  // Automatically bound from %mate.root_dir%
+            private string $cacheDir, // Automatically bound from %mate.cache_dir%
+        ) {
+            parent::__construct();
+        }
+
+        protected static $defaultName = 'advanced:command';
+
+        protected function execute(InputInterface $input, OutputInterface $output): int
+        {
+            $this->logger->info('Command executed', [
+                'root_dir' => $this->rootDir,
+                'cache_dir' => $this->cacheDir,
+            ]);
+
+            return Command::SUCCESS;
+        }
+    }
+
+Available Named Parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following parameters are automatically available for binding in your commands:
+
+- ``$rootDir`` - Root directory of the project (from ``%mate.root_dir%``)
+- ``$basePath`` - Same as ``$rootDir``, for FilteredDiscoveryLoader
+- ``$cacheDir`` - Cache directory (from ``%mate.cache_dir%``)
+- ``$extensions`` - Loaded extensions array
+- ``$disabledFeatures`` - Array of disabled features
+- ``$enabledExtensions`` - Array of enabled extension names
+- ``$loadedExtensions`` - Same as ``$extensions``
+- ``$mcpProtocolVersion`` - MCP protocol version string
+
+Verifying Command Registration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After creating and registering your command, verify it's available:
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate discover
+    $ vendor/bin/mate list
+
+Your custom command should appear in the command list.
+
+Command Best Practices
+^^^^^^^^^^^^^^^^^^^^^^
+
+1. **Use descriptive command names** - Prefix commands with your extension name to avoid
+   conflicts (e.g., ``myext:command``)
+2. **Leverage autowiring** - Use constructor injection for dependencies
+3. **Follow Symfony conventions** - Use Symfony Console best practices for commands
+4. **Handle errors gracefully** - Return appropriate exit codes and display helpful error messages
+
 Dependency Injection
 --------------------
 
