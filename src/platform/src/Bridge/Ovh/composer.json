@@ -1,0 +1,59 @@
+{
+    "name": "symfony/ai-ovh-platform",
+    "description": "OVH AI Endpoints platform bridge for Symfony AI",
+    "license": "MIT",
+    "type": "symfony-ai-platform",
+    "keywords": [
+        "ai",
+        "bridge",
+        "platform",
+        "ovh"
+    ],
+    "authors": [
+        {
+            "name": "Christopher Hertel",
+            "email": "mail@christopher-hertel.de"
+        },
+        {
+            "name": "Oskar Stark",
+            "email": "oskarstark@googlemail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/ai-generic-platform": "^0.3",
+        "symfony/ai-platform": "^0.3",
+        "symfony/http-client": "^7.3|^8.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.46"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Platform\\Bridge\\Ovh\\": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/",
+            "Symfony\\AI\\Platform\\Bridge\\Ovh\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    }
+}
