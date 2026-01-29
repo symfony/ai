@@ -85,7 +85,7 @@ class ResultConverter implements ResultConverterInterface
 
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
     {
-        return null;
+        return new TokenUsageExtractor();
     }
 
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
