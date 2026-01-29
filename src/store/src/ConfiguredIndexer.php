@@ -30,7 +30,7 @@ final class ConfiguredIndexer implements IndexerInterface
     ) {
     }
 
-    public function index(string|array|null $source = null, array $options = []): void
+    public function index(string|iterable|null $source = null, array $options = []): void
     {
         $this->indexer->index($source ?? $this->defaultSource, $options);
     }

@@ -13,7 +13,6 @@ namespace Symfony\AI\Store;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
 use Symfony\AI\Store\Document\FilterInterface;
 use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Document\TransformerInterface;
@@ -39,22 +38,20 @@ class Indexer implements IndexerInterface
     ) {
     }
 
-    public function index(string|array|null $source = null, array $options = []): void
+    public function index(string|iterable|null $source = null, array $options = []): void
     {
-        $sources = null === $source ? [null] : (array) $source;
+        $sources = match (true) {
+            is_iterable($source) => $source,
+            default => [$source],
+        };
 
         $this->logger->debug('Starting document processing', ['sources' => $sources, 'options' => $options]);
 
-        $documents = [];
-        foreach ($sources as $singleSource) {
-            $documents = array_merge($documents, $this->loadSource($singleSource));
-        }
-
-        if ([] === $documents) {
-            $this->logger->debug('No documents to process', ['sources' => $sources]);
-
-            return;
-        }
+        $documents = (function () use ($sources) {
+            foreach ($sources as $singleSource) {
+                yield from $this->loader->load($singleSource);
+            }
+        })();
 
         foreach ($this->filters as $filter) {
             $documents = $filter->filter($documents);
@@ -82,18 +79,5 @@ class Indexer implements IndexerInterface
         }
 
         $this->logger->debug('Document processing completed', ['total_documents' => $counter]);
-    }
-
-    /**
-     * @return EmbeddableDocumentInterface[]
-     */
-    private function loadSource(?string $source): array
-    {
-        $documents = [];
-        foreach ($this->loader->load($source) as $document) {
-            $documents[] = $document;
-        }
-
-        return $documents;
     }
 }

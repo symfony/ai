@@ -21,8 +21,8 @@ interface IndexerInterface
     /**
      * Process sources through the complete document pipeline: load → transform → vectorize → store.
      *
-     * @param string|array<string>|null                                        $source  Source identifier (file path, URL, etc.) or array of sources
+     * @param string|iterable<string>|null                                     $source  Source identifier (file path, URL, etc.) or iterable of sources
      * @param array{chunk_size?: int, platform_options?: array<string, mixed>} $options Processing options
      */
-    public function index(string|array|null $source = null, array $options = []): void;
+    public function index(string|iterable|null $source = null, array $options = []): void;
 }
