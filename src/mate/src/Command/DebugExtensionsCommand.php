@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Mate\Command;
 
-use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -19,7 +18,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Display detailed information about discovered and loaded MCP extensions.
@@ -54,21 +52,16 @@ class DebugExtensionsCommand extends Command
     private string $rootDir;
 
     public function __construct(
-        LoggerInterface $logger,
-        ContainerInterface $container,
+        string $rootDir,
+        array $enabledExtensions,
+        array $loadedExtensions,
+        private ComposerExtensionDiscovery $extensionDiscovery,
     ) {
         parent::__construct(self::getDefaultName());
 
-        $this->rootDir = $container->getParameter('mate.root_dir');
-        \assert(\is_string($this->rootDir));
-
-        $this->enabledExtensions = $container->getParameter('mate.enabled_extensions') ?? [];
-        \assert(\is_array($this->enabledExtensions));
-
-        $this->loadedExtensions = $container->getParameter('mate.extensions') ?? [];
-        \assert(\is_array($this->loadedExtensions));
-
-        $extensionDiscovery = new ComposerExtensionDiscovery($this->rootDir, $logger);
+        $this->rootDir = $rootDir;
+        $this->enabledExtensions = $enabledExtensions;
+        $this->loadedExtensions = $loadedExtensions;
         $this->discoveredExtensions = $extensionDiscovery->discover();
         $this->rootProjectConfig = $extensionDiscovery->discoverRootProject();
     }

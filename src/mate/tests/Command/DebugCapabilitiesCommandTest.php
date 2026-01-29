@@ -11,13 +11,15 @@
 
 namespace Symfony\AI\Mate\Tests\Command;
 
+use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\DebugCapabilitiesCommand;
+use Symfony\AI\Mate\Discovery\CapabilityCollector;
+use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -34,16 +36,12 @@ final class DebugCapabilitiesCommandTest extends TestCase
     public function testExecuteDisplaysCapabilities()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-a', 'vendor/package-b']);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugCapabilitiesCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -57,16 +55,12 @@ final class DebugCapabilitiesCommandTest extends TestCase
     public function testExecuteWithEmptyExtensions()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugCapabilitiesCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -79,16 +73,12 @@ final class DebugCapabilitiesCommandTest extends TestCase
     public function testExecuteWithJsonFormat()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugCapabilitiesCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['--format' => 'json']);
@@ -110,16 +100,12 @@ final class DebugCapabilitiesCommandTest extends TestCase
     public function testExecuteWithExtensionFilter()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-a', 'vendor/package-b']);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugCapabilitiesCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['--extension' => '_custom']);
@@ -134,16 +120,12 @@ final class DebugCapabilitiesCommandTest extends TestCase
     public function testExecuteWithInvalidExtensionFilter()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugCapabilitiesCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $this->expectException(InvalidArgumentException::class);
@@ -155,16 +137,12 @@ final class DebugCapabilitiesCommandTest extends TestCase
     public function testExecuteWithTypeFilter()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugCapabilitiesCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['--type' => 'tool']);
@@ -175,16 +153,12 @@ final class DebugCapabilitiesCommandTest extends TestCase
     public function testExecuteWithInvalidTypeFilter()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugCapabilitiesCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $this->expectException(InvalidArgumentException::class);
@@ -196,16 +170,12 @@ final class DebugCapabilitiesCommandTest extends TestCase
     public function testExecuteWithCombinedFilters()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-a']);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugCapabilitiesCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute([
@@ -219,16 +189,12 @@ final class DebugCapabilitiesCommandTest extends TestCase
     public function testExecuteWithJsonFormatAndFilters()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugCapabilitiesCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute([
@@ -245,5 +211,19 @@ final class DebugCapabilitiesCommandTest extends TestCase
         $this->assertArrayHasKey('_custom', $json['extensions']);
         $this->assertArrayHasKey('resources', $json['extensions']['_custom']);
         $this->assertArrayNotHasKey('tools', $json['extensions']['_custom']);
+    }
+
+    /**
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     * @param array<string, array<string, array{enabled: bool}>>       $disabledFeatures
+     */
+    private function createCommand(string $rootDir, array $extensions, array $disabledFeatures = []): DebugCapabilitiesCommand
+    {
+        $logger = new NullLogger();
+        $discoverer = new Discoverer($logger);
+        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
+        $collector = new CapabilityCollector($loader);
+
+        return new DebugCapabilitiesCommand($extensions, $collector);
     }
 }

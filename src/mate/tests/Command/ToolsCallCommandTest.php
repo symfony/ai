@@ -11,10 +11,12 @@
 
 namespace Symfony\AI\Mate\Tests\Command;
 
+use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Capability\ServerInfo;
 use Symfony\AI\Mate\Command\ToolsCallCommand;
+use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -26,9 +28,12 @@ final class ToolsCallCommandTest extends TestCase
 {
     public function testExecuteCallsToolSuccessfully()
     {
-        $container = $this->createContainer();
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
+        ];
 
-        $command = new ToolsCallCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute([
@@ -45,9 +50,12 @@ final class ToolsCallCommandTest extends TestCase
 
     public function testExecuteWithJsonFormat()
     {
-        $container = $this->createContainer();
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
+        ];
 
-        $command = new ToolsCallCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute([
@@ -70,9 +78,12 @@ final class ToolsCallCommandTest extends TestCase
 
     public function testExecuteWithInvalidToolName()
     {
-        $container = $this->createContainer();
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
+        ];
 
-        $command = new ToolsCallCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute([
@@ -87,9 +98,12 @@ final class ToolsCallCommandTest extends TestCase
 
     public function testExecuteWithInvalidJson()
     {
-        $container = $this->createContainer();
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
+        ];
 
-        $command = new ToolsCallCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute([
@@ -102,20 +116,18 @@ final class ToolsCallCommandTest extends TestCase
         $this->assertStringContainsString('Invalid JSON', $output);
     }
 
-    private function createContainer(): ContainerBuilder
+    /**
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     */
+    private function createCommand(string $rootDir, array $extensions): ToolsCallCommand
     {
-        $rootDir = __DIR__.'/../..';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
-            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
-        ]);
+        $logger = new NullLogger();
+        $discoverer = new Discoverer($logger);
+        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, [], $discoverer, $logger);
 
-        // Register ServerInfo service for tool execution
+        $container = new ContainerBuilder();
         $container->set(ServerInfo::class, new ServerInfo());
 
-        return $container;
+        return new ToolsCallCommand($loader, $container, $logger);
     }
 }
