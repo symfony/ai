@@ -55,12 +55,10 @@ return static function (ContainerConfigurator $container): void {
             ->autoconfigure()
             // Named argument binding for common parameters
             ->bind('$rootDir', '%mate.root_dir%')
-            ->bind('$basePath', '%mate.root_dir%')  // For FilteredDiscoveryLoader
             ->bind('$cacheDir', '%mate.cache_dir%')
             ->bind('$extensions', '%mate.extensions%')
             ->bind('$disabledFeatures', '%mate.disabled_features%')
             ->bind('$enabledExtensions', '%mate.enabled_extensions%')
-            ->bind('$loadedExtensions', '%mate.extensions%')  // For DebugExtensionsCommand
             ->bind('$mcpProtocolVersion', '%mate.mcp_protocol_version%')
 
         ->set('_build.logger', Logger::class)

@@ -47,21 +47,21 @@ class DebugExtensionsCommand extends Command
     /**
      * @var array<string, ExtensionData>
      */
-    private array $loadedExtensions;
+    private array $extensions;
 
     private string $rootDir;
 
     public function __construct(
         string $rootDir,
         array $enabledExtensions,
-        array $loadedExtensions,
+        array $extensions,
         private ComposerExtensionDiscovery $extensionDiscovery,
     ) {
         parent::__construct(self::getDefaultName());
 
         $this->rootDir = $rootDir;
         $this->enabledExtensions = $enabledExtensions;
-        $this->loadedExtensions = $loadedExtensions;
+        $this->extensions = $extensions;
         $this->discoveredExtensions = $extensionDiscovery->discover();
         $this->rootProjectConfig = $extensionDiscovery->discoverRootProject();
     }
@@ -158,7 +158,7 @@ HELP
         if (\count($enabledExtensions) > 0) {
             $io->section(\sprintf('Enabled Extensions (%d)', $enabledCount));
             foreach ($enabledExtensions as $packageName => $data) {
-                $isLoaded = isset($this->loadedExtensions[$packageName]);
+                $isLoaded = isset($this->extensions[$packageName]);
                 $this->displayExtensionDetails($io, $packageName, $data, true, $isLoaded);
             }
         }
@@ -166,7 +166,7 @@ HELP
         if ($showAll && \count($disabledExtensions) > 0) {
             $io->section(\sprintf('Disabled Extensions (%d)', $disabledCount));
             foreach ($disabledExtensions as $packageName => $data) {
-                $isLoaded = isset($this->loadedExtensions[$packageName]);
+                $isLoaded = isset($this->extensions[$packageName]);
                 $this->displayExtensionDetails($io, $packageName, $data, false, $isLoaded);
             }
         }
@@ -175,7 +175,7 @@ HELP
         $io->text(\sprintf('Total discovered: %d', \count($this->discoveredExtensions) + 1)); // +1 for root project
         $io->text(\sprintf('Enabled: %d', $enabledCount + 1)); // +1 for root project
         $io->text(\sprintf('Disabled: %d', $disabledCount));
-        $io->text(\sprintf('Loaded: %d', \count($this->loadedExtensions)));
+        $io->text(\sprintf('Loaded: %d', \count($this->extensions)));
 
         if (!$showAll && $disabledCount > 0) {
             $io->note(\sprintf('Use --show-all to see %d disabled extension%s', $disabledCount, 1 === $disabledCount ? '' : 's'));
@@ -244,7 +244,7 @@ HELP
 
         foreach ($this->discoveredExtensions as $packageName => $data) {
             $isEnabled = \in_array($packageName, $this->enabledExtensions, true);
-            $isLoaded = isset($this->loadedExtensions[$packageName]);
+            $isLoaded = isset($this->extensions[$packageName]);
 
             $extensionData = [
                 'type' => 'vendor_extension',

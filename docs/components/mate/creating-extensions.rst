@@ -178,13 +178,11 @@ Available Named Parameters
 The following parameters are automatically available for binding in your commands:
 
 - ``$rootDir`` - Root directory of the project (from ``%mate.root_dir%``)
-- ``$basePath`` - Same as ``$rootDir``, for FilteredDiscoveryLoader
 - ``$cacheDir`` - Cache directory (from ``%mate.cache_dir%``)
-- ``$extensions`` - Loaded extensions array
-- ``$disabledFeatures`` - Array of disabled features
-- ``$enabledExtensions`` - Array of enabled extension names
-- ``$loadedExtensions`` - Same as ``$extensions``
-- ``$mcpProtocolVersion`` - MCP protocol version string
+- ``$extensions`` - Loaded extensions array (from ``%mate.extensions%``)
+- ``$disabledFeatures`` - Array of disabled features (from ``%mate.disabled_features%``)
+- ``$enabledExtensions`` - Array of enabled extension names (from ``%mate.enabled_extensions%``)
+- ``$mcpProtocolVersion`` - MCP protocol version string (from ``%mate.mcp_protocol_version%``)
 
 Verifying Command Registration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
