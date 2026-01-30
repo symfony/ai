@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -88,7 +87,28 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        // ManticoreSearch doesn't have a limit on the number of IDs per DELETE request
+        // But we'll chunk them for better performance and to avoid potential issues
+        $chunksIds = array_chunk($ids, 1000);
+
+        foreach ($chunksIds as $chunkIds) {
+            $quotedIds = array_map(fn (string $id): string => "'".addslashes($id)."'", $chunkIds);
+            $idsList = implode(', ', $quotedIds);
+
+            $this->request('cli', \sprintf(
+                'DELETE FROM %s WHERE uuid IN (%s)',
+                $this->table,
+                $idsList
+            ));
+        }
     }
 
     public function query(Vector $vector, array $options = []): iterable

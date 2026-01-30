@@ -197,4 +197,80 @@ final class StoreTest extends TestCase
         $this->assertCount(1, $documents);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testStoreCannotRemoveOnInvalidResponse()
+    {
+        $mockHttpClient = new MockHttpClient([
+            new MockResponse([], [
+                'http_code' => 400,
+            ]),
+        ]);
+
+        $store = new Store($mockHttpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:9308/cli".');
+        $this->expectExceptionCode(400);
+        $store->remove('test-id');
+    }
+
+    public function testStoreCanRemoveSingleId()
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse('Query OK, 1 rows affected (0.006 sec)'.\PHP_EOL, [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store->remove('test-id');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveMultipleIds()
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse('Query OK, 3 rows affected (0.006 sec)'.\PHP_EOL, [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store->remove(['test-id-1', 'test-id-2', 'test-id-3']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveWithEmptyArray()
+    {
+        $httpClient = new MockHttpClient();
+
+        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveWithChunking()
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse('Query OK, 1000 rows affected (0.006 sec)'.\PHP_EOL, [
+                'http_code' => 200,
+            ]),
+            new MockResponse('Query OK, 1 rows affected (0.006 sec)'.\PHP_EOL, [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $ids = [];
+        for ($i = 0; $i < 1001; ++$i) {
+            $ids[] = 'test-id-'.$i;
+        }
+
+        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store->remove($ids);
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
 }
