@@ -4,34 +4,58 @@ UPGRADE FROM 0.3 to 0.4
 AI Bundle
 ---------
 
- * An indexer configured with a `source`, now wraps the indexer with a `ConfiguredIndexer` decorator. This is
+ * An indexer configured with a `source`, now wraps the indexer with a `Symfony\AI\Store\ConfiguredSourceIndexer` decorator. This is
    transparent - the configured source is still used by default, but can be overridden by passing a source to `index()`.
 
 Store
 -----
 
- * The `Indexer` class is now stateless. The `$source` constructor parameter and `withSource()` method have been removed.
-   Source is now passed directly to the `index()` method:
+ * The `Symfony\AI\Store\Indexer` class has been replaced with two specialized implementations:
+   - `Symfony\AI\Store\SourceIndexer`: For indexing from sources (file paths, URLs, etc.) using a `LoaderInterface`
+   - `Symfony\AI\Store\DocumentIndexer`: For indexing documents directly without a loader
 
    ```diff
+   -use Symfony\AI\Store\Indexer;
+   +use Symfony\AI\Store\SourceIndexer;
+
    -$indexer = new Indexer($loader, $vectorizer, $store, '/path/to/source');
    -$indexer->index();
-   +$indexer = new Indexer($loader, $vectorizer, $store);
-   +$indexer->index('/path/to/source');
+   +$indexer = new SourceIndexer($loader, $vectorizer, $store);
+   +$indexer->index('/path/to/file');
    ```
 
- * The `IndexerInterface::withSource()` method has been removed. Use the `$source` parameter of `index()` instead:
+   For indexing documents directly:
+
+   ```php
+   use Symfony\AI\Store\Document\TextDocument;use Symfony\AI\Store\Indexer\DocumentIndexer;
+
+   $indexer = new DocumentIndexer($processor);
+   $indexer->index(new TextDocument($id, 'content'));
+   $indexer->index([$document1, $document2]);
+   ```
+
+ * The `Symfony\AI\Store\ConfiguredIndexer` class has been renamed to `Symfony\AI\Store\ConfiguredSourceIndexer`:
+
+   ```diff
+   -use Symfony\AI\Store\ConfiguredIndexer;
+   +use Symfony\AI\Store\ConfiguredSourceIndexer;
+
+   -$indexer = new ConfiguredIndexer($innerIndexer, 'default-source');
+   +$indexer = new ConfiguredSourceIndexer($sourceIndexer, 'default-source');
+   ```
+
+ * The `Symfony\AI\Store\IndexerInterface::index()` method signature has changed - the input parameter is no longer nullable:
+
+   ```diff
+   -public function index(string|iterable|null $source = null, array $options = []): void;
+   +public function index(string|iterable|object $input, array $options = []): void;
+   ```
+
+ * The `Symfony\AI\Store\IndexerInterface::withSource()` method has been removed. Use the `$source` parameter of `index()` instead:
 
    ```diff
    -$indexer->withSource('/new/source')->index();
    +$indexer->index('/new/source');
-   ```
-
- * The `Indexer` constructor parameter order has changed. Filters and transformers have shifted positions:
-
-   ```diff
-   -new Indexer($loader, $vectorizer, $store, $source, $filters, $transformers, $logger);
-   +new Indexer($loader, $vectorizer, $store, $filters, $transformers, $logger);
    ```
 
 UPGRADE FROM 0.2 to 0.3

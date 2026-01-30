@@ -9,27 +9,32 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Store;
+namespace Symfony\AI\Store\Indexer;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
 use Symfony\AI\Store\Document\FilterInterface;
-use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Document\TransformerInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\StoreInterface;
 
 /**
+ * Internal service that handles the shared document processing pipeline.
+ *
+ * Pipeline: filter → transform → vectorize → store
+ *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-class Indexer implements IndexerInterface
+final class DocumentProcessor
 {
     /**
-     * @param FilterInterface[]      $filters      Filters to apply after loading documents to remove unwanted content
-     * @param TransformerInterface[] $transformers Transformers to mutate documents after filtering (chunking, cleaning, etc.)
+     * @param FilterInterface[]      $filters      Filters to apply to remove unwanted documents
+     * @param TransformerInterface[] $transformers Transformers to mutate documents (chunking, cleaning, etc.)
      */
     public function __construct(
-        private LoaderInterface $loader,
         private VectorizerInterface $vectorizer,
         private StoreInterface $store,
         private array $filters = [],
@@ -38,20 +43,15 @@ class Indexer implements IndexerInterface
     ) {
     }
 
-    public function index(string|iterable|null $source = null, array $options = []): void
+    /**
+     * Process documents through the pipeline: filter → transform → vectorize → store.
+     *
+     * @param iterable<EmbeddableDocumentInterface>                            $documents Documents to process
+     * @param array{chunk_size?: int, platform_options?: array<string, mixed>} $options   Processing options
+     */
+    public function process(iterable $documents, array $options = []): void
     {
-        $sources = match (true) {
-            is_iterable($source) => $source,
-            default => [$source],
-        };
-
-        $this->logger->debug('Starting document processing', ['sources' => $sources, 'options' => $options]);
-
-        $documents = (function () use ($sources) {
-            foreach ($sources as $singleSource) {
-                yield from $this->loader->load($singleSource);
-            }
-        })();
+        $this->logger->debug('Starting document processing pipeline');
 
         foreach ($this->filters as $filter) {
             $documents = $filter->filter($documents);
@@ -64,7 +64,12 @@ class Indexer implements IndexerInterface
         $chunkSize = $options['chunk_size'] ?? 50;
         $counter = 0;
         $chunk = [];
+
         foreach ($documents as $document) {
+            if (!$document instanceof EmbeddableDocumentInterface) {
+                throw new InvalidArgumentException(\sprintf('DocumentProcessor expects documents to be instances of EmbeddableDocumentInterface, got "%s".', get_debug_type($document)));
+            }
+
             $chunk[] = $document;
             ++$counter;
 

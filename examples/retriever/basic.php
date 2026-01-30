@@ -13,7 +13,8 @@ use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Store\Document\Loader\TextFileLoader;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
-use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Indexer\DocumentProcessor;
+use Symfony\AI\Store\Indexer\SourceIndexer;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\AI\Store\Retriever;
 
@@ -24,13 +25,16 @@ $store = new InMemoryStore();
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
 
-$indexer = new Indexer(
+$indexer = new SourceIndexer(
     loader: new TextFileLoader(),
-    vectorizer: $vectorizer,
-    store: $store,
-    transformers: [
-        new TextSplitTransformer(chunkSize: 500, overlap: 100),
-    ],
+    processor: new DocumentProcessor(
+        vectorizer: $vectorizer,
+        store: $store,
+        transformers: [
+            new TextSplitTransformer(chunkSize: 500, overlap: 100),
+        ],
+        logger: logger(),
+    ),
 );
 $indexer->index([
     dirname(__DIR__, 2).'/fixtures/movies/gladiator.md',

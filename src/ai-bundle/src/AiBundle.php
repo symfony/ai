@@ -110,12 +110,13 @@ use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
-use Symfony\AI\Store\ConfiguredIndexer;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Document\VectorizerInterface;
-use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Indexer\ConfiguredSourceIndexer;
+use Symfony\AI\Store\Indexer\DocumentProcessor;
+use Symfony\AI\Store\Indexer\SourceIndexer;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\AI\Store\ManagedStoreInterface;
@@ -2265,13 +2266,19 @@ final class AiBundle extends AbstractBundle
             $filters[] = new Reference($filter);
         }
 
-        $indexerDefinition = new Definition(Indexer::class, [
-            new Reference($config['loader']),
+        $processorServiceId = 'ai.indexer.'.$name.'.processor';
+        $processorDefinition = new Definition(DocumentProcessor::class, [
             new Reference($config['vectorizer']),
             new Reference($config['store']),
             $filters,
             $transformers,
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+        ]);
+        $container->setDefinition($processorServiceId, $processorDefinition);
+
+        $indexerDefinition = new Definition(SourceIndexer::class, [
+            new Reference($config['loader']),
+            new Reference($processorServiceId),
         ]);
 
         $serviceId = 'ai.indexer.'.$name;
@@ -2280,7 +2287,7 @@ final class AiBundle extends AbstractBundle
             $innerServiceId = 'ai.indexer.'.$name.'.inner';
             $container->setDefinition($innerServiceId, $indexerDefinition);
 
-            $definition = new Definition(ConfiguredIndexer::class, [
+            $definition = new Definition(ConfiguredSourceIndexer::class, [
                 new Reference($innerServiceId),
                 $config['source'],
             ]);
