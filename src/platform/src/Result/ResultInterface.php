@@ -11,21 +11,19 @@
 
 namespace Symfony\AI\Platform\Result;
 
-use Symfony\AI\Platform\Metadata\Metadata;
+use Symfony\AI\Platform\Metadata\MetadataAwareInterface;
 use Symfony\AI\Platform\Result\Exception\RawResultAlreadySetException;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  * @author Denis Zunke <denis.zunke@gmail.com>
  */
-interface ResultInterface
+interface ResultInterface extends MetadataAwareInterface
 {
     /**
      * @return string|iterable<mixed>|object|null
      */
     public function getContent(): string|iterable|object|null;
-
-    public function getMetadata(): Metadata;
 
     public function getRawResult(): ?RawResultInterface;
 

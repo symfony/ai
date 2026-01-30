@@ -48,7 +48,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
             $prompts[] = [
                 'name' => $prompt->name,
                 'description' => $prompt->description,
-                'arguments' => array_map(fn ($arg) => [
+                'arguments' => array_map(static fn ($arg) => [
                     'name' => $arg->name,
                     'description' => $arg->description,
                     'required' => $arg->required,

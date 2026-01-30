@@ -54,7 +54,7 @@ final class ModelInfoCommand
         } else {
             $io->horizontalTable(
                 ['Provider', 'Status', 'Provider ID', 'Task', 'Is Model Author'],
-                array_map(fn (string $provider, array $data) => [
+                array_map(static fn (string $provider, array $data) => [
                     $provider,
                     $data['status'],
                     $data['providerId'],

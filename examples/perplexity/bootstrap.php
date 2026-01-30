@@ -9,18 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Metadata\Metadata;
-
 require_once dirname(__DIR__).'/bootstrap.php';
 
-function print_search_results(Metadata $metadata): void
+/**
+ * @param array<int, array<string, string>> $searchResults
+ */
+function print_search_results(array $searchResults): void
 {
-    $searchResults = $metadata->get('search_results');
-
-    if (null === $searchResults) {
-        return;
-    }
-
     echo 'Search results:'.\PHP_EOL;
 
     if (0 === count($searchResults)) {
@@ -40,14 +35,11 @@ function print_search_results(Metadata $metadata): void
     }
 }
 
-function print_citations(Metadata $metadata): void
+/**
+ * @param array<int, string> $citations
+ */
+function print_citations(array $citations): void
 {
-    $citations = $metadata->get('citations');
-
-    if (null === $citations) {
-        return;
-    }
-
     echo 'Citations:'.\PHP_EOL;
 
     if (0 === count($citations)) {

@@ -18,14 +18,21 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 /**
  * Add OpenRouter specific features to the model catalogues.
  *
- * "openrouter/auto" -> https://openrouter.ai/docs/features/model-routing#auto-router
- * "@preset/" -> https://openrouter.ai/docs/features/presets
+ * Routers:
+ * - "openrouter/auto" -> https://openrouter.ai/docs/guides/routing/routers/auto-router
+ * - "openrouter/bodybuilder" -> https://openrouter.ai/docs/guides/routing/routers/body-builder
+ * - "@preset/" -> https://openrouter.ai/docs/guides/features/presets
  *
- *  Modifier are handled by the default parseModelName function
- *  ":nitro" -> https://openrouter.ai/docs/features/provider-routing#nitro-shortcut
- *  ":floor" -> https://openrouter.ai/docs/features/provider-routing#floor-price-shortcut
- *  ":exacto" -> https://openrouter.ai/docs/features/exacto-variant
- *  ":online" -> https://openrouter.ai/docs/features/web-search
+ * Provider selection modification
+ * - ":nitro" -> https://openrouter.ai/docs/guides/routing/provider-selection#nitro-shortcut
+ * - ":floor" -> https://openrouter.ai/docs/guides/routing/provider-selection#floor-price-shortcut
+ *
+ * Model variants:
+ * - ":free" -> https://openrouter.ai/docs/guides/routing/model-variants/free
+ * - ":extended" -> https://openrouter.ai/docs/guides/routing/model-variants/extended
+ * - ":exacto" -> https://openrouter.ai/docs/guides/routing/model-variants/exacto
+ * - ":thinking" -> https://openrouter.ai/docs/guides/routing/model-variants/thinking
+ * - ":online" -> https://openrouter.ai/docs/guides/routing/model-variants/online
  *
  * @author Tim Lochmüller <tim@fruit-lab.de>
  */
@@ -35,6 +42,10 @@ abstract class AbstractOpenRouterModelCatalog extends AbstractModelCatalog
     {
         $this->models = [
             'openrouter/auto' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => Capability::cases(),
+            ],
+            'openrouter/bodybuilder' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => Capability::cases(),
             ],

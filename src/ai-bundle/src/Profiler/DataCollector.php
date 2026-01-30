@@ -84,7 +84,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         $this->data = [
             'tools' => $this->getAllTools(),
             'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
-            'tool_calls' => array_merge(...array_map(fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
+            'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
             'messages' => array_merge(...array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->calls, $this->messageStores)),
             'chats' => array_merge(...array_map(static fn (TraceableChat $chat): array => $chat->calls, $this->chats)),
         ];
@@ -140,7 +140,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
      */
     private function getAllTools(): array
     {
-        return array_merge(...array_map(fn (TraceableToolbox $toolbox) => $toolbox->getTools(), $this->toolboxes));
+        return array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->getTools(), $this->toolboxes));
     }
 
     /**

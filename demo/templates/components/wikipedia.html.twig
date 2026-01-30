@@ -13,7 +13,7 @@
                 <div class="ms-5 ps-4" style="margin-top: -1.5em;">
                     <span class="text-muted">Sources:</span>
                     {% for source in message.metadata.get('sources') %}
-                        <a class="text-black-50" href="{{ source.reference }}" target="_blank" rel="noopener">
+                        <a class="text-black-50 text-decoration-none" href="{{ source.reference }}" target="_blank" rel="noopener">
                             <span class="badge text-bg-secondary">{{ source.name }}</span>
                         </a>
                     {% endfor %}

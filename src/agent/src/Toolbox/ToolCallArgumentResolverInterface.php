@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\Toolbox;
 
+use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
 
@@ -21,6 +22,8 @@ interface ToolCallArgumentResolverInterface
 {
     /**
      * @return array<string, mixed>
+     *
+     * @throws ToolException When it is not possible to resolve the tool arguments
      */
-    public function resolveArguments(object $tool, Tool $metadata, ToolCall $toolCall): array;
+    public function resolveArguments(Tool $metadata, ToolCall $toolCall): array;
 }

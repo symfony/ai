@@ -27,8 +27,8 @@
     "require": {
         "php": ">=8.2",
         "probots-io/pinecone-php": "^1.0",
-        "symfony/ai-platform": "^0.2",
-        "symfony/ai-store": "^0.2",
+        "symfony/ai-platform": "^0.3",
+        "symfony/ai-store": "^0.3",
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
@@ -53,9 +53,6 @@
         "sort-packages": true
     },
     "extra": {
-        "branch-alias": {
-            "dev-main": "0.3.x-dev"
-        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"

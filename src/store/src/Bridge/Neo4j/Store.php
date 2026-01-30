@@ -16,9 +16,9 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -67,6 +67,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 ],
             ]);
         }
+    }
+
+    public function remove(string|array $ids, array $options = []): void
+    {
+        throw new LogicException('Method not implemented yet.');
     }
 
     public function query(Vector $vector, array $options = []): iterable
@@ -121,7 +126,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             : new Vector($payload['properties'][$this->embeddingsField]);
 
         return new VectorDocument(
-            id: Uuid::fromString($id),
+            id: $id,
             vector: $vector,
             metadata: new Metadata(json_decode($payload['properties']['metadata'], true)),
             score: $data[1] ?? null

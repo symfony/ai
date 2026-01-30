@@ -20,7 +20,7 @@ use Symfony\Component\Uid\Uuid;
 
 final class ChunkDelayTransformerTest extends TestCase
 {
-    public function testDefaultChunkSizeAndDelay()
+    public function testDefaultChunkSizeAndDelayNoSleepWhenBelowChunkSize()
     {
         $clock = $this->createMock(ClockInterface::class);
         $clock->expects($this->never())
@@ -39,6 +39,66 @@ final class ChunkDelayTransformerTest extends TestCase
         for ($i = 0; $i < 30; ++$i) {
             $this->assertSame('content-'.$i, $result[$i]->getContent());
         }
+    }
+
+    public function testDefaultChunkSizeAndDelaySleepsAfterDefaultChunkSize()
+    {
+        $clock = $this->createMock(ClockInterface::class);
+        $clock->expects($this->once())
+            ->method('sleep')
+            ->with(10); // default delay
+
+        $transformer = new ChunkDelayTransformer($clock);
+
+        $documents = [];
+        for ($i = 0; $i < 60; ++$i) {
+            $documents[] = new TextDocument(Uuid::v4(), 'content-'.$i);
+        }
+
+        $result = iterator_to_array($transformer->transform($documents));
+
+        $this->assertCount(60, $result);
+    }
+
+    public function testConstructorWithCustomChunkSizeAndDelay()
+    {
+        $clock = $this->createMock(ClockInterface::class);
+        $clock->expects($this->once())
+            ->method('sleep')
+            ->with(5); // custom delay from constructor
+
+        $transformer = new ChunkDelayTransformer($clock, chunkSize: 20, delay: 5);
+
+        $documents = [];
+        for ($i = 0; $i < 30; ++$i) {
+            $documents[] = new TextDocument(Uuid::v4(), 'content-'.$i);
+        }
+
+        $result = iterator_to_array($transformer->transform($documents));
+
+        $this->assertCount(30, $result);
+    }
+
+    public function testOptionsOverrideConstructorDefaults()
+    {
+        $clock = $this->createMock(ClockInterface::class);
+        $clock->expects($this->once())
+            ->method('sleep')
+            ->with(3); // options should override constructor
+
+        $transformer = new ChunkDelayTransformer($clock, chunkSize: 20, delay: 5);
+
+        $documents = [];
+        for ($i = 0; $i < 15; ++$i) {
+            $documents[] = new TextDocument(Uuid::v4(), 'content-'.$i);
+        }
+
+        $result = iterator_to_array($transformer->transform($documents, [
+            ChunkDelayTransformer::OPTION_CHUNK_SIZE => 10,
+            ChunkDelayTransformer::OPTION_DELAY => 3,
+        ]));
+
+        $this->assertCount(15, $result);
     }
 
     public function testSleepsAfterChunkSize()

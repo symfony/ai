@@ -24,11 +24,13 @@ final class PipelineExecution
     private ?array $result = null;
 
     /**
-     * @param array<mixed>|string $input
+     * @param array<mixed>|string  $input
+     * @param array<string, mixed> $options Pipeline input options
      */
     public function __construct(
         private readonly Pipeline $pipeline,
         private readonly array|string $input,
+        private readonly array $options,
     ) {
     }
 
@@ -38,7 +40,7 @@ final class PipelineExecution
     public function getResult(): array
     {
         if (null === $this->result) {
-            $this->result = ($this->pipeline)($this->input);
+            $this->result = ($this->pipeline)($this->input, ...$this->options);
         }
 
         return $this->result;

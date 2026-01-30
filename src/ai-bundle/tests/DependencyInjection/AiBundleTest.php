@@ -30,6 +30,7 @@ use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsApiCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
@@ -37,7 +38,6 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformF
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
-use Symfony\AI\Platform\CachedPlatform;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
@@ -68,6 +68,7 @@ use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
+use Symfony\AI\Store\ConfiguredIndexer;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
@@ -75,6 +76,7 @@ use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Document\VectorizerInterface;
+use Symfony\AI\Store\Indexer;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\AI\Store\ManagedStoreInterface;
@@ -91,6 +93,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
+use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AiBundleTest extends TestCase
@@ -5230,11 +5233,16 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
+        // With source configured, main service is ConfiguredIndexer
         $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $configuredIndexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
+        $this->assertSame(ConfiguredIndexer::class, $configuredIndexerDefinition->getClass());
+        $arguments = $configuredIndexerDefinition->getArguments();
 
-        $this->assertSame('https://example.com/feed.xml', $arguments[3]);
+        // ConfiguredIndexer arguments: [0] = inner indexer reference, [1] = source
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('ai.indexer.my_indexer.inner', (string) $arguments[0]);
+        $this->assertSame('https://example.com/feed.xml', $arguments[1]);
     }
 
     public function testIndexerWithArraySource()
@@ -5261,17 +5269,20 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
+        // With source configured, main service is ConfiguredIndexer
         $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $configuredIndexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
+        $this->assertSame(ConfiguredIndexer::class, $configuredIndexerDefinition->getClass());
+        $arguments = $configuredIndexerDefinition->getArguments();
 
-        $this->assertIsArray($arguments[3]);
-        $this->assertCount(3, $arguments[3]);
+        // ConfiguredIndexer arguments: [0] = inner indexer reference, [1] = source
+        $this->assertIsArray($arguments[1]);
+        $this->assertCount(3, $arguments[1]);
         $this->assertSame([
             '/path/to/file1.txt',
             '/path/to/file2.txt',
             'https://example.com/feed.xml',
-        ], $arguments[3]);
+        ], $arguments[1]);
     }
 
     public function testIndexerWithNullSource()
@@ -5288,17 +5299,17 @@ class AiBundleTest extends TestCase
                         'loader' => InMemoryLoader::class,
                         'vectorizer' => 'my_vectorizer_service',
                         'store' => 'ai.store.memory.my_store',
-                        // source not configured, should default to null
+                        // source not configured, should default to null - no ConfiguredIndexer wrapper
                     ],
                 ],
             ],
         ]);
 
+        // Without source configured, main service is Indexer directly (no ConfiguredIndexer wrapper)
         $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
+        $this->assertFalse($container->hasDefinition('ai.indexer.my_indexer.inner'));
         $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
-
-        $this->assertNull($arguments[3]);
+        $this->assertSame(Indexer::class, $indexerDefinition->getClass());
     }
 
     public function testIndexerWithConfiguredTransformers()
@@ -5328,15 +5339,16 @@ class AiBundleTest extends TestCase
         $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
         $arguments = $indexerDefinition->getArguments();
 
-        $this->assertSame([], $arguments[4]); // Empty filters
-        $this->assertIsArray($arguments[5]);
-        $this->assertCount(2, $arguments[5]);
+        // Without source: [0]=loader, [1]=vectorizer, [2]=store, [3]=filters, [4]=transformers, [5]=logger
+        $this->assertSame([], $arguments[3]); // Empty filters
+        $this->assertIsArray($arguments[4]);
+        $this->assertCount(2, $arguments[4]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[5][0]);
-        $this->assertSame(TextTrimTransformer::class, (string) $arguments[5][0]);
+        $this->assertInstanceOf(Reference::class, $arguments[4][0]);
+        $this->assertSame(TextTrimTransformer::class, (string) $arguments[4][0]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[5][1]);
-        $this->assertSame('App\CustomTransformer', (string) $arguments[5][1]);
+        $this->assertInstanceOf(Reference::class, $arguments[4][1]);
+        $this->assertSame('App\CustomTransformer', (string) $arguments[4][1]);
     }
 
     public function testIndexerWithEmptyTransformers()
@@ -5363,8 +5375,9 @@ class AiBundleTest extends TestCase
         $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
         $arguments = $indexerDefinition->getArguments();
 
-        $this->assertSame([], $arguments[4]); // Empty filters
-        $this->assertSame([], $arguments[5]); // Empty transformers
+        // Without source: [0]=loader, [1]=vectorizer, [2]=store, [3]=filters, [4]=transformers, [5]=logger
+        $this->assertSame([], $arguments[3]); // Empty filters
+        $this->assertSame([], $arguments[4]); // Empty transformers
     }
 
     public function testIndexerWithoutTransformers()
@@ -5391,8 +5404,9 @@ class AiBundleTest extends TestCase
         $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
         $arguments = $indexerDefinition->getArguments();
 
-        $this->assertSame([], $arguments[4]); // Empty filters
-        $this->assertSame([], $arguments[5]); // Empty transformers
+        // Without source: [0]=loader, [1]=vectorizer, [2]=store, [3]=filters, [4]=transformers, [5]=logger
+        $this->assertSame([], $arguments[3]); // Empty filters
+        $this->assertSame([], $arguments[4]); // Empty transformers
     }
 
     public function testIndexerWithSourceAndTransformers()
@@ -5421,9 +5435,23 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
+        // With source configured, main service is ConfiguredIndexer
         $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $configuredIndexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
+        $this->assertSame(ConfiguredIndexer::class, $configuredIndexerDefinition->getClass());
+        $configuredArguments = $configuredIndexerDefinition->getArguments();
+
+        // Check source on ConfiguredIndexer
+        $this->assertIsArray($configuredArguments[1]);
+        $this->assertCount(2, $configuredArguments[1]);
+        $this->assertSame([
+            '/path/to/file1.txt',
+            '/path/to/file2.txt',
+        ], $configuredArguments[1]);
+
+        // Check inner indexer
+        $innerIndexerDefinition = $container->getDefinition('ai.indexer.my_indexer.inner');
+        $arguments = $innerIndexerDefinition->getArguments();
 
         $this->assertInstanceOf(Reference::class, $arguments[0]);
         $this->assertSame(InMemoryLoader::class, (string) $arguments[0]);
@@ -5434,18 +5462,12 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $arguments[2]);
         $this->assertSame('ai.store.memory.my_store', (string) $arguments[2]);
 
-        $this->assertIsArray($arguments[3]);
-        $this->assertCount(2, $arguments[3]);
-        $this->assertSame([
-            '/path/to/file1.txt',
-            '/path/to/file2.txt',
-        ], $arguments[3]);
-
-        $this->assertSame([], $arguments[4]); // Empty filters
-        $this->assertIsArray($arguments[5]);
-        $this->assertCount(1, $arguments[5]);
-        $this->assertInstanceOf(Reference::class, $arguments[5][0]);
-        $this->assertSame(TextTrimTransformer::class, (string) $arguments[5][0]);
+        // Inner indexer: [0]=loader, [1]=vectorizer, [2]=store, [3]=filters, [4]=transformers, [5]=logger
+        $this->assertSame([], $arguments[3]); // Empty filters
+        $this->assertIsArray($arguments[4]);
+        $this->assertCount(1, $arguments[4]);
+        $this->assertInstanceOf(Reference::class, $arguments[4][0]);
+        $this->assertSame(TextTrimTransformer::class, (string) $arguments[4][0]);
     }
 
     public function testIndexerWithConfiguredFilters()
@@ -5475,18 +5497,19 @@ class AiBundleTest extends TestCase
         $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
         $arguments = $indexerDefinition->getArguments();
 
-        // Verify filters are in the correct position (index 4, before transformers)
-        $this->assertIsArray($arguments[4]);
-        $this->assertCount(2, $arguments[4]);
+        // Without source: [0]=loader, [1]=vectorizer, [2]=store, [3]=filters, [4]=transformers, [5]=logger
+        // Verify filters are in the correct position (index 3)
+        $this->assertIsArray($arguments[3]);
+        $this->assertCount(2, $arguments[3]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[4][0]);
-        $this->assertSame(TextContainsFilter::class, (string) $arguments[4][0]);
+        $this->assertInstanceOf(Reference::class, $arguments[3][0]);
+        $this->assertSame(TextContainsFilter::class, (string) $arguments[3][0]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[4][1]);
-        $this->assertSame('App\CustomFilter', (string) $arguments[4][1]);
+        $this->assertInstanceOf(Reference::class, $arguments[3][1]);
+        $this->assertSame('App\CustomFilter', (string) $arguments[3][1]);
 
-        // Verify transformers are in the correct position (index 5, after filters)
-        $this->assertSame([], $arguments[5]); // Empty transformers
+        // Verify transformers are in the correct position (index 4, after filters)
+        $this->assertSame([], $arguments[4]); // Empty transformers
     }
 
     public function testIndexerWithEmptyFilters()
@@ -5513,7 +5536,8 @@ class AiBundleTest extends TestCase
         $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
         $arguments = $indexerDefinition->getArguments();
 
-        $this->assertSame([], $arguments[4]); // Empty filters
+        // Without source: [0]=loader, [1]=vectorizer, [2]=store, [3]=filters, [4]=transformers, [5]=logger
+        $this->assertSame([], $arguments[3]); // Empty filters
     }
 
     public function testIndexerWithoutFilters()
@@ -5540,7 +5564,8 @@ class AiBundleTest extends TestCase
         $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
         $arguments = $indexerDefinition->getArguments();
 
-        $this->assertSame([], $arguments[4]); // Empty filters
+        // Without source: [0]=loader, [1]=vectorizer, [2]=store, [3]=filters, [4]=transformers, [5]=logger
+        $this->assertSame([], $arguments[3]); // Empty filters
     }
 
     public function testIndexerWithFiltersAndTransformers()
@@ -5572,17 +5597,18 @@ class AiBundleTest extends TestCase
         $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
         $arguments = $indexerDefinition->getArguments();
 
-        // Verify filters are at index 4
+        // Without source: [0]=loader, [1]=vectorizer, [2]=store, [3]=filters, [4]=transformers, [5]=logger
+        // Verify filters are at index 3
+        $this->assertIsArray($arguments[3]);
+        $this->assertCount(1, $arguments[3]);
+        $this->assertInstanceOf(Reference::class, $arguments[3][0]);
+        $this->assertSame(TextContainsFilter::class, (string) $arguments[3][0]);
+
+        // Verify transformers are at index 4
         $this->assertIsArray($arguments[4]);
         $this->assertCount(1, $arguments[4]);
         $this->assertInstanceOf(Reference::class, $arguments[4][0]);
-        $this->assertSame(TextContainsFilter::class, (string) $arguments[4][0]);
-
-        // Verify transformers are at index 5
-        $this->assertIsArray($arguments[5]);
-        $this->assertCount(1, $arguments[5]);
-        $this->assertInstanceOf(Reference::class, $arguments[5][0]);
-        $this->assertSame(TextTrimTransformer::class, (string) $arguments[5][0]);
+        $this->assertSame(TextTrimTransformer::class, (string) $arguments[4][0]);
     }
 
     public function testIndexerWithSourceFiltersAndTransformers()
@@ -5614,11 +5640,23 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
+        // With source configured, main service is ConfiguredIndexer
         $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
-        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
-        $arguments = $indexerDefinition->getArguments();
+        $configuredIndexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
+        $this->assertSame(ConfiguredIndexer::class, $configuredIndexerDefinition->getClass());
+        $configuredArguments = $configuredIndexerDefinition->getArguments();
 
-        // Verify correct order: loader, vectorizer, store, source, filters, transformers, logger
+        // ConfiguredIndexer: [0] = inner indexer reference, [1] = source
+        $this->assertInstanceOf(Reference::class, $configuredArguments[0]);
+        $this->assertSame('ai.indexer.my_indexer.inner', (string) $configuredArguments[0]);
+        $this->assertIsArray($configuredArguments[1]); // source
+        $this->assertCount(2, $configuredArguments[1]);
+        $this->assertSame(['/path/to/file1.txt', '/path/to/file2.txt'], $configuredArguments[1]);
+
+        // Check inner indexer: [0]=loader, [1]=vectorizer, [2]=store, [3]=filters, [4]=transformers, [5]=logger
+        $innerIndexerDefinition = $container->getDefinition('ai.indexer.my_indexer.inner');
+        $arguments = $innerIndexerDefinition->getArguments();
+
         $this->assertInstanceOf(Reference::class, $arguments[0]); // loader
         $this->assertSame(InMemoryLoader::class, (string) $arguments[0]);
 
@@ -5628,22 +5666,18 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $arguments[2]); // store
         $this->assertSame('ai.store.memory.my_store', (string) $arguments[2]);
 
-        $this->assertIsArray($arguments[3]); // source
-        $this->assertCount(2, $arguments[3]);
-        $this->assertSame(['/path/to/file1.txt', '/path/to/file2.txt'], $arguments[3]);
+        $this->assertIsArray($arguments[3]); // filters
+        $this->assertCount(1, $arguments[3]);
+        $this->assertInstanceOf(Reference::class, $arguments[3][0]);
+        $this->assertSame(TextContainsFilter::class, (string) $arguments[3][0]);
 
-        $this->assertIsArray($arguments[4]); // filters
+        $this->assertIsArray($arguments[4]); // transformers
         $this->assertCount(1, $arguments[4]);
         $this->assertInstanceOf(Reference::class, $arguments[4][0]);
-        $this->assertSame(TextContainsFilter::class, (string) $arguments[4][0]);
+        $this->assertSame(TextTrimTransformer::class, (string) $arguments[4][0]);
 
-        $this->assertIsArray($arguments[5]); // transformers
-        $this->assertCount(1, $arguments[5]);
-        $this->assertInstanceOf(Reference::class, $arguments[5][0]);
-        $this->assertSame(TextTrimTransformer::class, (string) $arguments[5][0]);
-
-        $this->assertInstanceOf(Reference::class, $arguments[6]); // logger
-        $this->assertSame('logger', (string) $arguments[6]);
+        $this->assertInstanceOf(Reference::class, $arguments[5]); // logger
+        $this->assertSame('logger', (string) $arguments[5]);
     }
 
     public function testInjectionIndexerAliasIsRegistered()
@@ -6297,7 +6331,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('text-embedding-3-small?normalize=false&cache=true&nested%5Bbool%5D=false', $vectorizerDefinition->getArgument(1));
     }
 
-    public function testCachedPlatformCanBeUsed()
+    public function testCachePlatformCanBeUsed()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -6308,8 +6342,6 @@ class AiBundleTest extends TestCase
                     'cache' => [
                         'ollama' => [
                             'platform' => 'ai.platform.ollama',
-                            'service' => 'cache.app',
-                            'cache_key' => 'ollama',
                         ],
                     ],
                 ],
@@ -6317,20 +6349,24 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.platform.cache.ollama'));
+        $this->assertTrue($container->hasDefinition('ai.platform.cache.result_normalizer'));
 
         $definition = $container->getDefinition('ai.platform.cache.ollama');
 
-        $this->assertSame(CachedPlatform::class, $definition->getClass());
+        $this->assertSame(CachePlatform::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
 
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $platformArgument = $definition->getArgument(0);
-        $this->assertSame('ai.platform.ollama', (string) $platformArgument);
-        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertSame('ai.platform.ollama', (string) $definition->getArgument(0));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('cache.app', (string) $definition->getArgument(2));
-        $this->assertSame('ollama', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('serializer', (string) $definition->getArgument(3));
+        $this->assertSame('ollama', $definition->getArgument(4));
+        $this->assertNull($definition->getArgument(5));
 
         $this->assertSame([
             ['interface' => PlatformInterface::class],
@@ -6344,7 +6380,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $cacheOllama'));
     }
 
-    public function testCachedPlatformCanBeUsedWithoutCustomCacheKey()
+    public function testCachePlatformCanBeUsedWithoutCustomCacheKey()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -6366,17 +6402,69 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.platform.cache.ollama');
 
-        $this->assertSame(CachedPlatform::class, $definition->getClass());
+        $this->assertSame(CachePlatform::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
 
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $platformArgument = $definition->getArgument(0);
-        $this->assertSame('ai.platform.ollama', (string) $platformArgument);
-        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertSame('ai.platform.ollama', (string) $definition->getArgument(0));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('cache.app', (string) $definition->getArgument(2));
-        $this->assertSame('ollama', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('serializer', (string) $definition->getArgument(3));
+        $this->assertSame('ollama', $definition->getArgument(4));
+        $this->assertNull($definition->getArgument(5));
+
+        $this->assertSame([
+            ['interface' => PlatformInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([
+            ['name' => 'cache.ollama'],
+        ], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Platform\PlatformInterface $cache_ollama'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $cacheOllama'));
+    }
+
+    public function testCachePlatformCanBeUsedWithCustomTtl()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'host_url' => 'http://127.0.0.1:11434',
+                    ],
+                    'cache' => [
+                        'ollama' => [
+                            'platform' => 'ai.platform.ollama',
+                            'ttl' => 10,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.cache.ollama'));
+
+        $definition = $container->getDefinition('ai.platform.cache.ollama');
+
+        $this->assertSame(CachePlatform::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('ai.platform.ollama', (string) $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('cache.app', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('serializer', (string) $definition->getArgument(3));
+        $this->assertSame('ollama', $definition->getArgument(4));
+        $this->assertSame(10, $definition->getArgument(5));
 
         $this->assertSame([
             ['interface' => PlatformInterface::class],
@@ -7236,6 +7324,7 @@ class AiBundleTest extends TestCase
             ],
             new Definition(InMemoryStorage::class),
         ]));
+        $container->setDefinition('serializer', new Definition(Serializer::class));
 
         $extension = (new AiBundle())->getContainerExtension();
         $extension->load($configuration, $container);
@@ -7281,8 +7370,18 @@ class AiBundleTest extends TestCase
                     'cache' => [
                         'azure' => [
                             'platform' => 'ai.platform.azure.my_azure_instance',
-                            'service' => 'cache.app',
+                        ],
+                        'azure_with_custom_cache' => [
+                            'platform' => 'ai.platform.azure.my_azure_instance',
+                            'service' => 'cache.foo',
+                        ],
+                        'azure_with_custom_cache_key' => [
+                            'platform' => 'ai.platform.azure.my_azure_instance',
                             'cache_key' => 'foo',
+                        ],
+                        'azure_with_custom_ttl' => [
+                            'platform' => 'ai.platform.azure.my_azure_instance',
+                            'ttl' => 10,
                         ],
                     ],
                     'cartesia' => [

@@ -229,4 +229,51 @@ final class ElevenLabsClientTest extends TestCase
         $this->assertInstanceOf(RawHttpResult::class, $result);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testClientCanPerformTextToSpeechRequestWithExtraApiOptions()
+    {
+        $payload = Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3');
+
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($payload) {
+            $this->assertSame('POST', $method);
+            $this->assertArrayHasKey('body', $options);
+            $body = json_decode($options['body'], true);
+            $this->assertArrayHasKey('voice_settings', $body);
+            $this->assertArrayNotHasKey('voice', $body);
+            $this->assertArrayNotHasKey('stream', $body);
+            $this->assertSame([
+                'stability' => 0.5,
+                'use_speaker_boost' => 1,
+                'similarity_boost' => 0.7,
+                'style' => 0.2,
+                'speed' => 1.2,
+            ], $body['voice_settings']);
+
+            return new MockResponse($payload->asBinary());
+        });
+
+        $client = new ElevenLabsClient(
+            $httpClient,
+            'my-api-key',
+        );
+
+        $client->request(
+            new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH]),
+            [
+                'text' => 'foo',
+            ],
+            [
+                'voice' => 'Dslrhjl3ZpzrctukrQSN',
+                'voice_settings' => [
+                    'stability' => 0.5,
+                    'use_speaker_boost' => 1,
+                    'similarity_boost' => 0.7,
+                    'style' => 0.2,
+                    'speed' => 1.2,
+                ],
+            ]
+        );
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }

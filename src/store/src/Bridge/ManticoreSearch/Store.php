@@ -16,9 +16,9 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -79,11 +79,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $documents,
         );
 
-        $this->request('bulk', function () use ($payload) {
+        $this->request('bulk', static function () use ($payload) {
             foreach ($payload as $document) {
                 yield json_encode($document).\PHP_EOL;
             }
         });
+    }
+
+    public function remove(string|array $ids, array $options = []): void
+    {
+        throw new LogicException('Method not implemented yet.');
     }
 
     public function query(Vector $vector, array $options = []): iterable
@@ -154,7 +159,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             : new Vector($payload[$this->field]);
 
         return new VectorDocument(
-            id: Uuid::fromString($payload['uuid']),
+            id: $payload['uuid'],
             vector: $vector,
             metadata: new Metadata($payload['metadata'] ?? []),
             score: $data['_knn_dist'] ?? null

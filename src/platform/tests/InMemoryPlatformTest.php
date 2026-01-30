@@ -29,7 +29,7 @@ class InMemoryPlatformTest extends TestCase
 
     public function testPlatformInvokeWithCallableResult()
     {
-        $platform = new InMemoryPlatform(function (Model $model, $input) {
+        $platform = new InMemoryPlatform(static function (Model $model, $input) {
             return strtoupper((string) $input);
         });
 
@@ -41,7 +41,7 @@ class InMemoryPlatformTest extends TestCase
     public function testPlatformInvokeWithVectorResultResponse()
     {
         $platform = new InMemoryPlatform(
-            fn () => new VectorResult(new Vector([0.1, 0.1, 0.5]))
+            static fn () => new VectorResult(new Vector([0.1, 0.1, 0.5]))
         );
 
         $result = $platform->invoke('test', 'dynamic text');

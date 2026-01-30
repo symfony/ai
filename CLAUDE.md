@@ -122,6 +122,7 @@ Each component uses:
 - Define array shapes for parameters and return types
 - Use project specific exceptions instead of global exception classes like \RuntimeException, \InvalidArgumentException etc.
 - NEVER mention Claude as co-author in commits
+- Avoid using the `empty()` function; prefer explicit checks like `[] === $array`, `'' === $string`, or `null === $value`
 
 ## Version Documentation
 
@@ -134,4 +135,14 @@ Each component uses:
 - Each component has its own `CHANGELOG.md` in its root directory
 - Add entries for new features, and deprecations under the appropriate version heading
 - Format entries as bullet points starting with "Add", "Fix", "Deprecate", etc.
+
+### Pull Requests
+- Always use the PR template from `.github/PULL_REQUEST_TEMPLATE.md`
+- Fill in the table at the top of the PR description with appropriate values:
+  - Bug fix?: yes/no
+  - New feature?: yes/no (update CHANGELOG.md files for new features)
+  - Docs?: yes/no (required for new features)
+  - Issues: Fix #... (prefix each issue number with "Fix #")
+  - License: MIT
+- Provide a clear description of the changes below the table
 

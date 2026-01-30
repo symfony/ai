@@ -62,6 +62,18 @@ final class PlatformSubscriberTest extends TestCase
         $this->assertSame([], $event->getOptions());
     }
 
+    public function testWithResponseFormatForNonLlmModel()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory());
+
+        $model = new Model('dalle-2');
+        $event = new InvocationEvent($model, 'some input text', ['response_format' => 'url']);
+
+        $processor->processInput($event);
+
+        $this->assertSame(['response_format' => 'url'], $event->getOptions());
+    }
+
     public function testProcessInputThrowsExceptionWhenLlmDoesNotSupportStructuredOutput()
     {
         $this->expectException(MissingModelSupportException::class);

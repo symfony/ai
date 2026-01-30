@@ -17,4 +17,17 @@ use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 class Kernel extends BaseKernel
 {
     use MicroKernelTrait;
+
+    /**
+     * @return array<string, array<mixed>|bool|string|int|float|\UnitEnum|null>
+     */
+    protected function getKernelParameters(): array
+    {
+        $parameters = parent::getKernelParameters();
+
+        // Disable generation of config/reference.php - not needed in this app
+        unset($parameters['.kernel.bundles_definition']);
+
+        return $parameters;
+    }
 }

@@ -123,7 +123,7 @@ final class DistanceCalculatorTest extends TestCase
         // d: [1.0, 1.0] -> sqrt(2) ≈ 1.414
         // e: [0.5, 0.5] -> sqrt(0.5) ≈ 0.707
 
-        $ids = array_map(fn ($doc) => $doc->metadata['id'], $result);
+        $ids = array_map(static fn ($doc) => $doc->metadata['id'], $result);
         $this->assertSame(['a', 'e', 'b'], $ids); // a is closest, then e, then b/c (same distance)
     }
 

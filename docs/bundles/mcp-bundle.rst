@@ -187,6 +187,12 @@ Configuration
     mcp:
         app: 'app' # Application name to be exposed to clients
         version: '1.0.0' # Application version to be exposed to clients
+        description: 'A sample MCP server for time management.' # Application description to be exposed to clients
+        icons:
+            - src: 'https://example.com/icon.png' # Application icon URL
+              mime_type: 'image/png' # MIME type of the icon
+              sizes: ['64x64'] # Sizes of the icon
+        website_url: 'https://example.com' # Application website URL
         pagination_limit: 50 # Maximum number of items returned per list request (default: 50)
         instructions: | # Instructions describing server purpose and usage context (for LLMs)
             This server provides time management capabilities for developers.

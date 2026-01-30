@@ -157,6 +157,32 @@ This leads to a store implementing two methods::
         }
     }
 
+Managing a store
+----------------
+
+Some vector store might requires to create table, indexes and so on before storing vectors,
+the :class:`Symfony\\AI\\Store\\ManagedStoreInterface` defines the methods to setup and drop the store.
+
+This leads to a store implementing two methods::
+
+    use Symfony\AI\Store\ManagedStoreInterface;
+    use Symfony\AI\Store\StoreInterface;
+
+    class MyCustomStore implements ManagedStoreInterface, StoreInterface
+    {
+        # ...
+
+        public function setup(array $options = []): void
+        {
+            // Implementation to create the store
+        }
+
+        public function drop(array $options = []): void
+        {
+            // Implementation to drop the store (and related vectors)
+        }
+    }
+
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
 .. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php
 .. _`Similarity Search with Cloudflare (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cloudflare.php

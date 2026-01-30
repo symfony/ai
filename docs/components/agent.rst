@@ -58,7 +58,9 @@ Tools
 -----
 
 To integrate LLMs with your application, Symfony AI supports tool calling out of the box. Tools are services that can be
-called by the LLM to provide additional features or process data.
+called by the LLM to provide additional features or process data. The LLM is capable of making an arbitrary number of
+tool calls. To control token costs or prevent infinite loops, you can limit the number of tool calls by using the
+`maxToolCalls` parameter of the :class:`Symfony\\AI\\Agent\\Toolbox\\AgentProcessor`.
 
 Tool calling can be enabled by registering the processors in the agent::
 
@@ -77,7 +79,7 @@ Tool calling can be enabled by registering the processors in the agent::
 
 Custom tools can basically be any class, but must configure by the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute::
 
-    use Symfony\AI\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
     #[AsTool('company_name', 'Provides the name of your company')]
     final class CompanyName
@@ -99,7 +101,7 @@ Tool Methods
 
 You can configure the method to be called by the LLM with the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute and have multiple tools per class::
 
-    use Symfony\AI\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
     #[AsTool(
         name: 'weather_current',
@@ -465,7 +467,7 @@ more accurate and context-aware results. Therefore, the component provides a bui
 
     $similaritySearch = new SimilaritySearch($model, $store);
     $toolbox = new Toolbox([$similaritySearch]);
-    $processor = new Agent($toolbox);
+    $processor = new AgentProcessor($toolbox);
     $agent = new Agent($platform, $model, [$processor], [$processor]);
 
     $messages = new MessageBag(

@@ -24,7 +24,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Display detailed information about discovered and loaded MCP extensions.
  *
- * @phpstan-type ExtensionData array{dirs: string[], includes: string[]}
+ * @phpstan-import-type ExtensionData from ComposerExtensionDiscovery
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -190,7 +190,7 @@ HELP
     }
 
     /**
-     * @param array{dirs: string[], includes: string[]} $data
+     * @param ExtensionData $data
      */
     private function displayExtensionDetails(
         SymfonyStyle $io,
@@ -222,6 +222,12 @@ HELP
             $io->text('  <fg=gray>No include files</>');
         }
 
+        if (isset($data['instructions'])) {
+            $io->text(\sprintf('  Agent instructions: <fg=cyan>%s</>', $data['instructions']));
+        } else {
+            $io->text('  <fg=gray>No agent instructions</>');
+        }
+
         $io->newLine();
     }
 
@@ -229,7 +235,7 @@ HELP
     {
         $extensions = [];
 
-        $extensions['_custom'] = [
+        $rootExtension = [
             'type' => 'root_project',
             'status' => 'enabled',
             'loaded' => true,
@@ -237,22 +243,34 @@ HELP
             'includes' => $this->rootProjectConfig['includes'],
         ];
 
+        if (isset($this->rootProjectConfig['instructions'])) {
+            $rootExtension['agent_instructions'] = $this->rootProjectConfig['instructions'];
+        }
+
+        $extensions['_custom'] = $rootExtension;
+
         foreach ($this->discoveredExtensions as $packageName => $data) {
             $isEnabled = \in_array($packageName, $this->enabledExtensions, true);
             $isLoaded = isset($this->loadedExtensions[$packageName]);
 
-            $extensions[$packageName] = [
+            $extensionData = [
                 'type' => 'vendor_extension',
                 'status' => $isEnabled ? 'enabled' : 'disabled',
                 'loaded' => $isLoaded,
                 'scan_dirs' => $data['dirs'],
                 'includes' => $data['includes'],
             ];
+
+            if (isset($data['instructions'])) {
+                $extensionData['agent_instructions'] = $data['instructions'];
+            }
+
+            $extensions[$packageName] = $extensionData;
         }
 
-        $enabledCount = array_reduce($extensions, fn ($count, $ext) => 'enabled' === $ext['status'] ? $count + 1 : $count, 0);
+        $enabledCount = array_reduce($extensions, static fn ($count, $ext) => 'enabled' === $ext['status'] ? $count + 1 : $count, 0);
         $disabledCount = \count($extensions) - $enabledCount;
-        $loadedCount = array_reduce($extensions, fn ($count, $ext) => $ext['loaded'] ? $count + 1 : $count, 0);
+        $loadedCount = array_reduce($extensions, static fn ($count, $ext) => $ext['loaded'] ? $count + 1 : $count, 0);
 
         $result = [
             'extensions' => $extensions,

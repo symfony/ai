@@ -30,7 +30,7 @@ final class ObjectDetectionResult
     public static function fromArray(array $data): self
     {
         return new self(array_map(
-            fn (array $item) => new DetectedObject(
+            static fn (array $item) => new DetectedObject(
                 $item['label'],
                 $item['score'],
                 $item['box']['xmin'],

@@ -44,7 +44,7 @@ final class ModelClientTest extends TestCase
     public function testRequestSendsToCorrectEndpoint()
     {
         $requestMade = false;
-        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$requestMade) {
+        $httpClient = new MockHttpClient(static function ($method, $url, $options) use (&$requestMade) {
             $requestMade = true;
             self::assertSame('POST', $method);
             self::assertSame('https://api.deepseek.com/chat/completions', $url);
@@ -65,7 +65,7 @@ final class ModelClientTest extends TestCase
     public function testRequestMergesOptionsWithPayload()
     {
         $requestMade = false;
-        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$requestMade) {
+        $httpClient = new MockHttpClient(static function ($method, $url, $options) use (&$requestMade) {
             $requestMade = true;
             $body = json_decode($options['body'], true);
             self::assertArrayHasKey('messages', $body);

@@ -617,12 +617,31 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
                     Capability::OUTPUT_TEXT,
                 ],
             ],
+            'openai/gpt-audio' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_AUDIO,
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
+                ],
+            ],
+            'openai/gpt-audio-mini' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_AUDIO,
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
+                ],
+            ],
             'openai/gpt-4o-audio-preview' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
                     Capability::INPUT_AUDIO,
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
                 ],
             ],
             'mistralai/mistral-medium-3.1' => [

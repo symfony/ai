@@ -40,7 +40,7 @@ final class FaultTolerantToolbox implements ToolboxInterface
         } catch (ToolExecutionExceptionInterface $e) {
             return new ToolResult($toolCall, $e->getToolCallResult());
         } catch (ToolNotFoundException) {
-            $names = array_map(fn (Tool $metadata) => $metadata->getName(), $this->getTools());
+            $names = array_map(static fn (Tool $metadata) => $metadata->getName(), $this->getTools());
 
             return new ToolResult(
                 $toolCall,

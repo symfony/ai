@@ -67,7 +67,7 @@ final class SystemPromptInputProcessor implements InputProcessorInterface
             $this->logger->debug('Append tool definitions to system prompt.');
 
             $tools = implode(\PHP_EOL.\PHP_EOL, array_map(
-                fn (Tool $tool) => <<<TOOL
+                static fn (Tool $tool) => <<<TOOL
                     ## {$tool->getName()}
                     {$tool->getDescription()}
                     TOOL,

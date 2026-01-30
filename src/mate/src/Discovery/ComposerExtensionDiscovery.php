@@ -21,9 +21,16 @@ use Psr\Log\LoggerInterface;
  *   "extra": {
  *     "ai-mate": {
  *       "scan-dirs": ["src"],
- *       "includes": ["config/config.php"]
+ *       "includes": ["config/config.php"],
+ *       "instructions": "INSTRUCTIONS.md"
  *     }
  *   }
+ * }
+ *
+ * @phpstan-type ExtensionData array{
+ *     dirs: string[],
+ *     includes: string[],
+ *     instructions?: string,
  * }
  *
  * @author Johannes Wachter <johannes@sulu.io>
@@ -48,7 +55,7 @@ final class ComposerExtensionDiscovery
     /**
      * @param string[]|false $includeFilter Only include packages in this list. If false, include all.
      *
-     * @return array<string, array{dirs: string[], includes: string[]}>
+     * @return array<string, ExtensionData>
      */
     public function discover(array|false $includeFilter = false): array
     {
@@ -63,17 +70,30 @@ final class ComposerExtensionDiscovery
                 continue;
             }
 
+            // Skip if explicitly marked as non-extension
+            if (isset($aiMateConfig['extension']) && false === $aiMateConfig['extension']) {
+                continue;
+            }
+
             if (false !== $includeFilter && !\in_array($packageName, $includeFilter, true)) {
                 continue;
             }
 
             $scanDirs = $this->extractScanDirs($package, $packageName);
             $includeFiles = $this->extractIncludeFiles($package, $packageName);
-            if ([] !== $scanDirs || [] !== $includeFiles) {
-                $extensions[$packageName] = [
+            $agentInstructions = $this->extractInstructions($package, $packageName);
+
+            if ([] !== $scanDirs || [] !== $includeFiles || null !== $agentInstructions) {
+                $extensionData = [
                     'dirs' => $scanDirs,
                     'includes' => $includeFiles,
                 ];
+
+                if (null !== $agentInstructions) {
+                    $extensionData['instructions'] = $agentInstructions;
+                }
+
+                $extensions[$packageName] = $extensionData;
             }
         }
 
@@ -81,7 +101,7 @@ final class ComposerExtensionDiscovery
     }
 
     /**
-     * @return array{dirs: array<string>, includes: array<string>}
+     * @return ExtensionData
      */
     public function discoverRootProject(): array
     {
@@ -114,10 +134,17 @@ final class ComposerExtensionDiscovery
             ];
         }
 
-        return [
+        $result = [
             'dirs' => array_values($this->extractAiMateConfig($rootComposer, 'scan-dirs')),
             'includes' => array_values($this->extractAiMateConfig($rootComposer, 'includes')),
         ];
+
+        $agentInstructions = $this->extractAiMateConfigString($rootComposer, 'instructions');
+        if (null !== $agentInstructions) {
+            $result['instructions'] = $agentInstructions;
+        }
+
+        return $result;
     }
 
     /**
@@ -202,7 +229,7 @@ final class ComposerExtensionDiscovery
      *     extra: array<string, mixed>,
      * } $package
      *
-     * @return string[] list of directories with paths relative to project root
+     * @return string[]
      */
     private function extractScanDirs(array $package, string $packageName): array
     {
@@ -311,6 +338,54 @@ final class ComposerExtensionDiscovery
     }
 
     /**
+     * Extract instructions path from package extra config.
+     *
+     * Uses "instructions" from extra.ai-mate config, e.g.:
+     * "extra": { "ai-mate": { "instructions": "INSTRUCTIONS.md" } }
+     *
+     * @param array{
+     *     name: string,
+     *     extra: array<string, mixed>,
+     * } $package
+     */
+    private function extractInstructions(array $package, string $packageName): ?string
+    {
+        $aiMateConfig = $package['extra']['ai-mate'] ?? null;
+        if (null === $aiMateConfig || !\is_array($aiMateConfig)) {
+            return null;
+        }
+
+        $agentInstructions = $aiMateConfig['instructions'] ?? null;
+
+        if (!\is_string($agentInstructions) || '' === trim($agentInstructions)) {
+            return null;
+        }
+
+        // Security: prevent path traversal
+        if (str_contains($agentInstructions, '..')) {
+            $this->logger->warning('Invalid instructions path (contains "..")', [
+                'package' => $packageName,
+                'path' => $agentInstructions,
+            ]);
+
+            return null;
+        }
+
+        // Validate file exists
+        $fullPath = $this->rootDir.'/vendor/'.$packageName.'/'.ltrim($agentInstructions, '/');
+        if (!file_exists($fullPath)) {
+            $this->logger->warning('Agent instructions file does not exist', [
+                'package' => $packageName,
+                'file' => $fullPath,
+            ]);
+
+            return null;
+        }
+
+        return $agentInstructions;
+    }
+
+    /**
      * @param array<string, mixed> $composer
      *
      * @return string[]
@@ -327,5 +402,22 @@ final class ComposerExtensionDiscovery
         }
 
         return array_filter($value, 'is_string');
+    }
+
+    /**
+     * @param array<string, mixed> $composer
+     */
+    private function extractAiMateConfigString(array $composer, string $key): ?string
+    {
+        if (!isset($composer['extra']['ai-mate'][$key])) {
+            return null;
+        }
+
+        $value = $composer['extra']['ai-mate'][$key];
+        if (!\is_string($value) || '' === trim($value)) {
+            return null;
+        }
+
+        return $value;
     }
 }

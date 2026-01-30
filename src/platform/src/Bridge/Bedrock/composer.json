@@ -27,9 +27,9 @@
     "require": {
         "async-aws/bedrock-runtime": "^0.1|^1.0",
         "php": ">=8.2",
-        "symfony/ai-anthropic-platform": "^0.2",
-        "symfony/ai-meta-platform": "^0.2",
-        "symfony/ai-platform": "^0.2"
+        "symfony/ai-anthropic-platform": "^0.3",
+        "symfony/ai-meta-platform": "^0.3",
+        "symfony/ai-platform": "^0.3"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
@@ -53,9 +53,6 @@
         "sort-packages": true
     },
     "extra": {
-        "branch-alias": {
-            "dev-main": "0.3.x-dev"
-        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"

@@ -226,4 +226,130 @@ final class ComposerExtensionDiscoveryTest extends TestCase
             rmdir($tempDir);
         }
     }
+
+    public function testDiscoverSkipsPackagesWithExtensionFalse()
+    {
+        $discovery = new ComposerExtensionDiscovery(
+            $this->fixturesDir.'/with-extension-false',
+            new NullLogger()
+        );
+
+        $extensions = $discovery->discover();
+
+        // Should only discover the normal package, not the excluded one
+        $this->assertCount(1, $extensions);
+        $this->assertArrayHasKey('vendor/normal-package', $extensions);
+        $this->assertArrayNotHasKey('vendor/excluded-package', $extensions);
+    }
+
+    public function testDiscoverIncludesPackagesWithExtensionTrue()
+    {
+        // Create a temporary directory with installed.json containing extension: true
+        $tempDir = sys_get_temp_dir().'/mate-test-'.uniqid();
+        mkdir($tempDir.'/vendor/composer', 0755, true);
+        mkdir($tempDir.'/vendor/vendor/test-package/src', 0755, true);
+
+        $installedJson = [
+            'packages' => [
+                [
+                    'name' => 'vendor/test-package',
+                    'extra' => [
+                        'ai-mate' => [
+                            'extension' => true,
+                            'scan-dirs' => ['src'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        file_put_contents($tempDir.'/vendor/composer/installed.json', json_encode($installedJson));
+
+        try {
+            $discovery = new ComposerExtensionDiscovery($tempDir, new NullLogger());
+            $extensions = $discovery->discover();
+
+            // Package with explicit extension: true should be discovered
+            $this->assertCount(1, $extensions);
+            $this->assertArrayHasKey('vendor/test-package', $extensions);
+        } finally {
+            unlink($tempDir.'/vendor/composer/installed.json');
+            rmdir($tempDir.'/vendor/vendor/test-package/src');
+            rmdir($tempDir.'/vendor/vendor/test-package');
+            rmdir($tempDir.'/vendor/vendor');
+            rmdir($tempDir.'/vendor/composer');
+            rmdir($tempDir.'/vendor');
+            rmdir($tempDir);
+        }
+    }
+
+    public function testDiscoverIncludesPackagesWithoutExtensionFlag()
+    {
+        $discovery = new ComposerExtensionDiscovery(
+            $this->fixturesDir.'/with-ai-mate-config',
+            new NullLogger()
+        );
+
+        $extensions = $discovery->discover();
+
+        // Packages without extension field should be discovered (backward compatibility)
+        $this->assertCount(2, $extensions);
+        $this->assertArrayHasKey('vendor/package-a', $extensions);
+        $this->assertArrayHasKey('vendor/package-b', $extensions);
+    }
+
+    public function testDiscoverWithIncludeFilterIgnoresExtensionFalsePackages()
+    {
+        $enabledExtensions = [
+            'vendor/excluded-package', // Explicitly try to enable it
+            'vendor/normal-package',
+        ];
+
+        $discovery = new ComposerExtensionDiscovery(
+            $this->fixturesDir.'/with-extension-false',
+            new NullLogger()
+        );
+
+        $extensions = $discovery->discover($enabledExtensions);
+
+        // Extension flag takes precedence over include filter
+        $this->assertCount(1, $extensions);
+        $this->assertArrayHasKey('vendor/normal-package', $extensions);
+        $this->assertArrayNotHasKey('vendor/excluded-package', $extensions);
+    }
+
+    public function testRootProjectNotAffectedByExtensionFlag()
+    {
+        // Create a temporary directory with a composer.json that has extension: false
+        $tempDir = sys_get_temp_dir().'/mate-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        $composerJson = [
+            'name' => 'test/project',
+            'extra' => [
+                'ai-mate' => [
+                    'extension' => false,
+                    'scan-dirs' => ['src', 'lib'],
+                    'includes' => ['config/mate.php'],
+                ],
+            ],
+        ];
+
+        file_put_contents($tempDir.'/composer.json', json_encode($composerJson));
+
+        try {
+            $discovery = new ComposerExtensionDiscovery($tempDir, new NullLogger());
+            $result = $discovery->discoverRootProject();
+
+            // Root project discovery should work regardless of extension flag
+            $this->assertIsArray($result);
+            $this->assertArrayHasKey('dirs', $result);
+            $this->assertArrayHasKey('includes', $result);
+            $this->assertSame(['src', 'lib'], $result['dirs']);
+            $this->assertSame(['config/mate.php'], $result['includes']);
+        } finally {
+            unlink($tempDir.'/composer.json');
+            rmdir($tempDir);
+        }
+    }
 }

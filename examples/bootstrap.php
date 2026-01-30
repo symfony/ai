@@ -12,11 +12,14 @@
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
 use Symfony\AI\Platform\Result\DeferredResult;
-use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
+use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\AI\Store\Exception\ExceptionInterface as StoreException;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Dotenv\Dotenv;
@@ -71,7 +74,7 @@ function logger(): LoggerInterface
             // Add context display for debug verbosity
             if ($this->output->getVerbosity() >= ConsoleOutput::VERBOSITY_DEBUG && [] !== $context) {
                 // Filter out special keys that are already handled
-                $displayContext = array_filter($context, function ($key) {
+                $displayContext = array_filter($context, static function ($key) {
                     return !in_array($key, ['exception', 'error', 'object'], true);
                 }, \ARRAY_FILTER_USE_KEY);
 
@@ -96,7 +99,32 @@ function output(): ConsoleOutput
     return new ConsoleOutput($verbosity);
 }
 
-function print_token_usage(?TokenUsage $tokenUsage): void
+function print_sources(?SourceCollection $sources): void
+{
+    if (null === $sources || 0 === $sources->count()) {
+        output()->writeln('<error>No sources available.</error>');
+
+        return;
+    }
+
+    $table = new Table(output());
+    $table->setHeaderTitle('Tool Sources');
+    $table->setHeaders(['Name (Reference)', 'Content']);
+    foreach ($sources as $source) {
+        $name = $source->getName();
+        $reference = $source->getReference();
+        $content = $source->getContent();
+        $table->addRow([
+            '<comment>'.(strlen($name) <= 50 ? $name : substr($name, 0, 50).'...').'</comment>'.\PHP_EOL.
+            '<fg=gray>'.(strlen($reference) <= 50 ? $reference : substr($reference, 0, 50).'...').'</>',
+            strlen($content) <= 100 ? $content : substr($content, 0, 100).'...',
+        ]);
+        $table->addRow(new TableSeparator());
+    }
+    $table->render();
+}
+
+function print_token_usage(?TokenUsageInterface $tokenUsage): void
 {
     if (null === $tokenUsage) {
         output()->writeln('<error>No token usage information available.</error>');
@@ -118,6 +146,10 @@ function print_token_usage(?TokenUsage $tokenUsage): void
         ['Total tokens', $tokenUsage->getTotalTokens() ?? $na],
     ]);
     $table->render();
+
+    if ($tokenUsage instanceof TokenUsageAggregation) {
+        output()->writeln(sprintf('<comment>Aggregated token usage from %d calls.</comment>', $tokenUsage->count()));
+    }
 }
 
 function print_vectors(DeferredResult $result): void
@@ -128,7 +160,7 @@ function print_vectors(DeferredResult $result): void
     output()->writeln(sprintf('Dimensions: %d', $result->asVectors()[0]->getDimensions()));
 }
 
-set_exception_handler(function ($exception) {
+set_exception_handler(static function ($exception) {
     if ($exception instanceof AgentException || $exception instanceof PlatformException || $exception instanceof StoreException) {
         output()->writeln(sprintf('<error>%s</error>', $exception->getMessage()));
 

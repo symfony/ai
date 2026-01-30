@@ -52,7 +52,7 @@ final class ChatTest extends TestCase
 
         $this->agent->expects($this->once())
             ->method('call')
-            ->with($this->callback(function (MessageBag $messages) use ($userMessage) {
+            ->with($this->callback(static function (MessageBag $messages) use ($userMessage) {
                 $messagesArray = $messages->getMessages();
 
                 return end($messagesArray) === $userMessage;
@@ -100,7 +100,7 @@ final class ChatTest extends TestCase
 
         $this->agent->expects($this->once())
             ->method('call')
-            ->with($this->callback(function (MessageBag $messages) {
+            ->with($this->callback(static function (MessageBag $messages) {
                 $messagesArray = $messages->getMessages();
 
                 return 1 === \count($messagesArray);

@@ -12,9 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Albert;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Symfony\AI\Platform\Bridge\Generic\Completions;
-use Symfony\AI\Platform\Bridge\Generic\Embeddings;
-use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
@@ -48,15 +46,14 @@ final class PlatformFactory
 
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform(
-            [
-                new Completions\ModelClient($httpClient, $baseUrl, $apiKey, '/chat/completions'),
-                new Embeddings\ModelClient($httpClient, $baseUrl, $apiKey, '/embeddings'),
-            ],
-            [new Completions\ResultConverter(), new Embeddings\ResultConverter()],
-            $modelCatalog,
-            Contract::create(),
-            $eventDispatcher,
+        return GenericPlatformFactory::create(
+            baseUrl: $baseUrl,
+            apiKey: $apiKey,
+            httpClient: $httpClient,
+            modelCatalog: $modelCatalog,
+            eventDispatcher: $eventDispatcher,
+            completionsPath: '/chat/completions',
+            embeddingsPath: '/embeddings',
         );
     }
 }

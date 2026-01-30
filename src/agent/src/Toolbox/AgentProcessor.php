@@ -13,17 +13,17 @@ namespace Symfony\AI\Agent\Toolbox;
 
 use Symfony\AI\Agent\AgentAwareInterface;
 use Symfony\AI\Agent\AgentAwareTrait;
+use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
-use Symfony\AI\Agent\Toolbox\Source\Source;
-use Symfony\AI\Agent\Toolbox\StreamResult as ToolboxStreamResponse;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\Result\StreamResult as GenericStreamResponse;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -38,10 +38,8 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
     /**
      * Sources get collected during tool calls on class level to be able to handle consecutive tool calls.
      * They get added to the result metadata and reset when the outermost agent call is finished via nesting level.
-     *
-     * @var Source[]
      */
-    private array $sources = [];
+    private SourceCollection $sources;
 
     /**
      * Tracks the nesting level of agent calls.
@@ -54,7 +52,9 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
         private readonly bool $keepToolMessages = false,
         private readonly bool $includeSources = false,
+        private readonly ?int $maxToolCalls = null,
     ) {
+        $this->sources = new SourceCollection();
     }
 
     public function processInput(Input $input): void
@@ -67,7 +67,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         $options = $input->getOptions();
         // only filter tool map if list of strings is provided as option
         if (isset($options['tools']) && $this->isFlatStringArray($options['tools'])) {
-            $toolMap = array_values(array_filter($toolMap, fn (Tool $tool) => \in_array($tool->getName(), $options['tools'], true)));
+            $toolMap = array_values(array_filter($toolMap, static fn (Tool $tool) => \in_array($tool->getName(), $options['tools'], true)));
         }
 
         $options['tools'] = $toolMap;
@@ -78,12 +78,9 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
     {
         $result = $output->getResult();
 
-        if ($result instanceof GenericStreamResponse) {
-            $output->setResult(
-                new ToolboxStreamResponse(
-                    $result->getContent(),
-                    fn (ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null) => $this->handleToolCallsCallback($output, $result, $streamedAssistantResponse)
-                )
+        if ($result instanceof StreamResult) {
+            $result->addListener(new StreamListener(
+                fn (ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null) => $this->handleToolCallsCallback($output, $result, $streamedAssistantResponse))
             );
 
             return;
@@ -101,7 +98,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
      */
     private function isFlatStringArray(array $tools): bool
     {
-        return array_reduce($tools, fn (bool $carry, mixed $item) => $carry && \is_string($item), true);
+        return array_reduce($tools, static fn (bool $carry, mixed $item) => $carry && \is_string($item), true);
     }
 
     private function handleToolCallsCallback(Output $output, ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null): ResultInterface
@@ -113,7 +110,12 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             $messages->add($streamedAssistantResponse);
         }
 
+        $iterations = 0;
         do {
+            if (null !== $this->maxToolCalls && ++$iterations > $this->maxToolCalls) {
+                throw new MaxIterationsExceededException($this->maxToolCalls);
+            }
+
             $toolCalls = $result->getContent();
             $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
 
@@ -121,7 +123,9 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             foreach ($toolCalls as $toolCall) {
                 $results[] = $toolResult = $this->toolbox->execute($toolCall);
                 $messages->add(Message::ofToolCall($toolCall, $this->resultConverter->convert($toolResult)));
-                array_push($this->sources, ...$toolResult->getSources());
+                if ($this->includeSources && null !== $toolResult->getSources()) {
+                    $this->sources = $this->sources->merge($toolResult->getSources());
+                }
             }
 
             $event = new ToolCallsExecuted(...$results);
@@ -133,7 +137,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         --$this->nestingLevel;
         if ($this->includeSources && 0 === $this->nestingLevel) {
             $result->getMetadata()->add('sources', $this->sources);
-            $this->sources = [];
+            $this->sources = new SourceCollection();
         }
 
         return $result;

@@ -15,10 +15,13 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class ResultConverterTest extends TestCase
 {
@@ -73,5 +76,138 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('API Error [Unknown]: "An unknown error occurred."');
 
         $converter->convert(new RawHttpResult($response));
+    }
+
+    public function testStreamingToolCallsYieldsToolCallResult()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'get_weather']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"loc']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => 'ation": "']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => 'Berlin"}']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'tool_use']],
+            ['type' => 'message_stop'],
+        ];
+
+        $raw = new class($httpResponse, $events) implements RawResultInterface {
+            /**
+             * @param array<array<string, mixed>> $events
+             */
+            public function __construct(
+                private readonly ResponseInterface $response,
+                private readonly array $events,
+            ) {
+            }
+
+            public function getData(): array
+            {
+                return [];
+            }
+
+            public function getDataStream(): iterable
+            {
+                foreach ($this->events as $event) {
+                    yield $event;
+                }
+            }
+
+            public function getObject(): object
+            {
+                return $this->response;
+            }
+        };
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $streamResult);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $this->assertCount(1, $chunks);
+        $this->assertInstanceOf(ToolCallResult::class, $chunks[0]);
+
+        $toolCalls = $chunks[0]->getContent();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('toolu_01ABC123', $toolCalls[0]->getId());
+        $this->assertSame('get_weather', $toolCalls[0]->getName());
+        $this->assertSame(['location' => 'Berlin'], $toolCalls[0]->getArguments());
+    }
+
+    public function testStreamingTextAndToolCallsYieldsBoth()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'text', 'text' => '']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'text_delta', 'text' => 'Let me check ']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'text_delta', 'text' => 'the weather.']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'content_block_start', 'index' => 1, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01XYZ789', 'name' => 'get_weather']],
+            ['type' => 'content_block_delta', 'index' => 1, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"city": "Munich"}']],
+            ['type' => 'content_block_stop', 'index' => 1],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'tool_use']],
+            ['type' => 'message_stop'],
+        ];
+
+        $raw = new class($httpResponse, $events) implements RawResultInterface {
+            /**
+             * @param array<array<string, mixed>> $events
+             */
+            public function __construct(
+                private readonly ResponseInterface $response,
+                private readonly array $events,
+            ) {
+            }
+
+            public function getData(): array
+            {
+                return [];
+            }
+
+            public function getDataStream(): iterable
+            {
+                foreach ($this->events as $event) {
+                    yield $event;
+                }
+            }
+
+            public function getObject(): object
+            {
+                return $this->response;
+            }
+        };
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $streamResult);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $this->assertSame('Let me check ', $chunks[0]);
+        $this->assertSame('the weather.', $chunks[1]);
+        $this->assertInstanceOf(ToolCallResult::class, $chunks[2]);
+
+        $toolCalls = $chunks[2]->getContent();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('toolu_01XYZ789', $toolCalls[0]->getId());
+        $this->assertSame('get_weather', $toolCalls[0]->getName());
+        $this->assertSame(['city' => 'Munich'], $toolCalls[0]->getArguments());
     }
 }

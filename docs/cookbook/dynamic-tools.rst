@@ -20,8 +20,8 @@ The example use-cases assume that you are working with the Symfony AI demo appli
 Requirement: Set Up Dynamic Toolbox Class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-First, create a class that implements the ``ToolboxInterface`` and, in its constructor, accepts
-another ``ToolboxInterface`` instance to delegate calls to the original toolbox. This implements the decorator
+First, create a class that implements the :class:`Symfony\\AI\\Agent\\Toolbox\\ToolboxInterface` and, in its constructor, accepts
+another :class:`Symfony\\AI\\Agent\\Toolbox\\ToolboxInterface` instance to delegate calls to the original toolbox. This implements the decorator
 pattern.
 
 

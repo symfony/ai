@@ -1,16 +1,9 @@
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-    <!-- svg-source:excalidraw -->
-    <defs>
-        <style>
-            @font-face {
-                font-family: Lilita One;
-                src: url(data:font/woff2;base64,d09GMgABAAAAAAG8AA0AAAAAA7QAAAFuAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGwwcGAZgAAQRCAoAKgsEAAE2AiQDBAQgBYMkByAb+wLIrgpsY+FkU2dFDWvuKOXBh9p0iy/i4f/3+7XPu7inv0gmWZN5gghNE15peOavTiljTUOd6ZOmib+zbYiVeKP5Oskyo1HfONwCIGtzlROtFDZJSp4td/omBwHoa/tlEAX2W5ZKFGiUJpa9tL1glG4Oi9Y1w5IM4eOYCVSl4Iq2tjhgx0csQBbP8aiU7EV2jds+KD4b+51BuLa1sSnOH5ye8khFnxAQv7M3KGQgRJ6rBwEvdQlnAuHqRSP149+s6vQFPg5W3t38OpdKRVT8KKVijvRV0C0RTsJbBMIyAwSMym1TRUklXrgnQsslMnUOkEzzdYlGqa6m/5ZpYkln1DkxhRkqod2hs5jB6NDIyNiCCzPLLWanxQ4xs0VU8AgUT77HRkZHN6DGZcTsy/uZxeqz6zRaJ+jZ5RhS4UIditeyJ2M87ZssRozQYsIdnZ8zUDjTObVgAzqg3Q1VYMZsDSuYCTpA92kjOwE5YwAA);
-            }
-            @font-face {
-                font-family: Lilita One;
-                src: url(data:font/woff2;base64,d09GMgABAAAAAAJkAA4AAAAABMAAAAISAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGhYbDBwYBmAANBEICoEogTELCAABNgIkAwwEIAWDJAcgG9ADyB6JcSzFkhILF/EAvz/ec9/7kEcmwMlOVLI64Ma6ta3PDX5n2xAv6UbzdZJVa4z2/4hYkpQ8rzs9WEIHkWv7Es7igNoCK+TP2zXhlidtYUIBYDq3hCTdm4GEH+FzVwnIAQRBJAgCsharHmXKhKVkxXISIApnwn6pRA+jndh9J8M7Xf0mAhP8k3GTJkzkCkXxySTiU94iQPgdPUWDCBFilIgFlEjRgBQpAkYnCUYlSXJLAEFIEvkgBmmI0AX9UKAEEITChoGpW3eJsnfVnthScTorZ+flZTvD5OzwzrITvt7Z8nb1jK0P/6Z00pRTe0jTtrxet7z0VenHk0XLW3Zuvbmoe9khX0wqKdm/9kjPLVUbT+buzRuudJn9PZTtqFjXfEHWjKXHrJ47traYn5VXsy97tGwmitaE89FjXZMknsw8EhBsn/41dT7K7/UtIzt+D686ZL6MxmRnIr4Xn0KGCATiUwnirwQuCHBJ7BnhhtbxLl0FxEYTQAAp3WSskJKJh/YWBiXWYSTPUoz1Y6YpHFNVKXpvmiKM0hl1TkRiVklVdofOYga66Kizzroa4ULMIovZabGrELOFo0HDkNSd3VVnXXQxQaVxGRH7cH9gsfrsOo3WCbQ2hyZwDQ55SBrzYmrdTjdZjIhCi7DN1vlp2muw+ju0ZCY6VHa3SgkMEUdgDGLC6qDJepEqBpJbugIA);
-            }
-        </style>
-    </defs>
-    <text x="12" y="{{ y }}" font-family="Lilita One, Segoe UI Emoji" font-size="14px" fill="currentColor" text-anchor="middle">AI</text>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="226 13 50 50">
+    <path
+        fill="currentColor"
+        d="M253.39985,47.45406h-13.29523l-1.60193,4.55023c-.40867,1.16081-1.50535,1.93738-2.73599,1.93738h-3.3834l10.92086-30.52647c.27304-.7632.99618-1.27253,1.80675-1.27253h3.32851c.81057,0,1.53372.50932,1.80675,1.27253l10.92086,30.52647h-3.0259c-1.47233,0-2.78439-.92908-3.27331-2.31786l-1.46798-4.16975ZM251.93835,43.20509l-5.16318-14.75776-5.20802,14.75776h10.3712Z"/>
+    <path
+        fill="currentColor"
+        d="M269.87499,24.50757v27.11454c0,1.28105-1.0385,2.31955-2.31955,2.31955h-2.88949v-31.75364h2.88949c1.28105,0,2.31955,1.0385,2.31955,2.31955Z"/>
 </svg>

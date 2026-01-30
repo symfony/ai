@@ -55,6 +55,7 @@ use Symfony\AI\Platform\Bridge\Albert\PlatformFactory as AlbertPlatformFactory;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory as BedrockFactory;
+use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Cartesia\PlatformFactory as CartesiaPlatformFactory;
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFactory;
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
@@ -78,7 +79,6 @@ use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory as ScalewayPlatformFacto
 use Symfony\AI\Platform\Bridge\TransformersPhp\PlatformFactory as TransformersPhpPlatformFactory;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
-use Symfony\AI\Platform\CachedPlatform;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\File;
@@ -110,6 +110,7 @@ use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
+use Symfony\AI\Store\ConfiguredIndexer;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -514,23 +515,32 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('cache' === $type) {
-            foreach ($platform as $name => $cachedPlatformConfig) {
-                $definition = (new Definition(CachedPlatform::class))
+            foreach ($platform as $name => $cachePlatformConfig) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-cache-platform', CachePlatform::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('CachePlatform platform configuration requires "symfony/ai-cache-platform" package. Try running "composer require symfony/ai-cache-platform".');
+                }
+
+                $definition = (new Definition(CachePlatform::class))
                     ->setLazy(true)
                     ->setArguments([
-                        new Reference($cachedPlatformConfig['platform']),
+                        new Reference($cachePlatformConfig['platform']),
                         new Reference(ClockInterface::class),
-                        new Reference($cachedPlatformConfig['service'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        $cachedPlatformConfig['cache_key'] ?? $name,
+                        new Reference($cachePlatformConfig['service'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                        new Reference('serializer'),
+                        $cachePlatformConfig['cache_key'] ?? $name,
+                        $cachePlatformConfig['ttl'] ?? null,
                     ])
                     ->addTag('proxy', ['interface' => PlatformInterface::class])
                     ->addTag('ai.platform', ['name' => 'cache.'.$name]);
 
-                $container->setDefinition('ai.platform.cache.'.$name, $definition);
-                $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type.'_'.$name);
+                $container->setDefinition('ai.platform.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.platform.'.$type.'.'.$name, PlatformInterface::class, $type.'_'.$name);
             }
 
             return;
+        }
+        if (!ContainerBuilder::willBeAvailable('symfony/ai-cache-platform', CachePlatform::class, ['symfony/ai-bundle'])) {
+            $container->removeDefinition('ai.platform.cache.result_normalizer');
         }
 
         if ('cartesia' === $type) {
@@ -2031,6 +2041,10 @@ final class AiBundle extends AbstractBundle
     {
         if ('cache' === $type) {
             foreach ($messageStores as $name => $messageStore) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-cache-message-store', CacheMessageStore::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Cache message store configuration requires "symfony/ai-cache-message-store" package. Try running "composer require symfony/ai-cache-message-store".');
+                }
+
                 $arguments = [
                     new Reference($messageStore['service']),
                     $messageStore['key'] ?? $name,
@@ -2056,6 +2070,10 @@ final class AiBundle extends AbstractBundle
 
         if ('cloudflare' === $type) {
             foreach ($messageStores as $name => $messageStore) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-cloudflare-message-store', CloudflareMessageStore::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Cloudflare message store configuration requires "symfony/ai-cloudflare-message-store" package. Try running "composer require symfony/ai-cloudflare-message-store".');
+                }
+
                 $arguments = [
                     new Reference('http_client'),
                     $messageStore['namespace'],
@@ -2084,6 +2102,10 @@ final class AiBundle extends AbstractBundle
 
         if ('doctrine' === $type) {
             foreach ($messageStores['dbal'] ?? [] as $name => $dbalMessageStore) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-doctrine-message-store', DoctrineDbalMessageStore::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Doctrine Dbal message store configuration requires "symfony/ai-doctrine-message-store" package. Try running "composer require symfony/ai-doctrine-message-store".');
+                }
+
                 $definition = new Definition(DoctrineDbalMessageStore::class);
                 $definition
                     ->setLazy(true)
@@ -2104,6 +2126,10 @@ final class AiBundle extends AbstractBundle
 
         if ('meilisearch' === $type) {
             foreach ($messageStores as $name => $messageStore) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-meilisearch-message-store', MeilisearchMessageStore::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Meilisearch message store configuration requires "symfony/ai-meilisearch-message-store" package. Try running "composer require symfony/ai-meilisearch-message-store".');
+                }
+
                 $definition = new Definition(MeilisearchMessageStore::class);
                 $definition
                     ->setLazy(true)
@@ -2142,6 +2168,10 @@ final class AiBundle extends AbstractBundle
 
         if ('mongodb' === $type) {
             foreach ($messageStores as $name => $messageStore) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-mongo-db-message-store', MongoDbMessageStore::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('MongoDb message store configuration requires "symfony/ai-mongo-db-message-store" package. Try running "composer require symfony/ai-mongo-db-message-store".');
+                }
+
                 $definition = new Definition(MongoDbMessageStore::class);
                 $definition
                     ->setLazy(true)
@@ -2163,6 +2193,10 @@ final class AiBundle extends AbstractBundle
 
         if ('pogocache' === $type) {
             foreach ($messageStores as $name => $messageStore) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-pogocache-message-store', PogocacheMessageStore::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Pogocache message store configuration requires "symfony/ai-pogocache-message-store" package. Try running "composer require symfony/ai-pogocache-message-store".');
+                }
+
                 $definition = new Definition(PogocacheMessageStore::class);
                 $definition
                     ->setLazy(true)
@@ -2185,6 +2219,10 @@ final class AiBundle extends AbstractBundle
 
         if ('redis' === $type) {
             foreach ($messageStores as $name => $messageStore) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-redis-message-store', RedisMessageStore::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Redis message store configuration requires "symfony/ai-redis-message-store" package. Try running "composer require symfony/ai-redis-message-store".');
+                }
+
                 if (isset($messageStore['client'])) {
                     $redisClient = new Reference($messageStore['client']);
                 } else {
@@ -2212,6 +2250,10 @@ final class AiBundle extends AbstractBundle
 
         if ('session' === $type) {
             foreach ($messageStores as $name => $messageStore) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-session-message-store', SessionMessageStore::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Session message store configuration requires "symfony/ai-session-message-store" package. Try running "composer require symfony/ai-session-message-store".');
+                }
+
                 $definition = new Definition(SessionMessageStore::class);
                 $definition
                     ->setLazy(true)
@@ -2231,6 +2273,10 @@ final class AiBundle extends AbstractBundle
 
         if ('surrealdb' === $type) {
             foreach ($messageStores as $name => $messageStore) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-surreal-db-message-store', SurrealDbMessageStore::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('SurrealDb message store configuration requires "symfony/ai-surreal-db-message-store" package. Try running "composer require symfony/ai-surreal-db-message-store".');
+                }
+
                 $arguments = [
                     new Reference('http_client'),
                     $messageStore['endpoint'],
@@ -2314,18 +2360,30 @@ final class AiBundle extends AbstractBundle
             $filters[] = new Reference($filter);
         }
 
-        $definition = new Definition(Indexer::class, [
+        $indexerDefinition = new Definition(Indexer::class, [
             new Reference($config['loader']),
             new Reference($config['vectorizer']),
             new Reference($config['store']),
-            $config['source'],
             $filters,
             $transformers,
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
-        $definition->addTag('ai.indexer', ['name' => $name]);
 
         $serviceId = 'ai.indexer.'.$name;
+
+        if (null !== $config['source']) {
+            $innerServiceId = 'ai.indexer.'.$name.'.inner';
+            $container->setDefinition($innerServiceId, $indexerDefinition);
+
+            $definition = new Definition(ConfiguredIndexer::class, [
+                new Reference($innerServiceId),
+                $config['source'],
+            ]);
+        } else {
+            $definition = $indexerDefinition;
+        }
+
+        $definition->addTag('ai.indexer', ['name' => $name]);
         $container->setDefinition($serviceId, $definition);
         $container->registerAliasForArgument($serviceId, IndexerInterface::class, (new Target((string) $name))->getParsedName());
     }

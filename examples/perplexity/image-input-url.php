@@ -29,5 +29,5 @@ $result = $platform->invoke('sonar', $messages);
 
 echo $result->asText().\PHP_EOL;
 
-print_search_results($result->getMetadata());
-print_citations($result->getMetadata());
+print_search_results($result->getMetadata()->get('search_results'));
+print_citations($result->getMetadata()->get('citations'));

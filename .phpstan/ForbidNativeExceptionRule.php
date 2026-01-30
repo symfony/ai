@@ -53,6 +53,10 @@ final class ForbidNativeExceptionRule implements Rule
         'Symfony\\AI\\Store' => 'Symfony\\AI\\Store\\Exception\\',
         'Symfony\\AI\\AiBundle' => 'Symfony\\AI\\AiBundle\\Exception\\',
         'Symfony\\AI\\McpBundle' => 'Symfony\\AI\\McpBundle\\Exception\\',
+        'Symfony\\AI\\Mate\\Bridge\\Profiler' => 'Symfony\\AI\\Mate\\Bridge\\Profiler\\Exception\\',
+        'Symfony\\AI\\Mate\\Bridge\\Monolog' => 'Symfony\\AI\\Mate\\Bridge\\Monolog\\Exception\\',
+        'Symfony\\AI\\Mate\\Bridge\\Symfony' => 'Symfony\\AI\\Mate\\Bridge\\Symfony\\Exception\\',
+        'Symfony\\AI\\Mate' => 'Symfony\\AI\\Mate\\Exception\\',
     ];
 
     public function getNodeType(): string

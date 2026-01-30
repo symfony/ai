@@ -15,10 +15,10 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Grégoire Pineau <lyrixx@lyrixx.info>
@@ -107,6 +107,11 @@ class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function remove(string|array $ids, array $options = []): void
+    {
+        throw new LogicException('Method not implemented yet.');
+    }
+
     /**
      * @param array{limit?: positive-int, maxScore?: float, where?: string} $options
      *
@@ -171,7 +176,7 @@ class Store implements ManagedStoreInterface, StoreInterface
             }
 
             yield new VectorDocument(
-                id: Uuid::fromString($data['$.id']),
+                id: $data['$.id'],
                 vector: new Vector($data['$.embedding'] ?? []),
                 metadata: new Metadata($data['$.metadata'] ?? []),
                 score: $score,

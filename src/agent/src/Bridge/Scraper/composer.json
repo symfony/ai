@@ -28,7 +28,7 @@
     "require": {
         "php": ">=8.2",
         "masterminds/html5": "^2.8",
-        "symfony/ai-agent": "^0.2",
+        "symfony/ai-agent": "^0.3",
         "symfony/css-selector": "^7.3|^8.0",
         "symfony/dom-crawler": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0"
@@ -37,7 +37,8 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.46"
+        "phpunit/phpunit": "^11.5.46",
+        "symfony/ai-platform": "^0.3"
     },
     "minimum-stability": "dev",
     "autoload": {
@@ -55,9 +56,6 @@
         "sort-packages": true
     },
     "extra": {
-        "branch-alias": {
-            "dev-main": "0.3.x-dev"
-        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"

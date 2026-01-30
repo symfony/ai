@@ -16,9 +16,9 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -104,6 +104,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
+    public function remove(string|array $ids, array $options = []): void
+    {
+        throw new LogicException('Method not implemented yet.');
+    }
+
     public function query(Vector $vector, array $options = []): iterable
     {
         $payload = [
@@ -155,7 +160,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     private function convertToIndexableArray(VectorDocument $document): array
     {
         return [
-            'id' => $document->id->toRfc4122(),
+            'id' => $document->id,
             '_metadata' => json_encode($document->metadata->getArrayCopy()),
             $this->vectorFieldName => $document->vector->getData(),
         ];
@@ -174,6 +179,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $score = $data['distance'] ?? null;
 
-        return new VectorDocument(Uuid::fromString($id), $vector, new Metadata(json_decode($data['_metadata'], true)), $score);
+        return new VectorDocument($id, $vector, new Metadata(json_decode($data['_metadata'], true)), $score);
     }
 }

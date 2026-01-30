@@ -17,7 +17,6 @@ use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Result\DeferredResult;
-use Symfony\AI\Platform\Serializer\StructuredOutputSerializer;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -36,7 +35,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
         private readonly ResponseFormatFactoryInterface $responseFormatFactory = new ResponseFormatFactory(),
         ?SerializerInterface $serializer = null,
     ) {
-        $this->serializer = $serializer ?? new StructuredOutputSerializer();
+        $this->serializer = $serializer ?? new Serializer();
     }
 
     public static function getSubscribedEvents(): array
@@ -59,16 +58,16 @@ final class PlatformSubscriber implements EventSubscriberInterface
             return;
         }
 
+        if (!class_exists($options[self::RESPONSE_FORMAT])) {
+            return;
+        }
+
         if (true === ($options['stream'] ?? false)) {
             throw new InvalidArgumentException('Streamed responses are not supported for structured output.');
         }
 
         if (!$event->getModel()->supports(Capability::OUTPUT_STRUCTURED)) {
             throw MissingModelSupportException::forStructuredOutput($event->getModel());
-        }
-
-        if (!class_exists($options[self::RESPONSE_FORMAT])) {
-            throw new InvalidArgumentException(\sprintf('The specified response format class "%s" does not exist.', $options[self::RESPONSE_FORMAT]));
         }
 
         $this->outputType = $options[self::RESPONSE_FORMAT];

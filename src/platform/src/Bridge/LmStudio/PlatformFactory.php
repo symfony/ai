@@ -12,8 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\LmStudio;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Symfony\AI\Platform\Bridge\Generic\Completions;
-use Symfony\AI\Platform\Bridge\Generic\Embeddings;
+use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
@@ -34,18 +33,12 @@ class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform(
-            [
-                new Completions\ModelClient($httpClient, $baseUrl),
-                new Embeddings\ModelClient($httpClient, $baseUrl),
-            ],
-            [
-                new Embeddings\ResultConverter(),
-                new Completions\ResultConverter(),
-            ],
-            $modelCatalog,
-            $contract ?? Contract::create(),
-            $eventDispatcher,
+        return GenericPlatformFactory::create(
+            baseUrl: $baseUrl,
+            httpClient: $httpClient,
+            modelCatalog: $modelCatalog,
+            contract: $contract,
+            eventDispatcher: $eventDispatcher,
         );
     }
 }

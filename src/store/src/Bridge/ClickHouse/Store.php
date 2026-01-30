@@ -15,10 +15,10 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -68,6 +68,11 @@ class Store implements ManagedStoreInterface, StoreInterface
         $this->insertBatch($rows);
     }
 
+    public function remove(string|array $ids, array $options = []): void
+    {
+        throw new LogicException('Method not implemented yet.');
+    }
+
     public function query(Vector $vector, array $options = [], ?float $minScore = null): iterable
     {
         $sql = <<<'SQL'
@@ -99,7 +104,7 @@ class Store implements ManagedStoreInterface, StoreInterface
 
         foreach ($results as $result) {
             yield new VectorDocument(
-                id: Uuid::fromString($result['id']),
+                id: $result['id'],
                 vector: new Vector($result['embedding']),
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],

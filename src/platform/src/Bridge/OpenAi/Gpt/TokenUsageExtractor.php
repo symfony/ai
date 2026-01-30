@@ -41,13 +41,31 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
 
         $remainingTokens = $rawResponse->getHeaders(false)['x-ratelimit-remaining-tokens'][0] ?? null;
 
+        return $this->fromDataArray($content, $remainingTokens);
+    }
+
+    /**
+     * @param array{usage: array{
+     *     input_tokens?: int,
+     *     input_tokens_details?: array{
+     *         cached_tokens?: int,
+     *     },
+     *     output_tokens?: int,
+     *     output_tokens_details?: array{
+     *         reasoning_tokens?: int,
+     *     },
+     *     total_tokens?: int,
+     * }} $data
+     */
+    public function fromDataArray(array $data, ?string $remainingTokens = null): TokenUsage
+    {
         return new TokenUsage(
-            promptTokens: $content['usage']['input_tokens'] ?? null,
-            completionTokens: $content['usage']['output_tokens'] ?? null,
-            thinkingTokens: $content['usage']['output_tokens_details']['reasoning_tokens'] ?? null,
-            cachedTokens: $content['usage']['input_tokens_details']['cached_tokens'] ?? null,
+            promptTokens: $data['usage']['input_tokens'] ?? null,
+            completionTokens: $data['usage']['output_tokens'] ?? null,
+            thinkingTokens: $data['usage']['output_tokens_details']['reasoning_tokens'] ?? null,
+            cachedTokens: $data['usage']['input_tokens_details']['cached_tokens'] ?? null,
             remainingTokens: null !== $remainingTokens ? (int) $remainingTokens : null,
-            totalTokens: $content['usage']['total_tokens'] ?? null,
+            totalTokens: $data['usage']['total_tokens'] ?? null,
         );
     }
 }

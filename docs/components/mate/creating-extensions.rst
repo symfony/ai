@@ -20,7 +20,8 @@ Quick Start
         },
         "extra": {
             "ai-mate": {
-                "scan-dirs": ["src", "lib"]
+                "scan-dirs": ["src", "lib"],
+                "instructions": "INSTRUCTIONS.md"
             }
         }
     }
@@ -132,6 +133,57 @@ Service Includes
 - Array of service configuration file paths
 - Standard Symfony DI configuration format (PHP files)
 - Supports environment variables via ``%env()%``
+
+Agent Instructions
+~~~~~~~~~~~~~~~~~~
+
+``extra.ai-mate.instructions`` (optional)
+
+- Path to a markdown file containing instructions for AI agents
+- Relative to package root
+- Conventionally named ``INSTRUCTIONS.md``
+- Content is aggregated and provided to AI assistants during MCP handshake
+
+Example configuration:
+
+.. code-block:: json
+
+    {
+        "extra": {
+            "ai-mate": {
+                "scan-dirs": ["src"],
+                "instructions": "INSTRUCTIONS.md"
+            }
+        }
+    }
+
+Writing Effective Agent Instructions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Agent instructions help AI assistants understand when and how to use your extension's tools.
+A good ``INSTRUCTIONS.md`` file should:
+
+1. **Map CLI commands to MCP tools** - Show what tools replace common CLI operations
+2. **Highlight benefits** - Explain why the MCP tools are better than alternatives
+3. **Be concise** - AI assistants have context limits; focus on essential guidance
+
+Example ``INSTRUCTIONS.md``:
+
+.. code-block:: markdown
+
+    ## My Extension
+
+    Use MCP tools instead of CLI for better results:
+
+    | Instead of...              | Use                    |
+    |----------------------------|------------------------|
+    | `my-cli command`           | `my-tool`              |
+    | `my-cli search "term"`     | `my-search` with term  |
+
+    ### Benefits
+    - Structured output that AI can parse
+    - Better error handling and context
+    - Integrated with project configuration
 
 Security
 ~~~~~~~~
@@ -265,5 +317,34 @@ If dependencies aren't being injected:
                }
            }
        }
+
+Agent Instructions Not Loading
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If your agent instructions aren't being provided to AI assistants:
+
+1. **Verify the file exists** at the path specified in ``composer.json``
+
+2. **Check the path is correct** - must be relative to package root:
+
+   .. code-block:: json
+
+       {
+           "extra": {
+               "ai-mate": {
+                   "instructions": "INSTRUCTIONS.md"
+               }
+           }
+       }
+
+3. **Ensure the file is readable** and contains valid markdown
+
+4. **Use debug command** to verify discovery:
+
+   .. code-block:: terminal
+
+       $ vendor/bin/mate debug:extensions
+
+   Look for ``instructions`` field in the output.
 
 For general server issues and debugging tips, see the :doc:`troubleshooting` guide.

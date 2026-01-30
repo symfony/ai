@@ -118,6 +118,13 @@ class InitCommand extends Command
             '  4. Run "vendor/bin/mate serve" to start the MCP server',
         ]);
 
+        $io->note([
+            'By default, "extension: false" is set in composer.json to prevent this package',
+            'from being discovered as a Mate extension when installed in other projects.',
+            'If you want this package to BE a Mate extension, set "extension: true" or remove',
+            'the "extension" field from extra.ai-mate configuration.',
+        ]);
+
         return Command::SUCCESS;
     }
 
@@ -163,6 +170,7 @@ class InitCommand extends Command
 
         if (!isset($composerJson['extra']['ai-mate'])) {
             $composerJson['extra']['ai-mate'] = [
+                'extension' => false,
                 'scan-dirs' => ['mate/src'],
                 'includes' => ['mate/config.php'],
             ];

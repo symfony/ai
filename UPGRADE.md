@@ -1,3 +1,69 @@
+UPGRADE FROM 0.3 to 0.4
+=======================
+
+AI Bundle
+---------
+
+ * An indexer configured with a `source`, now wraps the indexer with a `ConfiguredIndexer` decorator. This is
+   transparent - the configured source is still used by default, but can be overridden by passing a source to `index()`.
+
+Store
+-----
+
+ * The `Indexer` class is now stateless. The `$source` constructor parameter and `withSource()` method have been removed.
+   Source is now passed directly to the `index()` method:
+
+   ```diff
+   -$indexer = new Indexer($loader, $vectorizer, $store, '/path/to/source');
+   -$indexer->index();
+   +$indexer = new Indexer($loader, $vectorizer, $store);
+   +$indexer->index('/path/to/source');
+   ```
+
+ * The `IndexerInterface::withSource()` method has been removed. Use the `$source` parameter of `index()` instead:
+
+   ```diff
+   -$indexer->withSource('/new/source')->index();
+   +$indexer->index('/new/source');
+   ```
+
+ * The `Indexer` constructor parameter order has changed. Filters and transformers have shifted positions:
+
+   ```diff
+   -new Indexer($loader, $vectorizer, $store, $source, $filters, $transformers, $logger);
+   +new Indexer($loader, $vectorizer, $store, $filters, $transformers, $logger);
+   ```
+
+UPGRADE FROM 0.2 to 0.3
+=======================
+
+Agent
+-----
+
+  * The `Symfony\AI\Agent\Toolbox\StreamResult` class has been removed in favor of a `StreamListener`. Checks should now target
+    `Symfony\AI\Platform\Result\StreamResult` instead.
+  * The `Symfony\AI\Agent\Toolbox\Source\SourceMap` class has been renamed to `SourceCollection`. Its methods have also been renamed:
+    * `getSources()` is now `all()`
+    * `addSource()` is now `add()`
+  * The third argument of the `Symfony\AI\Agent\Toolbox\ToolResult::__construct()` method now expects a `SourceCollection` instead of an `array<int, Source>`
+
+Platform
+--------
+
+ * The `TokenUsageAggregation::__construct()` method signature has changed from variadic to accept an array of `TokenUsageInterface`
+
+   ```diff
+   -$aggregation = new TokenUsageAggregation($usage1, $usage2);
+   +$aggregation = new TokenUsageAggregation([$usage1, $usage2]);
+   ```
+
+ * The `Symfony\AI\Platform\CachedPlatform` has been renamed `Symfony\AI\Platform\Bridge\Cache\CachePlatform`
+   * To use it, consider the following steps:
+     * Run `composer require symfony/ai-cache-platform`
+     * Change `Symfony\AI\Platform\CachedPlatform` namespace usages to `Symfony\AI\Platform\Bridge\Cache\CachePlatform`
+     * The `ttl` option can be used in the configuration
+ * Adopt usage of class `Symfony\AI\Platform\Serializer\StructuredOuputSerializer` to `Symfony\AI\Platform\StructuredOutput\Serializer`
+
 UPGRADE FROM 0.1 to 0.2
 =======================
 
@@ -47,6 +113,16 @@ Platform
 
 Store
 -----
+
+* The `StoreInterface::remove()` method was added to the interface
+
+  ```php
+  public function remove(string|array $ids, array $options = []): void;
+
+  // Usage
+  $store->remove('vector-id-1');
+  $store->remove(['vid-1', 'vid-2']);
+  ```
 
  * The `StoreInterface::add()` method signature has changed from variadic to accept a single document or an array
 

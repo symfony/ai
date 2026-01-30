@@ -19,8 +19,11 @@ use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -115,7 +118,7 @@ class ResultConverterTest extends TestCase
 
         $httpResponse->expects($this->exactly(1))
             ->method('toArray')
-            ->willReturnCallback(function ($throw = true) {
+            ->willReturnCallback(static function ($throw = true) {
                 if ($throw) {
                     throw new class extends \Exception implements ClientExceptionInterface {
                         public function getResponse(): ResponseInterface
@@ -214,5 +217,88 @@ class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Error "invalid_request_error"-invalid_request (model): "The model `gpt-5` does not exist".');
 
         $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testStreamTransmitsUsageToResultMetadata()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            [
+                'type' => 'message.delta.output_text.delta',
+                'delta' => 'Hello',
+            ],
+            [
+                'type' => 'message.delta.output_text.delta',
+                'delta' => ' world',
+            ],
+            [
+                'type' => 'response.completed',
+                'response' => [
+                    'usage' => [
+                        'input_tokens' => 11,
+                        'output_tokens' => 7,
+                        'output_tokens_details' => [
+                            'reasoning_tokens' => 2,
+                        ],
+                        'input_tokens_details' => [
+                            'cached_tokens' => 3,
+                        ],
+                        'total_tokens' => 18,
+                    ],
+                    'output' => [],
+                ],
+            ],
+        ];
+
+        $raw = new class($httpResponse, $events) implements RawResultInterface {
+            /**
+             * @param array<array<string, mixed>> $events
+             */
+            public function __construct(
+                private readonly ResponseInterface $response,
+                private readonly array $events,
+            ) {
+            }
+
+            public function getData(): array
+            {
+                return [];
+            }
+
+            public function getDataStream(): iterable
+            {
+                foreach ($this->events as $event) {
+                    yield $event;
+                }
+            }
+
+            public function getObject(): object
+            {
+                return $this->response;
+            }
+        };
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $streamResult);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $this->assertSame('Hello', $chunks[0]);
+        $this->assertSame(' world', $chunks[1]);
+
+        $this->assertInstanceOf(TokenUsage::class, $chunks[2]);
+        $this->assertSame(11, $chunks[2]->getPromptTokens());
+        $this->assertSame(7, $chunks[2]->getCompletionTokens());
+        $this->assertSame(2, $chunks[2]->getThinkingTokens());
+        $this->assertSame(3, $chunks[2]->getCachedTokens());
+        $this->assertSame(18, $chunks[2]->getTotalTokens());
     }
 }

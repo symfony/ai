@@ -33,7 +33,11 @@ final class ElevenLabsApiCatalog implements ModelCatalogInterface
         $models = $this->getModels();
 
         if (!\array_key_exists($modelName, $models)) {
-            throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieve from the API.', $modelName));
+            throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieved from the API.', $modelName));
+        }
+
+        if ([] === $models[$modelName]['capabilities']) {
+            throw new InvalidArgumentException(\sprintf('The model "%s" is not supported, please check the ElevenLabs API.', $modelName));
         }
 
         return new ElevenLabs($modelName, $models[$modelName]['capabilities']);
@@ -43,34 +47,32 @@ final class ElevenLabsApiCatalog implements ModelCatalogInterface
     {
         $response = $this->httpClient->request('GET', \sprintf('%s/models', $this->hostUrl), [
             'headers' => [
-                'x-api-key' => $this->apiKey,
+                'xi-api-key' => $this->apiKey,
             ],
         ]);
 
         $models = $response->toArray();
 
-        $capabilities = fn (array $model): array => match (true) {
+        $capabilities = static fn (array $model): array => match (true) {
             $model['can_do_text_to_speech'] => [
                 Capability::TEXT_TO_SPEECH,
                 Capability::INPUT_TEXT,
                 Capability::OUTPUT_AUDIO,
             ],
-            $model['can_do_voice_conversation'] => [
+            $model['can_do_voice_conversion'] => [
                 Capability::SPEECH_TO_TEXT,
                 Capability::INPUT_AUDIO,
                 Capability::OUTPUT_TEXT,
             ],
-            default => throw new InvalidArgumentException(\sprintf('The model "%s" is not supported, please check the ElevenLabs API.', $model['name'])),
+            default => [],
         };
 
-        return array_merge(...array_map(
-            static fn (array $model): array => [
-                $model['name'] => [
-                    'class' => ElevenLabs::class,
-                    'capabilities' => $capabilities($model),
-                ],
-            ],
-            $models,
-        ));
+        return array_combine(
+            array_map(static fn (array $model): string => $model['model_id'], $models),
+            array_map(static fn (array $model): array => [
+                'class' => ElevenLabs::class,
+                'capabilities' => $capabilities($model),
+            ], $models),
+        );
     }
 }

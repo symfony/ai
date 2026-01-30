@@ -40,10 +40,6 @@ $result = $agent->call(new MessageBag(Message::ofUser($prompt)), ['stream' => tr
 foreach ($result->getContent() as $word) {
     echo $word;
 }
-echo \PHP_EOL;
+echo \PHP_EOL.\PHP_EOL;
 
-echo 'Used sources:'.\PHP_EOL;
-foreach ($result->getMetadata()->get('sources', []) as $source) {
-    echo sprintf(' - %s (%s)', $source->getName(), $source->getReference()).\PHP_EOL;
-}
-echo \PHP_EOL;
+print_sources($result->getMetadata()->get('sources'));

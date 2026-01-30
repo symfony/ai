@@ -27,7 +27,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-mate": "^0.2",
+        "symfony/ai-mate": "^0.3",
         "monolog/monolog": "^2.0|^3.0"
     },
     "require-dev": {
@@ -52,9 +52,6 @@
         "sort-packages": true
     },
     "extra": {
-        "branch-alias": {
-            "dev-main": "0.3.x-dev"
-        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"
@@ -65,7 +62,8 @@
             ],
             "includes": [
                 "config/config.php"
-            ]
+            ],
+            "instructions": "INSTRUCTIONS.md"
         }
     }
 }

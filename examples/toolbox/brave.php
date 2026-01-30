@@ -29,7 +29,7 @@ $clock = new Clock(new SymfonyClock());
 $crawler = new Scraper(http_client());
 $toolbox = new Toolbox([$brave, $clock, $crawler], logger: logger());
 $processor = new AgentProcessor($toolbox, includeSources: true);
-$agent = new Agent($platform, 'gpt-4o', [$processor], [$processor]);
+$agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor]);
 
 $prompt = <<<PROMPT
     Summarize the latest game of the Dallas Cowboys. When and where was it? Who was the opponent, what was the result,
@@ -41,8 +41,4 @@ $result = $agent->call(new MessageBag(Message::ofUser($prompt)));
 
 echo $result->getContent().\PHP_EOL.\PHP_EOL;
 
-echo 'Used sources:'.\PHP_EOL;
-foreach ($result->getMetadata()->get('sources', []) as $source) {
-    echo sprintf(' - %s (%s)', $source->getName(), $source->getReference()).\PHP_EOL;
-}
-echo \PHP_EOL;
+print_sources($result->getMetadata()->get('sources'));

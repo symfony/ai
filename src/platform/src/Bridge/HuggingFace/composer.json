@@ -25,7 +25,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-platform": "^0.2",
+        "symfony/ai-platform": "^0.3",
         "symfony/console": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0"
     },
@@ -51,9 +51,6 @@
         "sort-packages": true
     },
     "extra": {
-        "branch-alias": {
-            "dev-main": "0.3.x-dev"
-        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"

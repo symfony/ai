@@ -82,7 +82,7 @@ final class WhisperModelClientTest extends TestCase
     public function testItUsesTranscriptionEndpointByDefault()
     {
         $httpClient = new MockHttpClient([
-            function ($method, $url): MockResponse {
+            static function ($method, $url): MockResponse {
                 self::assertSame('POST', $method);
                 self::assertSame('https://test.azure.com/openai/deployments/whspr/audio/transcriptions?api-version=2023-12', $url);
 
@@ -99,7 +99,7 @@ final class WhisperModelClientTest extends TestCase
     public function testItUsesTranscriptionEndpointWhenTaskIsSpecified()
     {
         $httpClient = new MockHttpClient([
-            function ($method, $url): MockResponse {
+            static function ($method, $url): MockResponse {
                 self::assertSame('POST', $method);
                 self::assertSame('https://test.azure.com/openai/deployments/whspr/audio/transcriptions?api-version=2023-12', $url);
 
@@ -116,7 +116,7 @@ final class WhisperModelClientTest extends TestCase
     public function testItUsesTranslationEndpointWhenTaskIsSpecified()
     {
         $httpClient = new MockHttpClient([
-            function ($method, $url): MockResponse {
+            static function ($method, $url): MockResponse {
                 self::assertSame('POST', $method);
                 self::assertSame('https://test.azure.com/openai/deployments/whspr/audio/translations?api-version=2023-12', $url);
 

@@ -16,9 +16,9 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -68,11 +68,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $documents,
         );
 
-        $this->request('POST', \sprintf('vectorize/v2/indexes/%s/upsert', $this->index), function () use ($payload) {
+        $this->request('POST', \sprintf('vectorize/v2/indexes/%s/upsert', $this->index), static function () use ($payload) {
             foreach ($payload as $entry) {
                 yield json_encode($entry).\PHP_EOL;
             }
         });
+    }
+
+    public function remove(string|array $ids, array $options = []): void
+    {
+        throw new LogicException('Method not implemented yet.');
     }
 
     public function query(Vector $vector, array $options = []): iterable
@@ -142,7 +147,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             : new Vector($data['values']);
 
         return new VectorDocument(
-            id: Uuid::fromString($id),
+            id: $id,
             vector: $vector,
             metadata: new Metadata($data['metadata']),
             score: $data['score'] ?? null

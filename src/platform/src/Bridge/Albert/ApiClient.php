@@ -37,6 +37,6 @@ final class ApiClient
             'auth_bearer' => $this->apiKey,
         ]);
 
-        return array_map(fn (array $model) => new Model($model['id']), $result->toArray()['data']);
+        return array_map(static fn (array $model) => new Model($model['id']), $result->toArray()['data']);
     }
 }

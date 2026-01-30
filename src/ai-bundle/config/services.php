@@ -30,6 +30,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\ModelCatalog as AzureOpenAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Bedrock\ModelCatalog as BedrockModelCatalog;
+use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Bridge\Cartesia\ModelCatalog as CartesiaModelCatalog;
 use Symfony\AI\Platform\Bridge\Cerebras\ModelCatalog as CerebrasModelCatalog;
 use Symfony\AI\Platform\Bridge\Decart\ModelCatalog as DecartModelCatalog;
@@ -64,10 +65,10 @@ use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRende
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
-use Symfony\AI\Platform\Serializer\StructuredOutputSerializer;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
+use Symfony\AI\Platform\StructuredOutput\Serializer as StructuredOutputSerializer;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
 use Symfony\AI\Store\Command\RetrieveCommand;
@@ -219,6 +220,12 @@ return static function (ContainerConfigurator $container): void {
 
         // serializer
         ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
+            ->tag('serializer.normalizer')
+
+        ->set('ai.platform.cache.result_normalizer', ResultNormalizer::class)
+            ->args([
+                service('serializer.normalizer.object'),
+            ])
             ->tag('serializer.normalizer')
 
         // commands

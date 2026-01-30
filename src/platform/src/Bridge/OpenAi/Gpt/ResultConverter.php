@@ -134,6 +134,10 @@ final class ResultConverter implements ResultConverterInterface
         foreach ($result->getDataStream() as $event) {
             $type = $event['type'] ?? '';
 
+            if (isset($event['response']['usage'])) {
+                yield $this->getTokenUsageExtractor()->fromDataArray($event['response']);
+            }
+
             if (str_contains($type, 'output_text') && isset($event['delta'])) {
                 yield $event['delta'];
             }

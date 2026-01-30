@@ -185,7 +185,7 @@ final class AgentCallCommandTest extends TestCase
 
         $agent->expects($this->exactly(2))
             ->method('call')
-            ->willReturnCallback(function (MessageBag $messages) use ($result) {
+            ->willReturnCallback(static function (MessageBag $messages) use ($result) {
                 // Simulate SystemPromptInputProcessor behavior - add system prompt if not present
                 if (null === $messages->getSystemMessage()) {
                     $messages->withSystemMessage(Message::forSystem('System prompt'));

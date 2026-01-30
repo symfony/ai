@@ -79,7 +79,7 @@ final class MetadataTest extends TestCase
     public function testItCanMergeMetadataArrays()
     {
         $metadata = new Metadata(['key0' => 'value0', 'key1' => 'value1']);
-        $metadata->merge(['key2' => 'value2', 'key1' => 'newValue1']);
+        $metadata->merge(new Metadata(['key2' => 'value2', 'key1' => 'newValue1']));
 
         $this->assertTrue($metadata->has('key0'));
         $this->assertTrue($metadata->has('key1'));

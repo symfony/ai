@@ -348,7 +348,7 @@ final class MockAgentTest extends TestCase
     public function testCallableResponse()
     {
         $agent = new MockAgent();
-        $agent->addResponse('dynamic', function ($messages, $options, $input) {
+        $agent->addResponse('dynamic', static function ($messages, $options, $input) {
             return "Dynamic response for: {$input}";
         });
 
@@ -361,7 +361,7 @@ final class MockAgentTest extends TestCase
     public function testCallableResponseWithParameters()
     {
         $agent = new MockAgent();
-        $agent->addResponse('test', function ($messages, $options, $input) {
+        $agent->addResponse('test', static function ($messages, $options, $input) {
             $messageCount = \count($messages->getMessages());
             $optionKeys = implode(',', array_keys($options));
 
@@ -381,7 +381,7 @@ final class MockAgentTest extends TestCase
     public function testCallableReturningMockResponse()
     {
         $agent = new MockAgent();
-        $agent->addResponse('complex', function ($messages, $options, $input) {
+        $agent->addResponse('complex', static function ($messages, $options, $input) {
             return new MockResponse("Complex response for: {$input}");
         });
 
@@ -394,7 +394,7 @@ final class MockAgentTest extends TestCase
     public function testCallableTrackingInCalls()
     {
         $agent = new MockAgent();
-        $agent->addResponse('tracked', function ($messages, $options, $input) {
+        $agent->addResponse('tracked', static function ($messages, $options, $input) {
             return "Tracked: {$input}";
         });
 

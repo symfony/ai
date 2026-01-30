@@ -30,5 +30,5 @@ foreach ($result->asStream() as $word) {
 }
 echo \PHP_EOL;
 
-print_search_results($result->getMetadata());
-print_citations($result->getMetadata());
+print_search_results($result->getResult()->getMetadata()->get('search_results'));
+print_citations($result->getResult()->getMetadata()->get('citations'));

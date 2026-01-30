@@ -226,7 +226,7 @@ services:
             - '8108:8108'
 
     weaviate:
-        image: cr.weaviate.io/semitechnologies/weaviate:1.32.4
+        image: cr.weaviate.io/semitechnologies/weaviate:1.35.3
         command: ['--host', '0.0.0.0', '--port', '8080', '--scheme', 'http']
         environment:
             QUERY_DEFAULTS_LIMIT: 25

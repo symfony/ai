@@ -10,8 +10,8 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
-use Symfony\AI\Platform\CachedPlatform;
+use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
+use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -19,10 +19,10 @@ use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
-$cachedPlatform = new CachedPlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
 
-$agent = new Agent($cachedPlatform, 'qwen3:0.6b-q4_K_M');
+$agent = new Agent($cachedPlatform, 'gpt-4o-mini');
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),

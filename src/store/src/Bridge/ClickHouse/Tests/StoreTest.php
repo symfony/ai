@@ -115,7 +115,7 @@ final class StoreTest extends TestCase
         $uuid = Uuid::v4();
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]));
 
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) {
             return new MockResponse('Internal Server Error', ['http_code' => 500]);
         });
 
@@ -220,7 +220,7 @@ final class StoreTest extends TestCase
             ],
         ];
 
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($responseData) {
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($responseData) {
             return new MockResponse(json_encode($responseData));
         });
 

@@ -30,7 +30,7 @@ final class TokenClassificationResult
     public static function fromArray(array $data): self
     {
         return new self(array_map(
-            fn (array $item) => new Token(
+            static fn (array $item) => new Token(
                 $item['entity_group'],
                 $item['score'],
                 $item['word'],

@@ -61,7 +61,7 @@ Supported Message stores
 Implementing a Bridge
 ---------------------
 
-The main extension points of the Chat component is the ``Symfony\AI\Chat\MessageStoreInterface``, that defines the methods
+The main extension points of the Chat component is the :class:`Symfony\\AI\\Chat\\MessageStoreInterface`, that defines the methods
 for adding messages to the message store, and returning the messages from a store.
 
 This leads to a store implementing two methods::
@@ -86,7 +86,7 @@ Managing a store
 ----------------
 
 Some store might requires to create table, indexes and so on before storing messages,
-the ``Symfony\AI\Chat\ManagedStoreInterface`` defines the methods
+the :class:`Symfony\\AI\\Chat\\ManagedStoreInterface` defines the methods
 to setup and drop the store.
 
 This leads to a store implementing two methods::

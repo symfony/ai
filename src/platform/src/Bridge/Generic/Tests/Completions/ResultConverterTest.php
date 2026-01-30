@@ -123,7 +123,7 @@ class ResultConverterTest extends TestCase
 
         $httpResponse->expects($this->exactly(1))
             ->method('toArray')
-            ->willReturnCallback(function ($throw = true) {
+            ->willReturnCallback(static function ($throw = true) {
                 if ($throw) {
                     throw new class extends \Exception implements ClientExceptionInterface {
                         public function getResponse(): ResponseInterface

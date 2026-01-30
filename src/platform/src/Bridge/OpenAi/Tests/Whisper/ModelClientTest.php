@@ -61,7 +61,7 @@ final class ModelClientTest extends TestCase
     public function testItUsesTranscriptionEndpointByDefault()
     {
         $httpClient = new MockHttpClient([
-            function ($method, $url): MockResponse {
+            static function ($method, $url): MockResponse {
                 self::assertSame('POST', $method);
                 self::assertSame('https://api.openai.com/v1/audio/transcriptions', $url);
 
@@ -78,7 +78,7 @@ final class ModelClientTest extends TestCase
     public function testItUsesTranscriptionEndpointWhenTaskIsSpecified()
     {
         $httpClient = new MockHttpClient([
-            function ($method, $url): MockResponse {
+            static function ($method, $url): MockResponse {
                 self::assertSame('POST', $method);
                 self::assertSame('https://api.openai.com/v1/audio/transcriptions', $url);
 
@@ -95,7 +95,7 @@ final class ModelClientTest extends TestCase
     public function testItUsesTranslationEndpointWhenTaskIsSpecified()
     {
         $httpClient = new MockHttpClient([
-            function ($method, $url): MockResponse {
+            static function ($method, $url): MockResponse {
                 self::assertSame('POST', $method);
                 self::assertSame('https://api.openai.com/v1/audio/translations', $url);
 
@@ -115,7 +115,7 @@ final class ModelClientTest extends TestCase
     public function testItUsesCorrectRegionUrlForTranscription(?string $region, string $expectedUrl)
     {
         $httpClient = new MockHttpClient([
-            function ($method, $url) use ($expectedUrl): MockResponse {
+            static function ($method, $url) use ($expectedUrl): MockResponse {
                 self::assertSame('POST', $method);
                 self::assertSame($expectedUrl, $url);
 
@@ -135,7 +135,7 @@ final class ModelClientTest extends TestCase
     public function testItUsesCorrectRegionUrlForTranslation(?string $region, string $expectedUrl)
     {
         $httpClient = new MockHttpClient([
-            function ($method, $url) use ($expectedUrl): MockResponse {
+            static function ($method, $url) use ($expectedUrl): MockResponse {
                 self::assertSame('POST', $method);
                 self::assertSame($expectedUrl, $url);
 

@@ -38,4 +38,8 @@ foreach ($result->getContent() as $word) {
     echo $word;
 }
 
+echo \PHP_EOL.\PHP_EOL;
+
+print_token_usage($result->getMetadata()->get('token_usage'));
+
 echo \PHP_EOL;

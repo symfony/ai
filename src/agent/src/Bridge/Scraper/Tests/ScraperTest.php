@@ -45,7 +45,7 @@ final class ScraperTest extends TestCase
 
         $scraper('https://example.com');
 
-        $sources = $scraper->getSourceMap()->getSources();
+        $sources = $scraper->getSourceCollection()->all();
         $this->assertCount(1, $sources);
         $this->assertSame('Example Page Title', $sources[0]->getName());
         $this->assertSame('https://example.com', $sources[0]->getReference());

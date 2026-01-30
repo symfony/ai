@@ -96,6 +96,9 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
                     case 'image':
                         $capabilities[] = Capability::OUTPUT_IMAGE;
                         break;
+                    case 'audio':
+                        $capabilities[] = Capability::OUTPUT_AUDIO;
+                        break;
                     default:
                         throw new InvalidArgumentException('Unknown model '.$outputModality.' output modality.', 1763717588);
                 }

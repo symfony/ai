@@ -16,9 +16,9 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -57,6 +57,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ],
             'objects' => array_map($this->convertToIndexableArray(...), $documents),
         ]);
+    }
+
+    public function remove(string|array $ids, array $options = []): void
+    {
+        throw new LogicException('Method not implemented yet.');
     }
 
     public function query(Vector $vector, array $options = []): iterable
@@ -120,10 +125,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
     {
         return [
             'class' => $this->collection,
-            'id' => $document->id->toRfc4122(),
+            'id' => $document->id,
             'vector' => $document->vector->getData(),
             'properties' => [
-                'uuid' => $document->id->toRfc4122(),
+                'uuid' => $document->id,
                 'vector' => $document->vector->getData(),
                 '_metadata' => json_encode($document->metadata->getArrayCopy()),
             ],
@@ -141,6 +146,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ? new NullVector()
             : new Vector($data['vector']);
 
-        return new VectorDocument(Uuid::fromString($id), $vector, new Metadata(json_decode($data['_metadata'], true)));
+        return new VectorDocument($id, $vector, new Metadata(json_decode($data['_metadata'], true)));
     }
 }

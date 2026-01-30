@@ -53,6 +53,9 @@ final class McpBundle extends AbstractBundle
 
         $builder->setParameter('mcp.app', $config['app']);
         $builder->setParameter('mcp.version', $config['version']);
+        $builder->setParameter('mcp.description', $config['description']);
+        $builder->setParameter('mcp.website_url', $config['website_url']);
+        $builder->setParameter('mcp.icons', $config['icons']);
         $builder->setParameter('mcp.pagination_limit', $config['pagination_limit']);
         $builder->setParameter('mcp.instructions', $config['instructions']);
         $builder->setParameter('mcp.discovery.scan_dirs', $config['discovery']['scan_dirs']);

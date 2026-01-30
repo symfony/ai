@@ -131,7 +131,7 @@ final class Factory
             // Check for ToolParameter attributes
             $attributes = $element->getAttributes(With::class);
             if (\count($attributes) > 0) {
-                $attributeState = array_filter((array) $attributes[0]->newInstance(), fn ($value) => null !== $value);
+                $attributeState = array_filter((array) $attributes[0]->newInstance(), static fn ($value) => null !== $value);
                 $schema = array_merge($schema, $attributeState);
             }
 
@@ -228,12 +228,11 @@ final class Factory
 
                 if (\in_array($className, ['DateTime', 'DateTimeImmutable', 'DateTimeInterface'], true)) {
                     return ['type' => 'string', 'format' => 'date-time'];
-                } else {
-                    // Recursively build the schema for an object type
-                    return $this->buildProperties($className) ?? ['type' => 'object'];
                 }
 
-                // no break
+                // Recursively build the schema for an object type
+                return $this->buildProperties($className) ?? ['type' => 'object'];
+
             case $type->isIdentifiedBy(TypeIdentifier::NULL):
                 return ['type' => 'null'];
             case $type->isIdentifiedBy(TypeIdentifier::STRING):

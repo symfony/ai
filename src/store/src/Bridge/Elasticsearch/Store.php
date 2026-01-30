@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Uid\Uuid;
@@ -83,11 +84,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'metadata' => json_encode($document->metadata->getArrayCopy()),
         ];
 
-        $this->request('POST', '_bulk', function () use ($documents, $documentToIndex, $documentToPayload) {
+        $this->request('POST', '_bulk', static function () use ($documents, $documentToIndex, $documentToPayload) {
             foreach ($documents as $document) {
                 yield json_encode($documentToIndex($document)).\PHP_EOL.json_encode($documentToPayload($document)).\PHP_EOL;
             }
         });
+    }
+
+    public function remove(string|array $ids, array $options = []): void
+    {
+        throw new LogicException('Method not implemented yet.');
     }
 
     public function query(Vector $vector, array $options = []): iterable

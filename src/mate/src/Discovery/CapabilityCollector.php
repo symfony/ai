@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Mate\Discovery;
 
-use Mcp\Capability\Discovery\Discoverer;
+use Mcp\Capability\Discovery\DiscovererInterface;
 use Mcp\Capability\Registry\PromptReference;
 use Mcp\Capability\Registry\ResourceTemplateReference;
 use Mcp\Capability\Registry\ToolReference;
@@ -52,7 +52,7 @@ use Psr\Log\LoggerInterface;
  */
 class CapabilityCollector
 {
-    private Discoverer $discoverer;
+    private DiscovererInterface $discoverer;
     private FilteredDiscoveryLoader $loader;
 
     /**
@@ -63,9 +63,10 @@ class CapabilityCollector
         string $rootDir,
         array $extensions,
         array $disabledFeatures,
+        DiscovererInterface $discoverer,
         private LoggerInterface $logger,
     ) {
-        $this->discoverer = new Discoverer($this->logger);
+        $this->discoverer = $discoverer;
         $this->loader = new FilteredDiscoveryLoader(
             $rootDir,
             $extensions,
@@ -141,10 +142,10 @@ class CapabilityCollector
         foreach ($resources as $uri => $resourceRef) {
             $formatted[$uri] = [
                 'uri' => $uri,
-                'name' => $resourceRef->schema->name,
-                'description' => $resourceRef->schema->description,
+                'name' => $resourceRef->resource->name,
+                'description' => $resourceRef->resource->description,
                 'handler' => $this->getHandlerInfo($resourceRef->handler),
-                'mime_type' => $resourceRef->schema->mimeType,
+                'mime_type' => $resourceRef->resource->mimeType,
             ];
         }
 

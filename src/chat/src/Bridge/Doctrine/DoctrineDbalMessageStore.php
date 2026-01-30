@@ -11,21 +11,21 @@
 
 namespace Symfony\AI\Chat\Bridge\Doctrine;
 
-use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Connection as DBALConnection;
 use Doctrine\DBAL\Platforms\OraclePlatform;
-use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Schema\Name\Identifier;
 use Doctrine\DBAL\Schema\Name\UnqualifiedName;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
+use Psr\Clock\ClockInterface;
 use Symfony\AI\Chat\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Serializer;
@@ -43,6 +43,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             new ArrayDenormalizer(),
             new MessageNormalizer(),
         ], [new JsonEncoder()]),
+        private readonly ClockInterface $clock = new MonotonicClock(),
     ) {
     }
 
@@ -72,9 +73,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         $queryBuilder = $this->dbalConnection->createQueryBuilder()
             ->delete($this->tableName);
 
-        $this->dbalConnection->transactional(fn (Connection $connection): Result => $connection->executeQuery(
-            $queryBuilder->getSQL(),
-        ));
+        $this->dbalConnection->executeStatement($queryBuilder->getSQL());
     }
 
     public function save(MessageBag $messages): void
@@ -83,15 +82,13 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             ->insert($this->tableName)
             ->values([
                 'messages' => '?',
+                'added_at' => '?',
             ]);
 
-        $this->dbalConnection->transactional(fn (Connection $connection): Result => $connection->executeQuery(
-            $queryBuilder->getSQL(),
-            [
-                $this->serializer->serialize($messages->getMessages(), 'json'),
-            ],
-            $queryBuilder->getParameterTypes(),
-        ));
+        $this->dbalConnection->executeStatement($queryBuilder->getSQL(), [
+            $this->serializer->serialize($messages->getMessages(), 'json'),
+            $this->clock->now()->getTimestamp(),
+        ]);
     }
 
     public function load(): MessageBag
@@ -99,11 +96,10 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         $queryBuilder = $this->dbalConnection->createQueryBuilder()
             ->select('messages')
             ->from($this->tableName)
+            ->orderBy('added_at', 'ASC')
         ;
 
-        $result = $this->dbalConnection->transactional(static fn (Connection $connection): Result => $connection->executeQuery(
-            $queryBuilder->getSQL(),
-        ));
+        $result = $this->dbalConnection->executeQuery($queryBuilder->getSQL());
 
         $messages = array_map(
             fn (array $payload): array => $this->serializer->deserialize($payload['messages'], MessageInterface::class.'[]', 'json'),
@@ -121,6 +117,8 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             ->setAutoincrement(true)
             ->setNotnull(true);
         $table->addColumn('messages', Types::TEXT)
+            ->setNotnull(true);
+        $table->addColumn('added_at', Types::INTEGER)
             ->setNotnull(true);
         if (class_exists(PrimaryKeyConstraint::class)) {
             $table->addPrimaryKeyConstraint(new PrimaryKeyConstraint(null, [

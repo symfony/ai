@@ -20,7 +20,7 @@ use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
-use Symfony\AI\Agent\Toolbox\Source\SourceMap;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
@@ -51,7 +51,7 @@ final class Toolbox implements ToolboxInterface
     public function __construct(
         iterable $tools,
         private readonly ToolFactoryInterface $toolFactory = new ReflectionToolFactory(),
-        private readonly ToolCallArgumentResolver $argumentResolver = new ToolCallArgumentResolver(),
+        private readonly ToolCallArgumentResolverInterface $argumentResolver = new ToolCallArgumentResolver(),
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
@@ -86,13 +86,13 @@ final class Toolbox implements ToolboxInterface
             $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metadata, $arguments));
 
             if ($tool instanceof HasSourcesInterface) {
-                $tool->setSourceMap($sourceMap = new SourceMap());
+                $tool->setSourceCollection($sourceCollection = new SourceCollection());
             }
 
             $result = new ToolResult(
                 $toolCall,
                 $tool->{$metadata->getReference()->getMethod()}(...$arguments),
-                $tool instanceof HasSourcesInterface ? $sourceMap->getSources() : [],
+                $tool instanceof HasSourcesInterface ? $sourceCollection : null,
             );
 
             $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metadata, $arguments, $result));

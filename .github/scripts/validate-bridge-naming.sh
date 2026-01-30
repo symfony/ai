@@ -56,12 +56,29 @@ for composer_file in ${BRIDGE_PATH}/composer.json; do
         # Expected config key should be lowercase without dashes/underscores
         expected_config_key=$(echo "$bridge_name" | tr '[:upper:]' '[:lower:]')
 
-        # Look for ->arrayNode('configkey') in the options file
-        if ! grep -q -- "->arrayNode('$expected_config_key')" "$OPTIONS_FILE"; then
-            echo "::error file=$OPTIONS_FILE::Missing or incorrect config key for bridge '$bridge_name'. Expected '->arrayNode('$expected_config_key')' in ${BRIDGE_TYPE} configuration"
+        # First check if there's an $import for this bridge type
+        options_dir=$(dirname "$OPTIONS_FILE")
+        # Config directories use underscores (message_store) while bridge types use dashes (message-store)
+        config_dir_name=$(echo "$BRIDGE_TYPE" | tr '-' '_')
+        import_pattern="\$import('${config_dir_name}/${expected_config_key}')"
+
+        if ! grep -q -- "$import_pattern" "$OPTIONS_FILE"; then
+            echo "::error file=$OPTIONS_FILE::Missing import for bridge '$bridge_name'. Expected \"\$import('${config_dir_name}/${expected_config_key}')\" in ${BRIDGE_TYPE} configuration"
+            ERRORS=$((ERRORS + 1))
+            continue
+        fi
+
+        # Import found, check if the imported file exists
+        imported_file="${options_dir}/${config_dir_name}/${expected_config_key}.php"
+
+        if [[ ! -f "$imported_file" ]]; then
+            echo "::error file=$OPTIONS_FILE::Import found for '$expected_config_key' but file '$imported_file' does not exist"
+            ERRORS=$((ERRORS + 1))
+        elif ! grep -q -- "ArrayNodeDefinition('$expected_config_key')" "$imported_file"; then
+            echo "::error file=$imported_file::Missing or incorrect config key for bridge '$bridge_name'. Expected \"ArrayNodeDefinition('$expected_config_key')\" in imported file"
             ERRORS=$((ERRORS + 1))
         else
-            echo "✓ $bridge_name: config key '$expected_config_key' found in options.php"
+            echo "✓ $bridge_name: import and config key '$expected_config_key' found in ${config_dir_name}/${expected_config_key}.php"
         fi
     fi
 done

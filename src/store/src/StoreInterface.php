@@ -25,6 +25,12 @@ interface StoreInterface
     public function add(VectorDocument|array $documents): void;
 
     /**
+     * @param string|array<string> $ids
+     * @param array<string, mixed> $options
+     */
+    public function remove(string|array $ids, array $options = []): void;
+
+    /**
      * @param array<string, mixed> $options
      *
      * @return iterable<VectorDocument>

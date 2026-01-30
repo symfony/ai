@@ -124,7 +124,7 @@ final class Vectorizer implements VectorizerInterface
         $this->logger->info('Starting vectorization of strings', ['string_count' => $stringCount]);
 
         // Convert all values to strings
-        $stringValues = array_map(fn (string|\Stringable $s) => (string) $s, $strings);
+        $stringValues = array_map(static fn (string|\Stringable $s) => (string) $s, $strings);
 
         if ($this->platform->getModelCatalog()->getModel($this->model)->supports(Capability::INPUT_MULTIPLE)) {
             $this->logger->debug('Using batch vectorization with model that supports multiple inputs');
@@ -165,7 +165,7 @@ final class Vectorizer implements VectorizerInterface
 
         if ($this->platform->getModelCatalog()->getModel($this->model)->supports(Capability::INPUT_MULTIPLE)) {
             $this->logger->debug('Using batch vectorization with model that supports multiple inputs');
-            $result = $this->platform->invoke($this->model, array_map(fn (EmbeddableDocumentInterface $document) => $document->getContent(), $documents), $options);
+            $result = $this->platform->invoke($this->model, array_map(static fn (EmbeddableDocumentInterface $document) => $document->getContent(), $documents), $options);
 
             $vectors = $result->asVectors();
             $this->logger->debug('Batch vectorization completed', ['vector_count' => \count($vectors)]);

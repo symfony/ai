@@ -27,6 +27,8 @@ final class ChunkDelayTransformer implements TransformerInterface
 
     public function __construct(
         private readonly ClockInterface $clock,
+        private readonly int $chunkSize = 50,
+        private readonly int $delay = 10,
     ) {
     }
 
@@ -35,8 +37,8 @@ final class ChunkDelayTransformer implements TransformerInterface
      */
     public function transform(iterable $documents, array $options = []): iterable
     {
-        $chunkSize = $options[self::OPTION_CHUNK_SIZE] ?? 50;
-        $delay = $options[self::OPTION_DELAY] ?? 10;
+        $chunkSize = $options[self::OPTION_CHUNK_SIZE] ?? $this->chunkSize;
+        $delay = $options[self::OPTION_DELAY] ?? $this->delay;
 
         $counter = 0;
         foreach ($documents as $document) {

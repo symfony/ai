@@ -171,7 +171,7 @@ final class ObjectDetectionResultTest extends TestCase
         $this->assertCount(4, $result->objects);
 
         // Check multiple instances of same class
-        $personCount = array_filter($result->objects, fn ($obj) => 'person' === $obj->label);
+        $personCount = array_filter($result->objects, static fn ($obj) => 'person' === $obj->label);
         $this->assertCount(2, $personCount);
     }
 }

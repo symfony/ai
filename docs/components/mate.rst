@@ -206,17 +206,24 @@ Available Bridges
 Symfony Bridge
 ~~~~~~~~~~~~~~
 
-The Symfony bridge (``symfony/ai-symfony-mate-extension``) provides container introspection tools
-for Symfony applications:
+The Symfony bridge (``symfony/ai-symfony-mate-extension``) provides container introspection and
+profiler data access tools for Symfony applications.
+
+Container Introspection
+^^^^^^^^^^^^^^^^^^^^^^^
+
+**MCP Tools:**
 
 * ``symfony-services`` - List all Symfony services from the compiled container
+
+**Configuration:**
 
 Configure the cache directory::
 
     $container->parameters()
         ->set('ai_mate_symfony.cache_dir', '%root_dir%/var/cache');
 
-**Troubleshooting**
+**Troubleshooting:**
 
 *Container not found*:
 
@@ -228,6 +235,101 @@ the compiled container XML file (e.g., ``App_KernelDevDebugContainer.xml``) in t
 1. Clear Symfony cache: ``bin/console cache:clear``
 2. Ensure the container is compiled (warm up cache)
 3. Verify the container XML file exists in the cache directory
+
+Profiler Data Access
+^^^^^^^^^^^^^^^^^^^^
+
+When ``symfony/http-kernel`` and ``symfony/web-profiler-bundle`` are installed, profiler tools
+become available for accessing Symfony profiler data.
+
+**MCP Tools:**
+
+* ``symfony-profiler-list`` - List available profiler profiles with summary data
+* ``symfony-profiler-latest`` - Get the latest profiler profile summary
+* ``symfony-profiler-search`` - Search profiles by criteria (route, method, status code, date range)
+* ``symfony-profiler-get`` - Get a specific profile by token
+
+All tools return profiles with a ``resource_uri`` field that points to the full profile resource.
+
+**MCP Resources:**
+
+* ``symfony-profiler://profile/{token}`` - Full profile details including metadata and list of available collectors with URIs
+* ``symfony-profiler://profile/{token}/{collector}`` - Detailed collector-specific data (request, response, exception, events, etc.)
+
+**Configuration:**
+
+Single profiler directory (default)::
+
+    $container->parameters()
+        ->set('ai_mate_symfony.profiler_dir', '%mate.root_dir%/var/cache/dev/profiler');
+
+Multiple directories with contexts (e.g., for multi-kernel applications)::
+
+    $container->parameters()
+        ->set('ai_mate_symfony.profiler_dir', [
+            'website' => '%mate.root_dir%/var/cache/website/dev/profiler',
+            'admin' => '%mate.root_dir%/var/cache/admin/dev/profiler',
+        ]);
+
+When using multiple directories, profiles include a ``context`` field for filtering.
+
+**Example Usage:**
+
+Search for errors::
+
+    // Using symfony-profiler-search tool
+    {
+        "method": "tools/call",
+        "params": {
+            "name": "symfony-profiler-search",
+            "arguments": {
+                "statusCode": 500,
+                "limit": 20
+            }
+        }
+    }
+
+Access full profile via resource::
+
+    // Using resource template
+    {
+        "method": "resources/read",
+        "params": {
+            "uri": "symfony-profiler://profile/abc123"
+        }
+    }
+
+Access specific collector::
+
+    {
+        "method": "resources/read",
+        "params": {
+            "uri": "symfony-profiler://profile/abc123/exception"
+        }
+    }
+
+**Security:**
+
+Cookies, session data, authentication headers, and sensitive environment variables are automatically
+redacted from profiler data.
+
+**Extensibility:**
+
+Create custom collector formatters by implementing ``CollectorFormatterInterface`` and
+registering via DI tag ``ai_mate_symfony.profiler_collector_formatter``.
+
+**Troubleshooting:**
+
+*Profiles not found*:
+
+1. Ensure the profiler directory parameter points to the correct location
+2. Verify Symfony profiler is enabled in your environment
+3. Generate some HTTP requests to create profile data
+
+*Collector data not available*:
+
+1. Check that the specific collector is enabled in Symfony profiler configuration
+2. Verify the profile was captured with that collector active
 
 Monolog Bridge
 ~~~~~~~~~~~~~~
@@ -368,6 +470,98 @@ Commands
 
         # JSON output for scripting
         $ vendor/bin/mate debug:extensions --format=json
+
+``mate mcp:tools:list``
+    List all available MCP tools with their metadata. This command provides a compact
+    overview of tools for quick reference and filtering.
+
+    **Options:**
+
+    ``--filter=PATTERN``
+        Filter tools by name pattern (supports wildcards like ``search*`` or ``*logs``)
+
+    ``--extension=EXTENSION``
+        Filter tools by extension package name
+
+    ``--format=FORMAT``
+        Output format: ``table`` (default) or ``json``
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # List all tools
+        $ vendor/bin/mate mcp:tools:list
+
+        # Filter by name pattern
+        $ vendor/bin/mate mcp:tools:list --filter="monolog*"
+        $ vendor/bin/mate mcp:tools:list --filter="*search"
+
+        # Show tools from specific extension
+        $ vendor/bin/mate mcp:tools:list --extension=symfony/ai-monolog-mate-extension
+
+        # JSON output for scripting
+        $ vendor/bin/mate mcp:tools:list --format=json
+
+        # Combined filters
+        $ vendor/bin/mate mcp:tools:list --extension=symfony/ai-monolog-mate-extension --filter="*search"
+
+``mate mcp:tools:inspect``
+    Display detailed information about a specific MCP tool including its full JSON schema.
+    This command is useful for understanding tool parameters and requirements.
+
+    **Arguments:**
+
+    ``tool-name``
+        Name of the tool to inspect (required)
+
+    **Options:**
+
+    ``--format=FORMAT``
+        Output format: ``text`` (default) or ``json``
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # Inspect a specific tool
+        $ vendor/bin/mate mcp:tools:inspect php-version
+
+        # Inspect extension tool
+        $ vendor/bin/mate mcp:tools:inspect search-logs
+
+        # JSON output for scripting
+        $ vendor/bin/mate mcp:tools:inspect php-version --format=json
+
+``mate mcp:tools:call``
+    Execute MCP tools via JSON input parameters. This command allows you to test and
+    debug tools by executing them directly from the command line.
+
+    **Arguments:**
+
+    ``tool-name``
+        Name of the tool to execute (required)
+
+    ``json-input``
+        JSON object with tool parameters (required)
+
+    **Options:**
+
+    ``--format=FORMAT``
+        Output format: ``pretty`` (default) or ``json``
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # Execute tool with empty parameters
+        $ vendor/bin/mate mcp:tools:call php-version '{}'
+
+        # Execute tool with parameters
+        $ vendor/bin/mate mcp:tools:call search-logs '{"query": "error", "level": "error"}'
+
+        # JSON output format
+        $ vendor/bin/mate mcp:tools:call php-version '{}' --format=json
 
 Security
 --------
