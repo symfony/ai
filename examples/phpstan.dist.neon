@@ -7,3 +7,5 @@ parameters:
         - ./
     excludePaths:
         - vendor
+    scanDirectories:
+        - vendor/symfony/ai-store/src
