@@ -17,34 +17,18 @@ use Psr\Cache\CacheItemPoolInterface;
 use Symfony\AI\Chat\Bridge\Cache\MessageStore;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 final class MessageStoreTest extends TestCase
 {
     public function testSetupStoresEmptyMessageBag()
     {
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $cacheItem = $this->createMock(CacheItemInterface::class);
-
-        $cache->expects($this->once())
-            ->method('getItem')
-            ->with('test_key')
-            ->willReturn($cacheItem);
-
-        $cacheItem->expects($this->once())
-            ->method('set')
-            ->with($this->isInstanceOf(MessageBag::class));
-
-        $cacheItem->expects($this->once())
-            ->method('expiresAfter')
-            ->with(86400)
-            ->willReturn($cacheItem);
-
-        $cache->expects($this->once())
-            ->method('save')
-            ->with($cacheItem);
+        $cache = new ArrayAdapter();
 
         $store = new MessageStore($cache, 'test_key');
         $store->setup();
+
+        $this->assertInstanceOf(MessageBag::class, $store->load('test_key'));
     }
 
     public function testSetupWithCustomTtl()
@@ -73,29 +57,10 @@ final class MessageStoreTest extends TestCase
         $messageBag = new MessageBag();
         $messageBag->add(Message::ofUser('Test message'));
 
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $cacheItem = $this->createMock(CacheItemInterface::class);
-
-        $cache->expects($this->once())
-            ->method('getItem')
-            ->with('messages')
-            ->willReturn($cacheItem);
-
-        $cacheItem->expects($this->once())
-            ->method('set')
-            ->with($messageBag);
-
-        $cacheItem->expects($this->once())
-            ->method('expiresAfter')
-            ->with(86400)
-            ->willReturn($cacheItem);
-
-        $cache->expects($this->once())
-            ->method('save')
-            ->with($cacheItem);
-
-        $store = new MessageStore($cache, 'messages');
+        $store = new MessageStore(new ArrayAdapter(), 'messages');
         $store->save($messageBag);
+
+        $this->assertCount(1, $store->load());
     }
 
     public function testLoadReturnsStoredMessages()
@@ -103,26 +68,12 @@ final class MessageStoreTest extends TestCase
         $messageBag = new MessageBag();
         $messageBag->add(Message::ofUser('Cached message'));
 
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $cacheItem = $this->createMock(CacheItemInterface::class);
+        $store = new MessageStore(new ArrayAdapter(), 'test_key');
+        $store->save($messageBag);
 
-        $cache->expects($this->once())
-            ->method('getItem')
-            ->with('test_key')
-            ->willReturn($cacheItem);
-
-        $cacheItem->expects($this->once())
-            ->method('isHit')
-            ->willReturn(true);
-
-        $cacheItem->expects($this->once())
-            ->method('get')
-            ->willReturn($messageBag);
-
-        $store = new MessageStore($cache, 'test_key');
         $result = $store->load();
 
-        $this->assertSame($messageBag, $result);
+        $this->assertSame($messageBag->getId()->toRfc4122(), $result->getId()->toRfc4122());
         $this->assertCount(1, $result);
     }
 
@@ -152,13 +103,15 @@ final class MessageStoreTest extends TestCase
 
     public function testDropDeletesCacheItem()
     {
-        $cache = $this->createMock(CacheItemPoolInterface::class);
+        $store = new MessageStore(new ArrayAdapter(), 'messages');
+        $store->save(new MessageBag(
+            Message::ofUser('Hello world'),
+        ));
 
-        $cache->expects($this->once())
-            ->method('deleteItem')
-            ->with('messages');
+        $this->assertCount(1, $store->load());
 
-        $store = new MessageStore($cache, 'messages');
         $store->drop();
+
+        $this->assertCount(0, $store->load());
     }
 }
