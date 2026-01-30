@@ -88,22 +88,21 @@ Use a vectorizer to convert documents into embeddings and store them::
 
     use Symfony\AI\Store\Document\Loader\InMemoryLoader;
     use Symfony\AI\Store\Document\Vectorizer;
-    use Symfony\AI\Store\Indexer;
+    use Symfony\AI\Store\Indexer\DocumentIndexer;
+    use Symfony\AI\Store\Indexer\DocumentProcessor;
 
     $platform = PlatformFactory::create(env('OPENAI_API_KEY'));
     $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
-    $indexer = new Indexer(
-        new InMemoryLoader($documents),
-        $vectorizer,
-        $store
-    );
+    $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store));
     $indexer->index($documents);
 
-The indexer handles:
+The :class:`Symfony\\AI\\Store\\Indexer\\DocumentIndexer` handles:
 
-* Loading documents from the source
+* Transforming and/or filtering documents (optional)
 * Generating vector embeddings
 * Storing vectors in the vector store
+
+Alternatively, you can use the :class:`Symfony\\AI\\Store\\Indexer\\SourceIndexer` for loading documents with a loader.
 
 Step 4: Configure Similarity Search Tool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

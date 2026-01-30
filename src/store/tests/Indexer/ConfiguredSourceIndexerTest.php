@@ -9,22 +9,23 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Store\Tests;
+namespace Symfony\AI\Store\Tests\Indexer;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
-use Symfony\AI\Store\ConfiguredIndexer;
 use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
-use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Indexer\ConfiguredSourceIndexer;
+use Symfony\AI\Store\Indexer\DocumentProcessor;
+use Symfony\AI\Store\Indexer\SourceIndexer;
 use Symfony\AI\Store\Tests\Double\PlatformTestHandler;
 use Symfony\AI\Store\Tests\Double\TestStore;
 use Symfony\Component\Uid\Uuid;
 
-final class ConfiguredIndexerTest extends TestCase
+final class ConfiguredSourceIndexerTest extends TestCase
 {
     public function testIndexUsesDefaultSourceWhenNoneProvided()
     {
@@ -33,8 +34,9 @@ final class ConfiguredIndexerTest extends TestCase
         $loader = new InMemoryLoader([$document]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
-        $innerIndexer = new Indexer($loader, $vectorizer, $store = new TestStore());
-        $configuredIndexer = new ConfiguredIndexer($innerIndexer, 'default-source');
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+        $innerIndexer = new SourceIndexer($loader, $processor);
+        $configuredIndexer = new ConfiguredSourceIndexer($innerIndexer, 'default-source');
 
         // When calling index() without source, it should use the default source
         $configuredIndexer->index();
@@ -49,27 +51,12 @@ final class ConfiguredIndexerTest extends TestCase
         $loader = new InMemoryLoader([$document]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
-        $innerIndexer = new Indexer($loader, $vectorizer, $store = new TestStore());
-        $configuredIndexer = new ConfiguredIndexer($innerIndexer, 'default-source');
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+        $innerIndexer = new SourceIndexer($loader, $processor);
+        $configuredIndexer = new ConfiguredSourceIndexer($innerIndexer, 'default-source');
 
         // When calling index() with a source, it should override the default
         $configuredIndexer->index('override-source');
-
-        $this->assertCount(1, $store->documents);
-    }
-
-    public function testIndexWithNullDefaultSource()
-    {
-        $document = new TextDocument(Uuid::v4(), 'Test content');
-        $vector = new Vector([0.1, 0.2, 0.3]);
-        $loader = new InMemoryLoader([$document]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
-
-        $innerIndexer = new Indexer($loader, $vectorizer, $store = new TestStore());
-        $configuredIndexer = new ConfiguredIndexer($innerIndexer, null);
-
-        // When no default source is set and none provided, it should work
-        $configuredIndexer->index();
 
         $this->assertCount(1, $store->documents);
     }
@@ -85,8 +72,9 @@ final class ConfiguredIndexerTest extends TestCase
         $loader = new InMemoryLoader([$document1, $document2]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2, $vector3, $vector4)), 'text-embedding-3-small');
 
-        $innerIndexer = new Indexer($loader, $vectorizer, $store = new TestStore());
-        $configuredIndexer = new ConfiguredIndexer($innerIndexer, ['source1', 'source2']);
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+        $innerIndexer = new SourceIndexer($loader, $processor);
+        $configuredIndexer = new ConfiguredSourceIndexer($innerIndexer, ['source1', 'source2']);
 
         // When default source is an array, it should be used
         $configuredIndexer->index();
@@ -110,8 +98,9 @@ final class ConfiguredIndexerTest extends TestCase
         $loader = new InMemoryLoader($documents);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult(...$vectors)), 'text-embedding-3-small');
 
-        $innerIndexer = new Indexer($loader, $vectorizer, $store = new TestStore());
-        $configuredIndexer = new ConfiguredIndexer($innerIndexer, 'default-source');
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+        $innerIndexer = new SourceIndexer($loader, $processor);
+        $configuredIndexer = new ConfiguredSourceIndexer($innerIndexer, 'default-source');
 
         // Pass custom chunk_size option
         $configuredIndexer->index(null, ['chunk_size' => 10]);

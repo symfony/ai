@@ -14,7 +14,8 @@ use Symfony\AI\Store\Document\Loader\TextFileLoader;
 use Symfony\AI\Store\Document\Transformer\TextReplaceTransformer;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
-use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Indexer\DocumentProcessor;
+use Symfony\AI\Store\Indexer\SourceIndexer;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -22,14 +23,17 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
 $store = new InMemoryStore();
 $vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'), logger());
-$indexer = new Indexer(
+$indexer = new SourceIndexer(
     loader: new TextFileLoader(),
-    vectorizer: $vectorizer,
-    store: $store,
-    transformers: [
-        new TextReplaceTransformer(search: '## Plot', replace: '## Synopsis'),
-        new TextSplitTransformer(chunkSize: 500, overlap: 100),
-    ],
+    processor: new DocumentProcessor(
+        vectorizer: $vectorizer,
+        store: $store,
+        transformers: [
+            new TextReplaceTransformer(search: '## Plot', replace: '## Synopsis'),
+            new TextSplitTransformer(chunkSize: 500, overlap: 100),
+        ],
+        logger: logger(),
+    ),
 );
 
 $indexer->index([

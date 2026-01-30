@@ -5,8 +5,11 @@ CHANGELOG
 ---
 
  * Add `StoreInterface::remove()` method
- * [BC BREAK] Make `Indexer` stateless - removed `$source` constructor parameter and `withSource()` method
- * Add `ConfiguredIndexer` decorator for pre-configuring default sources
+ * Add `SourceIndexer` for indexing from sources (file paths, URLs, etc.) using a `LoaderInterface`
+ * Add `DocumentIndexer` for indexing documents directly without a loader
+ * Add `ConfiguredSourceIndexer` decorator for pre-configuring default sources on `SourceIndexer`
+ * [BC BREAK] Remove `Indexer` class - use `SourceIndexer` or `DocumentIndexer` instead
+ * [BC BREAK] Change `IndexerInterface::index()` signature - input parameter is no longer nullable
 
 0.3
 ---

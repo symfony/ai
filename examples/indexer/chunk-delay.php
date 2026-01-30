@@ -10,12 +10,12 @@
  */
 
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\ChunkDelayTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
-use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Indexer\DocumentIndexer;
+use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\Uid\Uuid;
@@ -55,19 +55,21 @@ $documents = [
     ),
 ];
 
-$indexer = new Indexer(
-    loader: new InMemoryLoader($documents),
-    vectorizer: $vectorizer,
-    store: $store,
-    transformers: [
-        new ChunkDelayTransformer(new Clock(), 1, 10, logger()),
-    ],
+$indexer = new DocumentIndexer(
+    new DocumentProcessor(
+        vectorizer: $vectorizer,
+        store: $store,
+        transformers: [
+            new ChunkDelayTransformer(new Clock(), 1, 10, logger()),
+        ],
+        logger: logger(),
+    ),
 );
 
 echo "Indexing documents with chunk delay...\n";
 $startTime = microtime(true);
 
-$indexer->index();
+$indexer->index($documents);
 
 $elapsedTime = microtime(true) - $startTime;
 echo sprintf("Indexing completed in %.2f seconds.\n\n", $elapsedTime);

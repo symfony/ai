@@ -9,112 +9,82 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Store\Tests;
+namespace Symfony\AI\Store\Tests\Indexer;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
 use Symfony\AI\Store\Document\FilterInterface;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\TransformerInterface;
-use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\Vectorizer;
-use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\Tests\Double\PlatformTestHandler;
 use Symfony\AI\Store\Tests\Double\TestStore;
 use Symfony\Component\Uid\Uuid;
 
-final class IndexerTest extends TestCase
+final class DocumentProcessorTest extends TestCase
 {
-    public function testIndexSingleDocument()
+    public function testProcessSingleDocument()
     {
         $document = new TextDocument($id = Uuid::v4(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $loader = new InMemoryLoader([$document]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore());
-        $indexer->index();
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+        $processor->process([$document]);
 
         $this->assertCount(1, $store->documents);
-        $this->assertInstanceOf(VectorDocument::class, $store->documents[0]);
         $this->assertSame($id, $store->documents[0]->id);
         $this->assertSame($vector, $store->documents[0]->vector);
     }
 
-    public function testIndexEmptyDocumentList()
+    public function testProcessEmptyDocumentList()
     {
-        $loader = new InMemoryLoader([]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(), 'text-embedding-3-small');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore());
-        $indexer->index();
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+        $processor->process([]);
 
         $this->assertSame([], $store->documents);
     }
 
-    public function testIndexDocumentWithMetadata()
+    public function testProcessDocumentWithMetadata()
     {
         $metadata = new Metadata(['key' => 'value']);
         $document = new TextDocument($id = Uuid::v4(), 'Test content', $metadata);
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $loader = new InMemoryLoader([$document]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore());
-        $indexer->index();
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+        $processor->process([$document]);
 
         $this->assertSame(1, $store->addCalls);
         $this->assertCount(1, $store->documents);
-        $this->assertInstanceOf(VectorDocument::class, $store->documents[0]);
         $this->assertSame($id, $store->documents[0]->id);
         $this->assertSame($vector, $store->documents[0]->vector);
         $this->assertSame(['key' => 'value'], $store->documents[0]->metadata->getArrayCopy());
     }
 
-    public function testIndexWithSource()
-    {
-        $document1 = new TextDocument(Uuid::v4(), 'Document 1');
-        $vector = new Vector([0.1, 0.2, 0.3]);
-
-        // InMemoryLoader doesn't use source parameter, but we test that source is passed correctly
-        $loader = new InMemoryLoader([$document1]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
-
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore());
-        $indexer->index('source1');
-
-        $this->assertCount(1, $store->documents);
-    }
-
-    public function testIndexWithSourceArray()
+    public function testProcessMultipleDocuments()
     {
         $document1 = new TextDocument(Uuid::v4(), 'Document 1');
         $document2 = new TextDocument(Uuid::v4(), 'Document 2');
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
-        $vector3 = new Vector([0.7, 0.8, 0.9]);
-        $vector4 = new Vector([1.0, 1.1, 1.2]);
 
-        // InMemoryLoader returns all documents regardless of source
-        $loader = new InMemoryLoader([$document1, $document2]);
-        // Need 4 vectors total: 2 for each source in the array (2 sources * 2 docs = 4)
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2, $vector3, $vector4)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore());
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+        $processor->process([$document1, $document2]);
 
-        // With array sources, loadSource is called for each source
-        // Since InMemoryLoader ignores source, it returns all docs each time
-        // So with 2 sources and 2 docs each time = 4 documents total
-        $indexer->index(['source1', 'source2']);
-
-        $this->assertCount(4, $store->documents);
+        $this->assertCount(2, $store->documents);
     }
 
-    public function testIndexWithTextContainsFilter()
+    public function testProcessWithTextContainsFilter()
     {
         $documents = [
             new TextDocument(Uuid::v4(), 'Regular blog post'),
@@ -124,18 +94,17 @@ final class IndexerTest extends TestCase
         // Filter will remove the "Week of Symfony" document, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
-        $loader = new InMemoryLoader($documents);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
         $filter = new TextContainsFilter('Week of Symfony');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), [$filter]);
-        $indexer->index();
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore(), [$filter]);
+        $processor->process($documents);
 
         // Should only have 2 documents (the "Week of Symfony" one should be filtered out)
         $this->assertCount(2, $store->documents);
     }
 
-    public function testIndexWithMultipleFilters()
+    public function testProcessWithMultipleFilters()
     {
         $documents = [
             new TextDocument(Uuid::v4(), 'Regular blog post'),
@@ -146,21 +115,20 @@ final class IndexerTest extends TestCase
         // Filters will remove "Week of Symfony" and "SPAM" documents, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
-        $loader = new InMemoryLoader($documents);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
         $filters = [
             new TextContainsFilter('Week of Symfony'),
             new TextContainsFilter('SPAM'),
         ];
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), $filters);
-        $indexer->index();
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore(), $filters);
+        $processor->process($documents);
 
         // Should only have 2 documents (filtered out "Week of Symfony" and "SPAM")
         $this->assertCount(2, $store->documents);
     }
 
-    public function testIndexWithFiltersAndTransformers()
+    public function testProcessWithFiltersAndTransformers()
     {
         $documents = [
             new TextDocument(Uuid::v4(), 'Regular blog post'),
@@ -170,7 +138,6 @@ final class IndexerTest extends TestCase
         // Filter will remove "Week of Symfony" document, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
-        $loader = new InMemoryLoader($documents);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
         $filter = new TextContainsFilter('Week of Symfony');
         $transformer = new class implements TransformerInterface {
@@ -185,8 +152,8 @@ final class IndexerTest extends TestCase
             }
         };
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), [$filter], [$transformer]);
-        $indexer->index();
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore(), [$filter], [$transformer]);
+        $processor->process($documents);
 
         // Should have 2 documents (filtered out "Week of Symfony"), and transformation should have occurred
         $this->assertCount(2, $store->documents);
@@ -196,7 +163,7 @@ final class IndexerTest extends TestCase
         $this->assertSame('Good content', $store->documents[1]->metadata['original_content']);
     }
 
-    public function testIndexWithFiltersAndTransformersAppliesBoth()
+    public function testProcessWithFiltersAndTransformersAppliesBoth()
     {
         $documents = [
             new TextDocument(Uuid::v4(), 'Keep this document'),
@@ -206,7 +173,6 @@ final class IndexerTest extends TestCase
         // Filter will remove the "Remove" document, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
-        $loader = new InMemoryLoader($documents);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
 
         $filter = new class implements FilterInterface {
@@ -231,8 +197,8 @@ final class IndexerTest extends TestCase
             }
         };
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), [$filter], [$transformer]);
-        $indexer->index();
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore(), [$filter], [$transformer]);
+        $processor->process($documents);
 
         // Should have 2 documents (one filtered out)
         $this->assertCount(2, $store->documents);
@@ -243,31 +209,65 @@ final class IndexerTest extends TestCase
         }
     }
 
-    public function testIndexWithNoFilters()
+    public function testProcessWithNoFilters()
     {
         $document = new TextDocument(Uuid::v4(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $loader = new InMemoryLoader([$document]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), []);
-        $indexer->index();
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore(), []);
+        $processor->process([$document]);
 
         $this->assertCount(1, $store->documents);
     }
 
-    public function testIndexWithSourceAndFilters()
+    public function testProcessThrowsExceptionForNonDocumentInIterable()
     {
-        $document = new TextDocument(Uuid::v4(), 'Test content');
-        $vector = new Vector([0.1, 0.2, 0.3]);
-        $loader = new InMemoryLoader([$document]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
-        $filter = new TextContainsFilter('nonexistent');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(), 'text-embedding-3-small');
 
-        $indexer = new Indexer($loader, $vectorizer, $store = new TestStore(), [$filter]);
-        $indexer->index('source1');
+        $processor = new DocumentProcessor($vectorizer, new TestStore());
 
-        // Filter should still work when source is provided
-        $this->assertCount(1, $store->documents);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('DocumentProcessor expects documents to be instances of EmbeddableDocumentInterface, got "string".');
+
+        $processor->process(['not-a-document']); /* @phpstan-ignore argument.type */
+    }
+
+    public function testProcessWithChunking()
+    {
+        $documents = [];
+        $vectors = [];
+        for ($i = 0; $i < 100; ++$i) {
+            $documents[] = new TextDocument(Uuid::v4(), 'Document '.$i);
+            $vectors[] = new Vector([0.1 * $i, 0.2 * $i, 0.3 * $i]);
+        }
+
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult(...$vectors)), 'test-embedding-model');
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+
+        // With default chunk_size of 50 and 100 documents, there should be 2 add calls
+        $processor->process($documents);
+
+        $this->assertCount(100, $store->documents);
+        $this->assertSame(2, $store->addCalls);
+    }
+
+    public function testProcessWithCustomChunkSize()
+    {
+        $documents = [];
+        $vectors = [];
+        for ($i = 0; $i < 100; ++$i) {
+            $documents[] = new TextDocument(Uuid::v4(), 'Document '.$i);
+            $vectors[] = new Vector([0.1 * $i, 0.2 * $i, 0.3 * $i]);
+        }
+
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult(...$vectors)), 'test-embedding-model');
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+
+        // With chunk_size of 10 and 100 documents, there should be 10 add calls
+        $processor->process($documents, ['chunk_size' => 10]);
+
+        $this->assertCount(100, $store->documents);
+        $this->assertSame(10, $store->addCalls);
     }
 }

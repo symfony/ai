@@ -10,12 +10,12 @@
  */
 
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
-use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Indexer\DocumentIndexer;
+use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
 use Symfony\Component\Uid\Uuid;
 
@@ -38,16 +38,18 @@ $documents = [
     ),
 ];
 
-$indexer = new Indexer(
-    loader: new InMemoryLoader($documents),
-    vectorizer: $vectorizer,
-    store: $store,
-    transformers: [
-        new TextSplitTransformer(chunkSize: 100, overlap: 20),
-    ],
+$indexer = new DocumentIndexer(
+    processor: new DocumentProcessor(
+        vectorizer: $vectorizer,
+        store: $store,
+        transformers: [
+            new TextSplitTransformer(chunkSize: 100, overlap: 20),
+        ],
+        logger: logger(),
+    ),
 );
 
-$indexer->index();
+$indexer->index($documents);
 
 $vector = $vectorizer->vectorize('machine learning artificial intelligence');
 $results = $store->query($vector);

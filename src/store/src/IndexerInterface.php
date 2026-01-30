@@ -12,17 +12,17 @@
 namespace Symfony\AI\Store;
 
 /**
- * Handles the complete document processing pipeline: load → transform → vectorize → store.
+ * Handles the complete document processing pipeline: load/accept → filter → transform → vectorize → store.
  *
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
 interface IndexerInterface
 {
     /**
-     * Process sources through the complete document pipeline: load → transform → vectorize → store.
+     * Process input through the complete document pipeline.
      *
-     * @param string|iterable<string>|null                                     $source  Source identifier (file path, URL, etc.) or iterable of sources
+     * @param string|iterable<string|object>|object                            $input   Input to process (source identifier, documents, etc.)
      * @param array{chunk_size?: int, platform_options?: array<string, mixed>} $options Processing options
      */
-    public function index(string|iterable|null $source = null, array $options = []): void;
+    public function index(string|iterable|object $input, array $options = []): void;
 }
