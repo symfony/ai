@@ -27,11 +27,7 @@ use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-echo "=== PostgreSQL Hybrid Search Demo ===\n\n";
-echo "Demonstrates HybridStore with configurable search strategies:\n";
-echo "- Native PostgreSQL FTS vs BM25\n";
-echo "- Semantic ratio adjustment\n";
-echo "- Custom RRF scoring\n\n";
+echo '=== PostgreSQL Hybrid Search Demo ==='.\PHP_EOL.\PHP_EOL;
 
 $connection = DriverManager::getConnection((new DsnParser())->parse(env('POSTGRES_URI')));
 $pdo = $connection->getNativeConnection();
@@ -40,19 +36,9 @@ if (!$pdo instanceof PDO) {
     throw new RuntimeException('Unable to get native PDO connection from Doctrine DBAL.');
 }
 
-echo "=== Using BM25 Text Search Strategy ===\n\n";
-
-$store = new HybridStore(
-    connection: $pdo,
-    tableName: 'hybrid_movies',
-    textSearchStrategy: new Bm25TextSearchStrategy('en'),
-    rrf: new ReciprocalRankFusion(k: 60, normalizeScores: true),
-    semanticRatio: 0.5,
-);
-
-// Create embeddings and documents
+// Prepare documents
 $documents = [];
-foreach (Movies::all() as $i => $movie) {
+foreach (Movies::all() as $movie) {
     $documents[] = new TextDocument(
         id: Uuid::v4(),
         content: 'Title: '.$movie['title'].\PHP_EOL.'Director: '.$movie['director'].\PHP_EOL.'Description: '.$movie['description'],
@@ -60,21 +46,31 @@ foreach (Movies::all() as $i => $movie) {
     );
 }
 
-// Initialize the table
-$store->setup();
-
-// Create embeddings for documents
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
-$indexer->index($documents);
 
-// Create a query embedding
 $queryText = 'futuristic technology and artificial intelligence';
-echo "Query: \"$queryText\"\n\n";
+
+// --- Native PostgreSQL FTS (works with any PostgreSQL + pgvector) ---
+
+echo '=== Using Native PostgreSQL FTS ==='.\PHP_EOL.\PHP_EOL;
+
+$store = new HybridStore(
+    connection: $pdo,
+    tableName: 'hybrid_movies',
+    textSearchStrategy: new PostgresTextSearchStrategy(),
+    rrf: new ReciprocalRankFusion(k: 60, normalizeScores: true),
+    semanticRatio: 0.5,
+);
+
+$store->setup();
+
+$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
+$indexer->index();
+
+echo sprintf('Query: "%s"', $queryText).\PHP_EOL.\PHP_EOL;
 $queryEmbedding = $vectorizer->vectorize($queryText);
 
-// Test different semantic ratios to compare results
 $ratios = [
     ['ratio' => 0.0, 'description' => '100% Full-text search (keyword matching)'],
     ['ratio' => 0.5, 'description' => 'Balanced hybrid (RRF: 50% semantic + 50% FTS)'],
@@ -82,87 +78,88 @@ $ratios = [
 ];
 
 foreach ($ratios as $config) {
-    echo "--- {$config['description']} ---\n";
+    echo sprintf('--- %s ---', $config['description']).\PHP_EOL;
 
-    // Override the semantic ratio for this specific query
     $results = $store->query($queryEmbedding, [
         'semanticRatio' => $config['ratio'],
-        'q' => 'technology', // Full-text search keyword
+        'q' => 'technology',
         'limit' => 3,
     ]);
 
-    echo "Top 3 results:\n";
+    echo 'Top 3 results:'.\PHP_EOL;
     foreach ($results as $i => $result) {
         $metadata = $result->metadata->getArrayCopy();
         echo sprintf(
-            "  %d. %s (Score: %.4f)\n",
+            '  %d. %s (Score: %.4f)'.\PHP_EOL,
             $i + 1,
             $metadata['title'] ?? 'Unknown',
             $result->score ?? 0.0
         );
     }
-    echo "\n";
+    echo \PHP_EOL;
 }
 
-echo "--- Custom query with pure semantic search ---\n";
-echo "Query: Movies about space exploration\n";
+echo '--- Custom query with pure semantic search ---'.\PHP_EOL;
+echo 'Query: Movies about space exploration'.\PHP_EOL;
 $spaceEmbedding = $vectorizer->vectorize('space exploration and cosmic adventures');
 $results = $store->query($spaceEmbedding, [
-    'semanticRatio' => 1.0, // Pure semantic search
+    'semanticRatio' => 1.0,
     'limit' => 3,
 ]);
 
-echo "Top 3 results:\n";
+echo 'Top 3 results:'.\PHP_EOL;
 foreach ($results as $i => $result) {
     $metadata = $result->metadata->getArrayCopy();
     echo sprintf(
-        "  %d. %s (Score: %.4f)\n",
+        '  %d. %s (Score: %.4f)'.\PHP_EOL,
         $i + 1,
         $metadata['title'] ?? 'Unknown',
         $result->score ?? 0.0
     );
 }
-echo "\n";
+echo \PHP_EOL;
 
-// Cleanup
 $store->drop();
 
-echo "=== Comparing with Native PostgreSQL FTS ===\n\n";
+// --- BM25 strategy (requires plpgsql_bm25 extension) ---
 
-$storeFts = new HybridStore(
-    connection: $pdo,
-    tableName: 'hybrid_movies_fts',
-    textSearchStrategy: new PostgresTextSearchStrategy(),
-    semanticRatio: 0.5,
-);
+$bm25Strategy = new Bm25TextSearchStrategy('en');
 
-$storeFts->setup();
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $storeFts, logger: logger());
-$indexer->index($documents);
+if ($bm25Strategy->isAvailable($pdo)) {
+    echo '=== Using BM25 Text Search Strategy ==='.\PHP_EOL.\PHP_EOL;
 
-$resultsFts = $storeFts->query($queryEmbedding, [
-    'semanticRatio' => 0.5,
-    'q' => 'technology',
-    'limit' => 3,
-]);
-
-echo "Top 3 results (Native FTS):\n";
-foreach ($resultsFts as $i => $result) {
-    $metadata = $result->metadata->getArrayCopy();
-    echo sprintf(
-        "  %d. %s (Score: %.4f)\n",
-        $i + 1,
-        $metadata['title'] ?? 'Unknown',
-        $result->score ?? 0.0
+    $storeBm25 = new HybridStore(
+        connection: $pdo,
+        tableName: 'hybrid_movies_bm25',
+        textSearchStrategy: $bm25Strategy,
+        rrf: new ReciprocalRankFusion(k: 60, normalizeScores: true),
+        semanticRatio: 0.5,
     );
+
+    $storeBm25->setup();
+    $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $storeBm25, logger: logger());
+    $indexer->index();
+
+    $resultsBm25 = $storeBm25->query($queryEmbedding, [
+        'semanticRatio' => 0.5,
+        'q' => 'technology',
+        'limit' => 3,
+    ]);
+
+    echo 'Top 3 results (BM25):'.\PHP_EOL;
+    foreach ($resultsBm25 as $i => $result) {
+        $metadata = $result->metadata->getArrayCopy();
+        echo sprintf(
+            '  %d. %s (Score: %.4f)'.\PHP_EOL,
+            $i + 1,
+            $metadata['title'] ?? 'Unknown',
+            $result->score ?? 0.0
+        );
+    }
+
+    $storeBm25->drop();
+} else {
+    echo '=== BM25 Text Search Strategy ==='.\PHP_EOL;
+    echo 'Skipped: plpgsql_bm25 extension is not installed.'.\PHP_EOL;
+    echo 'See https://github.com/jankovicsandras/plpgsql_bm25'.\PHP_EOL;
 }
-
-$storeFts->drop();
-
-echo "\n=== Summary ===\n";
-echo "- semanticRatio = 0.0: Pure keyword matching\n";
-echo "- semanticRatio = 0.5: Balanced hybrid (RRF)\n";
-echo "- semanticRatio = 1.0: Pure semantic search\n";
-echo "\nText Search Strategies:\n";
-echo "- PostgresTextSearchStrategy: Native FTS (ts_rank_cd)\n";
-echo "- Bm25TextSearchStrategy: BM25 ranking (requires pg_bm25 extension)\n";
