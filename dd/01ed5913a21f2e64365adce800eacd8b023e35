@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-30T15:14:44Z
+
+alright, i think i'm mostly happy now - the only alternative for this i could think of would be even more into direction of decorator or pipeline pattern, but i like that `IndexerInterface` is more open and `DocumentProcessor` is more closed, with `DocumentIndexer` bridging between - even if little code left.
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2026-01-30T15:49:46Z
+
+Let's merge this one, so I can test it. We could iterate if needed after that
