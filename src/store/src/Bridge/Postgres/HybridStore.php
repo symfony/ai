@@ -192,6 +192,10 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         $this->textSearchStrategy->refreshIndex($this->connection, $this->tableName, $this->contentFieldName);
     }
 
+    /**
+     * @param string|array<string> $ids
+     * @param array<string, mixed> $options
+     */
     public function remove(string|array $ids, array $options = []): void
     {
         if (\is_string($ids)) {

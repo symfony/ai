@@ -127,6 +127,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    /**
+     * @param string|array<string> $ids
+     * @param array<string, mixed> $options
+     */
     public function remove(string|array $ids, array $options = []): void
     {
         if (\is_string($ids)) {

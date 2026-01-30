@@ -102,7 +102,10 @@ use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\HybridStore;
+use Symfony\AI\Store\Bridge\Postgres\ReciprocalRankFusion;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\Bm25TextSearchStrategy;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
@@ -1752,8 +1755,8 @@ final class AiBundle extends AbstractBundle
                     $pdo->setArguments([
                         $store['dsn'],
                         $store['username'] ?? null,
-                        $store['password'] ?? null],
-                    );
+                        $store['password'] ?? null,
+                    ]);
 
                     $arguments = [
                         $pdo,
@@ -1785,16 +1788,16 @@ final class AiBundle extends AbstractBundle
                     // Text search strategy
                     $textSearchStrategy = null;
                     if (isset($hybrid['text_search_strategy']) && 'bm25' === $hybrid['text_search_strategy']) {
-                        $textSearchStrategy = new Definition(\Symfony\AI\Store\Bridge\Postgres\TextSearch\Bm25TextSearchStrategy::class);
+                        $textSearchStrategy = new Definition(Bm25TextSearchStrategy::class);
                         $textSearchStrategy->setArguments([$hybrid['bm25_language'] ?? 'en']);
                     } else {
-                        $textSearchStrategy = new Definition(\Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy::class);
+                        $textSearchStrategy = new Definition(PostgresTextSearchStrategy::class);
                     }
                     $arguments[7] = $textSearchStrategy;
 
                     // RRF configuration
                     if (isset($hybrid['rrf_k']) || isset($hybrid['normalize_scores'])) {
-                        $rrfDefinition = new Definition(\Symfony\AI\Store\Bridge\Postgres\ReciprocalRankFusion::class);
+                        $rrfDefinition = new Definition(ReciprocalRankFusion::class);
                         $rrfDefinition->setArguments([
                             $hybrid['rrf_k'] ?? 60,
                             $hybrid['normalize_scores'] ?? true,
