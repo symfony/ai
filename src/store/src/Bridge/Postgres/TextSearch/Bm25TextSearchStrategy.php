@@ -47,7 +47,10 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
 
         $bm25SqlPath = __DIR__.'/Resources/plpgsql_bm25.sql';
         if (file_exists($bm25SqlPath)) {
-            $sql[] = file_get_contents($bm25SqlPath);
+            $content = file_get_contents($bm25SqlPath);
+            if (false !== $content) {
+                $sql[] = $content;
+            }
         }
 
         return $sql;
