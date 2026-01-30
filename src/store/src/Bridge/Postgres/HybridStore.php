@@ -273,22 +273,6 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * Get the text search strategy being used.
-     */
-    public function getTextSearchStrategy(): TextSearchStrategyInterface
-    {
-        return $this->textSearchStrategy;
-    }
-
-    /**
-     * Get the RRF calculator being used.
-     */
-    public function getRrf(): ReciprocalRankFusion
-    {
-        return $this->rrf;
-    }
-
-    /**
      * Ensure the text search index exists, creating it lazily if needed.
      *
      * This is called after adding documents to handle strategies like BM25
@@ -606,16 +590,16 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
     private function addFilterToWhereClause(string $whereClause, string $filter): string
     {
         if ('' === $whereClause) {
-            return "WHERE $filter";
+            return \sprintf('WHERE %s', $filter);
         }
 
         $whereClause = rtrim($whereClause);
 
         if (str_starts_with($whereClause, 'WHERE ')) {
-            return "$whereClause AND $filter";
+            return \sprintf('WHERE %s AND %s', $filter, ltrim($whereClause));
         }
 
-        return "WHERE $filter AND ".ltrim($whereClause);
+        return \sprintf('WHERE %s AND %s', $filter, ltrim($whereClause));
     }
 
     /**
