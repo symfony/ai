@@ -164,4 +164,9 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
             $contentFieldName
         ));
     }
+
+    public function refreshIndex(\PDO $connection, string $tableName, string $contentFieldName): void
+    {
+        $this->createIndex($connection, $tableName, $contentFieldName);
+    }
 }

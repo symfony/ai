@@ -114,4 +114,8 @@ final class PostgresTextSearchStrategy implements TextSearchStrategyInterface
     public function createIndex(\PDO $connection, string $tableName, string $contentFieldName): void
     {
     }
+
+    public function refreshIndex(\PDO $connection, string $tableName, string $contentFieldName): void
+    {
+    }
 }

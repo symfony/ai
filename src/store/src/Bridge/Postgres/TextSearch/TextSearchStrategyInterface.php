@@ -102,4 +102,16 @@ interface TextSearchStrategyInterface
      * @param string $contentFieldName The content field name
      */
     public function createIndex(\PDO $connection, string $tableName, string $contentFieldName): void;
+
+    /**
+     * Refresh the text search index after documents are added.
+     *
+     * Some strategies (like BM25) require the index to be rebuilt after adding documents.
+     * This method is called after each add() operation.
+     *
+     * @param \PDO   $connection       The database connection
+     * @param string $tableName        The table name
+     * @param string $contentFieldName The content field name
+     */
+    public function refreshIndex(\PDO $connection, string $tableName, string $contentFieldName): void;
 }
