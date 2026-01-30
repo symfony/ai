@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\ClickHouse\Tests;
 
+use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\ClickHouse\Store;
@@ -230,5 +231,59 @@ final class StoreTest extends TestCase
 
         $this->assertCount(1, $results);
         $this->assertSame([], $results[0]->metadata->getArrayCopy());
+    }
+
+    public function testRemoveSingleDocument()
+    {
+        $uuid = Uuid::v4();
+        $id = $uuid->toRfc4122();
+
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($id) {
+            $this->assertSame('POST', $method);
+            $this->assertStringContainsString('?', $url); // Check that URL has query parameters
+            $expectedSql = 'ALTER TABLE test_table DELETE WHERE id IN {ids:Array(String)}';
+            $this->assertSame($expectedSql, $options['query']['query']);
+            $this->assertSame([$id], $options['query']['param_ids']);
+
+            return new MockResponse('', ['http_code' => 200]);
+        });
+
+        $store = new Store($httpClient, 'test_db', 'test_table');
+
+        $store->remove($id);
+    }
+
+    public function testRemoveMultipleDocuments()
+    {
+        $uuid1 = Uuid::v4();
+        $uuid2 = Uuid::v4();
+        $id1 = $uuid1->toRfc4122();
+        $id2 = $uuid2->toRfc4122();
+
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($id1, $id2) {
+            $this->assertSame('POST', $method);
+            $this->assertStringContainsString('?', $url); // Check that URL has query parameters
+            $expectedSql = 'ALTER TABLE test_table DELETE WHERE id IN {ids:Array(String)}';
+            $this->assertSame($expectedSql, $options['query']['query']);
+            $this->assertSame([$id1, $id2], $options['query']['param_ids']);
+
+            return new MockResponse('', ['http_code' => 200]);
+        });
+
+        $store = new Store($httpClient, 'test_db', 'test_table');
+
+        $store->remove([$id1, $id2]);
+    }
+
+    #[DoesNotPerformAssertions]
+    public function testRemoveWithEmptyArray()
+    {
+        $httpClient = new MockHttpClient(function () {
+            $this->fail('Should not make any request when removing empty array');
+        });
+
+        $store = new Store($httpClient, 'test_db', 'test_table');
+
+        $store->remove([]);
     }
 }
