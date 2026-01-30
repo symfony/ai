@@ -81,4 +81,25 @@ interface TextSearchStrategyInterface
      * Check if the strategy is available (extensions installed, etc.).
      */
     public function isAvailable(\PDO $connection): bool;
+
+    /**
+     * Check if the text search index exists for the given table.
+     *
+     * @param \PDO   $connection       The database connection
+     * @param string $tableName        The table name
+     * @param string $contentFieldName The content field name
+     */
+    public function hasIndex(\PDO $connection, string $tableName, string $contentFieldName): bool;
+
+    /**
+     * Create the text search index for the given table.
+     *
+     * This method is called lazily after documents are added to the table,
+     * allowing indexes that require data (like BM25) to be created at the right time.
+     *
+     * @param \PDO   $connection       The database connection
+     * @param string $tableName        The table name
+     * @param string $contentFieldName The content field name
+     */
+    public function createIndex(\PDO $connection, string $tableName, string $contentFieldName): void;
 }

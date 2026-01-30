@@ -28,7 +28,6 @@ final class PostgresTextSearchStrategy implements TextSearchStrategyInterface
     public function getSetupSql(string $tableName, string $contentFieldName, string $language): array
     {
         return [
-            // Add tsvector column if not exists
             \sprintf(
                 "ALTER TABLE %s ADD COLUMN IF NOT EXISTS content_tsv tsvector
                  GENERATED ALWAYS AS (to_tsvector('%s', %s)) STORED",
@@ -36,7 +35,6 @@ final class PostgresTextSearchStrategy implements TextSearchStrategyInterface
                 $language,
                 $contentFieldName,
             ),
-            // Create GIN index for full-text search
             \sprintf(
                 'CREATE INDEX IF NOT EXISTS %s_content_tsv_idx ON %s USING gin(content_tsv)',
                 $tableName,
@@ -95,18 +93,25 @@ final class PostgresTextSearchStrategy implements TextSearchStrategyInterface
 
     public function getNormalizedScoreExpression(string $scoreColumn): string
     {
-        // ts_rank_cd returns values typically between 0 and 1, but can exceed 1
-        // We cap it at 1.0 for normalization
         return \sprintf('LEAST(%s, 1.0)', $scoreColumn);
     }
 
     public function getRequiredExtensions(): array
     {
-        return []; // No additional extensions required
+        return [];
     }
 
     public function isAvailable(\PDO $connection): bool
     {
-        return true; // Always available in PostgreSQL
+        return true;
+    }
+
+    public function hasIndex(\PDO $connection, string $tableName, string $contentFieldName): bool
+    {
+        return true;
+    }
+
+    public function createIndex(\PDO $connection, string $tableName, string $contentFieldName): void
+    {
     }
 }

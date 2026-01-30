@@ -21,7 +21,7 @@ namespace Symfony\AI\Store\Bridge\Postgres\TextSearch;
  * Requirements:
  * - plpgsql_bm25 extension must be installed
  *
- * @see https://github.com/pgsql-bm25/plpgsql_bm25
+ * @see https://github.com/jankovicsandras/plpgsql_bm25
  *
  * @author Ahmed EBEN HASSINE <ahmedbhs123@gmail.com>
  */
@@ -43,9 +43,14 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
 
     public function getSetupSql(string $tableName, string $contentFieldName, string $language): array
     {
-        // BM25 doesn't require additional table setup, it uses the content field directly
-        // The index is managed internally by the bm25topk function
-        return [];
+        $sql = [];
+
+        $bm25SqlPath = __DIR__.'/Resources/plpgsql_bm25.sql';
+        if (file_exists($bm25SqlPath)) {
+            $sql[] = file_get_contents($bm25SqlPath);
+        }
+
+        return $sql;
     }
 
     public function buildSearchCte(
@@ -54,7 +59,6 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
         string $language,
         string $queryParam = ':query',
     ): string {
-        // BM25 search with deduplication fix for duplicate titles
         return \sprintf(
             "bm25_search AS (
                 SELECT
@@ -116,7 +120,6 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
 
     public function getNormalizedScoreExpression(string $scoreColumn): string
     {
-        // BM25 scores are typically in 0-10+ range, normalize to 0-1
         return \sprintf('LEAST(%s / 10.0, 1.0)', $scoreColumn);
     }
 
@@ -136,5 +139,29 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
         } catch (\PDOException) {
             return false;
         }
+    }
+
+    public function hasIndex(\PDO $connection, string $tableName, string $contentFieldName): bool
+    {
+        try {
+            $paramsTable = \sprintf('%s_%s_bm25i_params', $tableName, $contentFieldName);
+            $stmt = $connection->prepare(
+                'SELECT 1 FROM information_schema.tables WHERE table_name = :table_name LIMIT 1'
+            );
+            $stmt->execute(['table_name' => $paramsTable]);
+
+            return false !== $stmt->fetchColumn();
+        } catch (\PDOException) {
+            return false;
+        }
+    }
+
+    public function createIndex(\PDO $connection, string $tableName, string $contentFieldName): void
+    {
+        $connection->exec(\sprintf(
+            "SELECT bm25createindex('%s', '%s')",
+            $tableName,
+            $contentFieldName
+        ));
     }
 }

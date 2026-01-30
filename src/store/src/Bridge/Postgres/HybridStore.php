@@ -18,6 +18,7 @@ use Symfony\AI\Store\Bridge\Postgres\TextSearch\TextSearchStrategyInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Uid\Uuid;
@@ -90,16 +91,14 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
      */
     public function setup(array $options = []): void
     {
-        // Enable pgvector extension
-        $this->connection->exec('CREATE EXTENSION IF NOT EXISTS vector');
+        $this->ensureExtensionAvailable('vector', 'pgvector is required for vector similarity search. Install it from https://github.com/pgvector/pgvector or use a PostgreSQL image with pgvector pre-installed (e.g., ankane/pgvector).');
+        $this->ensureExtensionAvailable('pg_trgm', 'pg_trgm is required for fuzzy matching. It is usually included in PostgreSQL contrib packages.');
 
-        // Enable pg_trgm extension for fuzzy matching
+        $this->connection->exec('CREATE EXTENSION IF NOT EXISTS vector');
         $this->connection->exec('CREATE EXTENSION IF NOT EXISTS pg_trgm');
 
-        // Build tsvector columns
         $tsvectorColumns = $this->buildTsvectorColumns();
 
-        // Create main table
         $this->connection->exec(
             \sprintf(
                 'CREATE TABLE IF NOT EXISTS %s (
@@ -117,7 +116,6 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             ),
         );
 
-        // Add search_text field for fuzzy matching
         $this->connection->exec(
             \sprintf(
                 'ALTER TABLE %s ADD COLUMN IF NOT EXISTS search_text TEXT',
@@ -125,10 +123,8 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             ),
         );
 
-        // Create trigger for search_text auto-update
         $this->createSearchTextTrigger();
 
-        // Create vector index
         $this->connection->exec(
             \sprintf(
                 'CREATE INDEX IF NOT EXISTS %s_%s_idx ON %s USING %s (%s %s)',
@@ -141,17 +137,14 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             ),
         );
 
-        // Execute text search strategy setup (only if not using searchableAttributes)
         if ([] === $this->searchableAttributes) {
             foreach ($this->textSearchStrategy->getSetupSql($this->tableName, $this->contentFieldName, $this->language) as $sql) {
                 $this->connection->exec($sql);
             }
         } else {
-            // Create GIN indexes for tsvector columns when using searchableAttributes
             $this->createTsvectorIndexes();
         }
 
-        // Create trigram index for fuzzy matching
         $this->connection->exec(
             \sprintf(
                 'CREATE INDEX IF NOT EXISTS %s_search_text_trgm_idx ON %s USING gin(search_text gin_trgm_ops)',
@@ -194,6 +187,26 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
 
             $statement->execute();
         }
+
+        $this->ensureTextSearchIndexExists();
+    }
+
+    public function remove(string|array $ids, array $options = []): void
+    {
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $placeholders = implode(', ', array_fill(0, \count($ids), '?'));
+        $statement = $this->connection->prepare(
+            \sprintf('DELETE FROM %s WHERE id IN (%s)', $this->tableName, $placeholders)
+        );
+
+        $statement->execute($ids);
     }
 
     /**
@@ -223,32 +236,30 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         $queryText = $options['q'] ?? '';
         $limit = $options['limit'] ?? 5;
 
-        // Build WHERE clause and params
-        [$whereClause, $params] = $this->buildWhereClause($vector, $options, $semanticRatio);
+        if ('' !== $queryText && $semanticRatio < 1.0 && !$this->textSearchStrategy->isAvailable($this->connection)) {
+            $extensions = $this->textSearchStrategy->getRequiredExtensions();
+            throw new RuntimeException(\sprintf('The text search strategy "%s" is not available. Required extensions: %s. Run "ai:store:setup" to install them.', $this->textSearchStrategy::class, implode(', ', $extensions) ?: 'none'));
+        }
 
-        // Choose query strategy
+        [$whereClause, $params] = $this->buildWhereClause($vector, $options, $semanticRatio);
         $sql = $this->buildQuery($semanticRatio, $queryText, $whereClause, $limit);
 
         if ('' !== $queryText && $semanticRatio < 1.0) {
             $params['query'] = $queryText;
         }
 
-        // Execute query
         $statement = $this->connection->prepare($sql);
         $statement->execute([...$params, ...($options['params'] ?? [])]);
 
-        // Process results
         $documents = $this->processResults(
             $statement->fetchAll(\PDO::FETCH_ASSOC),
             $options['includeScoreBreakdown'] ?? false,
         );
 
-        // Apply boosting
         if (isset($options['boostFields']) && [] !== $options['boostFields']) {
             $documents = $this->applyBoostFields($documents, $options['boostFields']);
         }
 
-        // Apply minimum score filter
         $minScore = $options['minScore'] ?? $this->defaultMinScore;
         if (null !== $minScore) {
             $documents = array_values(array_filter(
@@ -276,6 +287,36 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         return $this->rrf;
     }
 
+    /**
+     * Ensure the text search index exists, creating it lazily if needed.
+     *
+     * This is called after adding documents to handle strategies like BM25
+     * that require data to be present before creating the index.
+     */
+    private function ensureTextSearchIndexExists(): void
+    {
+        if (!$this->textSearchStrategy->hasIndex($this->connection, $this->tableName, $this->contentFieldName)) {
+            $this->textSearchStrategy->createIndex($this->connection, $this->tableName, $this->contentFieldName);
+        }
+    }
+
+    /**
+     * Check if a PostgreSQL extension is available on the server.
+     *
+     * @throws RuntimeException if the extension is not available
+     */
+    private function ensureExtensionAvailable(string $extensionName, string $installInstructions): void
+    {
+        $stmt = $this->connection->prepare(
+            'SELECT 1 FROM pg_available_extensions WHERE name = :name'
+        );
+        $stmt->execute(['name' => $extensionName]);
+
+        if (false === $stmt->fetchColumn()) {
+            throw new RuntimeException(\sprintf('The PostgreSQL extension "%s" is not available on this server. %s', $extensionName, $installInstructions));
+        }
+    }
+
     private function buildTsvectorColumns(): string
     {
         if ([] !== $this->searchableAttributes) {
@@ -293,7 +334,6 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             return $columns;
         }
 
-        // When not using searchableAttributes, let the TextSearchStrategy handle tsvector columns
         return '';
     }
 
@@ -458,15 +498,12 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         $ftsScoreColumn = $this->textSearchStrategy->getScoreColumn();
         $ftsNormalizedScore = $this->textSearchStrategy->getNormalizedScoreExpression($ftsScoreColumn);
 
-        // Calculate weights
         $ftsWeight = (1.0 - $semanticRatio) * (1.0 - $this->fuzzyWeight);
         $fuzzyWeightCalculated = (1.0 - $semanticRatio) * $this->fuzzyWeight;
 
-        // Build fuzzy filter
         $fuzzyFilter = $this->buildFuzzyFilter();
         $fuzzyWhereClause = $this->addFilterToWhereClause($whereClause, $fuzzyFilter);
 
-        // Build RRF expressions using the RRF class
         $vectorContribution = $this->rrf->buildSqlExpression(
             'v.rank_ix',
             '(1.0 - LEAST(v.distance / 2.0, 1.0))',
@@ -596,7 +633,6 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
                 $metadata['_score_breakdown'] = $this->buildScoreBreakdown($result);
             }
 
-            // Use NullVector for results without embedding (FTS-only or fuzzy-only matches)
             $vector = null !== $result['embedding']
                 ? new Vector(PgvectorConverter::fromPgvector($result['embedding']))
                 : new NullVector();

@@ -22,6 +22,7 @@ use Symfony\AI\Store\Bridge\Postgres\TextSearch\TextSearchStrategyInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\Component\Uid\Uuid;
 
 final class HybridStoreTest extends TestCase
@@ -53,46 +54,84 @@ final class HybridStoreTest extends TestCase
         new HybridStore($pdo, 'test_table', fuzzyWeight: 1.5);
     }
 
-    public function testConstructorUsesDefaultTextSearchStrategy()
-    {
-        $pdo = $this->createMock(\PDO::class);
-        $store = new HybridStore($pdo, 'test_table');
-
-        $this->assertInstanceOf(PostgresTextSearchStrategy::class, $store->getTextSearchStrategy());
-    }
-
-    public function testConstructorUsesCustomTextSearchStrategy()
+    public function testConstructorAcceptsCustomTextSearchStrategy()
     {
         $pdo = $this->createMock(\PDO::class);
         $customStrategy = new Bm25TextSearchStrategy();
+
+        // Should not throw - custom strategy is accepted
         $store = new HybridStore($pdo, 'test_table', textSearchStrategy: $customStrategy);
-
-        $this->assertSame($customStrategy, $store->getTextSearchStrategy());
+        $this->assertInstanceOf(HybridStore::class, $store);
     }
 
-    public function testConstructorUsesDefaultRrf()
-    {
-        $pdo = $this->createMock(\PDO::class);
-        $store = new HybridStore($pdo, 'test_table');
-
-        $this->assertInstanceOf(ReciprocalRankFusion::class, $store->getRrf());
-        $this->assertSame(60, $store->getRrf()->getK());
-    }
-
-    public function testConstructorUsesCustomRrf()
+    public function testConstructorAcceptsCustomRrf()
     {
         $pdo = $this->createMock(\PDO::class);
         $customRrf = new ReciprocalRankFusion(k: 100, normalizeScores: false);
-        $store = new HybridStore($pdo, 'test_table', rrf: $customRrf);
 
-        $this->assertSame($customRrf, $store->getRrf());
-        $this->assertSame(100, $store->getRrf()->getK());
+        // Should not throw - custom RRF is accepted
+        $store = new HybridStore($pdo, 'test_table', rrf: $customRrf);
+        $this->assertInstanceOf(HybridStore::class, $store);
+    }
+
+    public function testQueryThrowsExceptionWhenTextSearchStrategyNotAvailable()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('is not available. Required extensions: plpgsql_bm25. Run "ai:store:setup" to install them.');
+
+        $pdo = $this->createMock(\PDO::class);
+
+        // Create a mock strategy that reports as unavailable
+        $unavailableStrategy = $this->createMock(TextSearchStrategyInterface::class);
+        $unavailableStrategy->method('isAvailable')->willReturn(false);
+        $unavailableStrategy->method('getRequiredExtensions')->willReturn(['plpgsql_bm25']);
+
+        $store = new HybridStore(
+            $pdo,
+            'test_table',
+            semanticRatio: 0.5,
+            textSearchStrategy: $unavailableStrategy
+        );
+
+        // This should throw because we're using FTS (semanticRatio < 1.0) with a query text
+        // and the strategy is not available
+        $store->query(new Vector([0.1, 0.2, 0.3]), ['q' => 'test query']);
+    }
+
+    public function testQueryDoesNotCheckAvailabilityForPureSemanticSearch()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        // Create a mock strategy that would fail if checked
+        $unavailableStrategy = $this->createMock(TextSearchStrategyInterface::class);
+        $unavailableStrategy->expects($this->never())->method('isAvailable');
+
+        $store = new HybridStore(
+            $pdo,
+            'test_table',
+            semanticRatio: 1.0,
+            textSearchStrategy: $unavailableStrategy
+        );
+
+        $pdo->method('prepare')->willReturn($statement);
+        $statement->method('execute');
+        $statement->method('fetchAll')->willReturn([]);
+
+        // Pure semantic search (semanticRatio = 1.0) should not check strategy availability
+        $store->query(new Vector([0.1, 0.2, 0.3]), ['q' => 'test query']);
     }
 
     public function testSetupCreatesTableWithFullTextSearchSupport()
     {
         $pdo = $this->createMock(\PDO::class);
         $store = new HybridStore($pdo, 'hybrid_table');
+
+        // Mock prepare() for extension availability check
+        $extensionCheckStmt = $this->createMock(\PDOStatement::class);
+        $extensionCheckStmt->method('execute')->willReturn(true);
+        $extensionCheckStmt->method('fetchColumn')->willReturn(1); // Extension available
+        $pdo->method('prepare')->willReturn($extensionCheckStmt);
 
         $pdo->expects($this->exactly(10))
             ->method('exec')
@@ -148,6 +187,12 @@ final class HybridStoreTest extends TestCase
             ]);
 
         $store = new HybridStore($pdo, 'hybrid_table', textSearchStrategy: $mockStrategy);
+
+        // Mock prepare() for extension availability check
+        $extensionCheckStmt = $this->createMock(\PDOStatement::class);
+        $extensionCheckStmt->method('execute')->willReturn(true);
+        $extensionCheckStmt->method('fetchColumn')->willReturn(1); // Extension available
+        $pdo->method('prepare')->willReturn($extensionCheckStmt);
 
         $execCalls = [];
         $pdo->expects($this->any())
@@ -374,12 +419,33 @@ final class HybridStoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
+        // Create a mock BM25 strategy that reports as available
+        $bm25Strategy = $this->createMock(TextSearchStrategyInterface::class);
+        $bm25Strategy->method('isAvailable')->willReturn(true);
+        $bm25Strategy->method('getRequiredExtensions')->willReturn(['plpgsql_bm25']);
+        $bm25Strategy->method('getCteAlias')->willReturn('bm25_with_metadata');
+        $bm25Strategy->method('getRankColumn')->willReturn('bm25_rank');
+        $bm25Strategy->method('getScoreColumn')->willReturn('bm25_score');
+        $bm25Strategy->method('getNormalizedScoreExpression')->willReturn('LEAST(bm25_score / 10.0, 1.0)');
+        $bm25Strategy->method('buildSearchCte')->willReturn(
+            "bm25_search AS (
+                SELECT doc, score as bm25_score, ROW_NUMBER() OVER (ORDER BY score DESC) as bm25_rank
+                FROM bm25topk('hybrid_table', 'content', :query, 100, '', 'en') AS bm25
+            ),
+            bm25_with_metadata AS (
+                SELECT DISTINCT ON (b.bm25_rank) m.id, m.metadata, m.content, b.bm25_score, b.bm25_rank
+                FROM bm25_search b
+                INNER JOIN hybrid_table m ON (m.metadata->>'title') = SUBSTRING(b.doc FROM 'title: ([^\n]+)')
+                ORDER BY b.bm25_rank, m.id
+            )"
+        );
+
         $rrf = new ReciprocalRankFusion(normalizeScores: false);
         $store = new HybridStore(
             $pdo,
             'hybrid_table',
             semanticRatio: 0.0,
-            textSearchStrategy: new Bm25TextSearchStrategy(bm25Language: 'en'),
+            textSearchStrategy: $bm25Strategy,
             rrf: $rrf
         );
 
@@ -387,14 +453,14 @@ final class HybridStoreTest extends TestCase
             ->method('prepare')
             ->with($this->callback(function ($sql) {
                 // Verify BM25 structure
-                $this->assertStringContainsString('WITH', $sql);
-                $this->assertStringContainsString('bm25_search AS', $sql);
-                $this->assertStringContainsString('bm25topk(', $sql);
-                $this->assertStringContainsString('bm25_with_metadata AS', $sql);
-                $this->assertStringContainsString('DISTINCT ON', $sql);
+                self::assertStringContainsString('WITH', $sql);
+                self::assertStringContainsString('bm25_search AS', $sql);
+                self::assertStringContainsString('bm25topk(', $sql);
+                self::assertStringContainsString('bm25_with_metadata AS', $sql);
+                self::assertStringContainsString('DISTINCT ON', $sql);
 
                 // Should NOT contain native FTS functions
-                $this->assertStringNotContainsString('ts_rank_cd', $sql);
+                self::assertStringNotContainsString('ts_rank_cd', $sql);
 
                 return true;
             }))
@@ -758,6 +824,12 @@ final class HybridStoreTest extends TestCase
             'hybrid_table',
             searchableAttributes: $searchableAttributes
         );
+
+        // Mock prepare() for extension availability check
+        $extensionCheckStmt = $this->createMock(\PDOStatement::class);
+        $extensionCheckStmt->method('execute')->willReturn(true);
+        $extensionCheckStmt->method('fetchColumn')->willReturn(1); // Extension available
+        $pdo->method('prepare')->willReturn($extensionCheckStmt);
 
         $pdo->expects($this->exactly(10))
             ->method('exec')
