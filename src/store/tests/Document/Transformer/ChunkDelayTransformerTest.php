@@ -126,7 +126,7 @@ final class ChunkDelayTransformerTest extends TestCase
     public function testCustomChunkSizeAndDelay()
     {
         $clock = $this->createMock(ClockInterface::class);
-        $clock->expects($this->once())
+        $clock->expects($this->exactly(3))
             ->method('sleep')
             ->with(2);
 
@@ -203,7 +203,7 @@ final class ChunkDelayTransformerTest extends TestCase
     public function testSingleDocument()
     {
         $clock = $this->createMock(ClockInterface::class);
-        $clock->expects($this->once())
+        $clock->expects($this->never())
             ->method('sleep')
             ->with(5);
 
@@ -223,7 +223,7 @@ final class ChunkDelayTransformerTest extends TestCase
     public function testExactlyChunkSizeDocuments()
     {
         $clock = $this->createMock(ClockInterface::class);
-        $clock->expects($this->once())
+        $clock->expects($this->never())
             ->method('sleep')
             ->with(3);
 
@@ -245,7 +245,7 @@ final class ChunkDelayTransformerTest extends TestCase
     public function testMultipleExactChunks()
     {
         $clock = $this->createMock(ClockInterface::class);
-        $clock->expects($this->once())
+        $clock->expects($this->exactly(2))
             ->method('sleep')
             ->with(1);
 
@@ -315,5 +315,27 @@ final class ChunkDelayTransformerTest extends TestCase
         $elapsed = $endTime->getTimestamp() - $startTime->getTimestamp();
 
         $this->assertSame(30, $elapsed);
+    }
+
+    public function testSleepsAfterEveryChunk()
+    {
+        $clock = $this->createMock(ClockInterface::class);
+        $clock->expects($this->exactly(2))
+            ->method('sleep')
+            ->with(1);
+
+        $transformer = new ChunkDelayTransformer($clock);
+
+        $documents = [];
+        for ($i = 0; $i < 15; ++$i) {
+            $documents[] = new TextDocument(Uuid::v4(), 'content-'.$i);
+        }
+
+        $result = iterator_to_array($transformer->transform($documents, [
+            ChunkDelayTransformer::OPTION_CHUNK_SIZE => 5,
+            ChunkDelayTransformer::OPTION_DELAY => 1,
+        ]));
+
+        $this->assertCount(15, $result);
     }
 }

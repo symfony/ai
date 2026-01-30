@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Store\Document\Transformer;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\AI\Store\Document\TransformerInterface;
 use Symfony\Component\Clock\ClockInterface;
 
@@ -29,6 +31,7 @@ final class ChunkDelayTransformer implements TransformerInterface
         private readonly ClockInterface $clock,
         private readonly int $chunkSize = 50,
         private readonly int $delay = 10,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -42,12 +45,14 @@ final class ChunkDelayTransformer implements TransformerInterface
 
         $counter = 0;
         foreach ($documents as $document) {
+            if ($chunkSize === $counter && 0 !== $delay) {
+                $this->logger->info(\sprintf('Processed %d documents, sleeping for %d seconds to avoid rate limits...', $counter, $delay));
+                $this->clock->sleep($delay);
+                $counter = 0;
+            }
+
             yield $document;
             ++$counter;
-
-            if ($chunkSize === $counter && 0 !== $delay) {
-                $this->clock->sleep($delay);
-            }
         }
     }
 }
