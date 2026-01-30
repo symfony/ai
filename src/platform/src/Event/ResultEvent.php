@@ -30,7 +30,7 @@ final class ResultEvent extends Event
         private Model $model,
         private DeferredResult $deferredResult,
         private array $options = [],
-        private array|string|object $input = [],
+        private readonly array|string|object $input = [],
     ) {
     }
 
