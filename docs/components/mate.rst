@@ -206,17 +206,24 @@ Available Bridges
 Symfony Bridge
 ~~~~~~~~~~~~~~
 
-The Symfony bridge (``symfony/ai-symfony-mate-extension``) provides container introspection tools
-for Symfony applications:
+The Symfony bridge (``symfony/ai-symfony-mate-extension``) provides container introspection and
+profiler data access tools for Symfony applications.
+
+Container Introspection
+^^^^^^^^^^^^^^^^^^^^^^^
+
+**MCP Tools:**
 
 * ``symfony-services`` - List all Symfony services from the compiled container
+
+**Configuration:**
 
 Configure the cache directory::
 
     $container->parameters()
         ->set('ai_mate_symfony.cache_dir', '%root_dir%/var/cache');
 
-**Troubleshooting**
+**Troubleshooting:**
 
 *Container not found*:
 
@@ -228,6 +235,101 @@ the compiled container XML file (e.g., ``App_KernelDevDebugContainer.xml``) in t
 1. Clear Symfony cache: ``bin/console cache:clear``
 2. Ensure the container is compiled (warm up cache)
 3. Verify the container XML file exists in the cache directory
+
+Profiler Data Access
+^^^^^^^^^^^^^^^^^^^^
+
+When ``symfony/http-kernel`` and ``symfony/web-profiler-bundle`` are installed, profiler tools
+become available for accessing Symfony profiler data.
+
+**MCP Tools:**
+
+* ``symfony-profiler-list`` - List available profiler profiles with summary data
+* ``symfony-profiler-latest`` - Get the latest profiler profile summary
+* ``symfony-profiler-search`` - Search profiles by criteria (route, method, status code, date range)
+* ``symfony-profiler-get`` - Get a specific profile by token
+
+All tools return profiles with a ``resource_uri`` field that points to the full profile resource.
+
+**MCP Resources:**
+
+* ``symfony-profiler://profile/{token}`` - Full profile details including metadata and list of available collectors with URIs
+* ``symfony-profiler://profile/{token}/{collector}`` - Detailed collector-specific data (request, response, exception, events, etc.)
+
+**Configuration:**
+
+Single profiler directory (default)::
+
+    $container->parameters()
+        ->set('ai_mate_symfony.profiler_dir', '%mate.root_dir%/var/cache/dev/profiler');
+
+Multiple directories with contexts (e.g., for multi-kernel applications)::
+
+    $container->parameters()
+        ->set('ai_mate_symfony.profiler_dir', [
+            'website' => '%mate.root_dir%/var/cache/website/dev/profiler',
+            'admin' => '%mate.root_dir%/var/cache/admin/dev/profiler',
+        ]);
+
+When using multiple directories, profiles include a ``context`` field for filtering.
+
+**Example Usage:**
+
+Search for errors::
+
+    // Using symfony-profiler-search tool
+    {
+        "method": "tools/call",
+        "params": {
+            "name": "symfony-profiler-search",
+            "arguments": {
+                "statusCode": 500,
+                "limit": 20
+            }
+        }
+    }
+
+Access full profile via resource::
+
+    // Using resource template
+    {
+        "method": "resources/read",
+        "params": {
+            "uri": "symfony-profiler://profile/abc123"
+        }
+    }
+
+Access specific collector::
+
+    {
+        "method": "resources/read",
+        "params": {
+            "uri": "symfony-profiler://profile/abc123/exception"
+        }
+    }
+
+**Security:**
+
+Cookies, session data, authentication headers, and sensitive environment variables are automatically
+redacted from profiler data.
+
+**Extensibility:**
+
+Create custom collector formatters by implementing ``CollectorFormatterInterface`` and
+registering via DI tag ``ai_mate_symfony.profiler_collector_formatter``.
+
+**Troubleshooting:**
+
+*Profiles not found*:
+
+1. Ensure the profiler directory parameter points to the correct location
+2. Verify Symfony profiler is enabled in your environment
+3. Generate some HTTP requests to create profile data
+
+*Collector data not available*:
+
+1. Check that the specific collector is enabled in Symfony profiler configuration
+2. Verify the profile was captured with that collector active
 
 Monolog Bridge
 ~~~~~~~~~~~~~~
@@ -259,96 +361,6 @@ log files are stored.
 1. Verify log format is standard Monolog line format or JSON
 2. Check file permissions on log files
 3. Ensure log files are not empty or corrupted
-
-Profiler Bridge
-~~~~~~~~~~~~~~~
-
-The Profiler bridge (``symfony/ai-profiler-mate-extension``) provides MCP tools and resources
-for accessing Symfony profiler data:
-
-**MCP Tools:**
-
-* ``profiler-list`` - List available profiler profiles with summary data
-* ``profiler-latest`` - Get the latest profiler profile summary
-* ``profiler-search`` - Search profiles by criteria (route, method, status code, date range)
-* ``profiler-get`` - Get a specific profile by token
-
-All tools return profiles with a ``resource_uri`` field that points to the full profile resource.
-
-**MCP Resources:**
-
-* ``profiler://profile/{token}`` - Full profile details including metadata and list of available collectors with URIs
-* ``profiler://profile/{token}/{collector}`` - Detailed collector-specific data (request, response, exception, events, etc.)
-
-**Configuration:**
-
-Single profiler directory (default)::
-
-    $container->parameters()
-        ->set('ai_mate_profiler.profiler_dir', '%mate.root_dir%/var/cache/dev/profiler');
-
-Multiple directories with contexts (e.g., for multi-kernel applications)::
-
-    $container->parameters()
-        ->set('ai_mate_profiler.profiler_dir', [
-            'website' => '%mate.root_dir%/var/cache/website/dev/profiler',
-            'admin' => '%mate.root_dir%/var/cache/admin/dev/profiler',
-        ]);
-
-When using multiple directories, profiles include a ``context`` field for filtering.
-
-**Example Usage:**
-
-Search for errors::
-
-    // Using profiler-search tool
-    {
-        "method": "tools/call",
-        "params": {
-            "name": "profiler-search",
-            "arguments": {
-                "statusCode": 500,
-                "limit": 20
-            }
-        }
-    }
-
-Access full profile via resource::
-
-    // Using resource template
-    {
-        "method": "resources/read",
-        "params": {
-            "uri": "profiler://profile/abc123"
-        }
-    }
-
-Access specific collector::
-
-    {
-        "method": "resources/read",
-        "params": {
-            "uri": "profiler://profile/abc123/exception"
-        }
-    }
-
-**Extensibility:**
-
-Create custom collector formatters by implementing ``CollectorFormatterInterface`` and
-registering via DI tag ``ai_mate.profiler_collector_formatter``.
-
-**Troubleshooting:**
-
-*Profiles not found*:
-
-1. Ensure the profiler directory parameter points to the correct location
-2. Verify Symfony profiler is enabled in your environment
-3. Generate some HTTP requests to create profile data
-
-*Collector data not available*:
-
-1. Check that the specific collector is enabled in Symfony profiler configuration
-2. Verify the profile was captured with that collector active
 
 Built-in Tools
 --------------
