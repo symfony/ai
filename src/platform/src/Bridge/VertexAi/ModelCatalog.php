@@ -113,6 +113,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,
+                    Capability::EMBEDDINGS,
                 ],
             ],
             'text-embedding-005' => [
@@ -120,6 +121,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,
+                    Capability::EMBEDDINGS,
                 ],
             ],
             'text-multilingual-embedding-002' => [
@@ -127,6 +129,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,
+                    Capability::EMBEDDINGS,
                 ],
             ],
         ];

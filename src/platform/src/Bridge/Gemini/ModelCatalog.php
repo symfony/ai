@@ -164,15 +164,15 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-embedding-exp-03-07' => [
                 'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'text-embedding-004' => [
                 'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'embedding-001' => [
                 'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
         ];
 

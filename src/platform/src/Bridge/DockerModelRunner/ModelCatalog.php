@@ -143,24 +143,28 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Embeddings::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
+                    Capability::EMBEDDINGS,
                 ],
             ],
             'ai/mxbai-embed-large' => [
                 'class' => Embeddings::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
+                    Capability::EMBEDDINGS,
                 ],
             ],
             'ai/embeddinggemma' => [
                 'class' => Embeddings::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
+                    Capability::EMBEDDINGS,
                 ],
             ],
             'ai/granite-embedding-multilingual' => [
                 'class' => Embeddings::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
+                    Capability::EMBEDDINGS,
                 ],
             ],
         ];
