@@ -40,6 +40,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | Ollama              | `symfony/ai-ollama-platform`              |
 | OpenAI              | `symfony/ai-open-ai-platform`             |
 | OpenRouter          | `symfony/ai-open-router-platform`         |
+| OVH                 | `symfony/ai-ovh-platform`                 |
 | Perplexity          | `symfony/ai-perplexity-platform`          |
 | Replicate           | `symfony/ai-replicate-platform`           |
 | Scaleway            | `symfony/ai-scaleway-platform`            |

@@ -47,6 +47,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/ollama'))
                     ->append($import('platform/openai'))
                     ->append($import('platform/openrouter'))
+                    ->append($import('platform/ovh'))
                     ->append($import('platform/perplexity'))
                     ->append($import('platform/scaleway'))
                     ->append($import('platform/transformersphp'))

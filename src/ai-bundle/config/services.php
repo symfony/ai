@@ -49,6 +49,7 @@ use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog as OllamaModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog as OpenAiModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\ModelCatalog as OpenRouterModelCatalog;
+use Symfony\AI\Platform\Bridge\Ovh\ModelCatalog as OvhModelCatalog;
 use Symfony\AI\Platform\Bridge\Perplexity\Contract\PerplexityContract;
 use Symfony\AI\Platform\Bridge\Perplexity\ModelCatalog as PerplexityModelCatalog;
 use Symfony\AI\Platform\Bridge\Replicate\ModelCatalog as ReplicateModelCatalog;
@@ -115,6 +116,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.ollama', OllamaModelCatalog::class)
         ->set('ai.platform.model_catalog.openai', OpenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.openrouter', OpenRouterModelCatalog::class)
+        ->set('ai.platform.model_catalog.ovh', OvhModelCatalog::class)
         ->set('ai.platform.model_catalog.perplexity', PerplexityModelCatalog::class)
         ->set('ai.platform.model_catalog.replicate', ReplicateModelCatalog::class)
         ->set('ai.platform.model_catalog.scaleway', ScalewayModelCatalog::class)
