@@ -68,6 +68,7 @@
         "symfony/ai-meta-platform": "^0.3",
         "symfony/ai-milvus-store": "^0.3",
         "symfony/ai-mistral-platform": "^0.3",
+        "symfony/ai-mini-max-platform": "^0.4",
         "symfony/ai-mongo-db-message-store": "^0.3",
         "symfony/ai-mongo-db-store": "^0.3",
         "symfony/ai-neo4j-store": "^0.3",
