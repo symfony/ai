@@ -149,22 +149,22 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'zhipu/glm-4.5' => ['zhipu/glm-4.5', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
 
         // Embedding models
-        yield 'text-embedding-3-small' => ['text-embedding-3-small', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'text-embedding-3-large' => ['text-embedding-3-large', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'text-embedding-ada-002' => ['text-embedding-ada-002', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'togethercomputer/m2-bert-80M-32k-retrieval' => ['togethercomputer/m2-bert-80M-32k-retrieval', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'BAAI/bge-base-en-v1.5' => ['BAAI/bge-base-en-v1.5', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'BAAI/bge-large-en-v1.' => ['BAAI/bge-large-en-v1.', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-large-2-instruct' => ['voyage-large-2-instruct', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-finance-2' => ['voyage-finance-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-multilingual-2' => ['voyage-multilingual-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-law-2' => ['voyage-law-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-code-2' => ['voyage-code-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-large-2' => ['voyage-large-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-2' => ['voyage-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'textembedding-gecko@003' => ['textembedding-gecko@003', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'textembedding-gecko-multilingual@001' => ['textembedding-gecko-multilingual@001', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
-        yield 'text-multilingual-embedding-002' => ['text-multilingual-embedding-002', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE]];
+        yield 'text-embedding-3-small' => ['text-embedding-3-small', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'text-embedding-3-large' => ['text-embedding-3-large', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'text-embedding-ada-002' => ['text-embedding-ada-002', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'togethercomputer/m2-bert-80M-32k-retrieval' => ['togethercomputer/m2-bert-80M-32k-retrieval', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'BAAI/bge-base-en-v1.5' => ['BAAI/bge-base-en-v1.5', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'BAAI/bge-large-en-v1.' => ['BAAI/bge-large-en-v1.', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-large-2-instruct' => ['voyage-large-2-instruct', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-finance-2' => ['voyage-finance-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-multilingual-2' => ['voyage-multilingual-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-law-2' => ['voyage-law-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-code-2' => ['voyage-code-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-large-2' => ['voyage-large-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-2' => ['voyage-2', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'textembedding-gecko@003' => ['textembedding-gecko@003', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'textembedding-gecko-multilingual@001' => ['textembedding-gecko-multilingual@001', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'text-multilingual-embedding-002' => ['text-multilingual-embedding-002', EmbeddingsModel::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface
