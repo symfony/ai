@@ -55,6 +55,7 @@
         "ai-generic-platform": "src/platform/src/Bridge/Generic",
         "ai-hugging-face-platform": "src/platform/src/Bridge/HuggingFace",
         "ai-lm-studio-platform": "src/platform/src/Bridge/LmStudio",
+        "ai-load-balanced-platform": "src/platform/src/Bridge/LoadBalanced",
         "ai-meta-platform": "src/platform/src/Bridge/Meta",
         "ai-mistral-platform": "src/platform/src/Bridge/Mistral",
         "ai-ollama-platform": "src/platform/src/Bridge/Ollama",
