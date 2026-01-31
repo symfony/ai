@@ -4,7 +4,7 @@
     <div class="card-header p-2">
         {{ ux_icon('iconoir:microphone-solid', { height: '32px', width: '32px' }) }}
         <strong class="ms-1 pt-1 d-inline-block">Speech Bot</strong>
-        <button id="chat-reset" class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
+        <button {{ live_action('reset') }} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
     </div>
     <div id="chat-body" class="card-body p-4 overflow-auto">
         {% for message in this.messages %}

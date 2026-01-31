@@ -4,7 +4,7 @@
     <div class="card-header p-2">
         {{ ux_icon('bi:youtube', { height: '32px', width: '32px' }) }}
         <strong class="ms-1 pt-1 d-inline-block">YouTube Transcript Bot</strong>
-        <button id="chat-reset" class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
+        <button {{ live_action('reset') }} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
     </div>
     <div id="chat-body" class="card-body p-4 overflow-auto">
         {% set messages = this.messages %}
@@ -16,11 +16,13 @@
                 <h4 class="mt-5">Chat about a YouTube Video</h4>
                 <div class="w-75 mx-auto text-start">
                     <label for="youtube-id" class="form-label">Enter the ID of the YouTube video (e.g. <code>6uXW-ulpj0s</code>) to initialize the chat:</label>
-                    <div class="input-group mb-3">
+                    <form class="input-group mb-3" {{ live_action('start:prevent') }}>
                         <span class="input-group-text" id="basic-addon3">https://youtube.com/watch?v=</span>
-                        <input type="text" id="youtube-id" class="form-control" placeholder="YouTube Video ID">
-                        <button class="btn btn-secondary" type="button" id="chat-start">Start</button>
-                    </div>
+                        <input autofocus type="text" id="youtube-id"
+                               data-model="norender|videoId"
+                               class="form-control" placeholder="YouTube Video ID">
+                        <button class="btn btn-secondary" id="chat-start">Start</button>
+                    </form>
                 </div>
             </div>
         {% endfor %}
@@ -30,9 +32,14 @@
         </div>
     </div>
     <div class="card-footer p-2">
-        <div class="input-group">
-            <input id="chat-message" {{ messages|length == 0 ? 'disabled'}} type="text" class="form-control border-0" placeholder="Write a message ...">
-            <button id="chat-submit" {{ messages|length == 0 ? 'disabled'}} class="btn btn-outline-secondary border-0" type="button">{{ ux_icon('mingcute:send-fill', { height: '25px', width: '25px' }) }} Submit</button>
-        </div>
+        <form class="input-group" {{ live_action('submit:prevent') }}>
+            <input id="chat-message" {{ messages|length == 0 ? 'disabled'}}
+                   data-model="norender|message"
+                   type="text" class="form-control border-0" placeholder="Write a message ...">
+            <button {{ messages|length == 0 ? 'disabled'}}
+                class="btn btn-outline-secondary border-0">
+                {{ ux_icon('mingcute:send-fill', { height: '25px', width: '25px' }) }} Submit
+            </button>
+        </form>
     </div>
 </div>

@@ -15,12 +15,16 @@ use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
 #[AsLiveComponent('wikipedia')]
 final class TwigComponent
 {
     use DefaultActionTrait;
+
+    #[LiveProp(writable: true)]
+    public ?string $message = null;
 
     public function __construct(
         private readonly Chat $wikipedia,
@@ -36,9 +40,15 @@ final class TwigComponent
     }
 
     #[LiveAction]
-    public function submit(#[LiveArg] string $message): void
+    public function submit(): void
     {
-        $this->wikipedia->submitMessage($message);
+        if (null === $this->message || '' === trim($this->message)) {
+            return;
+        }
+
+        $this->wikipedia->submitMessage($this->message);
+
+        $this->message = null;
     }
 
     #[LiveAction]

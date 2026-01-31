@@ -15,7 +15,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
-use Symfony\UX\LiveComponent\Attribute\LiveArg;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
 use function Symfony\Component\String\u;
@@ -25,6 +25,12 @@ final class TwigComponent
 {
     use DefaultActionTrait;
 
+    #[LiveProp(writable: true)]
+    public ?string $videoId = null;
+
+    #[LiveProp(writable: true)]
+    public ?string $message = null;
+
     public function __construct(
         private readonly Chat $youTube,
         private readonly LoggerInterface $logger,
@@ -32,18 +38,24 @@ final class TwigComponent
     }
 
     #[LiveAction]
-    public function start(#[LiveArg] string $videoId): void
+    public function start(): void
     {
-        if (str_contains($videoId, 'youtube.com')) {
-            $videoId = $this->getVideoIdFromUrl($videoId);
+        if (null === $this->videoId || '' === trim($this->videoId)) {
+            return;
+        }
+
+        if (str_contains($this->videoId, 'youtube.com')) {
+            $this->videoId = $this->getVideoIdFromUrl($this->videoId);
         }
 
         try {
-            $this->youTube->start($videoId);
+            $this->youTube->start($this->videoId);
         } catch (\Exception $e) {
             $this->logger->error('Unable to start YouTube chat.', ['exception' => $e]);
             $this->youTube->reset();
         }
+
+        $this->videoId = null;
     }
 
     /**
@@ -55,9 +67,15 @@ final class TwigComponent
     }
 
     #[LiveAction]
-    public function submit(#[LiveArg] string $message): void
+    public function submit(): void
     {
-        $this->youTube->submitMessage($message);
+        if (null === $this->message || '' === trim($this->message)) {
+            return;
+        }
+
+        $this->youTube->submitMessage($this->message);
+
+        $this->message = null;
     }
 
     #[LiveAction]

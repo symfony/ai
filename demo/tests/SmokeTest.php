@@ -39,7 +39,7 @@ final class SmokeTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextSame('h4', $expectedHeadline);
-        $this->assertSelectorCount(1, '#chat-submit');
+        $this->assertSelectorCount(1, '.card-footer button');
     }
 
     /**

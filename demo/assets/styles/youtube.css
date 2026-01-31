@@ -39,7 +39,7 @@
             color: #ff0000;
         }
 
-        #chat-reset, #chat-submit {
+        button {
             &:hover {
                 background: #ff0000;
                 border-color: #ff0000;

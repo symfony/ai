@@ -1,5 +1,5 @@
-import {Controller} from '@hotwired/stimulus';
-import {getComponent} from '@symfony/ux-live-component';
+import { Controller } from '@hotwired/stimulus';
+import { getComponent } from '@symfony/ux-live-component';
 
 /**
  * Heavily inspired by https://github.com/ngxson/smolvlm-realtime-webcam
@@ -10,19 +10,6 @@ export default class extends Controller {
 
         this.video = document.getElementById('videoFeed');
         this.canvas = document.getElementById('canvas');
-
-        const input = document.getElementById('chat-message');
-        input.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                this.submitMessage();
-            }
-        });
-        input.focus();
-
-        const submitButton = document.getElementById('chat-submit');
-        submitButton.addEventListener('click', (event) => {
-            this.submitMessage();
-        });
 
         await this.initCamera();
     };
@@ -38,9 +25,9 @@ export default class extends Controller {
         }
     }
 
-    submitMessage() {
-        const input = document.getElementById('chat-message');
-        const instruction = input.value;
+    async submit(event) {
+        event.preventDefault();
+
         const image = this.captureImage();
 
         if (null === image) {
@@ -48,8 +35,9 @@ export default class extends Controller {
             return;
         }
 
-        this.component.action('submit', { instruction, image });
-        input.value = '';
+        this.component.set('image', image, false);
+        await this.component.action('submit');
+        document.getElementById('chat-message').value = '';
     }
 
     captureImage() {

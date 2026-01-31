@@ -14,13 +14,16 @@ namespace App\Speech;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
-use Symfony\UX\LiveComponent\Attribute\LiveArg;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
 #[AsLiveComponent('speech')]
 final class TwigComponent
 {
     use DefaultActionTrait;
+
+    #[LiveProp(writable: true)]
+    public ?string $audio = null;
 
     public function __construct(
         private readonly Chat $chat,
@@ -36,9 +39,15 @@ final class TwigComponent
     }
 
     #[LiveAction]
-    public function submit(#[LiveArg] string $audio): void
+    public function submit(): void
     {
-        $this->chat->say($audio);
+        if (null === $this->audio || '' === trim($this->audio)) {
+            return;
+        }
+
+        $this->chat->say($this->audio);
+
+        $this->audio = null;
     }
 
     #[LiveAction]
