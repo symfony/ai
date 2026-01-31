@@ -4105,6 +4105,57 @@ class AiBundleTest extends TestCase
         $this->assertSame('ai.platform.contract.perplexity', (string) $arguments[3]);
     }
 
+    public function testDeepSeekPlatformConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'deepseek' => [
+                        'api_key' => 'sk-deepseek-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.deepseek'));
+
+        $definition = $container->getDefinition('ai.platform.deepseek');
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(5, $arguments);
+        $this->assertSame('sk-deepseek-test-key', $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('http_client', (string) $arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('ai.platform.model_catalog.deepseek', (string) $arguments[2]);
+        $this->assertNull($arguments[3]);
+        $this->assertInstanceOf(Reference::class, $arguments[4]);
+        $this->assertSame('event_dispatcher', (string) $arguments[4]);
+    }
+
+    #[TestDox('DeepSeek platform uses custom http_client when configured')]
+    public function testDeepSeekPlatformUsesCustomHttpClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'deepseek' => [
+                        'api_key' => 'sk-deepseek-test-key',
+                        'http_client' => 'my_custom_http_client',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.deepseek'));
+
+        $definition = $container->getDefinition('ai.platform.deepseek');
+        $arguments = $definition->getArguments();
+
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('my_custom_http_client', (string) $arguments[1]);
+    }
+
     public function testTransformersPhpConfiguration()
     {
         $container = $this->buildContainer([
