@@ -8,6 +8,7 @@ CHANGELOG
  * [BC BREAK] Rename service ID prefix `ai.toolbox.{agent}.agent_wrapper.` to `ai.toolbox.{agent}.subagent.`
  * Add support for `DocumentIndexer` when no loader is configured for an indexer
  * [BC BREAK] The `host_url` configuration key for `Ollama` has been renamed `endpoint`
+ * Add `ResetInterface` support to `TraceableChat`, `TraceableMessageStore`, `TraceablePlatform` and `TraceableToolbox` to clear collected data between requests
 
 0.2
 ---

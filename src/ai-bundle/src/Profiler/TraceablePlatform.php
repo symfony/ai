@@ -19,6 +19,7 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -30,7 +31,7 @@ use Symfony\AI\Platform\Result\StreamResult;
  *     result: DeferredResult,
  * }
  */
-final class TraceablePlatform implements PlatformInterface
+final class TraceablePlatform implements PlatformInterface, ResetInterface
 {
     /**
      * @var PlatformCallData[]
@@ -72,6 +73,12 @@ final class TraceablePlatform implements PlatformInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->platform->getModelCatalog();
+    }
+
+    public function reset(): void
+    {
+        $this->calls = [];
+        $this->resultCache = new \WeakMap();
     }
 
     private function createTraceableStreamResult(DeferredResult $originalStream): StreamResult

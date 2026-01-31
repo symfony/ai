@@ -185,7 +185,8 @@ final class AiBundle extends AbstractBundle
                 $traceablePlatformDefinition = (new Definition(TraceablePlatform::class))
                     ->setDecoratedService($platform, priority: -1024)
                     ->setArguments([new Reference('.inner')])
-                    ->addTag('ai.traceable_platform');
+                    ->addTag('ai.traceable_platform')
+                    ->addTag('kernel.reset', ['method' => 'reset']);
                 $suffix = u($platform)->after('ai.platform.')->toString();
                 $builder->setDefinition('ai.traceable_platform.'.$suffix, $traceablePlatformDefinition);
             }
@@ -262,7 +263,8 @@ final class AiBundle extends AbstractBundle
                         new Reference('.inner'),
                         new Reference(ClockInterface::class),
                     ])
-                    ->addTag('ai.traceable_message_store');
+                    ->addTag('ai.traceable_message_store')
+                    ->addTag('kernel.reset', ['method' => 'reset']);
                 $suffix = u($messageStore)->afterLast('.')->toString();
                 $builder->setDefinition('ai.traceable_message_store.'.$suffix, $traceableMessageStoreDefinition);
             }
@@ -297,7 +299,8 @@ final class AiBundle extends AbstractBundle
                         new Reference('.inner'),
                         new Reference(ClockInterface::class),
                     ])
-                    ->addTag('ai.traceable_chat');
+                    ->addTag('ai.traceable_chat')
+                    ->addTag('kernel.reset', ['method' => 'reset']);
                 $suffix = u($chat)->afterLast('.')->toString();
                 $builder->setDefinition('ai.traceable_chat.'.$suffix, $traceableChatDefinition);
             }
@@ -1150,7 +1153,8 @@ final class AiBundle extends AbstractBundle
                     ->setClass(TraceableToolbox::class)
                     ->setArguments([new Reference('.inner')])
                     ->setDecoratedService('ai.toolbox.'.$name, priority: -1024)
-                    ->addTag('ai.traceable_toolbox');
+                    ->addTag('ai.traceable_toolbox')
+                    ->addTag('kernel.reset', ['method' => 'reset']);
                 $container->setDefinition('ai.traceable_toolbox.'.$name, $traceableToolboxDefinition);
             }
 
@@ -1537,11 +1541,9 @@ final class AiBundle extends AbstractBundle
 
                 $definition = new Definition(InMemoryStore::class);
                 $definition
-                    ->setLazy(true)
                     ->setArguments($arguments)
-                    ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store')
+                    ->addTag('kernel.reset', ['method' => 'reset']);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2089,11 +2091,9 @@ final class AiBundle extends AbstractBundle
             foreach ($messageStores as $name => $messageStore) {
                 $definition = new Definition(InMemoryMessageStore::class);
                 $definition
-                    ->setLazy(true)
                     ->setArgument(0, $messageStore['identifier'])
-                    ->addTag('proxy', ['interface' => MessageStoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedMessageStoreInterface::class])
-                    ->addTag('ai.message_store');
+                    ->addTag('ai.message_store')
+                    ->addTag('kernel.reset', ['method' => 'reset']);
 
                 $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $name);

@@ -47,6 +47,18 @@ final class TraceableToolboxTest extends TestCase
         $this->assertSame('tool_result', $traceableToolbox->calls[0]->getResult());
     }
 
+    public function testResetClearsCalls()
+    {
+        $toolbox = $this->createToolbox([]);
+        $traceableToolbox = new TraceableToolbox($toolbox);
+
+        $traceableToolbox->execute(new ToolCall('foo', '__invoke'));
+        $this->assertCount(1, $traceableToolbox->calls);
+
+        $traceableToolbox->reset();
+        $this->assertCount(0, $traceableToolbox->calls);
+    }
+
     /**
      * @param Tool[] $tools
      */

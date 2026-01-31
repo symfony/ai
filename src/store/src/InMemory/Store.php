@@ -21,11 +21,12 @@ use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-class Store implements ManagedStoreInterface, StoreInterface
+class Store implements ManagedStoreInterface, StoreInterface, ResetInterface
 {
     /**
      * @var VectorDocument[]
@@ -99,6 +100,11 @@ class Store implements ManagedStoreInterface, StoreInterface
     public function drop(array $options = []): void
     {
         $this->documents = [];
+    }
+
+    public function reset(): void
+    {
+        $this->drop();
     }
 
     /**
