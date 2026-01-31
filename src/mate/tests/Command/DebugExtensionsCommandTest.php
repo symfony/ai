@@ -14,9 +14,9 @@ namespace Symfony\AI\Mate\Tests\Command;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\DebugExtensionsCommand;
+use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -33,16 +33,14 @@ final class DebugExtensionsCommandTest extends TestCase
     public function testExecuteDisplaysExtensions()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-a', 'vendor/package-b']);
-        $container->setParameter('mate.extensions', [
+        $enabledExtensions = ['vendor/package-a', 'vendor/package-b'];
+        $loadedExtensions = [
             'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
             'vendor/package-b' => ['dirs' => ['vendor/vendor/package-b/lib'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugExtensionsCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -59,15 +57,13 @@ final class DebugExtensionsCommandTest extends TestCase
     public function testExecuteShowsEnabledExtensionsOnly()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-a']);
-        $container->setParameter('mate.extensions', [
+        $enabledExtensions = ['vendor/package-a'];
+        $loadedExtensions = [
             'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugExtensionsCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -82,15 +78,13 @@ final class DebugExtensionsCommandTest extends TestCase
     public function testExecuteWithShowAllFlag()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-a']);
-        $container->setParameter('mate.extensions', [
+        $enabledExtensions = ['vendor/package-a'];
+        $loadedExtensions = [
             'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugExtensionsCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['--show-all' => true]);
@@ -104,15 +98,13 @@ final class DebugExtensionsCommandTest extends TestCase
     public function testExecuteWithJsonFormat()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-a']);
-        $container->setParameter('mate.extensions', [
+        $enabledExtensions = ['vendor/package-a'];
+        $loadedExtensions = [
             'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugExtensionsCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['--format' => 'json']);
@@ -135,15 +127,13 @@ final class DebugExtensionsCommandTest extends TestCase
     public function testExecuteShowsExtensionDetails()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-a']);
-        $container->setParameter('mate.extensions', [
+        $enabledExtensions = ['vendor/package-a'];
+        $loadedExtensions = [
             'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugExtensionsCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -156,14 +146,12 @@ final class DebugExtensionsCommandTest extends TestCase
     public function testExecuteHandlesNoLoadedExtensions()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.extensions', [
+        $enabledExtensions = [];
+        $loadedExtensions = [
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugExtensionsCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -176,15 +164,13 @@ final class DebugExtensionsCommandTest extends TestCase
     public function testExecuteShowsLoadedStatus()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-a']);
-        $container->setParameter('mate.extensions', [
+        $enabledExtensions = ['vendor/package-a'];
+        $loadedExtensions = [
             'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugExtensionsCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -196,15 +182,13 @@ final class DebugExtensionsCommandTest extends TestCase
     public function testExecuteJsonFormatContainsExtensionMetadata()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-a']);
-        $container->setParameter('mate.extensions', [
+        $enabledExtensions = ['vendor/package-a'];
+        $loadedExtensions = [
             'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugExtensionsCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['--format' => 'json']);
@@ -224,18 +208,16 @@ final class DebugExtensionsCommandTest extends TestCase
     public function testExecuteShowsIncludeFiles()
     {
         $rootDir = $this->fixturesDir.'/with-includes';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', ['vendor/package-with-includes']);
-        $container->setParameter('mate.extensions', [
+        $enabledExtensions = ['vendor/package-with-includes'];
+        $loadedExtensions = [
             'vendor/package-with-includes' => [
                 'dirs' => [],
                 'includes' => [$rootDir.'/vendor/vendor/package-with-includes/config/config.php'],
             ],
             '_custom' => ['dirs' => [], 'includes' => []],
-        ]);
+        ];
 
-        $command = new DebugExtensionsCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -243,5 +225,17 @@ final class DebugExtensionsCommandTest extends TestCase
         $output = $tester->getDisplay();
         $this->assertStringContainsString('Include files', $output);
         $this->assertStringContainsString('config/config.php', $output);
+    }
+
+    /**
+     * @param array<string>                                            $enabledExtensions
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     */
+    private function createCommand(string $rootDir, array $enabledExtensions, array $extensions): DebugExtensionsCommand
+    {
+        $logger = new NullLogger();
+        $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
+
+        return new DebugExtensionsCommand($enabledExtensions, $extensions, $discoverer);
     }
 }

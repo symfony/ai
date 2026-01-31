@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Mate\Command;
 
-use Mcp\Capability\Discovery\Discoverer;
 use Mcp\Capability\Registry;
 use Mcp\Capability\Registry\ReferenceHandler;
 use Mcp\Exception\ToolNotFoundException;
@@ -40,27 +39,11 @@ class ToolsCallCommand extends Command
     private ReferenceHandler $referenceHandler;
 
     public function __construct(
+        FilteredDiscoveryLoader $loader,
+        ContainerInterface $container,
         LoggerInterface $logger,
-        private ContainerInterface $container,
     ) {
         parent::__construct(self::getDefaultName());
-
-        $rootDir = $container->getParameter('mate.root_dir');
-        \assert(\is_string($rootDir));
-
-        $extensions = $this->container->getParameter('mate.extensions') ?? [];
-        \assert(\is_array($extensions));
-
-        $disabledFeatures = $this->container->getParameter('mate.disabled_features') ?? [];
-        \assert(\is_array($disabledFeatures));
-
-        $loader = new FilteredDiscoveryLoader(
-            basePath: $rootDir,
-            extensions: $extensions,
-            disabledFeatures: $disabledFeatures,
-            discoverer: new Discoverer($logger),
-            logger: $logger
-        );
 
         $this->registry = new Registry(null, $logger);
         $loader->load($this->registry);

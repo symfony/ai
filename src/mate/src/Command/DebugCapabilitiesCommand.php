@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Mate\Command;
 
-use Mcp\Capability\Discovery\Discoverer;
-use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -21,7 +19,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Display all MCP capabilities grouped by extension.
@@ -36,31 +33,20 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[AsCommand('debug:capabilities', 'Display all MCP capabilities grouped by extension')]
 class DebugCapabilitiesCommand extends Command
 {
-    private CapabilityCollector $collector;
-
     /**
      * @var array<string, ExtensionData>
      */
     private array $extensions;
 
+    /**
+     * @param array<string, ExtensionData> $extensions
+     */
     public function __construct(
-        LoggerInterface $logger,
-        private ContainerInterface $container,
+        array $extensions,
+        private CapabilityCollector $collector,
     ) {
         parent::__construct(self::getDefaultName());
-
-        $rootDir = $container->getParameter('mate.root_dir');
-        \assert(\is_string($rootDir));
-
-        $extensions = $this->container->getParameter('mate.extensions') ?? [];
-        \assert(\is_array($extensions));
         $this->extensions = $extensions;
-
-        $disabledFeatures = $this->container->getParameter('mate.disabled_features') ?? [];
-        \assert(\is_array($disabledFeatures));
-
-        $discoverer = new Discoverer($logger);
-        $this->collector = new CapabilityCollector($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
     }
 
     public static function getDefaultName(): string

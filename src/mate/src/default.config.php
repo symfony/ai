@@ -9,8 +9,25 @@
  * file that was distributed with this source code.
  */
 
+use Mcp\Capability\Discovery\Discoverer;
+use Mcp\Capability\Discovery\DiscovererInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\Mate\Agent\AgentInstructionsAggregator;
+use Symfony\AI\Mate\Command\ClearCacheCommand;
+use Symfony\AI\Mate\Command\DebugCapabilitiesCommand;
+use Symfony\AI\Mate\Command\DebugExtensionsCommand;
+use Symfony\AI\Mate\Command\DiscoverCommand;
+use Symfony\AI\Mate\Command\InitCommand;
+use Symfony\AI\Mate\Command\ServeCommand;
+use Symfony\AI\Mate\Command\StopCommand;
+use Symfony\AI\Mate\Command\ToolsCallCommand;
+use Symfony\AI\Mate\Command\ToolsInspectCommand;
+use Symfony\AI\Mate\Command\ToolsListCommand;
+use Symfony\AI\Mate\Discovery\CapabilityCollector;
+use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
+use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\AI\Mate\Service\Logger;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $container): void {
@@ -36,6 +53,13 @@ return static function (ContainerConfigurator $container): void {
         ->defaults()
             ->autowire()
             ->autoconfigure()
+            // Named argument binding for common parameters
+            ->bind('$rootDir', '%mate.root_dir%')
+            ->bind('$cacheDir', '%mate.cache_dir%')
+            ->bind('$extensions', '%mate.extensions%')
+            ->bind('$disabledFeatures', '%mate.disabled_features%')
+            ->bind('$enabledExtensions', '%mate.enabled_extensions%')
+            ->bind('$mcpProtocolVersion', '%mate.mcp_protocol_version%')
 
         ->set('_build.logger', Logger::class)
             ->private() // To be removed when we compile
@@ -49,5 +73,81 @@ return static function (ContainerConfigurator $container): void {
             ->arg('$fileLogEnabled', '%mate.debug_file_enabled%')
             ->arg('$debugEnabled', '%mate.debug_enabled%')
             ->alias(Logger::class, LoggerInterface::class)
+
+        // Container service for commands that need it
+        ->alias(ContainerInterface::class, 'service_container')
+
+        // Register discovery services
+        ->set(Discoverer::class)
+            ->autowire()
+            ->public()
+            ->alias(DiscovererInterface::class, Discoverer::class)
+
+        ->set(ComposerExtensionDiscovery::class)
+            ->autowire()
+            ->public()
+
+        ->set(FilteredDiscoveryLoader::class)
+            ->autowire()
+            ->public()
+
+        ->set(CapabilityCollector::class)
+            ->autowire()
+            ->public()
+
+        ->set(AgentInstructionsAggregator::class)
+            ->autowire()
+            ->public()
+
+        // Register all commands explicitly
+        ->set(InitCommand::class)
+            ->autowire()
+            ->public()
+            ->tag('mate.command')
+
+        ->set(ServeCommand::class)
+            ->autowire()
+            ->public()
+            ->tag('mate.command')
+
+        ->set(DiscoverCommand::class)
+            ->autowire()
+            ->public()
+            ->tag('mate.command')
+
+        ->set(StopCommand::class)
+            ->autowire()
+            ->public()
+            ->tag('mate.command')
+
+        ->set(DebugCapabilitiesCommand::class)
+            ->autowire()
+            ->public()
+            ->tag('mate.command')
+
+        ->set(DebugExtensionsCommand::class)
+            ->autowire()
+            ->public()
+            ->tag('mate.command')
+
+        ->set(ClearCacheCommand::class)
+            ->autowire()
+            ->public()
+            ->tag('mate.command')
+
+        ->set(ToolsListCommand::class)
+            ->autowire()
+            ->public()
+            ->tag('mate.command')
+
+        ->set(ToolsInspectCommand::class)
+            ->autowire()
+            ->public()
+            ->tag('mate.command')
+
+        ->set(ToolsCallCommand::class)
+            ->autowire()
+            ->public()
+            ->tag('mate.command')
     ;
 };

@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Mate\Command;
 
-use Mcp\Capability\Discovery\Discoverer;
 use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\Icon;
 use Mcp\Server;
@@ -37,42 +36,15 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[AsCommand('serve', 'Starts the MCP server with stdio transport')]
 class ServeCommand extends Command
 {
-    private string $cacheDir;
-    private FilteredDiscoveryLoader $loader;
-    private AgentInstructionsAggregator $instructionsAggregator;
-
     public function __construct(
-        private ContainerInterface $container,
+        private string $cacheDir,
+        private string $mcpProtocolVersion,
+        private FilteredDiscoveryLoader $loader,
+        private AgentInstructionsAggregator $instructionsAggregator,
         private LoggerInterface $logger,
+        private ContainerInterface $container,
     ) {
         parent::__construct(self::getDefaultName());
-
-        $rootDir = $container->getParameter('mate.root_dir');
-        \assert(\is_string($rootDir));
-
-        $cacheDir = $container->getParameter('mate.cache_dir');
-        \assert(\is_string($cacheDir));
-        $this->cacheDir = $cacheDir;
-
-        $extensions = $this->container->getParameter('mate.extensions') ?? [];
-        \assert(\is_array($extensions));
-
-        $disabledFeatures = $this->container->getParameter('mate.disabled_features') ?? [];
-        \assert(\is_array($disabledFeatures));
-
-        $this->loader = new FilteredDiscoveryLoader(
-            basePath: $rootDir,
-            extensions: $extensions,
-            disabledFeatures: $disabledFeatures,
-            discoverer: new Discoverer($logger),
-            logger: $logger
-        );
-
-        $this->instructionsAggregator = new AgentInstructionsAggregator(
-            rootDir: $rootDir,
-            extensions: $extensions,
-            logger: $logger
-        );
     }
 
     public static function getDefaultName(): string
@@ -100,9 +72,7 @@ class ServeCommand extends Command
 
         $serverBuilder = Server::builder()
             ->setProtocolVersion(
-                ProtocolVersion::tryFrom(
-                    $this->container->getParameter('mate.mcp_protocol_version') ?? ProtocolVersion::V2025_03_26->value
-                ) ?? ProtocolVersion::V2025_03_26
+                ProtocolVersion::tryFrom($this->mcpProtocolVersion) ?? ProtocolVersion::V2025_03_26
             )
             ->setServerInfo(
                 App::NAME,
@@ -111,10 +81,10 @@ class ServeCommand extends Command
                 $this->getIcon(),
                 'https://symfony.com/doc/current/ai/components/mate.html',
             )
-            ->setContainer($this->container)
             ->addLoader($this->loader)
             ->setSession(new FileSessionStore($this->cacheDir.'/sessions'))
-            ->setLogger($this->logger);
+            ->setLogger($this->logger)
+            ->setContainer($this->container);
 
         $instructions = $this->instructionsAggregator->aggregate();
         if (null !== $instructions) {
