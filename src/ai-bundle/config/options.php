@@ -35,6 +35,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/cartesia'))
                     ->append($import('platform/cerebras'))
                     ->append($import('platform/decart'))
+                    ->append($import('platform/deepseek'))
                     ->append($import('platform/dockermodelrunner'))
                     ->append($import('platform/elevenlabs'))
                     ->append($import('platform/failover'))
