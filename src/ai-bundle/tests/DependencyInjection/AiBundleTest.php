@@ -1530,17 +1530,14 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.store.memory.my_memory_store_with_custom_strategy');
         $this->assertSame(InMemoryStore::class, $definition->getClass());
 
-        $this->assertTrue($definition->isLazy());
+        $this->assertFalse($definition->isLazy());
         $this->assertCount(1, $definition->getArguments());
         $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
         $this->assertSame(DistanceCalculator::class, $definition->getArgument(0)->getClass());
 
-        $this->assertTrue($definition->hasTag('proxy'));
-        $this->assertSame([
-            ['interface' => StoreInterface::class],
-            ['interface' => ManagedStoreInterface::class],
-        ], $definition->getTag('proxy'));
+        $this->assertFalse($definition->hasTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
+        $this->assertTrue($definition->hasTag('kernel.reset'));
 
         $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_memory_store_with_custom_strategy'));
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMemoryStoreWithCustomStrategy'));
@@ -1569,17 +1566,14 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.store.memory.my_memory_store_with_custom_strategy');
         $this->assertSame(InMemoryStore::class, $definition->getClass());
 
-        $this->assertTrue($definition->isLazy());
+        $this->assertFalse($definition->isLazy());
         $this->assertCount(1, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('ai.store.distance_calculator.my_memory_store_with_custom_strategy', (string) $definition->getArgument(0));
 
-        $this->assertTrue($definition->hasTag('proxy'));
-        $this->assertSame([
-            ['interface' => StoreInterface::class],
-            ['interface' => ManagedStoreInterface::class],
-        ], $definition->getTag('proxy'));
+        $this->assertFalse($definition->hasTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
+        $this->assertTrue($definition->hasTag('kernel.reset'));
 
         $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_memory_store_with_custom_strategy'));
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMemoryStoreWithCustomStrategy'));
@@ -6709,14 +6703,12 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.message_store.memory.custom');
 
-        $this->assertTrue($definition->isLazy());
+        $this->assertFalse($definition->isLazy());
         $this->assertSame('foo', $definition->getArgument(0));
 
-        $this->assertSame([
-            ['interface' => MessageStoreInterface::class],
-            ['interface' => ManagedMessageStoreInterface::class],
-        ], $definition->getTag('proxy'));
+        $this->assertFalse($definition->hasTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
+        $this->assertTrue($definition->hasTag('kernel.reset'));
     }
 
     public function testMongoDbMessageStoreIsConfigured()

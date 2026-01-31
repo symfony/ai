@@ -60,4 +60,17 @@ final class TraceableChatTest extends TestCase
         $this->assertInstanceOf(UserMessage::class, $traceableChat->calls[1]['message']);
         $this->assertInstanceOf(\DateTimeImmutable::class, $traceableChat->calls[1]['saved_at']);
     }
+
+    public function testResetClearsCalls()
+    {
+        $agent = $this->createStub(AgentInterface::class);
+        $chat = new Chat($agent, new InMemoryStore());
+        $traceableChat = new TraceableChat($chat, new MonotonicClock());
+
+        $traceableChat->initiate(new MessageBag());
+        $this->assertCount(1, $traceableChat->calls);
+
+        $traceableChat->reset();
+        $this->assertCount(0, $traceableChat->calls);
+    }
 }

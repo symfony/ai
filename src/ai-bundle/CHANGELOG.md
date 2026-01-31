@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add `chats` data from `DataCollector` to the `data_collector.html.twig` template
  * [BC BREAK] Rename service ID prefix `ai.toolbox.{agent}.agent_wrapper.` to `ai.toolbox.{agent}.subagent.`
+ * Add `ResetInterface` support to `TraceableChat`, `TraceableMessageStore`, `TraceablePlatform` and `TraceableToolbox` to clear collected data between requests
 
 0.2
 ---

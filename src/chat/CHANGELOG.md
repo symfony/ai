@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.4
+---
+
+ * Add `ResetInterface` support to in-memory store
+
 0.1
 ---
 

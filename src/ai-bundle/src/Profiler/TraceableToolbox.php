@@ -14,11 +14,12 @@ namespace Symfony\AI\AiBundle\Profiler;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class TraceableToolbox implements ToolboxInterface
+final class TraceableToolbox implements ToolboxInterface, ResetInterface
 {
     /**
      * @var ToolResult[]
@@ -38,5 +39,10 @@ final class TraceableToolbox implements ToolboxInterface
     public function execute(ToolCall $toolCall): ToolResult
     {
         return $this->calls[] = $this->toolbox->execute($toolCall);
+    }
+
+    public function reset(): void
+    {
+        $this->calls = [];
     }
 }

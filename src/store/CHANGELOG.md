@@ -10,6 +10,7 @@ CHANGELOG
  * Add `ConfiguredSourceIndexer` decorator for pre-configuring default sources on `SourceIndexer`
  * [BC BREAK] Remove `Indexer` class - use `SourceIndexer` or `DocumentIndexer` instead
  * [BC BREAK] Change `IndexerInterface::index()` signature - input parameter is no longer nullable
+ * Add `ResetInterface` support to in-memory store
 
 0.3
 ---

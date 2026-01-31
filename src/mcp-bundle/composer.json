@@ -23,7 +23,8 @@
         "symfony/http-foundation": "^7.3|^8.0",
         "symfony/http-kernel": "^7.3|^8.0",
         "symfony/psr-http-message-bridge": "^7.3|^8.0",
-        "symfony/routing": "^7.3|^8.0"
+        "symfony/routing": "^7.3|^8.0",
+        "symfony/service-contracts": "^2.5|^3"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
