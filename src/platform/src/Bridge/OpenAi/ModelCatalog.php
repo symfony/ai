@@ -242,15 +242,15 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'text-embedding-ada-002' => [
                 'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_TEXT],
+                'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ],
             'text-embedding-3-large' => [
                 'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_TEXT],
+                'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ],
             'text-embedding-3-small' => [
                 'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_TEXT],
+                'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ],
             'tts-1' => [
                 'class' => TextToSpeech::class,

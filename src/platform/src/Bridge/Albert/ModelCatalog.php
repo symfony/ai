@@ -54,7 +54,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'openweight-embeddings' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_TEXT],
+                'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ],
         ];
 

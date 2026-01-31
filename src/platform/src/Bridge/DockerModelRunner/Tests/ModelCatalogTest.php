@@ -44,10 +44,10 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'ai/smollm3' => ['ai/smollm3', Completions::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]];
 
         // Embeddings models
-        yield 'ai/nomic-embed-text-v1.5' => ['ai/nomic-embed-text-v1.5', Embeddings::class, [Capability::INPUT_TEXT]];
-        yield 'ai/mxbai-embed-large' => ['ai/mxbai-embed-large', Embeddings::class, [Capability::INPUT_TEXT]];
-        yield 'ai/embeddinggemma' => ['ai/embeddinggemma', Embeddings::class, [Capability::INPUT_TEXT]];
-        yield 'ai/granite-embedding-multilingual' => ['ai/granite-embedding-multilingual', Embeddings::class, [Capability::INPUT_TEXT]];
+        yield 'ai/nomic-embed-text-v1.5' => ['ai/nomic-embed-text-v1.5', Embeddings::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
+        yield 'ai/mxbai-embed-large' => ['ai/mxbai-embed-large', Embeddings::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
+        yield 'ai/embeddinggemma' => ['ai/embeddinggemma', Embeddings::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
+        yield 'ai/granite-embedding-multilingual' => ['ai/granite-embedding-multilingual', Embeddings::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

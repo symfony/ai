@@ -24,49 +24,50 @@ final class ModelCatalog extends AbstractModelCatalog
         $defaultModels = [
             'voyage-3.5' => [
                 'class' => Voyage::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-3.5-lite' => [
                 'class' => Voyage::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-3' => [
                 'class' => Voyage::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-3-lite' => [
                 'class' => Voyage::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-3-large' => [
                 'class' => Voyage::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-finance-2' => [
                 'class' => Voyage::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-multilingual-2' => [
                 'class' => Voyage::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-law-2' => [
                 'class' => Voyage::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-code-3' => [
                 'class' => Voyage::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-code-2' => [
                 'class' => Voyage::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-multimodal-3' => [
                 'class' => Voyage::class,
                 'capabilities' => [
                     Capability::INPUT_MULTIPLE,
                     Capability::INPUT_MULTIMODAL,
+                    Capability::EMBEDDINGS,
                 ],
             ],
         ];

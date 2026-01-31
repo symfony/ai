@@ -182,7 +182,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'mistral-embed' => [
                 'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
         ];
 

@@ -1025,67 +1025,67 @@ final class ModelCatalog extends AbstractModelCatalog
             // Embedding models
             'text-embedding-3-small' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'text-embedding-3-large' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'text-embedding-ada-002' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'togethercomputer/m2-bert-80M-32k-retrieval' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'BAAI/bge-base-en-v1.5' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'BAAI/bge-large-en-v1.' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-large-2-instruct' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-finance-2' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-multilingual-2' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-law-2' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-code-2' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-large-2' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'voyage-2' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'textembedding-gecko@003' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'textembedding-gecko-multilingual@001' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'text-multilingual-embedding-002' => [
                 'class' => EmbeddingsModel::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE],
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
         ];
 

@@ -138,7 +138,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'bge-multilingual-gemma2' => [
                 'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_TEXT],
+                'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ],
         ];
 

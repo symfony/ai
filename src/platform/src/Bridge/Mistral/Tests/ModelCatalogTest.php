@@ -39,7 +39,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'pixstral-12b-latest' => ['pixstral-12b-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_IMAGE, Capability::TOOL_CALLING]];
         yield 'voxtral-small-latest' => ['voxtral-small-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_AUDIO, Capability::TOOL_CALLING]];
         yield 'voxtral-mini-latest' => ['voxtral-mini-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_AUDIO, Capability::TOOL_CALLING]];
-        yield 'mistral-embed' => ['mistral-embed', Embeddings::class, [Capability::INPUT_MULTIPLE]];
+        yield 'mistral-embed' => ['mistral-embed', Embeddings::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

@@ -21,17 +21,17 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 {
     public static function modelsProvider(): iterable
     {
-        yield 'voyage-3.5' => ['voyage-3.5', Voyage::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-3.5-lite' => ['voyage-3.5-lite', Voyage::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-3' => ['voyage-3', Voyage::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-3-lite' => ['voyage-3-lite', Voyage::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-3-large' => ['voyage-3-large', Voyage::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-finance-2' => ['voyage-finance-2', Voyage::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-multilingual-2' => ['voyage-multilingual-2', Voyage::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-law-2' => ['voyage-law-2', Voyage::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-code-3' => ['voyage-code-3', Voyage::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-code-2' => ['voyage-code-2', Voyage::class, [Capability::INPUT_MULTIPLE]];
-        yield 'voyage-multimodal-3' => ['voyage-multimodal-3', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::INPUT_MULTIMODAL]];
+        yield 'voyage-3.5' => ['voyage-3.5', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-3.5-lite' => ['voyage-3.5-lite', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-3' => ['voyage-3', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-3-lite' => ['voyage-3-lite', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-3-large' => ['voyage-3-large', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-finance-2' => ['voyage-finance-2', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-multilingual-2' => ['voyage-multilingual-2', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-law-2' => ['voyage-law-2', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-code-3' => ['voyage-code-3', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-code-2' => ['voyage-code-2', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'voyage-multimodal-3' => ['voyage-multimodal-3', Voyage::class, [Capability::INPUT_MULTIPLE, Capability::INPUT_MULTIMODAL, Capability::EMBEDDINGS]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface
