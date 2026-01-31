@@ -4,7 +4,7 @@
     <div class="card-header p-2">
         {{ ux_icon('mdi:car-turbocharger', { height: '32px', width: '32px' }) }}
         <strong class="ms-1 pt-1 d-inline-block">Turbo Stream Bot</strong>
-        <button {{ live_action('reset')}} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
+        <button {{ live_action('reset') }} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
     </div>
     <div id="chat-body" class="card-body p-4 overflow-auto">
         {% for message in this.messages %}
@@ -24,7 +24,7 @@
     </div>
     <div class="card-footer p-2">
         <form class="input-group" {{ live_action('submit:prevent') }}>
-            <input data-model="norender|message" type="text" class="form-control border-0" placeholder="Write a message ...">
+            <input autofocus data-model="norender|message" type="text" class="form-control border-0" placeholder="Write a message ...">
             <button class="btn btn-outline-secondary border-0">{{ ux_icon('mingcute:send-fill', { height: '25px', width: '25px' }) }} Submit</button>
         </form>
     </div>

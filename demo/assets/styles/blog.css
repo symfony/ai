@@ -51,7 +51,7 @@
             color: #2c5282;
         }
 
-        #chat-reset, #chat-submit {
+        button {
             &:hover {
                 background: #d5054e;
                 border-color: #d5054e;

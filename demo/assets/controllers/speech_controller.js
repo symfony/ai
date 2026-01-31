@@ -6,11 +6,6 @@ export default class extends Controller {
         this.component = await getComponent(this.element);
         this.scrollToBottom();
 
-        const resetButton = document.getElementById('chat-reset');
-        resetButton.addEventListener('click', (event) => {
-            this.component.action('reset');
-        });
-
         const startButton = document.getElementById('micro-start');
         const stopButton = document.getElementById('micro-stop');
         const botThinkingButton = document.getElementById('bot-thinking');
@@ -62,7 +57,8 @@ export default class extends Controller {
             this.mediaRecorder.stream.getAudioTracks().forEach(track => track.stop());
 
             const base64String = await this.blobToBase64(audioBlob);
-            this.component.action('submit', { audio: base64String });
+            this.component.set('audio', base64String, false);
+            await this.component.action('submit');
         };
 
         this.mediaRecorder.start();

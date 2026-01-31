@@ -49,6 +49,7 @@ final class Chat
 
         $messages = new MessageBag(
             Message::forSystem($system),
+            Message::ofUser($videoId),
             Message::ofAssistant('What do you want to know about that video?'),
         );
 

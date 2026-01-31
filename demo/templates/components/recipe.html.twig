@@ -2,12 +2,12 @@
     <div class="card-header p-2">
             {{ ux_icon('mdi:cook', { height: '32px', width: '32px' }) }}
             <strong class="ms-1 pt-1 d-inline-block">Recipe Bot</strong>
-        <button id="chat-reset" class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
+        <button {{ live_action('reset') }} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
     </div>
     <div id="chat-body" class="card-body p-4 overflow-auto">
         {% if this.recipe %}
             {% set recipe = this.recipe %}
-            <div id="recipe-card">
+            <div data-loading="hide">
                 <h2 class="mb-4 pb-3 border-bottom">{{ recipe.name }}</h2>
                 <div class="row mb-4">
                     <div class="col-md-4 text-center">
@@ -76,13 +76,13 @@
                 </div>
             </div>
         {% else %}
-            <div id="welcome" class="text-center mt-5 py-5 bg-white rounded-5 shadow-sm w-75 mx-auto">
+            <div data-loading="hide" class="text-center mt-5 py-5 bg-white rounded-5 shadow-sm w-75 mx-auto">
                 {{ ux_icon('mdi:cook', { height: '200px', width: '200px' }) }}
                 <h4 class="mt-5">Cooking Recipes</h4>
                 <span class="text-muted">Please provide your preferences for a recipe.</span>
             </div>
         {% endif %}
-        <div id="loading-message" class="d-none">
+        <div id="loading-message" data-loading>
             <div class="d-flex flex-column align-items-center justify-content-center w-100">
                 <div class="spinner-border text-success mb-4" style="width: 60px; height: 60px;">
                     <span class="visually-hidden">Loading...</span>
@@ -93,9 +93,13 @@
         </div>
     </div>
     <div class="card-footer p-2">
-        <div class="input-group">
-            <input id="chat-message" type="text" class="form-control border-0" placeholder="Write a message ...">
-            <button id="chat-submit" class="btn btn-outline-secondary border-0" type="button">{{ ux_icon('mingcute:send-fill', { height: '25px', width: '25px' }) }} Submit</button>
-        </div>
+        <form class="input-group" {{ live_action('submit:prevent') }}>
+            <input autofocus id="chat-message"
+                   data-model="norender|message"
+                   type="text" class="form-control border-0" placeholder="Write a message ...">
+            <button class="btn btn-outline-secondary border-0">
+                {{ ux_icon('mingcute:send-fill', { height: '25px', width: '25px' }) }} Submit
+            </button>
+        </form>
     </div>
 </div>
