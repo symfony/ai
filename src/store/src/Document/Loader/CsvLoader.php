@@ -54,12 +54,12 @@ final class CsvLoader implements LoaderInterface
         }
 
         if (!is_file($source)) {
-            throw new RuntimeException(sprintf('File "%s" does not exist.', $source));
+            throw new RuntimeException(\sprintf('File "%s" does not exist.', $source));
         }
 
         $handle = fopen($source, 'r');
         if (false === $handle) {
-            throw new RuntimeException(sprintf('Unable to open file "%s".', $source));
+            throw new RuntimeException(\sprintf('Unable to open file "%s".', $source));
         }
 
         $contentColumn = $options[self::OPTION_CONTENT_COLUMN] ?? $this->contentColumn;
@@ -82,11 +82,8 @@ final class CsvLoader implements LoaderInterface
                 if ($hasHeader && null === $headers) {
                     $headers = $row;
 
-                    if (is_string($contentColumn) && !in_array($contentColumn, $headers, true)) {
-                        throw new InvalidArgumentException(sprintf(
-                            'Content column "%s" not found in CSV headers.',
-                            $contentColumn
-                        ));
+                    if (\is_string($contentColumn) && !\in_array($contentColumn, $headers, true)) {
+                        throw new InvalidArgumentException(\sprintf('Content column "%s" not found in CSV headers.', $contentColumn));
                     }
 
                     continue;
@@ -117,7 +114,7 @@ final class CsvLoader implements LoaderInterface
     }
 
     /**
-     * @param array<int, string>       $row
+     * @param array<int, string>      $row
      * @param array<int, string>|null $headers
      *
      * @return array<string|int, string>
@@ -128,17 +125,13 @@ final class CsvLoader implements LoaderInterface
             return $row;
         }
 
-        if (count($row) !== count($headers)) {
-            $row = array_pad($row, count($headers), '');
+        if (\count($row) !== \count($headers)) {
+            $row = array_pad($row, \count($headers), '');
         }
 
         $data = array_combine($headers, $row);
         if (false === $data) {
-            throw new RuntimeException(sprintf(
-                'Invalid CSV structure in "%s" at row %d.',
-                $source,
-                $rowIndex
-            ));
+            throw new RuntimeException(\sprintf('Invalid CSV structure in "%s" at row %d.', $source, $rowIndex));
         }
 
         return $data;
@@ -174,7 +167,7 @@ final class CsvLoader implements LoaderInterface
         foreach ($metadataColumns as $column) {
             $value = $this->getValue($data, $column);
             if (null !== $value) {
-                $metadata[is_int($column) ? 'column_'.$column : $column] = $value;
+                $metadata[\is_int($column) ? 'column_'.$column : $column] = $value;
             }
         }
 
@@ -186,6 +179,6 @@ final class CsvLoader implements LoaderInterface
      */
     private function getValue(array $data, string|int $key): ?string
     {
-        return array_key_exists($key, $data) ? $data[$key] : null;
+        return \array_key_exists($key, $data) ? $data[$key] : null;
     }
 }
