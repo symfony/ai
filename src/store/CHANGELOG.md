@@ -4,6 +4,7 @@ CHANGELOG
 0.4
 ---
 
+ * Add `CsvLoader` for loading documents from CSV files
  * Add `StoreInterface::remove()` method
  * Add `SourceIndexer` for indexing from sources (file paths, URLs, etc.) using a `LoaderInterface`
  * Add `DocumentIndexer` for indexing documents directly without a loader
