@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.4
+---
+
+ * Add `chats` data from `DataCollector` to the `data_collector.html.twig` template 
+
 0.2
 ---
 
