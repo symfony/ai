@@ -124,7 +124,7 @@ final class CsvLoaderTest extends TestCase
             $loader->load($this->getFixturePath())
         );
 
-        $ids = array_map(fn ($doc) => (string) $doc->getId(), $documents);
+        $ids = array_map(static fn ($doc) => (string) $doc->getId(), $documents);
 
         $this->assertContains('5', $ids);
         $this->assertNotContains('6', $ids);

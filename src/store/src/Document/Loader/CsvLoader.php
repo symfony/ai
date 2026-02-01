@@ -36,6 +36,9 @@ final class CsvLoader implements LoaderInterface
     public const OPTION_ESCAPE = 'escape';
     public const OPTION_HAS_HEADER = 'has_header';
 
+    /**
+     * @param array<string|int> $metadataColumns
+     */
     public function __construct(
         private readonly string|int $contentColumn = 'content',
         private readonly string|int|null $idColumn = null,
@@ -129,12 +132,7 @@ final class CsvLoader implements LoaderInterface
             $row = array_pad($row, \count($headers), '');
         }
 
-        $data = array_combine($headers, $row);
-        if (false === $data) {
-            throw new RuntimeException(\sprintf('Invalid CSV structure in "%s" at row %d.', $source, $rowIndex));
-        }
-
-        return $data;
+        return array_combine($headers, $row);
     }
 
     /**
