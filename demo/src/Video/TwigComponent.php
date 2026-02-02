@@ -46,6 +46,7 @@ final class TwigComponent
     {
         if (null === $this->instruction || '' === trim($this->instruction) || null === $this->image || '' === trim($this->image)) {
             $this->caption = 'Please provide both an instruction and activate your webcam.';
+
             return;
         }
 
