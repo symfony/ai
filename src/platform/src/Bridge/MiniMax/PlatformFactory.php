@@ -27,7 +27,7 @@ final class PlatformFactory
     public static function create(
         #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,
-        string $hostUrl = 'https://api.minimax.io/v1',
+        string $endpoint = 'https://api.minimax.io/v1',
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
@@ -35,8 +35,8 @@ final class PlatformFactory
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [new MiniMaxClient($httpClient, $apiKey, $hostUrl)],
-            [new MiniMaxResultConverter()],
+            [new MiniMaxClient($httpClient, $apiKey, $endpoint)],
+            [new MiniMaxResultConverter($httpClient, $apiKey, $endpoint)],
             $modelCatalog,
             $contract ?? MiniMaxContract::create(),
             $eventDispatcher,

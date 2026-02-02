@@ -37,6 +37,7 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
+use Symfony\AI\Platform\Bridge\MiniMax\PlatformFactory as MiniMaxPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
@@ -45,6 +46,7 @@ use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
@@ -3624,6 +3626,119 @@ class AiBundleTest extends TestCase
         $this->assertSame('http://127.0.0.1:11434', $ollamaCatalogDefinition->getArgument(0));
         $this->assertInstanceOf(Reference::class, $ollamaCatalogDefinition->getArgument(1));
         $this->assertSame('http_client', (string) $ollamaCatalogDefinition->getArgument(1));
+    }
+
+    public function testMiniMaxCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'minimax' => [
+                        'api_key' => 'foo',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.minimax'));
+        $this->assertTrue($container->hasDefinition('ai.platform.model_catalog.minimax'));
+        $this->assertTrue($container->hasDefinition('ai.platform.contract.minimax'));
+
+        $definition = $container->getDefinition('ai.platform.minimax');
+        $this->assertSame(Platform::class, $definition->getClass());
+        $this->assertSame([MiniMaxPlatformFactory::class, 'create'], $definition->getFactory());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('http_client', (string) $definition->getArgument(1));
+        $this->assertSame('https://api.minimax.io/v1', $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('ai.platform.model_catalog.minimax', (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.minimax', (string) $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'minimax']], $definition->getTag('ai.platform'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'minimax' => [
+                        'api_key' => 'foo',
+                        'http_client' => 'foo',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.minimax'));
+        $this->assertTrue($container->hasDefinition('ai.platform.model_catalog.minimax'));
+        $this->assertTrue($container->hasDefinition('ai.platform.contract.minimax'));
+
+        $definition = $container->getDefinition('ai.platform.minimax');
+        $this->assertSame(Platform::class, $definition->getClass());
+        $this->assertSame([MiniMaxPlatformFactory::class, 'create'], $definition->getFactory());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('foo', (string) $definition->getArgument(1));
+        $this->assertSame('https://api.minimax.io/v1', $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('ai.platform.model_catalog.minimax', (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.minimax', (string) $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'minimax']], $definition->getTag('ai.platform'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'minimax' => [
+                        'endpoint' => 'https://api.minimax.io/v2',
+                        'api_key' => 'foo',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.minimax'));
+        $this->assertTrue($container->hasDefinition('ai.platform.model_catalog.minimax'));
+        $this->assertTrue($container->hasDefinition('ai.platform.contract.minimax'));
+
+        $definition = $container->getDefinition('ai.platform.minimax');
+        $this->assertSame(Platform::class, $definition->getClass());
+        $this->assertSame([MiniMaxPlatformFactory::class, 'create'], $definition->getFactory());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('http_client', (string) $definition->getArgument(1));
+        $this->assertSame('https://api.minimax.io/v2', $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('ai.platform.model_catalog.minimax', (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.minimax', (string) $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'minimax']], $definition->getTag('ai.platform'));
     }
 
     /**
@@ -7432,6 +7547,9 @@ class AiBundleTest extends TestCase
                     ],
                     'mistral' => [
                         'api_key' => 'mistral_key_full',
+                    ],
+                    'minimax' => [
+                        'api_key' => 'foo',
                     ],
                     'openrouter' => [
                         'api_key' => 'sk-openrouter_key_full',

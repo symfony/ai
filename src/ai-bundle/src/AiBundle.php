@@ -69,6 +69,7 @@ use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory as HuggingFacePlatformFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory as LmStudioPlatformFactory;
+use Symfony\AI\Platform\Bridge\MiniMax\PlatformFactory as MiniMaxPlatformFactory;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory as MistralPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
@@ -731,6 +732,30 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'huggingface']);
 
             $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('minimax' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-mini-max-platform', MiniMaxPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('MiniMax platform configuration requires "symfony/ai-mini-max-platform" package. Try running "composer require symfony/ai-mini-max-platform".');
+            }
+
+            $definition = (new Definition(Platform::class))
+                ->setFactory(MiniMaxPlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $platform['endpoint'],
+                    new Reference('ai.platform.model_catalog.minimax'),
+                    new Reference('ai.platform.contract.minimax'),
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform', ['name' => 'minimax']);
+
+            $container->setDefinition('ai.platform.minimax', $definition);
 
             return;
         }

@@ -40,7 +40,7 @@ final class MiniMaxClient implements ModelClientInterface
     {
         return match (true) {
             $model->supports(Capability::INPUT_MESSAGES) => $this->doTextGeneration($model, $payload, $options),
-            $model->supports(Capability::TEXT_TO_SPEECH_ASYNC),
+            $model->supports(Capability::TEXT_TO_SPEECH_ASYNC) && $options['async'] ?? false,
             $model->supports(Capability::TEXT_TO_SPEECH) => $this->doSpeechGeneration($model, $payload, $options),
             $model->supports(Capability::TEXT_TO_IMAGE),
             $model->supports(Capability::IMAGE_TO_IMAGE) => $this->doImageGeneration($model, $payload, $options),
@@ -74,7 +74,7 @@ final class MiniMaxClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('The payload is not a string, given "%s".', get_debug_type($payload)));
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/%s', $this->endpoint, $model->supports(Capability::TEXT_TO_SPEECH_ASYNC) ? 't2a_async_v2' : 't2a_v2'), [
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/%s', $this->endpoint, ($model->supports(Capability::TEXT_TO_SPEECH_ASYNC) && $options['async'] ?? false) ? 't2a_async_v2' : 't2a_v2'), [
             'auth_bearer' => $this->apiKey,
             'json' => [
                 'model' => $model->getName(),
