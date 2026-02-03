@@ -638,6 +638,126 @@ useful when certain interactions shouldn't be influenced by the memory context::
     ]);
 
 
+History Compression
+-------------------
+
+When building conversational agents, the message history can grow large over time, increasing token costs and potentially
+exceeding context limits. Symfony AI provides history compression strategies to manage conversation length automatically.
+
+Using History Compression
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+History compression is handled through the :class:`Symfony\\AI\\Agent\\Compression\\HistoryCompressionInputProcessor` and a
+compression strategy implementing :class:`Symfony\\AI\\Agent\\Compression\\CompressionStrategyInterface`::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Compression\HistoryCompressionInputProcessor;
+    use Symfony\AI\Agent\Compression\SlidingWindowStrategy;
+
+    // Platform instantiation
+
+    $strategy = new SlidingWindowStrategy(maxMessages: 10, threshold: 20);
+    $compressionProcessor = new HistoryCompressionInputProcessor($strategy);
+
+    $agent = new Agent($platform, $model, [$compressionProcessor]);
+
+Compression Strategies
+^^^^^^^^^^^^^^^^^^^^^^
+
+The library includes several compression strategy implementations.
+
+Sliding Window Strategy
+.......................
+
+The simplest strategy that keeps only the most recent messages, discarding older ones. The system message is always
+preserved::
+
+    use Symfony\AI\Agent\Compression\SlidingWindowStrategy;
+
+    $strategy = new SlidingWindowStrategy(
+        maxMessages: 10, // Keep last 10 messages after compression
+        threshold: 20,   // Trigger compression when exceeding 20 messages
+    );
+
+Summarization Strategy
+......................
+
+This strategy uses an LLM to summarize older messages while keeping recent messages intact. The summary is injected
+into the system message::
+
+    use Symfony\AI\Agent\Compression\SummarizationStrategy;
+
+    $strategy = new SummarizationStrategy(
+        $platform,
+        'gemini-2.0-flash',               // Model to use for summarization
+        threshold: 20,                    // Trigger compression when exceeding 20 messages
+        keepRecent: 6,                    // Keep the 6 most recent messages uncompressed
+    );
+
+Hybrid Strategy
+...............
+
+Combines multiple strategies with progressive thresholds. This allows using a lightweight strategy for moderate
+conversation lengths and a more aggressive strategy for very long conversations::
+
+    use Symfony\AI\Agent\Compression\HybridStrategy;
+    use Symfony\AI\Agent\Compression\SlidingWindowStrategy;
+    use Symfony\AI\Agent\Compression\SummarizationStrategy;
+
+    $slidingWindow = new SlidingWindowStrategy(maxMessages: 15);
+    $summarization = new SummarizationStrategy($platform, 'gemini-2.0-flash', keepRecent: 6);
+
+    $strategy = new HybridStrategy(
+        primaryStrategy: $slidingWindow,   // Used between soft and hard threshold
+        secondaryStrategy: $summarization, // Used above hard threshold
+        softThreshold: 15,                 // When to start using primary strategy
+        hardThreshold: 30,                 // When to switch to secondary strategy
+    );
+
+Dynamic Compression Control
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Compression is globally configured for the agent, but you can selectively disable it for specific calls::
+
+    $result = $agent->call($messages, [
+        'compress_history' => false, // Disable compression for this specific call
+    ]);
+
+Compression Events
+^^^^^^^^^^^^^^^^^^
+
+The compression processor dispatches events that allow you to monitor or modify the compression process.
+
+BeforeHistoryCompression
+........................
+
+Dispatched before compression is applied. Listeners can inspect the original messages and skip compression::
+
+    use Symfony\AI\Agent\Compression\BeforeHistoryCompression;
+
+    $eventDispatcher->addListener(BeforeHistoryCompression::class, function (BeforeHistoryCompression $event): void {
+        // Optionally skip compression based on custom logic
+        if ($this->shouldPreserveFullHistory($event->getOriginalMessages())) {
+            $event->skip();
+        }
+    });
+
+AfterHistoryCompression
+.......................
+
+Dispatched after compression is applied. Listeners can inspect or modify the compressed messages::
+
+    use Symfony\AI\Agent\Compression\AfterHistoryCompression;
+
+    $eventDispatcher->addListener(AfterHistoryCompression::class, function (AfterHistoryCompression $event): void {
+        $delta = $event->getCompressionDelta();
+        $this->logger->info(sprintf('Compressed %d messages', $delta));
+
+        // Optionally modify the compressed messages
+        $event->setCompressedMessages($modifiedMessages);
+    });
+
+
 Testing
 -------
 

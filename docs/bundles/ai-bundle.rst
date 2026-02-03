@@ -530,6 +530,98 @@ When using a service reference, the memory service must implement the
         }
     }
 
+History Compression
+-------------------
+
+When building conversational agents, the message history can grow large over time, increasing token costs and potentially
+exceeding context limits. The AI Bundle supports history compression through configurable strategies.
+
+Configuring Compression
+~~~~~~~~~~~~~~~~~~~~~~~
+
+To enable history compression, reference a compression strategy service in your agent configuration:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: 'gpt-4o-mini'
+                compression: 'App\Compression\MyCompressionStrategy'
+
+The referenced service must implement :class:`Symfony\\AI\\Agent\\Compression\\CompressionStrategyInterface`.
+
+Built-in Compression Strategies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Symfony AI provides several built-in compression strategies that you can register as services:
+
+**Sliding Window Strategy**: Keeps only the most recent messages, discarding older ones::
+
+    use Symfony\AI\Agent\Compression\SlidingWindowStrategy;
+
+    // In services.yaml
+    services:
+        Symfony\AI\Agent\Compression\SlidingWindowStrategy:
+            $maxMessages: 10  # Keep last 10 messages after compression
+            $threshold: 20    # Trigger compression when exceeding 20 messages
+
+**Summarization Strategy**: Uses an LLM to summarize older messages while keeping recent ones intact::
+
+    use Symfony\AI\Agent\Compression\SummarizationStrategy;
+
+    // In services.yaml
+    services:
+        Symfony\AI\Agent\Compression\SummarizationStrategy:
+            $platform: '@ai.platform.openai'
+            $summaryModel: 'gpt-5-mini'
+            $threshold: 20
+            $keepRecent: 6
+
+**Hybrid Strategy**: Combines multiple strategies with progressive thresholds::
+
+    use Symfony\AI\Agent\Compression\HybridStrategy;
+
+    // In services.yaml
+    services:
+        Symfony\AI\Agent\Compression\HybridStrategy:
+            $primaryStrategy: '@Symfony\AI\Agent\Compression\SlidingWindowStrategy'
+            $secondaryStrategy: '@Symfony\AI\Agent\Compression\SummarizationStrategy'
+            $softThreshold: 15
+            $hardThreshold: 30
+
+Disabling Compression Per-Request
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Compression can be disabled for specific agent calls using the ``compress_history`` option::
+
+    $result = $agent->call($messages, [
+        'compress_history' => false,
+    ]);
+
+Compression Events
+~~~~~~~~~~~~~~~~~~
+
+The compression processor dispatches events that allow you to monitor or modify the compression process:
+
+* :class:`Symfony\\AI\\Agent\\Compression\\BeforeHistoryCompression`: Dispatched before compression, allows skipping
+* :class:`Symfony\\AI\\Agent\\Compression\\AfterHistoryCompression`: Dispatched after compression, allows modifying the result
+
+Example event listener::
+
+    use Symfony\AI\Agent\Compression\AfterHistoryCompression;
+    use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+
+    #[AsEventListener]
+    final class CompressionLogger
+    {
+        public function __invoke(AfterHistoryCompression $event): void
+        {
+            $delta = $event->getCompressionDelta();
+            // Log that $delta messages were compressed
+        }
+    }
+
 Multi-Agent Orchestration
 -------------------------
 

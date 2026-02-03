@@ -7,6 +7,7 @@ CHANGELOG
  * Add `chats` data from `DataCollector` to the `data_collector.html.twig` template
  * [BC BREAK] Rename service ID prefix `ai.toolbox.{agent}.agent_wrapper.` to `ai.toolbox.{agent}.subagent.`
  * Add support for `DocumentIndexer` when no loader is configured for an indexer
+ * Add `compression` option to agent configuration for history compression strategies
 
 0.2
 ---

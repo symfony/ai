@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Rename `Symfony\AI\Agent\Toolbox\Tool\Agent` to `Symfony\AI\Agent\Toolbox\Tool\Subagent`
+ * Add history compression strategies for managing conversation length including events for compression lifecycle
 
 0.3
 ---
