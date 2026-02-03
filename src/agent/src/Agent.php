@@ -68,7 +68,7 @@ final class Agent implements AgentInterface
      */
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
-        $input = new Input($this->getModel(), $messages, $options);
+        $input = new Input($this->getModel(), $messages, $options, $this->platform);
         array_map(static fn (InputProcessorInterface $processor) => $processor->processInput($input), $this->inputProcessors);
 
         $model = $input->getModel();
