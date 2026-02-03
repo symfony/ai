@@ -40,7 +40,7 @@ $messages = new MessageBag(
     Message::ofUser($userTemplate)
 );
 
-$result = $platform->invoke('gpt-4o-mini', $messages, [
+$result = $platform->invoke('gpt-5-mini', $messages, [
     'template_vars' => [
         'domain' => 'math',
         'operation' => '2 + 2',

@@ -30,7 +30,7 @@ $personalFacts = new StaticMemoryProvider(
 );
 $memoryProcessor = new MemoryInputProcessor([$personalFacts]);
 
-$agent = new Agent($platform, 'gpt-4o-mini', [$systemPromptProcessor, $memoryProcessor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$systemPromptProcessor, $memoryProcessor]);
 $messages = new MessageBag(Message::ofUser('What do we do today?'));
 $result = $agent->call($messages);
 

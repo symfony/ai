@@ -24,7 +24,7 @@ $platform = PlatformFactory::create($_ENV['OPENAI_API_KEY'], http_client());
 $promptFile = File::fromFile(dirname(__DIR__, 2).'/fixtures/prompts/code-reviewer.json');
 $systemPromptProcessor = new SystemPromptInputProcessor($promptFile);
 
-$agent = new Agent($platform, 'gpt-4o-mini', [$systemPromptProcessor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$systemPromptProcessor]);
 $messages = new MessageBag(Message::ofUser('Review this code: function add($a, $b) { return $a + $b; }'));
 $result = $agent->call($messages);
 

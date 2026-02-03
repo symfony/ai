@@ -31,7 +31,7 @@ $store = new MessageStore(
     table: 'chat',
 );
 
-$agent = new Agent($platform, 'gpt-4o-mini');
+$agent = new Agent($platform, 'gpt-5-mini');
 $chat = new Chat($agent, $store);
 
 $messages = new MessageBag(

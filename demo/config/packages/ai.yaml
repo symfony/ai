@@ -7,7 +7,7 @@ ai:
     agent:
         blog:
             platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            model: 'gpt-5-mini'
             tools:
                 - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
                 - service: 'clock'
@@ -18,24 +18,24 @@ ai:
                 service: 'App\Blog\SymfonyVersionsMemory'
         stream:
             platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            model: 'gpt-5-mini'
             prompt:
                 file: '%kernel.project_dir%/prompts/stream-chat.txt'
             tools: false
         youtube:
             platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            model: 'gpt-5-mini'
             tools: false
         recipe:
             platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            model: 'gpt-5-mini'
             prompt:
                 text: 'You are a helpful cooking assistant. Provide detailed recipes based on user requests.'
             tools: false
         wikipedia:
             platform: 'ai.platform.openai'
             model:
-                name: 'gpt-4o-mini'
+                name: 'gpt-5-mini'
                 options:
                     temperature: 0.5
             prompt:
@@ -46,7 +46,7 @@ ai:
             include_sources: true
         speech:
             platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini?temperature=1.0'
+            model: 'gpt-5-mini?temperature=1.0'
             prompt: |
                 You are a friendly, positive and energetic voice assistant. You can engage in light discussions, ask
                 questions, and do general small-talk. If asked about the Symfony Framework or their community events,
@@ -64,17 +64,17 @@ ai:
         # Multi-agent setup
         orchestrator:
             platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            model: 'gpt-5-mini'
             prompt: 'You are an intelligent agent orchestrator that routes user questions to specialized agents.'
             tools: false
         technical:
             platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            model: 'gpt-5-mini'
             prompt: 'You are a technical support specialist. Help users resolve bugs, problems, and technical errors.'
             tools: false
         fallback:
             platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            model: 'gpt-5-mini'
             prompt: 'You are a helpful general assistant. Assist users with any questions or tasks they may have.'
             tools: false
     multi_agent:

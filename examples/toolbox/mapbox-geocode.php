@@ -24,7 +24,7 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $mapbox = new Mapbox(http_client(), env('MAPBOX_ACCESS_TOKEN'));
 $toolbox = new Toolbox([$mapbox], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);
 
 $messages = new MessageBag(Message::ofUser('What are the coordinates of Brandenburg Gate in Berlin?'));
 $result = $agent->call($messages);

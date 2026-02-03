@@ -24,7 +24,7 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $store = new MessageStore(http_client(), env('MEILISEARCH_HOST'), env('MEILISEARCH_API_KEY'), new MonotonicClock());
 $store->setup();
 
-$agent = new Agent($platform, 'gpt-4o-mini');
+$agent = new Agent($platform, 'gpt-5-mini');
 $chat = new Chat($agent, $store);
 
 $messages = new MessageBag(

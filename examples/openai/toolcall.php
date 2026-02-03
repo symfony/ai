@@ -24,7 +24,7 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $transcriber = new YoutubeTranscriber(http_client());
 $toolbox = new Toolbox([$transcriber], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);
 
 $messages = new MessageBag(Message::ofUser('Please summarize this video for me: https://www.youtube.com/watch?v=6uXW-ulpj0s'));
 $result = $agent->call($messages);

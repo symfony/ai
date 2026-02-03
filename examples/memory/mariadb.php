@@ -65,7 +65,7 @@ $embeddingsModel = $platform->getModelCatalog()->getModel($embeddings);
 $embeddingsMemory = new EmbeddingProvider($platform, $embeddingsModel, $store);
 $memoryProcessor = new MemoryInputProcessor([$embeddingsMemory]);
 
-$agent = new Agent($platform, 'gpt-4o-mini', [$memoryProcessor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$memoryProcessor]);
 $messages = new MessageBag(Message::ofUser('Have we discussed about my friend John in the past? If yes, what did we talk about?'));
 $result = $agent->call($messages);
 

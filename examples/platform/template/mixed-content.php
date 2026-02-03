@@ -37,7 +37,7 @@ $messages = new MessageBag(
     Message::ofUser('I need help with', Template::string(' {task}'))
 );
 
-$result = $platform->invoke('gpt-4o-mini', $messages, [
+$result = $platform->invoke('gpt-5-mini', $messages, [
     'template_vars' => ['task' => 'debugging'],
 ]);
 

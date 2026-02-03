@@ -27,13 +27,13 @@ $rateLimiter = new RateLimiterFactory([
     'limit' => 1,
 ], new InMemoryStorage());
 
-// # Ollama will fail as 'gpt-4o' is not available in the catalog
+// # Ollama will fail as 'gpt-5.2' is not available in the catalog
 $platform = new FailoverPlatform([
     OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), http_client()),
     OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), http_client()),
 ], $rateLimiter);
 
-$result = $platform->invoke('gpt-4o', new MessageBag(
+$result = $platform->invoke('gpt-5.2', new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
 ));

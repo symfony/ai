@@ -24,6 +24,6 @@ $messages = new MessageBag(
         Document::fromFile(dirname(__DIR__, 2).'/fixtures/document.pdf'),
     ),
 );
-$result = $platform->invoke('gpt-4o-mini', $messages);
+$result = $platform->invoke('gpt-5-mini', $messages);
 
 echo $result->asText().\PHP_EOL;

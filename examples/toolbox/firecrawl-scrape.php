@@ -30,7 +30,7 @@ $firecrawl = new Firecrawl(
 $toolbox = new Toolbox([$firecrawl], logger: logger());
 $toolProcessor = new AgentProcessor($toolbox);
 
-$agent = new Agent($platform, 'gpt-4o-mini', inputProcessors: [$toolProcessor], outputProcessors: [$toolProcessor]);
+$agent = new Agent($platform, 'gpt-5-mini', inputProcessors: [$toolProcessor], outputProcessors: [$toolProcessor]);
 
 $messages = new MessageBag(Message::ofUser('Scrape the following URL: https://symfony.com/doc/current/setup.html then resume it in less than 200 words.'));
 $result = $agent->call($messages);

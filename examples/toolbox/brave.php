@@ -29,7 +29,7 @@ $clock = new Clock(new SymfonyClock());
 $crawler = new Scraper(http_client());
 $toolbox = new Toolbox([$brave, $clock, $crawler], logger: logger());
 $processor = new AgentProcessor($toolbox, includeSources: true);
-$agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);
 
 $prompt = <<<PROMPT
     Summarize the latest game of the Dallas Cowboys. When and where was it? Who was the opponent, what was the result,
