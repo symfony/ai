@@ -11,11 +11,12 @@
 
 namespace Symfony\AI\Chat\Bridge\Cloudflare;
 
+use Symfony\AI\Chat\Exception\RuntimeException;
 use Symfony\AI\Chat\ManagedStoreInterface;
+use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -36,6 +37,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         #[\SensitiveParameter] private readonly string $apiKey,
         private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
         ], [new JsonEncoder()]),
         private readonly string $endpointUrl = 'https://api.cloudflare.com/client/v4/accounts',
@@ -50,9 +52,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
             return;
         }
 
-        $this->request('POST', 'storage/kv/namespaces', [
-            'title' => $this->namespace,
-        ]);
+        $this->createNamespace();
     }
 
     public function drop(): void
@@ -75,24 +75,35 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         ));
     }
 
-    public function save(MessageBag $messages): void
+    public function save(MessageBag $messages, ?string $identifier = null): void
     {
-        $currentNamespace = $this->retrieveCurrentNamespace();
+        if (null !== $identifier && [] === $this->retrieveCurrentNamespace($identifier)) {
+            $this->createNamespace($identifier);
+        }
 
-        $this->request('PUT', \sprintf('storage/kv/namespaces/%s/bulk', $currentNamespace['id']), array_map(
-            fn (MessageInterface $message): array => [
-                'key' => $message->getId()->toRfc4122(),
-                'value' => $this->serializer->serialize($message, 'json'),
+        $currentNamespace = $this->retrieveCurrentNamespace($identifier);
+
+        $this->request('PUT', \sprintf('storage/kv/namespaces/%s/bulk', $currentNamespace['id']), [
+            [
+                'key' => $messages->getId()->toRfc4122(),
+                'value' => $this->serializer->serialize($messages, 'json'),
             ],
-            $messages->getMessages(),
-        ));
+        ]);
     }
 
-    public function load(): MessageBag
+    public function load(?string $identifier = null): MessageBag
     {
-        $currentNamespace = $this->retrieveCurrentNamespace();
+        if (null !== $identifier && [] === $this->retrieveCurrentNamespace($identifier)) {
+            $this->createNamespace($identifier);
+        }
+
+        $currentNamespace = $this->retrieveCurrentNamespace($identifier);
 
         $keys = $this->request('GET', \sprintf('storage/kv/namespaces/%s/keys', $currentNamespace['id']));
+
+        if ([] === $keys['result']) {
+            return new MessageBag();
+        }
 
         $messages = $this->request('POST', \sprintf('storage/kv/namespaces/%s/bulk/get', $currentNamespace['id']), [
             'keys' => array_map(
@@ -101,10 +112,11 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
             ),
         ]);
 
-        return new MessageBag(...array_map(
-            fn (string $message): MessageInterface => $this->serializer->deserialize($message, MessageInterface::class, 'json'),
-            $messages['result']['values'],
-        ));
+        if (1 < \count($messages['result']['values'])) {
+            throw new RuntimeException(\sprintf('More than one bag found for namespace "%s".', $identifier ?? $this->namespace));
+        }
+
+        return $this->serializer->deserialize(array_values($messages['result']['values'])[0] ?? [], MessageBag::class, 'json');
     }
 
     /**
@@ -134,7 +146,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
      *     supports_url_encoding: bool,
      * }|array{}
      */
-    private function retrieveCurrentNamespace(?int $page = 1): array
+    private function retrieveCurrentNamespace(?string $identifier = null, ?int $page = 1): array
     {
         $namespaces = $this->request('GET', 1 === $page ? 'storage/kv/namespaces' : \sprintf('storage/kv/namespaces?page=%d', $page));
 
@@ -142,13 +154,15 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
             return [];
         }
 
+        $finalIdentifier = $identifier ?? $this->namespace;
+
         $filteredNamespaces = array_filter(
             $namespaces['result'],
-            fn (array $payload): bool => $payload['title'] === $this->namespace,
+            fn (array $payload): bool => $payload['title'] === $finalIdentifier,
         );
 
         if (0 === \count($filteredNamespaces) && $page !== $namespaces['result_info']['total_pages']) {
-            return $this->retrieveCurrentNamespace($namespaces['result_info']['page'] + 1);
+            return $this->retrieveCurrentNamespace(page: $namespaces['result_info']['page'] + 1);
         }
 
         if (0 === \count($filteredNamespaces) && $page === $namespaces['result_info']['total_pages']) {
@@ -158,5 +172,12 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         reset($filteredNamespaces);
 
         return array_values($filteredNamespaces)[0];
+    }
+
+    private function createNamespace(?string $identifier = null): void
+    {
+        $this->request('POST', 'storage/kv/namespaces', [
+            'title' => $identifier ?? $this->namespace,
+        ]);
     }
 }

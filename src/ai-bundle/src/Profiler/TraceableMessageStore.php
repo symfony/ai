@@ -22,6 +22,7 @@ use Symfony\Component\Clock\ClockInterface;
  * @phpstan-type MessageStoreData array{
  *      bag: MessageBag,
  *      saved_at: \DateTimeImmutable,
+ *      identifier?: ?string,
  *  }
  */
 final class TraceableMessageStore implements ManagedStoreInterface, MessageStoreInterface
@@ -46,19 +47,20 @@ final class TraceableMessageStore implements ManagedStoreInterface, MessageStore
         $this->messageStore->setup($options);
     }
 
-    public function save(MessageBag $messages): void
+    public function save(MessageBag $messages, ?string $identifier = null): void
     {
         $this->calls[] = [
             'bag' => $messages,
             'saved_at' => $this->clock->now(),
+            'identifier' => $identifier,
         ];
 
-        $this->messageStore->save($messages);
+        $this->messageStore->save($messages, $identifier);
     }
 
-    public function load(): MessageBag
+    public function load(?string $identifier = null): MessageBag
     {
-        return $this->messageStore->load();
+        return $this->messageStore->load($identifier);
     }
 
     public function drop(): void

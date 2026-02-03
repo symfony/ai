@@ -10,7 +10,7 @@
          failOnWarning="true"
 >
     <testsuites>
-        <testsuite name="symfony/ai-agent">
+        <testsuite name="symfony/ai-chat">
             <directory>tests</directory>
         </testsuite>
     </testsuites>

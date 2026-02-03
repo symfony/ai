@@ -12,10 +12,10 @@
 namespace Symfony\AI\Chat\Bridge\Redis;
 
 use Symfony\AI\Chat\ManagedStoreInterface;
+use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Serializer;
@@ -31,6 +31,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         private readonly string $indexName,
         private readonly SerializerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
         ], [new JsonEncoder()]),
     ) {
@@ -50,13 +51,18 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         $this->redis->set($this->indexName, $this->serializer->serialize([], 'json'));
     }
 
-    public function save(MessageBag $messages): void
+    public function save(MessageBag $messages, ?string $identifier = null): void
     {
-        $this->redis->set($this->indexName, $this->serializer->serialize($messages->getMessages(), 'json'));
+        $this->redis->set($identifier ?? $this->indexName, $this->serializer->serialize($messages, 'json'));
     }
 
-    public function load(): MessageBag
+    public function load(?string $identifier = null): MessageBag
     {
-        return new MessageBag(...$this->serializer->deserialize($this->redis->get($this->indexName), MessageInterface::class.'[]', 'json'));
+        $payload = \is_bool($this->redis->get($identifier ?? $this->indexName))
+            ? $this->serializer->serialize([], 'json')
+            : $this->redis->get($identifier ?? $this->indexName)
+        ;
+
+        return $this->serializer->deserialize($payload, MessageBag::class, 'json');
     }
 }

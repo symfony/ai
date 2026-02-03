@@ -13,10 +13,10 @@ namespace Symfony\AI\Chat\Bridge\Pogocache;
 
 use Symfony\AI\Chat\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ManagedStoreInterface;
+use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -37,6 +37,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         private readonly string $key = '_message_store_pogocache',
         private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
         ], [new JsonEncoder()]),
     ) {
@@ -45,7 +46,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
     public function setup(array $options = []): void
     {
         if ([] !== $options) {
-            throw new InvalidArgumentException('The Pogocache message store does not support any options.');
+            throw new InvalidArgumentException('No supported options.');
         }
 
         $this->request('PUT', $this->key);
@@ -53,25 +54,19 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
 
     public function drop(): void
     {
-        $this->request('PUT', $this->key);
+        $this->request('DELETE', $this->key);
     }
 
-    public function save(MessageBag $messages): void
+    public function save(MessageBag $messages, ?string $identifier = null): void
     {
-        $this->request('PUT', $this->key, array_map(
-            fn (MessageInterface $message): array => $this->serializer->normalize($message),
-            $messages->getMessages(),
-        ));
+        $this->request('PUT', $identifier ?? $this->key, $this->serializer->normalize($messages));
     }
 
-    public function load(): MessageBag
+    public function load(?string $identifier = null): MessageBag
     {
-        $messages = $this->request('GET', $this->key);
+        $messages = $this->request('GET', $identifier ?? $this->key);
 
-        return new MessageBag(...array_map(
-            fn (array $message): MessageInterface => $this->serializer->denormalize($message, MessageInterface::class),
-            $messages,
-        ));
+        return $this->serializer->denormalize($messages, MessageBag::class);
     }
 
     /**
@@ -81,11 +76,11 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
      */
     private function request(string $method, string $endpoint, array $payload = []): array
     {
-        $result = $this->httpClient->request($method, \sprintf('%s/%s?auth=%s', $this->host, $endpoint, $this->password), [
+        $response = $this->httpClient->request($method, \sprintf('%s/%s?auth=%s', $this->host, $endpoint, $this->password), [
             'json' => [] !== $payload ? $payload : new \stdClass(),
         ]);
 
-        $payload = $result->getContent();
+        $payload = $response->getContent();
 
         if ('GET' === $method && json_validate($payload)) {
             return json_decode($payload, true);

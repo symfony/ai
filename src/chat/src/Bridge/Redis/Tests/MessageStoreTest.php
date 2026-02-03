@@ -13,9 +13,13 @@ namespace Symfony\AI\Chat\Bridge\Redis\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\Redis\MessageStore;
+use Symfony\AI\Chat\MessageBagNormalizer;
+use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\SystemMessage;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
 final class MessageStoreTest extends TestCase
@@ -60,8 +64,11 @@ final class MessageStoreTest extends TestCase
 
     public function testStoreCanSave()
     {
-        $serializer = $this->createMock(SerializerInterface::class);
-        $serializer->expects($this->once())->method('serialize')->willReturn('[{"id":"019a24c5-67a3-7f08-a670-5d30958d439f","type":"Symfony\\AI\\Platform\\Message\\SystemMessage","content":"You are a helpful assistant. You only answer with short sentences.","contentAsBase64":[],"toolsCalls":[],"metadata":[],"addedAt":1761553508}]');
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
 
         $redis = $this->createMock(\Redis::class);
         $redis->expects($this->never())->method('exists');
@@ -73,18 +80,21 @@ final class MessageStoreTest extends TestCase
 
     public function testStoreCanLoad()
     {
-        $serializer = $this->createMock(SerializerInterface::class);
-        $serializer->expects($this->once())->method('serialize')->willReturn('[{"id":"019a24c5-67a3-7f08-a670-5d30958d439f","type":"Symfony\\AI\\Platform\\Message\\SystemMessage","content":"You are a helpful assistant. You only answer with short sentences.","contentAsBase64":[],"toolsCalls":[],"metadata":[],"addedAt":1761553508}]');
-        $serializer->expects($this->once())->method('deserialize')->willReturn([
-            new SystemMessage('You are a helpful assistant. You only answer with short sentences.'),
-        ]);
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $messageBag = new MessageBag(Message::ofUser('Hello there'));
 
         $redis = $this->createMock(\Redis::class);
         $redis->expects($this->never())->method('exists');
         $redis->expects($this->once())->method('set');
+        $redis->expects($this->once())->method('get')->willReturn($serializer->serialize($messageBag, 'json'));
 
         $store = new MessageStore($redis, 'test', $serializer);
-        $store->save(new MessageBag(Message::ofUser('Hello there')));
+        $store->save($messageBag);
 
         $messageBag = $store->load();
 

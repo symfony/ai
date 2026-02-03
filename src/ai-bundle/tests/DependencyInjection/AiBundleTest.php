@@ -320,12 +320,19 @@ class AiBundleTest extends TestCase
 
         $this->assertCount(1, $container->findTaggedServiceIds('ai.chat'));
 
-        $this->assertTrue($container->hasAlias(ChatInterface::class.' $main'));
+        $definition = $container->getDefinition('ai.chat.main');
+        $this->assertCount(3, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('main', $definition->getArgument(2));
 
-        $chatDefinition = $container->getDefinition('ai.chat.main');
-        $this->assertCount(2, $chatDefinition->getArguments());
-        $this->assertInstanceOf(Reference::class, $chatDefinition->getArgument(0));
-        $this->assertInstanceOf(Reference::class, $chatDefinition->getArgument(1));
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => ChatInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.chat'));
+
+        $this->assertTrue($container->hasAlias(ChatInterface::class.' $main'));
     }
 
     public function testAgentHasTag()
@@ -7827,12 +7834,15 @@ class AiBundleTest extends TestCase
                         'my_cloudflare_message_store' => [
                             'account_id' => 'foo',
                             'api_key' => 'bar',
+                        ],
+                        'my_cloudflare_message_store_with_namespace' => [
+                            'account_id' => 'foo',
+                            'api_key' => 'bar',
                             'namespace' => 'random',
                         ],
                         'my_cloudflare_message_store_with_new_endpoint' => [
                             'account_id' => 'foo',
                             'api_key' => 'bar',
-                            'namespace' => 'random',
                             'endpoint_url' => 'https://api.cloudflare.com/client/v6/accounts',
                         ],
                     ],
@@ -7840,17 +7850,25 @@ class AiBundleTest extends TestCase
                         'dbal' => [
                             'default' => [
                                 'connection' => 'default',
+                            ],
+                            'default_with_custom_table_name' => [
+                                'connection' => 'default',
                                 'table_name' => 'foo',
                             ],
                         ],
                     ],
                     'memory' => [
-                        'my_memory_message_store' => [
+                        'my_memory_message_store' => [],
+                        'my_memory_message_store_with_custom_identifier' => [
                             'identifier' => '_memory',
                         ],
                     ],
                     'meilisearch' => [
                         'my_meilisearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:7700',
+                            'api_key' => 'foo',
+                        ],
+                        'my_meilisearch_store_with_custom_index_name' => [
                             'endpoint' => 'http://127.0.0.1:7700',
                             'api_key' => 'foo',
                             'index_name' => 'test',
@@ -7871,6 +7889,10 @@ class AiBundleTest extends TestCase
                         'my_pogocache_message_store' => [
                             'endpoint' => 'http://127.0.0.1:9401',
                             'password' => 'foo',
+                        ],
+                        'my_pogocache_message_store_with_custom_key' => [
+                            'endpoint' => 'http://127.0.0.1:9401',
+                            'password' => 'foo',
                             'key' => 'bar',
                         ],
                     ],
@@ -7880,11 +7902,18 @@ class AiBundleTest extends TestCase
                                 'host' => '1.2.3.4',
                                 'port' => 6379,
                             ],
+                        ],
+                        'my_redis_store_with_custom_index_name' => [
+                            'connection_parameters' => [
+                                'host' => '1.2.3.4',
+                                'port' => 6379,
+                            ],
                             'index_name' => 'my_message_store',
                         ],
                     ],
                     'session' => [
-                        'my_session_message_store' => [
+                        'my_session_message_store' => [],
+                        'my_session_message_store_with_identifier' => [
                             'identifier' => 'session',
                         ],
                     ],
@@ -7895,7 +7924,6 @@ class AiBundleTest extends TestCase
                             'password' => 'test',
                             'namespace' => 'foo',
                             'database' => 'bar',
-                            'namespaced_user' => true,
                         ],
                         'my_surrealdb_message_store_with_custom_table' => [
                             'endpoint' => 'http://127.0.0.1:8000',
@@ -7904,6 +7932,13 @@ class AiBundleTest extends TestCase
                             'namespace' => 'foo',
                             'database' => 'bar',
                             'table' => 'bar',
+                        ],
+                        'my_surrealdb_message_store_with_namespaced_user' => [
+                            'endpoint' => 'http://127.0.0.1:8000',
+                            'username' => 'test',
+                            'password' => 'test',
+                            'namespace' => 'foo',
+                            'database' => 'bar',
                             'namespaced_user' => true,
                         ],
                     ],
