@@ -25,6 +25,6 @@ $messages = new MessageBag(
         new ImageUrl('https://christopher-hertel.de/images/projects/llmchain.png'),
     ),
 );
-$result = $platform->invoke('gpt-4o-mini', $messages);
+$result = $platform->invoke('gpt-5-mini', $messages);
 
 echo $result->asText().\PHP_EOL;

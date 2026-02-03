@@ -24,7 +24,7 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);
 $messages = new MessageBag(Message::ofUser(<<<TXT
         First, define unicorn in 30 words.
         Then lookup at Wikipedia what the irish history looks like in 2 sentences.

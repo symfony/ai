@@ -27,7 +27,7 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
 // Create a specialized agent for mathematical calculations
 $mathSystemPrompt = new SystemPromptInputProcessor('You are a mathematical calculator. When given a math problem, solve it and return only the numerical result with a brief explanation.');
-$mathAgent = new Agent($platform, 'gpt-4o', [$mathSystemPrompt]);
+$mathAgent = new Agent($platform, 'gpt-5.2', [$mathSystemPrompt]);
 
 // Wrap the math agent as a tool
 $mathTool = new AgentTool($mathAgent);
@@ -49,7 +49,7 @@ $chainFactory = new ChainFactory([
 // Create the main agent with the math agent as a tool
 $toolbox = new Toolbox([$mathTool], toolFactory: $chainFactory, logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);
 
 // Ask a question that requires mathematical calculation
 $messages = new MessageBag(Message::ofUser('I have 15 apples and I want to share them equally among 4 friends. How many apples does each friend get and how many are left over?'));

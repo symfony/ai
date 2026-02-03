@@ -26,7 +26,7 @@ $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' =
 $store = new DoctrineDbalMessageStore('symfony', $connection);
 $store->setup();
 
-$agent = new Agent($platform, 'gpt-4o-mini');
+$agent = new Agent($platform, 'gpt-5-mini');
 $chat = new Chat($agent, $store);
 
 $messages = new MessageBag(

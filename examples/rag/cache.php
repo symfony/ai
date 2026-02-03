@@ -50,7 +50,7 @@ $indexer->index($documents);
 $similaritySearch = new SimilaritySearch($vectorizer, $store);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gpt-4o-mini', [$processor], [$processor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);
 
 $messages = new MessageBag(
     Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),

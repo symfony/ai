@@ -21,7 +21,7 @@ $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
 $processor = new SystemPromptInputProcessor('You are Yoda and write like he speaks. But short.');
 
-$agent = new Agent($platform, 'gpt-4o-mini', [$processor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$processor]);
 $messages = new MessageBag(Message::ofUser('What is the meaning of life?'));
 $result = $agent->call($messages);
 

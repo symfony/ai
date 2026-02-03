@@ -24,7 +24,7 @@ $cachedPlatform = new CachePlatform($platform, cache: new RedisTagAwareAdapter(n
     'port' => 6379,
 ])));
 
-$agent = new Agent($cachedPlatform, 'gpt-4o-mini');
+$agent = new Agent($cachedPlatform, 'gpt-5-mini');
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),

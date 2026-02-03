@@ -27,7 +27,7 @@ $clock = new Clock(new SymfonyClock());
 $tavily = new Tavily(http_client(), env('TAVILY_API_KEY'));
 $toolbox = new Toolbox([$clock, $tavily], logger: logger());
 $processor = new AgentProcessor($toolbox, includeSources: true);
-$agent = new Agent($platform, 'gpt-4o', [$processor], [$processor]);
+$agent = new Agent($platform, 'gpt-5.2', [$processor], [$processor]);
 
 $prompt = <<<PROMPT
     Summarize the latest game of the Dallas Cowboys. When and where was it? Who was the opponent, what was the result,

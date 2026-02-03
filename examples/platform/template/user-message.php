@@ -37,7 +37,7 @@ $messages = new MessageBag(
     Message::ofUser(Template::string('Tell me about {topic}'))
 );
 
-$result = $platform->invoke('gpt-4o-mini', $messages, [
+$result = $platform->invoke('gpt-5-mini', $messages, [
     'template_vars' => ['topic' => 'PHP'],
 ]);
 

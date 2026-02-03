@@ -21,7 +21,7 @@ $messages = new MessageBag(
     Message::forSystem('You are a thoughtful philosopher.'),
     Message::ofUser('What is the purpose of an ant?'),
 );
-$result = $platform->invoke('gpt-4o-mini', $messages, [
+$result = $platform->invoke('gpt-5-mini', $messages, [
     'stream' => true, // enable streaming of response text
 ]);
 

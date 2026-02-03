@@ -38,7 +38,7 @@ $messages = new MessageBag(
     Message::ofUser('What is PHP?')
 );
 
-$result = $platform->invoke('gpt-4o-mini', $messages, [
+$result = $platform->invoke('gpt-5-mini', $messages, [
     'template_vars' => ['domain' => 'programming'],
 ]);
 
