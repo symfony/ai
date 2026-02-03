@@ -18,6 +18,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Compression\ContextCompressionInputProcessor;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -1255,6 +1256,18 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -40]);
 
             $container->setDefinition('ai.agent.'.$name.'.memory_input_processor', $memoryInputProcessorDefinition);
+        }
+
+        // CONTEXT COMPRESSION
+        if (isset($config['compression'])) {
+            $compressionInputProcessorDefinition = (new Definition(ContextCompressionInputProcessor::class))
+                ->setArguments([
+                    new Reference($config['compression']),
+                    new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -50]);
+
+            $container->setDefinition('ai.agent.'.$name.'.compression_input_processor', $compressionInputProcessorDefinition);
         }
 
         $agentDefinition
