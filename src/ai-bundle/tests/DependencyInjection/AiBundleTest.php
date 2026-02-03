@@ -46,6 +46,7 @@ use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Speech\SpeechConfiguration;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
@@ -154,6 +155,7 @@ class AiBundleTest extends TestCase
             'ai.command.drop_store' => true,
             'ai.command.setup_message_store' => true,
             'ai.command.drop_message_store' => true,
+            'ai.speech.listener' => true,
         ], $container->getRemovedIds());
     }
 
@@ -176,6 +178,7 @@ class AiBundleTest extends TestCase
             'ai.command.drop_store' => true,
             'ai.command.setup_message_store' => true,
             'ai.command.drop_message_store' => true,
+            'ai.speech.listener' => true,
         ], $container->getRemovedIds());
     }
 
@@ -7322,6 +7325,81 @@ class AiBundleTest extends TestCase
         }
     }
 
+    public function testCartesiaSpeechPlatformCanBeRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'cartesia' => [
+                        'api_key' => 'cartesia_key_full',
+                        'version' => '2025-04-16',
+                        'speech' => [
+                            'tts_model' => 'foo',
+                            'tts_options' => [
+                                'foo' => 'bar',
+                                'voice' => 'bar',
+                            ],
+                            'stt_model' => 'foo',
+                            'stt_options' => [
+                                'foo' => 'bar',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.cartesia'));
+        $this->assertTrue($container->hasDefinition('ai.platform.speech.cartesia.configuration'));
+
+        $speechConfigurationDefinition = $container->getDefinition('ai.platform.speech.cartesia.configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigurationDefinition->getClass());
+        $this->assertCount(1, $speechConfigurationDefinition->getArguments());
+
+        $this->assertTrue($speechConfigurationDefinition->hasTag('ai.platform.speech_configuration'));
+
+        $this->assertSame([
+            ['name' => 'cartesia'],
+        ], $speechConfigurationDefinition->getTag('ai.platform.speech_configuration'));
+    }
+
+    public function testElevenLabsSpeechPlatformCanBeRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'elevenlabs' => [
+                        'api_key' => 'foo',
+                        'speech' => [
+                            'tts_model' => 'foo',
+                            'tts_options' => [
+                                'foo' => 'bar',
+                                'voice' => 'bar',
+                            ],
+                            'stt_model' => 'foo',
+                            'stt_options' => [
+                                'foo' => 'bar',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+        $this->assertTrue($container->hasDefinition('ai.platform.speech.elevenlabs.configuration'));
+
+        $speechConfigurationDefinition = $container->getDefinition('ai.platform.speech.elevenlabs.configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigurationDefinition->getClass());
+        $this->assertCount(1, $speechConfigurationDefinition->getArguments());
+
+        $this->assertTrue($speechConfigurationDefinition->hasTag('ai.platform.speech_configuration'));
+
+        $this->assertSame([
+            ['name' => 'elevenlabs'],
+        ], $speechConfigurationDefinition->getTag('ai.platform.speech_configuration'));
+    }
+
     /**
      * @param array<string, mixed> $configuration
      */
@@ -7414,6 +7492,17 @@ class AiBundleTest extends TestCase
                     'elevenlabs' => [
                         'host' => 'https://api.elevenlabs.io/v1',
                         'api_key' => 'elevenlabs_key_full',
+                        'speech' => [
+                            'tts_model' => 'foo',
+                            'tts_options' => [
+                                'foo' => 'bar',
+                                'voice' => 'bar',
+                            ],
+                            'stt_model' => 'foo',
+                            'stt_options' => [
+                                'foo' => 'bar',
+                            ],
+                        ],
                     ],
                     'failover' => [
                         'main' => [
