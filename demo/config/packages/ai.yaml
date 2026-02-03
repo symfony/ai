@@ -119,7 +119,7 @@ services:
     Symfony\AI\Store\Document\Loader\RssFeedLoader: ~
     Symfony\AI\Store\Document\Transformer\TextSplitTransformer: ~
     Symfony\AI\Store\Document\Transformer\TextTrimTransformer: ~
-
+    
     app.filter.week_of_symfony:
         class: 'Symfony\AI\Store\Document\Filter\TextContainsFilter'
         arguments:
