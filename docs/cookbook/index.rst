@@ -12,6 +12,7 @@ Getting Started Guides
 
     chatbot-with-memory
     rag-implementation
+    structured-output-object-instances
 
 Memory & Context Management
 ---------------------------
@@ -22,3 +23,8 @@ Retrieval Augmented Generation
 ------------------------------
 
 * :doc:`rag-implementation` - Implement complete RAG systems with vector stores and semantic search
+
+Structured Output
+-----------------
+
+* :doc:`structured-output-object-instances` - Populate existing object instances with AI-generated data
