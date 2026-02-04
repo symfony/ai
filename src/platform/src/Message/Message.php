@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -55,7 +56,7 @@ final class Message
 
         foreach ($content as $entry) {
             if (!\is_string($entry) && !$entry instanceof \Stringable && !$entry instanceof ContentInterface) {
-                throw new \InvalidArgumentException(\sprintf('Content must be string, Stringable, or ContentInterface, "%s" given.', get_debug_type($entry)));
+                throw new InvalidArgumentException(\sprintf('Content must be string, Stringable, or ContentInterface, "%s" given.', get_debug_type($entry)));
             }
         }
 

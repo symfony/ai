@@ -222,7 +222,7 @@ final class MessageTest extends TestCase
 
     public function testCreateUserMessageThrowsExceptionForInvalidContentType()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Content must be string, Stringable, or ContentInterface');
 
         Message::ofUser('Hello', ['invalid' => 'array']);
@@ -230,7 +230,7 @@ final class MessageTest extends TestCase
 
     public function testCreateUserMessageWithObjectAndInvalidTypeThrowsException()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Content must be string, Stringable, or ContentInterface');
 
         $city = new City(name: 'London');

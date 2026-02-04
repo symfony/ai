@@ -489,11 +489,85 @@ top this example uses the feature through the agent to leverage tool calling::
 
     dump($result->getContent()); // returns an array
 
+Populating Existing Objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of creating new object instances, you can pass existing object instances to have the AI populate missing data.
+This is useful when you have partially filled objects and want the AI to complete them::
+
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    // Create a partially populated object
+    class City
+    {
+        public function __construct(
+            public ?string $name = null,
+            public ?int $population = null,
+            public ?string $country = null,
+            public ?string $mayor = null,
+        ) {}
+    }
+
+    $city = new City(name: 'Berlin');
+
+    // Pass the object instance to response_format
+    $messages = new MessageBag(
+        Message::forSystem('You are a helpful assistant that provides information about cities.'),
+        Message::ofUser('Please provide the population, country, and current mayor for Berlin.'),
+    );
+
+    $result = $platform->invoke('gpt-4o-mini', $messages, [
+        'response_format' => $city, // Pass the instance instead of the class
+    ]);
+
+    // The same object instance is returned with populated fields
+    $populatedCity = $result->asObject();
+    assert($city === $populatedCity); // Same object!
+
+    echo $city->population; // 3500000
+    echo $city->country;    // Germany
+    echo $city->mayor;      // Kai Wegner
+
+The AI will populate the missing fields while preserving any existing values. This is particularly useful for:
+
+- Enriching partial data from databases
+- Updating incomplete records
+- Progressive data collection workflows
+
+Object Context in Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can also pass objects directly to user messages for automatic serialization as context.
+The object will be JSON-serialized and included in the message content::
+
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    $city = new City(name: 'Berlin'); // Partial object
+
+    // Pass object as last parameter to Message::ofUser()
+    $messages = new MessageBag(
+        Message::forSystem('You are a helpful assistant that provides information about cities.'),
+        Message::ofUser('Research missing data for this city', $city), // Object as context
+    );
+
+    $result = $platform->invoke('gpt-4o-mini', $messages, [
+        'response_format' => $city, // Populate the same object
+    ]);
+
+    // The AI sees the serialized object state and fills in missing data
+    $populatedCity = $result->asObject();
+
+The object is serialized to JSON and appended to the message, providing the AI with the current state of the object.
+This makes it clear what data is already present and what needs to be filled.
+
 Code Examples
 ~~~~~~~~~~~~~
 
 * `Structured Output with PHP class`_
 * `Structured Output with array`_
+* `Populating existing objects`_
 
 Server Tools
 ------------
@@ -748,6 +822,7 @@ Code Examples
 .. _`Embeddings with Mistral`: https://github.com/symfony/ai/blob/main/examples/mistral/embeddings.php
 .. _`Structured Output with PHP class`: https://github.com/symfony/ai/blob/main/examples/openai/structured-output-math.php
 .. _`Structured Output with array`: https://github.com/symfony/ai/blob/main/examples/openai/structured-output-clock.php
+.. _`Populating existing objects`: https://github.com/symfony/ai/blob/main/examples/platform/structured-output-populate-object.php
 .. _`Parallel GPT Calls`: https://github.com/symfony/ai/blob/main/examples/misc/parallel-chat-gpt.php
 .. _`Parallel Embeddings Calls`: https://github.com/symfony/ai/blob/main/examples/misc/parallel-embeddings.php
 .. _`LM Studio`: https://lmstudio.ai/

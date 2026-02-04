@@ -13,20 +13,10 @@ use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 require_once dirname(__DIR__).'/bootstrap.php';
-
-final class City
-{
-    public function __construct(
-        public ?string $name = null,
-        public ?int $population = null,
-        public ?string $country = null,
-        public ?string $mayor = null,
-    ) {
-    }
-}
 
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
@@ -53,4 +43,4 @@ dump($result->asObject());
 
 // Verify that the same object instance was populated
 echo "\nObject identity preserved: ";
-var_dump($city === $result->asObject());
+dump($city === $result->asObject());
