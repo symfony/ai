@@ -115,6 +115,7 @@ use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Indexer\ConfiguredSourceIndexer;
+use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\Indexer\SourceIndexer;
 use Symfony\AI\Store\IndexerInterface;
@@ -2276,15 +2277,24 @@ final class AiBundle extends AbstractBundle
         ]);
         $container->setDefinition($processorServiceId, $processorDefinition);
 
-        $indexerDefinition = new Definition(SourceIndexer::class, [
-            new Reference($config['loader']),
-            new Reference($processorServiceId),
-        ]);
-
         $serviceId = 'ai.indexer.'.$name;
 
-        if (null !== $config['source']) {
+        if (null === $config['loader']) {
+            if (null !== $config['source']) {
+                throw new InvalidArgumentException(\sprintf('Indexer "%s" has a "source" configured but no "loader". A loader is required to process sources.', $name));
+            }
+
+            // No loader configured: DocumentIndexer for direct document indexing
+            $definition = new Definition(DocumentIndexer::class, [
+                new Reference($processorServiceId),
+            ]);
+        } elseif (null !== $config['source']) {
+            // Loader and source configured: ConfiguredSourceIndexer wrapping SourceIndexer
             $innerServiceId = 'ai.indexer.'.$name.'.inner';
+            $indexerDefinition = new Definition(SourceIndexer::class, [
+                new Reference($config['loader']),
+                new Reference($processorServiceId),
+            ]);
             $container->setDefinition($innerServiceId, $indexerDefinition);
 
             $definition = new Definition(ConfiguredSourceIndexer::class, [
@@ -2292,7 +2302,11 @@ final class AiBundle extends AbstractBundle
                 $config['source'],
             ]);
         } else {
-            $definition = $indexerDefinition;
+            // Loader configured without source: SourceIndexer for runtime source input
+            $definition = new Definition(SourceIndexer::class, [
+                new Reference($config['loader']),
+                new Reference($processorServiceId),
+            ]);
         }
 
         $definition->addTag('ai.indexer', ['name' => $name]);

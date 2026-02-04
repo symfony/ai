@@ -12,6 +12,8 @@
 namespace Symfony\AI\Store\Command;
 
 use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\Indexer\ConfiguredSourceIndexer;
+use Symfony\AI\Store\Indexer\SourceIndexer;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -87,6 +89,10 @@ EOF
         }
 
         $indexerService = $this->indexers->get($indexer);
+
+        if (!$indexerService instanceof SourceIndexer && !$indexerService instanceof ConfiguredSourceIndexer) {
+            throw new RuntimeException(\sprintf('The "%s" indexer is not a SourceIndexer. This command only works with indexers that have a loader configured.', $indexer));
+        }
 
         $io->title(\sprintf('Indexing documents using "%s" indexer', $indexer));
 

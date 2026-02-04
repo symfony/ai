@@ -27,6 +27,7 @@ use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\AiBundle\AiBundle;
+use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
@@ -76,6 +77,7 @@ use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Indexer\ConfiguredSourceIndexer;
+use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\SourceIndexer;
 use Symfony\AI\Store\IndexerInterface;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
@@ -5292,6 +5294,62 @@ class AiBundleTest extends TestCase
         $this->assertFalse($container->hasDefinition('ai.indexer.my_indexer.inner'));
         $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
         $this->assertSame(SourceIndexer::class, $indexerDefinition->getClass());
+    }
+
+    public function testIndexerWithoutLoader()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'memory' => [
+                        'my_store' => [],
+                    ],
+                ],
+                'indexer' => [
+                    'my_indexer' => [
+                        // No loader configured - should create DocumentIndexer
+                        'vectorizer' => 'my_vectorizer_service',
+                        'store' => 'ai.store.memory.my_store',
+                    ],
+                ],
+            ],
+        ]);
+
+        // Without loader configured, main service is DocumentIndexer for direct document indexing
+        $this->assertTrue($container->hasDefinition('ai.indexer.my_indexer'));
+        $this->assertFalse($container->hasDefinition('ai.indexer.my_indexer.inner'));
+        $indexerDefinition = $container->getDefinition('ai.indexer.my_indexer');
+        $this->assertSame(DocumentIndexer::class, $indexerDefinition->getClass());
+
+        // Should have processor as only argument
+        $arguments = $indexerDefinition->getArguments();
+        $this->assertCount(1, $arguments);
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('ai.indexer.my_indexer.processor', (string) $arguments[0]);
+    }
+
+    public function testIndexerWithSourceButWithoutLoaderThrowsException()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Indexer "my_indexer" has a "source" configured but no "loader". A loader is required to process sources.');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'memory' => [
+                        'my_store' => [],
+                    ],
+                ],
+                'indexer' => [
+                    'my_indexer' => [
+                        // Source configured without loader - should throw exception
+                        'source' => '/path/to/file.txt',
+                        'vectorizer' => 'my_vectorizer_service',
+                        'store' => 'ai.store.memory.my_store',
+                    ],
+                ],
+            ],
+        ]);
     }
 
     public function testIndexerWithConfiguredTransformers()
