@@ -1,8 +1,29 @@
 UPGRADE FROM 0.3 to 0.4
 =======================
 
+Agent
+-----
+
+ * The `Symfony\AI\Agent\Toolbox\Tool\Agent` class has been renamed to `Symfony\AI\Agent\Toolbox\Tool\Subagent`:
+
+   ```diff
+   -use Symfony\AI\Agent\Toolbox\Tool\Agent;
+   +use Symfony\AI\Agent\Toolbox\Tool\Subagent;
+
+   -$agentTool = new Agent($agent);
+   +$subagent = new Subagent($agent);
+   ```
+
 AI Bundle
 ---------
+
+ * The service ID prefix for agent tools wrapping sub-agents has changed from `ai.toolbox.{agent}.agent_wrapper.`
+   to `ai.toolbox.{agent}.subagent.`:
+
+   ```diff
+   -$container->get('ai.toolbox.my_agent.agent_wrapper.research_agent');
+   +$container->get('ai.toolbox.my_agent.subagent.research_agent');
+   ```
 
  * An indexer configured with a `source`, now wraps the indexer with a `Symfony\AI\Store\ConfiguredSourceIndexer` decorator. This is
    transparent - the configured source is still used by default, but can be overridden by passing a source to `index()`.

@@ -426,8 +426,8 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.toolbox.main_agent.agent_wrapper.another_agent'));
-        $this->assertTrue($container->hasDefinition('ai.toolbox.main_agent.agent_wrapper.another_agent_instance'));
+        $this->assertTrue($container->hasDefinition('ai.toolbox.main_agent.subagent.another_agent'));
+        $this->assertTrue($container->hasDefinition('ai.toolbox.main_agent.subagent.another_agent_instance'));
     }
 
     public function testAgentsAsToolsCannotDefineService()

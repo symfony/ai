@@ -27,7 +27,7 @@ use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
-use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
+use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
@@ -1146,9 +1146,9 @@ final class AiBundle extends AbstractBundle
                     // We use the memory factory in case method, description and name are set
                     if (isset($tool['name'], $tool['description'])) {
                         if (isset($tool['agent'])) {
-                            $agentWrapperDefinition = new Definition(AgentTool::class, [$reference]);
-                            $container->setDefinition('ai.toolbox.'.$name.'.agent_wrapper.'.$tool['name'], $agentWrapperDefinition);
-                            $reference = new Reference('ai.toolbox.'.$name.'.agent_wrapper.'.$tool['name']);
+                            $subagentDefinition = new Definition(Subagent::class, [$reference]);
+                            $container->setDefinition('ai.toolbox.'.$name.'.subagent.'.$tool['name'], $subagentDefinition);
+                            $reference = new Reference('ai.toolbox.'.$name.'.subagent.'.$tool['name']);
                         }
                         $memoryFactoryDefinition->addMethodCall('addTool', [$reference, $tool['name'], $tool['description'], $tool['method'] ?? '__invoke']);
                     }

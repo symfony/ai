@@ -243,22 +243,22 @@ tools in the same chain - which even enables you to overwrite the pre-existing c
 
     The order of the factories in the ChainFactory matters, as the first factory has the highest priority.
 
-Agent uses Agent
-~~~~~~~~~~~~~~~~
+Subagent
+~~~~~~~~
 
 Similar to third-party tools, an agent can also use an different agent as a tool. This can be useful to encapsulate
 complex logic or to reuse an agent in multiple places or hide sub-agents from the LLM::
 
-    use Symfony\AI\Agent\Toolbox\Tool\Agent;
+    use Symfony\AI\Agent\Toolbox\Tool\Subagent;
     use Symfony\AI\Agent\Toolbox\Toolbox;
     use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 
     // agent was initialized before
 
-    $agentTool = new Agent($agent);
+    $subagent = new Subagent($agent);
     $metadataFactory = (new MemoryToolFactory())
-        ->addTool($agentTool, 'research_agent', 'Meaningful description for sub-agent');
-    $toolbox = new Toolbox($metadataFactory, [$agentTool]);
+        ->addTool($subagent, 'research_agent', 'Meaningful description for sub-agent');
+    $toolbox = new Toolbox($metadataFactory, [$subagent]);
 
 Fault Tolerance
 ~~~~~~~~~~~~~~~

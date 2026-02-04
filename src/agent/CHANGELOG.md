@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.4
+---
+
+ * [BC BREAK] Rename `Symfony\AI\Agent\Toolbox\Tool\Agent` to `Symfony\AI\Agent\Toolbox\Tool\Subagent`
+
 0.3
 ---
 
