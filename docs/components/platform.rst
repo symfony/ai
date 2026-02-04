@@ -614,7 +614,7 @@ This platform can also be configured when using the bundle::
 Testing Tools
 -------------
 
-For unit or integration testing, you can use the :class:`Symfony\\AI\\Platform\\InMemoryPlatform`,
+For unit or integration testing, you can use the :class:`Symfony\\AI\\Platform\\Test\\InMemoryPlatform`,
 which implements :class:`Symfony\\AI\\Platform\\PlatformInterface` without calling external APIs.
 
 It supports returning either:
@@ -622,8 +622,8 @@ It supports returning either:
 - A fixed string result
 - A callable that dynamically returns a simple string or any :class:`Symfony\\AI\\Platform\\Result\\ResultInterface` based on the model, input, and options::
 
-    use Symfony\AI\Platform\InMemoryPlatform;
     use Symfony\AI\Platform\Model;
+    use Symfony\AI\Platform\Test\InMemoryPlatform;
 
     $platform = new InMemoryPlatform('Fake result');
 
