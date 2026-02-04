@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Contract\Normalizer\Message\UserMessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\ToolNormalizer;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -65,7 +66,7 @@ class Contract
         $normalizer[] = new JsonSerializableNormalizer();
 
         return new self(
-            new Serializer($normalizer),
+            new Serializer($normalizer, [new JsonEncoder()]),
         );
     }
 
