@@ -12,7 +12,7 @@
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
-use Symfony\AI\Agent\Toolbox\Tool\Agent as AgentTool;
+use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
@@ -30,7 +30,7 @@ $mathSystemPrompt = new SystemPromptInputProcessor('You are a mathematical calcu
 $mathAgent = new Agent($platform, 'gpt-5.2', [$mathSystemPrompt]);
 
 // Wrap the math agent as a tool
-$mathTool = new AgentTool($mathAgent);
+$mathTool = new Subagent($mathAgent);
 
 // Use MemoryToolFactory to register the tool with metadata
 $memoryFactory = new MemoryToolFactory();
