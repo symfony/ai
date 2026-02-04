@@ -29,6 +29,8 @@ final class PlatformSubscriber implements EventSubscriberInterface
 
     private string $outputType;
 
+    private ?object $objectToPopulate = null;
+
     private SerializerInterface $serializer;
 
     public function __construct(
@@ -54,11 +56,19 @@ final class PlatformSubscriber implements EventSubscriberInterface
     {
         $options = $event->getOptions();
 
-        if (!isset($options[self::RESPONSE_FORMAT]) || !\is_string($options[self::RESPONSE_FORMAT])) {
+        if (!isset($options[self::RESPONSE_FORMAT])) {
             return;
         }
 
-        if (!class_exists($options[self::RESPONSE_FORMAT])) {
+        $responseFormat = $options[self::RESPONSE_FORMAT];
+
+        if (\is_object($responseFormat)) {
+            $this->objectToPopulate = $responseFormat;
+            $className = $responseFormat::class;
+        } elseif (\is_string($responseFormat) && class_exists($responseFormat)) {
+            $this->objectToPopulate = null;
+            $className = $responseFormat;
+        } else {
             return;
         }
 
@@ -70,9 +80,9 @@ final class PlatformSubscriber implements EventSubscriberInterface
             throw MissingModelSupportException::forStructuredOutput($event->getModel());
         }
 
-        $this->outputType = $options[self::RESPONSE_FORMAT];
+        $this->outputType = $className;
 
-        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($options[self::RESPONSE_FORMAT]);
+        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($className);
 
         $event->setOptions($options);
     }
@@ -86,8 +96,16 @@ final class PlatformSubscriber implements EventSubscriberInterface
         }
 
         $deferred = $event->getDeferredResult();
-        $converter = new ResultConverter($deferred->getResultConverter(), $this->serializer, $this->outputType ?? null);
+        $converter = new ResultConverter(
+            $deferred->getResultConverter(),
+            $this->serializer,
+            $this->outputType ?? null,
+            $this->objectToPopulate
+        );
 
         $event->setDeferredResult(new DeferredResult($converter, $deferred->getRawResult(), $options));
+
+        // Reset object to populate for next invocation
+        $this->objectToPopulate = null;
     }
 }

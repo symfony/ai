@@ -18,6 +18,8 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
+use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Model;
@@ -27,6 +29,7 @@ use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoningWithAttributes;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListItemAge;
@@ -281,5 +284,198 @@ final class PlatformSubscriberTest extends TestCase
         $processor->processResult($event);
 
         $this->assertSame($result, $event->getDeferredResult()->getResult());
+    }
+
+    public function testProcessInputWithObjectInstance()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+        $city = new City(name: 'Berlin');
+        $event = new InvocationEvent(new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]), new MessageBag(), [
+            'response_format' => $city,
+        ]);
+
+        $processor->processInput($event);
+
+        $this->assertSame(['response_format' => ['some' => 'format']], $event->getOptions());
+    }
+
+    public function testProcessOutputWithObjectInstance()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+
+        $city = new City(name: 'Berlin');
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+        $invocationEvent = new InvocationEvent($model, new MessageBag(), ['response_format' => $city]);
+        $processor->processInput($invocationEvent);
+
+        $converter = new PlainConverter(new TextResult('{"name": "Berlin", "population": 3500000, "country": "Germany", "mayor": "Kai Wegner"}'));
+        $deferred = new DeferredResult($converter, new InMemoryRawResult());
+        $resultEvent = new ResultEvent($model, $deferred, $invocationEvent->getOptions());
+
+        $processor->processResult($resultEvent);
+
+        $deferredResult = $resultEvent->getDeferredResult();
+        $this->assertInstanceOf(ObjectResult::class, $deferredResult->getResult());
+        $result = $deferredResult->asObject();
+        $this->assertInstanceOf(City::class, $result);
+        $this->assertSame($city, $result);
+        $this->assertSame('Berlin', $result->name);
+        $this->assertSame(3500000, $result->population);
+        $this->assertSame('Germany', $result->country);
+        $this->assertSame('Kai Wegner', $result->mayor);
+    }
+
+    public function testObjectInstancePreservesExistingValues()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+
+        $city = new City(name: 'Berlin', country: 'Germany');
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+        $invocationEvent = new InvocationEvent($model, new MessageBag(), ['response_format' => $city]);
+        $processor->processInput($invocationEvent);
+
+        $converter = new PlainConverter(new TextResult('{"population": 3500000, "mayor": "Kai Wegner"}'));
+        $deferred = new DeferredResult($converter, new InMemoryRawResult());
+        $resultEvent = new ResultEvent($model, $deferred, $invocationEvent->getOptions());
+
+        $processor->processResult($resultEvent);
+
+        $result = $resultEvent->getDeferredResult()->asObject();
+        $this->assertSame($city, $result);
+        $this->assertSame('Berlin', $result->name);
+        $this->assertSame('Germany', $result->country);
+        $this->assertSame(3500000, $result->population);
+        $this->assertSame('Kai Wegner', $result->mayor);
+    }
+
+    public function testObjectInstanceThrowsExceptionWithStreaming()
+    {
+        $this->expectException(\Symfony\AI\Platform\Exception\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Streamed responses are not supported for structured output.');
+
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory());
+
+        $city = new City(name: 'Berlin');
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+        $event = new InvocationEvent($model, new MessageBag(), [
+            'response_format' => $city,
+            'stream' => true,
+        ]);
+
+        $processor->processInput($event);
+    }
+
+    public function testObjectPassedToUserMessageIsSerializedAsContext()
+    {
+        $city = new City(name: 'Berlin');
+        $message = Message::ofUser('Please research missing data', $city);
+
+        $content = $message->getContent();
+        $this->assertCount(2, $content);
+
+        $this->assertInstanceOf(Text::class, $content[0]);
+        $this->assertSame('Please research missing data', $content[0]->getText());
+
+        $this->assertInstanceOf(Text::class, $content[1]);
+        $serializedContent = $content[1]->getText();
+        $this->assertStringContainsString('Berlin', $serializedContent);
+        $this->assertStringContainsString('"name"', $serializedContent);
+    }
+
+    public function testProcessInputIgnoresNonObjectNonClassString()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory());
+
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+        $event = new InvocationEvent($model, new MessageBag(), [
+            'response_format' => 'invalid-class-name',
+        ]);
+
+        $processor->processInput($event);
+
+        $this->assertSame(['response_format' => 'invalid-class-name'], $event->getOptions());
+    }
+
+    public function testProcessInputIgnoresNonStructuredOutputResponseFormats()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory());
+
+        $model = new Model('dalle-2');
+        $event = new InvocationEvent($model, new MessageBag(), [
+            'response_format' => 'url',
+        ]);
+
+        $processor->processInput($event);
+
+        $this->assertSame(['response_format' => 'url'], $event->getOptions());
+    }
+
+    public function testObjectToPopulateIsResetAfterProcessResult()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+
+        $city1 = new City(name: 'Berlin');
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+        $invocationEvent1 = new InvocationEvent($model, new MessageBag(), ['response_format' => $city1]);
+        $processor->processInput($invocationEvent1);
+
+        $converter = new PlainConverter(new TextResult('{"name": "Berlin", "population": 3500000}'));
+        $deferred = new DeferredResult($converter, new InMemoryRawResult());
+        $resultEvent1 = new ResultEvent($model, $deferred, $invocationEvent1->getOptions());
+        $processor->processResult($resultEvent1);
+
+        $invocationEvent2 = new InvocationEvent($model, new MessageBag(), ['response_format' => City::class]);
+        $processor->processInput($invocationEvent2);
+
+        $converter2 = new PlainConverter(new TextResult('{"name": "Paris", "population": 2161000}'));
+        $deferred2 = new DeferredResult($converter2, new InMemoryRawResult());
+        $resultEvent2 = new ResultEvent($model, $deferred2, $invocationEvent2->getOptions());
+        $processor->processResult($resultEvent2);
+
+        $result2 = $resultEvent2->getDeferredResult()->asObject();
+
+        $this->assertInstanceOf(City::class, $result2);
+        $this->assertNotSame($city1, $result2);
+        $this->assertSame('Paris', $result2->name);
+    }
+
+    public function testMultipleObjectInstancesInSequenceAreHandledCorrectly()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+
+        $city1 = new City(name: 'Berlin');
+        $city2 = new City(name: 'Paris');
+
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+
+        // First invocation
+        $invocationEvent1 = new InvocationEvent($model, new MessageBag(), ['response_format' => $city1]);
+        $processor->processInput($invocationEvent1);
+        $this->assertSame(['response_format' => ['some' => 'format']], $invocationEvent1->getOptions());
+
+        $converter1 = new PlainConverter(new TextResult('{"name": "Berlin", "population": 3500000}'));
+        $deferred1 = new DeferredResult($converter1, new InMemoryRawResult());
+        $resultEvent1 = new ResultEvent($model, $deferred1, $invocationEvent1->getOptions());
+        $processor->processResult($resultEvent1);
+
+        $result1 = $resultEvent1->getDeferredResult()->asObject();
+        $this->assertSame($city1, $result1);
+
+        // Second invocation with different object
+        $invocationEvent2 = new InvocationEvent($model, new MessageBag(), ['response_format' => $city2]);
+        $processor->processInput($invocationEvent2);
+
+        $converter2 = new PlainConverter(new TextResult('{"name": "Paris", "population": 2161000}'));
+        $deferred2 = new DeferredResult($converter2, new InMemoryRawResult());
+        $resultEvent2 = new ResultEvent($model, $deferred2, $invocationEvent2->getOptions());
+        $processor->processResult($resultEvent2);
+
+        $result2 = $resultEvent2->getDeferredResult()->asObject();
+        $this->assertSame($city2, $result2);
+
+        $this->assertSame('Berlin', $city1->name);
+        $this->assertSame(3500000, $city1->population);
+        $this->assertSame('Paris', $city2->name);
+        $this->assertSame(2161000, $city2->population);
     }
 }

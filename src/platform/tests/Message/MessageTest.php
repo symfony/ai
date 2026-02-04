@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 
 final class MessageTest extends TestCase
 {
@@ -121,5 +122,118 @@ final class MessageTest extends TestCase
 
         $this->assertSame('Foo bar.', $message->getContent());
         $this->assertSame($toolCall, $message->getToolCall());
+    }
+
+    public function testCreateUserMessageWithObjectSerializesItAsContext()
+    {
+        $city = new City(name: 'Berlin', population: 3500000);
+        $message = Message::ofUser('Please research missing data', $city);
+
+        $content = $message->getContent();
+        $this->assertCount(2, $content);
+
+        $this->assertInstanceOf(Text::class, $content[0]);
+        $this->assertSame('Please research missing data', $content[0]->getText());
+
+        $this->assertInstanceOf(Text::class, $content[1]);
+        $serializedContent = $content[1]->getText();
+        $this->assertStringContainsString('Berlin', $serializedContent);
+        $this->assertStringContainsString('3500000', $serializedContent);
+        $this->assertStringContainsString('"name"', $serializedContent);
+        $this->assertStringContainsString('"population"', $serializedContent);
+    }
+
+    public function testCreateUserMessageWithObjectStoresItInMetadata()
+    {
+        $city = new City(name: 'Berlin');
+        $message = Message::ofUser('Research data', $city);
+
+        $this->assertTrue($message->getMetadata()->has('structured_output_object'));
+        $this->assertSame($city, $message->getMetadata()->get('structured_output_object'));
+    }
+
+    public function testCreateUserMessageWithMultipleContentAndObject()
+    {
+        $city = new City(name: 'Paris');
+        $message = Message::ofUser(
+            'Check this city',
+            new ImageUrl('http://example.com/paris.jpg'),
+            $city
+        );
+
+        $content = $message->getContent();
+        $this->assertCount(3, $content);
+
+        $this->assertInstanceOf(Text::class, $content[0]);
+        $this->assertInstanceOf(ImageUrl::class, $content[1]);
+
+        $this->assertInstanceOf(Text::class, $content[2]);
+        $this->assertStringContainsString('Paris', $content[2]->getText());
+    }
+
+    public function testCreateUserMessageWithOnlyObject()
+    {
+        $city = new City(name: 'Tokyo');
+        $message = Message::ofUser($city);
+
+        $content = $message->getContent();
+        $this->assertCount(1, $content);
+
+        $this->assertInstanceOf(Text::class, $content[0]);
+        $serializedContent = $content[0]->getText();
+        $this->assertStringContainsString('Tokyo', $serializedContent);
+        $this->assertStringContainsString('"name"', $serializedContent);
+    }
+
+    public function testCreateUserMessageWithStringableIsNotTreatedAsObject()
+    {
+        $stringable = new class implements \Stringable {
+            public function __toString(): string
+            {
+                return 'I am stringable';
+            }
+        };
+
+        $message = Message::ofUser('Hello', $stringable);
+
+        $content = $message->getContent();
+        $this->assertCount(2, $content);
+
+        $this->assertInstanceOf(Text::class, $content[0]);
+        $this->assertInstanceOf(Text::class, $content[1]);
+        $this->assertSame('I am stringable', $content[1]->getText());
+
+        $this->assertFalse($message->getMetadata()->has('structured_output_object'));
+    }
+
+    public function testCreateUserMessageWithContentInterfaceIsNotTreatedAsObject()
+    {
+        $imageUrl = new ImageUrl('http://example.com/image.jpg');
+        $message = Message::ofUser('Look at this', $imageUrl);
+
+        $content = $message->getContent();
+        $this->assertCount(2, $content);
+
+        $this->assertInstanceOf(Text::class, $content[0]);
+        $this->assertInstanceOf(ImageUrl::class, $content[1]);
+
+        $this->assertFalse($message->getMetadata()->has('structured_output_object'));
+    }
+
+    public function testCreateUserMessageThrowsExceptionForInvalidContentType()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Content must be string, Stringable, or ContentInterface');
+
+        Message::ofUser('Hello', ['invalid' => 'array']);
+    }
+
+    public function testCreateUserMessageWithObjectAndInvalidTypeThrowsException()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Content must be string, Stringable, or ContentInterface');
+
+        $city = new City(name: 'London');
+        Message::ofUser(123, 'text', $city);
     }
 }

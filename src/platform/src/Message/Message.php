@@ -43,8 +43,22 @@ final class Message
         return new AssistantMessage($content, $toolCalls);
     }
 
-    public static function ofUser(\Stringable|string|ContentInterface ...$content): UserMessage
+    public static function ofUser(mixed ...$content): UserMessage
     {
+        $contextObject = null;
+        if (\count($content) > 0) {
+            $lastArg = $content[\count($content) - 1];
+            if (\is_object($lastArg) && !$lastArg instanceof \Stringable && !$lastArg instanceof ContentInterface) {
+                $contextObject = array_pop($content);
+            }
+        }
+
+        foreach ($content as $entry) {
+            if (!\is_string($entry) && !$entry instanceof \Stringable && !$entry instanceof ContentInterface) {
+                throw new \InvalidArgumentException(\sprintf('Content must be string, Stringable, or ContentInterface, "%s" given.', get_debug_type($entry)));
+            }
+        }
+
         $content = array_map(
             static fn (\Stringable|string|ContentInterface $entry) => match (true) {
                 $entry instanceof ContentInterface => $entry,
@@ -54,7 +68,17 @@ final class Message
             $content,
         );
 
-        return new UserMessage(...$content);
+        if (null !== $contextObject) {
+            $content[] = new Text(json_encode($contextObject, \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR));
+        }
+
+        $message = new UserMessage(...$content);
+
+        if (null !== $contextObject) {
+            $message->getMetadata()->add('structured_output_object', $contextObject);
+        }
+
+        return $message;
     }
 
     public static function ofToolCall(ToolCall $toolCall, string $content): ToolCallMessage
