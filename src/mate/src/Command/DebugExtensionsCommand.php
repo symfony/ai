@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Mate\Command;
 
-use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -19,7 +18,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Display detailed information about discovered and loaded MCP extensions.
@@ -49,28 +47,23 @@ class DebugExtensionsCommand extends Command
     /**
      * @var array<string, ExtensionData>
      */
-    private array $loadedExtensions;
+    private array $extensions;
 
-    private string $rootDir;
-
+    /**
+     * @param string[]                     $enabledExtensions
+     * @param array<string, ExtensionData> $extensions
+     */
     public function __construct(
-        LoggerInterface $logger,
-        ContainerInterface $container,
+        array $enabledExtensions,
+        array $extensions,
+        private ComposerExtensionDiscovery $extensionDiscovery,
     ) {
         parent::__construct(self::getDefaultName());
 
-        $this->rootDir = $container->getParameter('mate.root_dir');
-        \assert(\is_string($this->rootDir));
-
-        $this->enabledExtensions = $container->getParameter('mate.enabled_extensions') ?? [];
-        \assert(\is_array($this->enabledExtensions));
-
-        $this->loadedExtensions = $container->getParameter('mate.extensions') ?? [];
-        \assert(\is_array($this->loadedExtensions));
-
-        $extensionDiscovery = new ComposerExtensionDiscovery($this->rootDir, $logger);
-        $this->discoveredExtensions = $extensionDiscovery->discover();
-        $this->rootProjectConfig = $extensionDiscovery->discoverRootProject();
+        $this->enabledExtensions = $enabledExtensions;
+        $this->extensions = $extensions;
+        $this->discoveredExtensions = $this->extensionDiscovery->discover();
+        $this->rootProjectConfig = $this->extensionDiscovery->discoverRootProject();
     }
 
     public static function getDefaultName(): string
@@ -165,7 +158,7 @@ HELP
         if (\count($enabledExtensions) > 0) {
             $io->section(\sprintf('Enabled Extensions (%d)', $enabledCount));
             foreach ($enabledExtensions as $packageName => $data) {
-                $isLoaded = isset($this->loadedExtensions[$packageName]);
+                $isLoaded = isset($this->extensions[$packageName]);
                 $this->displayExtensionDetails($io, $packageName, $data, true, $isLoaded);
             }
         }
@@ -173,7 +166,7 @@ HELP
         if ($showAll && \count($disabledExtensions) > 0) {
             $io->section(\sprintf('Disabled Extensions (%d)', $disabledCount));
             foreach ($disabledExtensions as $packageName => $data) {
-                $isLoaded = isset($this->loadedExtensions[$packageName]);
+                $isLoaded = isset($this->extensions[$packageName]);
                 $this->displayExtensionDetails($io, $packageName, $data, false, $isLoaded);
             }
         }
@@ -182,7 +175,7 @@ HELP
         $io->text(\sprintf('Total discovered: %d', \count($this->discoveredExtensions) + 1)); // +1 for root project
         $io->text(\sprintf('Enabled: %d', $enabledCount + 1)); // +1 for root project
         $io->text(\sprintf('Disabled: %d', $disabledCount));
-        $io->text(\sprintf('Loaded: %d', \count($this->loadedExtensions)));
+        $io->text(\sprintf('Loaded: %d', \count($this->extensions)));
 
         if (!$showAll && $disabledCount > 0) {
             $io->note(\sprintf('Use --show-all to see %d disabled extension%s', $disabledCount, 1 === $disabledCount ? '' : 's'));
@@ -251,7 +244,7 @@ HELP
 
         foreach ($this->discoveredExtensions as $packageName => $data) {
             $isEnabled = \in_array($packageName, $this->enabledExtensions, true);
-            $isLoaded = isset($this->loadedExtensions[$packageName]);
+            $isLoaded = isset($this->extensions[$packageName]);
 
             $extensionData = [
                 'type' => 'vendor_extension',

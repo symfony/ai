@@ -11,12 +11,14 @@
 
 namespace Symfony\AI\Mate\Tests\Command;
 
+use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\ToolsInspectCommand;
+use Symfony\AI\Mate\Discovery\CapabilityCollector;
+use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -26,15 +28,11 @@ final class ToolsInspectCommandTest extends TestCase
     public function testExecuteInspectsExistingTool()
     {
         $rootDir = __DIR__.'/../..';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
-        ]);
+        ];
 
-        $command = new ToolsInspectCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['tool-name' => 'php-version']);
@@ -51,15 +49,11 @@ final class ToolsInspectCommandTest extends TestCase
     public function testExecuteWithJsonFormat()
     {
         $rootDir = __DIR__.'/../..';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
-        ]);
+        ];
 
-        $command = new ToolsInspectCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['tool-name' => 'php-version', '--format' => 'json']);
@@ -80,15 +74,11 @@ final class ToolsInspectCommandTest extends TestCase
     public function testExecuteWithInvalidToolName()
     {
         $rootDir = __DIR__.'/../..';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
-        ]);
+        ];
 
-        $command = new ToolsInspectCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['tool-name' => 'non-existent-tool']);
@@ -102,15 +92,11 @@ final class ToolsInspectCommandTest extends TestCase
     public function testTextOutputFormatDisplaysFullInformation()
     {
         $rootDir = __DIR__.'/../..';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
-        ]);
+        ];
 
-        $command = new ToolsInspectCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['tool-name' => 'php-version', '--format' => 'text']);
@@ -128,15 +114,11 @@ final class ToolsInspectCommandTest extends TestCase
     public function testJsonOutputContainsAllFields()
     {
         $rootDir = __DIR__.'/../..';
-        $container = new ContainerBuilder();
-        $container->setParameter('mate.root_dir', $rootDir);
-        $container->setParameter('mate.enabled_extensions', []);
-        $container->setParameter('mate.disabled_features', []);
-        $container->setParameter('mate.extensions', [
+        $extensions = [
             '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
-        ]);
+        ];
 
-        $command = new ToolsInspectCommand(new NullLogger(), $container);
+        $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
         $tester->execute(['tool-name' => 'operating-system', '--format' => 'json']);
@@ -149,5 +131,19 @@ final class ToolsInspectCommandTest extends TestCase
         $this->assertSame('operating-system', $json['name']);
         $this->assertIsString($json['handler']);
         $this->assertSame('_custom', $json['extension']);
+    }
+
+    /**
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     * @param array<string, array<string, array{enabled: bool}>>       $disabledFeatures
+     */
+    private function createCommand(string $rootDir, array $extensions, array $disabledFeatures = []): ToolsInspectCommand
+    {
+        $logger = new NullLogger();
+        $discoverer = new Discoverer($logger);
+        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
+        $collector = new CapabilityCollector($loader);
+
+        return new ToolsInspectCommand($extensions, $collector);
     }
 }

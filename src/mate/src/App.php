@@ -13,7 +13,6 @@ namespace Symfony\AI\Mate;
 
 use Mcp\Server\Transport\Stdio\RunnerControl;
 use Mcp\Server\Transport\Stdio\RunnerState;
-use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Command\ClearCacheCommand;
 use Symfony\AI\Mate\Command\DebugCapabilitiesCommand;
 use Symfony\AI\Mate\Command\DebugExtensionsCommand;
@@ -40,27 +39,30 @@ final class App
 
     public static function build(ContainerInterface $container): Application
     {
-        $logger = $container->get(LoggerInterface::class);
-        \assert($logger instanceof LoggerInterface);
-
-        $rootDir = $container->getParameter('mate.root_dir');
-        \assert(\is_string($rootDir));
-
-        $cacheDir = $container->getParameter('mate.cache_dir');
-        \assert(\is_string($cacheDir));
-
         $application = new Application(self::NAME, self::VERSION);
 
-        self::addCommand($application, new InitCommand($rootDir));
-        self::addCommand($application, new ServeCommand($container, $logger));
-        self::addCommand($application, new DiscoverCommand($rootDir, $logger));
-        self::addCommand($application, new StopCommand((string) $container->getParameter('mate.cache_dir')));
-        self::addCommand($application, new DebugCapabilitiesCommand($logger, $container));
-        self::addCommand($application, new DebugExtensionsCommand($logger, $container));
-        self::addCommand($application, new ClearCacheCommand($cacheDir));
-        self::addCommand($application, new ToolsListCommand($logger, $container));
-        self::addCommand($application, new ToolsInspectCommand($logger, $container));
-        self::addCommand($application, new ToolsCallCommand($logger, $container));
+        $commands = [
+            InitCommand::class,
+            ServeCommand::class,
+            DiscoverCommand::class,
+            StopCommand::class,
+            DebugCapabilitiesCommand::class,
+            DebugExtensionsCommand::class,
+            ClearCacheCommand::class,
+            ToolsListCommand::class,
+            ToolsInspectCommand::class,
+            ToolsCallCommand::class,
+        ];
+
+        foreach ($commands as $commandClass) {
+            $command = $container->get($commandClass);
+            \assert(
+                $command instanceof Command,
+                \sprintf('Service %s is not an instance of %s', $commandClass, Command::class),
+            );
+
+            self::addCommand($application, $command);
+        }
 
         if (\defined('SIGUSR1') && class_exists(RunnerControl::class)) {
             $application->getSignalRegistry()->register(\SIGUSR1, static function () {

@@ -34,38 +34,42 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchByTextTerm()
     {
-        $results = $this->tool->search('logged in');
+        $result = $this->tool->search('logged in');
 
-        $this->assertNotEmpty($results);
-        $this->assertCount(1, $results);
-        $this->assertStringContainsString('User logged in', $results[0]['message']);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
+        $this->assertCount(1, $result['entries']);
+        $this->assertStringContainsString('User logged in', $result['entries'][0]['message']);
     }
 
     public function testSearchByTextTermReturnsEmptyWhenNotFound()
     {
-        $results = $this->tool->search('nonexistent search term xyz');
+        $result = $this->tool->search('nonexistent search term xyz');
 
-        $this->assertEmpty($results);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertEmpty($result['entries']);
     }
 
     public function testSearchByLevel()
     {
-        $results = $this->tool->search('', level: 'ERROR');
+        $result = $this->tool->search('', level: 'ERROR');
 
-        $this->assertNotEmpty($results);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
 
-        foreach ($results as $entry) {
+        foreach ($result['entries'] as $entry) {
             $this->assertSame('ERROR', $entry['level']);
         }
     }
 
     public function testSearchByChannel()
     {
-        $results = $this->tool->search('', channel: 'security');
+        $result = $this->tool->search('', channel: 'security');
 
-        $this->assertNotEmpty($results);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
 
-        foreach ($results as $entry) {
+        foreach ($result['entries'] as $entry) {
             $this->assertSame('security', $entry['channel']);
         }
     }
@@ -78,73 +82,82 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchWithLimit()
     {
-        $results = $this->tool->search('', limit: 2);
+        $result = $this->tool->search('', limit: 2);
 
-        $this->assertLessThanOrEqual(2, \count($results));
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertLessThanOrEqual(2, \count($result['entries']));
     }
 
     public function testSearchRegex()
     {
-        $results = $this->tool->searchRegex('Database.*failed');
+        $result = $this->tool->searchRegex('Database.*failed');
 
-        $this->assertNotEmpty($results);
-        $this->assertStringContainsString('Database connection failed', $results[0]['message']);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
+        $this->assertStringContainsString('Database connection failed', $result['entries'][0]['message']);
     }
 
     public function testSearchRegexWithDelimiters()
     {
-        $results = $this->tool->searchRegex('/User.*logged/i');
+        $result = $this->tool->searchRegex('/User.*logged/i');
 
-        $this->assertNotEmpty($results);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
     }
 
     public function testSearchRegexByLevel()
     {
-        $results = $this->tool->searchRegex('.*', level: 'WARNING');
+        $result = $this->tool->searchRegex('.*', level: 'WARNING');
 
-        $this->assertNotEmpty($results);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
 
-        foreach ($results as $entry) {
+        foreach ($result['entries'] as $entry) {
             $this->assertSame('WARNING', $entry['level']);
         }
     }
 
     public function testSearchContext()
     {
-        $results = $this->tool->searchContext('user_id', '123');
+        $result = $this->tool->searchContext('user_id', '123');
 
-        $this->assertNotEmpty($results);
-        $this->assertArrayHasKey('user_id', $results[0]['context']);
-        $this->assertSame(123, $results[0]['context']['user_id']);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
+        $this->assertArrayHasKey('user_id', $result['entries'][0]['context']);
+        $this->assertSame(123, $result['entries'][0]['context']['user_id']);
     }
 
     public function testSearchContextReturnsEmptyWhenKeyNotFound()
     {
-        $results = $this->tool->searchContext('nonexistent_key', 'value');
+        $result = $this->tool->searchContext('nonexistent_key', 'value');
 
-        $this->assertEmpty($results);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertEmpty($result['entries']);
     }
 
     public function testSearchContextByLevel()
     {
-        $results = $this->tool->searchContext('error', 'Connection', level: 'ERROR');
+        $result = $this->tool->searchContext('error', 'Connection', level: 'ERROR');
 
-        $this->assertNotEmpty($results);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
     }
 
     public function testTail()
     {
-        $results = $this->tool->tail(10);
+        $result = $this->tool->tail(10);
 
-        $this->assertNotEmpty($results);
-        $this->assertLessThanOrEqual(10, \count($results));
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
+        $this->assertLessThanOrEqual(10, \count($result['entries']));
     }
 
     public function testTailWithLevel()
     {
-        $results = $this->tool->tail(10, level: 'INFO');
+        $result = $this->tool->tail(10, level: 'INFO');
 
-        foreach ($results as $entry) {
+        $this->assertArrayHasKey('entries', $result);
+        foreach ($result['entries'] as $entry) {
             $this->assertSame('INFO', $entry['level']);
         }
     }
@@ -157,11 +170,12 @@ final class LogSearchToolTest extends TestCase
 
     public function testListFiles()
     {
-        $results = $this->tool->listFiles();
+        $result = $this->tool->listFiles();
 
-        $this->assertNotEmpty($results);
+        $this->assertArrayHasKey('files', $result);
+        $this->assertNotEmpty($result['files']);
 
-        foreach ($results as $file) {
+        foreach ($result['files'] as $file) {
             $this->assertArrayHasKey('name', $file);
             $this->assertArrayHasKey('path', $file);
             $this->assertArrayHasKey('size', $file);
@@ -177,20 +191,22 @@ final class LogSearchToolTest extends TestCase
 
     public function testListChannels()
     {
-        $results = $this->tool->listChannels();
+        $result = $this->tool->listChannels();
 
-        $this->assertNotEmpty($results);
-        $this->assertContains('app', $results);
-        $this->assertContains('security', $results);
+        $this->assertArrayHasKey('channels', $result);
+        $this->assertNotEmpty($result['channels']);
+        $this->assertContains('app', $result['channels']);
+        $this->assertContains('security', $result['channels']);
     }
 
     public function testByLevel()
     {
-        $results = $this->tool->byLevel('INFO');
+        $result = $this->tool->byLevel('INFO');
 
-        $this->assertNotEmpty($results);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
 
-        foreach ($results as $entry) {
+        foreach ($result['entries'] as $entry) {
             $this->assertSame('INFO', $entry['level']);
         }
     }
@@ -203,18 +219,20 @@ final class LogSearchToolTest extends TestCase
 
     public function testByLevelWithLimit()
     {
-        $results = $this->tool->byLevel('INFO', limit: 1);
+        $result = $this->tool->byLevel('INFO', limit: 1);
 
-        $this->assertLessThanOrEqual(1, \count($results));
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertLessThanOrEqual(1, \count($result['entries']));
     }
 
     public function testSearchReturnsLogEntryArrayStructure()
     {
-        $results = $this->tool->search('logged');
+        $result = $this->tool->search('logged');
 
-        $this->assertNotEmpty($results);
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
 
-        $entry = $results[0];
+        $entry = $result['entries'][0];
         $this->assertArrayHasKey('datetime', $entry);
         $this->assertArrayHasKey('channel', $entry);
         $this->assertArrayHasKey('level', $entry);

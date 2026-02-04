@@ -43,7 +43,7 @@ class Logger extends AbstractLogger
             "[%s] %s %s\n",
             strtoupper($levelString),
             $message,
-            ([] === $context || !$this->debugEnabled) ? '' : json_encode($context),
+            ([] === $context || !$this->debugEnabled) ? '' : json_encode($this->normalizeContext($context)),
         );
 
         if ($this->fileLogEnabled || !\defined('STDERR')) {
@@ -63,6 +63,52 @@ class Logger extends AbstractLogger
         } else {
             fwrite(\STDERR, $logMessage);
         }
+    }
+
+    /**
+     * Normalize context data to be JSON-serializable.
+     *
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, mixed>
+     */
+    private function normalizeContext(array $context): array
+    {
+        $normalized = [];
+
+        foreach ($context as $key => $value) {
+            $normalized[$key] = $this->normalizeValue($value);
+        }
+
+        return $normalized;
+    }
+
+    private function normalizeValue(mixed $value): mixed
+    {
+        if ($value instanceof \Throwable) {
+            return [
+                'class' => $value::class,
+                'message' => $value->getMessage(),
+                'code' => $value->getCode(),
+                'file' => $value->getFile(),
+                'line' => $value->getLine(),
+                'trace' => $this->debugEnabled ? $value->getTraceAsString() : null,
+            ];
+        }
+
+        if (\is_array($value)) {
+            return array_map(fn ($item) => $this->normalizeValue($item), $value);
+        }
+
+        if (\is_object($value)) {
+            if (method_exists($value, '__toString')) {
+                return (string) $value;
+            }
+
+            return ['object' => $value::class];
+        }
+
+        return $value;
     }
 
     private function ensureDirectoryExists(string $filePath): void
