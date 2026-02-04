@@ -94,7 +94,7 @@ final class CsvLoader implements LoaderInterface
 
                 $data = $this->normalizeRow($row, $headers, $source, $rowIndex);
 
-                $content = $this->getValue($data, $contentColumn);
+                $content = $data[$contentColumn] ?? null;
                 if (null === $content || '' === trim($content)) {
                     ++$rowIndex;
                     continue;
@@ -144,7 +144,7 @@ final class CsvLoader implements LoaderInterface
             return Uuid::v4();
         }
 
-        $id = $this->getValue($data, $idColumn);
+        $id = $data[$idColumn] ?? null;
 
         return null !== $id && '' !== $id ? $id : Uuid::v4();
     }
@@ -163,20 +163,12 @@ final class CsvLoader implements LoaderInterface
         ];
 
         foreach ($metadataColumns as $column) {
-            $value = $this->getValue($data, $column);
+            $value = $data[$column] ?? null;
             if (null !== $value) {
                 $metadata[\is_int($column) ? 'column_'.$column : $column] = $value;
             }
         }
 
         return $metadata;
-    }
-
-    /**
-     * @param array<string|int, string> $data
-     */
-    private function getValue(array $data, string|int $key): ?string
-    {
-        return \array_key_exists($key, $data) ? $data[$key] : null;
     }
 }
