@@ -18,6 +18,7 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolException;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallFailed;
+use Symfony\AI\Agent\Toolbox\Event\ToolCallRequested;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallSucceeded;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -68,6 +69,7 @@ final class ToolboxEventDispatcherTest extends TestCase
         } catch (\Throwable) {
         }
         $this->assertSame([
+            ToolCallRequested::class,
             ToolCallArgumentsResolved::class,
             ToolCallFailed::class,
         ], $this->dispatchedEvents);
@@ -80,6 +82,7 @@ final class ToolboxEventDispatcherTest extends TestCase
         } catch (\Throwable) {
         }
         $this->assertSame([
+            ToolCallRequested::class,
             ToolCallArgumentsResolved::class,
             ToolCallFailed::class,
         ], $this->dispatchedEvents);
@@ -92,6 +95,7 @@ final class ToolboxEventDispatcherTest extends TestCase
         } catch (\Throwable) {
         }
         $this->assertSame([
+            ToolCallRequested::class,
             ToolCallArgumentsResolved::class,
             ToolCallSucceeded::class,
         ], $this->dispatchedEvents);

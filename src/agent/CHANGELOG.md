@@ -5,6 +5,8 @@ CHANGELOG
 ---
 
  * [BC BREAK] Rename `Symfony\AI\Agent\Toolbox\Tool\Agent` to `Symfony\AI\Agent\Toolbox\Tool\Subagent`
+ * Add human-in-the-loop tool confirmation system
+ * Add `ToolCallRequested` event dispatched before tool execution
 
 0.3
 ---
