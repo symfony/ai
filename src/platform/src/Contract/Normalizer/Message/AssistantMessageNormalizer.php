@@ -15,13 +15,16 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Symfony\Component\Serializer\SerializerAwareInterface;
+use Symfony\Component\Serializer\SerializerAwareTrait;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class AssistantMessageNormalizer implements NormalizerInterface, NormalizerAwareInterface
+final class AssistantMessageNormalizer implements NormalizerInterface, NormalizerAwareInterface, SerializerAwareInterface
 {
     use NormalizerAwareTrait;
+    use SerializerAwareTrait;
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
@@ -48,7 +51,7 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
 
         $content = $data->getContent();
         if (null !== $content) {
-            $array['content'] = json_encode($this->normalizer->normalize($content, $format, $context), \JSON_THROW_ON_ERROR);
+            $array['content'] = $this->serializer->serialize($content, 'json', $context);
         }
 
         if ($data->hasToolCalls()) {
