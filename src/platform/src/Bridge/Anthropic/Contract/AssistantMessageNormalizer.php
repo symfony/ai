@@ -48,7 +48,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         if (!$hasBlocks) {
             return [
                 'role' => 'assistant',
-                'content' => $data->getContent() ?? '',
+                'content' => $this->normalizeContent($data->getContent(), $format, $context) ?? '',
             ];
         }
 
@@ -66,7 +66,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         }
 
         if (null !== $data->getContent()) {
-            $blocks[] = ['type' => 'text', 'text' => $data->getContent()];
+            $blocks[] = ['type' => 'text', 'text' => $this->normalizeContent($data->getContent(), $format, $context)];
         }
 
         if ($data->hasToolCalls()) {
@@ -94,5 +94,25 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     protected function supportsModel(Model $model): bool
     {
         return $model instanceof Claude;
+    }
+
+    private function normalizeContent(object|string|null $content, ?string $format, array $context): ?string
+    {
+        if (null === $content) {
+            return null;
+        }
+
+        if (\is_string($content)) {
+            return $content;
+        }
+
+        if ($content instanceof \Stringable) {
+            return (string) $content;
+        }
+
+        return json_encode(
+            $this->normalizer->normalize($content, $format, $context),
+            \JSON_THROW_ON_ERROR
+        );
     }
 }

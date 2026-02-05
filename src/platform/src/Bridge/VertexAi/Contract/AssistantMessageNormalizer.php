@@ -15,12 +15,16 @@ use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model as BaseModel;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
  */
-final class AssistantMessageNormalizer extends ModelContractNormalizer
+final class AssistantMessageNormalizer extends ModelContractNormalizer implements NormalizerAwareInterface
 {
+    use NormalizerAwareTrait;
+
     /**
      * @param AssistantMessage $data
      *
@@ -38,8 +42,19 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
     {
         $normalized = [];
 
-        if (null !== $data->getContent()) {
-            $normalized[] = ['text' => $data->getContent()];
+        $content = $data->getContent();
+        if (null !== $content) {
+            if (\is_string($content)) {
+                $textContent = $content;
+            } elseif ($content instanceof \Stringable) {
+                $textContent = (string) $content;
+            } else {
+                $textContent = json_encode(
+                    $this->normalizer->normalize($content, $format, $context),
+                    \JSON_THROW_ON_ERROR
+                );
+            }
+            $normalized[] = ['text' => $textContent];
         }
 
         if ($data->hasToolCalls()) {
