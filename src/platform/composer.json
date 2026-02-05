@@ -25,6 +25,7 @@
         "ollama",
         "openai",
         "openrouter",
+        "ovh",
         "perplexity",
         "replicate",
         "transformers",
