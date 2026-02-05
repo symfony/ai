@@ -6,6 +6,7 @@
         },
         "ai-brave-tool": "src/agent/src/Bridge/Brave",
         "ai-clock-tool": "src/agent/src/Bridge/Clock",
+        "ai-filesystem-tool": "src/agent/src/Bridge/Filesystem",
         "ai-firecrawl-tool": "src/agent/src/Bridge/Firecrawl",
         "ai-mapbox-tool": "src/agent/src/Bridge/Mapbox",
         "ai-ollama-tool": "src/agent/src/Bridge/Ollama",
