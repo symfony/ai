@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-05T13:44:27Z
+
+Sorry for asking, but is this already covered by a test? I mean, can I trust the CI here?  😄
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-02-05T17:23:10Z
+
+> is this already covered by a test
+
+Yes I would say so, e.g. https://github.com/symfony/ai/blob/main/src/platform/tests/Contract/JsonSchema/FactoryTest.php#L224-L276
