@@ -46,8 +46,18 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
             'role' => $data->getRole()->value,
         ];
 
-        if (null !== $data->getContent()) {
-            $array['content'] = $data->getContent();
+        $content = $data->getContent();
+        if (null !== $content) {
+            if (\is_string($content)) {
+                $array['content'] = $content;
+            } elseif ($content instanceof \Stringable) {
+                $array['content'] = (string) $content;
+            } else {
+                $array['content'] = json_encode(
+                    $this->normalizer->normalize($content, $format, $context),
+                    \JSON_THROW_ON_ERROR
+                );
+            }
         }
 
         if ($data->hasToolCalls()) {

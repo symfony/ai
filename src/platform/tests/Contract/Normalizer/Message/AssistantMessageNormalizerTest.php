@@ -101,4 +101,72 @@ final class AssistantMessageNormalizerTest extends TestCase
 
         $this->assertSame($expected, $this->normalizer->normalize($message));
     }
+
+    public function testNormalizeWithJsonSerializableContent()
+    {
+        $content = new class implements \JsonSerializable {
+            /**
+             * @return array{title: string, ingredients: list<string>}
+             */
+            public function jsonSerialize(): array
+            {
+                return ['title' => 'Test Recipe', 'ingredients' => ['flour', 'sugar']];
+            }
+        };
+        $message = new AssistantMessage($content);
+
+        $innerNormalizer = $this->createMock(NormalizerInterface::class);
+        $innerNormalizer->expects($this->once())
+            ->method('normalize')
+            ->with($content, null, [])
+            ->willReturn(['title' => 'Test Recipe', 'ingredients' => ['flour', 'sugar']]);
+
+        $this->normalizer->setNormalizer($innerNormalizer);
+
+        $result = $this->normalizer->normalize($message);
+
+        $this->assertSame('assistant', $result['role']);
+        $this->assertIsString($result['content']);
+        $this->assertStringContainsString('"title":"Test Recipe"', $result['content']);
+        $this->assertStringContainsString('"ingredients":["flour","sugar"]', $result['content']);
+    }
+
+    public function testNormalizeWithStringableContent()
+    {
+        $content = new class implements \Stringable {
+            public function __toString(): string
+            {
+                return 'Stringable content here';
+            }
+        };
+        $message = new AssistantMessage($content);
+
+        $expected = [
+            'role' => 'assistant',
+            'content' => 'Stringable content here',
+        ];
+
+        $this->assertSame($expected, $this->normalizer->normalize($message));
+    }
+
+    public function testNormalizeWithObjectContent()
+    {
+        $content = new \stdClass();
+        $content->property = 'value';
+        $message = new AssistantMessage($content);
+
+        $innerNormalizer = $this->createMock(NormalizerInterface::class);
+        $innerNormalizer->expects($this->once())
+            ->method('normalize')
+            ->with($content, null, [])
+            ->willReturn(['property' => 'value']);
+
+        $this->normalizer->setNormalizer($innerNormalizer);
+
+        $result = $this->normalizer->normalize($message);
+
+        $this->assertSame('assistant', $result['role']);
+        $this->assertIsString($result['content']);
+        $this->assertStringContainsString('"property":"value"', $result['content']);
+    }
 }
