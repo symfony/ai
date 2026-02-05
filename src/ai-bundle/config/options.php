@@ -471,7 +471,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->children()
                         ->stringNode('loader')
                             ->info('Service name of loader')
-                            ->isRequired()
+                            ->defaultNull()
                         ->end()
                         ->variableNode('source')
                             ->info('Source identifier (file path, URL, etc.) or array of sources')

@@ -762,6 +762,11 @@ The ``ai:store:index`` command indexes documents into a store using a configured
 The ``--source`` (or ``-s``) option allows you to override the source(s) configured in your indexer.
 This is useful for ad-hoc indexing operations or testing different data sources.
 
+.. note::
+
+    This command only works with indexers that have a ``loader`` configured. Document indexers
+    (those without a loader) must be used programmatically in your code.
+
 Usage
 -----
 
@@ -1004,6 +1009,49 @@ Once configured, vectorizers can be referenced by name in indexer configurations
                 loader: 'Symfony\AI\Store\Document\Loader\InMemoryLoader'
                 vectorizer: 'ai.vectorizer.mistral_embed'
                 store: 'ai.store.memory.kb'
+
+Document Indexers
+~~~~~~~~~~~~~~~~~
+
+If you omit the ``loader`` option, a :class:`Symfony\\AI\\Store\\Indexer\\DocumentIndexer` is created
+instead of a :class:`Symfony\\AI\\Store\\Indexer\\SourceIndexer`. This is useful when you want to
+index documents directly in your code without loading them from external sources:
+
+.. code-block:: yaml
+
+    ai:
+        indexer:
+            my_indexer:
+                # No loader - creates a DocumentIndexer
+                vectorizer: 'ai.vectorizer.openai_small'
+                store: 'ai.store.chromadb.documents'
+
+The resulting service accepts documents directly:
+
+.. code-block::
+
+    use Symfony\AI\Store\Document\TextDocument;
+    use Symfony\AI\Store\IndexerInterface;
+
+    class MyService
+    {
+        public function __construct(
+            private IndexerInterface $myIndexer,
+        ) {
+        }
+
+        public function indexContent(string $id, string $content): void
+        {
+            $this->myIndexer->index(new TextDocument($id, $content));
+            // Or multiple documents
+            $this->myIndexer->index([$document1, $document2]);
+        }
+    }
+
+.. note::
+
+    Document indexers cannot be used with the ``ai:store:index`` command, as that command
+    requires a loader to fetch documents from sources.
 
 Benefits of Configured Vectorizers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
