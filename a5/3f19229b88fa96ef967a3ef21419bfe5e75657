@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-04T22:10:00Z
+
+on top:
+* please add a small note to `docs/bundles/ai-bundle.rst` about this
+* add a check in `Symfony\AI\Store\Command\IndexCommand` that the used indexer is an instance of `SourceIndexer` - it only works like that
