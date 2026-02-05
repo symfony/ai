@@ -40,10 +40,22 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
             return $this->normalizer->normalize($data->getToolCalls(), $format, $context);
         }
 
+        $content = $data->getContent();
+        if (null !== $content && !\is_string($content)) {
+            if ($content instanceof \Stringable) {
+                $content = (string) $content;
+            } else {
+                $content = json_encode(
+                    $this->normalizer->normalize($content, $format, $context),
+                    \JSON_THROW_ON_ERROR
+                );
+            }
+        }
+
         return [
             'role' => $data->getRole()->value,
             'type' => 'message',
-            'content' => $data->getContent(),
+            'content' => $content,
         ];
     }
 

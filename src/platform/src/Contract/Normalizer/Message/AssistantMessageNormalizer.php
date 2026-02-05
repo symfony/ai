@@ -15,16 +15,13 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-use Symfony\Component\Serializer\SerializerAwareInterface;
-use Symfony\Component\Serializer\SerializerAwareTrait;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class AssistantMessageNormalizer implements NormalizerInterface, NormalizerAwareInterface, SerializerAwareInterface
+final class AssistantMessageNormalizer implements NormalizerInterface, NormalizerAwareInterface
 {
     use NormalizerAwareTrait;
-    use SerializerAwareTrait;
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
