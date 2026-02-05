@@ -158,6 +158,7 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('ai.platform.json_schema.description_parser'),
                 service('type_info.resolver')->nullOnInvalid(),
+                service('serializer.mapping.class_metadata_factory')->ignoreOnInvalid(),
             ])
         ->alias(ResponseFormatFactoryInterface::class, 'ai.platform.response_format_factory')
         ->set('ai.platform.structured_output_serializer', StructuredOutputSerializer::class)

@@ -13,7 +13,9 @@ namespace Symfony\AI\Platform\Contract\JsonSchema;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\Component\Serializer\Attribute\DiscriminatorMap;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
+use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\TypeInfo\Type;
 use Symfony\Component\TypeInfo\Type\BackedEnumType;
 use Symfony\Component\TypeInfo\Type\BuiltinType;
@@ -65,6 +67,7 @@ final class Factory
     public function __construct(
         private readonly DescriptionParser $descriptionParser = new DescriptionParser(),
         ?TypeResolver $typeResolver = null,
+        private readonly ClassMetadataFactoryInterface $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader()),
     ) {
         $this->typeResolver = $typeResolver ?? TypeResolver::create();
     }
@@ -192,7 +195,7 @@ final class Factory
                     \assert($collectionValueType instanceof ObjectType);
 
                     // Check for the DiscriminatorMap attribute to handle polymorphic arrays
-                    $discriminatorMapping = $this->findDiscriminatorMapping($collectionValueType->getClassName());
+                    $discriminatorMapping = $this->classMetadataFactory->getMetadataFor($collectionValueType->getClassName())->getClassDiscriminatorMapping()?->getTypesMapping();
                     if ($discriminatorMapping) {
                         $discriminators = [];
                         foreach ($discriminatorMapping as $_ => $discriminator) {
@@ -272,34 +275,5 @@ final class Factory
             'type' => $jsonType,
             'enum' => $values,
         ];
-    }
-
-    /**
-     * @param class-string $className
-     *
-     * @return array<string, class-string>|null
-     *
-     * @throws \ReflectionException
-     */
-    private function findDiscriminatorMapping(string $className): ?array
-    {
-        /** @var \ReflectionAttribute<DiscriminatorMap>[] $attributes */
-        $attributes = (new \ReflectionClass($className))->getAttributes(DiscriminatorMap::class);
-        $result = \count($attributes) > 0 ? $attributes[array_key_first($attributes)]->newInstance() : null;
-
-        if (!$result) {
-            return null;
-        }
-
-        /**
-         * In the 8.* release of symfony/serializer DiscriminatorMap removes the getMapping() method in favor of property access.
-         * This satisfies the project's pipeline that builds against both < and >= 8.* release.
-         * This logic can be removed once the project builds against >= 8.* only.
-         *
-         * @see https://github.com/symfony/ai/pull/585#issuecomment-3303631346
-         */
-        $reflectionProperty = new \ReflectionProperty($result, 'mapping');
-
-        return $reflectionProperty->getValue($result);
     }
 }
