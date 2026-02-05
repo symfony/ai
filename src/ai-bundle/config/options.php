@@ -44,6 +44,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/huggingface'))
                     ->append($import('platform/lmstudio'))
                     ->append($import('platform/mistral'))
+                    ->append($import('platform/minimax'))
                     ->append($import('platform/ollama'))
                     ->append($import('platform/openai'))
                     ->append($import('platform/openrouter'))
