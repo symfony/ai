@@ -39,7 +39,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'qwen3-235b-a22b-instruct-2507' => ['qwen3-235b-a22b-instruct-2507', Scaleway::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING, Capability::OUTPUT_STRUCTURED]];
 
         // Embedding models
-        yield 'bge-multilingual-gemma2' => ['bge-multilingual-gemma2', Embeddings::class, [Capability::INPUT_TEXT]];
+        yield 'bge-multilingual-gemma2' => ['bge-multilingual-gemma2', Embeddings::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

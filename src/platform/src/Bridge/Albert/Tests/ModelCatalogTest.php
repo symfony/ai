@@ -28,7 +28,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'openweight-small' => ['openweight-small', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
         yield 'openweight-medium' => ['openweight-medium', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
         yield 'openweight-large' => ['openweight-large', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
-        yield 'openweight-embeddings' => ['openweight-embeddings', EmbeddingsModel::class, [Capability::INPUT_TEXT]];
+        yield 'openweight-embeddings' => ['openweight-embeddings', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

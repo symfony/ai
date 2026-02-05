@@ -33,9 +33,9 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'gemini-2.0-flash-lite-preview-02-05' => ['gemini-2.0-flash-lite-preview-02-05', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
         yield 'gemini-2.0-flash-thinking-exp-01-21' => ['gemini-2.0-flash-thinking-exp-01-21', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
         yield 'gemini-1.5-flash' => ['gemini-1.5-flash', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
-        yield 'gemini-embedding-exp-03-07' => ['gemini-embedding-exp-03-07', Embeddings::class, [Capability::INPUT_MULTIPLE]];
-        yield 'text-embedding-004' => ['text-embedding-004', Embeddings::class, [Capability::INPUT_MULTIPLE]];
-        yield 'embedding-001' => ['embedding-001', Embeddings::class, [Capability::INPUT_MULTIPLE]];
+        yield 'gemini-embedding-exp-03-07' => ['gemini-embedding-exp-03-07', Embeddings::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'text-embedding-004' => ['text-embedding-004', Embeddings::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'embedding-001' => ['embedding-001', Embeddings::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

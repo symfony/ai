@@ -33,9 +33,9 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'gemini-2.0-flash-lite' => ['gemini-2.0-flash-lite', GeminiModel::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
 
         // Embeddings models
-        yield 'gemini-embedding-001' => ['gemini-embedding-001', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE]];
-        yield 'text-embedding-005' => ['text-embedding-005', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE]];
-        yield 'text-multilingual-embedding-002' => ['text-multilingual-embedding-002', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE]];
+        yield 'gemini-embedding-001' => ['gemini-embedding-001', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'text-embedding-005' => ['text-embedding-005', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'text-multilingual-embedding-002' => ['text-multilingual-embedding-002', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface
