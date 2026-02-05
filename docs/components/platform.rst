@@ -493,7 +493,10 @@ Populating Existing Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Instead of creating new object instances, you can pass existing object instances to have the AI populate missing data.
-This is useful when you have partially filled objects and want the AI to complete them::
+This is useful when you have partially filled objects and want the AI to complete them.
+
+You can provide context to the AI in two ways: either describe the task in plain text, or pass the object
+directly to the message for automatic serialization::
 
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
@@ -511,13 +514,16 @@ This is useful when you have partially filled objects and want the AI to complet
 
     $city = new City(name: 'Berlin');
 
-    // Pass the object instance to response_format
+    // You can either describe the task in plain text or pass the object directly
     $messages = new MessageBag(
         Message::forSystem('You are a helpful assistant that provides information about cities.'),
+        // describe the task
         Message::ofUser('Please provide the population, country, and current mayor for Berlin.'),
+        // or directly hand over the given data
+        Message::ofUser('Research missing data for this city', $city),
     );
 
-    $result = $platform->invoke('gpt-4o-mini', $messages, [
+    $result = $platform->invoke('gpt-5-mini', $messages, [
         'response_format' => $city, // Pass the instance instead of the class
     ]);
 
@@ -529,38 +535,15 @@ This is useful when you have partially filled objects and want the AI to complet
     echo $city->country;    // Germany
     echo $city->mayor;      // Kai Wegner
 
+When you pass an object to ``Message::ofUser()`` as the last parameter, it is automatically JSON-serialized
+and included in the message content. This provides the AI with the current state of the object, making it
+clear what data is already present and what needs to be filled.
+
 The AI will populate the missing fields while preserving any existing values. This is particularly useful for:
 
 - Enriching partial data from databases
 - Updating incomplete records
 - Progressive data collection workflows
-
-Object Context in Messages
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You can also pass objects directly to user messages for automatic serialization as context.
-The object will be JSON-serialized and included in the message content::
-
-    use Symfony\AI\Platform\Message\Message;
-    use Symfony\AI\Platform\Message\MessageBag;
-
-    $city = new City(name: 'Berlin'); // Partial object
-
-    // Pass object as last parameter to Message::ofUser()
-    $messages = new MessageBag(
-        Message::forSystem('You are a helpful assistant that provides information about cities.'),
-        Message::ofUser('Research missing data for this city', $city), // Object as context
-    );
-
-    $result = $platform->invoke('gpt-4o-mini', $messages, [
-        'response_format' => $city, // Populate the same object
-    ]);
-
-    // The AI sees the serialized object state and fills in missing data
-    $populatedCity = $result->asObject();
-
-The object is serialized to JSON and appended to the message, providing the AI with the current state of the object.
-This makes it clear what data is already present and what needs to be filled.
 
 Code Examples
 ~~~~~~~~~~~~~
