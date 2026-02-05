@@ -76,7 +76,8 @@ final class McpBundle extends AbstractBundle
             $traceableRegistry = (new Definition('mcp.traceable_registry'))
                 ->setClass(TraceableRegistry::class)
                 ->setArguments([new Reference('.inner')])
-                ->setDecoratedService('mcp.registry');
+                ->setDecoratedService('mcp.registry')
+                ->addTag('kernel.reset', ['method' => 'reset']);
             $builder->setDefinition('mcp.traceable_registry', $traceableRegistry);
 
             $dataCollector = (new Definition(DataCollector::class))

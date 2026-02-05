@@ -14,11 +14,12 @@ namespace Symfony\AI\Chat\InMemory;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class Store implements ManagedStoreInterface, MessageStoreInterface
+final class Store implements ManagedStoreInterface, MessageStoreInterface, ResetInterface
 {
     /**
      * @var MessageBag[]
@@ -48,5 +49,10 @@ final class Store implements ManagedStoreInterface, MessageStoreInterface
     public function drop(): void
     {
         $this->messages[$this->identifier] = new MessageBag();
+    }
+
+    public function reset(): void
+    {
+        $this->messages = [];
     }
 }

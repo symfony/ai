@@ -26,7 +26,8 @@
     "require": {
         "php": ">=8.2",
         "symfony/ai-agent": "^0.3",
-        "symfony/ai-platform": "^0.3"
+        "symfony/ai-platform": "^0.3",
+        "symfony/service-contracts": "^2.5|^3"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",

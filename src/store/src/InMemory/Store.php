@@ -17,11 +17,12 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-class Store implements ManagedStoreInterface, StoreInterface
+class Store implements ManagedStoreInterface, StoreInterface, ResetInterface
 {
     /**
      * @var VectorDocument[]
@@ -87,5 +88,10 @@ class Store implements ManagedStoreInterface, StoreInterface
     public function drop(array $options = []): void
     {
         $this->documents = [];
+    }
+
+    public function reset(): void
+    {
+        $this->drop();
     }
 }

@@ -42,4 +42,16 @@ final class TraceableMessageStoreTest extends TestCase
         $this->assertCount(1, $calls[0]['bag']);
         $this->assertInstanceOf(\DateTimeImmutable::class, $calls[0]['saved_at']);
     }
+
+    public function testResetClearsCalls()
+    {
+        $messageStore = new InMemoryStore();
+        $traceableMessageStore = new TraceableMessageStore($messageStore, new MonotonicClock());
+
+        $traceableMessageStore->save(new MessageBag());
+        $this->assertCount(1, $traceableMessageStore->calls);
+
+        $traceableMessageStore->reset();
+        $this->assertCount(0, $traceableMessageStore->calls);
+    }
 }

@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -27,7 +28,7 @@ use Symfony\Component\Clock\ClockInterface;
  *      saved_at: \DateTimeImmutable,
  *  }
  */
-final class TraceableChat implements ChatInterface
+final class TraceableChat implements ChatInterface, ResetInterface
 {
     /**
      * @var array<int, array{
@@ -65,5 +66,13 @@ final class TraceableChat implements ChatInterface
         ];
 
         return $this->chat->submit($message);
+    }
+
+    public function reset(): void
+    {
+        if ($this->chat instanceof ResetInterface) {
+            $this->chat->reset();
+        }
+        $this->calls = [];
     }
 }
