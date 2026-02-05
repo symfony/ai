@@ -41,16 +41,18 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
+        $content = $data->hasToolCalls() ? array_map(static function (ToolCall $toolCall) {
+            return [
+                'type' => 'tool_use',
+                'id' => $toolCall->getId(),
+                'name' => $toolCall->getName(),
+                'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
+            ];
+        }, $data->getToolCalls()) : $this->normalizeContent($data->getContent(), $format, $context);
+
         return [
             'role' => 'assistant',
-            'content' => $data->hasToolCalls() ? array_map(static function (ToolCall $toolCall) {
-                return [
-                    'type' => 'tool_use',
-                    'id' => $toolCall->getId(),
-                    'name' => $toolCall->getName(),
-                    'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
-                ];
-            }, $data->getToolCalls()) : $data->getContent(),
+            'content' => $content,
         ];
     }
 
@@ -62,5 +64,25 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     protected function supportsModel(Model $model): bool
     {
         return $model instanceof Claude;
+    }
+
+    private function normalizeContent(object|string|null $content, ?string $format, array $context): ?string
+    {
+        if (null === $content) {
+            return null;
+        }
+
+        if (\is_string($content)) {
+            return $content;
+        }
+
+        if ($content instanceof \Stringable) {
+            return (string) $content;
+        }
+
+        return json_encode(
+            $this->normalizer->normalize($content, $format, $context),
+            \JSON_THROW_ON_ERROR
+        );
     }
 }
