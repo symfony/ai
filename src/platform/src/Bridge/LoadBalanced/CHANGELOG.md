@@ -1,0 +1,4 @@
+CHANGELOG
+=========
+
+* Add the bridge
