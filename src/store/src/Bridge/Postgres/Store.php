@@ -13,11 +13,9 @@ namespace Symfony\AI\Store\Bridge\Postgres;
 
 use Doctrine\DBAL\Connection;
 use Symfony\AI\Platform\Vector\Vector;
-use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 
@@ -123,15 +121,40 @@ final class Store implements ManagedStoreInterface, StoreInterface
         foreach ($documents as $document) {
             $statement->bindValue(':id', $document->id->toRfc4122());
             $statement->bindValue(':metadata', json_encode($document->metadata->getArrayCopy(), \JSON_THROW_ON_ERROR));
-            $statement->bindValue(':vector', $this->toPgvector($document->vector));
+            $statement->bindValue(':vector', PgvectorConverter::toPgvector($document->vector));
 
             $statement->execute();
         }
     }
 
+    /**
+     * @param string|array<string> $ids
+     * @param array<string, mixed> $options
+     */
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $placeholders = implode(', ', array_map(
+            static fn (int $i): string => \sprintf(':id_%d', $i),
+            array_keys($ids),
+        ));
+
+        $statement = $this->connection->prepare(
+            \sprintf('DELETE FROM %s WHERE id IN (%s)', $this->tableName, $placeholders),
+        );
+
+        foreach ($ids as $i => $id) {
+            $statement->bindValue(\sprintf(':id_%d', $i), $id);
+        }
+
+        $statement->execute();
     }
 
     public function query(Vector $vector, array $options = []): iterable
@@ -168,7 +191,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement = $this->connection->prepare($sql);
 
         $params = [
-            'embedding' => $this->toPgvector($vector),
+            'embedding' => PgvectorConverter::toPgvector($vector),
             ...$options['params'] ?? [],
         ];
         if (null !== $maxScore) {
@@ -184,23 +207,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
             yield new VectorDocument(
                 id: $result['id'],
-                vector: new Vector($this->fromPgvector($result['embedding'])),
+                vector: new Vector(PgvectorConverter::fromPgvector($result['embedding'])),
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );
         }
-    }
-
-    private function toPgvector(VectorInterface $vector): string
-    {
-        return '['.implode(',', $vector->getData()).']';
-    }
-
-    /**
-     * @return float[]
-     */
-    private function fromPgvector(string $vector): array
-    {
-        return json_decode($vector, true, 512, \JSON_THROW_ON_ERROR);
     }
 }

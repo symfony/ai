@@ -1,0 +1,734 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Store\Bridge\Postgres;
+
+use Symfony\AI\Platform\Vector\NullVector;
+use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\TextSearchStrategyInterface;
+use Symfony\AI\Store\Document\Metadata;
+use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\StoreInterface;
+use Symfony\Component\Uid\Uuid;
+
+/**
+ * Hybrid Search Store for PostgreSQL combining vector similarity and full-text search.
+ *
+ * Uses Reciprocal Rank Fusion (RRF) to combine multiple search signals:
+ * - Vector similarity (pgvector)
+ * - Full-text search (configurable: native PostgreSQL or BM25)
+ * - Fuzzy matching (pg_trgm) for typo tolerance
+ *
+ * @see https://supabase.com/docs/guides/ai/hybrid-search
+ *
+ * @author Ahmed EBEN HASSINE <ahmedbhs123@gmail.com>
+ */
+final class HybridStore implements ManagedStoreInterface, StoreInterface
+{
+    private readonly ReciprocalRankFusion $rrf;
+    private readonly TextSearchStrategyInterface $textSearchStrategy;
+
+    /**
+     * @param string                                                    $vectorFieldName         Name of the vector field
+     * @param string                                                    $contentFieldName        Name of the text field for FTS
+     * @param float                                                     $semanticRatio           Ratio between semantic and keyword search (0.0 to 1.0)
+     * @param Distance                                                  $distance                Distance metric for vector similarity
+     * @param string                                                    $language                PostgreSQL text search configuration
+     * @param TextSearchStrategyInterface|null                          $textSearchStrategy      Text search strategy (defaults to native PostgreSQL)
+     * @param ReciprocalRankFusion|null                                 $rrf                     RRF calculator (defaults to k=60, normalized)
+     * @param float|null                                                $defaultMaxScore         Default max distance for vector search
+     * @param float|null                                                $defaultMinScore         Default min RRF score threshold
+     * @param float                                                     $fuzzyPrimaryThreshold   Primary threshold for fuzzy matching
+     * @param float                                                     $fuzzySecondaryThreshold Secondary threshold for fuzzy matching
+     * @param float                                                     $fuzzyStrictThreshold    Strict threshold for double validation
+     * @param float                                                     $fuzzyWeight             Weight of fuzzy matching (0.0 to 1.0)
+     * @param array<string, array{metadata_key: string, boost?: float}> $searchableAttributes    Searchable attributes with boosting config
+     */
+    public function __construct(
+        private readonly \PDO $connection,
+        private readonly string $tableName,
+        private readonly string $vectorFieldName = 'embedding',
+        private readonly string $contentFieldName = 'content',
+        private readonly float $semanticRatio = 1.0,
+        private readonly Distance $distance = Distance::L2,
+        private readonly string $language = 'simple',
+        ?TextSearchStrategyInterface $textSearchStrategy = null,
+        ?ReciprocalRankFusion $rrf = null,
+        private readonly ?float $defaultMaxScore = null,
+        private readonly ?float $defaultMinScore = null,
+        private readonly float $fuzzyPrimaryThreshold = 0.25,
+        private readonly float $fuzzySecondaryThreshold = 0.2,
+        private readonly float $fuzzyStrictThreshold = 0.15,
+        private readonly float $fuzzyWeight = 0.5,
+        private readonly array $searchableAttributes = [],
+    ) {
+        if ($semanticRatio < 0.0 || $semanticRatio > 1.0) {
+            throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $semanticRatio));
+        }
+
+        if ($fuzzyWeight < 0.0 || $fuzzyWeight > 1.0) {
+            throw new InvalidArgumentException(\sprintf('The fuzzy weight must be between 0.0 and 1.0, "%s" given.', $fuzzyWeight));
+        }
+
+        $this->textSearchStrategy = $textSearchStrategy ?? new PostgresTextSearchStrategy();
+        $this->rrf = $rrf ?? new ReciprocalRankFusion();
+    }
+
+    /**
+     * @param array{vector_type?: string, vector_size?: positive-int, index_method?: string, index_opclass?: string} $options
+     */
+    public function setup(array $options = []): void
+    {
+        $this->ensureExtensionAvailable('vector', 'pgvector is required for vector similarity search. Install it from https://github.com/pgvector/pgvector or use a PostgreSQL image with pgvector pre-installed (e.g., ankane/pgvector).');
+        $this->ensureExtensionAvailable('pg_trgm', 'pg_trgm is required for fuzzy matching. It is usually included in PostgreSQL contrib packages.');
+
+        $this->connection->exec('CREATE EXTENSION IF NOT EXISTS vector');
+        $this->connection->exec('CREATE EXTENSION IF NOT EXISTS pg_trgm');
+
+        $tsvectorColumns = $this->buildTsvectorColumns();
+
+        $this->connection->exec(
+            \sprintf(
+                'CREATE TABLE IF NOT EXISTS %s (
+                    id UUID PRIMARY KEY,
+                    metadata JSONB,
+                    %s TEXT NOT NULL,
+                    %s %s(%d) NOT NULL%s
+                )',
+                $this->tableName,
+                $this->contentFieldName,
+                $this->vectorFieldName,
+                $options['vector_type'] ?? 'vector',
+                $options['vector_size'] ?? 1536,
+                $tsvectorColumns,
+            ),
+        );
+
+        $this->connection->exec(
+            \sprintf(
+                'ALTER TABLE %s ADD COLUMN IF NOT EXISTS search_text TEXT',
+                $this->tableName,
+            ),
+        );
+
+        $this->createSearchTextTrigger();
+
+        $this->connection->exec(
+            \sprintf(
+                'CREATE INDEX IF NOT EXISTS %s_%s_idx ON %s USING %s (%s %s)',
+                $this->tableName,
+                $this->vectorFieldName,
+                $this->tableName,
+                $options['index_method'] ?? 'ivfflat',
+                $this->vectorFieldName,
+                $options['index_opclass'] ?? 'vector_cosine_ops',
+            ),
+        );
+
+        if ([] === $this->searchableAttributes) {
+            foreach ($this->textSearchStrategy->getSetupSql($this->tableName, $this->contentFieldName, $this->language) as $sql) {
+                $this->connection->exec($sql);
+            }
+        } else {
+            $this->createTsvectorIndexes();
+        }
+
+        $this->connection->exec(
+            \sprintf(
+                'CREATE INDEX IF NOT EXISTS %s_search_text_trgm_idx ON %s USING gin(search_text gin_trgm_ops)',
+                $this->tableName,
+                $this->tableName,
+            ),
+        );
+    }
+
+    public function drop(array $options = []): void
+    {
+        $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
+    }
+
+    public function add(VectorDocument|array $documents): void
+    {
+        if ($documents instanceof VectorDocument) {
+            $documents = [$documents];
+        }
+
+        $statement = $this->connection->prepare(
+            \sprintf(
+                'INSERT INTO %1$s (id, metadata, %2$s, %3$s)
+                VALUES (:id, :metadata, :content, :vector)
+                ON CONFLICT (id) DO UPDATE SET
+                    metadata = EXCLUDED.metadata,
+                    %2$s = EXCLUDED.%2$s,
+                    %3$s = EXCLUDED.%3$s',
+                $this->tableName,
+                $this->contentFieldName,
+                $this->vectorFieldName,
+            ),
+        );
+
+        foreach ($documents as $document) {
+            $statement->bindValue(':id', $document->id->toRfc4122());
+            $statement->bindValue(':metadata', json_encode($document->metadata->getArrayCopy(), \JSON_THROW_ON_ERROR));
+            $statement->bindValue(':content', $document->metadata->getText() ?? '');
+            $statement->bindValue(':vector', PgvectorConverter::toPgvector($document->vector));
+
+            $statement->execute();
+        }
+
+        $this->ensureTextSearchIndexExists();
+        $this->textSearchStrategy->refreshIndex($this->connection, $this->tableName, $this->contentFieldName);
+    }
+
+    /**
+     * @param string|array<string> $ids
+     * @param array<string, mixed> $options
+     */
+    public function remove(string|array $ids, array $options = []): void
+    {
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $placeholders = implode(', ', array_fill(0, \count($ids), '?'));
+        $statement = $this->connection->prepare(
+            \sprintf('DELETE FROM %s WHERE id IN (%s)', $this->tableName, $placeholders)
+        );
+
+        $statement->execute($ids);
+    }
+
+    /**
+     * Hybrid search combining vector similarity and full-text search.
+     *
+     * Note: When results come from FTS-only or fuzzy-only matches (no vector similarity),
+     * the VectorDocument will contain a NullVector. Check with `$doc->vector instanceof NullVector`
+     * before calling getData() or getDimensions() on the vector.
+     *
+     * @param array{
+     *   q?: string,
+     *   semanticRatio?: float,
+     *   limit?: int,
+     *   where?: string,
+     *   params?: array<string, mixed>,
+     *   maxScore?: float,
+     *   minScore?: float,
+     *   includeScoreBreakdown?: bool,
+     *   boostFields?: array<string, array{min?: float, max?: float, boost: float}>
+     * } $options
+     *
+     * @return VectorDocument[]
+     */
+    public function query(Vector $vector, array $options = []): array
+    {
+        $semanticRatio = $this->validateSemanticRatio($options['semanticRatio'] ?? $this->semanticRatio);
+        $queryText = $options['q'] ?? '';
+        $limit = $options['limit'] ?? 5;
+
+        if ('' !== $queryText && $semanticRatio < 1.0 && !$this->textSearchStrategy->isAvailable($this->connection)) {
+            $extensions = $this->textSearchStrategy->getRequiredExtensions();
+            throw new RuntimeException(\sprintf('The text search strategy "%s" is not available. Required extensions: %s. Run "ai:store:setup" to install them.', $this->textSearchStrategy::class, implode(', ', $extensions) ?: 'none'));
+        }
+
+        [$whereClause, $params] = $this->buildWhereClause($vector, $options, $semanticRatio);
+        $sql = $this->buildQuery($semanticRatio, $queryText, $whereClause, $limit);
+
+        if ('' !== $queryText && $semanticRatio < 1.0) {
+            $params['query'] = $queryText;
+        }
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute([...$params, ...($options['params'] ?? [])]);
+
+        $documents = $this->processResults(
+            $statement->fetchAll(\PDO::FETCH_ASSOC),
+            $options['includeScoreBreakdown'] ?? false,
+        );
+
+        if (isset($options['boostFields']) && [] !== $options['boostFields']) {
+            $documents = $this->applyBoostFields($documents, $options['boostFields']);
+        }
+
+        $minScore = $options['minScore'] ?? $this->defaultMinScore;
+        if (null !== $minScore) {
+            $documents = array_values(array_filter(
+                $documents,
+                fn (VectorDocument $doc) => $doc->score >= $minScore
+            ));
+        }
+
+        return $documents;
+    }
+
+    /**
+     * Ensure the text search index exists, creating it lazily if needed.
+     *
+     * This is called after adding documents to handle strategies like BM25
+     * that require data to be present before creating the index.
+     */
+    private function ensureTextSearchIndexExists(): void
+    {
+        if (!$this->textSearchStrategy->hasIndex($this->connection, $this->tableName, $this->contentFieldName)) {
+            $this->textSearchStrategy->createIndex($this->connection, $this->tableName, $this->contentFieldName);
+        }
+    }
+
+    /**
+     * Check if a PostgreSQL extension is available on the server.
+     *
+     * @throws RuntimeException if the extension is not available
+     */
+    private function ensureExtensionAvailable(string $extensionName, string $installInstructions): void
+    {
+        $stmt = $this->connection->prepare(
+            'SELECT 1 FROM pg_available_extensions WHERE name = :name'
+        );
+        $stmt->execute(['name' => $extensionName]);
+
+        if (false === $stmt->fetchColumn()) {
+            throw new RuntimeException(\sprintf('The PostgreSQL extension "%s" is not available on this server. %s', $extensionName, $installInstructions));
+        }
+    }
+
+    private function buildTsvectorColumns(): string
+    {
+        if ([] !== $this->searchableAttributes) {
+            $columns = '';
+            foreach ($this->searchableAttributes as $fieldName => $config) {
+                $metadataKey = $config['metadata_key'];
+                $columns .= \sprintf(
+                    ",\n                    %s_tsv tsvector GENERATED ALWAYS AS (to_tsvector('%s', COALESCE(metadata->>'%s', ''))) STORED",
+                    $fieldName,
+                    $this->language,
+                    $metadataKey
+                );
+            }
+
+            return $columns;
+        }
+
+        return '';
+    }
+
+    private function createSearchTextTrigger(): void
+    {
+        $this->connection->exec(
+            "CREATE OR REPLACE FUNCTION update_search_text()
+            RETURNS TRIGGER AS \$\$
+            BEGIN
+                NEW.search_text := COALESCE(NEW.metadata->>'title', '');
+                RETURN NEW;
+            END;
+            \$\$ LANGUAGE plpgsql;"
+        );
+
+        $this->connection->exec(
+            \sprintf(
+                'DROP TRIGGER IF EXISTS trigger_update_search_text ON %s;
+                CREATE TRIGGER trigger_update_search_text
+                BEFORE INSERT OR UPDATE ON %s
+                FOR EACH ROW
+                EXECUTE FUNCTION update_search_text();',
+                $this->tableName,
+                $this->tableName,
+            ),
+        );
+    }
+
+    private function createTsvectorIndexes(): void
+    {
+        if ([] !== $this->searchableAttributes) {
+            foreach ($this->searchableAttributes as $fieldName => $config) {
+                $this->connection->exec(
+                    \sprintf(
+                        'CREATE INDEX IF NOT EXISTS %s_%s_tsv_idx ON %s USING gin(%s_tsv)',
+                        $this->tableName,
+                        $fieldName,
+                        $this->tableName,
+                        $fieldName,
+                    ),
+                );
+            }
+        } else {
+            $this->connection->exec(
+                \sprintf(
+                    'CREATE INDEX IF NOT EXISTS %s_content_tsv_idx ON %s USING gin(content_tsv)',
+                    $this->tableName,
+                    $this->tableName,
+                ),
+            );
+        }
+    }
+
+    private function validateSemanticRatio(float $ratio): float
+    {
+        if ($ratio < 0.0 || $ratio > 1.0) {
+            throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $ratio));
+        }
+
+        return $ratio;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return array{string, array<string, mixed>}
+     */
+    private function buildWhereClause(Vector $vector, array $options, float $semanticRatio): array
+    {
+        $where = [];
+        $params = [];
+
+        $maxScore = $options['maxScore'] ?? $this->defaultMaxScore;
+
+        if ($semanticRatio > 0.0 || null !== $maxScore) {
+            $params['embedding'] = PgvectorConverter::toPgvector($vector);
+        }
+
+        if (null !== $maxScore) {
+            $where[] = \sprintf(
+                '(%s %s :embedding) <= :maxScore',
+                $this->vectorFieldName,
+                $this->distance->getComparisonSign()
+            );
+            $params['maxScore'] = $maxScore;
+        }
+
+        if (isset($options['where']) && '' !== $options['where']) {
+            $where[] = '('.$options['where'].')';
+        }
+
+        $whereClause = $where ? 'WHERE '.implode(' AND ', $where) : '';
+
+        return [$whereClause, $params];
+    }
+
+    private function buildQuery(float $semanticRatio, string $queryText, string $whereClause, int $limit): string
+    {
+        if (1.0 === $semanticRatio || '' === $queryText) {
+            return $this->buildVectorOnlyQuery($whereClause, $limit);
+        }
+
+        if (0.0 === $semanticRatio) {
+            return $this->buildFtsOnlyQuery($whereClause, $limit);
+        }
+
+        return $this->buildHybridQuery($whereClause, $limit, $semanticRatio);
+    }
+
+    private function buildVectorOnlyQuery(string $whereClause, int $limit): string
+    {
+        return \sprintf(
+            'SELECT id, %s AS embedding, metadata, (%s %s :embedding) AS score
+            FROM %s
+            %s
+            ORDER BY score ASC
+            LIMIT %d',
+            $this->vectorFieldName,
+            $this->vectorFieldName,
+            $this->distance->getComparisonSign(),
+            $this->tableName,
+            $whereClause,
+            $limit,
+        );
+    }
+
+    private function buildFtsOnlyQuery(string $whereClause, int $limit): string
+    {
+        $ftsCte = $this->textSearchStrategy->buildSearchCte(
+            $this->tableName,
+            $this->contentFieldName,
+            $this->language,
+        );
+        $cteAlias = $this->textSearchStrategy->getCteAlias();
+        $scoreColumn = $this->textSearchStrategy->getScoreColumn();
+
+        return \sprintf(
+            'WITH %s
+            SELECT id, NULL AS embedding, metadata, %s AS score
+            FROM %s
+            %s
+            ORDER BY %s DESC
+            LIMIT %d',
+            $ftsCte,
+            $scoreColumn,
+            $cteAlias,
+            $whereClause ? 'WHERE id IN (SELECT id FROM '.$this->tableName.' '.$whereClause.')' : '',
+            $scoreColumn,
+            $limit,
+        );
+    }
+
+    private function buildHybridQuery(string $whereClause, int $limit, float $semanticRatio): string
+    {
+        $ftsCte = $this->textSearchStrategy->buildSearchCte(
+            $this->tableName,
+            $this->contentFieldName,
+            $this->language,
+        );
+        $ftsAlias = $this->textSearchStrategy->getCteAlias();
+        $ftsRankColumn = $this->textSearchStrategy->getRankColumn();
+        $ftsScoreColumn = $this->textSearchStrategy->getScoreColumn();
+        $ftsNormalizedScore = $this->textSearchStrategy->getNormalizedScoreExpression($ftsScoreColumn);
+
+        $ftsWeight = (1.0 - $semanticRatio) * (1.0 - $this->fuzzyWeight);
+        $fuzzyWeightCalculated = (1.0 - $semanticRatio) * $this->fuzzyWeight;
+
+        $fuzzyFilter = $this->buildFuzzyFilter();
+        $fuzzyWhereClause = $this->addFilterToWhereClause($whereClause, $fuzzyFilter);
+
+        $vectorContribution = $this->rrf->buildSqlExpression(
+            'v.rank_ix',
+            '(1.0 - LEAST(v.distance / 2.0, 1.0))',
+            $semanticRatio,
+        );
+        $ftsContribution = $this->rrf->buildSqlExpression(
+            "b.{$ftsRankColumn}",
+            $ftsNormalizedScore,
+            $ftsWeight,
+        );
+        $fuzzyContribution = $this->rrf->buildSqlExpression(
+            'fz.rank_ix',
+            'fz.fuzzy_similarity',
+            $fuzzyWeightCalculated,
+        );
+
+        return \sprintf(
+            'WITH vector_scores AS (
+                SELECT id, %s AS embedding, metadata,
+                       (%s %s :embedding) AS distance,
+                       ROW_NUMBER() OVER (ORDER BY %s %s :embedding) AS rank_ix
+                FROM %s
+                %s
+            ),
+            %s,
+            fuzzy_scores AS (
+                SELECT id, metadata,
+                       word_similarity(:query, search_text) AS fuzzy_similarity,
+                       ROW_NUMBER() OVER (ORDER BY word_similarity(:query, search_text) DESC) AS rank_ix
+                FROM %s
+                %s
+            ),
+            combined_results AS (
+                SELECT
+                    COALESCE(v.id, b.id, fz.id) as id,
+                    v.embedding,
+                    COALESCE(v.metadata, b.metadata, fz.metadata) as metadata,
+                    (%s + %s + %s) AS score,
+                    v.rank_ix AS vector_rank,
+                    b.%s AS fts_rank,
+                    v.distance AS vector_distance,
+                    b.%s AS fts_score,
+                    fz.rank_ix AS fuzzy_rank,
+                    fz.fuzzy_similarity AS fuzzy_score,
+                    %s AS vector_contribution,
+                    %s AS fts_contribution,
+                    %s AS fuzzy_contribution
+                FROM vector_scores v
+                FULL OUTER JOIN %s b ON v.id = b.id
+                FULL OUTER JOIN fuzzy_scores fz ON COALESCE(v.id, b.id) = fz.id
+                WHERE v.id IS NOT NULL OR b.id IS NOT NULL OR fz.id IS NOT NULL
+            )
+            SELECT * FROM (
+                SELECT DISTINCT ON (metadata->>\'title\') *
+                FROM combined_results
+                ORDER BY metadata->>\'title\', score DESC
+            ) unique_results
+            ORDER BY score DESC
+            LIMIT %d',
+            $this->vectorFieldName,
+            $this->vectorFieldName,
+            $this->distance->getComparisonSign(),
+            $this->vectorFieldName,
+            $this->distance->getComparisonSign(),
+            $this->tableName,
+            $whereClause,
+            $ftsCte,
+            $this->tableName,
+            $fuzzyWhereClause,
+            $vectorContribution,
+            $ftsContribution,
+            $fuzzyContribution,
+            $ftsRankColumn,
+            $ftsScoreColumn,
+            $vectorContribution,
+            $ftsContribution,
+            $fuzzyContribution,
+            $ftsAlias,
+            $limit,
+        );
+    }
+
+    private function buildFuzzyFilter(): string
+    {
+        return \sprintf(
+            '(
+                word_similarity(:query, search_text) > %f
+                OR (
+                    word_similarity(:query, search_text) > %f
+                    AND similarity(:query, search_text) > %f
+                )
+            )',
+            $this->fuzzyPrimaryThreshold,
+            $this->fuzzySecondaryThreshold,
+            $this->fuzzyStrictThreshold
+        );
+    }
+
+    private function addFilterToWhereClause(string $whereClause, string $filter): string
+    {
+        if ('' === $whereClause) {
+            return \sprintf('WHERE %s', $filter);
+        }
+
+        $whereClause = rtrim($whereClause);
+
+        if (str_starts_with($whereClause, 'WHERE ')) {
+            return \sprintf('WHERE %s AND %s', $filter, ltrim($whereClause));
+        }
+
+        return \sprintf('WHERE %s AND %s', $filter, ltrim($whereClause));
+    }
+
+    /**
+     * @param array<array<string, mixed>> $results
+     *
+     * @return VectorDocument[]
+     */
+    private function processResults(array $results, bool $includeBreakdown): array
+    {
+        $documents = [];
+
+        foreach ($results as $result) {
+            $metadata = new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR));
+
+            if ($includeBreakdown && isset($result['vector_rank'])) {
+                $metadata['_score_breakdown'] = $this->buildScoreBreakdown($result);
+            }
+
+            $vector = null !== $result['embedding']
+                ? new Vector(PgvectorConverter::fromPgvector($result['embedding']))
+                : new NullVector();
+
+            $score = $result['score'];
+            if ($this->rrf->isNormalized()) {
+                $score = $this->rrf->normalize($score);
+            }
+
+            $documents[] = new VectorDocument(
+                id: Uuid::fromString($result['id']),
+                vector: $vector,
+                metadata: $metadata,
+                score: $score,
+            );
+        }
+
+        return $documents;
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     *
+     * @return array<string, mixed>
+     */
+    private function buildScoreBreakdown(array $result): array
+    {
+        $breakdown = [
+            'vector_rank' => $result['vector_rank'],
+            'fts_rank' => $result['fts_rank'],
+            'vector_distance' => $result['vector_distance'],
+            'fts_score' => $result['fts_score'],
+            'vector_contribution' => $result['vector_contribution'],
+            'fts_contribution' => $result['fts_contribution'],
+        ];
+
+        if (isset($result['fuzzy_rank'])) {
+            $breakdown['fuzzy_rank'] = $result['fuzzy_rank'];
+            $breakdown['fuzzy_score'] = $result['fuzzy_score'];
+            $breakdown['fuzzy_contribution'] = $result['fuzzy_contribution'];
+        }
+
+        if ($this->rrf->isNormalized()) {
+            $breakdown['vector_contribution'] = $this->rrf->normalize($breakdown['vector_contribution']);
+            $breakdown['fts_contribution'] = $this->rrf->normalize($breakdown['fts_contribution']);
+
+            if (isset($breakdown['fuzzy_contribution'])) {
+                $breakdown['fuzzy_contribution'] = $this->rrf->normalize($breakdown['fuzzy_contribution']);
+            }
+        }
+
+        return $breakdown;
+    }
+
+    /**
+     * @param VectorDocument[]                                             $documents
+     * @param array<string, array{min?: float, max?: float, boost: float}> $boostFields
+     *
+     * @return VectorDocument[]
+     */
+    private function applyBoostFields(array $documents, array $boostFields): array
+    {
+        $documents = array_map(function (VectorDocument $doc) use ($boostFields) {
+            $metadata = $doc->metadata;
+            $score = $doc->score;
+            $appliedBoosts = [];
+
+            foreach ($boostFields as $field => $boostConfig) {
+                if (!isset($metadata[$field])) {
+                    continue;
+                }
+
+                $value = $metadata[$field];
+                $boost = $boostConfig['boost'] ?? 0.0;
+
+                $shouldBoost = true;
+                if (isset($boostConfig['min']) && $value < $boostConfig['min']) {
+                    $shouldBoost = false;
+                }
+                if (isset($boostConfig['max']) && $value > $boostConfig['max']) {
+                    $shouldBoost = false;
+                }
+
+                if ($shouldBoost && 0.0 !== $boost) {
+                    $score *= (1.0 + $boost);
+                    $appliedBoosts[$field] = [
+                        'value' => $value,
+                        'boost' => $boost,
+                        'multiplier' => (1.0 + $boost),
+                    ];
+                }
+            }
+
+            if ([] !== $appliedBoosts) {
+                $metadata['_applied_boosts'] = $appliedBoosts;
+            }
+
+            return new VectorDocument(
+                id: $doc->id,
+                vector: $doc->vector,
+                metadata: $metadata,
+                score: $score
+            );
+        }, $documents);
+
+        usort($documents, fn (VectorDocument $a, VectorDocument $b) => $b->score <=> $a->score);
+
+        return $documents;
+    }
+}
