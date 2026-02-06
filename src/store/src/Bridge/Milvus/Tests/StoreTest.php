@@ -236,4 +236,115 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $results);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testStoreCannotRemoveOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 400,
+            ]),
+        ], 'http://127.0.0.1:19530');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:19530',
+            'test',
+            'test',
+            'test',
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:19530/v2/vectordb/entities/delete".');
+        $this->expectExceptionCode(400);
+        $store->remove('test-id');
+    }
+
+    public function testStoreCanRemoveSingleId()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'code' => 0,
+                'data' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:19530');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:19530',
+            'test',
+            'test',
+            'test',
+        );
+
+        $store->remove('test-id');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveMultipleIds()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'code' => 0,
+                'data' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:19530');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:19530',
+            'test',
+            'test',
+            'test',
+        );
+
+        $store->remove(['test-id-1', 'test-id-2', 'test-id-3']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveWithEmptyIds()
+    {
+        $httpClient = new MockHttpClient([], 'http://127.0.0.1:19530');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:19530',
+            'test',
+            'test',
+            'test',
+        );
+
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveIdWithSpecialCharacters()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'code' => 0,
+                'data' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:19530');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:19530',
+            'test',
+            'test',
+            'test',
+        );
+
+        $store->remove('test-id-with-"quotes"');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }
