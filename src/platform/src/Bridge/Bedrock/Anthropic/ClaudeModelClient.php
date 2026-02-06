@@ -42,6 +42,16 @@ final class ClaudeModelClient implements ModelClientInterface
             $options['tool_choice'] = ['type' => 'auto'];
         }
 
+        if (isset($options['response_format'])) {
+            $options['output_config'] = [
+                'format' => [
+                    'type' => 'json_schema',
+                    'schema' => $options['response_format']['json_schema']['schema'] ?? [],
+                ],
+            ];
+            unset($options['response_format']);
+        }
+
         if (!isset($options['anthropic_version'])) {
             $options['anthropic_version'] = 'bedrock-'.$this->version;
         }
