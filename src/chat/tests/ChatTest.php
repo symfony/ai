@@ -13,7 +13,6 @@ namespace Symfony\AI\Chat\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\MockAgent;
-use Symfony\AI\Agent\MockResponse;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\AssistantMessage;
@@ -48,18 +47,13 @@ final class ChatTest extends TestCase
     {
         $userMessage = Message::ofUser($userPrompt = 'Hello, how are you?');
         $assistantContent = 'I am doing well, thank you!';
-        $assistantSources = ['https://example.com'];
 
-        $response = new MockResponse($assistantContent);
-        $response->getMetadata()->add('sources', $assistantSources);
-
-        $this->agent->addResponse($userPrompt, $response);
+        $this->agent->addResponse($userPrompt, $assistantContent);
 
         $result = $this->chat->submit($userMessage);
 
         $this->assertInstanceOf(AssistantMessage::class, $result);
         $this->assertSame($assistantContent, $result->getContent());
-        $this->assertSame($assistantSources, $result->getMetadata()->get('sources', []));
         $this->assertCount(2, $this->store->load());
 
         $this->agent->assertCallCount(1);
