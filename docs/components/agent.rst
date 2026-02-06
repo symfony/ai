@@ -208,6 +208,17 @@ This eliminates the need for manual ``#[With(enum: [...])]`` attributes when usi
 
     Please be aware, that this is only converted in a JSON Schema for the LLM to respect, but not validated by Symfony AI itself.
 
+Polymorphic Parameters with DiscriminatorMap
+............................................
+
+For complex tool parameters that can be one of multiple types, use the ``DiscriminatorMap`` attribute from Symfony Serializer.
+This generates a JSON Schema with ``oneOf`` to properly describe all possible implementations. The ``typeProperty`` defines
+which field identifies the type, and the Symfony Serializer will automatically deserialize to the correct implementation
+class based on this discriminator field.
+
+See the `toolcall-polymorphic-interface.php <https://github.com/symfony/ai/blob/main/examples/anthropic/toolcall-polymorphic-interface.php>`_
+example for a complete working implementation.
+
 Third-Party Tools
 ~~~~~~~~~~~~~~~~~
 

@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\NavigationResult;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
@@ -386,6 +387,63 @@ final class FactoryTest extends TestCase
             'required' => ['searchTerms', 'mode', 'priority'],
             'additionalProperties' => false,
         ];
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesForSinglePolymorphicTypeWithDiscriminatorMap()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'filter' => [
+                    'oneOf' => [
+                        [
+                            'type' => 'object',
+                            'properties' => [
+                                'type' => [
+                                    'type' => 'string',
+                                    'const' => 'order',
+                                ],
+                                'number' => [
+                                    'type' => ['string', 'null'],
+                                ],
+                                'userResponsible' => [
+                                    'type' => ['string', 'null'],
+                                ],
+                                'departureDate' => [
+                                    'type' => ['string', 'null'],
+                                    'format' => 'date-time',
+                                ],
+                            ],
+                            'required' => ['type', 'number', 'userResponsible', 'departureDate'],
+                            'additionalProperties' => false,
+                        ],
+                        [
+                            'type' => 'object',
+                            'properties' => [
+                                'type' => [
+                                    'type' => 'string',
+                                    'const' => 'purchase_contract',
+                                ],
+                                'contractNumber' => [
+                                    'type' => ['string', 'null'],
+                                ],
+                                'subsidiary' => [
+                                    'type' => ['string', 'null'],
+                                ],
+                            ],
+                            'required' => ['type', 'contractNumber', 'subsidiary'],
+                            'additionalProperties' => false,
+                        ],
+                    ],
+                ],
+            ],
+            'required' => ['filter'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(NavigationResult::class);
 
         $this->assertSame($expected, $actual);
     }
