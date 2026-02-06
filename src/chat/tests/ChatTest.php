@@ -47,8 +47,11 @@ final class ChatTest extends TestCase
     {
         $userMessage = Message::ofUser('Hello, how are you?');
         $assistantContent = 'I am doing well, thank you!';
+        $assistantSources = ['https://example.com'];
 
         $textResult = new TextResult($assistantContent);
+        $textResult->getMetadata()->add('sources', $assistantSources);
+
 
         $this->agent->expects($this->once())
             ->method('call')
@@ -63,6 +66,7 @@ final class ChatTest extends TestCase
 
         $this->assertInstanceOf(AssistantMessage::class, $result);
         $this->assertSame($assistantContent, $result->getContent());
+        $this->assertSame($assistantSources, $result->getMetadata()->get('sources', []));
         $this->assertCount(2, $this->store->load());
     }
 
