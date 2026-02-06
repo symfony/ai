@@ -237,4 +237,75 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $results);
         $this->assertSame(1, $mockHttpClient->getRequestsCount());
     }
+
+    public function testStoreCannotRemoveOnInvalidResponse()
+    {
+        $mockHttpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 400,
+            ]),
+        ]);
+
+        $store = new Store(
+            $mockHttpClient,
+            'foo',
+            'bar',
+            'random',
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 400 returned for "https://api.cloudflare.com/client/v4/accounts/foo/vectorize/v2/indexes/random/delete_by_ids".');
+        $this->expectExceptionCode(400);
+        $store->remove(['id1', 'id2']);
+    }
+
+    public function testStoreCanRemoveWithSingleId()
+    {
+        $mockHttpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'result' => [
+                    'mutationId' => '1',
+                ],
+                'success' => true,
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store(
+            $mockHttpClient,
+            'foo',
+            'bar',
+            'random',
+        );
+
+        $store->remove('id1');
+
+        $this->assertSame(1, $mockHttpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveWithMultipleIds()
+    {
+        $mockHttpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'result' => [
+                    'mutationId' => '1',
+                ],
+                'success' => true,
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store(
+            $mockHttpClient,
+            'foo',
+            'bar',
+            'random',
+        );
+
+        $store->remove(['id1', 'id2', 'id3']);
+
+        $this->assertSame(1, $mockHttpClient->getRequestsCount());
+    }
 }
