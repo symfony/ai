@@ -79,6 +79,38 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('1234', $toolCall->getId());
     }
 
+    public function testReturnsToolCallWithThought()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'thoughtSignature' => 'fake-signature',
+                            ],
+                            [
+                                'functionCall' => [
+                                    'id' => '1234',
+                                    'name' => 'some_tool',
+                                    'args' => [],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+        $this->assertInstanceOf(ToolCallResult::class, $result);
+        $this->assertTrue($result->getMetadata()->has('thought'));
+        $this->assertSame('fake-signature', $result->getMetadata()->get('thought'));
+    }
+
     public function testConvertsInlineDataToBinaryResult()
     {
         $converter = new ResultConverter();
