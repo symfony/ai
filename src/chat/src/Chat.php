@@ -45,6 +45,7 @@ final class Chat implements ChatInterface
         \assert($result instanceof TextResult);
 
         $assistantMessage = Message::ofAssistant($result->getContent());
+        $assistantMessage->getMetadata()->merge($result->getMetadata());
         $messages->add($assistantMessage);
 
         $this->store->save($messages);
