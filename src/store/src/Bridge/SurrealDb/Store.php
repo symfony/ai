@@ -76,7 +76,7 @@ class Store implements ManagedStoreInterface, StoreInterface
         }
 
         foreach ($ids as $id) {
-            $this->request('DELETE', \sprintf('key/%s/%s', $this->table, $id), []);
+            $this->request('POST', 'sql', \sprintf('DELETE %s:%s;', $this->table, $id));
         }
     }
 

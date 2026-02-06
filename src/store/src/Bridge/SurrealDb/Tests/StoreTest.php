@@ -433,7 +433,7 @@ final class StoreTest extends TestCase
         $store->setup();
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/key/vectors/test-id".');
+        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/sql".');
         $this->expectExceptionCode(400);
         $store->remove('test-id');
     }
