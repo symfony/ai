@@ -1,0 +1,8 @@
+services:
+    meilisearch:
+        image: getmeili/meilisearch:v1.19
+        environment:
+            MEILI_MASTER_KEY: 'changeMe'
+            MEILI_EXPERIMENTAL_VECTOR_STORE: 'true'
+        ports:
+            - '7700:7700'
