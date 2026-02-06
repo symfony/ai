@@ -52,7 +52,6 @@ final class ChatTest extends TestCase
         $textResult = new TextResult($assistantContent);
         $textResult->getMetadata()->add('sources', $assistantSources);
 
-
         $this->agent->expects($this->once())
             ->method('call')
             ->with($this->callback(static function (MessageBag $messages) use ($userMessage) {
