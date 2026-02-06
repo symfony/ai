@@ -106,6 +106,7 @@ use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
+use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
@@ -1930,6 +1931,47 @@ final class AiBundle extends AbstractBundle
                         $store['api_key'],
                         $store['collection'] ?? $name,
                     ])
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('s3vectors' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-s3vectors-store', S3VectorsStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('S3Vectors store configuration requires "symfony/ai-s3vectors-store" package. Try running "composer require symfony/ai-s3vectors-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                if (isset($store['client'])) {
+                    $s3VectorsClient = new Reference($store['client']);
+                } else {
+                    $s3VectorsClient = new Definition(\AsyncAws\S3Vectors\S3VectorsClient::class);
+                    $s3VectorsClient->setArguments([$store['configuration'] ?? []]);
+                }
+
+                $arguments = [
+                    $s3VectorsClient,
+                    $store['vector_bucket_name'],
+                    $store['index_name'] ?? $name,
+                ];
+
+                if (\array_key_exists('filter', $store)) {
+                    $arguments[3] = $store['filter'];
+                }
+
+                if (\array_key_exists('top_k', $store)) {
+                    $arguments[4] = $store['top_k'];
+                }
+
+                $definition = new Definition(S3VectorsStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');

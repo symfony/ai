@@ -89,6 +89,7 @@
         "symfony/ai-vertex-ai-platform": "^0.3",
         "symfony/ai-voyage-platform": "^0.3",
         "symfony/ai-weaviate-store": "^0.3",
+        "symfony/ai-s3vectors-store": "^0.1",
         "symfony/ai-wikipedia-tool": "^0.3",
         "symfony/ai-youtube-tool": "^0.3",
         "symfony/console": "^7.4|^8.0",

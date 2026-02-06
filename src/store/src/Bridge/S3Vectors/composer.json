@@ -1,0 +1,55 @@
+{
+    "name": "symfony/ai-s3vectors-store",
+    "description": "AWS S3 Vectors store bridge for Symfony AI",
+    "license": "MIT",
+    "type": "symfony-ai-store",
+    "keywords": [
+        "ai",
+        "aws",
+        "bridge",
+        "s3",
+        "s3vectors",
+        "store",
+        "vector"
+    ],
+    "authors": [
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "async-aws/s3-vectors": "^2.0",
+        "symfony/ai-platform": "^0.3",
+        "symfony/ai-store": "^0.3",
+        "symfony/uid": "^7.3|^8.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.46"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Store\\Bridge\\S3Vectors\\": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/",
+            "Symfony\\AI\\Store\\Bridge\\S3Vectors\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    }
+}

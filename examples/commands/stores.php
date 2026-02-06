@@ -11,6 +11,7 @@
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
+use AsyncAws\S3Vectors\S3VectorsClient;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 use MongoDB\Client as MongoDbClient;
@@ -29,6 +30,7 @@ use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
+use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
@@ -119,6 +121,15 @@ $factories = [
         'host' => env('REDIS_HOST'),
         'port' => 6379,
     ]), 'symfony'),
+    's3vectors' => static fn (): S3VectorsStore => new S3VectorsStore(
+        new S3VectorsClient([
+            'region' => env('AWS_DEFAULT_REGION'),
+            'accessKeyId' => env('AWS_ACCESS_KEY_ID'),
+            'accessKeySecret' => env('AWS_SECRET_ACCESS_KEY'),
+        ]),
+        env('S3_VECTORS_BUCKET'),
+        'symfony',
+    ),
     'surrealdb' => static fn (): SurrealDbStore => new SurrealDbStore(
         httpClient: http_client(),
         endpointUrl: env('SURREALDB_HOST'),

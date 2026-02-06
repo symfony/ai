@@ -94,6 +94,7 @@
         "symfony/ai-vertex-ai-platform": "^0.3",
         "symfony/ai-voyage-platform": "^0.3",
         "symfony/ai-weaviate-store": "^0.3",
+        "symfony/ai-s3vectors-store": "^0.1",
         "symfony/expression-language": "^7.3|^8.0",
         "symfony/security-core": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0"
