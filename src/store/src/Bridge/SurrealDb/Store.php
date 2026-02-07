@@ -75,9 +75,8 @@ class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        foreach ($ids as $id) {
-            $this->request('POST', 'sql', \sprintf('DELETE %s:%s;', $this->table, $id));
-        }
+        $recordIds = array_map(fn($id) => \sprintf('%s:%s', $this->table, $id), $ids);
+        $this->request('POST', 'sql', \sprintf('DELETE %s;', implode(', ', $recordIds)));
     }
 
     public function query(Vector $vector, array $options = []): iterable

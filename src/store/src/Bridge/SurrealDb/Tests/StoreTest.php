@@ -492,9 +492,6 @@ final class StoreTest extends TestCase
             new JsonMockResponse([], [
                 'http_code' => 200,
             ]),
-            new JsonMockResponse([], [
-                'http_code' => 200,
-            ]),
         ], 'http://127.0.0.1:8000');
 
         $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
@@ -502,7 +499,7 @@ final class StoreTest extends TestCase
 
         $store->remove(['test-id-1', 'test-id-2']);
 
-        $this->assertSame(4, $httpClient->getRequestsCount());
+        $this->assertSame(3, $httpClient->getRequestsCount());
     }
 
     public function testStoreCanRemoveWithEmptyIds()
