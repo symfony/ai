@@ -1,0 +1,223 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-06T23:36:40Z
+
+@copilot please continue here
+
+---------------------------------------------------------------------------
+
+by Copilot at 2026-02-06T23:47:10Z
+
+> @copilot please continue here
+
+I've implemented the `remove()` method for the Postgres store in commit 9ba0bac. The implementation:
+
+- Accepts string or array of IDs
+- Handles empty arrays gracefully (early return without database calls)
+- Uses PDO prepared statements with parameterized queries for security
+- Includes 3 comprehensive tests following the existing test patterns
+
+The implementation follows the Pinecone store reference but uses SQL DELETE queries instead of API calls.
+
+> [!WARNING]
+>
+> <details>
+> <summary>Firewall rules blocked me from connecting to one or more addresses (expand for details)</summary>
+>
+> #### I tried to connect to the following addresses, but was blocked by firewall rules:
+>
+> - `https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/d1ee5e570343bd4276a3d5959e6e1c2530b006d0`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/Masterminds/html5-php/zipball/fcf91eb64359852f00d921887b219479b4f21251`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/OskarStark/enum-helper/zipball/c37c58bdd43530512dfb02cb2f8279b0afef89cf`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/PHP-CS-Fixer/shim/zipball/3a9db22e8f01762fddd3a85b998053294c5a3629`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/composer/pcre/zipball/b2bed4734f0cc156ee1fe9c0da2550420d99a21e`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/composer/xdebug-handler/zipball/6c1925561632e83d60a44492e0b344cf48ab85ef`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/deptrac/deptrac/zipball/b27bfc5291a1cbe1c0ebf514716b1d25c68c63fd`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/doctrine/deprecations/zipball/02d85fa10e8ea2ffd7146931270714a9445829a7`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/doctrine/deprecations/zipball/459c2f5dd3d6a4633d3b5f46ee2b1c40f57d3f38`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/myclabs/DeepCopy/zipball/5ee4e978b7fec6dbd844282126a5a32daa2044c6`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/nikic/PHP-Parser/zipball/8c360e27327c8bd29e1c57721574709d0d706118`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/nikic/PHP-Parser/zipball/dca41cd15c2ac9d055ad70dbfd011130757d1f82`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/phar-io/manifest/zipball/c581d4941e196459bf76c945a8ca922963a66708`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phar-io/version/zipball/4f7fd7836c6f332bb2933569e566a0d6c4cbed74`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/php-fig/clock/zipball/e41a24703d4560fd0acb709162f73b8adfc3aa0d`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/php-fig/container/zipball/707984727bd5b2b670e59559d3ed2500240cf875`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/php-fig/container/zipball/c71ecc56dfe541dbd90c5360474fbc405f8d5963`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/php-fig/event-dispatcher/zipball/bbd9eacc080d33861e5b5c75b3b8c4d7e6d01874`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/php-fig/event-dispatcher/zipball/dbefd12671e8a14ec7f180cab83036ed26714bb0`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/php-fig/log/zipball/f16e1d5863e37f8d8c2a01719f5b34baa2b714d3`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/phpDocumentor/GraphViz/zipball/115999dc7f31f2392645aa825a94a6b165e1cedf`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/phpDocumentor/ReflectionCommon/zipball/1d01c49d4ed62f25aa84a747ad35d5a16924662b`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/phpDocumentor/ReflectionCommon/zipball/a0eeab580cbdf4414fef6978732510a36ed0a9d6`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/5cee1d3dfc2d2aa6599834520911d246f656bcb8`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phpDocumentor/TypeResolver/zipball/327a05bbee54120d4786a0dc67aad30226ad4cf9`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/phpDocumentor/TypeResolver/zipball/fb05a34cd192e7987c18c06ef47dce6c2e2ec39f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phpstan/phpdoc-parser/zipball/a004701b11273a26cd7955a61d67a7f1e525a45a`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/phpstan/phpstan-phpunit/zipball/4d1d77610d68c8ff059ab17c76e0aaea2615d7c6`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phpstan/phpstan-strict-rules/zipball/f6028238bd723b38eb7003bc0fcc60a795e6c9e7`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phpstan/phpstan/zipball/a49260166405408dd373272d4702a79f8b95f497`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phpstan/phpstan/zipball/dfaf1f530e1663aa167bc3e52197adb221582629`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/cli-parser/zipball/249c25bbb38eb80f9ba1682ba5617759f2b853a8`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/code-unit-reverse-lookup/zipball/5cf245ed8605ac5c89946e4bcdcbbd1565b19d9f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/code-unit/zipball/23caa57776ddcaa35a2965b93d5f4212a2c3a2d9`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/comparator/zipball/ee0326914d9fe5797f8f8270d4eb36c42c64afd5`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/complexity/zipball/66dc7be5b87498fc0a94565e3b869515becc6569`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/diff/zipball/a42039c742783604f4156c17357f22e335ba5d1c`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/environment/zipball/05faa86b4c0042e122ed6be66766b9bf820775d6`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/exporter/zipball/c939676885df069c0bc467ca4a1ac7dd367db7a8`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/global-state/zipball/88b1eb038ff5daa6f3c2b76bea3cd0ac48626f53`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/lines-of-code/zipball/8426f4eebca3f4003616c617b89094be52fc7b16`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/object-enumerator/zipball/1748f199f50f7deb6f12c4f08cddc306cf6fd2e2`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/object-reflector/zipball/89dc41f115e98bfa597501c28e489dd7db93b855`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/2c1ed04922802c15e1de5d7447b4856de949cf56`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/php-file-iterator/zipball/2f3a64888c814fc235386b7387dd5b5ed92ad903`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/php-invoker/zipball/cdf46882fb81433d671ed4ba64c62da7e62b1f12`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/php-text-template/zipball/51c29005b7c2781f72381ff01a2fe79be7096d29`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/php-timer/zipball/297d0ed22e93b061dfa9697636255c6b4570786a`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/phpunit/zipball/ad14159f92910b0f0e3928c13e9b2077529de091`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/recursion-context/zipball/5d8d13f2fcb3c9839d4ff05613e008ceb02bfc64`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/type/zipball/6abfe424c60c52cafb35c5c78e142304925817be`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/version/zipball/0e6075acec40b5ed867eefd095488171404c63fa`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/staabm/side-effects-detector/zipball/d8334211a140ce329c13726d4a715adbddd0a163`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/ai-platform/zipball/4effec562e4ef2e92cccff0161fde74361c49587`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/clock/zipball/9169f24776edde469914c1e7a1442a50f7a4e110`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/config/zipball/4275b53b8ab0cf37f48bf273dc2285c8178efdfb`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/console/zipball/41e38717ac1dd7a46b6bda7d6a82af2d98a78894`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/console/zipball/84b674b85a998052cf69f1e96b5034d38c8a7fec`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/dependency-injection/zipball/25524aa4e40b4e84b027276f793246320dc27d69`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/dependency-injection/zipball/76a02cddca45a5254479ad68f9fa274ead0a7ef2`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/deprecation-contracts/zipball/63afe740e99a13ba87ec199bb07bbdee937a5b62`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/deprecation-contracts/zipball/bbd66f9d55454b9b7a66a9cebe77523806a3288a`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/dom-crawler/zipball/71fd6a82fc357c8b5de22f78b228acfc43dee965`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/event-dispatcher-contracts/zipball/59eb412e93815df44f05f342958efa9f46b1e586`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/event-dispatcher-contracts/zipball/ccba7060602b7fed0b03c85bf025257f76d9ef32`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/event-dispatcher/zipball/dc2c0eba1af673e736bb851d747d266108aea746`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/filesystem/zipball/d551b38811096d0be9c4691d406991b47c0c630a`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/finder/zipball/ad4daa7c38668dcb031e63bc99ea9bd42196a2cb`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/http-client-contracts/zipball/402a972e29ca7f0596dcbe072b8d2c1ff9f2dd78`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/http-client/zipball/ad163a4cba1da9938cd7dde69408de478329c2ec`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-ctype/zipball/a3cc8b044a6ea513310cbd48ef7333b384945638`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-intl-grapheme/zipball/380872130d3a5dd3ace2f4010d95125fde5d5c70`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-intl-normalizer/zipball/3833d7255cc303546435cb650316bff708a1c75c`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-mbstring/zipball/6d857f4d76bd4b343eac26d6b539585d2bc56493`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-php83/zipball/17f6f9a6b1735c0f163024d959f700cfbc5155e5`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-php84/zipball/4acd8b3205f17b5811d5e036e89690fe8baad365`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-uuid/zipball/21533be36c24be3f4b1669c4725c7d1d2bab4ae2`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/property-access/zipball/fa49bf1ca8fce1ba0e2dba4e4658554cfb9364b1`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/property-info/zipball/89e71477250aa89385abe8471a94311a19d160cf`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/serializer/zipball/8034531ad2517ae11c3d9566dcdbdb93d144e397`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/service-contracts/zipball/09dd242537543ad34254b0e173ab287a7e39900b`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/service-contracts/zipball/45112560a3ba2d715666a509a0bc9521d10b6c43`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/string/zipball/1c4b10461bf2ec27537b5f36105337262f5f5d6f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/string/zipball/c0145982dc2a4f8de8738d6880e096e36dd08100`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/type-info/zipball/f83c725e72b39b2704b9d6fc85070ad6ac7a5889`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/uid/zipball/7719ce8aba76be93dfe249192f1fbfa52c588e36`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/var-exporter/zipball/03a60f169c79a28513a78c967316fbc8bf17816f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/symfony/yaml/zipball/24dd4de28d2e3988b311751ac49e684d783e2345`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/sJbwnb /usr/bin/composer install --no-interaction rgo/bin/git che/composer/vcsphp mann/exporter.gi/usr/local/bin/phpunit tnet/tools/git git rev- --quiet -dispatcher-contracts.git tnet/tools/git com-symfony-consphp` (http block)
+> - `https://api.github.com/repos/theseer/tokenizer/zipball/b7489ce515e168639d17feec34b8847c326b0b3c`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/webmozarts/assert/zipball/ce6a2f100c404b2d32a1dd1270f9b59ad4f57649`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/fext01 /usr/bin/composer install --no-interaction` (http block)
+>
+> If you need me to access, download, or install something from one of these locations, you can either:
+>
+> - Configure [Actions setup steps](https://gh.io/copilot/actions-setup-steps) to set up my environment, which run before the firewall is enabled
+> - Add the appropriate URLs or hosts to the custom allowlist in this repository's [Copilot coding agent settings](https://github.com/symfony/ai/settings/copilot/coding_agent) (admins only)
+>
+> </details>
