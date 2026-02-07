@@ -4,6 +4,8 @@ CHANGELOG
 0.3
 ---
 
+ * Add support for populating existing object instances in structured output via `response_format` option
+ * Add support for passing objects to `Message::ofUser()` for automatic serialization as context
  * Add `StreamListenerInterface` to hook into response streams
  * [BC BREAK] Change `TokenUsageAggregation::__construct()` from variadic to array
  * Add `TokenUsageAggregation::add()` method to add more token usages
