@@ -97,6 +97,41 @@ class ModelClientTest extends TestCase
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
+    public function testTransformsResponseFormatToOutputConfig()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertArrayNotHasKey('anthropic-beta', $headers);
+
+            $body = json_decode($options['body'], true);
+            $this->assertArrayHasKey('output_config', $body);
+            $this->assertArrayHasKey('format', $body['output_config']);
+            $this->assertSame('json_schema', $body['output_config']['format']['type']);
+            $this->assertSame(['type' => 'object', 'properties' => ['foo' => ['type' => 'string']]], $body['output_config']['format']['schema']);
+            $this->assertArrayNotHasKey('response_format', $body);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = [
+            'response_format' => [
+                'json_schema' => [
+                    'schema' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'foo' => ['type' => 'string'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
     /**
      * @param list<string> $headers
      *

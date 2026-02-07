@@ -48,10 +48,11 @@ final class ModelClient implements ModelClientInterface
         }
 
         if (isset($options['response_format'])) {
-            $options['beta_features'][] = 'structured-outputs-2025-11-13';
-            $options['output_format'] = [
-                'type' => 'json_schema',
-                'schema' => $options['response_format']['json_schema']['schema'] ?? [],
+            $options['output_config'] = [
+                'format' => [
+                    'type' => 'json_schema',
+                    'schema' => $options['response_format']['json_schema']['schema'] ?? [],
+                ],
             ];
             unset($options['response_format']);
         }
