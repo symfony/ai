@@ -11,25 +11,24 @@
 
 namespace Symfony\AI\Chat\Tests;
 
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\MockAgent;
+use Symfony\AI\Agent\MockResponse;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\TextResult;
 
 final class ChatTest extends TestCase
 {
-    private AgentInterface&MockObject $agent;
+    private MockAgent $agent;
     private InMemoryStore $store;
     private Chat $chat;
 
     protected function setUp(): void
     {
-        $this->agent = $this->createMock(AgentInterface::class);
+        $this->agent = new MockAgent();
         $this->store = new InMemoryStore();
         $this->chat = new Chat($this->agent, $this->store);
     }
@@ -41,29 +40,30 @@ final class ChatTest extends TestCase
         $this->chat->initiate($messages);
 
         $this->assertCount(0, $this->store->load());
+
+        $this->agent->assertNotCalled();
     }
 
     public function testItSubmitsUserMessageAndReturnsAssistantMessage()
     {
-        $userMessage = Message::ofUser('Hello, how are you?');
+        $userMessage = Message::ofUser($userPrompt = 'Hello, how are you?');
         $assistantContent = 'I am doing well, thank you!';
+        $assistantSources = ['https://example.com'];
 
-        $textResult = new TextResult($assistantContent);
+        $response = new MockResponse($assistantContent);
+        $response->getMetadata()->add('sources', $assistantSources);
 
-        $this->agent->expects($this->once())
-            ->method('call')
-            ->with($this->callback(static function (MessageBag $messages) use ($userMessage) {
-                $messagesArray = $messages->getMessages();
-
-                return end($messagesArray) === $userMessage;
-            }))
-            ->willReturn($textResult);
+        $this->agent->addResponse($userPrompt, $response);
 
         $result = $this->chat->submit($userMessage);
 
         $this->assertInstanceOf(AssistantMessage::class, $result);
         $this->assertSame($assistantContent, $result->getContent());
+        $this->assertSame($assistantSources, $result->getMetadata()->get('sources', []));
         $this->assertCount(2, $this->store->load());
+
+        $this->agent->assertCallCount(1);
+        $this->agent->assertCalledWith($userPrompt);
     }
 
     public function testItAppendsMessagesToExistingConversation()
@@ -75,42 +75,37 @@ final class ChatTest extends TestCase
         $existingMessages->add($existingUserMessage);
         $existingMessages->add($existingAssistantMessage);
 
-        $newUserMessage = Message::ofUser('Can you help with programming?');
+        $this->store->save($existingMessages);
+
+        $newUserMessage = Message::ofUser($newUserPrompt = 'Can you help with programming?');
         $newAssistantContent = 'Yes, I can help with programming!';
 
-        $textResult = new TextResult($newAssistantContent);
-
-        $this->agent->expects($this->once())
-            ->method('call')
-            ->willReturn($textResult);
+        $this->agent->addResponse($newUserPrompt, $newAssistantContent);
 
         $result = $this->chat->submit($newUserMessage);
 
         $this->assertInstanceOf(AssistantMessage::class, $result);
         $this->assertSame($newAssistantContent, $result->getContent());
-        $this->assertCount(2, $this->store->load());
+        $this->assertCount(4, $this->store->load());
+
+        $this->agent->assertCallCount(1);
+        $this->agent->assertCalledWith($newUserPrompt);
     }
 
     public function testItHandlesEmptyMessageStore()
     {
-        $userMessage = Message::ofUser('First message');
+        $userMessage = Message::ofUser($userPrompt = 'First message');
         $assistantContent = 'First response';
 
-        $textResult = new TextResult($assistantContent);
-
-        $this->agent->expects($this->once())
-            ->method('call')
-            ->with($this->callback(static function (MessageBag $messages) {
-                $messagesArray = $messages->getMessages();
-
-                return 1 === \count($messagesArray);
-            }))
-            ->willReturn($textResult);
+        $this->agent->addResponse($userPrompt, $assistantContent);
 
         $result = $this->chat->submit($userMessage);
 
         $this->assertInstanceOf(AssistantMessage::class, $result);
         $this->assertSame($assistantContent, $result->getContent());
         $this->assertCount(2, $this->store->load());
+
+        $this->agent->assertCallCount(1);
+        $this->agent->assertCalledWith($userPrompt);
     }
 }
