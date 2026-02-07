@@ -29,6 +29,7 @@ final class TokenUsage implements MergeableMetadataInterface, TokenUsageInterfac
         private readonly ?int $remainingTokensMinute = null,
         private readonly ?int $remainingTokensMonth = null,
         private readonly ?int $totalTokens = null,
+        private readonly ?string $model = null,
     ) {
     }
 
@@ -84,5 +85,10 @@ final class TokenUsage implements MergeableMetadataInterface, TokenUsageInterfac
     public function getTotalTokens(): ?int
     {
         return $this->totalTokens;
+    }
+
+    public function getModel(): ?string
+    {
+        return $this->model;
     }
 }

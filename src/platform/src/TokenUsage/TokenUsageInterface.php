@@ -33,4 +33,6 @@ interface TokenUsageInterface
     public function getRemainingTokensMonth(): ?int;
 
     public function getTotalTokens(): ?int;
+
+    public function getModel(): ?string;
 }

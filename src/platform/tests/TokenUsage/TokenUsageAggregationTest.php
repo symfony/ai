@@ -88,4 +88,31 @@ class TokenUsageAggregationTest extends TestCase
         $aggregation->add(new TokenUsageAggregation([new TokenUsage(), new TokenUsage()]));
         $this->assertSame(5, $aggregation->count());
     }
+
+    public function testReturnsModelWhenAllUsagesHaveSameModel()
+    {
+        $usage1 = new TokenUsage(promptTokens: 10, completionTokens: 20, model: 'gpt-4o');
+        $usage2 = new TokenUsage(promptTokens: 5, completionTokens: 10, model: 'gpt-4o');
+        $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
+
+        $this->assertSame('gpt-4o', $aggregation->getModel());
+    }
+
+    public function testReturnsNullWhenUsagesHaveDifferentModels()
+    {
+        $usage1 = new TokenUsage(promptTokens: 10, completionTokens: 20, model: 'gpt-4o');
+        $usage2 = new TokenUsage(promptTokens: 5, completionTokens: 10, model: 'claude-3-5-sonnet');
+        $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
+
+        $this->assertNull($aggregation->getModel());
+    }
+
+    public function testReturnsNullWhenAllModelsAreNull()
+    {
+        $usage1 = new TokenUsage(promptTokens: 10, completionTokens: 20);
+        $usage2 = new TokenUsage(promptTokens: 5, completionTokens: 10);
+        $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
+
+        $this->assertNull($aggregation->getModel());
+    }
 }
