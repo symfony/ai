@@ -40,6 +40,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -671,6 +672,26 @@ class ResultConverterTest extends TestCase
         $textDeltas = array_values(array_filter(iterator_to_array($streamResult->getContent()), static fn ($c) => $c instanceof TextDelta));
         $this->assertCount(1, $textDeltas);
         $this->assertSame('Hi', $textDeltas[0]->getText());
+    }
+
+    public function testStreamingYieldsTokenUsageWithModel()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['model' => 'some-model', 'choices' => [['index' => 0, 'delta' => ['content' => 'Hi']]]],
+            ['model' => 'some-model', 'choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
+            ['model' => 'some-model', 'choices' => [], 'usage' => ['prompt_tokens' => 1, 'completion_tokens' => 1, 'total_tokens' => 2]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $usages = array_values(array_filter(iterator_to_array($streamResult->getContent()), static fn ($c) => $c instanceof TokenUsage));
+
+        $this->assertCount(1, $usages);
+        $this->assertSame(1, $usages[0]->getPromptTokens());
+        $this->assertSame(2, $usages[0]->getTotalTokens());
+        $this->assertSame('some-model', $usages[0]->getModel());
     }
 
     public function testStreamingDoesNotThrowOnEmptyStream()

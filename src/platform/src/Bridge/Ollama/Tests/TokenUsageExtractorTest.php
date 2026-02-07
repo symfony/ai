@@ -48,6 +48,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertSame(10, $tokenUsage->getCompletionTokens());
+        $this->assertSame('foo', $tokenUsage->getModel());
     }
 
     public function testItExtractsTokenUsageFromStreamResult()

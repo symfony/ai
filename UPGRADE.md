@@ -1,3 +1,37 @@
+UPGRADE FROM 0.13 to 0.14
+=========================
+
+Platform
+--------
+
+ * `TokenUsage\TokenUsageInterface` gained a `getModel()` method reporting the model that consumed
+   the tokens, so a run that mixes models can be priced per call. `TokenUsage` and
+   `TokenUsageAggregation` implement it; a custom implementation has to add it:
+
+   ```diff
+    final class MyTokenUsage implements TokenUsageInterface
+    {
+        // ...
+   +
+   +    public function getModel(): ?string
+   +    {
+   +        return $this->model;
+   +    }
+    }
+   ```
+
+   `TokenUsageAggregation::getModel()` returns the model only when every usage it sums up agrees on
+   one, and `null` otherwise -- iterate `getTokenUsages()` to price a run that mixed models.
+
+ * `Bridge\Generic\Completions\CompletionsConversionTrait::convertStreamUsage()` takes the model
+   reported by the stream chunk as a second argument, so an overriding result converter has to
+   accept it as well:
+
+   ```diff
+   -protected function convertStreamUsage(array $usage): TokenUsage
+   +protected function convertStreamUsage(array $usage, ?string $model = null): TokenUsage
+   ```
+
 UPGRADE FROM 0.12 to 0.13
 =========================
 

@@ -36,6 +36,7 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
+            'modelVersion' => 'gemini-2.5-flash',
             'usageMetadata' => [
                 'promptTokenCount' => 10,
                 'candidatesTokenCount' => 20,
@@ -56,6 +57,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(20, $tokenUsage->getThinkingTokens());
         $this->assertSame(40, $tokenUsage->getCachedTokens());
         $this->assertSame(50, $tokenUsage->getTotalTokens());
+        $this->assertSame('gemini-2.5-flash', $tokenUsage->getModel());
     }
 
     public function testItHandlesMissingUsageFields()
@@ -75,5 +77,6 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertNull($tokenUsage->getRemainingTokens());
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertNull($tokenUsage->getModel());
     }
 }

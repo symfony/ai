@@ -685,6 +685,52 @@ from the visible deltas::
     when streamed. Wrap the consumption loop in a ``try``/``catch`` when you need to handle truncation
     of a streamed response.
 
+Token Usage
+~~~~~~~~~~~
+
+Every bridge whose provider reports what a call consumed exposes it as the ``token_usage``
+result metadata, a :class:`Symfony\\AI\\Platform\\TokenUsage\\TokenUsageInterface`::
+
+    $result = $platform->invoke($model, $messages);
+    $result->asText();
+
+    $usage = $result->getMetadata()->get('token_usage');
+
+    $usage->getPromptTokens();
+    $usage->getCompletionTokens();
+    $usage->getModel(); // "gpt-4o-2024-08-06"
+
+``getModel()`` reports the model the provider says consumed the tokens, which is what makes a
+usage priceable: it is usually the resolved snapshot rather than the alias that was requested.
+It is ``null`` when the provider does not name a model in the payload the usage was read from --
+Cohere and the Vertex AI embeddings endpoint, for instance, report none.
+
+A run that calls more than one model -- an agent embedding a query before answering it, say --
+aggregates its usages into a
+:class:`Symfony\\AI\\Platform\\TokenUsage\\TokenUsageAggregation`. Its ``getModel()`` answers
+only when every usage agrees on a model, so price a mixed run per call instead::
+
+    $usage = $result->getMetadata()->get('token_usage');
+
+    $usages = $usage instanceof TokenUsageAggregation ? $usage->getTokenUsages() : [$usage];
+
+    $cost = 0.0;
+    foreach ($usages as $call) {
+        $price = $pricing[$call->getModel()] ?? null;
+        if (null === $price) {
+            continue;
+        }
+
+        $cost += $call->getPromptTokens() / 1_000_000 * $price['input']
+            + $call->getCompletionTokens() / 1_000_000 * $price['output'];
+    }
+
+.. note::
+
+    Like the finish reason, a streamed usage is only known once the stream has been consumed, and
+    it is aggregated from the usage events the provider emits along the way. Register the
+    :class:`Symfony\\AI\\Platform\\TokenUsage\\StreamListener` on the stream result to collect them.
+
 Custom Tool Calls (Provider Extensions)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -36,6 +36,7 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
+            'model' => 'claude-sonnet-4-5-20250929',
             'usage' => [
                 'input_tokens' => 10,
                 'output_tokens' => 20,
@@ -61,6 +62,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(40, $tokenUsage->getCacheCreationTokens());
         $this->assertSame(50, $tokenUsage->getCacheReadTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertSame('claude-sonnet-4-5-20250929', $tokenUsage->getModel());
     }
 
     public function testItExtractsCacheCreationTokensOnly()
@@ -76,6 +78,7 @@ final class TokenUsageExtractorTest extends TestCase
 
         $tokenUsage = $extractor->extract($result);
 
+        $this->assertNull($tokenUsage->getModel());
         $this->assertSame(80, $tokenUsage->getCachedTokens());
         $this->assertSame(80, $tokenUsage->getCacheCreationTokens());
         $this->assertNull($tokenUsage->getCacheReadTokens());

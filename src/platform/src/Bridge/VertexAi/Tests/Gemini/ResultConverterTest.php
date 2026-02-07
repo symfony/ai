@@ -508,6 +508,7 @@ final class ResultConverterTest extends TestCase
                 'candidates' => [[
                     'content' => ['parts' => [['text' => ' world']]],
                 ]],
+                'modelVersion' => 'gemini-2.5-pro',
                 'usageMetadata' => [
                     'promptTokenCount' => 15,
                     'candidatesTokenCount' => 25,
@@ -532,6 +533,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(25, $items[1]->getCompletionTokens());
         $this->assertSame(3, $items[1]->getThinkingTokens());
         $this->assertSame(43, $items[1]->getTotalTokens());
+        $this->assertSame('gemini-2.5-pro', $items[1]->getModel());
 
         $this->assertInstanceOf(TextDelta::class, $items[2]);
         $this->assertSame(' world', $items[2]->getText());

@@ -257,7 +257,7 @@ final class ResultConverterTest extends TestCase
         // both message_start and message_delta. The stream aggregation sums
         // every yielded usage, so they must be counted only once.
         $raw = new InMemoryRawResult([], [
-            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => [], 'usage' => [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'model' => 'claude-sonnet-4-5-20250929', 'content' => [], 'usage' => [
                 'input_tokens' => 100,
                 'cache_creation_input_tokens' => 200,
                 'cache_read_input_tokens' => 300,
@@ -292,6 +292,9 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(200, $tokenUsage->getCacheCreationTokens());
         $this->assertSame(300, $tokenUsage->getCacheReadTokens());
         $this->assertSame(50, $tokenUsage->getCompletionTokens());
+        // message_delta carries no model of its own, so the aggregation only agrees on one
+        // if the message_start model was carried over to it.
+        $this->assertSame('claude-sonnet-4-5-20250929', $tokenUsage->getModel());
     }
 
     public function testStreamingThrowsWhenMessageStopIsMissing()
