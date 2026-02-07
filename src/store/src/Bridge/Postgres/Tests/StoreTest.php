@@ -688,6 +688,82 @@ final class StoreTest extends TestCase
         $this->assertSame('https://example.com', $results[0]->metadata['url']);
     }
 
+    public function testRemoveSingleDocument()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $expectedQuery = 'DELETE FROM embeddings_table WHERE id IN (?)';
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($expectedQuery)
+            ->willReturn($statement);
+
+        $vectorId = 'test-id';
+
+        $statement->expects($this->once())
+            ->method('bindValue')
+            ->with(1, $vectorId);
+
+        $statement->expects($this->once())
+            ->method('execute');
+
+        $store->remove($vectorId);
+    }
+
+    public function testRemoveMultipleDocuments()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $expectedQuery = 'DELETE FROM embeddings_table WHERE id IN (?,?,?)';
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($expectedQuery)
+            ->willReturn($statement);
+
+        $ids = ['id-1', 'id-2', 'id-3'];
+
+        $statement->expects($this->exactly(3))
+            ->method('bindValue')
+            ->willReturnCallback(static function (int $position, string $value) use ($ids): bool {
+                static $callCount = 0;
+                ++$callCount;
+
+                match ($callCount) {
+                    1 => self::assertSame([1, $ids[0]], [$position, $value]),
+                    2 => self::assertSame([2, $ids[1]], [$position, $value]),
+                    3 => self::assertSame([3, $ids[2]], [$position, $value]),
+                    default => self::fail('Unexpected bindValue call'),
+                };
+
+                return true;
+            });
+
+        $statement->expects($this->once())
+            ->method('execute');
+
+        $store->remove($ids);
+    }
+
+    public function testRemoveWithEmptyArray()
+    {
+        $pdo = $this->createMock(\PDO::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $pdo->expects($this->never())
+            ->method('prepare');
+
+        $store->remove([]);
+    }
+
     private function normalizeQuery(string $query): string
     {
         return trim(preg_replace('/\s+/', ' ', $query));
