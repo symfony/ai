@@ -895,9 +895,10 @@ To inject only specific tools, list them in the configuration:
                 tools:
                     - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
 
-To restrict the access to a tool, you can use the :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` attribute, which
-works similar to :class:`Symfony\\Component\\Security\\Http\\Attribute\\IsGranted` attribute in `symfony/security-http`. For this to work,
-make sure you have `symfony/security-core` installed in your project.
+To restrict the access to a tool, you can use the
+`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool <https://github.com/symfony/ai/blob/main/src/ai-bundle/src/Security/Attribute/IsGrantedTool.php>`_
+attribute, which works similar to `Symfony\\Component\\Security\\Http\\Attribute\\IsGranted <https://github.com/symfony/security-http/blob/8.1/Attribute/IsGranted.php>`_
+attribute in `symfony/security-http`. For this to work, make sure you have `symfony/security-core` installed in your project.
 
 ::
 
@@ -913,8 +914,8 @@ make sure you have `symfony/security-core` installed in your project.
         }
     }
 
-The attribute :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` can be added on class- or method-level - even multiple
-times. If multiple attributes apply to one tool call, a logical AND is used and all access
+The attribute `Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool <https://github.com/symfony/ai/blob/main/src/ai-bundle/src/Security/Attribute/IsGrantedTool.php>`_
+can be added on class- or method-level — even multiple times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
 
 Token Usage Tracking
