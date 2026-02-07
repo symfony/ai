@@ -233,6 +233,19 @@ final class Factory
                     return ['type' => 'string', 'format' => 'date-time'];
                 }
 
+                // Check for the DiscriminatorMap attribute to handle polymorphic interfaces
+                $discriminatorMapping = $this->classMetadataFactory->getMetadataFor($className)->getClassDiscriminatorMapping()?->getTypesMapping();
+                if ($discriminatorMapping) {
+                    $discriminators = [];
+                    foreach ($discriminatorMapping as $_ => $discriminator) {
+                        $discriminators[] = $this->buildProperties($discriminator);
+                    }
+
+                    return [
+                        'oneOf' => $discriminators,
+                    ];
+                }
+
                 // Recursively build the schema for an object type
                 return $this->buildProperties($className) ?? ['type' => 'object'];
 

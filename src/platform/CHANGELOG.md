@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.4
+---
+
+ * Add support for `DiscriminatorMap` on single polymorphic interface parameters in JSON schema generation
+
 0.3
 ---
 
