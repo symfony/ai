@@ -108,7 +108,8 @@ final class ResultConverter implements ResultConverterInterface
      *             codeExecutionResult?: array{
      *                 outcome: self::OUTCOME_*,
      *                 output: string
-     *             }
+     *             },
+     *             thought_signature?: string
      *         }[]
      *     }
      * } $choice
@@ -116,11 +117,24 @@ final class ResultConverter implements ResultConverterInterface
     private function convertChoice(array $choice): ToolCallResult|TextResult|BinaryResult
     {
         $contentParts = $choice['content']['parts'];
+        $thought = null;
+
+        foreach ($contentParts as $contentPart) {
+            if (isset($contentPart['thoughtSignature'])) {
+                $thought = $contentPart['thoughtSignature'];
+                break;
+            }
+        }
 
         // If any part is a function call, return it immediately and ignore all other parts.
         foreach ($contentParts as $contentPart) {
             if (isset($contentPart['functionCall'])) {
-                return new ToolCallResult($this->convertToolCall($contentPart['functionCall']));
+                $result = new ToolCallResult($this->convertToolCall($contentPart['functionCall']));
+                if ($thought) {
+                    $result->getMetadata()->add('thought', $thought);
+                }
+
+                return $result;
             }
         }
 

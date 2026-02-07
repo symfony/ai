@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Rename `Symfony\AI\Agent\Toolbox\Tool\Agent` to `Symfony\AI\Agent\Toolbox\Tool\Subagent`
+ * Pass metadata from `ToolCallResult` to `AssistantMessage` in `AgentProcessor` (enabling use of `thoughtSignature` with Gemini, for example)
 
 0.3
 ---

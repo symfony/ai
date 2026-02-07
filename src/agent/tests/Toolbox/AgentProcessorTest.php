@@ -413,4 +413,40 @@ class AgentProcessorTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $output->getResult());
     }
+
+    public function testMetadataGetsPropagatedFromToolCallResultToAssistantMessage()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Test response'));
+
+        // We prepare a ToolCallResult with a 'thought' metadata.
+        $result = new ToolCallResult($toolCall);
+        $result->getMetadata()->add('thought', 'fake-signature');
+
+        $messageBag = new MessageBag();
+        $agent = $this->createStub(AgentInterface::class);
+        $agent->method('call')->willReturn(new TextResult('Final answer'));
+
+        // We activate keepToolMessages so that we can inspect the MessageBag after processing.
+        $processor = new AgentProcessor($toolbox, keepToolMessages: true);
+        $processor->setAgent($agent);
+
+        $output = new Output('gemini-2.0-flash', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        // We verify that the first message (AssistantMessage created from ToolCallResult)
+        // does indeed contain the 'thought' metadata.
+        $messages = $messageBag->getMessages();
+        $this->assertCount(2, $messages); // AssistantMessage (tool call) + ToolCallMessage (result)
+
+        $assistantMessage = $messages[0];
+        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
+        $this->assertTrue($assistantMessage->getMetadata()->has('thought'));
+        $this->assertSame('fake-signature', $assistantMessage->getMetadata()->get('thought'));
+    }
 }
