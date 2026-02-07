@@ -33,19 +33,20 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
             return null;
         }
 
-        return $this->extractFromArray($content['usage']);
+        return $this->extractFromArray($content['usage'], $content['model'] ?? null);
     }
 
     /**
      * @param array<string, mixed> $usage
      */
-    public function extractFromArray(array $usage): TokenUsage
+    public function extractFromArray(array $usage, ?string $model = null): TokenUsage
     {
         return new TokenUsage(
             promptTokens: $usage['prompt_tokens'] ?? null,
             completionTokens: $usage['completion_tokens'] ?? null,
             cachedTokens: $usage['num_cached_tokens'] ?? null,
             totalTokens: $usage['total_tokens'] ?? null,
+            model: $model,
         );
     }
 }

@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Streaming responses now yield `TextDelta`, `BinaryDelta`, `ToolCallComplete`, and `ChoiceDelta` instead of result objects and raw strings
+ * Add model information to token usage extraction
 
 0.1
 ---

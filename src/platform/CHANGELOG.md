@@ -17,6 +17,7 @@ CHANGELOG
  * Generate JSON schema from Symfony Validator constraints when available
  * Add `asTextStream()` method to `DeferredResult` to get a stream of `TextDelta` objects only
  * Add `reasoning_content` serialization in shared `AssistantMessageNormalizer` for OpenAI-compatible endpoints
+ * Add `model` property to `TokenUsage` and `TokenUsageInterface` to track which AI model was used for token consumption
 
 0.6
 ---
