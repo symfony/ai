@@ -274,12 +274,6 @@ final class StoreTest extends TestCase
             new JsonMockResponse([], [
                 'http_code' => 204,
             ]),
-            new JsonMockResponse([], [
-                'http_code' => 204,
-            ]),
-            new JsonMockResponse([], [
-                'http_code' => 204,
-            ]),
         ], 'http://127.0.0.1:8080');
 
         $store = new Store(
@@ -291,7 +285,7 @@ final class StoreTest extends TestCase
 
         $store->remove(['test-id-1', 'test-id-2', 'test-id-3']);
 
-        $this->assertSame(3, $httpClient->getRequestsCount());
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testStoreCanRemoveWithEmptyArray()
@@ -330,7 +324,7 @@ final class StoreTest extends TestCase
         );
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 404 returned for "http://127.0.0.1:8080/v1/objects/non-existent-id".');
+        $this->expectExceptionMessage('HTTP 404 returned for "http://127.0.0.1:8080/v1/batch/objects".');
         $this->expectExceptionCode(404);
         $store->remove('non-existent-id');
     }
