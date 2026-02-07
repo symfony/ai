@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Rename `Symfony\AI\Agent\Toolbox\Tool\Agent` to `Symfony\AI\Agent\Toolbox\Tool\Subagent`
+ * [BC Break] Agent Processor has `keepToolMessages` set to `true` now by default since its helps llms understand what was tried.
 
 0.3
 ---

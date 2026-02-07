@@ -405,12 +405,12 @@ If you need to react more granularly to the lifecycle of individual tool calls, 
         // Let the client know, that the tool $event->toolCall->name failed with the exception: $event->exception
     });
 
-Keeping Tool Messages
-~~~~~~~~~~~~~~~~~~~~~
+Hiding Tool Messages
+~~~~~~~~~~~~~~~~~~~~
 
-Sometimes you might wish to keep the tool messages (:class:`Symfony\\AI\\Platform\\Message\\AssistantMessage` containing the ``toolCalls`` and :class:`Symfony\\AI\\Platform\\Message\\ToolCallMessage`
-containing the result) in the context. Enable the ``keepToolMessages`` flag of the toolbox' :class:`Symfony\\AI\\Agent\\Toolbox\\AgentProcessor`
-to ensure those messages will be added to your :class:`Symfony\\AI\\Platform\\Message\\MessageBag`::
+Sometimes you might wish to hide the tool messages (:class:`Symfony\\AI\\Platform\\Message\\AssistantMessage` containing the ``toolCalls`` and :class:`Symfony\\AI\\Platform\\Message\\ToolCallMessage`
+containing the result) in the context. Disable the ``keepToolMessages`` flag of the toolbox' :class:`Symfony\\AI\\Agent\\Toolbox\\AgentProcessor`
+to ensure those messages will be removed from your :class:`Symfony\\AI\\Platform\\Message\\MessageBag`::
 
     use Symfony\AI\Agent\Toolbox\AgentProcessor;
     use Symfony\AI\Agent\Toolbox\Toolbox;
@@ -428,11 +428,11 @@ to ensure those messages will be added to your :class:`Symfony\\AI\\Platform\\Me
     $tool = new MyTool();
 
     $toolbox = new Toolbox([$tool]);
-    $toolProcessor = new AgentProcessor($toolbox, keepToolMessages: true);
+    $toolProcessor = new AgentProcessor($toolbox, keepToolMessages: false);
 
     $agent = new Agent($platform, $model, inputProcessor: [$toolProcessor], outputProcessor: [$toolProcessor]);
     $result = $agent->call($messages);
-    // $messages will now include the tool messages
+    // $messages will now exclude the tool messages
 
 Code Examples (with built-in tools)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

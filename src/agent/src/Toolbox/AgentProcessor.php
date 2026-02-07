@@ -50,7 +50,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         private readonly ToolboxInterface $toolbox,
         private readonly ToolResultConverter $resultConverter = new ToolResultConverter(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
-        private readonly bool $keepToolMessages = false,
+        private readonly bool $keepToolMessages = true,
         private readonly bool $includeSources = false,
         private readonly ?int $maxToolCalls = null,
     ) {
