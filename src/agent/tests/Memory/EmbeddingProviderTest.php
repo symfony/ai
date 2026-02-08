@@ -28,6 +28,7 @@ use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 final class EmbeddingProviderTest extends TestCase
@@ -96,7 +97,7 @@ final class EmbeddingProviderTest extends TestCase
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->once())
             ->method('query')
-            ->with($vector)
+            ->with($this->callback(static fn ($query) => $query instanceof VectorQuery && $query->getVector() === $vector))
             ->willReturn([]);
 
         $embeddingProvider = new EmbeddingProvider($platform, new Model('text-embedding-3-small'), $store);
@@ -131,7 +132,7 @@ final class EmbeddingProviderTest extends TestCase
         })();
         $store->expects($this->once())
             ->method('query')
-            ->with($vector)
+            ->with($this->callback(static fn ($query) => $query instanceof VectorQuery && $query->getVector() === $vector))
             ->willReturn($generator);
 
         $embeddingProvider = new EmbeddingProvider($platform, new Model('text-embedding-3-small'), $store);

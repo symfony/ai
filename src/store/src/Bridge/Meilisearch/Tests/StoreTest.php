@@ -16,6 +16,9 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Meilisearch\Store;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -186,7 +189,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7700/indexes/test/search".');
         $this->expectExceptionCode(400);
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testStoreCanQuery()
@@ -228,7 +231,7 @@ final class StoreTest extends TestCase
             embeddingsDimension: 3,
         );
 
-        $vectors = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $vectors = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertSame(1, $httpClient->getRequestsCount());
         $this->assertCount(2, $vectors);
@@ -269,7 +272,7 @@ final class StoreTest extends TestCase
             embeddingsDimension: 3,
         );
 
-        $vectors = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $vectors = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
         $expected = [
             'title' => 'The Matrix',
             'description' => 'A science fiction action film.',
@@ -328,7 +331,7 @@ final class StoreTest extends TestCase
         $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.7);
 
         $vector = new Vector([0.1, 0.2, 0.3]);
-        iterator_to_array($store->query($vector));
+        iterator_to_array($store->query(new VectorQuery($vector)));
 
         $request = $httpClient->getRequestsCount() > 0 ? $responses[0]->getRequestOptions() : null;
         $this->assertNotNull($request);
@@ -348,7 +351,7 @@ final class StoreTest extends TestCase
         $httpClient = new MockHttpClient($responses);
         $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.5);
 
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['semanticRatio' => 0.2]));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['semanticRatio' => 0.2]));
 
         $request = $responses[0]->getRequestOptions();
         $body = json_decode($request['body'], true);
@@ -365,7 +368,7 @@ final class StoreTest extends TestCase
         $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index');
 
         $vector = new Vector([0.1, 0.2, 0.3]);
-        iterator_to_array($store->query($vector, ['semanticRatio' => 2.0]));
+        iterator_to_array($store->query(new VectorQuery($vector), ['semanticRatio' => 2.0]));
     }
 
     public function testQueryWithPureKeywordSearch()
@@ -391,7 +394,7 @@ final class StoreTest extends TestCase
         $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index');
 
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $results = iterator_to_array($store->query($vector, ['semanticRatio' => 0.0]));
+        $results = iterator_to_array($store->query(new VectorQuery($vector), ['semanticRatio' => 0.0]));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -413,7 +416,7 @@ final class StoreTest extends TestCase
         $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.5);
 
         $vector = new Vector([0.1, 0.2, 0.3]);
-        iterator_to_array($store->query($vector));
+        iterator_to_array($store->query(new VectorQuery($vector)));
 
         $request = $responses[0]->getRequestOptions();
         $body = json_decode($request['body'], true);
@@ -513,5 +516,23 @@ final class StoreTest extends TestCase
         $store->remove([]);
 
         $this->assertSame(0, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'http://localhost:7700', 'test-key', 'test-index');
+        $this->assertTrue($store->supports(VectorQuery::class));
+    }
+
+    public function testStoreDoesNotSupportTextQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'http://localhost:7700', 'test-key', 'test-index');
+        $this->assertFalse($store->supports(TextQuery::class));
+    }
+
+    public function testStoreDoesNotSupportHybridQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'http://localhost:7700', 'test-key', 'test-index');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

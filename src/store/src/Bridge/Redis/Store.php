@@ -16,7 +16,10 @@ use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -128,25 +131,34 @@ class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function supports(string $queryClass): bool
+    {
+        return VectorQuery::class === $queryClass;
+    }
+
     /**
      * @param array{limit?: positive-int, maxScore?: float, where?: string} $options
      *
      * @return VectorDocument[]
      */
-    public function query(Vector $vector, array $options = []): iterable
+    public function query(QueryInterface $query, array $options = []): iterable
     {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
         $limit = $options['limit'] ?? 5;
         $maxScore = $options['maxScore'] ?? null;
         $whereFilter = $options['where'] ?? '*';
 
-        $query = "({$whereFilter}) => [KNN {$limit} @embedding \$query_vector AS vector_score]";
+        $queryString = "({$whereFilter}) => [KNN {$limit} @embedding \$query_vector AS vector_score]";
 
         try {
             $results = $this->redis->rawCommand(
                 'FT.SEARCH',
                 $this->indexName,
-                $query,
-                'PARAMS', 2, 'query_vector', $this->toRedisVector($vector),
+                $queryString,
+                'PARAMS', 2, 'query_vector', $this->toRedisVector($query->getVector()),
                 'RETURN', 4, '$.id', '$.metadata', '$.embedding', 'vector_score',
                 'SORTBY', 'vector_score', 'ASC',
                 'LIMIT', 0, $limit,

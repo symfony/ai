@@ -2326,8 +2326,8 @@ final class AiBundle extends AbstractBundle
     private function processRetrieverConfig(int|string $name, array $config, ContainerBuilder $container): void
     {
         $definition = new Definition(Retriever::class, [
-            new Reference($config['vectorizer']),
             new Reference($config['store']),
+            new Reference($config['vectorizer']),
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
         $definition->addTag('ai.retriever', ['name' => $name]);

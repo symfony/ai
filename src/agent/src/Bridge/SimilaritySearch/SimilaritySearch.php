@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Bridge\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorizerInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -39,7 +40,7 @@ final class SimilaritySearch
     public function __invoke(string $searchTerm): string
     {
         $vector = $this->vectorizer->vectorize($searchTerm);
-        $this->usedDocuments = iterator_to_array($this->store->query($vector));
+        $this->usedDocuments = iterator_to_array($this->store->query(new VectorQuery($vector)));
 
         if ([] === $this->usedDocuments) {
             return 'No results found';

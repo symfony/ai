@@ -17,6 +17,7 @@ use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\Indexer\SourceIndexer;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
+use Symfony\AI\Store\Query\VectorQuery;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -43,7 +44,7 @@ $indexer->index([
 ]);
 
 $vector = $vectorizer->vectorize('Roman gladiator revenge');
-$results = $store->query($vector);
+$results = $store->query(new VectorQuery($vector));
 foreach ($results as $i => $document) {
     echo sprintf("%d. %s\n", $i + 1, substr($document->getId(), 0, 40).'...');
 }

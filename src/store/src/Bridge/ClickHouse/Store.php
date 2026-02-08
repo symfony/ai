@@ -15,8 +15,11 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -82,8 +85,17 @@ class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
-    public function query(Vector $vector, array $options = [], ?float $minScore = null): iterable
+    public function supports(string $queryClass): bool
     {
+        return VectorQuery::class === $queryClass;
+    }
+
+    public function query(QueryInterface $query, array $options = [], ?float $minScore = null): iterable
+    {
+        if (!$query instanceof VectorQuery) {
+            throw new InvalidArgumentException(\sprintf('Query must be instance of "%s", "%s" given.', VectorQuery::class, $query::class));
+        }
+
         $sql = <<<'SQL'
             SELECT
                 id,
@@ -104,7 +116,7 @@ class Store implements ManagedStoreInterface, StoreInterface
 
         $results = $this
             ->execute('GET', $sql, [
-                'query_vector' => $this->toClickHouseVector($vector),
+                'query_vector' => $this->toClickHouseVector($query->getVector()),
                 'limit' => $options['limit'] ?? 5,
                 ...$options['params'] ?? [],
             ])

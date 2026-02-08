@@ -18,6 +18,7 @@ use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -71,7 +72,7 @@ $indexer = new DocumentIndexer(
 $indexer->index($documents);
 
 $vector = $vectorizer->vectorize('technology artificial intelligence');
-$results = $store->query($vector);
+$results = $store->query(new VectorQuery($vector));
 
 $filteredDocuments = 0;
 foreach ($results as $i => $document) {

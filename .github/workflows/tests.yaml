@@ -507,10 +507,13 @@ jobs:
             - name: Build root packages
               run: php .github/build-packages.php
 
-            - name: Install root dependencies
+            - name: Install examples dependencies
               uses: ramsey/composer-install@v3
               with:
                   working-directory: examples
+
+            - name: Link local components to examples
+              run: ./link examples
 
             - name: Run commands examples
               working-directory: examples

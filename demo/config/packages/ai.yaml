@@ -104,8 +104,8 @@ ai:
             store: 'ai.store.chromadb.symfonycon'
     retriever:
         blog:
-            vectorizer: 'ai.vectorizer.openai'
             store: 'ai.store.chromadb.symfonycon'
+            vectorizer: 'ai.vectorizer.openai'
 
 services:
     _defaults:

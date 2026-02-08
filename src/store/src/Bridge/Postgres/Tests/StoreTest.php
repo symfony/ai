@@ -19,6 +19,9 @@ use Symfony\AI\Store\Bridge\Postgres\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
@@ -153,7 +156,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -205,7 +208,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -259,7 +262,7 @@ final class StoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['maxScore' => 0.8]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxScore' => 0.8]));
 
         $this->assertCount(0, $results);
     }
@@ -309,7 +312,7 @@ final class StoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['maxScore' => 0.8]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxScore' => 0.8]));
 
         $this->assertCount(0, $results);
     }
@@ -348,7 +351,7 @@ final class StoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = iterator_to_array($store->query(new Vector([0.7, 0.8, 0.9]), ['limit' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.7, 0.8, 0.9])), ['limit' => 10]));
 
         $this->assertCount(0, $results);
     }
@@ -382,7 +385,7 @@ final class StoreTest extends TestCase
             ->method('fetchAll')
             ->willReturn([]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(0, $results);
     }
@@ -520,7 +523,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertSame([], $results[0]->getMetadata()->getArrayCopy());
@@ -560,7 +563,7 @@ final class StoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['where' => 'metadata->>\'category\' = \'products\'']));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['where' => 'metadata->>\'category\' = \'products\'']));
 
         $this->assertCount(0, $results);
     }
@@ -610,7 +613,7 @@ final class StoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'maxScore' => 0.5,
             'where' => 'metadata->>\'active\' = \'true\'',
         ]));
@@ -674,7 +677,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'where' => 'metadata->>\'crawlId\' = :crawlId AND id != :currentId',
             'params' => [
                 'crawlId' => $crawlId,
@@ -762,6 +765,117 @@ final class StoreTest extends TestCase
             ->method('prepare');
 
         $store->remove([]);
+    }
+
+    public function testStoreSupportsMultipleQueryTypes()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $this->assertTrue($store->supports(VectorQuery::class));
+        $this->assertTrue($store->supports(TextQuery::class));
+        $this->assertTrue($store->supports(HybridQuery::class));
+    }
+
+    public function testQueryWithTextQuery()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $expectedQuery = "SELECT id, embedding AS embedding, metadata,
+                   ts_rank(to_tsvector('english', metadata->>'_text'), plainto_tsquery('english', :search_text_0)) AS score
+            FROM embeddings_table
+            WHERE to_tsvector('english', metadata->>'_text') @@ (plainto_tsquery('english', :search_text_0))
+            ORDER BY score DESC
+            LIMIT 5";
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
+            }))
+            ->willReturn($statement);
+
+        $statement->expects($this->once())
+            ->method('bindValue')
+            ->with(':search_text_0', 'test query');
+
+        $statement->expects($this->once())
+            ->method('execute');
+
+        $statement->expects($this->once())
+            ->method('fetchAll')
+            ->with(\PDO::FETCH_ASSOC)
+            ->willReturn([]);
+
+        $results = iterator_to_array($store->query(new TextQuery('test query')));
+
+        $this->assertCount(0, $results);
+    }
+
+    public function testQueryWithHybridQuery()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $expectedQuery = "SELECT id, embedding AS embedding, metadata,
+                   ((:semantic_ratio * (1 - (embedding <-> :embedding))) +
+                    (:keyword_ratio * ts_rank(to_tsvector('english', metadata->>'_text'), (plainto_tsquery('english', :search_text_0))))) AS score
+            FROM embeddings_table
+            WHERE to_tsvector('english', metadata->>'_text') @@ (plainto_tsquery('english', :search_text_0))
+            ORDER BY score DESC
+            LIMIT 5";
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
+            }))
+            ->willReturn($statement);
+
+        $statement->expects($this->exactly(4))
+            ->method('bindValue');
+
+        $statement->expects($this->once())
+            ->method('execute');
+
+        $statement->expects($this->once())
+            ->method('fetchAll')
+            ->with(\PDO::FETCH_ASSOC)
+            ->willReturn([]);
+
+        $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test query', 0.7)));
+
+        $this->assertCount(0, $results);
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $store = new Store($pdo, 'test_table');
+        $this->assertTrue($store->supports(VectorQuery::class));
+    }
+
+    public function testStoreSupportsTextQuery()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $store = new Store($pdo, 'test_table');
+        $this->assertTrue($store->supports(TextQuery::class));
+    }
+
+    public function testStoreSupportsHybridQuery()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $store = new Store($pdo, 'test_table');
+        $this->assertTrue($store->supports(HybridQuery::class));
     }
 
     private function normalizeQuery(string $query): string
