@@ -56,6 +56,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFac
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory as BedrockFactory;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
+use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Bridge\Cartesia\PlatformFactory as CartesiaPlatformFactory;
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFactory;
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
@@ -541,8 +542,13 @@ final class AiBundle extends AbstractBundle
 
             return;
         }
-        if (!ContainerBuilder::willBeAvailable('symfony/ai-cache-platform', CachePlatform::class, ['symfony/ai-bundle'])) {
-            $container->removeDefinition('ai.platform.cache.result_normalizer');
+
+        if (ContainerBuilder::willBeAvailable('symfony/ai-cache-platform', CachePlatform::class, ['symfony/ai-bundle'])) {
+            $container->register('ai.platform.cache.result_normalizer', ResultNormalizer::class)
+                ->setArguments([
+                    new Reference('serializer.normalizer.object'),
+                ])
+                ->addTag('serializer.normalizer');
         }
 
         if ('cartesia' === $type) {
