@@ -9,20 +9,26 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Contract\JsonSchema;
+namespace Symfony\AI\Platform\Contract\JsonSchema\Describer;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class DescriptionParser
+final class PhpDocDescriber implements DescriberInterface
 {
-    public function getDescription(\ReflectionProperty|\ReflectionParameter $reflector): string
+    public function describe(\ReflectionProperty|\ReflectionParameter|\ReflectionClass $reflector, ?array &$schema): void
     {
-        if ($reflector instanceof \ReflectionProperty) {
-            return $this->fromProperty($reflector);
+        $description = match (true) {
+            $reflector instanceof \ReflectionProperty => $this->fromProperty($reflector),
+            $reflector instanceof \ReflectionParameter => $this->fromParameter($reflector),
+            $reflector instanceof \ReflectionClass => '',
+        };
+
+        if (!$description) {
+            return;
         }
 
-        return $this->fromParameter($reflector);
+        $schema['description'] = $description;
     }
 
     private function fromProperty(\ReflectionProperty $property): string
