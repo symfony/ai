@@ -53,7 +53,7 @@ final class DistanceCalculatorTest extends TestCase
         $this->assertCount(\count($expectedOrder), $result);
 
         foreach ($expectedOrder as $position => $expectedIndex) {
-            $metadata = $result[$position]->metadata;
+            $metadata = $result[$position]->getMetadata();
             $this->assertSame($expectedIndex, $metadata['index']);
         }
     }
@@ -123,7 +123,7 @@ final class DistanceCalculatorTest extends TestCase
         // d: [1.0, 1.0] -> sqrt(2) ≈ 1.414
         // e: [0.5, 0.5] -> sqrt(0.5) ≈ 0.707
 
-        $ids = array_map(static fn ($doc) => $doc->metadata['id'], $result);
+        $ids = array_map(static fn ($doc) => $doc->getMetadata()['id'], $result);
         $this->assertSame(['a', 'e', 'b'], $ids); // a is closest, then e, then b/c (same distance)
     }
 
@@ -158,12 +158,12 @@ final class DistanceCalculatorTest extends TestCase
         $result = $calculator->calculate([$orthogonalDoc, $parallelDoc], $queryVector);
 
         // Parallel vector should be first (smaller angular distance)
-        $this->assertEquals($parallelDoc->id, $result[0]->id);
-        $this->assertEquals($parallelDoc->vector, $result[0]->vector);
-        $this->assertNotNull($result[0]->score);
-        $this->assertEquals($orthogonalDoc->id, $result[1]->id);
-        $this->assertEquals($orthogonalDoc->vector, $result[1]->vector);
-        $this->assertNotNull($result[1]->score);
+        $this->assertEquals($parallelDoc->getId(), $result[0]->getId());
+        $this->assertEquals($parallelDoc->getVector(), $result[0]->getVector());
+        $this->assertNotNull($result[0]->getScore());
+        $this->assertEquals($orthogonalDoc->getId(), $result[1]->getId());
+        $this->assertEquals($orthogonalDoc->getVector(), $result[1]->getVector());
+        $this->assertNotNull($result[1]->getScore());
     }
 
     #[TestDox('Calculates Chebyshev distance using maximum absolute difference')]
@@ -180,12 +180,12 @@ final class DistanceCalculatorTest extends TestCase
         $result = $calculator->calculate([$doc1, $doc2, $doc3], $queryVector);
 
         // doc1 should be first (distance 0), doc2 second (max diff 0.5), doc3 last (max diff 3.0)
-        $this->assertEquals($doc1->id, $result[0]->id);
-        $this->assertNotNull($result[0]->score);
-        $this->assertEquals($doc2->id, $result[1]->id);
-        $this->assertNotNull($result[1]->score);
-        $this->assertEquals($doc3->id, $result[2]->id);
-        $this->assertNotNull($result[2]->score);
+        $this->assertEquals($doc1->getId(), $result[0]->getId());
+        $this->assertNotNull($result[0]->getScore());
+        $this->assertEquals($doc2->getId(), $result[1]->getId());
+        $this->assertNotNull($result[1]->getScore());
+        $this->assertEquals($doc3->getId(), $result[2]->getId());
+        $this->assertNotNull($result[2]->getScore());
     }
 
     #[TestDox('Returns empty array when no documents are provided')]
@@ -208,9 +208,9 @@ final class DistanceCalculatorTest extends TestCase
         $result = $calculator->calculate([$doc], new Vector([0.0, 0.0, 0.0]));
 
         $this->assertCount(1, $result);
-        $this->assertEquals($doc->id, $result[0]->id);
-        $this->assertEquals($doc->vector, $result[0]->vector);
-        $this->assertNotNull($result[0]->score);
+        $this->assertEquals($doc->getId(), $result[0]->getId());
+        $this->assertEquals($doc->getVector(), $result[0]->getVector());
+        $this->assertNotNull($result[0]->getScore());
     }
 
     #[TestDox('Handles high-dimensional vectors correctly')]
@@ -231,10 +231,10 @@ final class DistanceCalculatorTest extends TestCase
         $result = $calculator->calculate([$doc1, $doc2], $queryVector);
 
         // doc1 should be closer to query vector (0.15 is closer to 0.1 than to 0.2)
-        $this->assertEquals($doc1->id, $result[0]->id);
-        $this->assertNotNull($result[0]->score);
-        $this->assertEquals($doc2->id, $result[1]->id);
-        $this->assertNotNull($result[1]->score);
+        $this->assertEquals($doc1->getId(), $result[0]->getId());
+        $this->assertNotNull($result[0]->getScore());
+        $this->assertEquals($doc2->getId(), $result[1]->getId());
+        $this->assertNotNull($result[1]->getScore());
     }
 
     #[TestDox('Handles negative vector components correctly')]
@@ -251,8 +251,8 @@ final class DistanceCalculatorTest extends TestCase
         $result = $calculator->calculate([$doc1, $doc2, $doc3], $queryVector);
 
         // doc1 should be first (identical to query)
-        $this->assertEquals($doc1->id, $result[0]->id);
-        $this->assertNotNull($result[0]->score);
+        $this->assertEquals($doc1->getId(), $result[0]->getId());
+        $this->assertNotNull($result[0]->getScore());
     }
 
     #[TestDox('Returns all documents when maxItems exceeds document count')]
@@ -283,8 +283,8 @@ final class DistanceCalculatorTest extends TestCase
         $result = $calculator->calculate([$doc1, $doc2, $doc3], $queryVector);
 
         // doc3 has smallest Manhattan distance (2.0), then doc1 and doc2 (both 4.0)
-        $this->assertEquals($doc3->id, $result[0]->id);
-        $this->assertNotNull($result[0]->score);
+        $this->assertEquals($doc3->getId(), $result[0]->getId());
+        $this->assertNotNull($result[0]->getScore());
     }
 
     #[TestDox('Uses cosine distance as default strategy')]

@@ -170,9 +170,9 @@ final class StoreTest extends TestCase
         $documents = iterator_to_array($store->query($queryVector));
 
         $this->assertCount(2, $documents);
-        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
-        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
-        $this->assertSame(['title' => 'Doc 1'], $documents[0]->metadata->getArrayCopy());
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());
+        $this->assertSame(['title' => 'Doc 1'], $documents[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryWithWhereFilter()
@@ -214,8 +214,8 @@ final class StoreTest extends TestCase
         $documents = iterator_to_array($store->query($queryVector, ['where' => $whereFilter]));
 
         $this->assertCount(1, $documents);
-        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
-        $this->assertSame(['title' => 'Tech Doc', 'category' => 'technology'], $documents[0]->metadata->getArrayCopy());
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
+        $this->assertSame(['title' => 'Tech Doc', 'category' => 'technology'], $documents[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryWithWhereDocumentFilter()
@@ -257,8 +257,8 @@ final class StoreTest extends TestCase
         $documents = iterator_to_array($store->query($queryVector, ['whereDocument' => $whereDocumentFilter]));
 
         $this->assertCount(2, $documents);
-        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
-        $this->assertSame('fedcba98-7654-3210-fedc-ba9876543210', (string) $documents[1]->id);
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
+        $this->assertSame('fedcba98-7654-3210-fedc-ba9876543210', (string) $documents[1]->getId());
     }
 
     public function testQueryWithBothFilters()
@@ -304,8 +304,8 @@ final class StoreTest extends TestCase
         ]));
 
         $this->assertCount(1, $documents);
-        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
-        $this->assertSame(['title' => 'AI Neural Networks', 'category' => 'AI', 'status' => 'published'], $documents[0]->metadata->getArrayCopy());
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
+        $this->assertSame(['title' => 'AI Neural Networks', 'category' => 'AI', 'status' => 'published'], $documents[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryWithEmptyResults()
@@ -378,8 +378,8 @@ final class StoreTest extends TestCase
         $documents = iterator_to_array($store->query($queryVector));
 
         $this->assertCount(2, $documents);
-        $this->assertSame(0.123, $documents[0]->score);
-        $this->assertSame(0.456, $documents[1]->score);
+        $this->assertSame(0.123, $documents[0]->getScore());
+        $this->assertSame(0.456, $documents[1]->getScore());
     }
 
     public function testQueryReturnsNullScoreWhenDistancesNotAvailable()
@@ -411,7 +411,7 @@ final class StoreTest extends TestCase
         $documents = iterator_to_array($store->query($queryVector));
 
         $this->assertCount(1, $documents);
-        $this->assertNull($documents[0]->score);
+        $this->assertNull($documents[0]->getScore());
     }
 
     /**
@@ -492,9 +492,9 @@ final class StoreTest extends TestCase
         $documents = iterator_to_array($store->query($queryVector));
 
         $this->assertCount(1, $documents);
-        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
-        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
-        $this->assertSame(['title' => 'Doc 1'], $documents[0]->metadata->getArrayCopy());
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());
+        $this->assertSame(['title' => 'Doc 1'], $documents[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryReturnsMetadatasEmbeddingsDistanceWithOnlyDocuments()
@@ -526,9 +526,9 @@ final class StoreTest extends TestCase
         $documents = iterator_to_array($store->query($queryVector, ['include' => ['documents']]));
 
         $this->assertCount(1, $documents);
-        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
-        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
-        $this->assertSame(['title' => 'Doc 1', '_text' => 'Document content here'], $documents[0]->metadata->getArrayCopy());
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());
+        $this->assertSame(['title' => 'Doc 1', '_text' => 'Document content here'], $documents[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryReturnsMetadatasEmbeddingsDistanceWithAll()
@@ -560,9 +560,9 @@ final class StoreTest extends TestCase
         $documents = iterator_to_array($store->query($queryVector, ['include' => ['embeddings', 'metadatas', 'distances', 'documents']]));
 
         $this->assertCount(1, $documents);
-        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
-        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
-        $this->assertSame(['title' => 'Doc 1', '_text' => 'Document content here'], $documents[0]->metadata->getArrayCopy());
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());
+        $this->assertSame(['title' => 'Doc 1', '_text' => 'Document content here'], $documents[0]->getMetadata()->getArrayCopy());
     }
 
     /**
@@ -675,9 +675,9 @@ final class StoreTest extends TestCase
         $documents = iterator_to_array($store->query($queryVector, ['queryTexts' => $queryTexts]));
 
         $this->assertCount(1, $documents);
-        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->id);
-        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
-        $this->assertSame(0.123, $documents[0]->score);
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());
+        $this->assertSame(0.123, $documents[0]->getScore());
     }
 
     public function testRemoveSingleDocument()

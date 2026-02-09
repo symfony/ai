@@ -19,26 +19,26 @@ use Symfony\Component\Uid\Uuid;
 final class RssItem
 {
     public function __construct(
-        public readonly Uuid $id,
-        public readonly string $title,
-        public readonly string $link,
-        public readonly \DateTimeImmutable $date,
-        public readonly string $description,
-        public readonly ?string $author,
-        public readonly ?string $content,
+        private readonly Uuid $id,
+        private readonly string $title,
+        private readonly string $link,
+        private readonly \DateTimeImmutable $date,
+        private readonly string $description,
+        private readonly ?string $author,
+        private readonly ?string $content,
     ) {
     }
 
     public function toString(): string
     {
-        return trim(<<<EOD
-Title: {$this->title}
-Date: {$this->date->format('Y-m-d H:i')}
-Link: {$this->link}
-Description: {$this->description}
+        return <<<EOD
+            Title: {$this->title}
+            Date: {$this->date->format('Y-m-d H:i')}
+            Link: {$this->link}
+            Description: {$this->description}
 
-{$this->content}
-EOD);
+            {$this->content}
+            EOD;
     }
 
     /**

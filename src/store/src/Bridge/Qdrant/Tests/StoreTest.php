@@ -164,9 +164,9 @@ final class StoreTest extends TestCase
                 'result' => [
                     'points' => [
                         [
-                            'id' => (string) $document->id,
-                            'payload' => (array) $document->metadata,
-                            'vector' => $document->vector->getData(),
+                            'id' => (string) $document->getId(),
+                            'payload' => (array) $document->getMetadata(),
+                            'vector' => $document->getVector()->getData(),
                         ],
                     ],
                 ],
@@ -298,9 +298,9 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $results);
 
         foreach ($results as $result) {
-            $this->assertArrayHasKey('foo', $result->metadata);
+            $this->assertArrayHasKey('foo', $result->getMetadata());
             $this->assertTrue(
-                'bar' === $result->metadata['foo'] || (\is_array($result->metadata['foo']) && \in_array('bar', $result->metadata['foo'], true)),
+                'bar' === $result->getMetadata()['foo'] || (\is_array($result->getMetadata()['foo']) && \in_array('bar', $result->getMetadata()['foo'], true)),
                 "Value should be 'bar' or an array containing 'bar'"
             );
         }

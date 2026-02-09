@@ -39,10 +39,10 @@ final class Store implements StoreInterface
         $metadata = [];
         $originalDocuments = [];
         foreach ($documents as $document) {
-            $ids[] = (string) $document->id;
-            $vectors[] = $document->vector->getData();
-            $metadataCopy = $document->metadata->getArrayCopy();
-            $originalDocuments[] = $document->metadata->getText() ?? '';
+            $ids[] = (string) $document->getId();
+            $vectors[] = $document->getVector()->getData();
+            $metadataCopy = $document->getMetadata()->getArrayCopy();
+            $originalDocuments[] = $document->getMetadata()->getText() ?? '';
             unset($metadataCopy[Metadata::KEY_TEXT]);
             $metadata[] = $metadataCopy;
         }

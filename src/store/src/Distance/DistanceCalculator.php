@@ -70,7 +70,7 @@ final class DistanceCalculator
 
     private function cosineSimilarity(VectorDocument $embedding, Vector $against): float
     {
-        $currentEmbeddingVectors = $embedding->vector->getData();
+        $currentEmbeddingVectors = $embedding->getVector()->getData();
 
         $dotProduct = array_sum(array: array_map(
             static fn (float $a, float $b): float => $a * $b,
@@ -102,7 +102,7 @@ final class DistanceCalculator
     {
         return sqrt(array_sum(array_map(
             static fn (float $a, float $b): float => ($a - $b) ** 2,
-            $embedding->vector->getData(),
+            $embedding->getVector()->getData(),
             $against->getData(),
         )));
     }
@@ -111,7 +111,7 @@ final class DistanceCalculator
     {
         return array_sum(array_map(
             static fn (float $a, float $b): float => abs($a - $b),
-            $embedding->vector->getData(),
+            $embedding->getVector()->getData(),
             $against->getData(),
         ));
     }
@@ -120,7 +120,7 @@ final class DistanceCalculator
     {
         $embeddingsAsPower = array_map(
             static fn (float $currentValue, float $againstValue): float => abs($currentValue - $againstValue),
-            $embedding->vector->getData(),
+            $embedding->getVector()->getData(),
             $against->getData(),
         );
 

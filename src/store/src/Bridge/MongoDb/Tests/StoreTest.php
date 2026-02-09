@@ -214,12 +214,12 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $documents);
         $this->assertInstanceOf(VectorDocument::class, $documents[0]);
         $this->assertInstanceOf(VectorDocument::class, $documents[1]);
-        $this->assertEquals($uuid1->toString(), $documents[0]->id);
-        $this->assertEquals($uuid2->toString(), $documents[1]->id);
-        $this->assertSame(0.95, $documents[0]->score);
-        $this->assertSame(0.85, $documents[1]->score);
-        $this->assertSame('First Document', $documents[0]->metadata['title']);
-        $this->assertSame('Second Document', $documents[1]->metadata['title']);
+        $this->assertEquals($uuid1->toString(), $documents[0]->getId());
+        $this->assertEquals($uuid2->toString(), $documents[1]->getId());
+        $this->assertSame(0.95, $documents[0]->getScore());
+        $this->assertSame(0.85, $documents[1]->getScore());
+        $this->assertSame('First Document', $documents[0]->getMetadata()['title']);
+        $this->assertSame('Second Document', $documents[1]->getMetadata()['title']);
     }
 
     public function testQueryWithMinScore()
@@ -560,6 +560,6 @@ final class StoreTest extends TestCase
         $documents = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(1, $documents);
-        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
+        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());
     }
 }

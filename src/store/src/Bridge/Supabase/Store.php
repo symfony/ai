@@ -59,14 +59,14 @@ final class Store implements StoreInterface
         $rows = [];
 
         foreach ($documents as $document) {
-            if (\count($document->vector->getData()) !== $this->vectorDimension) {
+            if (\count($document->getVector()->getData()) !== $this->vectorDimension) {
                 continue;
             }
 
             $rows[] = [
-                'id' => $document->id,
-                $this->vectorFieldName => $document->vector->getData(),
-                'metadata' => $document->metadata->getArrayCopy(),
+                'id' => $document->getId(),
+                $this->vectorFieldName => $document->getVector()->getData(),
+                'metadata' => $document->getMetadata()->getArrayCopy(),
             ];
         }
 

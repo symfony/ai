@@ -72,9 +72,9 @@ final class VectorizerTest extends TestCase
 
         foreach ($vectorDocuments as $i => $vectorDoc) {
             $this->assertInstanceOf(VectorDocument::class, $vectorDoc);
-            $this->assertSame($documents[$i]->getId(), $vectorDoc->id);
-            $this->assertEquals($vectors[$i], $vectorDoc->vector);
-            $this->assertSame($documents[$i]->getMetadata(), $vectorDoc->metadata);
+            $this->assertSame($documents[$i]->getId(), $vectorDoc->getId());
+            $this->assertEquals($vectors[$i], $vectorDoc->getVector());
+            $this->assertSame($documents[$i]->getMetadata(), $vectorDoc->getMetadata());
         }
     }
 
@@ -89,9 +89,9 @@ final class VectorizerTest extends TestCase
 
         $this->assertCount(1, $vectorDocuments);
         $this->assertInstanceOf(VectorDocument::class, $vectorDocuments[0]);
-        $this->assertSame($document->getId(), $vectorDocuments[0]->id);
-        $this->assertEquals($vector, $vectorDocuments[0]->vector);
-        $this->assertSame($document->getMetadata(), $vectorDocuments[0]->metadata);
+        $this->assertSame($document->getId(), $vectorDocuments[0]->getId());
+        $this->assertEquals($vector, $vectorDocuments[0]->getVector());
+        $this->assertSame($document->getMetadata(), $vectorDocuments[0]->getMetadata());
     }
 
     public function testVectorizeEmptyDocumentsArray()
@@ -123,10 +123,10 @@ final class VectorizerTest extends TestCase
         $vectorDocuments = $vectorizer->vectorize($documents);
 
         $this->assertCount(2, $vectorDocuments);
-        $this->assertSame($metadata1, $vectorDocuments[0]->metadata);
-        $this->assertSame($metadata2, $vectorDocuments[1]->metadata);
-        $this->assertSame(['source' => 'file1.txt', 'author' => 'Alice', 'tags' => ['important']], $vectorDocuments[0]->metadata->getArrayCopy());
-        $this->assertSame(['source' => 'file2.txt', 'author' => 'Bob', 'version' => 2], $vectorDocuments[1]->metadata->getArrayCopy());
+        $this->assertSame($metadata1, $vectorDocuments[0]->getMetadata());
+        $this->assertSame($metadata2, $vectorDocuments[1]->getMetadata());
+        $this->assertSame(['source' => 'file1.txt', 'author' => 'Alice', 'tags' => ['important']], $vectorDocuments[0]->getMetadata()->getArrayCopy());
+        $this->assertSame(['source' => 'file2.txt', 'author' => 'Bob', 'version' => 2], $vectorDocuments[1]->getMetadata()->getArrayCopy());
     }
 
     public function testVectorizeDocumentsPreservesDocumentIds()
@@ -152,9 +152,9 @@ final class VectorizerTest extends TestCase
         $vectorDocuments = $vectorizer->vectorize($documents);
 
         $this->assertCount(3, $vectorDocuments);
-        $this->assertSame($id1, $vectorDocuments[0]->id);
-        $this->assertSame($id2, $vectorDocuments[1]->id);
-        $this->assertSame($id3, $vectorDocuments[2]->id);
+        $this->assertSame($id1, $vectorDocuments[0]->getId());
+        $this->assertSame($id2, $vectorDocuments[1]->getId());
+        $this->assertSame($id3, $vectorDocuments[2]->getId());
     }
 
     #[DataProvider('provideDocumentCounts')]
@@ -182,10 +182,10 @@ final class VectorizerTest extends TestCase
 
         foreach ($vectorDocuments as $i => $vectorDoc) {
             $this->assertInstanceOf(VectorDocument::class, $vectorDoc);
-            $this->assertSame($documents[$i]->getId(), $vectorDoc->id);
-            $this->assertEquals($vectors[$i], $vectorDoc->vector);
-            $this->assertSame($documents[$i]->getMetadata(), $vectorDoc->metadata);
-            $this->assertSame(['index' => $i], $vectorDoc->metadata->getArrayCopy());
+            $this->assertSame($documents[$i]->getId(), $vectorDoc->getId());
+            $this->assertEquals($vectors[$i], $vectorDoc->getVector());
+            $this->assertSame($documents[$i]->getMetadata(), $vectorDoc->getMetadata());
+            $this->assertSame(['index' => $i], $vectorDoc->getMetadata()->getArrayCopy());
         }
     }
 
@@ -216,7 +216,7 @@ final class VectorizerTest extends TestCase
         $vectorDocuments = $vectorizer->vectorize([$document]);
 
         $this->assertCount(1, $vectorDocuments);
-        $this->assertEquals($vector, $vectorDocuments[0]->vector);
+        $this->assertEquals($vector, $vectorDocuments[0]->getVector());
     }
 
     public function testVectorizeDocumentsWithSpecialCharacters()
@@ -240,8 +240,8 @@ final class VectorizerTest extends TestCase
         $this->assertCount(3, $vectorDocuments);
 
         foreach ($vectorDocuments as $i => $vectorDoc) {
-            $this->assertSame($documents[$i]->getId(), $vectorDoc->id);
-            $this->assertEquals($vectors[$i], $vectorDoc->vector);
+            $this->assertSame($documents[$i]->getId(), $vectorDoc->getId());
+            $this->assertEquals($vectors[$i], $vectorDoc->getVector());
         }
     }
 
@@ -276,8 +276,8 @@ final class VectorizerTest extends TestCase
         $vectorDocuments = $vectorizer->vectorize($documents);
 
         $this->assertCount(2, $vectorDocuments);
-        $this->assertEquals($vectors[0], $vectorDocuments[0]->vector);
-        $this->assertEquals($vectors[1], $vectorDocuments[1]->vector);
+        $this->assertEquals($vectors[0], $vectorDocuments[0]->getVector());
+        $this->assertEquals($vectors[1], $vectorDocuments[1]->getVector());
     }
 
     public function testVectorizeString()
@@ -453,7 +453,7 @@ final class VectorizerTest extends TestCase
         $result = $vectorizer->vectorize($documents, $options);
 
         $this->assertCount(1, $result);
-        $this->assertEquals($vector, $result[0]->vector);
+        $this->assertEquals($vector, $result[0]->getVector());
     }
 
     public function testVectorizeTextDocumentsWithEmptyOptions()
@@ -471,7 +471,7 @@ final class VectorizerTest extends TestCase
         $result = $vectorizer->vectorize($documents);
 
         $this->assertCount(1, $result);
-        $this->assertEquals($vector, $result[0]->vector);
+        $this->assertEquals($vector, $result[0]->getVector());
     }
 
     public function testVectorizeStringPassesOptionsToInvoke()
@@ -550,7 +550,7 @@ final class VectorizerTest extends TestCase
         $result = $vectorizer->vectorize($documents, $options);
 
         $this->assertCount(2, $result);
-        $this->assertEquals($vectors[0], $result[0]->vector);
-        $this->assertEquals($vectors[1], $result[1]->vector);
+        $this->assertEquals($vectors[0], $result[0]->getVector());
+        $this->assertEquals($vectors[1], $result[1]->getVector());
     }
 }

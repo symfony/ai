@@ -38,8 +38,8 @@ final class DocumentProcessorTest extends TestCase
         $processor->process([$document]);
 
         $this->assertCount(1, $store->documents);
-        $this->assertSame($id, $store->documents[0]->id);
-        $this->assertSame($vector, $store->documents[0]->vector);
+        $this->assertSame($id, $store->documents[0]->getId());
+        $this->assertSame($vector, $store->documents[0]->getVector());
     }
 
     public function testProcessEmptyDocumentList()
@@ -64,9 +64,9 @@ final class DocumentProcessorTest extends TestCase
 
         $this->assertSame(1, $store->addCalls);
         $this->assertCount(1, $store->documents);
-        $this->assertSame($id, $store->documents[0]->id);
-        $this->assertSame($vector, $store->documents[0]->vector);
-        $this->assertSame(['key' => 'value'], $store->documents[0]->metadata->getArrayCopy());
+        $this->assertSame($id, $store->documents[0]->getId());
+        $this->assertSame($vector, $store->documents[0]->getVector());
+        $this->assertSame(['key' => 'value'], $store->documents[0]->getMetadata()->getArrayCopy());
     }
 
     public function testProcessMultipleDocuments()
@@ -157,10 +157,10 @@ final class DocumentProcessorTest extends TestCase
 
         // Should have 2 documents (filtered out "Week of Symfony"), and transformation should have occurred
         $this->assertCount(2, $store->documents);
-        $this->assertTrue($store->documents[0]->metadata['transformed']);
-        $this->assertTrue($store->documents[1]->metadata['transformed']);
-        $this->assertSame('Regular blog post', $store->documents[0]->metadata['original_content']);
-        $this->assertSame('Good content', $store->documents[1]->metadata['original_content']);
+        $this->assertTrue($store->documents[0]->getMetadata()['transformed']);
+        $this->assertTrue($store->documents[1]->getMetadata()['transformed']);
+        $this->assertSame('Regular blog post', $store->documents[0]->getMetadata()['original_content']);
+        $this->assertSame('Good content', $store->documents[1]->getMetadata()['original_content']);
     }
 
     public function testProcessWithFiltersAndTransformersAppliesBoth()
@@ -205,7 +205,7 @@ final class DocumentProcessorTest extends TestCase
 
         // Both remaining documents should be transformed
         foreach ($store->documents as $document) {
-            $this->assertTrue($document->metadata['transformed']);
+            $this->assertTrue($document->getMetadata()['transformed']);
         }
     }
 

@@ -43,5 +43,5 @@ $indexer->index([
 $vector = $vectorizer->vectorize('Week of Symfony');
 $results = $store->query($vector);
 foreach ($results as $i => $document) {
-    echo sprintf("%d. %s\n", $i + 1, substr($document->id, 0, 40).'...');
+    echo sprintf("%d. %s\n", $i + 1, substr($document->getId(), 0, 40).'...');
 }

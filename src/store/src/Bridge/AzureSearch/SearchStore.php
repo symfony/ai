@@ -103,9 +103,9 @@ final class SearchStore implements StoreInterface
     private function convertToIndexableArray(VectorDocument $document): array
     {
         return array_merge([
-            'id' => $document->id,
-            $this->vectorFieldName => $document->vector->getData(),
-        ], $document->metadata->getArrayCopy());
+            'id' => $document->getId(),
+            $this->vectorFieldName => $document->getVector()->getData(),
+        ], $document->getMetadata()->getArrayCopy());
     }
 
     /**

@@ -41,8 +41,8 @@ final class SourceIndexerTest extends TestCase
 
         $this->assertCount(1, $store->documents);
         $this->assertInstanceOf(VectorDocument::class, $store->documents[0]);
-        $this->assertSame($id, $store->documents[0]->id);
-        $this->assertSame($vector, $store->documents[0]->vector);
+        $this->assertSame($id, $store->documents[0]->getId());
+        $this->assertSame($vector, $store->documents[0]->getVector());
     }
 
     public function testIndexEmptyDocumentList()
@@ -72,9 +72,9 @@ final class SourceIndexerTest extends TestCase
         $this->assertSame(1, $store->addCalls);
         $this->assertCount(1, $store->documents);
         $this->assertInstanceOf(VectorDocument::class, $store->documents[0]);
-        $this->assertSame($id, $store->documents[0]->id);
-        $this->assertSame($vector, $store->documents[0]->vector);
-        $this->assertSame(['key' => 'value'], $store->documents[0]->metadata->getArrayCopy());
+        $this->assertSame($id, $store->documents[0]->getId());
+        $this->assertSame($vector, $store->documents[0]->getVector());
+        $this->assertSame(['key' => 'value'], $store->documents[0]->getMetadata()->getArrayCopy());
     }
 
     public function testIndexWithSource()

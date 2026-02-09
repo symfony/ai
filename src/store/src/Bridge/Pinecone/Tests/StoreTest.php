@@ -265,12 +265,12 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
         $this->assertInstanceOf(VectorDocument::class, $results[1]);
-        $this->assertEquals($uuid1, $results[0]->id);
-        $this->assertEquals($uuid2, $results[1]->id);
-        $this->assertSame(0.95, $results[0]->score);
-        $this->assertSame(0.85, $results[1]->score);
-        $this->assertSame('First Document', $results[0]->metadata['title']);
-        $this->assertSame('Second Document', $results[1]->metadata['title']);
+        $this->assertEquals($uuid1, $results[0]->getId());
+        $this->assertEquals($uuid2, $results[1]->getId());
+        $this->assertSame(0.95, $results[0]->getScore());
+        $this->assertSame(0.85, $results[1]->getScore());
+        $this->assertSame('First Document', $results[0]->getMetadata()['title']);
+        $this->assertSame('Second Document', $results[1]->getMetadata()['title']);
     }
 
     public function testQueryWithNamespaceAndFilter()

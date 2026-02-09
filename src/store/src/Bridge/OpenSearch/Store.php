@@ -80,13 +80,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $documentToIndex = fn (VectorDocument $document): array => [
             'index' => [
                 '_index' => $this->indexName,
-                '_id' => $document->id,
+                '_id' => $document->getId(),
             ],
         ];
 
         $documentToPayload = fn (VectorDocument $document): array => [
-            $this->vectorsField => $document->vector->getData(),
-            'metadata' => json_encode($document->metadata->getArrayCopy()),
+            $this->vectorsField => $document->getVector()->getData(),
+            'metadata' => json_encode($document->getMetadata()->getArrayCopy()),
         ];
 
         $this->request('POST', '_bulk', static function () use ($documents, $documentToIndex, $documentToPayload) {
