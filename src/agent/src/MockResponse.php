@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 
@@ -24,6 +25,8 @@ use Symfony\AI\Platform\Result\TextResult;
  */
 final class MockResponse
 {
+    use MetadataAwareTrait;
+
     public function __construct(
         private readonly string $content = '',
     ) {
@@ -31,7 +34,10 @@ final class MockResponse
 
     public function toResult(): ResultInterface
     {
-        return new TextResult($this->content);
+        $result = new TextResult($this->content);
+        $result->getMetadata()->merge($this->getMetadata());
+
+        return $result;
     }
 
     public function getContent(): string

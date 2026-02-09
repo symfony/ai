@@ -5,3 +5,4 @@ CHANGELOG
 ---
 
  * Add the component
+ * Add `metadata` from `TextResult` to `AssistantMessage`

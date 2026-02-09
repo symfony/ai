@@ -34,10 +34,13 @@ final class MockResponseTest extends TestCase
     public function testToResult()
     {
         $response = new MockResponse('Response content');
+        $response->getMetadata()->add('sources', ['https://example.com']);
+
         $result = $response->toResult();
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Response content', $result->getContent());
+        $this->assertEquals($response->getMetadata(), $result->getMetadata());
     }
 
     public function testCreate()
