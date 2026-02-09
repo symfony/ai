@@ -39,6 +39,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | Mistral             | `symfony/ai-mistral-platform`             |
 | Ollama              | `symfony/ai-ollama-platform`              |
 | OpenAI              | `symfony/ai-open-ai-platform`             |
+| Open Responses      | `symfony/ai-open-responses-platform`      |
 | OpenRouter          | `symfony/ai-open-router-platform`         |
 | OVH                 | `symfony/ai-ovh-platform`                 |
 | Perplexity          | `symfony/ai-perplexity-platform`          |

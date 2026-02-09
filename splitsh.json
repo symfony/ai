@@ -60,6 +60,7 @@
         "ai-mistral-platform": "src/platform/src/Bridge/Mistral",
         "ai-ollama-platform": "src/platform/src/Bridge/Ollama",
         "ai-open-ai-platform": "src/platform/src/Bridge/OpenAi",
+        "ai-open-responses-platform": "src/platform/src/Bridge/OpenResponses",
         "ai-open-router-platform": "src/platform/src/Bridge/OpenRouter",
         "ai-ovh-platform": "src/platform/src/Bridge/Ovh",
         "ai-perplexity-platform": "src/platform/src/Bridge/Perplexity",

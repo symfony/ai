@@ -1,19 +1,13 @@
 {
-    "name": "symfony/ai-open-ai-platform",
-    "description": "OpenAI platform bridge for Symfony AI",
+    "name": "symfony/ai-open-responses-platform",
+    "description": "Open Responses platform bridge for Symfony AI",
     "license": "MIT",
     "type": "symfony-ai-platform",
     "keywords": [
         "ai",
         "bridge",
-        "chatgpt",
-        "dall-e",
-        "embeddings",
-        "gpt",
-        "openai",
-        "platform",
-        "text-to-speech",
-        "whisper"
+        "open-responses",
+        "platform"
     ],
     "authors": [
         {
@@ -31,7 +25,6 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-open-responses-platform": "^0.4",
         "symfony/ai-platform": "^0.3",
         "symfony/http-client": "^7.3|^8.0"
     },
@@ -44,19 +37,22 @@
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "Symfony\\AI\\Platform\\Bridge\\OpenAi\\": ""
+            "Symfony\\AI\\Platform\\Bridge\\OpenResponses\\": ""
         }
     },
     "autoload-dev": {
         "psr-4": {
             "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/",
-            "Symfony\\AI\\Platform\\Bridge\\OpenAi\\Tests\\": "Tests/"
+            "Symfony\\AI\\Platform\\Bridge\\OpenResponses\\Tests\\": "Tests/"
         }
     },
     "config": {
         "sort-packages": true
     },
     "extra": {
+        "branch-alias": {
+            "dev-master": "0.4.x-dev"
+        },
         "thanks": {
             "name": "symfony/ai",
             "url": "https://github.com/symfony/ai"

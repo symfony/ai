@@ -53,6 +53,7 @@
         "phpunit/phpunit": "^12.1",
         "symfony/ai-mate": "^0.3",
         "symfony/ai-monolog-mate-extension": "^0.3",
+        "symfony/ai-open-responses-platform": "^0.4",
         "symfony/ai-symfony-mate-extension": "^0.3",
         "symfony/browser-kit": "^8.0",
         "symfony/css-selector": "^8.0",
