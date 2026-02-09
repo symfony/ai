@@ -29,7 +29,7 @@ final class DocumentIndexerTest extends TestCase
 {
     public function testIndexSingleDocument()
     {
-        $document = new TextDocument($id = Uuid::v4(), 'Test content');
+        $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
@@ -57,7 +57,7 @@ final class DocumentIndexerTest extends TestCase
     public function testIndexDocumentWithMetadata()
     {
         $metadata = new Metadata(['key' => 'value']);
-        $document = new TextDocument($id = Uuid::v4(), 'Test content', $metadata);
+        $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content', $metadata);
         $vector = new Vector([0.1, 0.2, 0.3]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
@@ -75,8 +75,8 @@ final class DocumentIndexerTest extends TestCase
 
     public function testIndexMultipleDocuments()
     {
-        $document1 = new TextDocument(Uuid::v4(), 'Document 1');
-        $document2 = new TextDocument(Uuid::v4(), 'Document 2');
+        $document1 = new TextDocument(Uuid::v4()->toString(), 'Document 1');
+        $document2 = new TextDocument(Uuid::v4()->toString(), 'Document 2');
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
 

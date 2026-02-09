@@ -75,7 +75,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $documentToIndex = fn (VectorDocument $document): array => [
             'index' => [
                 '_index' => $this->indexName,
-                '_id' => $document->id->toRfc4122(),
+                '_id' => $document->id,
             ],
         ];
 

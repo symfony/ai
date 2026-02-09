@@ -120,7 +120,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         );
 
         foreach ($documents as $document) {
-            $statement->bindValue(':id', $document->id->toRfc4122());
+            $statement->bindValue(':id', $document->id);
             $statement->bindValue(':metadata', json_encode($document->metadata->getArrayCopy(), \JSON_THROW_ON_ERROR));
             $statement->bindValue(':vector', $this->toPgvector($document->vector));
 

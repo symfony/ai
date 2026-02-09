@@ -10,6 +10,8 @@ CHANGELOG
  * Add `ConfiguredSourceIndexer` decorator for pre-configuring default sources on `SourceIndexer`
  * [BC BREAK] Remove `Indexer` class - use `SourceIndexer` or `DocumentIndexer` instead
  * [BC BREAK] Change `IndexerInterface::index()` signature - input parameter is no longer nullable
+ * [BC BREAK] Remove `Uuid` as possible type for `TextDocument::id` and `VectorDocument::id`, use `string` or `int` instead
+ * [BC BREAK] `Symfony\AI\Store\Document\EmbeddableDocumentInterface::getId()` now returns `string|int` instead of `mixed`
 
 0.3
 ---

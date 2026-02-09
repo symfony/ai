@@ -89,9 +89,9 @@ class Store implements ManagedStoreInterface, StoreInterface
         $pipeline = $this->redis->multi(\Redis::PIPELINE);
 
         foreach ($documents as $document) {
-            $key = $this->keyPrefix.$document->id->toRfc4122();
+            $key = $this->keyPrefix.$document->id;
             $data = [
-                'id' => $document->id->toRfc4122(),
+                'id' => $document->id,
                 'metadata' => $document->metadata->getArrayCopy(),
                 'embedding' => $document->vector->getData(),
             ];

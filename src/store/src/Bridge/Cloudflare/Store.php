@@ -134,7 +134,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     private function convertToIndexableArray(VectorDocument $document): array
     {
         return [
-            'id' => $document->id->toRfc4122(),
+            'id' => $document->id,
             'values' => $document->vector->getData(),
             'metadata' => $document->metadata->getArrayCopy(),
         ];

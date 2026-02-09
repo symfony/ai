@@ -135,20 +135,20 @@ final class SearchStoreTest extends TestCase
 
     public function testQueryReturnsDocuments()
     {
-        $uuid1 = Uuid::v4();
-        $uuid2 = Uuid::v4();
+        $uuid1 = Uuid::v4()->toString();
+        $uuid2 = Uuid::v4()->toString();
 
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
                 'value' => [
                     [
-                        'id' => $uuid1->toRfc4122(),
+                        'id' => $uuid1,
                         'vector' => [0.1, 0.2, 0.3],
                         '@search.score' => 0.95,
                         'title' => 'First Document',
                     ],
                     [
-                        'id' => $uuid2->toRfc4122(),
+                        'id' => $uuid2,
                         'vector' => [0.4, 0.5, 0.6],
                         '@search.score' => 0.85,
                         'title' => 'Second Document',

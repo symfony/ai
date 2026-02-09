@@ -61,7 +61,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
                 'statement' => \sprintf('CREATE (n:%s {id: $id, metadata: $metadata, %s: $embeddings}) RETURN n', $this->nodeName, $this->embeddingsField),
                 'parameters' => [
-                    'id' => $document->id->toRfc4122(),
+                    'id' => $document->id,
                     'metadata' => json_encode($document->metadata->getArrayCopy()),
                     'embeddings' => $document->vector->getData(),
                 ],

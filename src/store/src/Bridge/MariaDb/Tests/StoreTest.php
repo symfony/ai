@@ -257,7 +257,6 @@ final class StoreTest extends TestCase
             }))
             ->willReturn($statement);
 
-        $uuid = Uuid::v4();
         $crawlId = '396af6fe-0dfd-47ed-b222-3dbcced3f38e';
 
         $statement->expects($this->once())
@@ -280,7 +279,7 @@ final class StoreTest extends TestCase
             'where' => 'metadata->>\'crawlId\' = :crawlId AND id != :currentId',
             'params' => [
                 'crawlId' => $crawlId,
-                'currentId' => $uuid->toRfc4122(),
+                'currentId' => Uuid::v4()->toRfc4122(),
             ],
         ]));
 

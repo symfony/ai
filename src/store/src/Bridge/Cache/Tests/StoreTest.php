@@ -259,9 +259,9 @@ final class StoreTest extends TestCase
         $store = new Store(new ArrayAdapter());
         $store->setup();
 
-        $id1 = Uuid::v4();
-        $id2 = Uuid::v4();
-        $id3 = Uuid::v4();
+        $id1 = Uuid::v4()->toString();
+        $id2 = Uuid::v4()->toString();
+        $id3 = Uuid::v4()->toString();
 
         $store->add([
             new VectorDocument($id1, new Vector([0.1, 0.1, 0.5])),
@@ -272,15 +272,15 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(3, $result);
 
-        $store->remove($id2->toRfc4122());
+        $store->remove($id2);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(2, $result);
 
         $remainingIds = array_map(static fn (VectorDocument $doc) => $doc->id, $result);
-        $this->assertNotContains($id2->toRfc4122(), $remainingIds);
-        $this->assertContains($id1->toRfc4122(), $remainingIds);
-        $this->assertContains($id3->toRfc4122(), $remainingIds);
+        $this->assertNotContains($id2, $remainingIds);
+        $this->assertContains($id1, $remainingIds);
+        $this->assertContains($id3, $remainingIds);
     }
 
     public function testRemoveWithArrayOfIds()
@@ -288,10 +288,10 @@ final class StoreTest extends TestCase
         $store = new Store(new ArrayAdapter());
         $store->setup();
 
-        $id1 = Uuid::v4();
-        $id2 = Uuid::v4();
-        $id3 = Uuid::v4();
-        $id4 = Uuid::v4();
+        $id1 = Uuid::v4()->toString();
+        $id2 = Uuid::v4()->toString();
+        $id3 = Uuid::v4()->toString();
+        $id4 = Uuid::v4()->toString();
 
         $store->add([
             new VectorDocument($id1, new Vector([0.1, 0.1, 0.5])),
@@ -303,16 +303,16 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(4, $result);
 
-        $store->remove([$id2->toRfc4122(), $id4->toRfc4122()]);
+        $store->remove([$id2, $id4]);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(2, $result);
 
         $remainingIds = array_map(static fn (VectorDocument $doc) => $doc->id, $result);
-        $this->assertNotContains($id2->toRfc4122(), $remainingIds);
-        $this->assertNotContains($id4->toRfc4122(), $remainingIds);
-        $this->assertContains($id1->toRfc4122(), $remainingIds);
-        $this->assertContains($id3->toRfc4122(), $remainingIds);
+        $this->assertNotContains($id2, $remainingIds);
+        $this->assertNotContains($id4, $remainingIds);
+        $this->assertContains($id1, $remainingIds);
+        $this->assertContains($id3, $remainingIds);
     }
 
     public function testRemoveNonExistentId()
@@ -320,9 +320,9 @@ final class StoreTest extends TestCase
         $store = new Store(new ArrayAdapter());
         $store->setup();
 
-        $id1 = Uuid::v4();
-        $id2 = Uuid::v4();
-        $nonExistentId = Uuid::v4();
+        $id1 = Uuid::v4()->toString();
+        $id2 = Uuid::v4()->toString();
+        $nonExistentId = Uuid::v4()->toString();
 
         $store->add([
             new VectorDocument($id1, new Vector([0.1, 0.1, 0.5])),
@@ -332,7 +332,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(2, $result);
 
-        $store->remove($nonExistentId->toRfc4122());
+        $store->remove($nonExistentId);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(2, $result);
@@ -343,9 +343,9 @@ final class StoreTest extends TestCase
         $store = new Store(new ArrayAdapter());
         $store->setup();
 
-        $id1 = Uuid::v4();
-        $id2 = Uuid::v4();
-        $id3 = Uuid::v4();
+        $id1 = Uuid::v4()->toString();
+        $id2 = Uuid::v4()->toString();
+        $id3 = Uuid::v4()->toString();
 
         $store->add([
             new VectorDocument($id1, new Vector([0.1, 0.1, 0.5])),
@@ -356,7 +356,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(3, $result);
 
-        $store->remove([$id1->toRfc4122(), $id2->toRfc4122(), $id3->toRfc4122()]);
+        $store->remove([$id1, $id2, $id3]);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(0, $result);
@@ -367,7 +367,7 @@ final class StoreTest extends TestCase
         $store = new Store(new ArrayAdapter());
         $store->setup();
 
-        $id1 = Uuid::v4();
+        $id1 = Uuid::v4()->toString();
 
         $store->add([
             new VectorDocument($id1, new Vector([0.1, 0.1, 0.5])),
@@ -376,6 +376,6 @@ final class StoreTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('No supported options.');
 
-        $store->remove($id1->toRfc4122(), ['unsupported' => true]);
+        $store->remove($id1, ['unsupported' => true]);
     }
 }

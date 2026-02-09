@@ -57,11 +57,11 @@ final class StoreTest extends TestCase
 
     public function testAddSingleDocument()
     {
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]), new Metadata(['title' => 'Test Document']));
 
         $expectedJsonData = json_encode([
-            'id' => $uuid->toRfc4122(),
+            'id' => $uuid,
             'metadata' => json_encode(['title' => 'Test Document']),
             'embedding' => [0.1, 0.2, 0.3],
         ])."\n";
@@ -83,17 +83,17 @@ final class StoreTest extends TestCase
 
     public function testAddMultipleDocuments()
     {
-        $uuid1 = Uuid::v4();
-        $uuid2 = Uuid::v4();
+        $uuid1 = Uuid::v4()->toString();
+        $uuid2 = Uuid::v4()->toString();
         $document1 = new VectorDocument($uuid1, new Vector([0.1, 0.2, 0.3]));
         $document2 = new VectorDocument($uuid2, new Vector([0.4, 0.5, 0.6]), new Metadata(['title' => 'Second']));
 
         $expectedJsonData = json_encode([
-            'id' => $uuid1->toRfc4122(),
+            'id' => $uuid1,
             'metadata' => json_encode([]),
             'embedding' => [0.1, 0.2, 0.3],
         ])."\n".json_encode([
-            'id' => $uuid2->toRfc4122(),
+            'id' => $uuid2,
             'metadata' => json_encode(['title' => 'Second']),
             'embedding' => [0.4, 0.5, 0.6],
         ])."\n";
@@ -113,7 +113,7 @@ final class StoreTest extends TestCase
 
     public function testAddThrowsExceptionOnHttpError()
     {
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]));
 
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) {
@@ -131,7 +131,6 @@ final class StoreTest extends TestCase
     public function testQuery()
     {
         $queryVector = new Vector([0.1, 0.2, 0.3]);
-        $uuid = Uuid::v4();
 
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
             $this->assertSame('GET', $method);
@@ -208,12 +207,11 @@ final class StoreTest extends TestCase
     public function testQueryWithNullMetadata()
     {
         $queryVector = new Vector([0.1, 0.2, 0.3]);
-        $uuid = Uuid::v4();
 
         $responseData = [
             'data' => [
                 [
-                    'id' => $uuid->toRfc4122(),
+                    'id' => Uuid::v4()->toString(),
                     'embedding' => [0.1, 0.2, 0.3],
                     'metadata' => null,
                     'score' => 0.95,
@@ -221,7 +219,7 @@ final class StoreTest extends TestCase
             ],
         ];
 
-        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($responseData) {
+        $httpClient = new MockHttpClient(static function () use ($responseData) {
             return new MockResponse(json_encode($responseData));
         });
 
@@ -235,8 +233,7 @@ final class StoreTest extends TestCase
 
     public function testRemoveSingleDocument()
     {
-        $uuid = Uuid::v4();
-        $id = $uuid->toRfc4122();
+        $id = Uuid::v4()->toRfc4122();
 
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($id) {
             $this->assertSame('POST', $method);
@@ -255,10 +252,8 @@ final class StoreTest extends TestCase
 
     public function testRemoveMultipleDocuments()
     {
-        $uuid1 = Uuid::v4();
-        $uuid2 = Uuid::v4();
-        $id1 = $uuid1->toRfc4122();
-        $id2 = $uuid2->toRfc4122();
+        $id1 = Uuid::v4()->toRfc4122();
+        $id2 = Uuid::v4()->toRfc4122();
 
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($id1, $id2) {
             $this->assertSame('POST', $method);

@@ -12,7 +12,6 @@
 namespace Symfony\AI\Store\Document;
 
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -20,7 +19,7 @@ use Symfony\Component\Uid\Uuid;
 final class TextDocument implements EmbeddableDocumentInterface
 {
     public function __construct(
-        private readonly int|string|Uuid $id,
+        private readonly int|string $id,
         private readonly string $content,
         private readonly Metadata $metadata = new Metadata(),
     ) {
@@ -34,7 +33,7 @@ final class TextDocument implements EmbeddableDocumentInterface
         return new self($this->id, $content, $this->metadata);
     }
 
-    public function getId(): int|string|Uuid
+    public function getId(): int|string
     {
         return $this->id;
     }

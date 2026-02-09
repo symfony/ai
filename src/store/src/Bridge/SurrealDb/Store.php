@@ -136,10 +136,10 @@ class Store implements ManagedStoreInterface, StoreInterface
     private function convertToIndexableArray(VectorDocument $document): array
     {
         return [
-            'id' => $document->id->toRfc4122(),
+            'id' => $document->id,
             $this->vectorFieldName => $document->vector->getData(),
             '_metadata' => array_merge($document->metadata->getArrayCopy(), [
-                '_id' => $document->id->toRfc4122(),
+                '_id' => $document->id,
             ]),
         ];
     }
