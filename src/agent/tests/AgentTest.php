@@ -20,9 +20,14 @@ use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Agent\Policy\DelayPolicyHandler;
+use Symfony\AI\Agent\Policy\InputDelayPolicy;
+use Symfony\AI\Agent\Policy\OutputDelayPolicy;
+use Symfony\AI\Agent\Policy\PolicyHandlerRegistry;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlainConverter;
@@ -30,6 +35,8 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Test\InMemoryPlatform;
+use Symfony\Component\Clock\MockClock;
 
 final class AgentTest extends TestCase
 {
@@ -250,8 +257,28 @@ final class AgentTest extends TestCase
         $platform = $this->createMock(PlatformInterface::class);
         $name = 'test';
 
-        $agent = new Agent($platform, 'gpt-4', [], [], $name);
+        $agent = new Agent($platform, 'gpt-4', [], [], name: $name);
 
         $this->assertSame($name, $agent->getName());
+    }
+
+    public function testAgentCanUsePolicy()
+    {
+        $clock = new MockClock('01-01-2020 10:00:00');
+
+        $platform = new InMemoryPlatform('foo');
+
+        $agent = new Agent($platform, 'bar', policyHandlerRegistry: new PolicyHandlerRegistry([
+            new DelayPolicyHandler($clock),
+        ]));
+
+        $agent->call(new MessageBag(
+            Message::ofUser('Hello there'),
+        ), policies: [
+            new InputDelayPolicy(60),
+            new OutputDelayPolicy(30),
+        ]);
+
+        $this->assertSame('2020-01-01 10:01:30', $clock->now()->format('Y-m-d H:i:s'));
     }
 }

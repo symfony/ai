@@ -21,13 +21,17 @@ use PHPUnit\Framework\TestCase;
 use Probots\Pinecone\Client as PineconeClient;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
+use Symfony\AI\Agent\Policy\PolicyHandlerRegistry;
+use Symfony\AI\Agent\Policy\PolicyHandlerRegistryInterface;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
+use Symfony\AI\AiBundle\Profiler\TraceablePolicyHandler;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
@@ -363,8 +367,8 @@ class AiBundleTest extends TestCase
         $arguments = $agentDefinition->getArguments();
 
         // The 5th argument (index 4) should be the config key as agent name
-        $this->assertArrayHasKey(4, $arguments, 'Agent definition should have argument at index 4 for name');
-        $this->assertSame('my_custom_agent', $arguments[4]);
+        $this->assertArrayHasKey(5, $arguments, 'Agent definition should have argument at index 4 for name');
+        $this->assertSame('my_custom_agent', $arguments[5]);
 
         // Check that the tag uses the config key as name
         $tags = $agentDefinition->getTag('ai.agent');
@@ -7380,6 +7384,76 @@ class AiBundleTest extends TestCase
         }
     }
 
+    public function testAgentCanEnablePoliciesHandlers()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'agent_with_policy_handlers' => [
+                        'model' => 'gpt-4',
+                        'policies' => [
+                            'enabled' => true,
+                            'handlers' => [
+                                'default_policy_handler',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.agent_with_policy_handlers'));
+
+        $definition = $container->getDefinition('ai.agent.agent_with_policy_handlers');
+        $this->assertSame(Agent::class, $definition->getClass());
+
+        $this->assertCount(7, $definition->getArguments());
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.agent.policy_handler_registry', (string) $definition->getArgument(4));
+
+        $policyHandlerRegistryDefinition = $container->getDefinition('ai.agent.policy_handler_registry');
+        $this->assertSame(PolicyHandlerRegistry::class, $policyHandlerRegistryDefinition->getClass());
+        $this->assertTrue($policyHandlerRegistryDefinition->isLazy());
+        $this->assertCount(1, $policyHandlerRegistryDefinition->getArguments());
+        $this->assertEquals([
+            new Reference('default_policy_handler'),
+        ], $policyHandlerRegistryDefinition->getArgument(0));
+
+        $this->assertSame([
+            ['interface' => PolicyHandlerRegistryInterface::class],
+        ], $policyHandlerRegistryDefinition->getTag('proxy'));
+        $this->assertTrue($policyHandlerRegistryDefinition->hasTag('ai.agent.policy_handler_registry'));
+    }
+
+    public function testAgentCanEnableTraceablePoliciesHandlers()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'agent_with_policy_handlers' => [
+                        'model' => 'gpt-4',
+                        'policies' => [
+                            'enabled' => true,
+                            'handlers' => [
+                                'default_policy_handler',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.traceable_policy_handler.default_policy_handler'));
+
+        $definition = $container->getDefinition('ai.traceable_policy_handler.default_policy_handler');
+        $this->assertSame(TraceablePolicyHandler::class, $definition->getClass());
+
+        $this->assertCount(1, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('.inner', (string) $definition->getArgument(0));
+    }
+
     /**
      * @param array<string, mixed> $configuration
      */
@@ -7543,6 +7617,15 @@ class AiBundleTest extends TestCase
                     'another_agent' => [
                         'model' => 'claude-3-opus-20240229',
                         'prompt' => 'Be concise.',
+                    ],
+                    'another_agent_with_policy_handlers' => [
+                        'model' => 'gpt-4',
+                        'policies' => [
+                            'enabled' => true,
+                            'handlers' => [
+                                'default_policy_handler',
+                            ],
+                        ],
                     ],
                 ],
                 'store' => [

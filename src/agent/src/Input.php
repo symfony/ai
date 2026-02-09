@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Policy\InputPolicyInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**
@@ -19,12 +20,14 @@ use Symfony\AI\Platform\Message\MessageBag;
 final class Input
 {
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>   $options
+     * @param InputPolicyInterface[] $policies
      */
     public function __construct(
         private string $model,
         private MessageBag $messageBag,
         private array $options = [],
+        private readonly iterable $policies = [],
     ) {
     }
 
@@ -62,5 +65,13 @@ final class Input
     public function setOptions(array $options): void
     {
         $this->options = $options;
+    }
+
+    /**
+     * @return InputPolicyInterface[]
+     */
+    public function getPolicies(): iterable
+    {
+        return $this->policies;
     }
 }

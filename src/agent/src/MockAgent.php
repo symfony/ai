@@ -14,6 +14,8 @@ namespace Symfony\AI\Agent;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\OutOfBoundsException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Policy\InputPolicyInterface;
+use Symfony\AI\Agent\Policy\OutputPolicyInterface;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
@@ -54,9 +56,10 @@ final class MockAgent implements AgentInterface
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>                           $options
+     * @param InputPolicyInterface[]|OutputPolicyInterface[] $policies
      */
-    public function call(MessageBag $messages, array $options = []): ResultInterface
+    public function call(MessageBag $messages, array $options = [], array $policies = []): ResultInterface
     {
         $lastMessage = $messages->getMessages()[\count($messages->getMessages()) - 1];
         $content = '';

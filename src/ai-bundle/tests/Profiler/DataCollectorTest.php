@@ -13,10 +13,15 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\MockAgent;
+use Symfony\AI\Agent\Policy\DelayPolicyHandler;
+use Symfony\AI\Agent\Policy\InputDelayPolicy;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
+use Symfony\AI\AiBundle\Profiler\TraceableAgent;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
+use Symfony\AI\AiBundle\Profiler\TraceablePolicyHandler;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -31,7 +36,7 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\Clock\MonotonicClock;
 
-class DataCollectorTest extends TestCase
+final class DataCollectorTest extends TestCase
 {
     public function testCollectsDataForNonStreamingResponse()
     {
@@ -45,7 +50,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
         $this->assertSame('Assistant response', $result->asText());
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -69,7 +74,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
         $this->assertSame('Assistant response', implode('', iterator_to_array($result->asStream())));
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -93,7 +98,7 @@ class DataCollectorTest extends TestCase
         // Invoke but do NOT consume the stream
         $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -133,7 +138,7 @@ class DataCollectorTest extends TestCase
             Message::ofUser('Hello World'),
         ));
 
-        $dataCollector = new DataCollector([], [], [$traceableMessageStore], []);
+        $dataCollector = new DataCollector([], [], [$traceableMessageStore], [], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getMessages();
@@ -156,7 +161,7 @@ class DataCollectorTest extends TestCase
 
         $traceableChat->submit(Message::ofUser('Hello World'));
 
-        $dataCollector = new DataCollector([], [], [], [$traceableChat]);
+        $dataCollector = new DataCollector([], [], [], [$traceableChat], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getChats();
@@ -165,5 +170,65 @@ class DataCollectorTest extends TestCase
         $this->assertArrayHasKey('saved_at', $calls[0]);
         $this->assertInstanceOf(UserMessage::class, $calls[0]['message']);
         $this->assertInstanceOf(\DateTimeImmutable::class, $calls[0]['saved_at']);
+    }
+
+    public function testCollectsDataForAgent()
+    {
+        $traceableAgent = new TraceableAgent(new MockAgent([
+            'Hello there' => 'General Kenobi',
+        ]));
+
+        $messages = new MessageBag(
+            Message::ofUser('Hello there'),
+        );
+
+        $traceableAgent->call($messages, [
+            'stream' => true,
+        ], [
+            new InputDelayPolicy(1),
+        ]);
+
+        $dataCollector = new DataCollector([], [], [], [], [$traceableAgent], []);
+        $dataCollector->lateCollect();
+
+        $calls = $dataCollector->getAgents();
+
+        $this->assertCount(1, $calls);
+        $this->assertEquals([
+            'messages' => $messages,
+            'options' => [
+                'stream' => true,
+            ],
+            'policies' => [
+                new InputDelayPolicy(1),
+            ],
+        ], $calls[0]);
+    }
+
+    public function testCollectsDataForPolicyHandler()
+    {
+        $traceablePolicyHandler = new TraceablePolicyHandler(new DelayPolicyHandler());
+
+        $bag = new MessageBag();
+
+        $traceablePolicyHandler->support(new InputDelayPolicy(10));
+        $traceablePolicyHandler->handle($bag, [], new InputDelayPolicy(10));
+
+        $dataCollector = new DataCollector([], [], [], [], [], [$traceablePolicyHandler]);
+        $dataCollector->lateCollect();
+
+        $calls = $dataCollector->getPolicyHandlers();
+
+        $this->assertCount(2, $calls);
+        $this->assertSame([
+            'method' => 'support',
+            'policy' => InputDelayPolicy::class,
+        ], $calls[0]);
+        $this->assertSame([
+            'method' => 'handle',
+            'messages' => $bag,
+            'options' => [],
+            'policy' => InputDelayPolicy::class,
+        ], $calls[1]);
     }
 }
