@@ -166,6 +166,10 @@ This requires to configure a :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\Mod
 :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\CompletionsModel` or :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\EmbeddingsModel`,
 see `LiteLLM example`_ for more details.
 
+Alternatively, use the :doc:`models.dev bridge <platform/models-dev>` to
+auto-discover model capabilities for many providers without manually curating
+model catalogs.
+
 Options
 -------
 

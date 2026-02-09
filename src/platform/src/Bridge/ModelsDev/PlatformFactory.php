@@ -1,0 +1,108 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Platform\Bridge\ModelsDev;
+
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Platform;
+use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+
+/**
+ * Creates a Platform instance for any models.dev provider.
+ *
+ * @author Fabien Potencier <fabien@symfony.com>
+ */
+final class PlatformFactory
+{
+    public static function create(
+        string $provider,
+        #[\SensitiveParameter] ?string $apiKey = null,
+        ?string $baseUrl = null,
+        ?HttpClientInterface $httpClient = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
+    ): Platform {
+        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
+
+        $data = DataLoader::load();
+        if (!isset($data[$provider])) {
+            throw new InvalidArgumentException(\sprintf('Provider "%s" not found in models.dev data.', $provider));
+        }
+        $providerData = $data[$provider];
+        $npmPackage = $providerData['npm'] ?? null;
+
+        // Check if this provider requires a specialized bridge (e.g., Anthropic, Google)
+        if (null !== $npmPackage && BridgeResolver::requiresSpecializedBridge($npmPackage)) {
+            $package = BridgeResolver::getComposerPackage($npmPackage);
+            $factoryClass = BridgeResolver::getBridgeFactory($npmPackage);
+
+            if (!BridgeResolver::isBridgeAvailable($npmPackage)) {
+                throw new InvalidArgumentException(\sprintf('Provider "%s" requires a specialized bridge (%s); install it with composer require "%s".', $provider, $npmPackage, $package));
+            }
+            if (!BridgeResolver::isRoutable($npmPackage)) {
+                throw new InvalidArgumentException(\sprintf('Provider "%s" requires "%s" which has a different factory signature; use "%s::create()" directly.', $provider, $package, $factoryClass));
+            }
+
+            return $factoryClass::create(
+                apiKey: $apiKey,
+                modelCatalog: new ModelCatalog(
+                    $provider,
+                    completionsModelClass: BridgeResolver::getCompletionsModelClass($npmPackage),
+                    embeddingsModelClass: BridgeResolver::getEmbeddingsModelClass($npmPackage),
+                ),
+                httpClient: $httpClient,
+                eventDispatcher: $eventDispatcher,
+            );
+        }
+
+        // Use the generic OpenAI-compatible bridge
+        if ((null === $baseUrl) && null === $baseUrl = (new ProviderRegistry())->getApiBaseUrl($provider)) {
+            throw new InvalidArgumentException(\sprintf('Provider "%s" does not have a known API base URL; please provide one via the $baseUrl argument.', $provider));
+        }
+
+        // Base URL should NOT include /v1 suffix (e.g., https://api.groq.com/openai not https://api.groq.com/openai/v1)
+        // The paths /v1/chat/completions and /v1/embeddings will be appended by the Generic bridge
+        $baseUrl = rtrim($baseUrl, '/');
+
+        // Automatically detect what the provider supports based on its model catalog
+        $supportsCompletions = false;
+        $supportsEmbeddings = false;
+        $modelCatalog = new ModelCatalog($provider);
+        foreach ($modelCatalog->getModels() as $modelData) {
+            if (CompletionsModel::class === $modelData['class'] || is_subclass_of($modelData['class'], CompletionsModel::class)) {
+                $supportsCompletions = true;
+            }
+            if (EmbeddingsModel::class === $modelData['class'] || is_subclass_of($modelData['class'], EmbeddingsModel::class)) {
+                $supportsEmbeddings = true;
+            }
+
+            // Early exit if we found both types
+            if ($supportsCompletions && $supportsEmbeddings) {
+                break;
+            }
+        }
+
+        return GenericPlatformFactory::create(
+            baseUrl: $baseUrl,
+            apiKey: $apiKey,
+            httpClient: $httpClient,
+            modelCatalog: $modelCatalog,
+            contract: null, // Let Generic bridge use its default contract
+            eventDispatcher: $eventDispatcher,
+            supportsCompletions: $supportsCompletions,
+            supportsEmbeddings: $supportsEmbeddings,
+        );
+    }
+}
