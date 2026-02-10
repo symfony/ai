@@ -423,7 +423,7 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Test response'));
 
-        // On prépare un ToolCallResult avec une métadonnée 'thought'
+        // We prepare a ToolCallResult with a 'thought' metadata.
         $result = new ToolCallResult($toolCall);
         $result->getMetadata()->add('thought', 'fake-signature');
 
@@ -431,7 +431,7 @@ class AgentProcessorTest extends TestCase
         $agent = $this->createStub(AgentInterface::class);
         $agent->method('call')->willReturn(new TextResult('Final answer'));
 
-        // On active keepToolMessages pour pouvoir inspecter le MessageBag après traitement
+        // We activate keepToolMessages so that we can inspect the MessageBag after processing.
         $processor = new AgentProcessor($toolbox, keepToolMessages: true);
         $processor->setAgent($agent);
 
@@ -439,10 +439,10 @@ class AgentProcessorTest extends TestCase
 
         $processor->processOutput($output);
 
-        // On vérifie que le premier message (AssistantMessage créé à partir du ToolCallResult)
-        // contient bien la métadonnée 'thought'
+        // We verify that the first message (AssistantMessage created from ToolCallResult)
+        // does indeed contain the 'thought' metadata.
         $messages = $messageBag->getMessages();
-        $this->assertCount(2, $messages); // AssistantMessage (tool call) + ToolCallMessage (résultat)
+        $this->assertCount(2, $messages); // AssistantMessage (tool call) + ToolCallMessage (result)
 
         $assistantMessage = $messages[0];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
