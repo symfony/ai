@@ -6,6 +6,7 @@ CHANGELOG
 
  * [BC BREAK] Rename `Symfony\AI\Agent\Toolbox\Tool\Agent` to `Symfony\AI\Agent\Toolbox\Tool\Subagent`
  * Add `MetaDataAwareTrait` to `MockResponse`, the metadata will also be set on the returned `TextResult` when calling the `toResult` function
+ * Add `HasSourcesTrait` to `Symfony\AI\Agent\Toolbox\Tool\Subagent`
 
 0.3
 ---
