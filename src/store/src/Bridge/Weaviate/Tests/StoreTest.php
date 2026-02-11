@@ -69,7 +69,60 @@ final class StoreTest extends TestCase
     {
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
+                'classes' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
                 'class' => 'test',
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8080',
+            'test',
+            'test',
+        );
+
+        $store->setup();
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreSetupSkipsWhenCollectionExists()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'classes' => [
+                    ['class' => 'test'],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8080',
+            'test',
+            'test',
+        );
+
+        $store->setup();
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreSetupSkipsWhenCollectionExistsCaseInsensitive()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'classes' => [
+                    ['class' => 'Test'],
+                ],
             ], [
                 'http_code' => 200,
             ]),
