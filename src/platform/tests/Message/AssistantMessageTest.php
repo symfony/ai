@@ -82,4 +82,9 @@ final class AssistantMessageTest extends TestCase
         $this->assertInstanceOf(TimeBasedUidInterface::class, $message->getId());
         $this->assertInstanceOf(UuidV7::class, $message->getId());
     }
+
+    public function testMessageCanBeStreamed()
+    {
+        $message = new AssistantMessage('Hello there');
+    }
 }
