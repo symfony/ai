@@ -63,10 +63,12 @@ final class AssistantMessage implements MessageInterface
     {
         $len = strlen($this->content);
 
-        for ($i = 0; $i < $len; $i += 2) {
+        $chunkLength = rand(2, 5);
+
+        for ($i = 0; $i < $len; $i += $chunkLength) {
             $this->clock->sleep(0.015);
 
-            yield substr($this->content, $i, 2);
+            yield substr($this->content, $i, $chunkLength);
         }
     }
 }
