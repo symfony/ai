@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
@@ -25,33 +26,30 @@ use Symfony\Contracts\Service\ResetInterface;
  *      action: string,
  *      bag?: MessageBag,
  *      message?: UserMessage,
- *      saved_at: \DateTimeImmutable,
+ *      submitted_at?: \DateTimeImmutable,
+ *      streamed_at?: \DateTimeImmutable,
+ *      initiated_at?: \DateTimeImmutable,
  *  }
  */
 final class TraceableChat implements ChatInterface, ResetInterface
 {
     /**
-     * @var array<int, array{
-     *     action: string,
-     *     bag?: MessageBag,
-     *     message?: UserMessage,
-     *     saved_at: \DateTimeImmutable,
-     * }>
+     * @var ChatData[]
      */
     public array $calls = [];
 
     public function __construct(
         private readonly ChatInterface $chat,
-        private readonly ClockInterface $clock,
+        private readonly ClockInterface $clock = new MonotonicClock(),
     ) {
     }
 
     public function initiate(MessageBag $messages): void
     {
         $this->calls[] = [
-            'action' => __FUNCTION__,
+            'action' => 'initiate',
             'bag' => $messages,
-            'saved_at' => $this->clock->now(),
+            'initiated_at' => $this->clock->now(),
         ];
 
         $this->chat->initiate($messages);
@@ -60,12 +58,23 @@ final class TraceableChat implements ChatInterface, ResetInterface
     public function submit(UserMessage $message): AssistantMessage
     {
         $this->calls[] = [
-            'action' => __FUNCTION__,
+            'action' => 'submit',
             'message' => $message,
-            'saved_at' => $this->clock->now(),
+            'submitted_at' => $this->clock->now(),
         ];
 
         return $this->chat->submit($message);
+    }
+
+    public function stream(UserMessage $message): \Generator
+    {
+        $this->calls[] = [
+            'action' => 'stream',
+            'message' => $message,
+            'streamed_at' => $this->clock->now(),
+        ];
+
+        return $this->chat->stream($message);
     }
 
     public function reset(): void
@@ -73,6 +82,7 @@ final class TraceableChat implements ChatInterface, ResetInterface
         if ($this->chat instanceof ResetInterface) {
             $this->chat->reset();
         }
+
         $this->calls = [];
     }
 }
