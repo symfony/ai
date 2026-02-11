@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 
 /**
  * A test-friendly agent implementation that doesn't make actual AI calls.
@@ -44,7 +45,7 @@ final class MockAgent implements AgentInterface
     private array $calls = [];
 
     /**
-     * @param array<string, string|MockResponse|\Closure> $responses Predefined responses for specific inputs
+     * @param array<string, string|MockResponse|StreamResult|\Closure> $responses Predefined responses for specific inputs
      */
     public function __construct(
         array $responses = [],
@@ -80,10 +81,12 @@ final class MockAgent implements AgentInterface
             $response = $response($messages, $options, $content);
         }
 
-        // Convert response to ResultInterface
-        $result = $response instanceof MockResponse
-            ? $response->toResult()
-            : MockResponse::create($response)->toResult();
+        $result = match (true) {
+            $response instanceof MockResponse => $response->toResult(),
+            \is_string($response) => MockResponse::create($response)->toResult(),
+            $response instanceof StreamResult => $response,
+            default => throw new RuntimeException(\sprintf('Invalid response type for input "%s".', $content)),
+        };
 
         $responseText = $response instanceof MockResponse
             ? $response->getContent()
