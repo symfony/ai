@@ -55,7 +55,9 @@
         "phpunit/phpunit": "^11.5.46",
         "symfony/console": "^7.3|^8.0",
         "symfony/dom-crawler": "^7.3|^8.0",
-        "symfony/dependency-injection": "^7.3|^8.0"
+        "symfony/dependency-injection": "^7.3|^8.0",
+        "symfony/filesystem": "^7.3|^8.0",
+        "symfony/string": "^7.3|^8.0"
     },
     "minimum-stability": "dev",
     "autoload": {

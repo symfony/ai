@@ -108,6 +108,40 @@ Supported Stores
 * `Typesense`_
 * `Weaviate`_
 
+Document Loader
+---------------
+
+Creating and/or loading documents is a critical part of any RAG-based system, as it provides the foundation for the system to understand and respond to queries.
+Document loaders are responsible for fetching and preparing documents for indexing and retrieval.
+
+To help loading documents and integrate them into your RAG system, you can use the provided document loaders or create your own custom loaders to suit your specific needs:
+
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\InMemoryLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\MarkdownLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\RssFeedLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\TextFileLoader`
+
+Create a Custom Loader
+----------------------
+
+The main extension points of the Store component for document loaders is the :class:`Symfony\\AI\\Store\\Document\\LoaderInterface`,
+that defines the method to load a document from a source. This leads to a loader implementing one method::
+
+    use Symfony\AI\Store\Document\LoaderInterface;
+    use Symfony\AI\Store\Document\Metadata;
+    use Symfony\AI\Store\Document\TextDocument;
+    use Symfony\Component\Uid\Uuid;
+
+    class MyDocumentLoader implements LoaderInterface
+    {
+        public function load(?string $source = null, array $options = []): iterable
+        {
+            $content = ...
+
+            yield new TextDocument(Uuid::v7()->toRfc4122(), $content, new Metadata($metadata));
+        }
+    }
+
 Commands
 --------
 

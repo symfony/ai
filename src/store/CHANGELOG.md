@@ -13,6 +13,7 @@ CHANGELOG
  * [BC BREAK] Remove `Uuid` as possible type for `TextDocument::id` and `VectorDocument::id`, use `string` or `int` instead
  * [BC BREAK] `Symfony\AI\Store\Document\EmbeddableDocumentInterface::getId()` now returns `string|int` instead of `mixed`
  * [BC BREAK] Reduce visibility of `VectorDocument` and `RssItem` properties to `private` and add getters
+ * Add `MarkdownLoader`
 
 0.3
 ---
