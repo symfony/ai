@@ -13,23 +13,24 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\Clock\MonotonicClock;
 
 final class TraceableChatTest extends TestCase
 {
-    public function testInitializationMessageBagCanBeRetrieved()
+    public function testDataCanBeCollected()
     {
-        $agent = $this->createMock(AgentInterface::class);
-        $agent->expects($this->once())->method('call')->willReturn(new TextResult('foo'));
-
-        $chat = new Chat($agent, new InMemoryStore());
+        $chat = new Chat(new MockAgent([
+            'Hello World' => 'General Kenobi',
+            'Second Hello world' => 'General Kenobi',
+            'Third Hello world' => 'General Kenobi',
+        ]), new InMemoryStore());
 
         $traceableChat = new TraceableChat($chat, new MonotonicClock());
 
@@ -43,11 +44,11 @@ final class TraceableChatTest extends TestCase
 
         $this->assertArrayHasKey('action', $traceableChat->calls[0]);
         $this->assertArrayHasKey('bag', $traceableChat->calls[0]);
-        $this->assertArrayHasKey('saved_at', $traceableChat->calls[0]);
+        $this->assertArrayHasKey('initiated_at', $traceableChat->calls[0]);
         $this->assertSame('initiate', $traceableChat->calls[0]['action']);
         $this->assertInstanceOf(MessageBag::class, $traceableChat->calls[0]['bag']);
         $this->assertCount(1, $traceableChat->calls[0]['bag']);
-        $this->assertInstanceOf(\DateTimeImmutable::class, $traceableChat->calls[0]['saved_at']);
+        $this->assertInstanceOf(\DateTimeImmutable::class, $traceableChat->calls[0]['initiated_at']);
 
         $traceableChat->submit(Message::ofUser('Second Hello world'));
 
@@ -55,10 +56,21 @@ final class TraceableChatTest extends TestCase
 
         $this->assertArrayHasKey('action', $traceableChat->calls[1]);
         $this->assertArrayHasKey('message', $traceableChat->calls[1]);
-        $this->assertArrayHasKey('saved_at', $traceableChat->calls[1]);
+        $this->assertArrayHasKey('submitted_at', $traceableChat->calls[1]);
         $this->assertSame('submit', $traceableChat->calls[1]['action']);
         $this->assertInstanceOf(UserMessage::class, $traceableChat->calls[1]['message']);
-        $this->assertInstanceOf(\DateTimeImmutable::class, $traceableChat->calls[1]['saved_at']);
+        $this->assertInstanceOf(\DateTimeImmutable::class, $traceableChat->calls[1]['submitted_at']);
+
+        $traceableChat->stream(Message::ofUser('Third Hello world'));
+
+        $this->assertCount(3, $traceableChat->calls);
+
+        $this->assertArrayHasKey('action', $traceableChat->calls[2]);
+        $this->assertArrayHasKey('message', $traceableChat->calls[2]);
+        $this->assertArrayHasKey('streamed_at', $traceableChat->calls[2]);
+        $this->assertSame('stream', $traceableChat->calls[2]['action']);
+        $this->assertInstanceOf(UserMessage::class, $traceableChat->calls[2]['message']);
+        $this->assertInstanceOf(\DateTimeImmutable::class, $traceableChat->calls[2]['streamed_at']);
     }
 
     public function testResetClearsCalls()

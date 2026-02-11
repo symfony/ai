@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `ChatInterface::stream()` method for real-time streaming support
+
 0.4
 ---
 

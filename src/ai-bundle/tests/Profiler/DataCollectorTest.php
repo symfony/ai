@@ -175,9 +175,9 @@ class DataCollectorTest extends TestCase
         $calls = $dataCollector->getChats();
 
         $this->assertArrayHasKey('message', $calls[0]);
-        $this->assertArrayHasKey('saved_at', $calls[0]);
+        $this->assertArrayHasKey('submitted_at', $calls[0]);
         $this->assertInstanceOf(UserMessage::class, $calls[0]['message']);
-        $this->assertInstanceOf(\DateTimeImmutable::class, $calls[0]['saved_at']);
+        $this->assertInstanceOf(\DateTimeImmutable::class, $calls[0]['submitted_at']);
     }
 
     public function testGetNameReturnsShortName()

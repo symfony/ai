@@ -27,10 +27,10 @@ final class AssistantMessage implements MessageInterface
      * @param ?ToolCall[] $toolCalls
      */
     public function __construct(
-        private ?string $content = null,
-        private ?array $toolCalls = null,
-        private ?string $thinkingContent = null,
-        private ?string $thinkingSignature = null,
+        private readonly ?string $content = null,
+        private readonly ?array $toolCalls = null,
+        private readonly ?string $thinkingContent = null,
+        private readonly ?string $thinkingSignature = null,
     ) {
         $this->id = Uuid::v7();
     }

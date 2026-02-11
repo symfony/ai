@@ -40,6 +40,9 @@ Store
    +$retriever = new Retriever($store, $vectorizer, logger: $logger);
    ```
 
+ * The `ChatInterface` now has a `stream()` method. If you implement this interface,
+   you need to add this method to your implementation.
+
 UPGRADE FROM 0.5 to 0.6
 =======================
 
