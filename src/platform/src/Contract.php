@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Contract\Normalizer\Message\Content\AudioNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ImageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ImageUrlNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\Content\TextNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ThinkingNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\MessageBagNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\SystemMessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\ToolCallMessageNormalizer;
@@ -54,6 +55,7 @@ class Contract
         $normalizer[] = new ImageNormalizer();
         $normalizer[] = new ImageUrlNormalizer();
         $normalizer[] = new TextNormalizer();
+        $normalizer[] = new ThinkingNormalizer();
 
         // Options
         $normalizer[] = new ToolNormalizer();
