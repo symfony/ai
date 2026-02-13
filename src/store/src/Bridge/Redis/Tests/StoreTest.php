@@ -515,4 +515,62 @@ final class StoreTest extends TestCase
 
         $this->assertCount(0, $results); // Should skip documents without required fields
     }
+
+    public function testRemoveSingleDocument()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $vectorId = 'vector-id';
+
+        $redis->expects($this->once())
+            ->method('del')
+            ->with(['vector:vector-id']);
+
+        $store->remove($vectorId);
+    }
+
+    public function testRemoveMultipleDocuments()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $vectorIds = ['vector-id-1', 'vector-id-2', 'vector-id-3'];
+
+        $redis->expects($this->once())
+            ->method('del')
+            ->with(['vector:vector-id-1', 'vector:vector-id-2', 'vector:vector-id-3']);
+
+        $store->remove($vectorIds);
+    }
+
+    public function testRemoveWithEmptyArray()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $redis->expects($this->never())
+            ->method('del');
+
+        $store->remove([]);
+    }
+
+    public function testRemoveFailureThrowsRuntimeException()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $redis->expects($this->once())
+            ->method('del')
+            ->with(['vector:vector-id']);
+
+        $redis->expects($this->once())
+            ->method('getLastError')
+            ->willReturn('Delete failed');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to remove documents from Redis: "Delete failed".');
+
+        $store->remove('vector-id');
+    }
 }

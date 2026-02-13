@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
-use Symfony\AI\Store\Exception\UnsupportedFeatureException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 
@@ -109,7 +108,24 @@ class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new UnsupportedFeatureException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $this->redis->clearLastError();
+
+        $keys = array_map(fn ($id) => $this->keyPrefix.$id, $ids);
+
+        $this->redis->del($keys);
+
+        if ($error = $this->redis->getLastError()) {
+            $e = new \RedisException($error);
+            throw new RuntimeException(\sprintf('Failed to remove documents from Redis: "%s".', $e->getMessage()), 0, $e);
+        }
     }
 
     /**
