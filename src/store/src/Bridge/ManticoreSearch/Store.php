@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\UnsupportedFeatureException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -45,7 +44,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $this->request('cli', \sprintf(
-            "CREATE TABLE %s (uuid TEXT, metadata JSON, %s FLOAT_VECTOR KNN_TYPE='%s' KNN_DIMS='%s' HNSW_SIMILARITY='%s' QUANTIZATION='%s')",
+            "CREATE TABLE %s (uuid string, metadata JSON, %s FLOAT_VECTOR KNN_TYPE='%s' KNN_DIMS='%s' HNSW_SIMILARITY='%s' QUANTIZATION='%s')",
             $this->table, $this->field, $this->type, $this->dimensions, $this->similarity, $this->quantization,
         ));
     }
@@ -88,7 +87,35 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new UnsupportedFeatureException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        // ManticoreSearch doesn't have a limit on the number of IDs per DELETE request
+        // But we'll chunk them for better performance and to avoid potential issues
+        $chunksIds = array_chunk($ids, 1000);
+
+        foreach ($chunksIds as $chunkIds) {
+            $payload = array_map(
+                fn (string $id): array => [
+                    'delete' => [
+                        'table' => $this->table,
+                        'query' => ['equals' => ['uuid' => $id]],
+                    ],
+                ],
+                $chunkIds,
+            );
+
+            $this->request('bulk', static function () use ($payload) {
+                foreach ($payload as $delete) {
+                    yield json_encode($delete).\PHP_EOL;
+                }
+            });
+        }
     }
 
     public function query(Vector $vector, array $options = []): iterable
