@@ -73,6 +73,7 @@
         "symfony/ai-neo4j-store": "^0.3",
         "symfony/ai-ollama-platform": "^0.3",
         "symfony/ai-open-ai-platform": "^0.3",
+        "symfony/ai-open-responses-platform": "^0.4",
         "symfony/ai-open-router-platform": "^0.3",
         "symfony/ai-open-search-store": "^0.3",
         "symfony/ai-perplexity-platform": "^0.3",
