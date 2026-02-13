@@ -234,8 +234,8 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $vectors);
         $this->assertInstanceOf(VectorDocument::class, $vectors[0]);
         $this->assertInstanceOf(VectorDocument::class, $vectors[1]);
-        $this->assertSame(0.95, $vectors[0]->score);
-        $this->assertSame(0.85, $vectors[1]->score);
+        $this->assertSame(0.95, $vectors[0]->getScore());
+        $this->assertSame(0.85, $vectors[1]->getScore());
     }
 
     public function testMetadataWithoutIDRankingandVector()
@@ -275,7 +275,7 @@ final class StoreTest extends TestCase
             'description' => 'A science fiction action film.',
         ];
 
-        $this->assertSame($expected, $vectors[0]->metadata->getArrayCopy());
+        $this->assertSame($expected, $vectors[0]->getMetadata()->getArrayCopy());
     }
 
     public function testConstructorWithValidSemanticRatio()

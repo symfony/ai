@@ -97,6 +97,19 @@ Store
 
  * The `Symfony\AI\Store\Document\EmbeddableDocumentInterface::getId()` can only return `string` or `int` types now.
 
+ * Properties of `Symfony\AI\Store\Document\VectorDocument` and `Symfony\AI\Store\Document\Loader\Rss\RssItem` have been changed to private, use getters instead of public properties:
+
+   ```diff
+   -$document->id;
+   -$document->metadata;
+   -$document->score;
+   -$document->vector;
+   +$document->getId();
+   +$document->getMetadata();
+   +$document->getScore();
+   +$document->getVector();
+   ```
+
 UPGRADE FROM 0.2 to 0.3
 =======================
 

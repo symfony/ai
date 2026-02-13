@@ -47,7 +47,7 @@ final class SimilaritySearch
 
         $result = 'Found documents with following information:'.\PHP_EOL;
         foreach ($this->usedDocuments as $document) {
-            $result .= json_encode($document->metadata);
+            $result .= json_encode($document->getMetadata());
         }
 
         return $result;

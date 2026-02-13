@@ -125,12 +125,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
     {
         return [
             'class' => $this->collection,
-            'id' => $document->id,
-            'vector' => $document->vector->getData(),
+            'id' => $document->getId(),
+            'vector' => $document->getVector()->getData(),
             'properties' => [
-                'uuid' => $document->id,
-                'vector' => $document->vector->getData(),
-                '_metadata' => json_encode($document->metadata->getArrayCopy()),
+                'uuid' => $document->getId(),
+                'vector' => $document->getVector()->getData(),
+                '_metadata' => json_encode($document->getMetadata()->getArrayCopy()),
             ],
         ];
     }

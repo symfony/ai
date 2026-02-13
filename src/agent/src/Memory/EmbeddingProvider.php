@@ -58,7 +58,7 @@ final class EmbeddingProvider implements MemoryProviderInterface
 
         $content = '';
         foreach ($foundEmbeddingContent as $document) {
-            $content .= json_encode($document->metadata);
+            $content .= json_encode($document->getMetadata());
         }
 
         if ('' === $content) {

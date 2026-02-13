@@ -130,9 +130,9 @@ final class StoreTest extends TestCase
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
-        $this->assertEquals($uuid, $results[0]->id);
-        $this->assertSame(0.95, $results[0]->score);
-        $this->assertSame(['title' => 'Test Document'], $results[0]->metadata->getArrayCopy());
+        $this->assertEquals($uuid, $results[0]->getId());
+        $this->assertSame(0.95, $results[0]->getScore());
+        $this->assertSame(['title' => 'Test Document'], $results[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryChangedDistanceMethodWithoutMaxScore()
@@ -169,9 +169,9 @@ final class StoreTest extends TestCase
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
-        $this->assertEquals($uuid, $results[0]->id);
-        $this->assertSame(0.95, $results[0]->score);
-        $this->assertSame(['title' => 'Test Document'], $results[0]->metadata->getArrayCopy());
+        $this->assertEquals($uuid, $results[0]->getId());
+        $this->assertSame(0.95, $results[0]->getScore());
+        $this->assertSame(['title' => 'Test Document'], $results[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryWithMaxScore()
@@ -304,7 +304,7 @@ final class StoreTest extends TestCase
         $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(1, $results);
-        $this->assertSame([], $results[0]->metadata->getArrayCopy());
+        $this->assertSame([], $results[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryFailureThrowsRuntimeException()

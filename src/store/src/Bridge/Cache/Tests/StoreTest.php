@@ -62,7 +62,7 @@ final class StoreTest extends TestCase
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(3, $result);
-        $this->assertSame([0.1, 0.1, 0.5], $result[0]->vector->getData());
+        $this->assertSame([0.1, 0.1, 0.5], $result[0]->getVector()->getData());
 
         $store->add([
             new VectorDocument(Uuid::v4(), new Vector([0.1, 0.1, 0.5])),
@@ -72,7 +72,7 @@ final class StoreTest extends TestCase
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(6, $result);
-        $this->assertSame([0.1, 0.1, 0.5], $result[0]->vector->getData());
+        $this->assertSame([0.1, 0.1, 0.5], $result[0]->getVector()->getData());
     }
 
     public function testStoreCanSearchUsingCosineDistanceAndReturnCorrectOrder()
@@ -88,11 +88,11 @@ final class StoreTest extends TestCase
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(5, $result);
-        $this->assertSame([0.0, 0.1, 0.6], $result[0]->vector->getData());
-        $this->assertSame([0.1, 0.1, 0.5], $result[1]->vector->getData());
-        $this->assertSame([0.3, 0.1, 0.6], $result[2]->vector->getData());
-        $this->assertSame([0.3, 0.7, 0.1], $result[3]->vector->getData());
-        $this->assertSame([0.7, -0.3, 0.0], $result[4]->vector->getData());
+        $this->assertSame([0.0, 0.1, 0.6], $result[0]->getVector()->getData());
+        $this->assertSame([0.1, 0.1, 0.5], $result[1]->getVector()->getData());
+        $this->assertSame([0.3, 0.1, 0.6], $result[2]->getVector()->getData());
+        $this->assertSame([0.3, 0.7, 0.1], $result[3]->getVector()->getData());
+        $this->assertSame([0.7, -0.3, 0.0], $result[4]->getVector()->getData());
     }
 
     public function testStoreCanSearchUsingCosineDistanceWithMaxItems()
@@ -120,7 +120,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([1.2, 2.3, 3.4])));
 
         $this->assertCount(2, $result);
-        $this->assertSame([1.0, 2.0, 3.0], $result[0]->vector->getData());
+        $this->assertSame([1.0, 2.0, 3.0], $result[0]->getVector()->getData());
     }
 
     public function testStoreCanSearchUsingEuclideanDistance()
@@ -134,7 +134,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([1.2, 2.3, 3.4])));
 
         $this->assertCount(2, $result);
-        $this->assertSame([1.0, 2.0, 3.0], $result[0]->vector->getData());
+        $this->assertSame([1.0, 2.0, 3.0], $result[0]->getVector()->getData());
     }
 
     public function testStoreCanSearchUsingManhattanDistance()
@@ -148,7 +148,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([1.2, 2.3, 3.4])));
 
         $this->assertCount(2, $result);
-        $this->assertSame([1.0, 2.0, 3.0], $result[0]->vector->getData());
+        $this->assertSame([1.0, 2.0, 3.0], $result[0]->getVector()->getData());
     }
 
     public function testStoreCanSearchUsingChebyshevDistance()
@@ -162,7 +162,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([1.2, 2.3, 3.4])));
 
         $this->assertCount(2, $result);
-        $this->assertSame([1.0, 2.0, 3.0], $result[0]->vector->getData());
+        $this->assertSame([1.0, 2.0, 3.0], $result[0]->getVector()->getData());
     }
 
     public function testStoreCanSearchWithFilter()
@@ -175,12 +175,12 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
-            'filter' => static fn (VectorDocument $doc) => 'products' === $doc->metadata['category'],
+            'filter' => static fn (VectorDocument $doc) => 'products' === $doc->getMetadata()['category'],
         ]));
 
         $this->assertCount(2, $result);
-        $this->assertSame('products', $result[0]->metadata['category']);
-        $this->assertSame('products', $result[1]->metadata['category']);
+        $this->assertSame('products', $result[0]->getMetadata()['category']);
+        $this->assertSame('products', $result[1]->getMetadata()['category']);
     }
 
     public function testStoreCanSearchWithFilterAndMaxItems()
@@ -194,13 +194,13 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
-            'filter' => static fn (VectorDocument $doc) => 'products' === $doc->metadata['category'],
+            'filter' => static fn (VectorDocument $doc) => 'products' === $doc->getMetadata()['category'],
             'maxItems' => 2,
         ]));
 
         $this->assertCount(2, $result);
-        $this->assertSame('products', $result[0]->metadata['category']);
-        $this->assertSame('products', $result[1]->metadata['category']);
+        $this->assertSame('products', $result[0]->getMetadata()['category']);
+        $this->assertSame('products', $result[1]->getMetadata()['category']);
     }
 
     public function testStoreCanSearchWithComplexFilter()
@@ -213,7 +213,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
-            'filter' => static fn (VectorDocument $doc) => $doc->metadata['price'] <= 150 && $doc->metadata['stock'] > 0,
+            'filter' => static fn (VectorDocument $doc) => $doc->getMetadata()['price'] <= 150 && $doc->getMetadata()['stock'] > 0,
         ]));
 
         $this->assertCount(2, $result);
@@ -229,12 +229,12 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
-            'filter' => static fn (VectorDocument $doc) => 'S' === $doc->metadata['options']['size'],
+            'filter' => static fn (VectorDocument $doc) => 'S' === $doc->getMetadata()['options']['size'],
         ]));
 
         $this->assertCount(2, $result);
-        $this->assertSame('S', $result[0]->metadata['options']['size']);
-        $this->assertSame('S', $result[1]->metadata['options']['size']);
+        $this->assertSame('S', $result[0]->getMetadata()['options']['size']);
+        $this->assertSame('S', $result[1]->getMetadata()['options']['size']);
     }
 
     public function testStoreCanSearchWithInArrayFilter()
@@ -248,7 +248,7 @@ final class StoreTest extends TestCase
 
         $allowedBrands = ['Nike', 'Adidas', 'Puma'];
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6]), [
-            'filter' => static fn (VectorDocument $doc) => \in_array($doc->metadata['brand'] ?? '', $allowedBrands, true),
+            'filter' => static fn (VectorDocument $doc) => \in_array($doc->getMetadata()['brand'] ?? '', $allowedBrands, true),
         ]));
 
         $this->assertCount(2, $result);
@@ -277,7 +277,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(2, $result);
 
-        $remainingIds = array_map(static fn (VectorDocument $doc) => $doc->id, $result);
+        $remainingIds = array_map(static fn (VectorDocument $doc) => $doc->getId(), $result);
         $this->assertNotContains($id2, $remainingIds);
         $this->assertContains($id1, $remainingIds);
         $this->assertContains($id3, $remainingIds);
@@ -308,7 +308,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([0.0, 0.1, 0.6])));
         $this->assertCount(2, $result);
 
-        $remainingIds = array_map(static fn (VectorDocument $doc) => $doc->id, $result);
+        $remainingIds = array_map(static fn (VectorDocument $doc) => $doc->getId(), $result);
         $this->assertNotContains($id2, $remainingIds);
         $this->assertNotContains($id4, $remainingIds);
         $this->assertContains($id1, $remainingIds);

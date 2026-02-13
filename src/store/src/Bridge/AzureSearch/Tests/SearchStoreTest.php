@@ -172,10 +172,10 @@ final class SearchStoreTest extends TestCase
         $this->assertCount(2, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
         $this->assertInstanceOf(VectorDocument::class, $results[1]);
-        $this->assertEquals($uuid1, $results[0]->id);
-        $this->assertEquals($uuid2, $results[1]->id);
-        $this->assertSame('First Document', $results[0]->metadata['title']);
-        $this->assertSame('Second Document', $results[1]->metadata['title']);
+        $this->assertEquals($uuid1, $results[0]->getId());
+        $this->assertEquals($uuid2, $results[1]->getId());
+        $this->assertSame('First Document', $results[0]->getMetadata()['title']);
+        $this->assertSame('Second Document', $results[1]->getMetadata()['title']);
     }
 
     public function testQueryWithCustomVectorFieldName()
@@ -281,7 +281,7 @@ final class SearchStoreTest extends TestCase
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
-        $this->assertInstanceOf(NullVector::class, $results[0]->vector);
+        $this->assertInstanceOf(NullVector::class, $results[0]->getVector());
     }
 
     public function testRemoveWithSingleId()

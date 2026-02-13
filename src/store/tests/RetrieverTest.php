@@ -55,8 +55,8 @@ final class RetrieverTest extends TestCase
         $this->assertCount(2, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
         $this->assertInstanceOf(VectorDocument::class, $results[1]);
-        $this->assertSame('Document 1', $results[0]->metadata['title']);
-        $this->assertSame('Document 2', $results[1]->metadata['title']);
+        $this->assertSame('Document 1', $results[0]->getMetadata()['title']);
+        $this->assertSame('Document 2', $results[1]->getMetadata()['title']);
     }
 
     public function testRetrieveWithEmptyStore()

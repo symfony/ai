@@ -127,9 +127,9 @@ class Store implements ManagedStoreInterface, StoreInterface
     protected function formatVectorDocument(VectorDocument $document): array
     {
         return [
-            'id' => $document->id,
-            'metadata' => json_encode($document->metadata->getArrayCopy(), \JSON_THROW_ON_ERROR),
-            'embedding' => $document->vector->getData(),
+            'id' => $document->getId(),
+            'metadata' => json_encode($document->getMetadata()->getArrayCopy(), \JSON_THROW_ON_ERROR),
+            'embedding' => $document->getVector()->getData(),
         ];
     }
 

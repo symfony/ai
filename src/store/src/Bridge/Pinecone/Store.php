@@ -71,9 +71,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $vectors = [];
         foreach ($documents as $document) {
             $vectors[] = [
-                'id' => (string) $document->id,
-                'values' => $document->vector->getData(),
-                'metadata' => $document->metadata->getArrayCopy(),
+                'id' => (string) $document->getId(),
+                'values' => $document->getVector()->getData(),
+                'metadata' => $document->getMetadata()->getArrayCopy(),
             ];
         }
 

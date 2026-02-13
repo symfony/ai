@@ -55,9 +55,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $existingVectors = $this->cache->get($this->cacheKey, static fn (): array => []);
 
         $newVectors = array_map(static fn (VectorDocument $document): array => [
-            'id' => $document->id,
-            'vector' => $document->vector->getData(),
-            'metadata' => $document->metadata->getArrayCopy(),
+            'id' => $document->getId(),
+            'vector' => $document->getVector()->getData(),
+            'metadata' => $document->getMetadata()->getArrayCopy(),
         ], $documents);
 
         $cacheItem = $this->cache->getItem($this->cacheKey);

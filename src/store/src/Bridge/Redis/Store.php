@@ -89,11 +89,11 @@ class Store implements ManagedStoreInterface, StoreInterface
         $pipeline = $this->redis->multi(\Redis::PIPELINE);
 
         foreach ($documents as $document) {
-            $key = $this->keyPrefix.$document->id;
+            $key = $this->keyPrefix.$document->getId();
             $data = [
-                'id' => $document->id,
-                'metadata' => $document->metadata->getArrayCopy(),
-                'embedding' => $document->vector->getData(),
+                'id' => $document->getId(),
+                'metadata' => $document->getMetadata()->getArrayCopy(),
+                'embedding' => $document->getVector()->getData(),
             ];
 
             $pipeline->rawCommand('JSON.SET', $key, '$', json_encode($data, \JSON_THROW_ON_ERROR));

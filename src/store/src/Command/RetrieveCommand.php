@@ -56,17 +56,17 @@ final class RetrieveCommand extends Command
             ->addArgument('query', InputArgument::OPTIONAL, 'Search query')
             ->addOption('limit', 'l', InputOption::VALUE_REQUIRED, 'Maximum number of results to return', '10')
             ->setHelp(<<<'EOF'
-The <info>%command.name%</info> command retrieves documents from a store using the specified retriever.
+                The <info>%command.name%</info> command retrieves documents from a store using the specified retriever.
 
-Basic usage:
-    <info>php %command.full_name% blog "search query"</info>
+                Basic usage:
+                    <info>php %command.full_name% blog "search query"</info>
 
-Interactive mode (prompts for query):
-    <info>php %command.full_name% blog</info>
+                Interactive mode (prompts for query):
+                    <info>php %command.full_name% blog</info>
 
-Limit results:
-    <info>php %command.full_name% blog "search query" --limit=5</info>
-EOF
+                Limit results:
+                    <info>php %command.full_name% blog "search query" --limit=5</info>
+                EOF
             )
         ;
     }
@@ -106,16 +106,16 @@ EOF
                 $io->section(\sprintf('Result #%d', $count));
 
                 $tableData = [
-                    ['ID', (string) $document->id],
-                    ['Score', $document->score ?? 'n/a'],
+                    ['ID', (string) $document->getId()],
+                    ['Score', $document->getScore() ?? 'n/a'],
                 ];
 
-                if ($document->metadata->hasSource()) {
-                    $tableData[] = ['Source', $document->metadata->getSource()];
+                if ($document->getMetadata()->hasSource()) {
+                    $tableData[] = ['Source', $document->getMetadata()->getSource()];
                 }
 
-                if ($document->metadata->hasText()) {
-                    $text = $document->metadata->getText();
+                if ($document->getMetadata()->hasText()) {
+                    $text = $document->getMetadata()->getText();
                     if (\strlen($text) > 200) {
                         $text = substr($text, 0, 200).'...';
                     }

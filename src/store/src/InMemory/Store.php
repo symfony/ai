@@ -62,7 +62,7 @@ class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $this->documents = array_values(array_filter($this->documents, static function (VectorDocument $document) use ($ids): bool {
-            return !\in_array((string) $document->id, $ids, true);
+            return !\in_array((string) $document->getId(), $ids, true);
         }));
     }
 

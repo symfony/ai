@@ -144,10 +144,10 @@ class StoreTest extends TestCase
 
         $this->assertCount(1, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
-        $this->assertSame($uuid, $result[0]->id);
-        $this->assertSame([0.5, 0.6, 0.7], $result[0]->vector->getData());
-        $this->assertSame(['category' => 'test'], $result[0]->metadata->getArrayCopy());
-        $this->assertSame(0.85, $result[0]->score);
+        $this->assertSame($uuid, $result[0]->getId());
+        $this->assertSame([0.5, 0.6, 0.7], $result[0]->getVector()->getData());
+        $this->assertSame(['category' => 'test'], $result[0]->getMetadata()->getArrayCopy());
+        $this->assertSame(0.85, $result[0]->getScore());
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
@@ -176,15 +176,15 @@ class StoreTest extends TestCase
 
         $this->assertCount(2, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
-        $this->assertSame($uuid1, $result[0]->id);
-        $this->assertSame([0.1, 0.2], $result[0]->vector->getData());
-        $this->assertSame(0.95, $result[0]->score);
-        $this->assertSame(['type' => 'first'], $result[0]->metadata->getArrayCopy());
+        $this->assertSame($uuid1, $result[0]->getId());
+        $this->assertSame([0.1, 0.2], $result[0]->getVector()->getData());
+        $this->assertSame(0.95, $result[0]->getScore());
+        $this->assertSame(['type' => 'first'], $result[0]->getMetadata()->getArrayCopy());
         $this->assertInstanceOf(VectorDocument::class, $result[1]);
-        $this->assertSame($uuid2, $result[1]->id);
-        $this->assertSame([0.3, 0.4], $result[1]->vector->getData());
-        $this->assertSame(0.85, $result[1]->score);
-        $this->assertSame(['type' => 'second'], $result[1]->metadata->getArrayCopy());
+        $this->assertSame($uuid2, $result[1]->getId());
+        $this->assertSame([0.3, 0.4], $result[1]->getVector()->getData());
+        $this->assertSame(0.85, $result[1]->getScore());
+        $this->assertSame(['type' => 'second'], $result[1]->getMetadata()->getArrayCopy());
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -206,12 +206,12 @@ class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new Vector([1.0, 2.0, 3.0])));
 
         $document = $result[0];
-        $metadata = $document->metadata->getArrayCopy();
+        $metadata = $document->getMetadata()->getArrayCopy();
         $this->assertCount(1, $result);
         $this->assertInstanceOf(VectorDocument::class, $document);
-        $this->assertSame($uuid, $document->id);
-        $this->assertSame([0.1, 0.2, 0.3, 0.4], $document->vector->getData());
-        $this->assertSame(0.92, $document->score);
+        $this->assertSame($uuid, $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3, 0.4], $document->getVector()->getData());
+        $this->assertSame(0.92, $document->getScore());
         $this->assertSame('Test Document', $metadata['title']);
         $this->assertSame(['ai', 'test'], $metadata['tags']);
         $this->assertSame(0.92, $metadata['score']);

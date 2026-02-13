@@ -113,10 +113,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         foreach ($documents as $document) {
             $operation = [
-                ['_id' => (string) $document->id],
+                ['_id' => (string) $document->getId()],
                 array_filter([
-                    'metadata' => $document->metadata->getArrayCopy(),
-                    $this->vectorFieldName => $document->vector->getData(),
+                    'metadata' => $document->getMetadata()->getArrayCopy(),
+                    $this->vectorFieldName => $document->getVector()->getData(),
                 ]),
                 ['upsert' => true], // insert if not exists
             ];
