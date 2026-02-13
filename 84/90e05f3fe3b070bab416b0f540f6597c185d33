@@ -1,0 +1,12 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-06T16:40:10Z
+
+Let's keep it here, but should we rename it to `excludeToolMessage: false`?
+we're not hiding them, they're gone - and feels more consistent to `includeSources`
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-13T16:30:58Z
+
+Looks like the rebase brought in some unrelated commits => conflicts
