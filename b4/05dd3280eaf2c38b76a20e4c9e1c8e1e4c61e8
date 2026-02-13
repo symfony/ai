@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by derrabus at 2026-02-09T23:17:44Z
+
+This diff makes me sad. While PHP is moving in the opposite direction with property hooks, we're reintroducing getter functions. 😞
