@@ -305,4 +305,110 @@ final class StoreTest extends TestCase
             );
         }
     }
+
+    public function testStoreCannotRemoveOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 400,
+            ]),
+        ], 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points/delete?wait=true".');
+        $this->expectExceptionCode(400);
+        $store->remove('test-id');
+    }
+
+    public function testStoreCanRemoveSingleId()
+    {
+        $id = Uuid::v4()->toRfc4122();
+
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($id): JsonMockResponse {
+            self::assertSame('POST', $method);
+            self::assertArrayHasKey('wait', $options['query']);
+            self::assertSame('true', $options['query']['wait']);
+            self::assertIsString($options['body']);
+            self::assertSame(['points' => [$id]], json_decode($options['body'], true));
+
+            return new JsonMockResponse([
+                'time' => 0.002,
+                'status' => 'ok',
+                'result' => [
+                    'operation_id' => 0,
+                    'status' => 'completed',
+                ],
+            ], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+
+        $store->remove($id);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveMultipleIds()
+    {
+        $ids = [Uuid::v4()->toRfc4122(), Uuid::v4()->toRfc4122(), Uuid::v4()->toRfc4122()];
+
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($ids): JsonMockResponse {
+            self::assertSame('POST', $method);
+            self::assertArrayHasKey('wait', $options['query']);
+            self::assertSame('true', $options['query']['wait']);
+            self::assertIsString($options['body']);
+            self::assertSame(['points' => $ids], json_decode($options['body'], true));
+
+            return new JsonMockResponse([
+                'time' => 0.003,
+                'status' => 'ok',
+                'result' => [
+                    'operation_id' => 0,
+                    'status' => 'completed',
+                ],
+            ], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+
+        $store->remove($ids);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveAsynchronously()
+    {
+        $id = Uuid::v4()->toRfc4122();
+
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($id): JsonMockResponse {
+            self::assertSame('POST', $method);
+            self::assertArrayHasKey('wait', $options['query']);
+            self::assertSame('false', $options['query']['wait']);
+            self::assertIsString($options['body']);
+            self::assertSame(['points' => [$id]], json_decode($options['body'], true));
+
+            return new JsonMockResponse([
+                'time' => 0.002,
+                'status' => 'ok',
+                'result' => [
+                    'operation_id' => 1000001,
+                    'status' => 'acknowledged',
+                ],
+            ], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test', async: true);
+
+        $store->remove($id);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }
