@@ -293,4 +293,77 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $results);
         $this->assertSame(3, $httpClient->getRequestsCount());
     }
+
+    public function testStoreCanRemoveSingleDocument()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'data' => [
+                    'fields' => [],
+                    'values' => [],
+                ],
+                'bookmarks' => [
+                    'FB:kcwQ5zbxUD1ESXmS6UjG2xKCZMkAoJB=',
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:7474');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
+
+        $store->remove('test-id');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveMultipleDocuments()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'data' => [
+                    'fields' => [],
+                    'values' => [],
+                ],
+                'bookmarks' => [
+                    'FB:kcwQ5zbxUD1ESXmS6UjG2xKCZMkAoJB=',
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:7474');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
+
+        $store->remove(['test-id-1', 'test-id-2', 'test-id-3']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCannotRemoveOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 400,
+            ]),
+        ], 'http://127.0.0.1:7474');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7474/db/symfony/query/v2".');
+        $this->expectExceptionCode(400);
+        $store->remove('test-id');
+    }
+
+    public function testStoreRemoveWithEmptyArray()
+    {
+        $httpClient = new MockHttpClient([], 'http://127.0.0.1:7474');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
+
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
 }
