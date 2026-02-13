@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Anthropic\Contract;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Contract\Normalizer\ContentNormalizerTrait;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model;
@@ -23,6 +24,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
  */
 final class AssistantMessageNormalizer extends ModelContractNormalizer implements NormalizerAwareInterface
 {
+    use ContentNormalizerTrait;
     use NormalizerAwareTrait;
 
     /**
@@ -48,7 +50,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         if (!$hasBlocks) {
             return [
                 'role' => 'assistant',
-                'content' => $this->normalizeContent($data->getContent(), $format, $context) ?? '',
+                'content' => $this->normalizeContentToString($data->getContent(), $format, $context) ?? '',
             ];
         }
 
@@ -66,7 +68,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         }
 
         if (null !== $data->getContent()) {
-            $blocks[] = ['type' => 'text', 'text' => $this->normalizeContent($data->getContent(), $format, $context)];
+            $blocks[] = ['type' => 'text', 'text' => $this->normalizeContentToString($data->getContent(), $format, $context)];
         }
 
         if ($data->hasToolCalls()) {
@@ -94,25 +96,5 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     protected function supportsModel(Model $model): bool
     {
         return $model instanceof Claude;
-    }
-
-    private function normalizeContent(object|string|null $content, ?string $format, array $context): ?string
-    {
-        if (null === $content) {
-            return null;
-        }
-
-        if (\is_string($content)) {
-            return $content;
-        }
-
-        if ($content instanceof \Stringable) {
-            return (string) $content;
-        }
-
-        return json_encode(
-            $this->normalizer->normalize($content, $format, $context),
-            \JSON_THROW_ON_ERROR
-        );
     }
 }
