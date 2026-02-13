@@ -40,6 +40,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('No supported options.');
         }
 
+        if ($this->collectionExists()) {
+            return;
+        }
+
         $this->request('POST', 'v1/schema', [
             'class' => $this->collection,
         ]);
@@ -147,5 +151,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
             : new Vector($data['vector']);
 
         return new VectorDocument($id, $vector, new Metadata(json_decode($data['_metadata'], true)));
+    }
+
+    private function collectionExists(): bool
+    {
+        $response = $this->request('GET', 'v1/schema', []);
+
+        if (!isset($response['classes'])) {
+            return false;
+        }
+
+        foreach ($response['classes'] as $class) {
+            if (0 === strcasecmp($class['class'], $this->collection)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
