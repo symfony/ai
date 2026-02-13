@@ -4,6 +4,31 @@ UPGRADE FROM 0.3 to 0.4
 Agent
 -----
 
+ * The `keepToolMessages` parameter of `AgentProcessor` has been removed and replaced with `excludeToolMessages`.
+   Tool messages (`AssistantMessage` with tool call invocations and `ToolCallMessage` with tool call results) are now
+   **preserved** in the `MessageBag` by default.
+
+   If you were opting in to keep tool messages, just remove the parameter:
+
+   ```diff
+   -$processor = new AgentProcessor($toolbox, keepToolMessages: true);
+   +$processor = new AgentProcessor($toolbox);
+   ```
+
+   If you were explicitly discarding tool messages, use the new parameter:
+
+   ```diff
+   -$processor = new AgentProcessor($toolbox, keepToolMessages: false);
+   +$processor = new AgentProcessor($toolbox, excludeToolMessages: true);
+   ```
+
+   If you were relying on the previous default (tool messages discarded), opt in explicitly:
+
+   ```diff
+   -$processor = new AgentProcessor($toolbox);
+   +$processor = new AgentProcessor($toolbox, excludeToolMessages: true);
+   ```
+
  * The `Symfony\AI\Agent\Toolbox\Tool\Agent` class has been renamed to `Symfony\AI\Agent\Toolbox\Tool\Subagent`:
 
    ```diff
