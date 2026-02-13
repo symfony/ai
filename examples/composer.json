@@ -6,19 +6,7 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../src/agent"
-        },
-        {
-            "type": "path",
-            "url": "../src/chat"
-        },
-        {
-            "type": "path",
-            "url": "../src/platform"
-        },
-        {
-            "type": "path",
-            "url": "../src/store"
+            "url": "../src/platform/src/Bridge/OpenResponses"
         }
     ],
     "require": {
