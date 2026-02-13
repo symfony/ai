@@ -482,10 +482,10 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_azuresearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myAzuresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $azuresearchMyAzuresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_azuresearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myAzuresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $azuresearchMyAzuresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testAzureStoreCanBeConfiguredWithCustomVectorField()
@@ -525,10 +525,10 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_azuresearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myAzuresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $azuresearchMyAzuresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_azuresearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myAzuresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $azuresearchMyAzuresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testCacheStoreCanBeConfigured()
@@ -564,10 +564,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_cache_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myCacheStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $cacheMyCacheStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cache_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testCacheStoreWithCustomKeyCanBeConfigured()
@@ -606,10 +606,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $cache_my_cache_store_with_custom_key'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myCacheStoreWithCustomKey'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $cacheMyCacheStoreWithCustomKey'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $cache_my_cache_store_with_custom_key'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomKey'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomKey'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testCacheStoreWithCustomStrategyCanBeConfigured()
@@ -652,10 +652,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $cache_my_cache_store_with_custom_strategy'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myCacheStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $cacheMyCacheStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $cache_my_cache_store_with_custom_strategy'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomStrategy'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomStrategy'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testCacheStoreWithCustomStrategyAndKeyCanBeConfigured()
@@ -699,10 +699,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $cache_my_cache_store_with_custom_strategy_and_custom_key'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myCacheStoreWithCustomStrategyAndCustomKey'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $cacheMyCacheStoreWithCustomStrategyAndCustomKey'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $cache_my_cache_store_with_custom_strategy_and_custom_key'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomStrategyAndCustomKey'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomStrategyAndCustomKey'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testChromaDbStoreCanBeConfigured()
@@ -734,10 +734,10 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $chromadb_my_chromadb_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myChromadbStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $chromadbMyChromadbStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     #[TestDox('Configuring only one store type does not require packages for other store types')]
@@ -789,10 +789,10 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $chromadb_my_chromadb_store_with_custom_client'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myChromadbStoreWithCustomClient'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $chromadbMyChromadbStoreWithCustomClient'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store_with_custom_client'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStoreWithCustomClient'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStoreWithCustomClient'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testClickhouseStoreWithCustomHttpClientCanBeConfigured()
@@ -830,10 +830,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_clickhouse_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myClickhouseStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $clickhouseMyClickhouseStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_clickhouse_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myClickhouseStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $clickhouseMyClickhouseStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testClickhouseStoreWithCustomDsnCanBeConfigured()
@@ -873,10 +873,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_clickhouse_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myClickhouseStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $clickhouseMyClickhouseStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_clickhouse_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myClickhouseStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $clickhouseMyClickhouseStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testCloudflareStoreCanBeConfigured()
@@ -917,10 +917,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_cloudflare_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $cloudflareMyCloudflareStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testCloudflareStoreWithCustomIndexCanBeConfigured()
@@ -961,10 +961,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_cloudflare_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $cloudflareMyCloudflareStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testCloudflareStoreWithCustomDimensionsCanBeConfigured()
@@ -1005,10 +1005,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_cloudflare_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $cloudflareMyCloudflareStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testCloudflareStoreWithCustomEndpointCanBeConfigured()
@@ -1052,10 +1052,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_cloudflare_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $cloudflareMyCloudflareStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testManticoreSearchStoreCanBeConfigured()
@@ -1095,10 +1095,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_manticoresearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $manticoresearchMyManticoresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testManticoreSearchStoreWithCustomTableCanBeConfigured()
@@ -1139,10 +1139,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_manticoresearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $manticoresearchMyManticoresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testManticoreSearchStoreWithCustomFieldCanBeConfigured()
@@ -1183,10 +1183,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_manticoresearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $manticoresearchMyManticoresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testManticoreSearchStoreWithCustomDimensionsCanBeConfigured()
@@ -1227,10 +1227,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_manticoresearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $manticoresearchMyManticoresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testManticoreSearchStoreWithQuantizationCanBeConfigured()
@@ -1276,10 +1276,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_manticoresearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $manticoresearchMyManticoresearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMariaDbStoreCanBeConfigured()
@@ -1321,10 +1321,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mariadb_store'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mariadb_my_mariadb_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mariadbMyMariadbStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mariadb_store'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mariadb_my_mariadb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mariadbMyMariadbStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMariaDbStoreWithCustomTableCanBeConfigured()
@@ -1367,10 +1367,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mariadb_store'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mariadb_my_mariadb_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mariadbMyMariadbStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mariadb_store'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mariadb_my_mariadb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mariadbMyMariadbStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMeilisearchStoreCanBeConfigured()
@@ -1413,10 +1413,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $custom'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $meilisearchCustom'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMeilisearchStoreWithCustomIndexNameCanBeConfigured()
@@ -1460,10 +1460,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $custom'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $meilisearchCustom'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     #[TestDox('Meilisearch store with custom semantic_ratio can be configured')]
@@ -1509,10 +1509,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $custom'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $meilisearchCustom'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testInMemoryStoreWithoutCustomStrategyCanBeConfigured()
@@ -1544,11 +1544,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_memory_store_with_custom_strategy'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMemoryStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $memory_my_memory_store_with_custom_strategy'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $memoryMyMemoryStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_memory_store_with_custom_strategy'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMemoryStoreWithCustomStrategy'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $memory_my_memory_store_with_custom_strategy'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $memoryMyMemoryStoreWithCustomStrategy'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testInMemoryStoreWithCustomStrategyCanBeConfigured()
@@ -1583,11 +1583,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_memory_store_with_custom_strategy'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMemoryStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $memory_my_memory_store_with_custom_strategy'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $memoryMyMemoryStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_memory_store_with_custom_strategy'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMemoryStoreWithCustomStrategy'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $memory_my_memory_store_with_custom_strategy'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $memoryMyMemoryStoreWithCustomStrategy'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMilvusStoreCanBeConfigured()
@@ -1630,11 +1630,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_milvus_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMilvusStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $milvus_my_milvus_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $milvusMyMilvusStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_milvus_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMilvusStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $milvus_my_milvus_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $milvusMyMilvusStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMilvusStoreWithCustomDatabaseCanBeConfigured()
@@ -1678,11 +1678,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_milvus_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMilvusStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $milvus_my_milvus_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $milvusMyMilvusStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_milvus_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMilvusStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $milvus_my_milvus_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $milvusMyMilvusStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMilvusStoreWithCustomMetricsCanBeConfigured()
@@ -1726,11 +1726,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_milvus_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMilvusStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $milvus_my_milvus_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $milvusMyMilvusStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_milvus_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMilvusStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $milvus_my_milvus_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $milvusMyMilvusStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMongoDbStoreCanBeConfigured()
@@ -1770,11 +1770,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mongo_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mongodbMyMongoStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMongoDbStoreWithCustomCollectionCanBeConfigured()
@@ -1815,11 +1815,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mongo_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mongodbMyMongoStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMongoDbStoreWithCustomVectorFieldCanBeConfigured()
@@ -1860,11 +1860,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mongo_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mongodbMyMongoStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMongoDbStoreWithCustomClientCanBeConfigured()
@@ -1905,11 +1905,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mongo_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mongodbMyMongoStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testMongoDbStoreWithBulkWriteCanBeConfigured()
@@ -1951,11 +1951,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_mongo_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mongodbMyMongoStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testNeo4jStoreCanBeConfigured()
@@ -2002,11 +2002,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_neo4j_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myNeo4jStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $neo4j_my_neo4j_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $neo4jMyNeo4jStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_neo4j_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myNeo4jStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $neo4j_my_neo4j_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $neo4jMyNeo4jStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testNeo4jStoreWithCustomDatabaseCanBeConfigured()
@@ -2054,11 +2054,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_neo4j_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myNeo4jStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $neo4j_my_neo4j_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $neo4jMyNeo4jStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_neo4j_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myNeo4jStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $neo4j_my_neo4j_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $neo4jMyNeo4jStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testNeo4jStoreWithQuantizationCanBeConfigured()
@@ -2111,11 +2111,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_neo4j_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myNeo4jStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $neo4j_my_neo4j_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $neo4jMyNeo4jStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_neo4j_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myNeo4jStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $neo4j_my_neo4j_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $neo4jMyNeo4jStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testOpenSearchStoreCanBeConfigured()
@@ -2154,11 +2154,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testOpenSearchStoreWithCustomIndexCanBeConfigured()
@@ -2198,11 +2198,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testOpenSearchStoreWithCustomFieldCanBeConfigured()
@@ -2242,11 +2242,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testOpenSearchStoreWithCustomDimensionsCanBeConfigured()
@@ -2286,11 +2286,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testOpenSearchStoreWithCustomSpaceTypeCanBeConfigured()
@@ -2330,11 +2330,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testOpenSearchStoreWithCustomHttpClientCanBeConfigured()
@@ -2374,11 +2374,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $opensearchMyOpensearchStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testPineconeStoreCanBeConfigured()
@@ -2412,11 +2412,11 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => StoreInterface::class], ['interface' => ManagedStoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myPineconeStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $pinecone_my_pinecone_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $pineconeMyPineconeStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_pinecone_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myPineconeStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $pinecone_my_pinecone_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $pineconeMyPineconeStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testPineconeStoreWithCustomIndexNameCanBeConfigured()
@@ -2451,11 +2451,11 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => StoreInterface::class], ['interface' => ManagedStoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_pinecone_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myPineconeStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $pinecone_my_pinecone_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $pineconeMyPineconeStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_pinecone_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myPineconeStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $pinecone_my_pinecone_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $pineconeMyPineconeStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testPostgresStoreWithDifferentConnectionCanBeConfigured()
@@ -2491,10 +2491,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $db'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $postgres_db'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $postgresDb'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
             'ai' => [
@@ -2531,10 +2531,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $db'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $postgres_db'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $postgresDb'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
             'ai' => [
@@ -2567,10 +2567,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $db'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $postgres_db'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $postgresDb'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
             'ai' => [
@@ -2604,10 +2604,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $db'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $postgres_db'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $postgresDb'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
             'ai' => [
@@ -2642,10 +2642,10 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $db'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $postgres_db'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $postgresDb'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testQdrantStoreCanBeConfigured()
@@ -2685,11 +2685,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_qdrant_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $qdrantMyQdrantStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testQdrantStoreWithCustomCollectionCanBeConfigured()
@@ -2730,11 +2730,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_qdrant_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $qdrantMyQdrantStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testQdrantStoreWithAsyncCanBeConfigured()
@@ -2777,11 +2777,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_qdrant_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $qdrantMyQdrantStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testRedisStoreCanBeConfigured()
@@ -2821,11 +2821,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_redis_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $redisMyRedisStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testRedisStoreWithCustomIndexCanBeConfigured()
@@ -2866,11 +2866,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_redis_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $redisMyRedisStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testRedisStoreWithCustomClientCanBeConfigured()
@@ -2908,11 +2908,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_redis_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $redisMyRedisStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testRedisStoreWithCustomKeyPrefixCanBeConfigured()
@@ -2951,11 +2951,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_redis_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $redisMyRedisStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testRedisStoreWithCustomDistanceCanBeConfigured()
@@ -2994,11 +2994,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_redis_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $redisMyRedisStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testSupabaseStoreCanBeConfigured()
@@ -3036,11 +3036,11 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_supabase_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $supabaseMySupabaseStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testSupabaseStoreWithCustomTableCanBeConfigured()
@@ -3079,11 +3079,11 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_supabase_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $supabaseMySupabaseStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testSupabaseStoreWithCustomHttpClientCanBeConfigured()
@@ -3122,11 +3122,11 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_supabase_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $supabaseMySupabaseStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testSupabaseStoreWithCustomFunctionCanBeConfigured()
@@ -3165,11 +3165,11 @@ class AiBundleTest extends TestCase
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_supabase_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $supabaseMySupabaseStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testSurrealDbStoreCanBeConfigured()
@@ -3216,11 +3216,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $surrealdbMySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testSurrealDbStoreWithCustomTableCanBeConfigured()
@@ -3268,11 +3268,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $surrealdbMySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testSurrealDbStoreWithNamespacedUserCanBeConfigured()
@@ -3325,11 +3325,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $surrealdbMySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testTypesenseStoreCanBeConfigured()
@@ -3369,11 +3369,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_typesense_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myTypesenseStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $typesense_my_typesense_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $typesenseMyTypesenseStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_typesense_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myTypesenseStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $typesense_my_typesense_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $typesenseMyTypesenseStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testTypesenseStoreWithCustomCollectionCanBeConfigured()
@@ -3414,11 +3414,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_typesense_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myTypesenseStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $typesense_my_typesense_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $typesenseMyTypesenseStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_typesense_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myTypesenseStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $typesense_my_typesense_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $typesenseMyTypesenseStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testWevaviateStoreCanBeConfigured()
@@ -3456,11 +3456,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_weaviate_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myWeaviateStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $weaviate_my_weaviate_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $weaviateMyWeaviateStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_weaviate_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myWeaviateStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testWevaviateStoreWithCustomCollectionCanBeConfigured()
@@ -3499,11 +3499,11 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $my_weaviate_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $myWeaviateStore'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $weaviate_my_weaviate_store'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $weaviateMyWeaviateStore'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_weaviate_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myWeaviateStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testConfigurationWithUseAttributeAsKeyWorksWithoutNormalizeKeys()
@@ -3585,8 +3585,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.platform'));
         $this->assertSame([['name' => 'decart']], $definition->getTag('ai.platform'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $decart'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $decart'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
     }
 
     public function testOllamaCanBeCreatedWithCatalogFromApi()
@@ -3797,8 +3797,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.platform'));
         $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $elevenlabs'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $elevenlabs'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
 
         $modelCatalogDefinition = $container->getDefinition('ai.platform.model_catalog.elevenlabs');
 
@@ -3845,8 +3845,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.platform'));
         $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $elevenlabs'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $elevenlabs'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
 
         $modelCatalogDefinition = $container->getDefinition('ai.platform.model_catalog.elevenlabs');
 
@@ -3893,8 +3893,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.platform'));
         $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $elevenlabs'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $elevenlabs'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
 
         $modelCatalogDefinition = $container->getDefinition('ai.platform.model_catalog.elevenlabs');
 
@@ -3942,8 +3942,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.platform'));
         $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $elevenlabs'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $elevenlabs'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
 
         $modelCatalogDefinition = $container->getDefinition('ai.platform.model_catalog.elevenlabs');
 
@@ -4012,7 +4012,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.platform'));
         $this->assertSame([['name' => 'failover']], $definition->getTag('ai.platform'));
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $main'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $main'));
     }
 
     public function testOpenAiPlatformWithDefaultRegion()
@@ -5946,7 +5946,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([['name' => 'support']], $tags['ai.agent']);
 
         // Verify alias is created
-        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\AgentInterface $support'));
+        $this->assertTrue($container->hasAlias(AgentInterface::class.' $support'));
     }
 
     public function testMultiAgentWithMultipleHandoffs()
@@ -6271,8 +6271,8 @@ class AiBundleTest extends TestCase
         $this->assertArrayHasKey('ai.agent', $csTags);
         $this->assertSame([['name' => 'customer_support']], $csTags['ai.agent']);
 
-        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\AgentInterface $customerSupport'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Agent\AgentInterface $developmentAssistant'));
+        $this->assertTrue($container->hasAlias(AgentInterface::class.' $customerSupport'));
+        $this->assertTrue($container->hasAlias(AgentInterface::class.' $developmentAssistant'));
 
         // Test development_assistant multi-agent configuration
         $devAssistantDef = $container->getDefinition('ai.multi_agent.development_assistant');
@@ -6454,7 +6454,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias('.Symfony\AI\Platform\PlatformInterface $cache_ollama'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $cacheOllama'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $cacheOllama'));
     }
 
     public function testCachePlatformCanBeUsedWithoutCustomCacheKey()
@@ -6503,7 +6503,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias('.Symfony\AI\Platform\PlatformInterface $cache_ollama'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $cacheOllama'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $cacheOllama'));
     }
 
     public function testCachePlatformCanBeUsedWithCustomTtl()
@@ -6552,7 +6552,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias('.Symfony\AI\Platform\PlatformInterface $cache_ollama'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Platform\PlatformInterface $cacheOllama'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $cacheOllama'));
     }
 
     public function testCacheMessageStoreCanBeConfiguredWithCustomKey()
