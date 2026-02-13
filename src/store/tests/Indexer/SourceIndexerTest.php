@@ -30,7 +30,7 @@ final class SourceIndexerTest extends TestCase
 {
     public function testIndexSingleDocument()
     {
-        $document = new TextDocument($id = Uuid::v4(), 'Test content');
+        $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
         $loader = new InMemoryLoader([$document]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
@@ -60,7 +60,7 @@ final class SourceIndexerTest extends TestCase
     public function testIndexDocumentWithMetadata()
     {
         $metadata = new Metadata(['key' => 'value']);
-        $document = new TextDocument($id = Uuid::v4(), 'Test content', $metadata);
+        $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content', $metadata);
         $vector = new Vector([0.1, 0.2, 0.3]);
         $loader = new InMemoryLoader([$document]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
@@ -79,7 +79,7 @@ final class SourceIndexerTest extends TestCase
 
     public function testIndexWithSource()
     {
-        $document1 = new TextDocument(Uuid::v4(), 'Document 1');
+        $document1 = new TextDocument(Uuid::v4()->toString(), 'Document 1');
         $vector = new Vector([0.1, 0.2, 0.3]);
 
         $loader = new InMemoryLoader([$document1]);
@@ -94,8 +94,8 @@ final class SourceIndexerTest extends TestCase
 
     public function testIndexWithSourceArray()
     {
-        $document1 = new TextDocument(Uuid::v4(), 'Document 1');
-        $document2 = new TextDocument(Uuid::v4(), 'Document 2');
+        $document1 = new TextDocument(Uuid::v4()->toString(), 'Document 1');
+        $document2 = new TextDocument(Uuid::v4()->toString(), 'Document 2');
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
         $vector3 = new Vector([0.7, 0.8, 0.9]);
@@ -128,7 +128,7 @@ final class SourceIndexerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('SourceIndexer expects a string or iterable of strings');
 
-        $indexer->index(new TextDocument(Uuid::v4(), 'Test content')); /* @phpstan-ignore argument.type */
+        $indexer->index(new TextDocument(Uuid::v4()->toString(), 'Test content')); /* @phpstan-ignore argument.type */
     }
 
     public function testIndexThrowsExceptionForNonStringInIterable()
@@ -142,6 +142,6 @@ final class SourceIndexerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('SourceIndexer expects sources to be strings');
 
-        $indexer->index([new TextDocument(Uuid::v4(), 'Test content')]); /* @phpstan-ignore argument.type */
+        $indexer->index([new TextDocument(Uuid::v4()->toString(), 'Test content')]); /* @phpstan-ignore argument.type */
     }
 }

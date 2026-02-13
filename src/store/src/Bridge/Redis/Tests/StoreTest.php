@@ -34,10 +34,10 @@ final class StoreTest extends TestCase
             ->with(\Redis::PIPELINE)
             ->willReturn($pipeline);
 
-        $uuid = Uuid::v4();
-        $expectedKey = 'vector:'.$uuid->toRfc4122();
+        $uuid = Uuid::v4()->toString();
+        $expectedKey = 'vector:'.$uuid;
         $expectedData = [
-            'id' => $uuid->toRfc4122(),
+            'id' => $uuid,
             'metadata' => ['title' => 'Test Document'],
             'embedding' => [0.1, 0.2, 0.3],
         ];
@@ -101,7 +101,7 @@ final class StoreTest extends TestCase
         $redis = $this->createMock(\Redis::class);
         $store = new Store($redis, 'test_index', 'vector:');
 
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
 
         $redis->expects($this->once())
             ->method('rawCommand')
@@ -117,9 +117,9 @@ final class StoreTest extends TestCase
             )
             ->willReturn([
                 1, // number of results
-                'vector:'.$uuid->toRfc4122(), // document key
+                'vector:'.$uuid, // document key
                 [
-                    '$.id', $uuid->toRfc4122(),
+                    '$.id', $uuid,
                     '$.metadata', json_encode(['title' => 'Test Document']),
                     '$.embedding', json_encode([0.1, 0.2, 0.3]),
                     'vector_score', '0.95',
@@ -140,7 +140,7 @@ final class StoreTest extends TestCase
         $redis = $this->createMock(\Redis::class);
         $store = new Store($redis, 'test_index', 'vector:', Distance::L2);
 
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
 
         $redis->expects($this->once())
             ->method('rawCommand')
@@ -156,9 +156,9 @@ final class StoreTest extends TestCase
             )
             ->willReturn([
                 1,
-                'vector:'.$uuid->toRfc4122(),
+                'vector:'.$uuid,
                 [
-                    '$.id', $uuid->toRfc4122(),
+                    '$.id', $uuid,
                     '$.metadata', json_encode(['title' => 'Test Document']),
                     '$.embedding', json_encode([0.1, 0.2, 0.3]),
                     'vector_score', '0.95',

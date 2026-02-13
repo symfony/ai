@@ -129,10 +129,10 @@ class StoreTest extends TestCase
 
     public function testQuerySuccess()
     {
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
         $expectedResponse = [
             [
-                'id' => $uuid->toRfc4122(),
+                'id' => $uuid,
                 'embedding' => '[0.5, 0.6, 0.7]',
                 'metadata' => '{"category": "test"}',
                 'score' => 0.85,
@@ -144,7 +144,7 @@ class StoreTest extends TestCase
 
         $this->assertCount(1, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
-        $this->assertSame($uuid->toRfc4122(), $result[0]->id);
+        $this->assertSame($uuid, $result[0]->id);
         $this->assertSame([0.5, 0.6, 0.7], $result[0]->vector->getData());
         $this->assertSame(['category' => 'test'], $result[0]->metadata->getArrayCopy());
         $this->assertSame(0.85, $result[0]->score);
@@ -153,17 +153,17 @@ class StoreTest extends TestCase
 
     public function testQueryHandlesMultipleResultsAndMultipleOptions()
     {
-        $uuid1 = Uuid::v4();
-        $uuid2 = Uuid::v4();
+        $uuid1 = Uuid::v4()->toString();
+        $uuid2 = Uuid::v4()->toString();
         $expectedResponse = [
             [
-                'id' => $uuid1->toRfc4122(),
+                'id' => $uuid1,
                 'embedding' => '[0.1, 0.2]',
                 'metadata' => '{"type": "first"}',
                 'score' => 0.95,
             ],
             [
-                'id' => $uuid2->toRfc4122(),
+                'id' => $uuid2,
                 'embedding' => '[0.3, 0.4]',
                 'metadata' => '{"type": "second"}',
                 'score' => 0.85,
@@ -176,12 +176,12 @@ class StoreTest extends TestCase
 
         $this->assertCount(2, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
-        $this->assertSame($uuid1->toRfc4122(), $result[0]->id);
+        $this->assertSame($uuid1, $result[0]->id);
         $this->assertSame([0.1, 0.2], $result[0]->vector->getData());
         $this->assertSame(0.95, $result[0]->score);
         $this->assertSame(['type' => 'first'], $result[0]->metadata->getArrayCopy());
         $this->assertInstanceOf(VectorDocument::class, $result[1]);
-        $this->assertSame($uuid2->toRfc4122(), $result[1]->id);
+        $this->assertSame($uuid2, $result[1]->id);
         $this->assertSame([0.3, 0.4], $result[1]->vector->getData());
         $this->assertSame(0.85, $result[1]->score);
         $this->assertSame(['type' => 'second'], $result[1]->metadata->getArrayCopy());
@@ -191,10 +191,10 @@ class StoreTest extends TestCase
 
     public function testQueryParsesComplexMetadata()
     {
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
         $expectedResponse = [
             [
-                'id' => $uuid->toRfc4122(),
+                'id' => $uuid,
                 'embedding' => '[0.1, 0.2, 0.3, 0.4]',
                 'metadata' => '{"title": "Test Document", "tags": ["ai", "test"], "score": 0.92}',
                 'score' => 0.92,
@@ -209,7 +209,7 @@ class StoreTest extends TestCase
         $metadata = $document->metadata->getArrayCopy();
         $this->assertCount(1, $result);
         $this->assertInstanceOf(VectorDocument::class, $document);
-        $this->assertSame($uuid->toRfc4122(), $document->id);
+        $this->assertSame($uuid, $document->id);
         $this->assertSame([0.1, 0.2, 0.3, 0.4], $document->vector->getData());
         $this->assertSame(0.92, $document->score);
         $this->assertSame('Test Document', $metadata['title']);

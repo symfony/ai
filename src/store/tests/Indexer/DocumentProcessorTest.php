@@ -30,7 +30,7 @@ final class DocumentProcessorTest extends TestCase
 {
     public function testProcessSingleDocument()
     {
-        $document = new TextDocument($id = Uuid::v4(), 'Test content');
+        $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
@@ -55,7 +55,7 @@ final class DocumentProcessorTest extends TestCase
     public function testProcessDocumentWithMetadata()
     {
         $metadata = new Metadata(['key' => 'value']);
-        $document = new TextDocument($id = Uuid::v4(), 'Test content', $metadata);
+        $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content', $metadata);
         $vector = new Vector([0.1, 0.2, 0.3]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
@@ -71,8 +71,8 @@ final class DocumentProcessorTest extends TestCase
 
     public function testProcessMultipleDocuments()
     {
-        $document1 = new TextDocument(Uuid::v4(), 'Document 1');
-        $document2 = new TextDocument(Uuid::v4(), 'Document 2');
+        $document1 = new TextDocument(Uuid::v4()->toString(), 'Document 1');
+        $document2 = new TextDocument(Uuid::v4()->toString(), 'Document 2');
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
 
@@ -87,9 +87,9 @@ final class DocumentProcessorTest extends TestCase
     public function testProcessWithTextContainsFilter()
     {
         $documents = [
-            new TextDocument(Uuid::v4(), 'Regular blog post'),
-            new TextDocument(Uuid::v4(), 'Week of Symfony news roundup'),
-            new TextDocument(Uuid::v4(), 'Another regular post'),
+            new TextDocument(Uuid::v4()->toString(), 'Regular blog post'),
+            new TextDocument(Uuid::v4()->toString(), 'Week of Symfony news roundup'),
+            new TextDocument(Uuid::v4()->toString(), 'Another regular post'),
         ];
         // Filter will remove the "Week of Symfony" document, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
@@ -107,10 +107,10 @@ final class DocumentProcessorTest extends TestCase
     public function testProcessWithMultipleFilters()
     {
         $documents = [
-            new TextDocument(Uuid::v4(), 'Regular blog post'),
-            new TextDocument(Uuid::v4(), 'Week of Symfony news'),
-            new TextDocument(Uuid::v4(), 'SPAM content here'),
-            new TextDocument(Uuid::v4(), 'Good content'),
+            new TextDocument(Uuid::v4()->toString(), 'Regular blog post'),
+            new TextDocument(Uuid::v4()->toString(), 'Week of Symfony news'),
+            new TextDocument(Uuid::v4()->toString(), 'SPAM content here'),
+            new TextDocument(Uuid::v4()->toString(), 'Good content'),
         ];
         // Filters will remove "Week of Symfony" and "SPAM" documents, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
@@ -131,9 +131,9 @@ final class DocumentProcessorTest extends TestCase
     public function testProcessWithFiltersAndTransformers()
     {
         $documents = [
-            new TextDocument(Uuid::v4(), 'Regular blog post'),
-            new TextDocument(Uuid::v4(), 'Week of Symfony news'),
-            new TextDocument(Uuid::v4(), 'Good content'),
+            new TextDocument(Uuid::v4()->toString(), 'Regular blog post'),
+            new TextDocument(Uuid::v4()->toString(), 'Week of Symfony news'),
+            new TextDocument(Uuid::v4()->toString(), 'Good content'),
         ];
         // Filter will remove "Week of Symfony" document, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
@@ -166,9 +166,9 @@ final class DocumentProcessorTest extends TestCase
     public function testProcessWithFiltersAndTransformersAppliesBoth()
     {
         $documents = [
-            new TextDocument(Uuid::v4(), 'Keep this document'),
-            new TextDocument(Uuid::v4(), 'Remove this content'),  // Will be filtered out
-            new TextDocument(Uuid::v4(), 'Also keep this one'),
+            new TextDocument(Uuid::v4()->toString(), 'Keep this document'),
+            new TextDocument(Uuid::v4()->toString(), 'Remove this content'),  // Will be filtered out
+            new TextDocument(Uuid::v4()->toString(), 'Also keep this one'),
         ];
         // Filter will remove the "Remove" document, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
@@ -211,7 +211,7 @@ final class DocumentProcessorTest extends TestCase
 
     public function testProcessWithNoFilters()
     {
-        $document = new TextDocument(Uuid::v4(), 'Test content');
+        $document = new TextDocument(Uuid::v4()->toString(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
         $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
 
@@ -238,7 +238,7 @@ final class DocumentProcessorTest extends TestCase
         $documents = [];
         $vectors = [];
         for ($i = 0; $i < 100; ++$i) {
-            $documents[] = new TextDocument(Uuid::v4(), 'Document '.$i);
+            $documents[] = new TextDocument(Uuid::v4()->toString(), 'Document '.$i);
             $vectors[] = new Vector([0.1 * $i, 0.2 * $i, 0.3 * $i]);
         }
 
@@ -257,7 +257,7 @@ final class DocumentProcessorTest extends TestCase
         $documents = [];
         $vectors = [];
         for ($i = 0; $i < 100; ++$i) {
-            $documents[] = new TextDocument(Uuid::v4(), 'Document '.$i);
+            $documents[] = new TextDocument(Uuid::v4()->toString(), 'Document '.$i);
             $vectors[] = new Vector([0.1 * $i, 0.2 * $i, 0.3 * $i]);
         }
 

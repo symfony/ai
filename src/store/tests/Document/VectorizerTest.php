@@ -39,9 +39,9 @@ final class VectorizerTest extends TestCase
     public function testVectorizeDocumentsWithBatchSupport()
     {
         $documents = [
-            new TextDocument(Uuid::v4(), 'First document content', new Metadata(['source' => 'test1'])),
-            new TextDocument(Uuid::v4(), 'Second document content', new Metadata(['source' => 'test2'])),
-            new TextDocument(Uuid::v4(), 'Third document content', new Metadata(['source' => 'test3'])),
+            new TextDocument(Uuid::v4()->toString(), 'First document content', new Metadata(['source' => 'test1'])),
+            new TextDocument(Uuid::v4()->toString(), 'Second document content', new Metadata(['source' => 'test2'])),
+            new TextDocument(Uuid::v4()->toString(), 'Third document content', new Metadata(['source' => 'test3'])),
         ];
 
         $vectors = [
@@ -80,7 +80,7 @@ final class VectorizerTest extends TestCase
 
     public function testVectorizeDocumentsWithSingleDocument()
     {
-        $document = new TextDocument(Uuid::v4(), 'Single document content', new Metadata(['test' => 'value']));
+        $document = new TextDocument(Uuid::v4()->toString(), 'Single document content', new Metadata(['test' => 'value']));
         $vector = new Vector([0.1, 0.2, 0.3]);
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
@@ -109,8 +109,8 @@ final class VectorizerTest extends TestCase
         $metadata2 = new Metadata(['source' => 'file2.txt', 'author' => 'Bob', 'version' => 2]);
 
         $documents = [
-            new TextDocument(Uuid::v4(), 'Content 1', $metadata1),
-            new TextDocument(Uuid::v4(), 'Content 2', $metadata2),
+            new TextDocument(Uuid::v4()->toString(), 'Content 1', $metadata1),
+            new TextDocument(Uuid::v4()->toString(), 'Content 2', $metadata2),
         ];
 
         $vectors = [
@@ -131,9 +131,9 @@ final class VectorizerTest extends TestCase
 
     public function testVectorizeDocumentsPreservesDocumentIds()
     {
-        $id1 = Uuid::v4();
-        $id2 = Uuid::v4();
-        $id3 = Uuid::v4();
+        $id1 = Uuid::v4()->toString();
+        $id2 = Uuid::v4()->toString();
+        $id3 = Uuid::v4()->toString();
 
         $documents = [
             new TextDocument($id1, 'Document 1'),
@@ -165,7 +165,7 @@ final class VectorizerTest extends TestCase
 
         for ($i = 0; $i < $count; ++$i) {
             $documents[] = new TextDocument(
-                Uuid::v4(),
+                Uuid::v4()->toString(),
                 \sprintf('Document %d content', $i),
                 new Metadata(['index' => $i])
             );
@@ -202,7 +202,7 @@ final class VectorizerTest extends TestCase
 
     public function testVectorizeDocumentsWithLargeVectors()
     {
-        $document = new TextDocument(Uuid::v4(), 'Test content');
+        $document = new TextDocument(Uuid::v4()->toString(), 'Test content');
 
         // Create a large vector with 1536 dimensions (typical for OpenAI embeddings)
         $dimensions = [];
@@ -222,9 +222,9 @@ final class VectorizerTest extends TestCase
     public function testVectorizeDocumentsWithSpecialCharacters()
     {
         $documents = [
-            new TextDocument(Uuid::v4(), 'Document with "quotes" and special chars: @#$%'),
-            new TextDocument(Uuid::v4(), "Document with\nnewlines\nand\ttabs"),
-            new TextDocument(Uuid::v4(), 'Document with émojis 🚀 and ünïcödé'),
+            new TextDocument(Uuid::v4()->toString(), 'Document with "quotes" and special chars: @#$%'),
+            new TextDocument(Uuid::v4()->toString(), "Document with\nnewlines\nand\ttabs"),
+            new TextDocument(Uuid::v4()->toString(), 'Document with émojis 🚀 and ünïcödé'),
         ];
 
         $vectors = [
@@ -248,8 +248,8 @@ final class VectorizerTest extends TestCase
     public function testVectorizeDocumentsWithoutBatchSupportUsesNonBatchMode()
     {
         $documents = [
-            new TextDocument(Uuid::v4(), 'Document 1'),
-            new TextDocument(Uuid::v4(), 'Document 2'),
+            new TextDocument(Uuid::v4()->toString(), 'Document 1'),
+            new TextDocument(Uuid::v4()->toString(), 'Document 2'),
         ];
 
         $vectors = [
@@ -440,7 +440,7 @@ final class VectorizerTest extends TestCase
     public function testVectorizeTextDocumentsPassesOptionsToInvoke()
     {
         $documents = [
-            new TextDocument(Uuid::v4(), 'Test document', new Metadata(['source' => 'test'])),
+            new TextDocument(Uuid::v4()->toString(), 'Test document', new Metadata(['source' => 'test'])),
         ];
 
         $vector = new Vector([0.1, 0.2, 0.3]);
@@ -459,7 +459,7 @@ final class VectorizerTest extends TestCase
     public function testVectorizeTextDocumentsWithEmptyOptions()
     {
         $documents = [
-            new TextDocument(Uuid::v4(), 'Test document'),
+            new TextDocument(Uuid::v4()->toString(), 'Test document'),
         ];
 
         $vector = new Vector([0.1, 0.2, 0.3]);
@@ -520,8 +520,8 @@ final class VectorizerTest extends TestCase
     public function testVectorizeTextDocumentsWithoutBatchSupportPassesOptions()
     {
         $documents = [
-            new TextDocument(Uuid::v4(), 'Document 1'),
-            new TextDocument(Uuid::v4(), 'Document 2'),
+            new TextDocument(Uuid::v4()->toString(), 'Document 1'),
+            new TextDocument(Uuid::v4()->toString(), 'Document 2'),
         ];
 
         $vectors = [

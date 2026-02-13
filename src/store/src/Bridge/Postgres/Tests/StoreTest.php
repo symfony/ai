@@ -43,7 +43,7 @@ final class StoreTest extends TestCase
             }))
             ->willReturn($statement);
 
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
 
         $statement->expects($this->exactly(3))
             ->method('bindValue')
@@ -52,7 +52,7 @@ final class StoreTest extends TestCase
                 ++$callCount;
 
                 match ($callCount) {
-                    1 => $this->assertSame([':id', $uuid->toRfc4122()], [$param, $value]),
+                    1 => $this->assertSame([':id', $uuid], [$param, $value]),
                     2 => $this->assertSame([':metadata', json_encode(['title' => 'Test Document'])], [$param, $value]),
                     3 => $this->assertSame([':vector', '[0.1,0.2,0.3]'], [$param, $value]),
                     default => $this->fail('Unexpected bindValue call'),
@@ -79,8 +79,8 @@ final class StoreTest extends TestCase
             ->method('prepare')
             ->willReturn($statement);
 
-        $uuid1 = Uuid::v4();
-        $uuid2 = Uuid::v4();
+        $uuid1 = Uuid::v4()->toString();
+        $uuid2 = Uuid::v4()->toString();
 
         $statement->expects($this->exactly(6))
             ->method('bindValue')
@@ -89,10 +89,10 @@ final class StoreTest extends TestCase
                 ++$callCount;
 
                 match ($callCount) {
-                    1 => $this->assertSame([':id', $uuid1->toRfc4122()], [$param, $value]),
+                    1 => $this->assertSame([':id', $uuid1], [$param, $value]),
                     2 => $this->assertSame([':metadata', '[]'], [$param, $value]),
                     3 => $this->assertSame([':vector', '[0.1,0.2,0.3]'], [$param, $value]),
-                    4 => $this->assertSame([':id', $uuid2->toRfc4122()], [$param, $value]),
+                    4 => $this->assertSame([':id', $uuid2], [$param, $value]),
                     5 => $this->assertSame([':metadata', json_encode(['title' => 'Second'])], [$param, $value]),
                     6 => $this->assertSame([':vector', '[0.4,0.5,0.6]'], [$param, $value]),
                     default => $this->fail('Unexpected bindValue call'),

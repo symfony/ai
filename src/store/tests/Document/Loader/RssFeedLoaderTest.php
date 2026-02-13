@@ -125,7 +125,7 @@ XML;
 
         foreach ($result as $document) {
             $this->assertInstanceOf(TextDocument::class, $document);
-            $this->assertInstanceOf(Uuid::class, $document->getId());
+            $this->assertTrue(Uuid::isValid($document->getId()));
             $this->assertNotEmpty($document->getContent());
         }
     }

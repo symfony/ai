@@ -79,6 +79,24 @@ Store
    +$indexer->index('/new/source');
    ```
 
+ * The `Symfony\AI\Store\Document\TextDocument` and `Symfony\AI\Store\Document\VectorDocument` classes now only accept
+   `string` or `int` types for the `$id` property. The `Uuid` type has been removed and auto-casting to `uuid` in store
+   bridges has been removed as well:
+
+   ```diff
+    use Symfony\AI\Store\Document\TextDocument;
+    use Symfony\AI\Store\Document\VectorDocument;
+    use Symfony\Component\Uid\Uuid;
+
+    -$textDoc = new TextDocument(Uuid::v4(), 'content');
+    +$textDoc = new TextDocument(Uuid::v4()->toString(), 'content');
+
+    -$vectorDoc = new VectorDocument(Uuid::v4(), [0.1, ...]);
+    +$vectorDoc = new VectorDocument(Uuid::v4()->toString(), [0.1, ...]);
+    ```
+
+ * The `Symfony\AI\Store\Document\EmbeddableDocumentInterface::getId()` can only return `string` or `int` types now.
+
 UPGRADE FROM 0.2 to 0.3
 =======================
 

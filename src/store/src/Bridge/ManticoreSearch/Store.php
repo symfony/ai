@@ -70,7 +70,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     'table' => $this->table,
                     'id' => random_int(0, \PHP_INT_MAX),
                     'doc' => [
-                        'uuid' => $document->id->toRfc4122(),
+                        'uuid' => $document->id,
                         $this->field => $document->vector->getData(),
                         'metadata' => json_encode($document->metadata->getArrayCopy()),
                     ],

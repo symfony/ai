@@ -74,7 +74,7 @@ final class RssFeedLoader implements LoaderInterface
 
             $item = new RssItem($id, $node->filterXpath('//title')->text(), $link, new \DateTimeImmutable($node->filterXpath('//pubDate')->text()), $node->filterXpath('//description')->text(), $author, $content);
 
-            yield new TextDocument($id, $item->toString(), new Metadata([
+            yield new TextDocument($id->toString(), $item->toString(), new Metadata([
                 Metadata::KEY_SOURCE => $source,
                 ...$item->toArray(),
             ]));

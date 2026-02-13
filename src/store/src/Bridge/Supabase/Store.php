@@ -64,7 +64,7 @@ final class Store implements StoreInterface
             }
 
             $rows[] = [
-                'id' => $document->id->toRfc4122(),
+                'id' => $document->id,
                 $this->vectorFieldName => $document->vector->getData(),
                 'metadata' => $document->metadata->getArrayCopy(),
             ];
