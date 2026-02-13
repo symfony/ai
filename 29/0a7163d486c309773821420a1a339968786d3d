@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-11T20:55:50Z
+
+@OskarStark the failing testcase seems something different - in my opinion this PR is ready
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-12T04:05:41Z
+
+What do you mean? All checks passed 🤔
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-12T11:46:40Z
+
+> What do you mean? All checks passed 🤔
+
+<img width="663" height="175" alt="image" src="https://github.com/user-attachments/assets/5313ae00-4b86-4caf-8a3e-a25dc5377c8e" />
+
+A check is failing 😂
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-13T15:26:40Z
+
+Oh, it's unrelated. Weird, it was green, or maybe caching issue
