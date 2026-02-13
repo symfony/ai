@@ -31,7 +31,6 @@ use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
-use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
@@ -132,12 +131,6 @@ $factories = [
         http_client(),
         env('TYPESENSE_HOST'),
         env('TYPESENSE_API_KEY'),
-        'symfony',
-    ),
-    'weaviate' => static fn (): WeaviateStore => new WeaviateStore(
-        http_client(),
-        env('WEAVIATE_HOST'),
-        env('WEAVIATE_API_KEY'),
         'symfony',
     ),
 ];

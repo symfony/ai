@@ -300,4 +300,85 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $results);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testStoreCanRemoveSingleId()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 204,
+            ]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8080',
+            'test',
+            'test',
+        );
+
+        $store->remove('test-id-1');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveMultipleIds()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 204,
+            ]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8080',
+            'test',
+            'test',
+        );
+
+        $store->remove(['test-id-1', 'test-id-2', 'test-id-3']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveWithEmptyArray()
+    {
+        $httpClient = new MockHttpClient([], 'http://127.0.0.1:8080');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8080',
+            'test',
+            'test',
+        );
+
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCannotRemoveOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'error' => [
+                    'message' => 'Object not found',
+                ],
+            ], [
+                'http_code' => 404,
+            ]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8080',
+            'test',
+            'test',
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 404 returned for "http://127.0.0.1:8080/v1/batch/objects".');
+        $this->expectExceptionCode(404);
+        $store->remove('non-existent-id');
+    }
 }
