@@ -1,0 +1,21 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-13T12:18:56Z
+
+Chat is working for me, but `chat-org.php` not:
+<img width="1844" height="1266" alt="CleanShot 2026-02-13 at 13 18 01@2x" src="https://github.com/user-attachments/assets/d5a759a5-60f2-47bd-a7bb-681b6e045c31" />
+
+Is it enough to enable the model like this in my organization?
+<img width="1892" height="226" alt="CleanShot 2026-02-13 at 13 18 32@2x" src="https://github.com/user-attachments/assets/2670c03a-a400-4186-a62c-60a4cee87321" />
+
+---------------------------------------------------------------------------
+
+by dotmarn at 2026-02-13T14:28:09Z
+
+I think that should do. I couldn't verify that because I don't have an organisation account that I can utilise.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-13T14:43:08Z
+
+Could you do me a favor then and split this PR into 2? One for chat and one for chat org? I would then be happy to merge the chat one
