@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Anthropic\Tests\Contract;
+namespace Symfony\AI\Platform\Bridge\Bedrock\Tests\Nova\Contract;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Anthropic\Claude;
-use Symfony\AI\Platform\Bridge\Anthropic\Contract\AssistantMessageNormalizer;
+use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\AssistantMessageNormalizer;
+use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -27,7 +27,7 @@ final class AssistantMessageNormalizerTest extends TestCase
         $normalizer = new AssistantMessageNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
-            Contract::CONTEXT_MODEL => new Claude('claude-3-5-sonnet-latest'),
+            Contract::CONTEXT_MODEL => new Nova('nova-pro'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not an assistant message'));
     }
@@ -40,7 +40,7 @@ final class AssistantMessageNormalizerTest extends TestCase
     }
 
     /**
-     * @param array{role: 'assistant', content: string|list<array{type: 'tool_use', id: string, name: string, input: array<string, mixed>|\stdClass}>} $expectedOutput
+     * @param array{role: 'assistant', content: array<array{toolUse?: array{toolUseId: string, name: string, input: mixed}, text?: string}>} $expectedOutput
      */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(AssistantMessage $message, array $expectedOutput)
@@ -57,11 +57,9 @@ final class AssistantMessageNormalizerTest extends TestCase
      *     0: AssistantMessage,
      *     1: array{
      *         role: 'assistant',
-     *         content: string|list<array{
-     *             type: 'tool_use',
-     *             id: string,
-     *             name: string,
-     *             input: array<string, mixed>|\stdClass
+     *         content: array<array{
+     *             toolUse?: array{toolUseId: string, name: string, input: mixed},
+     *             text?: string
      *         }>
      *     }
      * }>
@@ -72,7 +70,7 @@ final class AssistantMessageNormalizerTest extends TestCase
             new AssistantMessage('Great to meet you. What would you like to know?'),
             [
                 'role' => 'assistant',
-                'content' => 'Great to meet you. What would you like to know?',
+                'content' => [['text' => 'Great to meet you. What would you like to know?']],
             ],
         ];
         yield 'function call' => [
@@ -81,10 +79,11 @@ final class AssistantMessageNormalizerTest extends TestCase
                 'role' => 'assistant',
                 'content' => [
                     [
-                        'type' => 'tool_use',
-                        'id' => 'id1',
-                        'name' => 'name1',
-                        'input' => ['arg1' => '123'],
+                        'toolUse' => [
+                            'toolUseId' => 'id1',
+                            'name' => 'name1',
+                            'input' => ['arg1' => '123'],
+                        ],
                     ],
                 ],
             ],
@@ -95,10 +94,11 @@ final class AssistantMessageNormalizerTest extends TestCase
                 'role' => 'assistant',
                 'content' => [
                     [
-                        'type' => 'tool_use',
-                        'id' => 'id1',
-                        'name' => 'name1',
-                        'input' => new \stdClass(),
+                        'toolUse' => [
+                            'toolUseId' => 'id1',
+                            'name' => 'name1',
+                            'input' => new \stdClass(),
+                        ],
                     ],
                 ],
             ],
@@ -120,7 +120,7 @@ final class AssistantMessageNormalizerTest extends TestCase
 
         $this->assertSame([
             'role' => 'assistant',
-            'content' => 'Stringable content',
+            'content' => [['text' => 'Stringable content']],
         ], $normalized);
     }
 
@@ -145,9 +145,10 @@ final class AssistantMessageNormalizerTest extends TestCase
         $normalized = $normalizer->normalize($message);
 
         $this->assertSame('assistant', $normalized['role']);
-        $this->assertIsString($normalized['content']);
-        $this->assertStringContainsString('"title":"Test"', $normalized['content']);
-        $this->assertStringContainsString('"value":123', $normalized['content']);
+        $this->assertCount(1, $normalized['content']);
+        $this->assertIsString($normalized['content'][0]['text']);
+        $this->assertStringContainsString('"title":"Test"', $normalized['content'][0]['text']);
+        $this->assertStringContainsString('"value":123', $normalized['content'][0]['text']);
     }
 
     public function testNormalizeWithObjectContent()
@@ -167,7 +168,8 @@ final class AssistantMessageNormalizerTest extends TestCase
         $normalized = $normalizer->normalize($message);
 
         $this->assertSame('assistant', $normalized['role']);
-        $this->assertIsString($normalized['content']);
-        $this->assertStringContainsString('"property":"value"', $normalized['content']);
+        $this->assertCount(1, $normalized['content']);
+        $this->assertIsString($normalized['content'][0]['text']);
+        $this->assertStringContainsString('"property":"value"', $normalized['content'][0]['text']);
     }
 }

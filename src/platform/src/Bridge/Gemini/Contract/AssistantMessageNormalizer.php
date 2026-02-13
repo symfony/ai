@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Contract;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Contract\Normalizer\ContentNormalizerTrait;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model;
@@ -23,6 +24,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
  */
 final class AssistantMessageNormalizer extends ModelContractNormalizer implements NormalizerAwareInterface
 {
+    use ContentNormalizerTrait;
     use NormalizerAwareTrait;
 
     /**
@@ -34,18 +36,9 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     {
         $normalized = [];
 
-        $content = $data->getContent();
+        $content = $this->normalizeContentToString($data->getContent(), $format, $context);
         if (null !== $content) {
-            if (\is_string($content)) {
-                $normalized['text'] = $content;
-            } elseif ($content instanceof \Stringable) {
-                $normalized['text'] = (string) $content;
-            } else {
-                $normalized['text'] = json_encode(
-                    $this->normalizer->normalize($content, $format, $context),
-                    \JSON_THROW_ON_ERROR
-                );
-            }
+            $normalized['text'] = $content;
         }
 
         if ($data->hasToolCalls()) {

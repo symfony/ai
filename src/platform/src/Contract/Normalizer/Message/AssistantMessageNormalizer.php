@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Contract\Normalizer\Message;
 
+use Symfony\AI\Platform\Contract\Normalizer\ContentNormalizerTrait;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
@@ -21,6 +22,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
  */
 final class AssistantMessageNormalizer implements NormalizerInterface, NormalizerAwareInterface
 {
+    use ContentNormalizerTrait;
     use NormalizerAwareTrait;
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
@@ -46,18 +48,9 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
             'role' => $data->getRole()->value,
         ];
 
-        $content = $data->getContent();
+        $content = $this->normalizeContentToString($data->getContent(), $format, $context);
         if (null !== $content) {
-            if (\is_string($content)) {
-                $array['content'] = $content;
-            } elseif ($content instanceof \Stringable) {
-                $array['content'] = (string) $content;
-            } else {
-                $array['content'] = json_encode(
-                    $this->normalizer->normalize($content, $format, $context),
-                    \JSON_THROW_ON_ERROR
-                );
-            }
+            $array['content'] = $content;
         }
 
         if ($data->hasToolCalls()) {

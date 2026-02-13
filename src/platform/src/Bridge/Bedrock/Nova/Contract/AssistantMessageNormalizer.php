@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract;
 
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
+use Symfony\AI\Platform\Contract\Normalizer\ContentNormalizerTrait;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model;
@@ -24,6 +25,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
  */
 final class AssistantMessageNormalizer extends ModelContractNormalizer implements NormalizerAwareInterface
 {
+    use ContentNormalizerTrait;
     use NormalizerAwareTrait;
 
     /**
@@ -58,21 +60,9 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
             ];
         }
 
-        $content = $data->getContent();
-        if (\is_string($content)) {
-            $textContent = $content;
-        } elseif ($content instanceof \Stringable) {
-            $textContent = (string) $content;
-        } else {
-            $textContent = json_encode(
-                $this->normalizer->normalize($content, $format, $context),
-                \JSON_THROW_ON_ERROR
-            );
-        }
-
         return [
             'role' => 'assistant',
-            'content' => [['text' => $textContent]],
+            'content' => [['text' => $this->normalizeContentToString($data->getContent(), $format, $context)]],
         ];
     }
 

@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Anthropic\Contract;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Contract\Normalizer\ContentNormalizerTrait;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model;
@@ -24,6 +25,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
  */
 final class AssistantMessageNormalizer extends ModelContractNormalizer implements NormalizerAwareInterface
 {
+    use ContentNormalizerTrait;
     use NormalizerAwareTrait;
 
     /**
@@ -48,7 +50,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
                 'name' => $toolCall->getName(),
                 'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
             ];
-        }, $data->getToolCalls()) : $this->normalizeContent($data->getContent(), $format, $context);
+        }, $data->getToolCalls()) : $this->normalizeContentToString($data->getContent(), $format, $context);
 
         return [
             'role' => 'assistant',
@@ -64,25 +66,5 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     protected function supportsModel(Model $model): bool
     {
         return $model instanceof Claude;
-    }
-
-    private function normalizeContent(object|string|null $content, ?string $format, array $context): ?string
-    {
-        if (null === $content) {
-            return null;
-        }
-
-        if (\is_string($content)) {
-            return $content;
-        }
-
-        if ($content instanceof \Stringable) {
-            return (string) $content;
-        }
-
-        return json_encode(
-            $this->normalizer->normalize($content, $format, $context),
-            \JSON_THROW_ON_ERROR
-        );
     }
 }

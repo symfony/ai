@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 final class AssistantMessageNormalizerTest extends TestCase
 {
@@ -68,5 +69,68 @@ final class AssistantMessageNormalizerTest extends TestCase
             new AssistantMessage(toolCalls: [new ToolCall('id1', 'name1')]),
             [['functionCall' => ['id' => 'id1', 'name' => 'name1']]],
         ];
+    }
+
+    public function testNormalizeWithStringableContent()
+    {
+        $content = new class implements \Stringable {
+            public function __toString(): string
+            {
+                return 'Stringable content';
+            }
+        };
+        $message = new AssistantMessage($content);
+        $normalizer = new AssistantMessageNormalizer();
+
+        $normalized = $normalizer->normalize($message);
+
+        $this->assertSame([['text' => 'Stringable content']], $normalized);
+    }
+
+    public function testNormalizeWithJsonSerializableContent()
+    {
+        $content = new class implements \JsonSerializable {
+            public function jsonSerialize(): array
+            {
+                return ['title' => 'Test', 'value' => 123];
+            }
+        };
+        $message = new AssistantMessage($content);
+        $normalizer = new AssistantMessageNormalizer();
+
+        $innerNormalizer = $this->createMock(NormalizerInterface::class);
+        $innerNormalizer->expects($this->once())
+            ->method('normalize')
+            ->with($content, null, [])
+            ->willReturn(['title' => 'Test', 'value' => 123]);
+        $normalizer->setNormalizer($innerNormalizer);
+
+        $normalized = $normalizer->normalize($message);
+
+        $this->assertCount(1, $normalized);
+        $this->assertIsString($normalized[0]['text']);
+        $this->assertStringContainsString('"title":"Test"', $normalized[0]['text']);
+        $this->assertStringContainsString('"value":123', $normalized[0]['text']);
+    }
+
+    public function testNormalizeWithObjectContent()
+    {
+        $content = new \stdClass();
+        $content->property = 'value';
+        $message = new AssistantMessage($content);
+        $normalizer = new AssistantMessageNormalizer();
+
+        $innerNormalizer = $this->createMock(NormalizerInterface::class);
+        $innerNormalizer->expects($this->once())
+            ->method('normalize')
+            ->with($content, null, [])
+            ->willReturn(['property' => 'value']);
+        $normalizer->setNormalizer($innerNormalizer);
+
+        $normalized = $normalizer->normalize($message);
+
+        $this->assertCount(1, $normalized);
+        $this->assertIsString($normalized[0]['text']);
+        $this->assertStringContainsString('"property":"value"', $normalized[0]['text']);
     }
 }
