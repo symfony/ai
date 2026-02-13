@@ -53,9 +53,9 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.46",
-        "symfony/console": "^6.4|^7.1",
-        "symfony/dependency-injection": "^6.4|^7.1",
-        "symfony/dom-crawler": "^6.4|^7.1"
+        "symfony/console": "^7.3|^8.0",
+        "symfony/dom-crawler": "^7.3|^8.0",
+        "symfony/dependency-injection": "^7.3|^8.0"
     },
     "minimum-stability": "dev",
     "autoload": {
