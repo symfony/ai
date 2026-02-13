@@ -26,6 +26,7 @@ use Symfony\AI\Chat\Command\SetupStoreCommand as SetupMessageStoreCommand;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Bridge\AiMlApi\ModelCatalog as AiMlApiModelCatalog;
 use Symfony\AI\Platform\Bridge\Albert\ModelCatalog as AlbertModelCatalog;
+use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\ModelCatalog as AzureOpenAiModelCatalog;
@@ -96,6 +97,7 @@ return static function (ContainerConfigurator $container): void {
         // model catalog
         ->set('ai.platform.model_catalog.aimlapi', AiMlApiModelCatalog::class)
         ->set('ai.platform.model_catalog.albert', AlbertModelCatalog::class)
+        ->set('ai.platform.model_catalog.amazeeai', AmazeeAiModelCatalog::class)
         ->set('ai.platform.model_catalog.anthropic', AnthropicModelCatalog::class)
         ->set('ai.platform.model_catalog.azure.openai', AzureOpenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.bedrock', BedrockModelCatalog::class)

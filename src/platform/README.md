@@ -21,6 +21,7 @@ To use a specific AI platform, install the corresponding bridge package:
 |---------------------|-------------------------------------------|
 | AI.ML API           | `symfony/ai-ai-ml-api-platform`           |
 | Albert              | `symfony/ai-albert-platform`              |
+| amazee.ai           | `symfony/ai-amazee-ai-platform`           |
 | Anthropic           | `symfony/ai-anthropic-platform`           |
 | Azure OpenAI        | `symfony/ai-azure-platform`               |
 | AWS Bedrock         | `symfony/ai-bedrock-platform`             |
