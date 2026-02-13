@@ -14,6 +14,6 @@ namespace Symfony\AI\Store\Exception;
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-class LogicException extends \LogicException implements ExceptionInterface
+class UnsupportedFeatureException extends \LogicException implements ExceptionInterface
 {
 }

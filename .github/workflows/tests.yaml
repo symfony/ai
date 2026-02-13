@@ -125,7 +125,70 @@ jobs:
                   dependency-versions: ${{ matrix.dependency-version }}
 
             - name: Run PHPUnit
-              run: cd src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} && vendor/bin/phpunit
+              run: cd src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} && vendor/bin/phpunit --exclude-group integration
+
+    store-bridges-integration:
+        name: Integration / Store / ${{ matrix.bridge }}
+        needs: matrix
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                bridge:
+                    - ChromaDb
+                    - ClickHouse
+                    - Elasticsearch
+                    - ManticoreSearch
+                    - MariaDb
+                    - Meilisearch
+                    - Milvus
+                    - Neo4j
+                    - OpenSearch
+                    - Postgres
+                    - Qdrant
+                    - Redis
+                    - Weaviate
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.4'
+                  tools: flex
+                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v3
+
+            - name: Build packages
+              run: php .github/build-packages.php
+
+            # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
+            - name: Clean vendor folders
+              run: rm -rf vendor src/store/src/Bridge/${{ matrix.bridge }}/vendor
+
+            - name: Install dependencies
+              uses: ramsey/composer-install@v3
+              with:
+                  working-directory: src/store/src/Bridge/${{ matrix.bridge }}
+
+            - name: Start Docker services
+              working-directory: src/store/src/Bridge/${{ matrix.bridge }}
+              run: docker compose up -d --wait
+
+            - name: Wait for services to be ready
+              run: sleep 15
+
+            - name: Run integration tests
+              run: cd src/store/src/Bridge/${{ matrix.bridge }} && vendor/bin/phpunit --group integration
+
+            - name: Stop Docker services
+              if: always()
+              working-directory: src/store/src/Bridge/${{ matrix.bridge }}
+              run: docker compose down
 
     message-store-bridges:
         name: Unit / Message Store / ${{ matrix.bridge.bridge }} / PHP ${{ matrix.php-version }}${{ matrix.dependency-version == 'lowest' && ' / lowest' || '' }}

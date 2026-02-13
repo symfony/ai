@@ -77,8 +77,8 @@ class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $this->execute('POST', 'ALTER TABLE {{ table }} DELETE WHERE id IN {ids:Array(String)}', [
-            'ids' => $ids,
+        $this->execute('POST', 'DELETE FROM {{ table }} WHERE id IN {ids:Array(UUID)}', [
+            'ids' => "['".implode("','", $ids)."']",
         ]);
     }
 

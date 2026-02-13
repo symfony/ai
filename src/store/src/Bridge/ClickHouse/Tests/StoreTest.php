@@ -233,14 +233,15 @@ final class StoreTest extends TestCase
 
     public function testRemoveSingleDocument()
     {
-        $id = Uuid::v4()->toRfc4122();
+        $id = 'a0d23a85-abfb-4696-a652-73a83b46710b';
 
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($id) {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
             $this->assertSame('POST', $method);
             $this->assertStringContainsString('?', $url); // Check that URL has query parameters
-            $expectedSql = 'ALTER TABLE test_table DELETE WHERE id IN {ids:Array(String)}';
+            $expectedSql = 'DELETE FROM test_table WHERE id IN {ids:Array(UUID)}';
             $this->assertSame($expectedSql, $options['query']['query']);
-            $this->assertSame([$id], $options['query']['param_ids']);
+            $expectedId = "['a0d23a85-abfb-4696-a652-73a83b46710b']";
+            $this->assertSame($expectedId, $options['query']['param_ids']);
 
             return new MockResponse('', ['http_code' => 200]);
         });
@@ -252,15 +253,16 @@ final class StoreTest extends TestCase
 
     public function testRemoveMultipleDocuments()
     {
-        $id1 = Uuid::v4()->toRfc4122();
-        $id2 = Uuid::v4()->toRfc4122();
+        $id1 = '93c1d46a-2a30-4466-a28b-8e92e935a29b';
+        $id2 = 'f5667ae9-e0f1-4fa0-ab16-37e0136680ca';
+        $expectedIds = "['93c1d46a-2a30-4466-a28b-8e92e935a29b','f5667ae9-e0f1-4fa0-ab16-37e0136680ca']";
 
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($id1, $id2) {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($expectedIds) {
             $this->assertSame('POST', $method);
             $this->assertStringContainsString('?', $url); // Check that URL has query parameters
-            $expectedSql = 'ALTER TABLE test_table DELETE WHERE id IN {ids:Array(String)}';
+            $expectedSql = 'DELETE FROM test_table WHERE id IN {ids:Array(UUID)}';
             $this->assertSame($expectedSql, $options['query']['query']);
-            $this->assertSame([$id1, $id2], $options['query']['param_ids']);
+            $this->assertSame($expectedIds, $options['query']['param_ids']);
 
             return new MockResponse('', ['http_code' => 200]);
         });

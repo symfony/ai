@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `remove` method
+ * Add support for store management methods `setup` and `drop`
 
 0.1
 ---
