@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
+use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
@@ -115,7 +116,7 @@ class ProcessorCompilerPassTest extends TestCase
 
         // MultiAgent service - should NOT be processed
         $orchestratorRef = new Reference('orchestrator');
-        $handoffs = [new Definition('Symfony\AI\Agent\MultiAgent\Handoff')];
+        $handoffs = [new Definition(Handoff::class)];
         $fallbackRef = new Reference('fallback');
         $name = 'support';
 
