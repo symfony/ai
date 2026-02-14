@@ -214,4 +214,81 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $results);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testStoreCanRemoveSingleDocument()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:8108');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8108',
+            'test',
+            'test',
+        );
+
+        $store->remove('doc-id-123');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveMultipleDocuments()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:8108');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8108',
+            'test',
+            'test',
+        );
+
+        $store->remove(['doc-id-123', 'doc-id-456', 'doc-id-789']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveWithEmptyArray()
+    {
+        $httpClient = new MockHttpClient([], 'http://127.0.0.1:8108');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8108',
+            'test',
+            'test',
+        );
+
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCannotRemoveOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 404,
+            ]),
+        ], 'http://127.0.0.1:8108');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8108',
+            'test',
+            'test',
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 404 returned for "http://127.0.0.1:8108/collections/test/documents?filter_by=id:[doc-id-123]".');
+        $this->expectExceptionCode(404);
+        $store->remove('doc-id-123');
+    }
 }

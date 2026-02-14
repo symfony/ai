@@ -147,6 +147,7 @@ jobs:
                     - Postgres
                     - Qdrant
                     - Redis
+                    - Typesense
                     - Weaviate
 
         steps:
@@ -474,7 +475,7 @@ jobs:
 
             - name: Up the examples services
               working-directory: examples
-              run: docker compose up -d meilisearch mongodb pogocache redis surrealdb typesense
+              run: docker compose up -d meilisearch mongodb pogocache redis surrealdb
 
             - name: Configure environment
               run: |

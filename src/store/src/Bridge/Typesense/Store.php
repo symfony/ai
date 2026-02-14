@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\UnsupportedFeatureException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -75,7 +74,23 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new UnsupportedFeatureException('Method not implemented yet.');
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
+        }
+
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $this->request('DELETE', \sprintf(
+            'collections/%s/documents?filter_by=id:[%s]',
+            $this->collection,
+            implode(',', $ids),
+        ), []);
     }
 
     public function query(Vector $vector, array $options = []): iterable
