@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.4
+---
+
+ * Add support for object serialization in template variables via `template_vars` option
+
 0.3
 ---
 

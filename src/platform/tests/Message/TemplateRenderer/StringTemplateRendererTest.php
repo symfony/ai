@@ -113,10 +113,89 @@ final class StringTemplateRendererTest extends TestCase
     public function testThrowsExceptionForInvalidValueType()
     {
         $template = Template::string('Hello {name}!');
+        $object = new \stdClass();
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Template variable "name" must be string, numeric or Stringable');
 
-        $this->renderer->render($template, ['name' => []]);
+        $this->renderer->render($template, ['name' => $object]);
+    }
+
+    public function testRenderNestedArrayWithDotNotation()
+    {
+        $template = Template::string('City: {city.name}, Population: {city.population}');
+
+        $result = $this->renderer->render($template, [
+            'city' => [
+                'name' => 'Berlin',
+                'population' => 3500000,
+            ],
+        ]);
+
+        $this->assertSame('City: Berlin, Population: 3500000', $result);
+    }
+
+    public function testRenderDeeplyNestedArray()
+    {
+        $template = Template::string('Value: {level1.level2.level3}');
+
+        $result = $this->renderer->render($template, [
+            'level1' => [
+                'level2' => [
+                    'level3' => 'deep value',
+                ],
+            ],
+        ]);
+
+        $this->assertSame('Value: deep value', $result);
+    }
+
+    public function testRenderNullValueAsEmptyString()
+    {
+        $template = Template::string('Value: {value}');
+
+        $result = $this->renderer->render($template, ['value' => null]);
+
+        $this->assertSame('Value: ', $result);
+    }
+
+    public function testRenderMixedFlatAndNestedVariables()
+    {
+        $template = Template::string('{greeting} {person.name} from {person.city.name}!');
+
+        $result = $this->renderer->render($template, [
+            'greeting' => 'Hello',
+            'person' => [
+                'name' => 'John',
+                'city' => [
+                    'name' => 'Paris',
+                ],
+            ],
+        ]);
+
+        $this->assertSame('Hello John from Paris!', $result);
+    }
+
+    public function testRenderEmptyNestedArray()
+    {
+        $template = Template::string('Value: {data.key}');
+
+        $result = $this->renderer->render($template, ['data' => []]);
+
+        $this->assertSame('Value: {data.key}', $result);
+    }
+
+    public function testRenderNestedArrayWithNumericValues()
+    {
+        $template = Template::string('Coordinates: {location.lat}, {location.lng}');
+
+        $result = $this->renderer->render($template, [
+            'location' => [
+                'lat' => 52.520008,
+                'lng' => 13.404954,
+            ],
+        ]);
+
+        $this->assertSame('Coordinates: 52.520008, 13.404954', $result);
     }
 }
