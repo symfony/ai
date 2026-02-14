@@ -43,30 +43,32 @@ final class StreamResult extends BaseResult
         }
         $this->getMetadata()->merge($event->getMetadata());
 
-        foreach ($this->generator as $chunk) {
-            $event = new ChunkEvent($this, $chunk);
+        try {
+            foreach ($this->generator as $chunk) {
+                $event = new ChunkEvent($this, $chunk);
+                foreach ($this->listeners as $listener) {
+                    $listener->onChunk($event);
+                }
+                $this->getMetadata()->merge($event->getMetadata());
+
+                if ($event->isChunkSkipped()) {
+                    continue;
+                }
+
+                $chunk = $event->getChunk();
+
+                if (null === $chunk || !is_iterable($chunk)) {
+                    yield $chunk;
+                } else {
+                    yield from $chunk;
+                }
+            }
+        } finally {
+            $event = new CompleteEvent($this);
             foreach ($this->listeners as $listener) {
-                $listener->onChunk($event);
+                $listener->onComplete($event);
             }
             $this->getMetadata()->merge($event->getMetadata());
-
-            if ($event->isChunkSkipped()) {
-                continue;
-            }
-
-            $chunk = $event->getChunk();
-
-            if (null === $chunk || !is_iterable($chunk)) {
-                yield $chunk;
-            } else {
-                yield from $chunk;
-            }
         }
-
-        $event = new CompleteEvent($this);
-        foreach ($this->listeners as $listener) {
-            $listener->onComplete($event);
-        }
-        $this->getMetadata()->merge($event->getMetadata());
     }
 }
