@@ -17,7 +17,6 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
-use Symfony\AI\Store\Exception\UnsupportedFeatureException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -67,7 +66,16 @@ class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new UnsupportedFeatureException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $recordIds = array_map(fn (string $id) => \sprintf('%s:`%s`', $this->table, $id), $ids);
+        $this->request('POST', 'sql', \sprintf('DELETE %s;', implode(', ', $recordIds)));
     }
 
     public function query(Vector $vector, array $options = []): iterable
@@ -104,7 +112,7 @@ class Store implements ManagedStoreInterface, StoreInterface
 
         if (\is_array($payload) && [] !== $payload) {
             $finalPayload = [
-                'body' => $payload,
+                'json' => $payload,
             ];
         }
 

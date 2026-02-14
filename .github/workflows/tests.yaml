@@ -147,6 +147,7 @@ jobs:
                     - Postgres
                     - Qdrant
                     - Redis
+                    - SurrealDb
                     - Typesense
                     - Weaviate
 
