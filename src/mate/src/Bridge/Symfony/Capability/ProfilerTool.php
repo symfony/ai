@@ -31,7 +31,7 @@ final class ProfilerTool
     }
 
     /**
-     * @return list<ProfileIndexData>
+     * @return array{profiles: list<ProfileIndexData>}
      */
     #[McpTool('symfony-profiler-list', 'List available profiler profiles. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
     public function listProfiles(
@@ -52,10 +52,12 @@ final class ProfilerTool
 
         $profiles = $this->dataProvider->searchProfiles(array_filter($criteria), $limit);
 
-        return array_values(array_map(
-            static fn (ProfileIndex $profile): array => $profile->toArray(),
-            $profiles,
-        ));
+        return [
+            'profiles' => array_values(array_map(
+                static fn (ProfileIndex $profile): array => $profile->toArray(),
+                $profiles,
+            )),
+        ];
     }
 
     /**
@@ -70,7 +72,7 @@ final class ProfilerTool
     }
 
     /**
-     * @return list<ProfileIndexData>
+     * @return array{profiles: list<ProfileIndexData>}
      */
     #[McpTool('symfony-profiler-search', 'Search profiles by criteria. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
     public function searchProfiles(
@@ -93,10 +95,12 @@ final class ProfilerTool
 
         $profiles = $this->dataProvider->searchProfiles(array_filter($criteria), $limit);
 
-        return array_values(array_map(
-            static fn (ProfileIndex $profile): array => $profile->toArray(),
-            $profiles,
-        ));
+        return [
+            'profiles' => array_values(array_map(
+                static fn (ProfileIndex $profile): array => $profile->toArray(),
+                $profiles,
+            )),
+        ];
     }
 
     /**
