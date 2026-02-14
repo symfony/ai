@@ -404,4 +404,130 @@ final class StoreTest extends TestCase
 
         $this->assertCount(2, $results);
     }
+
+    public function testStoreCannotRemoveOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'code' => 200,
+                'details' => 'Authentication succeeded.',
+                'token' => 'bar',
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                [
+                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
+                    'status' => 'OK',
+                    'time' => '263.208µs',
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([], [
+                'http_code' => 400,
+            ]),
+        ], 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
+        $store->setup();
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/sql".');
+        $this->expectExceptionCode(400);
+        $store->remove('test-id');
+    }
+
+    public function testStoreCanRemoveSingleId()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'code' => 200,
+                'details' => 'Authentication succeeded.',
+                'token' => 'bar',
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                [
+                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
+                    'status' => 'OK',
+                    'time' => '263.208µs',
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
+        $store->setup();
+
+        $store->remove('test-id');
+
+        $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveMultipleIds()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'code' => 200,
+                'details' => 'Authentication succeeded.',
+                'token' => 'bar',
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                [
+                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
+                    'status' => 'OK',
+                    'time' => '263.208µs',
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
+        $store->setup();
+
+        $store->remove(['test-id-1', 'test-id-2']);
+
+        $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemoveWithEmptyIds()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'code' => 200,
+                'details' => 'Authentication succeeded.',
+                'token' => 'bar',
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                [
+                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
+                    'status' => 'OK',
+                    'time' => '263.208µs',
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
+        $store->setup();
+
+        $store->remove([]);
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
 }

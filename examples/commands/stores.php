@@ -13,7 +13,6 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 use MongoDB\Client as MongoDbClient;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
-use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
 use Symfony\Component\Clock\MonotonicClock;
@@ -34,15 +33,6 @@ $factories = [
     //     new PineconeClient(env('PINECONE_API_KEY'), env('PINECONE_HOST')),
     //     'symfony',
     // ),
-    'surrealdb' => static fn (): SurrealDbStore => new SurrealDbStore(
-        httpClient: http_client(),
-        endpointUrl: env('SURREALDB_HOST'),
-        user: env('SURREALDB_USER'),
-        password: env('SURREALDB_PASS'),
-        namespace: 'default',
-        database: 'symfony',
-        table: 'symfony',
-    ),
 ];
 
 $storesIds = array_keys($factories);
