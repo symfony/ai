@@ -1,0 +1,30 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-13T23:29:32Z
+
+@copilot please continue here
+
+---------------------------------------------------------------------------
+
+by Copilot at 2026-02-14T00:00:54Z
+
+> @copilot please continue here
+
+I've completed the implementation of the `remove()` method for the Typesense store. Here's what was done:
+
+**Implementation (commit f03214f):**
+- Added `remove(string|array $ids, array $options = [])` method
+- Handles both single ID (string) and array of IDs
+- Validates options parameter (throws exception if non-empty)
+- Makes individual DELETE requests to Typesense API for each document
+
+**Tests (commit f03214f):**
+- Single document removal
+- Multiple documents removal
+- Empty array handling
+- Error response handling (404)
+
+**Documentation (commit ec24ad3):**
+- Updated CHANGELOG.md with new feature entry
+
+The implementation follows the same pattern as other HTTP-based operations in the Typesense store and is consistent with the Pinecone reference implementation.
