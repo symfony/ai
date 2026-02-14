@@ -31,6 +31,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Model::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_STRUCTURED,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                 ],
@@ -39,6 +40,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Model::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_STRUCTURED,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                 ],
@@ -47,6 +49,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Model::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_STRUCTURED,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                 ],
@@ -55,6 +58,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Model::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_STRUCTURED,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                 ],
@@ -63,14 +67,17 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Model::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_STRUCTURED,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
                 ],
             ],
             'qwen-3-235b-a22b-instruct-2507' => [
                 'class' => Model::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_STRUCTURED,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                 ],
@@ -79,6 +86,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Model::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_STRUCTURED,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                 ],
@@ -87,6 +95,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Model::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_STRUCTURED,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                 ],
@@ -95,8 +104,20 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Model::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_STRUCTURED,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'zai-glm-4.7' => [
+                'class' => Model::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
                 ],
             ],
         ];
