@@ -1,0 +1,222 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-13T22:32:39Z
+
+@copilot please rebase and continue your work here
+
+---------------------------------------------------------------------------
+
+by Copilot at 2026-02-13T22:45:47Z
+
+> @copilot please rebase and continue your work here
+
+I've completed the implementation of the `remove()` method for the OpenSearch store. The changes include:
+
+- ✅ Implemented the `remove()` method using OpenSearch's bulk API
+- ✅ Added comprehensive tests (single document, multiple documents, empty array)
+- ✅ Fixed code style issues
+- ✅ Optimized implementation to yield directly without intermediate arrays
+
+The implementation is complete and ready for review (commits b4c8f15, 65ae819, d6c6925).
+
+> [!WARNING]
+>
+> <details>
+> <summary>Firewall rules blocked me from connecting to one or more addresses (expand for details)</summary>
+>
+> #### I tried to connect to the following addresses, but was blocked by firewall rules:
+>
+> - `https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/d1ee5e570343bd4276a3d5959e6e1c2530b006d0`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/OskarStark/enum-helper/zipball/c37c58bdd43530512dfb02cb2f8279b0afef89cf`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/T0buyz /usr/bin/composer install` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/883b20fb38c7866de9844ab6d0a205c423bde2d4`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/PHP-CS-Fixer/shim/zipball/bf90113c2d4f349a639df42045d36e78ffc25c9a`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/clue/reactphp-ndjson/zipball/392dc165fce93b5bb5c637b67e59619223c931b0`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/composer/pcre/zipball/b2bed4734f0cc156ee1fe9c0da2550420d99a21e`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/composer/semver/zipball/198166618906cb2de69b95d7d47e5fa8aa1b2b95`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/composer/xdebug-handler/zipball/6c1925561632e83d60a44492e0b344cf48ab85ef`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/deptrac/deptrac/zipball/b27bfc5291a1cbe1c0ebf514716b1d25c68c63fd`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/doctrine/deprecations/zipball/a2d13f1c09db71b0688cbdbcd17e569ec489c44b`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/T0buyz /usr/bin/composer install` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/doctrine/deprecations/zipball/d4fe3e6fd9bb9e72557a19674f44d8ac7db4c6ca`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/igorw/evenement/zipball/0a16b0d71ab13284339abb99d9d2bd813640efbc`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/nikic/PHP-Parser/zipball/dca41cd15c2ac9d055ad70dbfd011130757d1f82`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phar-io/version/zipball/4f7fd7836c6f332bb2933569e566a0d6c4cbed74`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/php-fig/container/zipball/c71ecc56dfe541dbd90c5360474fbc405f8d5963`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/php-fig/event-dispatcher/zipball/dbefd12671e8a14ec7f180cab83036ed26714bb0`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/php-fig/log/zipball/f16e1d5863e37f8d8c2a01719f5b34baa2b714d3`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/phpDocumentor/GraphViz/zipball/115999dc7f31f2392645aa825a94a6b165e1cedf`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phpDocumentor/ReflectionCommon/zipball/1d01c49d4ed62f25aa84a747ad35d5a16924662b`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phpDocumentor/ReflectionCommon/zipball/a0eeab580cbdf4414fef6978732510a36ed0a9d6`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/T0buyz /usr/bin/composer install` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/5cee1d3dfc2d2aa6599834520911d246f656bcb8`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/T0buyz /usr/bin/composer install` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/phpDocumentor/TypeResolver/zipball/327a05bbee54120d4786a0dc67aad30226ad4cf9`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/phpDocumentor/TypeResolver/zipball/fb05a34cd192e7987c18c06ef47dce6c2e2ec39f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/T0buyz /usr/bin/composer install` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/phpstan/phpdoc-parser/zipball/a004701b11273a26cd7955a61d67a7f1e525a45a`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/T0buyz /usr/bin/composer install` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/phpstan/phpstan-phpunit/zipball/0f6ba8e22a3e919353a8f4615ea3cd2e91626c7f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/phpstan/phpstan-strict-rules/zipball/1aba28b697c1e3b6bbec8a1725f8b11b6d3e5a5f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/phpstan/phpstan/zipball/bd31d25805be804964fd40f486d749296e890c6e`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/phpstan/phpstan/zipball/c6f73a2af4cbcd99c931d0fb8f08548cc0fa8224`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/reactphp/cache/zipball/d47c472b64aa5608225f47965a484b75c7817d5b`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/reactphp/child-process/zipball/970f0e71945556422ee4570ccbabaedc3cf04ad3`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/reactphp/dns/zipball/7562c05391f42701c1fccf189c8225fece1cd7c3`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/reactphp/event-loop/zipball/ba276bda6083df7e0050fd9b33f66ad7a4ac747a`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/reactphp/promise/zipball/23444f53a813a3296c1368bb104793ce8d88f04a`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/reactphp/socket/zipball/ef5b17b81f6f60504c539313f94f2d826c5faa08`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/reactphp/stream/zipball/1e5b0acb8fe55143b5b426817155190eb6f5b18d`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/cli-parser/zipball/249c25bbb38eb80f9ba1682ba5617759f2b853a8`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/code-unit-reverse-lookup/zipball/5cf245ed8605ac5c89946e4bcdcbbd1565b19d9f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/code-unit/zipball/23caa57776ddcaa35a2965b93d5f4212a2c3a2d9`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/comparator/zipball/ee0326914d9fe5797f8f8270d4eb36c42c64afd5`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/complexity/zipball/66dc7be5b87498fc0a94565e3b869515becc6569`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/diff/zipball/7ab1ea946c012266ca32390913653d844ecd085f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/diff/zipball/a42039c742783604f4156c17357f22e335ba5d1c`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/environment/zipball/05faa86b4c0042e122ed6be66766b9bf820775d6`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/exporter/zipball/c939676885df069c0bc467ca4a1ac7dd367db7a8`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/global-state/zipball/88b1eb038ff5daa6f3c2b76bea3cd0ac48626f53`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/object-enumerator/zipball/1748f199f50f7deb6f12c4f08cddc306cf6fd2e2`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/object-reflector/zipball/89dc41f115e98bfa597501c28e489dd7db93b855`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/e9886462f454159e97d6e8e343cb1b512f6f0ff4`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/php-invoker/zipball/cdf46882fb81433d671ed4ba64c62da7e62b1f12`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/php-text-template/zipball/51c29005b7c2781f72381ff01a2fe79be7096d29`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/php-timer/zipball/297d0ed22e93b061dfa9697636255c6b4570786a`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/recursion-context/zipball/5d8d13f2fcb3c9839d4ff05613e008ceb02bfc64`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/type/zipball/6abfe424c60c52cafb35c5c78e142304925817be`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/sebastianbergmann/version/zipball/0e6075acec40b5ed867eefd095488171404c63fa`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/staabm/side-effects-detector/zipball/d8334211a140ce329c13726d4a715adbddd0a163`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/symfony/config/zipball/4275b53b8ab0cf37f48bf273dc2285c8178efdfb`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/console/zipball/41e38717ac1dd7a46b6bda7d6a82af2d98a78894`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/dependency-injection/zipball/76a02cddca45a5254479ad68f9fa274ead0a7ef2`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/deprecation-contracts/zipball/63afe740e99a13ba87ec199bb07bbdee937a5b62`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/event-dispatcher-contracts/zipball/59eb412e93815df44f05f342958efa9f46b1e586`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/event-dispatcher/zipball/dc2c0eba1af673e736bb851d747d266108aea746`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/filesystem/zipball/d551b38811096d0be9c4691d406991b47c0c630a`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/finder/zipball/ad4daa7c38668dcb031e63bc99ea9bd42196a2cb`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/options-resolver/zipball/b38026df55197f9e39a44f3215788edf83187b80`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-ctype/zipball/a3cc8b044a6ea513310cbd48ef7333b384945638`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/T0buyz /usr/bin/composer install` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-intl-grapheme/zipball/380872130d3a5dd3ace2f4010d95125fde5d5c70`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-intl-normalizer/zipball/3833d7255cc303546435cb650316bff708a1c75c`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-mbstring/zipball/6d857f4d76bd4b343eac26d6b539585d2bc56493`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-php80/zipball/0cc9dd0f17f61d8131e7df6b84bd344899fe2608`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-php81/zipball/4a4cfc2d253c21a5ad0e53071df248ed48c6ce5c`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/polyfill-php84/zipball/d8ced4d875142b6a7426000426b8abc631d6b191`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/process/zipball/608476f4604102976d687c483ac63a79ba18cc97`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/service-contracts/zipball/45112560a3ba2d715666a509a0bc9521d10b6c43`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/stopwatch/zipball/8a24af0a2e8a872fb745047180649b8418303084`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/string/zipball/1c4b10461bf2ec27537b5f36105337262f5f5d6f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/var-exporter/zipball/03a60f169c79a28513a78c967316fbc8bf17816f`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/symfony/yaml/zipball/24dd4de28d2e3988b311751ac49e684d783e2345`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/O3pUaj /usr/bin/composer install --no-interaction` (http block)
+> - `https://api.github.com/repos/theofidry/cpu-core-counter/zipball/db9508f7b1474469d9d3c53b86f817e344732678`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/JqAeO1 /usr/bin/composer global require friendsofphp/php-cs-fixer --no-interaction` (http block)
+> - `https://api.github.com/repos/webmozarts/assert/zipball/6976757ba8dd70bf8cbaea0914ad84d8b51a9f46`
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/T0buyz /usr/bin/composer install` (http block)
+>   - Triggering command: `/usr/bin/php8.3 /usr/bin/php8.3 -n -c /tmp/90yf0j /usr/bin/composer install --no-interaction --ignore-platform-reqs -exec touch -c git conf en` (http block)
+> - `phar.phpunit.de`
+>   - Triggering command: `/usr/bin/curl curl -L REDACTED -o phpunit.phar en` (dns block)
+>
+> If you need me to access, download, or install something from one of these locations, you can either:
+>
+> - Configure [Actions setup steps](https://gh.io/copilot/actions-setup-steps) to set up my environment, which run before the firewall is enabled
+> - Add the appropriate URLs or hosts to the custom allowlist in this repository's [Copilot coding agent settings](https://github.com/symfony/ai/settings/copilot/coding_agent) (admins only)
+>
+> </details>
