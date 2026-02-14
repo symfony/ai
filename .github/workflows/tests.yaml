@@ -474,7 +474,7 @@ jobs:
 
             - name: Up the examples services
               working-directory: examples
-              run: docker compose up -d
+              run: docker compose up -d meilisearch mongodb pogocache redis surrealdb typesense
 
             - name: Configure environment
               run: |
