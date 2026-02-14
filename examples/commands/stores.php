@@ -14,7 +14,6 @@ require_once dirname(__DIR__).'/bootstrap.php';
 use MongoDB\Client as MongoDbClient;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
-use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
 use Symfony\Component\Clock\MonotonicClock;
@@ -43,12 +42,6 @@ $factories = [
         namespace: 'default',
         database: 'symfony',
         table: 'symfony',
-    ),
-    'typesense' => static fn (): TypesenseStore => new TypesenseStore(
-        http_client(),
-        env('TYPESENSE_HOST'),
-        env('TYPESENSE_API_KEY'),
-        'symfony',
     ),
 ];
 
