@@ -16,7 +16,6 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
-use Symfony\AI\Store\Exception\UnsupportedFeatureException;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -95,7 +94,37 @@ final class Store implements StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new UnsupportedFeatureException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if (0 === \count($ids)) {
+            return;
+        }
+
+        // Supabase REST API supports batch deletes using the 'in' filter
+        // We'll chunk the ids to avoid potential URL length limits
+        $chunkSize = 200;
+
+        foreach (array_chunk($ids, $chunkSize) as $chunk) {
+            $idsString = implode(',', array_map(static fn ($id) => '"'.str_replace('"', '""', $id).'"', $chunk));
+
+            $response = $this->httpClient->request(
+                'DELETE',
+                \sprintf('%s/rest/v1/%s?id=in.(%s)', $this->url, $this->table, $idsString),
+                [
+                    'headers' => [
+                        'apikey' => $this->apiKey,
+                        'Authorization' => 'Bearer '.$this->apiKey,
+                        'Content-Type' => 'application/json',
+                    ],
+                ]
+            );
+
+            if ($response->getStatusCode() >= 400) {
+                throw new RuntimeException('Supabase delete failed: '.$response->getContent(false));
+            }
+        }
     }
 
     /**

@@ -218,6 +218,77 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testRemoveSingleDocument()
+    {
+        $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 204]));
+        $store = $this->createStore($httpClient);
+        $documentId = 'doc-id-123';
+
+        $store->remove($documentId);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testRemoveMultipleDocuments()
+    {
+        $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 204]));
+        $store = $this->createStore($httpClient);
+
+        $store->remove(['doc-id-1', 'doc-id-2', 'doc-id-3']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testRemoveEmptyArrayDoesNothing()
+    {
+        $httpClient = new MockHttpClient();
+        $store = $this->createStore($httpClient);
+
+        $store->remove([]);
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
+
+    public function testRemoveThrowsExceptionOnHttpError()
+    {
+        $httpClient = new MockHttpClient(new MockResponse('Delete failed', ['http_code' => 400]));
+        $store = $this->createStore($httpClient);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Supabase delete failed: Delete failed');
+        $store->remove('doc-id-123');
+    }
+
+    public function testRemoveChunksLargeNumberOfIds()
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse('', ['http_code' => 204]),
+            new MockResponse('', ['http_code' => 204]),
+            new MockResponse('', ['http_code' => 204]),
+        ]);
+        $store = $this->createStore($httpClient);
+
+        $ids = [];
+        for ($i = 0; $i < 401; ++$i) {
+            $ids[] = 'doc-id-'.$i;
+        }
+
+        $store->remove($ids);
+
+        // Should make 3 API calls with chunks of: 200 + 200 + 1
+        $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
+    public function testRemoveWithSpecialCharactersInId()
+    {
+        $httpClient = new MockHttpClient(new MockResponse('', ['http_code' => 204]));
+        $store = $this->createStore($httpClient);
+
+        $store->remove('id-with-"quotes"');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     private function createStore(MockHttpClient $httpClient, ?int $vectorDimension = 2): SupabaseStore
     {
         return new SupabaseStore(
