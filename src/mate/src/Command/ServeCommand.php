@@ -19,7 +19,7 @@ use Mcp\Server\Transport\StdioTransport;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Agent\AgentInstructionsAggregator;
 use Symfony\AI\Mate\App;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Service\RegistryProvider;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -39,7 +39,7 @@ class ServeCommand extends Command
     public function __construct(
         private string $cacheDir,
         private string $mcpProtocolVersion,
-        private FilteredDiscoveryLoader $loader,
+        private RegistryProvider $registryProvider,
         private AgentInstructionsAggregator $instructionsAggregator,
         private LoggerInterface $logger,
         private ContainerInterface $container,
@@ -81,7 +81,7 @@ class ServeCommand extends Command
                 $this->getIcon(),
                 'https://symfony.com/doc/current/ai/components/mate.html',
             )
-            ->addLoader($this->loader)
+            ->setRegistry($this->registryProvider->getRegistry())
             ->setSession(new FileSessionStore($this->cacheDir.'/sessions'))
             ->setLogger($this->logger)
             ->setContainer($this->container);
