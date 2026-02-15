@@ -90,6 +90,11 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         ];
     }
 
+    public function getName(): string
+    {
+        return 'ai';
+    }
+
     public static function getTemplate(): string
     {
         return '@Ai/data_collector.html.twig';

@@ -121,6 +121,11 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         return \count($this->getTools()) + \count($this->getPrompts()) + \count($this->getResources()) + \count($this->getResourceTemplates());
     }
 
+    public function getName(): string
+    {
+        return 'mcp';
+    }
+
     public static function getTemplate(): string
     {
         return '@Mcp/data_collector.html.twig';

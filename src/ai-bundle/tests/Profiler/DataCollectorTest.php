@@ -166,4 +166,16 @@ class DataCollectorTest extends TestCase
         $this->assertInstanceOf(UserMessage::class, $calls[0]['message']);
         $this->assertInstanceOf(\DateTimeImmutable::class, $calls[0]['saved_at']);
     }
+
+    public function testGetNameReturnsShortName()
+    {
+        $dataCollector = new DataCollector([], [], [], []);
+
+        $name = $dataCollector->getName();
+
+        $this->assertSame('ai', $name);
+        // Verify it's a short name, not a class name
+        $this->assertStringNotContainsString('\\', $name);
+        $this->assertStringNotContainsString('DataCollector', $name);
+    }
 }

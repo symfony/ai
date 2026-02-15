@@ -168,6 +168,30 @@ final class ProfilerDataProviderTest extends TestCase
         $this->assertContains('request', $collectors);
     }
 
+    public function testListAvailableCollectorsReturnsShortNamesNotClassNames()
+    {
+        $collectors = $this->provider->listAvailableCollectors('abc123');
+
+        foreach ($collectors as $collectorName) {
+            $this->assertIsString($collectorName);
+            $this->assertStringNotContainsString('\\', $collectorName);
+            $this->assertDoesNotMatchRegularExpression('/^[A-Z]/', $collectorName);
+        }
+
+        $this->assertContains('request', $collectors);
+    }
+
+    public function testGetCollectorDataWorksWithShortNames()
+    {
+        $data = $this->provider->getCollectorData('abc123', 'request');
+
+        $this->assertIsArray($data);
+        $this->assertSame('request', $data['name']);
+
+        $this->assertArrayHasKey('name', $data);
+        $this->assertStringNotContainsString('\\', $data['name']);
+    }
+
     public function testGetLatestProfileReturnsFirstProfile()
     {
         $profile = $this->provider->getLatestProfile();

@@ -35,8 +35,10 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesReturnsAllProfiles()
     {
-        $profiles = $this->tool->listProfiles();
+        $result = $this->tool->listProfiles();
 
+        $this->assertArrayHasKey('profiles', $result);
+        $profiles = $result['profiles'];
         $this->assertCount(3, $profiles);
         $this->assertArrayHasKey('token', $profiles[0]);
         $this->assertArrayHasKey('time_formatted', $profiles[0]);
@@ -45,39 +47,46 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesWithLimit()
     {
-        $profiles = $this->tool->listProfiles(limit: 2);
+        $result = $this->tool->listProfiles(limit: 2);
 
-        $this->assertCount(2, $profiles);
+        $this->assertArrayHasKey('profiles', $result);
+        $this->assertCount(2, $result['profiles']);
     }
 
     public function testListProfilesFilterByMethod()
     {
-        $profiles = $this->tool->listProfiles(method: 'POST');
+        $result = $this->tool->listProfiles(method: 'POST');
 
+        $this->assertArrayHasKey('profiles', $result);
+        $profiles = $result['profiles'];
         $this->assertCount(1, $profiles);
         $this->assertSame('def456', $profiles[0]['token']);
     }
 
     public function testListProfilesFilterByStatusCode()
     {
-        $profiles = $this->tool->listProfiles(statusCode: 404);
+        $result = $this->tool->listProfiles(statusCode: 404);
 
+        $this->assertArrayHasKey('profiles', $result);
+        $profiles = $result['profiles'];
         $this->assertCount(1, $profiles);
         $this->assertSame('ghi789', $profiles[0]['token']);
     }
 
     public function testListProfilesFilterByUrl()
     {
-        $profiles = $this->tool->listProfiles(url: 'users');
+        $result = $this->tool->listProfiles(url: 'users');
 
-        $this->assertCount(2, $profiles);
+        $this->assertArrayHasKey('profiles', $result);
+        $this->assertCount(2, $result['profiles']);
     }
 
     public function testListProfilesFilterByIp()
     {
-        $profiles = $this->tool->listProfiles(ip: '127.0.0.1');
+        $result = $this->tool->listProfiles(ip: '127.0.0.1');
 
-        $this->assertCount(2, $profiles);
+        $this->assertArrayHasKey('profiles', $result);
+        $this->assertCount(2, $result['profiles']);
     }
 
     public function testGetLatestProfileReturnsFirstProfile()
@@ -105,38 +114,44 @@ final class ProfilerToolTest extends TestCase
 
     public function testSearchProfilesWithoutCriteria()
     {
-        $profiles = $this->tool->searchProfiles();
+        $result = $this->tool->searchProfiles();
 
-        $this->assertCount(3, $profiles);
+        $this->assertArrayHasKey('profiles', $result);
+        $this->assertCount(3, $result['profiles']);
     }
 
     public function testSearchProfilesByMethod()
     {
-        $profiles = $this->tool->searchProfiles(method: 'GET');
+        $result = $this->tool->searchProfiles(method: 'GET');
 
-        $this->assertCount(2, $profiles);
+        $this->assertArrayHasKey('profiles', $result);
+        $this->assertCount(2, $result['profiles']);
     }
 
     public function testSearchProfilesByStatusCode()
     {
-        $profiles = $this->tool->searchProfiles(statusCode: 200);
+        $result = $this->tool->searchProfiles(statusCode: 200);
 
+        $this->assertArrayHasKey('profiles', $result);
+        $profiles = $result['profiles'];
         $this->assertCount(1, $profiles);
         $this->assertSame('abc123', $profiles[0]['token']);
     }
 
     public function testSearchProfilesByRoute()
     {
-        $profiles = $this->tool->searchProfiles(route: '/api/users');
+        $result = $this->tool->searchProfiles(route: '/api/users');
 
-        $this->assertCount(2, $profiles);
+        $this->assertArrayHasKey('profiles', $result);
+        $this->assertCount(2, $result['profiles']);
     }
 
     public function testSearchProfilesWithLimit()
     {
-        $profiles = $this->tool->searchProfiles(limit: 1);
+        $result = $this->tool->searchProfiles(limit: 1);
 
-        $this->assertCount(1, $profiles);
+        $this->assertArrayHasKey('profiles', $result);
+        $this->assertCount(1, $result['profiles']);
     }
 
     public function testGetProfileReturnsProfileWithResourceUri()
@@ -159,8 +174,10 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesIncludesResourceUri()
     {
-        $profiles = $this->tool->listProfiles();
+        $result = $this->tool->listProfiles();
 
+        $this->assertArrayHasKey('profiles', $result);
+        $profiles = $result['profiles'];
         $this->assertCount(3, $profiles);
         foreach ($profiles as $profile) {
             $this->assertArrayHasKey('resource_uri', $profile);
@@ -174,9 +191,10 @@ final class ProfilerToolTest extends TestCase
 
     public function testSearchProfilesIncludesResourceUri()
     {
-        $profiles = $this->tool->searchProfiles();
+        $result = $this->tool->searchProfiles();
 
-        foreach ($profiles as $profile) {
+        $this->assertArrayHasKey('profiles', $result);
+        foreach ($result['profiles'] as $profile) {
             $this->assertArrayHasKey('resource_uri', $profile);
             $this->assertStringStartsWith('symfony-profiler://profile/', $profile['resource_uri']);
         }
@@ -184,17 +202,19 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesReturnsIntegerKeys()
     {
-        $profiles = $this->tool->listProfiles();
+        $result = $this->tool->listProfiles();
 
-        $keys = array_keys($profiles);
+        $this->assertArrayHasKey('profiles', $result);
+        $keys = array_keys($result['profiles']);
         $this->assertSame([0, 1, 2], $keys);
     }
 
     public function testSearchProfilesReturnsIntegerKeys()
     {
-        $profiles = $this->tool->searchProfiles();
+        $result = $this->tool->searchProfiles();
 
-        $keys = array_keys($profiles);
+        $this->assertArrayHasKey('profiles', $result);
+        $keys = array_keys($result['profiles']);
         $this->assertSame([0, 1, 2], $keys);
     }
 }
