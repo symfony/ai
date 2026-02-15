@@ -826,6 +826,34 @@ the :class:`Symfony\\AI\\Agent\\Attribute\\AsOutputProcessor` attributes::
         }
     }
 
+Register Policy Handlers
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, all services implementing the :class:`Symfony\\AI\\Agent\\Policy\\InputPolicyHandler` or the
+:class:`Symfony\\AI\\Agent\\Policy\\OutputPolicyHandler` interfaces are automatically applied to every :class:`Symfony\\AI\\Agent\\Agent`.
+
+This behavior can be overridden/configured with the :class:`Symfony\\AI\\Agent\\Attribute\\AsPolicyHandler`::
+
+    use Symfony\AI\Agent\Policy\InputPolicyInterface;
+    use Symfony\AI\Agent\Policy\PolicyHandlerInterface;
+    use Symfony\AI\Agent\Policy\OutputPolicyInterface;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    #[AsPolicyHandler(priority: 99)] // This applies to every agent
+    #[AsPolicyHandler(agent: 'ai.agent.my_agent_name')] // The policy handler will only be registered for 'ai.agent.my_agent_name'
+    final readonly class MyService implements PolicyHandlerInterface
+    {
+        public function handle(MessageBag $messages, array $options, InputPolicyInterface|OutputPolicyInterface $policy): void
+        {
+            // ...
+        }
+
+        public function support(InputPolicyInterface|OutputPolicyInterface $policy): bool
+        {
+            // ...
+        }
+    }
+
 Register Tools
 ~~~~~~~~~~~~~~
 

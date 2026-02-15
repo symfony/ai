@@ -18,6 +18,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Attribute\AsPolicyHandler;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -373,6 +374,13 @@ final class AiBundle extends AbstractBundle
 
             $builder->registerAttributeForAutoconfiguration(AsOutputProcessor::class, static function (ChildDefinition $definition, AsOutputProcessor $attribute): void {
                 $definition->addTag('ai.agent.output_processor', [
+                    'agent' => $attribute->agent,
+                    'priority' => $attribute->priority,
+                ]);
+            });
+
+            $builder->registerAttributeForAutoconfiguration(AsPolicyHandler::class, static function (ChildDefinition $definition, AsPolicyHandler $attribute): void {
+                $definition->addTag('ai.agent.policy_handler', [
                     'agent' => $attribute->agent,
                     'priority' => $attribute->priority,
                 ]);

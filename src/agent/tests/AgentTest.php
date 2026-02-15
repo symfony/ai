@@ -24,6 +24,7 @@ use Symfony\AI\Agent\Policy\DelayPolicyHandler;
 use Symfony\AI\Agent\Policy\InputDelayPolicy;
 use Symfony\AI\Agent\Policy\OutputDelayPolicy;
 use Symfony\AI\Agent\Policy\PolicyHandlerRegistry;
+use Symfony\AI\Agent\Policy\PolicyProcessor;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -268,9 +269,15 @@ final class AgentTest extends TestCase
 
         $platform = new InMemoryPlatform('foo');
 
-        $agent = new Agent($platform, 'bar', policyHandlerRegistry: new PolicyHandlerRegistry([
-            new DelayPolicyHandler($clock),
-        ]));
+        $agent = new Agent($platform, 'bar', [
+            new PolicyProcessor(new PolicyHandlerRegistry([
+                new DelayPolicyHandler($clock),
+            ])),
+        ], [
+            new PolicyProcessor(new PolicyHandlerRegistry([
+                new DelayPolicyHandler($clock),
+            ])),
+        ]);
 
         $agent->call(new MessageBag(
             Message::ofUser('Hello there'),

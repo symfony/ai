@@ -13,6 +13,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Policy\DelayPolicyHandler;
 use Symfony\AI\Agent\Policy\InputDelayPolicy;
 use Symfony\AI\Agent\Policy\PolicyHandlerRegistry;
+use Symfony\AI\Agent\Policy\PolicyProcessor;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -21,9 +22,11 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
-$agent = new Agent($platform, 'gpt-4o-mini', policyHandlerRegistry: new PolicyHandlerRegistry([
-    new DelayPolicyHandler(),
-]));
+$agent = new Agent($platform, 'gpt-4o-mini', inputProcessors: [
+    new PolicyProcessor(new PolicyHandlerRegistry([
+        new DelayPolicyHandler(),
+    ])),
+]);
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
