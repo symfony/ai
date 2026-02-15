@@ -826,6 +826,34 @@ the :class:`Symfony\\AI\\Agent\\Attribute\\AsOutputProcessor` attributes::
         }
     }
 
+Register Policy Handlers
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, all services implementing the :class:`Symfony\\AI\\Agent\\Policy\\InputPolicyHandler` or the
+:class:`Symfony\\AI\\Agent\\Policy\\OutputPolicyHandler` interfaces are automatically applied to every :class:`Symfony\\AI\\Agent\\Agent`.
+
+This behavior can be overridden/configured with the :class:`Symfony\\AI\\Agent\\Attribute\\AsPolicyHandler`::
+
+    use Symfony\AI\Agent\Policy\InputPolicyInterface;
+    use Symfony\AI\Agent\Policy\PolicyHandlerInterface;
+    use Symfony\AI\Agent\Policy\OutputPolicyInterface;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    #[AsPolicyHandler(priority: 99)] // This applies to every agent
+    #[AsPolicyHandler(agent: 'ai.agent.my_agent_name')] // The policy handler will only be registered for 'ai.agent.my_agent_name'
+    final readonly class MyService implements PolicyHandlerInterface
+    {
+        public function handle(MessageBag $messages, array $options, InputPolicyInterface|OutputPolicyInterface $policy): void
+        {
+            // ...
+        }
+
+        public function support(InputPolicyInterface|OutputPolicyInterface $policy): bool
+        {
+            // ...
+        }
+    }
+
 Register Tools
 ~~~~~~~~~~~~~~
 
@@ -916,6 +944,96 @@ make sure you have `symfony/security-core` installed in your project.
 The attribute :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` can be added on class- or method-level - even multiple
 times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
+
+Policies
+--------
+
+Policies are a specific way to enabled/disable features at runtime, think of it as "stamps" during agents calls or "feature-flags"
+for sub-features in agents.
+
+Configuration
+^^^^^^^^^^^^^
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            # ...
+        agent:
+            platform: 'ai.platform.anthropic'
+            model: 'claude-3-7-sonnet'
+            policies:
+                - 'Symfony\AI\Agent\Policy\DelayPolicyHandler'
+
+Creating Custom Policy
+----------------------
+
+Custom policy can be registered by either implementing :class:`Symfony\\AI\\Agent\\Policy\\InputPolicyInterface`
+or :class:`Symfony\\AI\\Agent\\Policy\\OutputPolicyInterface`::
+
+    use Symfony\AI\Agent\Policy\InputPolicyInterface;
+
+    final class ValidationPolicy implements InputPolicyInterface
+    {
+        public function __construct(
+            public readonly array $groups,
+        ) {
+        }
+    }
+
+Once the policy is created, create a policy handler by implementing :class:`Symfony\\AI\\Agent\\Policy\\PolicyHandlerInterface`::
+
+    use App\Policy\ValidationPolicy;
+    use Symfony\AI\Agent\Policy\PolicyHandlerInterface;
+    use Symfony\Component\Validator\Validator\ValidatorInterface;
+
+    final class ValidationPolicy implements PolicyHandlerInterface
+    {
+        public function __construct(
+            private readonly ValidatorInterface $validator,
+        ) {
+        }
+
+        public function handle(MessageBag $messages, array $options, InputPolicyInterface|OutputPolicyInterface $policy): void
+        {
+            $violations = $this->validator->validate($messages->getUserMessage(), groups: $policy->groups);
+
+            // ...
+        }
+
+        public function support(MessageBag $messages, array $options, InputPolicyInterface|OutputPolicyInterface $policy): bool
+        {
+            return $policy instanceof ValidationPolicy;
+        }
+    }
+
+Then inject the :class:`Symfony\\AI\\Agent\\Agent` service to use policies::
+
+    use App\Policy\ValidationPolicy;
+    use Symfony\AI\Agent\AgentInterface;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    final readonly class MyService
+    {
+        public function __construct(
+            private AgentInterface $agent,
+        ) {
+        }
+
+        public function submit(string $message): string
+        {
+            $messages = new MessageBag(
+                Message::forSystem('Speak like a pirate.'),
+                Message::ofUser($message),
+            );
+
+            return $this->agent->call($messages, policies: [
+                new ValidationPolicy('user_defined_group'),
+            ]);
+        }
+    }
 
 Token Usage Tracking
 --------------------

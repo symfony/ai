@@ -13,6 +13,8 @@ namespace Symfony\AI\Agent;
 
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Policy\InputPolicyInterface;
+use Symfony\AI\Agent\Policy\OutputPolicyInterface;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
@@ -60,15 +62,17 @@ final class Agent implements AgentInterface
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>                           $options
+     * @param InputPolicyInterface[]|OutputPolicyInterface[] $policies
      *
      * @throws InvalidArgumentException When the platform returns a client error (4xx) indicating invalid request parameters
      * @throws RuntimeException         When the platform returns a server error (5xx) or network failure occurs
      * @throws ExceptionInterface       When the platform converter throws an exception
      */
-    public function call(MessageBag $messages, array $options = []): ResultInterface
+    public function call(MessageBag $messages, array $options = [], array $policies = []): ResultInterface
     {
-        $input = new Input($this->getModel(), $messages, $options);
+        $input = new Input($this->getModel(), $messages, $options, $policies);
+
         array_map(static fn (InputProcessorInterface $processor) => $processor->processInput($input), $this->inputProcessors);
 
         $model = $input->getModel();
@@ -77,7 +81,8 @@ final class Agent implements AgentInterface
 
         $result = $this->platform->invoke($model, $messages, $options)->getResult();
 
-        $output = new Output($model, $result, $messages, $options);
+        $output = new Output($model, $result, $messages, $options, $policies);
+
         array_map(static fn (OutputProcessorInterface $processor) => $processor->processOutput($output), $this->outputProcessors);
 
         return $output->getResult();

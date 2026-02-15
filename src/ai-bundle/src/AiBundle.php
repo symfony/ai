@@ -18,6 +18,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Attribute\AsPolicyHandler;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -25,6 +26,11 @@ use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Agent\Policy\InputPolicyInterface;
+use Symfony\AI\Agent\Policy\OutputPolicyInterface;
+use Symfony\AI\Agent\Policy\PolicyHandlerInterface;
+use Symfony\AI\Agent\Policy\PolicyHandlerRegistry;
+use Symfony\AI\Agent\Policy\PolicyHandlerRegistryInterface;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
@@ -32,9 +38,11 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
+use Symfony\AI\AiBundle\Profiler\TraceableAgent;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
+use Symfony\AI\AiBundle\Profiler\TraceablePolicyHandler;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
@@ -197,7 +205,17 @@ final class AiBundle extends AbstractBundle
 
             foreach ($config['agent'] as $agentName => $agent) {
                 $this->processAgentConfig($agentName, $agent, $builder);
+
+                if ($builder->getParameter('kernel.debug')) {
+                    $traceableAgentDefinition = (new Definition(TraceableAgent::class))
+                        ->setDecoratedService('ai.agent.'.$agentName, priority: -1024)
+                        ->setArguments([new Reference('.inner')])
+                        ->addTag('ai.traceable_agent');
+                    $suffix = u($agentName)->after('ai.agent.')->toString();
+                    $builder->setDefinition('ai.traceable_agent.'.$suffix, $traceableAgentDefinition);
+                }
             }
+
             if (1 === \count($config['agent']) && isset($agentName)) {
                 $builder->setAlias(AgentInterface::class, 'ai.agent.'.$agentName);
             }
@@ -361,10 +379,23 @@ final class AiBundle extends AbstractBundle
                 ]);
             });
 
+            $builder->registerAttributeForAutoconfiguration(AsPolicyHandler::class, static function (ChildDefinition $definition, AsPolicyHandler $attribute): void {
+                $definition->addTag('ai.agent.policy_handler', [
+                    'agent' => $attribute->agent,
+                    'priority' => $attribute->priority,
+                ]);
+            });
+
             $builder->registerForAutoconfiguration(InputProcessorInterface::class)
                 ->addTag('ai.agent.input_processor', ['tagged_by' => 'interface']);
             $builder->registerForAutoconfiguration(OutputProcessorInterface::class)
                 ->addTag('ai.agent.output_processor', ['tagged_by' => 'interface']);
+            $builder->registerForAutoconfiguration(PolicyHandlerInterface::class)
+                ->addTag('ai.agent.policy_handler', ['tagged_by' => 'interface']);
+            $builder->registerForAutoconfiguration(InputPolicyInterface::class)
+                ->addResourceTag('ai.agent.input_policy');
+            $builder->registerForAutoconfiguration(OutputPolicyInterface::class)
+                ->addResourceTag('ai.agent.output_policy');
         }
 
         $builder->registerForAutoconfiguration(ModelClientInterface::class)
@@ -1235,11 +1266,43 @@ final class AiBundle extends AbstractBundle
             $container->setDefinition('ai.agent.'.$name.'.memory_input_processor', $memoryInputProcessorDefinition);
         }
 
+        // PolicyHandlers
+        if ($config['policies']['enabled']) {
+            $policyRegistryHandlerDefinition = (new Definition(PolicyHandlerRegistry::class))
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PolicyHandlerRegistryInterface::class])
+                ->addTag('ai.agent.policy_handler_registry');
+
+            $container->setDefinition('ai.agent.policy_handler_registry', $policyRegistryHandlerDefinition);
+
+            $handlers = [];
+
+            foreach ($config['policies']['handlers'] as $policyHandler) {
+                $handlers[] = new Reference($policyHandler['service']);
+
+                if ($container->getParameter('kernel.debug')) {
+                    $traceablePolicyHandlerDefinition = (new Definition(TraceablePolicyHandler::class))
+                        ->setArguments([new Reference('.inner')])
+                        ->setDecoratedService($policyHandler['service'], priority: -1024)
+                        ->addTag('ai.traceable_policy_handler');
+
+                    $container->setDefinition('ai.traceable_policy_handler.'.$policyHandler['service'], $traceablePolicyHandlerDefinition);
+                }
+            }
+
+            foreach ($container->findTaggedServiceIds('ai.agent.policy_handler') as $id => $_) {
+                $handlers[] = new Reference($id);
+            }
+
+            $policyRegistryHandlerDefinition->setArgument(0, $handlers);
+        }
+
         $agentDefinition
             ->setArgument(2, []) // placeholder until ProcessorCompilerPass process.
             ->setArgument(3, []) // placeholder until ProcessorCompilerPass process.
-            ->setArgument(4, $name)
-            ->setArgument(5, new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
+            ->setArgument(4, new Reference('ai.agent.policy_handler_registry'))
+            ->setArgument(5, $name)
+            ->setArgument(6, new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
         ;
 
         $container->setDefinition($agentId, $agentDefinition);

@@ -25,6 +25,8 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  * @phpstan-import-type PlatformCallData from TraceablePlatform
  * @phpstan-import-type MessageStoreData from TraceableMessageStore
  * @phpstan-import-type ChatData from TraceableChat
+ * @phpstan-import-type AgentData from TraceableAgent
+ * @phpstan-import-type PolicyHandlerData from TraceablePolicyHandler
  *
  * @phpstan-type CollectedPlatformCallData array{
  *     model: string,
@@ -57,21 +59,37 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     private readonly array $chats;
 
     /**
-     * @param TraceablePlatform[]     $platforms
-     * @param TraceableToolbox[]      $toolboxes
-     * @param TraceableMessageStore[] $messageStores
-     * @param TraceableChat[]         $chats
+     * @var TraceableAgent[]
+     */
+    private readonly iterable $agents;
+
+    /**
+     * @var TraceablePolicyHandler[]
+     */
+    private readonly iterable $policyHandlers;
+
+    /**
+     * @param TraceablePlatform[]      $platforms
+     * @param TraceableToolbox[]       $toolboxes
+     * @param TraceableMessageStore[]  $messageStores
+     * @param TraceableChat[]          $chats
+     * @param TraceableAgent[]         $agents
+     * @param TraceablePolicyHandler[] $policyHandlers
      */
     public function __construct(
         iterable $platforms,
         iterable $toolboxes,
         iterable $messageStores,
         iterable $chats,
+        iterable $agents,
+        iterable $policyHandlers,
     ) {
         $this->platforms = $platforms instanceof \Traversable ? iterator_to_array($platforms) : $platforms;
         $this->toolboxes = $toolboxes instanceof \Traversable ? iterator_to_array($toolboxes) : $toolboxes;
         $this->messageStores = $messageStores instanceof \Traversable ? iterator_to_array($messageStores) : $messageStores;
         $this->chats = $chats instanceof \Traversable ? iterator_to_array($chats) : $chats;
+        $this->agents = $agents instanceof \Traversable ? iterator_to_array($agents) : $agents;
+        $this->policyHandlers = $policyHandlers instanceof \Traversable ? iterator_to_array($policyHandlers) : $policyHandlers;
     }
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
@@ -84,9 +102,11 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         $this->data = [
             'tools' => $this->getAllTools(),
             'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
-            'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
+            'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox): array => $toolbox->calls, $this->toolboxes)),
             'messages' => array_merge(...array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->calls, $this->messageStores)),
             'chats' => array_merge(...array_map(static fn (TraceableChat $chat): array => $chat->calls, $this->chats)),
+            'agents' => array_merge(...array_map(static fn (TraceableAgent $agent): array => $agent->calls, $this->agents)),
+            'policy_handlers' => array_merge(...array_map(static fn (TraceablePolicyHandler $policyHandler): array => $policyHandler->calls, $this->policyHandlers)),
         ];
     }
 
@@ -133,6 +153,22 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function getChats(): array
     {
         return $this->data['chats'] ?? [];
+    }
+
+    /**
+     * @return AgentData[]
+     */
+    public function getAgents(): array
+    {
+        return $this->data['agents'] ?? [];
+    }
+
+    /**
+     * @return PolicyHandlerData[]
+     */
+    public function getPolicyHandlers(): array
+    {
+        return $this->data['policy_handlers'] ?? [];
     }
 
     /**
