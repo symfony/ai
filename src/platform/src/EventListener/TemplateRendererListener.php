@@ -21,9 +21,13 @@ use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistryInterface;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
  * Renders message templates when template_vars option is provided.
+ *
+ * Supports object normalization in template variables with optional normalizer context
+ * via template_options['normalizer_context'].
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -31,6 +35,7 @@ final class TemplateRendererListener implements EventSubscriberInterface
 {
     public function __construct(
         private readonly TemplateRendererRegistryInterface $rendererRegistry,
+        private readonly ?NormalizerInterface $normalizer = null,
     ) {
     }
 
@@ -50,7 +55,17 @@ final class TemplateRendererListener implements EventSubscriberInterface
             return;
         }
 
-        $templateVars = $options['template_vars'];
+        $templateOptions = $options['template_options'] ?? [];
+        if (!\is_array($templateOptions)) {
+            throw new InvalidArgumentException('The "template_options" option must be an array.');
+        }
+
+        $normalizerContext = $templateOptions['normalizer_context'] ?? [];
+        if (!\is_array($normalizerContext)) {
+            throw new InvalidArgumentException('The "normalizer_context" option must be an array.');
+        }
+
+        $templateVars = $this->normalizeTemplateVars($options['template_vars'], $normalizerContext);
         $renderedMessages = [];
 
         foreach ($input->getMessages() as $message) {
@@ -59,7 +74,7 @@ final class TemplateRendererListener implements EventSubscriberInterface
 
         $event->setInput(new MessageBag(...$renderedMessages));
 
-        unset($options['template_vars']);
+        unset($options['template_vars'], $options['template_options']);
         $event->setOptions($options);
     }
 
@@ -68,6 +83,35 @@ final class TemplateRendererListener implements EventSubscriberInterface
         return [
             InvocationEvent::class => '__invoke',
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $templateVars
+     * @param array<string, mixed> $normalizerContext
+     *
+     * @return array<string, mixed>
+     */
+    private function normalizeTemplateVars(array $templateVars, array $normalizerContext): array
+    {
+        $normalized = [];
+
+        foreach ($templateVars as $key => $value) {
+            if (!\is_string($key)) {
+                throw new InvalidArgumentException(\sprintf('Template variable keys must be strings, "%s" given.', get_debug_type($key)));
+            }
+
+            if (\is_object($value) && !$value instanceof \Stringable) {
+                if (null === $this->normalizer) {
+                    throw new InvalidArgumentException(\sprintf('Template variable "%s" is an object but no normalizer is configured. Please provide a NormalizerInterface to the TemplateRendererListener.', $key));
+                }
+
+                $normalized[$key] = $this->normalizer->normalize($value, null, $normalizerContext);
+            } else {
+                $normalized[$key] = $value;
+            }
+        }
+
+        return $normalized;
     }
 
     /**
