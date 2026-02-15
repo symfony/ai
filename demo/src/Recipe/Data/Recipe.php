@@ -12,6 +12,7 @@
 namespace App\Recipe\Data;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\Component\Validator\Constraints as Assert;
 
 final class Recipe
 {
@@ -23,13 +24,13 @@ final class Recipe
     /**
      * @var int Duration in minutes
      */
-    #[With(minimum: 5, maximum: 240)]
+    #[Assert\Range(min: 5, max: 240)]
     public int $duration;
 
     /**
      * @var string Difficulty level of the recipe
      */
-    #[With(enum: ['Beginner', 'Intermediate', 'Advanced'])]
+    #[Assert\Choice(choices: ['Beginner', 'Intermediate', 'Advanced'])]
     public string $level;
 
     /**

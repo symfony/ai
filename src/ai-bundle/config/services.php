@@ -61,6 +61,7 @@ use Symfony\AI\Platform\Bridge\Voyage\ModelCatalog as VoyageModelCatalog;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\PhpDocDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\ValidatorConstraintsDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\WithAttributeDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
@@ -161,6 +162,11 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('type_info.resolver')->nullOnInvalid(),
                 service('serializer.mapping.class_metadata_factory')->ignoreOnInvalid(),
+            ])
+            ->tag('ai.platform.json_schema.describer')
+        ->set('ai.platform.json_schema.describer.validator', ValidatorConstraintsDescriber::class)
+            ->args([
+                service('validator')->nullOnInvalid(),
             ])
             ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer.with_attribute', WithAttributeDescriber::class)
