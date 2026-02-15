@@ -11,13 +11,12 @@
 
 namespace Symfony\AI\Mate\Command;
 
-use Mcp\Capability\Registry;
 use Mcp\Capability\Registry\ReferenceHandler;
+use Mcp\Capability\RegistryInterface;
 use Mcp\Exception\ToolNotFoundException;
 use Mcp\Schema\Request\CallToolRequest;
-use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Command\Session\CliSession;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Service\RegistryProvider;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -35,19 +34,16 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[AsCommand('mcp:tools:call', 'Execute MCP tools via JSON input')]
 class ToolsCallCommand extends Command
 {
-    private Registry $registry;
+    private RegistryInterface $registry;
     private ReferenceHandler $referenceHandler;
 
     public function __construct(
-        FilteredDiscoveryLoader $loader,
+        RegistryProvider $registryProvider,
         ContainerInterface $container,
-        LoggerInterface $logger,
     ) {
         parent::__construct(self::getDefaultName());
 
-        $this->registry = new Registry(null, $logger);
-        $loader->load($this->registry);
-
+        $this->registry = $registryProvider->getRegistry();
         $this->referenceHandler = new ReferenceHandler($container);
     }
 
