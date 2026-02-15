@@ -562,4 +562,120 @@ final class StoreTest extends TestCase
         $this->assertCount(1, $documents);
         $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());
     }
+
+    public function testRemoveSingleDocument()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $uuid = Uuid::v4();
+
+        $collection->expects($this->once())
+            ->method('deleteOne')
+            ->with(['_id' => $uuid->toString()]);
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+        );
+
+        $store->remove($uuid->toString());
+    }
+
+    public function testRemoveMultipleDocuments()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->exactly(2))
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $uuid1 = Uuid::v4();
+        $uuid2 = Uuid::v4();
+
+        $collection->expects($this->exactly(2))
+            ->method('deleteOne');
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+        );
+
+        $store->remove([$uuid1->toString(), $uuid2->toString()]);
+    }
+
+    public function testRemoveWithBulkWrite()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $uuid1 = Uuid::v4();
+        $uuid2 = Uuid::v4();
+
+        $collection->expects($this->once())
+            ->method('bulkWrite')
+            ->with([
+                [
+                    'deleteOne' => [
+                        ['_id' => $uuid1->toString()],
+                    ],
+                ],
+                [
+                    'deleteOne' => [
+                        ['_id' => $uuid2->toString()],
+                    ],
+                ],
+            ]);
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+            'vector',
+            bulkWrite: true,
+        );
+
+        $store->remove([$uuid1->toString(), $uuid2->toString()]);
+    }
+
+    public function testRemoveWithEmptyArray()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->never())
+            ->method('getCollection');
+
+        $collection->expects($this->never())
+            ->method('deleteOne');
+
+        $collection->expects($this->never())
+            ->method('bulkWrite');
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+        );
+
+        $store->remove([]);
+    }
 }
