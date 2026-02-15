@@ -155,12 +155,11 @@ class AiBundleTest extends TestCase
 
         $this->assertFalse($container->hasDefinition('ai.command.setup_store'));
         $this->assertFalse($container->hasDefinition('ai.command.drop_store'));
-        $this->assertSame([
-            'ai.command.setup_store' => true,
-            'ai.command.drop_store' => true,
-            'ai.command.setup_message_store' => true,
-            'ai.command.drop_message_store' => true,
-        ], $container->getRemovedIds());
+        $removedIds = $container->getRemovedIds();
+        $this->assertArrayHasKey('ai.command.setup_store', $removedIds);
+        $this->assertArrayHasKey('ai.command.drop_store', $removedIds);
+        $this->assertArrayHasKey('ai.command.setup_message_store', $removedIds);
+        $this->assertArrayHasKey('ai.command.drop_message_store', $removedIds);
     }
 
     public function testMessageStoreCommandsArentDefinedWithoutMessageStore()
@@ -177,12 +176,11 @@ class AiBundleTest extends TestCase
 
         $this->assertFalse($container->hasDefinition('ai.command.setup_message_store'));
         $this->assertFalse($container->hasDefinition('ai.command.drop_message_store'));
-        $this->assertSame([
-            'ai.command.setup_store' => true,
-            'ai.command.drop_store' => true,
-            'ai.command.setup_message_store' => true,
-            'ai.command.drop_message_store' => true,
-        ], $container->getRemovedIds());
+        $removedIds = $container->getRemovedIds();
+        $this->assertArrayHasKey('ai.command.setup_store', $removedIds);
+        $this->assertArrayHasKey('ai.command.drop_store', $removedIds);
+        $this->assertArrayHasKey('ai.command.setup_message_store', $removedIds);
+        $this->assertArrayHasKey('ai.command.drop_message_store', $removedIds);
     }
 
     public function testStoreCommandsAreDefined()

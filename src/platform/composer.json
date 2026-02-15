@@ -75,6 +75,7 @@
         "symfony/http-client": "^7.3|^8.0",
         "symfony/http-client-contracts": "^3.5",
         "symfony/process": "^7.3|^8.0",
+        "symfony/validator": "^7.3|^8.0",
         "symfony/var-dumper": "^7.3|^8.0"
     },
     "minimum-stability": "dev",
