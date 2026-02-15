@@ -20,16 +20,11 @@ use Symfony\AI\Agent\Toolbox\ToolFactoryInterface;
 final class ChainFactory implements ToolFactoryInterface
 {
     /**
-     * @var list<ToolFactoryInterface>
-     */
-    private readonly array $factories;
-
-    /**
      * @param iterable<ToolFactoryInterface> $factories
      */
-    public function __construct(iterable $factories)
-    {
-        $this->factories = $factories instanceof \Traversable ? iterator_to_array($factories) : $factories;
+    public function __construct(
+        private readonly iterable $factories,
+    ) {
     }
 
     public function getTool(string $reference): iterable
