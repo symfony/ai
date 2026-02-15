@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Contract\JsonSchema\Describer;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class Describer implements ObjectDescriberInterface, PropertyDescriberInterface
 {
@@ -22,17 +23,26 @@ final class Describer implements ObjectDescriberInterface, PropertyDescriberInte
     private readonly iterable $propertyDescribers;
 
     /**
-     * @param iterable<ObjectDescriberInterface|PropertyDescriberInterface> $describers
+     * @param iterable<ObjectDescriberInterface|PropertyDescriberInterface>|null $describers
      */
     public function __construct(
-        iterable $describers = [
-            new SerializerDescriber(),
-            new TypeInfoDescriber(),
-            new MethodDescriber(),
-            new PropertyInfoDescriber(),
-            new WithAttributeDescriber(),
-        ],
+        ?iterable $describers = null,
     ) {
+        if (null === $describers) {
+            $describers = [
+                new SerializerDescriber(),
+                new TypeInfoDescriber(),
+                new MethodDescriber(),
+                new PropertyInfoDescriber(),
+            ];
+
+            if (class_exists(ValidatorInterface::class)) {
+                $describers[] = new ValidatorConstraintsDescriber();
+            }
+
+            $describers[] = new WithAttributeDescriber();
+        }
+
         $objectDescribers = $propertyDescribers = [];
 
         foreach ($describers as $describer) {

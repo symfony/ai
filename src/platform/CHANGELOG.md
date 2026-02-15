@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
  * Add `description` and `example` properties to `#[With]` attribute
+ * Generate JSON schema from Symfony Validator constraints when available
 
 0.6
 ---
