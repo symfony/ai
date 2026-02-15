@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 final class OrderFilter implements Filterable
 {
     public function __construct(
-        #[With(const: 'order')]
+        #[With(enum: ['order'])]
         public string $type = 'order',
         public ?string $number = null,
         public ?string $userResponsible = null,

@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 final class PurchaseContractFilter implements Filterable
 {
     public function __construct(
-        #[With(const: 'purchase_contract')]
+        #[With(enum: ['purchase_contract'])]
         public string $type = 'purchase_contract',
         public ?string $contractNumber = null,
         public ?string $subsidiary = null,

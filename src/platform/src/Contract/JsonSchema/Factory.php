@@ -242,7 +242,7 @@ final class Factory
                     }
 
                     return [
-                        'oneOf' => $discriminators,
+                        'anyOf' => $discriminators,
                     ];
                 }
 

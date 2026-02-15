@@ -397,13 +397,13 @@ final class FactoryTest extends TestCase
             'type' => 'object',
             'properties' => [
                 'filter' => [
-                    'oneOf' => [
+                    'anyOf' => [
                         [
                             'type' => 'object',
                             'properties' => [
                                 'type' => [
                                     'type' => 'string',
-                                    'const' => 'order',
+                                    'enum' => ['order'],
                                 ],
                                 'number' => [
                                     'type' => ['string', 'null'],
@@ -424,7 +424,7 @@ final class FactoryTest extends TestCase
                             'properties' => [
                                 'type' => [
                                     'type' => 'string',
-                                    'const' => 'purchase_contract',
+                                    'enum' => ['purchase_contract'],
                                 ],
                                 'contractNumber' => [
                                     'type' => ['string', 'null'],
