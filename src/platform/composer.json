@@ -74,8 +74,11 @@
         "symfony/finder": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/http-client-contracts": "^3.5",
+        "symfony/intl": "^7.3|^8.0",
         "symfony/process": "^7.3|^8.0",
-        "symfony/var-dumper": "^7.3|^8.0"
+        "symfony/validator": "^7.3|^8.0",
+        "symfony/var-dumper": "^7.3|^8.0",
+        "symfony/yaml": "^7.3|^8.0"
     },
     "minimum-stability": "dev",
     "autoload": {

@@ -204,6 +204,35 @@ For PHP backed enums, automatic validation without requiring any :class:`Symfony
 
 This eliminates the need for manual ``#[With(enum: [...])]`` attributes when using PHP's native backed enum types.
 
+Using Symfony Validator
+.......................
+
+If you have `symfony/validator` installed, you can also use validation constraints for schema generation::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+    use Symfony\Component\Validator\Constraints as Assert;
+
+    class Person
+    {
+        #[Assert\Length(max: 255)]
+        public string $name;
+
+        #[Assert\Range(min: 18)]
+        public int $age;
+    }
+
+    #[AsTool('my_person_lookup_tool', 'Example tool to lookup a person.')]
+    final class MyTool
+    {
+        public function __invoke(Person $person): string
+        {
+            // do the lookup ...
+        }
+    }
+
+This replaces the need to manually define the schema using ``#[With(...)]``, though it's possible to use both if needed.
+
 .. note::
 
     Please be aware, that this is only converted in a JSON Schema for the LLM to respect, but not validated by Symfony AI itself.
