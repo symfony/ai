@@ -32,11 +32,12 @@ class TokenUsageTest extends TestCase
         $this->assertNull($usage->getRemainingTokensMinute());
         $this->assertNull($usage->getRemainingTokensMonth());
         $this->assertNull($usage->getTotalTokens());
+        $this->assertNull($usage->getModel());
     }
 
     public function testValuesAreSetCorrectly()
     {
-        $usage = new TokenUsage(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        $usage = new TokenUsage(1, 2, 3, 4, 5, 6, 7, 8, 9, 'gpt-4o');
 
         $this->assertSame(1, $usage->getPromptTokens());
         $this->assertSame(2, $usage->getCompletionTokens());
@@ -47,5 +48,6 @@ class TokenUsageTest extends TestCase
         $this->assertSame(7, $usage->getRemainingTokensMinute());
         $this->assertSame(8, $usage->getRemainingTokensMonth());
         $this->assertSame(9, $usage->getTotalTokens());
+        $this->assertSame('gpt-4o', $usage->getModel());
     }
 }

@@ -9,6 +9,7 @@ CHANGELOG
 0.3
 ---
 
+ * Add `model` property to `TokenUsage` and `TokenUsageInterface` to track which AI model was used for token consumption
  * Add `StreamListenerInterface` to hook into response streams
  * [BC BREAK] Change `TokenUsageAggregation::__construct()` from variadic to array
  * Add `TokenUsageAggregation::add()` method to add more token usages

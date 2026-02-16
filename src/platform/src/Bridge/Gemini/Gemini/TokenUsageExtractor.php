@@ -38,6 +38,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
             toolTokens: $content['usageMetadata']['toolUsePromptTokenCount'] ?? null,
             cachedTokens: $content['usageMetadata']['cachedContentTokenCount'] ?? null,
             totalTokens: $content['usageMetadata']['totalTokenCount'] ?? null,
+            model: $content['modelVersion'] ?? null,
         );
     }
 }

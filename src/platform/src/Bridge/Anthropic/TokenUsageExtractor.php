@@ -41,6 +41,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
             completionTokens: $usage['output_tokens'] ?? null,
             toolTokens: $usage['server_tool_use']['web_search_requests'] ?? null,
             cachedTokens: $cachedTokens,
+            model: $content['model'] ?? null,
         );
     }
 }

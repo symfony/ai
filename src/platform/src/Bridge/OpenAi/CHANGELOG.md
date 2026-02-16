@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.4
+---
+
+ * Add model information to token usage extraction
+
 0.3
 ---
 

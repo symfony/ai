@@ -39,6 +39,7 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
+            'model' => 'deepseek-chat',
             'usage' => [
                 'prompt_tokens' => 10,
                 'completion_tokens' => 20,
@@ -54,6 +55,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(20, $tokenUsage->getCompletionTokens());
         $this->assertSame(5, $tokenUsage->getCachedTokens());
         $this->assertSame(30, $tokenUsage->getTotalTokens());
+        $this->assertSame('deepseek-chat', $tokenUsage->getModel());
     }
 
     public function testItHandlesMissingUsageFields()
@@ -72,5 +74,6 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertNull($tokenUsage->getCachedTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertNull($tokenUsage->getModel());
     }
 }
