@@ -17,6 +17,8 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -135,5 +137,52 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame($image->asBinary(), $result->getContent());
         $this->assertNull($result->getMimeType());
+    }
+
+    public function testStreamSkipsCandidatesWithoutContentParts()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $rawResult = self::createMock(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($httpResponse);
+        $rawResult->method('getDataStream')->willReturn(
+            (static function (): \Generator {
+                yield [
+                    'candidates' => [
+                        [
+                            'content' => [
+                                'parts' => [
+                                    ['text' => 'Hello'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ];
+                yield [
+                    'candidates' => [
+                        [
+                            'finishReason' => 'STOP',
+                        ],
+                    ],
+                ];
+                yield [
+                    'usageMetadata' => [
+                        'promptTokenCount' => 10,
+                        'candidatesTokenCount' => 5,
+                    ],
+                ];
+            })(),
+        );
+
+        $result = $converter->convert($rawResult, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+
+        $items = iterator_to_array($result->getContent());
+        $this->assertCount(1, $items);
+        $this->assertSame('Hello', $items[0]);
     }
 }

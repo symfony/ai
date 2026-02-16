@@ -75,7 +75,7 @@ final class ResultConverter implements ResultConverterInterface
     private function convertStream(RawResultInterface $result): \Generator
     {
         foreach ($result->getDataStream() as $data) {
-            $choices = array_map($this->convertChoice(...), $data['candidates'] ?? []);
+            $choices = array_values(array_filter(array_map($this->convertChoice(...), $data['candidates'] ?? [])));
 
             if (!$choices) {
                 continue;
@@ -93,7 +93,7 @@ final class ResultConverter implements ResultConverterInterface
     /**
      * @param array{
      *     finishReason?: string,
-     *     content: array{
+     *     content?: array{
      *         parts: array{
      *             functionCall?: array{
      *                 id: string,
@@ -113,8 +113,12 @@ final class ResultConverter implements ResultConverterInterface
      *     }
      * } $choice
      */
-    private function convertChoice(array $choice): ToolCallResult|TextResult|BinaryResult
+    private function convertChoice(array $choice): ToolCallResult|TextResult|BinaryResult|null
     {
+        if (!isset($choice['content']['parts'])) {
+            return null;
+        }
+
         $contentParts = $choice['content']['parts'];
 
         // If any part is a function call, return it immediately and ignore all other parts.
