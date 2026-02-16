@@ -66,7 +66,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $payload = array_map(
-            $this->convertToIndexableArray(...),
+            static fn (VectorDocument $document): array => [
+                'id' => $document->getId(),
+                'values' => $document->getVector()->getData(),
+                'metadata' => $document->getMetadata()->getArrayCopy(),
+            ],
             $documents,
         );
 
@@ -107,7 +111,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
 
         foreach ($results['result']['matches'] as $item) {
-            yield $this->convertToVectorDocument($item);
+            yield $this->convertToVectorDocument($item, $options);
         }
     }
 
@@ -142,27 +146,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    private function convertToIndexableArray(VectorDocument $document): array
-    {
-        return [
-            'id' => $document->getId(),
-            'values' => $document->getVector()->getData(),
-            'metadata' => $document->getMetadata()->getArrayCopy(),
-        ];
-    }
-
-    /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data, array $options): VectorDocument
     {
         $id = $data['id'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
 
         $vector = !\array_key_exists('values', $data) || null === $data['values']
             ? new NullVector()
-            : new Vector($data['values']);
+            : ($options['include_vectors'] ?? false ? new Vector($data['values']) : new NullVector());
 
         return new VectorDocument(
             id: $id,

@@ -144,7 +144,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
 
         foreach ($documents['hits']['hits'] as $item) {
-            yield $this->convertToVectorDocument($item);
+            yield $this->convertToVectorDocument($item, $options);
         }
     }
 
@@ -185,8 +185,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     _knn_dist: float,
      *     _source: array<string, mixed>,
      * } $data
+     * @param array{include_vectors?: bool} $options
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data, array $options): VectorDocument
     {
         $payload = $data['_source'];
 
@@ -196,7 +197,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = !\array_key_exists($this->field, $payload) || null === $payload[$this->field]
             ? new NullVector()
-            : new Vector($payload[$this->field]);
+            : ($options['include_vectors'] ?? false ? new Vector($payload[$this->field]) : new NullVector());
 
         return new VectorDocument(
             id: $payload['uuid'],

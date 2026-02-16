@@ -17,6 +17,7 @@ CHANGELOG
  * Add `MarkdownLoader`
  * Add `JsonFileLoader`
  * Add `ResetInterface` support to in-memory store
+ * [BC BREAK] `Vector` are no longer returned in `VectorDocument` when using `Store::query()`, to retrieve them, use `include_vectors` option
 
 0.3
 ---

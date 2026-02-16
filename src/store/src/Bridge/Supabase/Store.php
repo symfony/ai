@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\Supabase;
 
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -110,7 +111,8 @@ final class Store implements StoreInterface
      * @param array{
      *      max_items?: int,
      *      limit?: int,
-     *      min_score?: float
+     *      min_score?: float,
+     *      include_vectors?: bool,
      *  } $options
      */
     public function query(QueryInterface $query, array $options = []): iterable
@@ -160,7 +162,7 @@ final class Store implements StoreInterface
 
             yield new VectorDocument(
                 id: $record['id'],
-                vector: new Vector($embedding),
+                vector: $options['include_vectors'] ?? false ? new Vector($embedding) : new NullVector(),
                 metadata: new Metadata($metadata),
                 score: (float) $record['score'],
             );

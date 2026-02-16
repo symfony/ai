@@ -16,6 +16,7 @@ use MongoDB\Collection;
 use MongoDB\Driver\Exception\CommandException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -154,6 +155,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     numCandidates?: positive-int,
      *     filter?: array<mixed>,
      *     minScore?: float,
+     *     include_vectors?: bool,
      * } $options
      */
     public function query(QueryInterface $query, array $options = []): iterable
@@ -167,6 +169,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         if (\array_key_exists('minScore', $options)) {
             $minScore = $options['minScore'];
             unset($options['minScore']);
+        }
+
+        $withVectors = $options['include_vectors'] ?? false;
+        if (\array_key_exists('include_vectors', $options)) {
+            unset($options['include_vectors']);
         }
 
         $pipeline = [
@@ -202,7 +209,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         foreach ($results as $result) {
             yield new VectorDocument(
                 id: $result['_id'],
-                vector: new Vector($result[$this->vectorFieldName]),
+                vector: $withVectors ? new Vector($result[$this->vectorFieldName]) : new NullVector(),
                 metadata: new Metadata($result['metadata'] ?? []),
                 score: $result['score'],
             );

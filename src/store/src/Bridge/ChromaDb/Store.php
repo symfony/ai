@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Bridge\ChromaDb;
 
 use Codewithkyrian\ChromaDB\Client;
 use Codewithkyrian\ChromaDB\Exceptions\ChromaException;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -101,7 +102,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, limit?: positive-int} $options
+     * @param array{
+     *     where?: array<string, string>,
+     *     whereDocument?: array<string, mixed>,
+     *     include?: array<string>,
+     *     limit?: positive-int,
+     *     include_vectors?: bool,
+     * } $options
      */
     public function query(QueryInterface $query, array $options = []): iterable
     {
@@ -117,7 +124,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, limit?: positive-int} $options
+     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, queryTexts?: array<string>, limit?: positive-int, include_vectors?: bool} $options
      *
      * @return iterable<VectorDocument>
      */
@@ -134,7 +141,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             include: $include,
         );
 
-        yield from $this->transformResponse($queryResponse);
+        yield from $this->transformResponse($queryResponse, $options);
     }
 
     /**
@@ -155,7 +162,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             include: $include,
         );
 
-        yield from $this->transformResponse($queryResponse);
+        yield from $this->transformResponse($queryResponse, $options);
     }
 
     /**
@@ -177,9 +184,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
+     * @param array<string, mixed> $options
+     *
      * @return iterable<VectorDocument>
      */
-    private function transformResponse(object $queryResponse): iterable
+    private function transformResponse(object $queryResponse, array $options): iterable
     {
         $metaCount = \count($queryResponse->metadatas[0]);
 
@@ -191,7 +200,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
             yield new VectorDocument(
                 id: $queryResponse->ids[0][$i],
-                vector: new Vector($queryResponse->embeddings[0][$i]),
+                vector: $options['include_vectors'] ?? false ? new Vector($queryResponse->embeddings[0][$i]) : new NullVector(),
                 metadata: $metaData,
                 score: $queryResponse->distances[0][$i] ?? null,
             );

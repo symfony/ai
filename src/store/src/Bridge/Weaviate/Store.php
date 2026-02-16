@@ -61,7 +61,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'fields' => [
                 'ALL',
             ],
-            'objects' => array_map($this->convertToIndexableArray(...), $documents),
+            'objects' => array_map(fn (VectorDocument $document): array => [
+                'class' => $this->collection,
+                'id' => $document->getId(),
+                'vector' => $document->getVector()->getData(),
+                'properties' => [
+                    'uuid' => $document->getId(),
+                    'vector' => $document->getVector()->getData(),
+                    '_metadata' => json_encode($document->getMetadata()->getArrayCopy()),
+                ],
+            ], $documents),
         ]);
     }
 
@@ -121,7 +130,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
 
         foreach ($results['data']['Get'][$this->collection] as $item) {
-            yield $this->convertToVectorDocument($item);
+            yield $this->convertToVectorDocument($item, $options);
         }
     }
 
@@ -157,32 +166,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    private function convertToIndexableArray(VectorDocument $document): array
-    {
-        return [
-            'class' => $this->collection,
-            'id' => $document->getId(),
-            'vector' => $document->getVector()->getData(),
-            'properties' => [
-                'uuid' => $document->getId(),
-                'vector' => $document->getVector()->getData(),
-                '_metadata' => json_encode($document->getMetadata()->getArrayCopy()),
-            ],
-        ];
-    }
-
-    /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data, array $options): VectorDocument
     {
         $id = $data['uuid'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
 
         $vector = !\array_key_exists('vector', $data) || null === $data['vector']
             ? new NullVector()
-            : new Vector($data['vector']);
+            : ($options['include_vectors'] ?? false ? new Vector($data['vector']) : new NullVector());
 
         return new VectorDocument($id, $vector, new Metadata(json_decode($data['_metadata'], true)));
     }

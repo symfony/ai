@@ -69,7 +69,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'PUT',
             \sprintf('collections/%s/points', $this->collectionName),
             [
-                'points' => array_map($this->convertToIndexableArray(...), $documents),
+                'points' => array_map(static fn (VectorDocument $document): array => [
+                    'id' => $document->getId(),
+                    'vector' => $document->getVector()->getData(),
+                    'payload' => $document->getMetadata()->getArrayCopy(),
+                ], $documents),
             ],
             ['wait' => $this->async ? 'false' : 'true'],
         );
@@ -130,7 +134,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $response = $this->request('POST', \sprintf('collections/%s/points/query', $this->collectionName), $payload);
 
         foreach ($response['result']['points'] as $item) {
-            yield $this->convertToVectorDocument($item);
+            yield $this->convertToVectorDocument($item, $options);
         }
     }
 
@@ -161,27 +165,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    private function convertToIndexableArray(VectorDocument $document): array
-    {
-        return [
-            'id' => $document->getId(),
-            'vector' => $document->getVector()->getData(),
-            'payload' => $document->getMetadata()->getArrayCopy(),
-        ];
-    }
-
-    /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data, array $options): VectorDocument
     {
         $id = $data['id'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
 
         $vector = !\array_key_exists('vector', $data) || null === $data['vector']
             ? new NullVector()
-            : new Vector($data['vector']);
+            : ($options['include_vectors'] ?? false ? new Vector($data['vector']) : new NullVector());
 
         return new VectorDocument(
             id: $id,

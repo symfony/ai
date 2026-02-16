@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Postgres;
 
 use Doctrine\DBAL\Connection;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
@@ -358,7 +359,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
             yield new VectorDocument(
                 id: $result['id'],
-                vector: new Vector($this->fromPgvector($result['embedding'])),
+                vector: $options['include_vectors'] ?? false ? new Vector($this->fromPgvector($result['embedding'])) : new NullVector(),
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );

@@ -560,7 +560,9 @@ final class StoreTest extends TestCase
             'custom_embeddings',
         );
 
-        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
+            'include_vectors' => true,
+        ]));
 
         $this->assertCount(1, $documents);
         $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());

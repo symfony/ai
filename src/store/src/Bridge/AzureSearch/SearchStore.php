@@ -87,7 +87,7 @@ final class SearchStore implements StoreInterface
         ]);
 
         foreach ($result['value'] as $item) {
-            yield $this->convertToVectorDocument($item);
+            yield $this->convertToVectorDocument($item, $options);
         }
     }
 
@@ -123,14 +123,15 @@ final class SearchStore implements StoreInterface
 
     /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data, array $options): VectorDocument
     {
         return new VectorDocument(
             id: $data['id'],
             vector: !\array_key_exists($this->vectorFieldName, $data) || null === $data[$this->vectorFieldName]
                 ? new NullVector()
-                : new Vector($data[$this->vectorFieldName]),
+                : ($options['include_vectors'] ?? false ? new Vector($data[$this->vectorFieldName]) : new NullVector()),
             metadata: new Metadata($data),
         );
     }

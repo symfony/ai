@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Bridge\Pinecone;
 
 use Probots\Pinecone\Client;
 use Probots\Pinecone\Resources\Data\VectorResource;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -137,7 +138,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         foreach ($result->json()['matches'] as $match) {
             yield new VectorDocument(
                 id: $match['id'],
-                vector: new Vector($match['values']),
+                vector: $options['include_vectors'] ?? false ? new Vector($match['values']) : new NullVector(),
                 metadata: new Metadata($match['metadata']),
                 score: $match['score'],
             );
