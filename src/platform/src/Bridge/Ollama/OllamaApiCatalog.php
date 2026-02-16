@@ -22,14 +22,13 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class OllamaApiCatalog implements ModelCatalogInterface
 {
     public function __construct(
-        private readonly string $host,
         private readonly HttpClientInterface $httpClient,
     ) {
     }
 
     public function getModel(string $modelName): Ollama
     {
-        $response = $this->httpClient->request('POST', \sprintf('%s/api/show', $this->host), [
+        $response = $this->httpClient->request('POST', '/api/show', [
             'json' => [
                 'model' => $modelName,
             ],
@@ -58,7 +57,7 @@ final class OllamaApiCatalog implements ModelCatalogInterface
 
     public function getModels(): array
     {
-        $response = $this->httpClient->request('GET', \sprintf('%s/api/tags', $this->host));
+        $response = $this->httpClient->request('GET', '/api/tags');
 
         $models = $response->toArray();
 

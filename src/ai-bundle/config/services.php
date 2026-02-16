@@ -113,6 +113,8 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.meta', MetaModelCatalog::class)
         ->set('ai.platform.model_catalog.mistral', MistralModelCatalog::class)
         ->set('ai.platform.model_catalog.ollama', OllamaModelCatalog::class)
+            ->lazy()
+            ->tag('proxy', ['interface' => ModelCatalogInterface::class])
         ->set('ai.platform.model_catalog.openai', OpenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.openrouter', OpenRouterModelCatalog::class)
         ->set('ai.platform.model_catalog.ovh', OvhModelCatalog::class)

@@ -53,6 +53,15 @@ AI Bundle
  * An indexer configured with a `source`, now wraps the indexer with a `Symfony\AI\Store\ConfiguredSourceIndexer` decorator. This is
    transparent - the configured source is still used by default, but can be overridden by passing a source to `index()`.
 
+ * The `host_url` parameter for `Ollama` platform has been renamed `endpoint`.
+
+Platform
+-------
+
+ * The `hostUrl` parameter for `OllamaClient` has been removed
+ * The `host` parameter for `OllamaApiCatalog` has been removed
+ * The `hostUrl` parameter for `PlatformFactory::create()` in `Ollama` has been renamed to `endpoint`
+
 Store
 -----
 

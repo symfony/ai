@@ -29,7 +29,7 @@ final class OllamaClientTest extends TestCase
 {
     public function testSupportsModel()
     {
-        $client = new OllamaClient(new MockHttpClient(), 'http://127.0.0.1:1234');
+        $client = new OllamaClient(new MockHttpClient());
 
         $this->assertTrue($client->supports(new Ollama('llama3.2')));
         $this->assertFalse($client->supports(new Model('any-model')));
@@ -48,7 +48,7 @@ final class OllamaClientTest extends TestCase
             ]),
         ], 'http://127.0.0.1:1234');
 
-        $client = new OllamaClient($httpClient, 'http://127.0.0.1:1234');
+        $client = new OllamaClient($httpClient);
         $response = $client->request(new Ollama('llama3.2', [
             Capability::INPUT_MESSAGES,
             Capability::TOOL_CALLING,
@@ -107,7 +107,7 @@ final class OllamaClientTest extends TestCase
             ]),
         ], 'http://127.0.0.1:1234');
 
-        $platform = PlatformFactory::create('http://127.0.0.1:1234', $httpClient);
+        $platform = PlatformFactory::create('http://127.0.0.1:1234', httpClient: $httpClient);
         $response = $platform->invoke('llama3.2', [
             'messages' => [
                 [
@@ -200,7 +200,7 @@ final class OllamaClientTest extends TestCase
             ]);
         }, 'http://127.0.0.1:1234');
 
-        $client = new OllamaClient($httpClient, 'http://127.0.0.1:1234');
+        $client = new OllamaClient($httpClient);
 
         $client->request(
             new Ollama('llama3.2', [Capability::INPUT_MESSAGES]),
@@ -238,7 +238,7 @@ final class OllamaClientTest extends TestCase
             ]);
         }, 'http://127.0.0.1:1234');
 
-        $client = new OllamaClient($httpClient, 'http://127.0.0.1:1234');
+        $client = new OllamaClient($httpClient);
 
         $client->request(
             new Ollama('llama3.2', [Capability::INPUT_MESSAGES]),
@@ -275,7 +275,7 @@ final class OllamaClientTest extends TestCase
             ]);
         }, 'http://127.0.0.1:1234');
 
-        $client = new OllamaClient($httpClient, 'http://127.0.0.1:1234');
+        $client = new OllamaClient($httpClient);
 
         $client->request(
             new Ollama('llama3.2', [Capability::INPUT_MESSAGES]),
@@ -325,7 +325,7 @@ final class OllamaClientTest extends TestCase
             ]);
         }, 'http://127.0.0.1:1234');
 
-        $client = new OllamaClient($httpClient, 'http://127.0.0.1:1234');
+        $client = new OllamaClient($httpClient);
 
         $client->request(
             new Ollama('embeddinggemma', [Capability::EMBEDDINGS]),

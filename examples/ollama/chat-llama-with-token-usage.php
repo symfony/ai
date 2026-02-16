@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
+$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), httpClient: http_client());
 
 try {
     $result = $platform->invoke(env('OLLAMA_LLM'), new MessageBag(
