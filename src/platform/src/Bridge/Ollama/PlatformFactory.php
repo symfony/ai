@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -25,7 +26,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class PlatformFactory
 {
     public static function create(
-        string $hostUrl = 'http://localhost:11434',
+        ?string $endpoint = 'http://localhost:11434',
+        #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
@@ -33,8 +35,17 @@ final class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
+        if (null !== $endpoint) {
+            $defaultOptions = [];
+            if (null !== $apiKey) {
+                $defaultOptions['auth_bearer'] = $apiKey;
+            }
+
+            $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, $defaultOptions);
+        }
+
         return new Platform(
-            [new OllamaClient($httpClient, $hostUrl)],
+            [new OllamaClient($httpClient)],
             [new OllamaResultConverter()],
             $modelCatalog,
             $contract ?? OllamaContract::create(),

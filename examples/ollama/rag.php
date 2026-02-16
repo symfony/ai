@@ -41,7 +41,7 @@ foreach (Movies::all() as $i => $movie) {
 }
 
 // create embeddings for documents
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
+$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), httpClient: http_client());
 $vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'), logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);

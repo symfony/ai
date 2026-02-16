@@ -135,6 +135,7 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
@@ -890,12 +891,32 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Ollama platform configuration requires "symfony/ai-ollama-platform" package. Try running "composer require symfony/ai-ollama-platform".');
             }
 
+            $httpClientReference = new Reference($platform['http_client']);
+
+            if (null !== $platform['endpoint']) {
+                $defaultOptions = [];
+                if (null !== ($platform['api_key'] ?? null)) {
+                    $defaultOptions['auth_bearer'] = $platform['api_key'];
+                }
+
+                $scopedClientDefinition = (new Definition(ScopingHttpClient::class))
+                    ->setFactory([ScopingHttpClient::class, 'forBaseUri'])
+                    ->setArguments([
+                        $httpClientReference,
+                        $platform['endpoint'],
+                        $defaultOptions,
+                    ]);
+
+                $container->setDefinition('ai.platform.ollama.scoped_http_client', $scopedClientDefinition);
+
+                $httpClientReference = new Reference('ai.platform.ollama.scoped_http_client');
+            }
+
             if (\array_key_exists('api_catalog', $platform)) {
                 $catalogDefinition = (new Definition(OllamaApiCatalog::class))
                     ->setLazy(true)
                     ->setArguments([
-                        $platform['host_url'],
-                        new Reference($platform['http_client']),
+                        $httpClientReference,
                     ])
                     ->addTag('proxy', ['interface' => ModelCatalogInterface::class])
                 ;
@@ -907,8 +928,9 @@ final class AiBundle extends AbstractBundle
                 ->setFactory(OllamaPlatformFactory::class.'::create')
                 ->setLazy(true)
                 ->setArguments([
-                    $platform['host_url'],
-                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $platform['endpoint'],
+                    $platform['api_key'] ?? null,
+                    $httpClientReference,
                     new Reference('ai.platform.model_catalog.ollama'),
                     new Reference('ai.platform.contract.ollama'),
                     new Reference('event_dispatcher'),

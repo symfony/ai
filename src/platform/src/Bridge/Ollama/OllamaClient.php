@@ -42,7 +42,6 @@ final class OllamaClient implements ModelClientInterface
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $hostUrl,
     ) {
     }
 
@@ -76,7 +75,7 @@ final class OllamaClient implements ModelClientInterface
 
         $options = $this->normalizeOllamaOptions($options, self::CHAT_TOP_LEVEL_KEYS);
 
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/api/chat', $this->hostUrl), [
+        return new RawHttpResult($this->httpClient->request('POST', '/api/chat', [
             'headers' => ['Content-Type' => 'application/json'],
             'json' => array_merge($options, $payload),
         ]));
@@ -90,7 +89,7 @@ final class OllamaClient implements ModelClientInterface
     {
         $options = self::normalizeOllamaOptions($options, self::EMBED_TOP_LEVEL_KEYS);
 
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/api/embed', $this->hostUrl), [
+        return new RawHttpResult($this->httpClient->request('POST', '/api/embed', [
             'json' => array_merge($options, [
                 'model' => $model->getName(),
                 'input' => $payload,

@@ -21,7 +21,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
 
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client(), eventDispatcher: $dispatcher);
+$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), httpClient: http_client(), eventDispatcher: $dispatcher);
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),
