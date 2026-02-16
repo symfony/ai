@@ -25,29 +25,17 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 final class Platform implements PlatformInterface
 {
     /**
-     * @var ModelClientInterface[]
-     */
-    private readonly array $modelClients;
-
-    /**
-     * @var ResultConverterInterface[]
-     */
-    private readonly array $resultConverters;
-
-    /**
      * @param iterable<ModelClientInterface>     $modelClients
      * @param iterable<ResultConverterInterface> $resultConverters
      */
     public function __construct(
-        iterable $modelClients,
-        iterable $resultConverters,
+        private readonly iterable $modelClients,
+        private readonly iterable $resultConverters,
         private readonly ModelCatalogInterface $modelCatalog,
         private ?Contract $contract = null,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
         $this->contract = $contract ?? Contract::create();
-        $this->modelClients = $modelClients instanceof \Traversable ? iterator_to_array($modelClients) : $modelClients;
-        $this->resultConverters = $resultConverters instanceof \Traversable ? iterator_to_array($resultConverters) : $resultConverters;
     }
 
     public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
