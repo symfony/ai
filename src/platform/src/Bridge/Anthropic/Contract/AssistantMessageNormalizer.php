@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Anthropic\Contract;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Contract\Normalizer\ContentNormalizerTrait;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model;
@@ -24,6 +25,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
  */
 final class AssistantMessageNormalizer extends ModelContractNormalizer implements NormalizerAwareInterface
 {
+    use ContentNormalizerTrait;
     use NormalizerAwareTrait;
 
     /**
@@ -41,16 +43,18 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
+        $content = $data->hasToolCalls() ? array_map(static function (ToolCall $toolCall) {
+            return [
+                'type' => 'tool_use',
+                'id' => $toolCall->getId(),
+                'name' => $toolCall->getName(),
+                'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
+            ];
+        }, $data->getToolCalls()) : $this->normalizeContentToString($data->getContent(), $format, $context);
+
         return [
             'role' => 'assistant',
-            'content' => $data->hasToolCalls() ? array_map(static function (ToolCall $toolCall) {
-                return [
-                    'type' => 'tool_use',
-                    'id' => $toolCall->getId(),
-                    'name' => $toolCall->getName(),
-                    'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
-                ];
-            }, $data->getToolCalls()) : $data->getContent(),
+            'content' => $content,
         ];
     }
 

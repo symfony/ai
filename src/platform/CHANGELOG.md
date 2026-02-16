@@ -10,6 +10,7 @@ CHANGELOG
 0.3
 ---
 
+ * Add support for objects (`JsonSerializable`, `Stringable`, or any object) in `AssistantMessage` content
  * Add `StreamListenerInterface` to hook into response streams
  * [BC BREAK] Change `TokenUsageAggregation::__construct()` from variadic to array
  * Add `TokenUsageAggregation::add()` method to add more token usages

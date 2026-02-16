@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Ollama\Contract;
 
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
+use Symfony\AI\Platform\Contract\Normalizer\ContentNormalizerTrait;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Role;
@@ -25,6 +26,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
  */
 final class AssistantMessageNormalizer extends ModelContractNormalizer implements NormalizerAwareInterface
 {
+    use ContentNormalizerTrait;
     use NormalizerAwareTrait;
 
     /**
@@ -44,9 +46,11 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
+        $content = $this->normalizeContentToString($data->getContent(), $format, $context) ?? '';
+
         return [
             'role' => Role::Assistant,
-            'content' => $data->getContent() ?? '',
+            'content' => $content,
             'tool_calls' => array_values(array_map(static function (ToolCall $message): array {
                 return [
                     'type' => 'function',
