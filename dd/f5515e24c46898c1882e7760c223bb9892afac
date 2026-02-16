@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-08T20:26:58Z
+
+for all who take a look at this PR this is a POC as a discussion base
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-10T09:54:36Z
+
+@chr-hertel I’ll remove the filter for now and address it in a separate issue. However, a lightweight filter implementation across all stores would be valuable. Starting with basic equality filters should cover the primary use case and work for most, if not all, stores. More complex filtering can be handled at the application level, where it’s already store-specific and can leverage those advantages.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-14T21:06:54Z
+
+@chr-hertel final in my opinion - the only issue is the chromadb stuff - but created the issue already
