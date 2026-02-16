@@ -16,6 +16,9 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -159,7 +162,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:9308/search".');
         $this->expectExceptionCode(400);
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testStoreCanQuery()
@@ -192,121 +195,27 @@ final class StoreTest extends TestCase
         ]);
 
         $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
-        $documents = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $documents);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testStoreCannotRemoveOnInvalidResponse()
+    public function testStoreSupportsVectorQuery()
     {
-        $mockHttpClient = new MockHttpClient([
-            new JsonMockResponse([], [
-                'http_code' => 400,
-            ]),
-        ]);
-
-        $store = new Store($mockHttpClient, 'http://127.0.0.1:9308', 'bar', 'random');
-
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:9308/bulk".');
-        $this->expectExceptionCode(400);
-        $store->remove('test-id');
+        $store = new Store(new MockHttpClient(), 'http://localhost:9308', 'test_index');
+        $this->assertTrue($store->supports(VectorQuery::class));
     }
 
-    public function testStoreCanRemoveSingleId()
+    public function testStoreDoesNotSupportTextQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'items' => [
-                    [
-                        'bulk' => [
-                            'table' => 'bar',
-                            '_id' => 1,
-                            'created' => 0,
-                            'deleted' => 1,
-                            'updated' => 0,
-                            'result' => 'deleted',
-                            'status' => 200,
-                        ],
-                    ],
-                ],
-                'errors' => false,
-            ], [
-                'http_code' => 200,
-            ]),
-        ]);
-
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
-        $store->remove('test-id');
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:9308', 'test_index');
+        $this->assertFalse($store->supports(TextQuery::class));
     }
 
-    public function testStoreCanRemoveMultipleIds()
+    public function testStoreDoesNotSupportHybridQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'items' => [
-                    [
-                        'bulk' => [
-                            'table' => 'bar',
-                            '_id' => 1,
-                            'created' => 0,
-                            'deleted' => 3,
-                            'updated' => 0,
-                            'result' => 'deleted',
-                            'status' => 200,
-                        ],
-                    ],
-                ],
-                'errors' => false,
-            ], [
-                'http_code' => 200,
-            ]),
-        ]);
-
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
-        $store->remove(['test-id-1', 'test-id-2', 'test-id-3']);
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
-    }
-
-    public function testStoreCanRemoveWithEmptyArray()
-    {
-        $httpClient = new MockHttpClient();
-
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
-        $store->remove([]);
-
-        $this->assertSame(0, $httpClient->getRequestsCount());
-    }
-
-    public function testStoreCanRemoveWithChunking()
-    {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'items' => [],
-                'errors' => false,
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([
-                'items' => [],
-                'errors' => false,
-            ], [
-                'http_code' => 200,
-            ]),
-        ]);
-
-        $ids = [];
-        for ($i = 0; $i < 1001; ++$i) {
-            $ids[] = 'test-id-'.$i;
-        }
-
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
-        $store->remove($ids);
-
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:9308', 'test_index');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

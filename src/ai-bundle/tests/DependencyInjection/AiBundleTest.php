@@ -5818,10 +5818,10 @@ class AiBundleTest extends TestCase
         $arguments = $retrieverDefinition->getArguments();
 
         $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame('ai.vectorizer.my_vectorizer', (string) $arguments[0]);
+        $this->assertSame('ai.store.memory.my_store', (string) $arguments[0]);
 
         $this->assertInstanceOf(Reference::class, $arguments[1]);
-        $this->assertSame('ai.store.memory.my_store', (string) $arguments[1]);
+        $this->assertSame('ai.vectorizer.my_vectorizer', (string) $arguments[1]);
 
         $this->assertInstanceOf(Reference::class, $arguments[2]); // logger
         $this->assertSame('logger', (string) $arguments[2]);

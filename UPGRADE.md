@@ -135,6 +135,40 @@ Store
    +$document->getVector();
    ```
 
+ * The `StoreInterface::query()` method signature has changed to accept a `QueryInterface` instead of a `Vector`:
+
+   ```diff
+   -use Symfony\AI\Platform\Vector\Vector;
+   +use Symfony\AI\Store\Query\VectorQuery;
+
+   -$results = $store->query($vector, ['limit' => 10]);
+   +$results = $store->query(new VectorQuery($vector), ['limit' => 10]);
+   ```
+
+   The Store component now supports multiple query types through a query abstraction system. Available query types:
+   - `VectorQuery`: For vector similarity search (replaces the old `Vector` parameter)
+   - `TextQuery`: For full-text search (when supported by the store)
+   - `HybridQuery`: For combined vector + text search (when supported by the store)
+
+   Check if a store supports a specific query type using the new `supports()` method:
+
+   ```php
+   if ($store->supports(VectorQuery::class)) {
+       $results = $store->query(new VectorQuery($vector));
+   }
+   ```
+
+ * The `Symfony\AI\Store\Retriever` constructor signature has changed - the first two arguments have been swapped:
+
+   ```diff
+   -use Symfony\AI\Store\Retriever;
+   -
+   -$retriever = new Retriever($vectorizer, $store, $logger);
+   +$retriever = new Retriever($store, $vectorizer, $logger);
+   ```
+
+   This change aligns the constructor with the primary dependency (the store) being first, followed by the optional vectorizer.
+
 UPGRADE FROM 0.2 to 0.3
 =======================
 

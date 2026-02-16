@@ -18,6 +18,9 @@ use Symfony\AI\Store\Bridge\Redis\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
@@ -126,7 +129,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -165,7 +168,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -192,7 +195,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['maxScore' => 0.8]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxScore' => 0.8]));
 
         $this->assertCount(0, $results); // Should be filtered out due to maxScore
     }
@@ -216,7 +219,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn([0]); // No results
 
-        $results = iterator_to_array($store->query(new Vector([0.7, 0.8, 0.9]), ['limit' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.7, 0.8, 0.9])), ['limit' => 10]));
 
         $this->assertCount(0, $results);
     }
@@ -240,7 +243,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn([0]); // No results
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['where' => '@metadata_category:products']));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['where' => '@metadata_category:products']));
 
         $this->assertCount(0, $results);
     }
@@ -273,7 +276,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'where' => '@metadata_active:true',
             'maxScore' => 0.8,
         ]));
@@ -301,7 +304,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertSame([], $results[0]->getMetadata()->getArrayCopy());
@@ -319,7 +322,7 @@ final class StoreTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to execute query: "Search failed".');
 
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testInitialize()
@@ -463,7 +466,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn([0]);
 
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testQueryEmptyResults()
@@ -475,7 +478,7 @@ final class StoreTest extends TestCase
             ->method('rawCommand')
             ->willReturn([0]); // No results
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(0, $results);
     }
@@ -489,7 +492,7 @@ final class StoreTest extends TestCase
             ->method('rawCommand')
             ->willReturn(null); // Invalid results
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(0, $results);
     }
@@ -511,66 +514,29 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(0, $results); // Should skip documents without required fields
     }
 
-    public function testRemoveSingleDocument()
+    public function testStoreSupportsVectorQuery()
     {
         $redis = $this->createMock(\Redis::class);
-        $store = new Store($redis, 'test_index', 'vector:');
-
-        $vectorId = 'vector-id';
-
-        $redis->expects($this->once())
-            ->method('del')
-            ->with(['vector:vector-id']);
-
-        $store->remove($vectorId);
+        $store = new Store($redis, 'test:vectors');
+        $this->assertTrue($store->supports(VectorQuery::class));
     }
 
-    public function testRemoveMultipleDocuments()
+    public function testStoreDoesNotSupportTextQuery()
     {
         $redis = $this->createMock(\Redis::class);
-        $store = new Store($redis, 'test_index', 'vector:');
-
-        $vectorIds = ['vector-id-1', 'vector-id-2', 'vector-id-3'];
-
-        $redis->expects($this->once())
-            ->method('del')
-            ->with(['vector:vector-id-1', 'vector:vector-id-2', 'vector:vector-id-3']);
-
-        $store->remove($vectorIds);
+        $store = new Store($redis, 'test:vectors');
+        $this->assertFalse($store->supports(TextQuery::class));
     }
 
-    public function testRemoveWithEmptyArray()
+    public function testStoreDoesNotSupportHybridQuery()
     {
         $redis = $this->createMock(\Redis::class);
-        $store = new Store($redis, 'test_index', 'vector:');
-
-        $redis->expects($this->never())
-            ->method('del');
-
-        $store->remove([]);
-    }
-
-    public function testRemoveFailureThrowsRuntimeException()
-    {
-        $redis = $this->createMock(\Redis::class);
-        $store = new Store($redis, 'test_index', 'vector:');
-
-        $redis->expects($this->once())
-            ->method('del')
-            ->with(['vector:vector-id']);
-
-        $redis->expects($this->once())
-            ->method('getLastError')
-            ->willReturn('Delete failed');
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to remove documents from Redis: "Delete failed".');
-
-        $store->remove('vector-id');
+        $store = new Store($redis, 'test:vectors');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

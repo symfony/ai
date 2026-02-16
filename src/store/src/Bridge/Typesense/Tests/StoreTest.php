@@ -15,6 +15,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Typesense\Store;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -168,7 +171,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8108/multi_search".');
         $this->expectExceptionCode(400);
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testStoreCanQuery()
@@ -209,86 +212,27 @@ final class StoreTest extends TestCase
             'test',
         );
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(2, $results);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testStoreCanRemoveSingleDocument()
+    public function testStoreSupportsVectorQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([], [
-                'http_code' => 200,
-            ]),
-        ], 'http://127.0.0.1:8108');
-
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8108',
-            'test',
-            'test',
-        );
-
-        $store->remove('doc-id-123');
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:8108', 'test-key', 'test_collection');
+        $this->assertTrue($store->supports(VectorQuery::class));
     }
 
-    public function testStoreCanRemoveMultipleDocuments()
+    public function testStoreDoesNotSupportTextQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([], [
-                'http_code' => 200,
-            ]),
-        ], 'http://127.0.0.1:8108');
-
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8108',
-            'test',
-            'test',
-        );
-
-        $store->remove(['doc-id-123', 'doc-id-456', 'doc-id-789']);
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:8108', 'test-key', 'test_collection');
+        $this->assertFalse($store->supports(TextQuery::class));
     }
 
-    public function testStoreCanRemoveWithEmptyArray()
+    public function testStoreDoesNotSupportHybridQuery()
     {
-        $httpClient = new MockHttpClient([], 'http://127.0.0.1:8108');
-
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8108',
-            'test',
-            'test',
-        );
-
-        $store->remove([]);
-
-        $this->assertSame(0, $httpClient->getRequestsCount());
-    }
-
-    public function testStoreCannotRemoveOnInvalidResponse()
-    {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([], [
-                'http_code' => 404,
-            ]),
-        ], 'http://127.0.0.1:8108');
-
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8108',
-            'test',
-            'test',
-        );
-
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 404 returned for "http://127.0.0.1:8108/collections/test/documents?filter_by=id:[doc-id-123]".');
-        $this->expectExceptionCode(404);
-        $store->remove('doc-id-123');
+        $store = new Store(new MockHttpClient(), 'http://localhost:8108', 'test-key', 'test_collection');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

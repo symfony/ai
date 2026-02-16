@@ -23,6 +23,11 @@ use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
 #[Group('integration')]
 final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
+    public function testQueryDocumentsWithTextQuery()
+    {
+        $this->markTestSkipped('ChromaDb TextQuery requires an embedding function to be configured.');
+    }
+
     protected static function createStore(): StoreInterface
     {
         $client = ChromaDB::factory()

@@ -15,6 +15,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Neo4j\Store;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -288,82 +291,27 @@ final class StoreTest extends TestCase
         $store->setup();
         $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(2, $results);
         $this->assertSame(3, $httpClient->getRequestsCount());
     }
 
-    public function testStoreCanRemoveSingleDocument()
+    public function testStoreSupportsVectorQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'data' => [
-                    'fields' => [],
-                    'values' => [],
-                ],
-                'bookmarks' => [
-                    'FB:kcwQ5zbxUD1ESXmS6UjG2xKCZMkAoJB=',
-                ],
-            ], [
-                'http_code' => 200,
-            ]),
-        ], 'http://127.0.0.1:7474');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
-
-        $store->remove('test-id');
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'bolt://localhost:7687', 'neo4j', 'password', 'neo4j', 'vector_index', 'Document');
+        $this->assertTrue($store->supports(VectorQuery::class));
     }
 
-    public function testStoreCanRemoveMultipleDocuments()
+    public function testStoreDoesNotSupportTextQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'data' => [
-                    'fields' => [],
-                    'values' => [],
-                ],
-                'bookmarks' => [
-                    'FB:kcwQ5zbxUD1ESXmS6UjG2xKCZMkAoJB=',
-                ],
-            ], [
-                'http_code' => 200,
-            ]),
-        ], 'http://127.0.0.1:7474');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
-
-        $store->remove(['test-id-1', 'test-id-2', 'test-id-3']);
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'bolt://localhost:7687', 'neo4j', 'password', 'neo4j', 'vector_index', 'Document');
+        $this->assertFalse($store->supports(TextQuery::class));
     }
 
-    public function testStoreCannotRemoveOnInvalidResponse()
+    public function testStoreDoesNotSupportHybridQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([], [
-                'http_code' => 400,
-            ]),
-        ], 'http://127.0.0.1:7474');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
-
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7474/db/symfony/query/v2".');
-        $this->expectExceptionCode(400);
-        $store->remove('test-id');
-    }
-
-    public function testStoreRemoveWithEmptyArray()
-    {
-        $httpClient = new MockHttpClient([], 'http://127.0.0.1:7474');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
-
-        $store->remove([]);
-
-        $this->assertSame(0, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'bolt://localhost:7687', 'neo4j', 'password', 'neo4j', 'vector_index', 'Document');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

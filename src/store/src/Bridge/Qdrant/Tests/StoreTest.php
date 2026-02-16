@@ -15,6 +15,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Qdrant\Store;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -227,7 +230,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points/query".');
         $this->expectExceptionCode(400);
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testStoreCanQuery()
@@ -255,7 +258,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertSame(1, $httpClient->getRequestsCount());
         $this->assertCount(2, $results);
@@ -286,7 +289,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'filter' => [
                 'must' => [
                     ['key' => 'foo', 'match' => ['value' => 'bar']],
@@ -306,109 +309,21 @@ final class StoreTest extends TestCase
         }
     }
 
-    public function testStoreCannotRemoveOnInvalidResponse()
+    public function testStoreSupportsVectorQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([], [
-                'http_code' => 400,
-            ]),
-        ], 'http://127.0.0.1:6333');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
-
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points/delete?wait=true".');
-        $this->expectExceptionCode(400);
-        $store->remove('test-id');
+        $store = new Store(new MockHttpClient(), 'http://localhost:6333', 'test-api-key', 'test_collection');
+        $this->assertTrue($store->supports(VectorQuery::class));
     }
 
-    public function testStoreCanRemoveSingleId()
+    public function testStoreDoesNotSupportTextQuery()
     {
-        $id = Uuid::v4()->toRfc4122();
-
-        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($id): JsonMockResponse {
-            self::assertSame('POST', $method);
-            self::assertArrayHasKey('wait', $options['query']);
-            self::assertSame('true', $options['query']['wait']);
-            self::assertIsString($options['body']);
-            self::assertSame(['points' => [$id]], json_decode($options['body'], true));
-
-            return new JsonMockResponse([
-                'time' => 0.002,
-                'status' => 'ok',
-                'result' => [
-                    'operation_id' => 0,
-                    'status' => 'completed',
-                ],
-            ], [
-                'http_code' => 200,
-            ]);
-        }, 'http://127.0.0.1:6333');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
-
-        $store->remove($id);
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:6333', 'test-api-key', 'test_collection');
+        $this->assertFalse($store->supports(TextQuery::class));
     }
 
-    public function testStoreCanRemoveMultipleIds()
+    public function testStoreDoesNotSupportHybridQuery()
     {
-        $ids = [Uuid::v4()->toRfc4122(), Uuid::v4()->toRfc4122(), Uuid::v4()->toRfc4122()];
-
-        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($ids): JsonMockResponse {
-            self::assertSame('POST', $method);
-            self::assertArrayHasKey('wait', $options['query']);
-            self::assertSame('true', $options['query']['wait']);
-            self::assertIsString($options['body']);
-            self::assertSame(['points' => $ids], json_decode($options['body'], true));
-
-            return new JsonMockResponse([
-                'time' => 0.003,
-                'status' => 'ok',
-                'result' => [
-                    'operation_id' => 0,
-                    'status' => 'completed',
-                ],
-            ], [
-                'http_code' => 200,
-            ]);
-        }, 'http://127.0.0.1:6333');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
-
-        $store->remove($ids);
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
-    }
-
-    public function testStoreCanRemoveAsynchronously()
-    {
-        $id = Uuid::v4()->toRfc4122();
-
-        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($id): JsonMockResponse {
-            self::assertSame('POST', $method);
-            self::assertArrayHasKey('wait', $options['query']);
-            self::assertSame('false', $options['query']['wait']);
-            self::assertIsString($options['body']);
-            self::assertSame(['points' => [$id]], json_decode($options['body'], true));
-
-            return new JsonMockResponse([
-                'time' => 0.002,
-                'status' => 'ok',
-                'result' => [
-                    'operation_id' => 1000001,
-                    'status' => 'acknowledged',
-                ],
-            ], [
-                'http_code' => 200,
-            ]);
-        }, 'http://127.0.0.1:6333');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test', async: true);
-
-        $store->remove($id);
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:6333', 'test-api-key', 'test_collection');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

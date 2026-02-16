@@ -17,6 +17,7 @@ use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\Uid\Uuid;
 
@@ -75,7 +76,7 @@ $elapsedTime = microtime(true) - $startTime;
 echo sprintf("Indexing completed in %.2f seconds.\n\n", $elapsedTime);
 
 $vector = $vectorizer->vectorize('machine learning artificial intelligence');
-$results = $store->query($vector);
+$results = $store->query(new VectorQuery($vector));
 
 echo "Search results for 'machine learning artificial intelligence':\n";
 foreach ($results as $i => $document) {

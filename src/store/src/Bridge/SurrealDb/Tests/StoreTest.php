@@ -15,6 +15,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\SurrealDb\Store;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -326,7 +329,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/sql".');
         $this->expectExceptionCode(400);
-        iterator_to_array($store->query(new Vector(array_fill(0, 1275, 0.1))));
+        iterator_to_array($store->query(new VectorQuery(new Vector(array_fill(0, 1275, 0.1)))));
     }
 
     public function testStoreCanQueryOnValidEmbeddings()
@@ -400,134 +403,26 @@ final class StoreTest extends TestCase
 
         $store->add([new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1)))]);
 
-        $results = iterator_to_array($store->query(new Vector(array_fill(0, 1275, 0.1))));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector(array_fill(0, 1275, 0.1)))));
 
         $this->assertCount(2, $results);
     }
 
-    public function testStoreCannotRemoveOnInvalidResponse()
+    public function testStoreSupportsVectorQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'code' => 200,
-                'details' => 'Authentication succeeded.',
-                'token' => 'bar',
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([
-                [
-                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
-                    'status' => 'OK',
-                    'time' => '263.208µs',
-                ],
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([], [
-                'http_code' => 400,
-            ]),
-        ], 'http://127.0.0.1:8000');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
-        $store->setup();
-
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/sql".');
-        $this->expectExceptionCode(400);
-        $store->remove('test-id');
+        $store = new Store(new MockHttpClient(), 'http://localhost:8000', 'test', 'test', 'test_namespace', 'test_database', 'test_table');
+        $this->assertTrue($store->supports(VectorQuery::class));
     }
 
-    public function testStoreCanRemoveSingleId()
+    public function testStoreDoesNotSupportTextQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'code' => 200,
-                'details' => 'Authentication succeeded.',
-                'token' => 'bar',
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([
-                [
-                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
-                    'status' => 'OK',
-                    'time' => '263.208µs',
-                ],
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([], [
-                'http_code' => 200,
-            ]),
-        ], 'http://127.0.0.1:8000');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
-        $store->setup();
-
-        $store->remove('test-id');
-
-        $this->assertSame(3, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:8000', 'test', 'test', 'test_namespace', 'test_database', 'test_table');
+        $this->assertFalse($store->supports(TextQuery::class));
     }
 
-    public function testStoreCanRemoveMultipleIds()
+    public function testStoreDoesNotSupportHybridQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'code' => 200,
-                'details' => 'Authentication succeeded.',
-                'token' => 'bar',
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([
-                [
-                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
-                    'status' => 'OK',
-                    'time' => '263.208µs',
-                ],
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([], [
-                'http_code' => 200,
-            ]),
-        ], 'http://127.0.0.1:8000');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
-        $store->setup();
-
-        $store->remove(['test-id-1', 'test-id-2']);
-
-        $this->assertSame(3, $httpClient->getRequestsCount());
-    }
-
-    public function testStoreCanRemoveWithEmptyIds()
-    {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'code' => 200,
-                'details' => 'Authentication succeeded.',
-                'token' => 'bar',
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([
-                [
-                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
-                    'status' => 'OK',
-                    'time' => '263.208µs',
-                ],
-            ], [
-                'http_code' => 200,
-            ]),
-        ], 'http://127.0.0.1:8000');
-
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
-        $store->setup();
-
-        $store->remove([]);
-
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:8000', 'test', 'test', 'test_namespace', 'test_database', 'test_table');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

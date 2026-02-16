@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -167,7 +168,7 @@ final class SearchStoreTest extends TestCase
             '2023-11-01',
         );
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(2, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -216,7 +217,7 @@ final class SearchStoreTest extends TestCase
             'custom_vector_field',
         );
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -247,7 +248,7 @@ final class SearchStoreTest extends TestCase
         $this->expectExceptionMessage('HTTP 400 returned');
         $this->expectExceptionCode(400);
 
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testQueryWithNullVector()
@@ -277,7 +278,7 @@ final class SearchStoreTest extends TestCase
             '2023-11-01',
         );
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -424,5 +425,11 @@ final class SearchStoreTest extends TestCase
         $this->expectExceptionCode(404);
 
         $store->remove('nonexistent-doc');
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $store = new SearchStore(new MockHttpClient(), 'https://test.search.windows.net', 'test-key', 'test-index', '2023-11-01');
+        $this->assertTrue($store->supports(VectorQuery::class));
     }
 }

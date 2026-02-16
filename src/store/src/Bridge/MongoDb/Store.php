@@ -21,7 +21,10 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedFeatureException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -140,6 +143,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         throw new UnsupportedFeatureException('Method not implemented yet.');
     }
 
+    public function supports(string $queryClass): bool
+    {
+        return VectorQuery::class === $queryClass;
+    }
+
     /**
      * @param array{
      *     limit?: positive-int,
@@ -148,8 +156,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     minScore?: float,
      * } $options
      */
-    public function query(Vector $vector, array $options = []): iterable
+    public function query(QueryInterface $query, array $options = []): iterable
     {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
+        $vector = $query->getVector();
         $minScore = null;
         if (\array_key_exists('minScore', $options)) {
             $minScore = $options['minScore'];

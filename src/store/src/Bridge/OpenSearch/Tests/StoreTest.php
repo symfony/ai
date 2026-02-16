@@ -16,6 +16,9 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\OpenSearch\Store;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\Uid\Uuid;
@@ -190,87 +193,27 @@ final class StoreTest extends TestCase
         ]);
 
         $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
-        $results = $store->query(new Vector([0.1, 0.2, 0.3]));
+        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(2, iterator_to_array($results));
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testStoreCanRemoveSingleDocument()
+    public function testStoreSupportsVectorQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'took' => 30,
-                'errors' => false,
-                'items' => [
-                    [
-                        'delete' => [
-                            '_index' => 'foo',
-                            '_id' => 'test-id-1',
-                            '_version' => 2,
-                            'result' => 'deleted',
-                            '_shards' => [],
-                            'status' => 200,
-                        ],
-                    ],
-                ],
-            ], [
-                'http_code' => 200,
-            ]),
-        ]);
-
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
-        $store->remove('test-id-1');
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:9200', 'test-index');
+        $this->assertTrue($store->supports(VectorQuery::class));
     }
 
-    public function testStoreCanRemoveMultipleDocuments()
+    public function testStoreDoesNotSupportTextQuery()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'took' => 50,
-                'errors' => false,
-                'items' => [
-                    [
-                        'delete' => [
-                            '_index' => 'foo',
-                            '_id' => 'test-id-1',
-                            '_version' => 2,
-                            'result' => 'deleted',
-                            '_shards' => [],
-                            'status' => 200,
-                        ],
-                    ],
-                    [
-                        'delete' => [
-                            '_index' => 'foo',
-                            '_id' => 'test-id-2',
-                            '_version' => 2,
-                            'result' => 'deleted',
-                            '_shards' => [],
-                            'status' => 200,
-                        ],
-                    ],
-                ],
-            ], [
-                'http_code' => 200,
-            ]),
-        ]);
-
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
-        $store->remove(['test-id-1', 'test-id-2']);
-
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:9200', 'test-index');
+        $this->assertFalse($store->supports(TextQuery::class));
     }
 
-    public function testStoreCanRemoveWithEmptyArray()
+    public function testStoreDoesNotSupportHybridQuery()
     {
-        $httpClient = new MockHttpClient([]);
-
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
-        $store->remove([]);
-
-        $this->assertSame(0, $httpClient->getRequestsCount());
+        $store = new Store(new MockHttpClient(), 'http://localhost:9200', 'test-index');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

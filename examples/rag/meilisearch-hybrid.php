@@ -17,6 +17,8 @@ use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -69,10 +71,7 @@ foreach ($ratios as $config) {
     echo "--- {$config['description']} ---\n";
 
     // Override the semantic ratio for this specific query
-    $results = $store->query($queryEmbedding, [
-        'semanticRatio' => $config['ratio'],
-        'q' => 'technology', // Full-text search keyword
-    ]);
+    $results = $store->query(new HybridQuery($queryEmbedding, 'technology', $config['ratio']));
 
     echo "Top 3 results:\n";
     foreach (array_slice($results, 0, 3) as $i => $result) {
@@ -90,9 +89,7 @@ foreach ($ratios as $config) {
 echo "--- Custom query with pure semantic search ---\n";
 echo "Query: Movies about space exploration\n";
 $spaceEmbedding = $vectorizer->vectorize('space exploration and cosmic adventures');
-$results = $store->query($spaceEmbedding, [
-    'semanticRatio' => 1.0, // Pure semantic search
-]);
+$results = $store->query(new VectorQuery($spaceEmbedding));
 
 echo "Top 3 results:\n";
 foreach (array_slice($results, 0, 3) as $i => $result) {

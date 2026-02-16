@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -54,7 +55,7 @@ final class EmbeddingProvider implements MemoryProviderInterface
         $userMessageTextContent = array_shift($userMessageTextContent);
 
         $vectors = $this->platform->invoke($this->model->getName(), $userMessageTextContent->getText())->asVectors();
-        $foundEmbeddingContent = $this->vectorStore->query($vectors[0]);
+        $foundEmbeddingContent = $this->vectorStore->query(new VectorQuery($vectors[0]));
 
         $content = '';
         foreach ($foundEmbeddingContent as $document) {

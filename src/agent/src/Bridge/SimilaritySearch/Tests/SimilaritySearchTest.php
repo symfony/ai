@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorizerInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -47,7 +48,7 @@ final class SimilaritySearchTest extends TestCase
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->once())
             ->method('query')
-            ->with($vector)
+            ->with($this->callback(static fn ($query) => $query instanceof VectorQuery && $query->getVector() === $vector))
             ->willReturn([$document1, $document2]);
 
         $similaritySearch = new SimilaritySearch($vectorizer, $store);
@@ -72,7 +73,7 @@ final class SimilaritySearchTest extends TestCase
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->once())
             ->method('query')
-            ->with($vector)
+            ->with($this->callback(static fn ($query) => $query instanceof VectorQuery && $query->getVector() === $vector))
             ->willReturn([]);
 
         $similaritySearch = new SimilaritySearch($vectorizer, $store);
@@ -103,7 +104,7 @@ final class SimilaritySearchTest extends TestCase
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->once())
             ->method('query')
-            ->with($vector)
+            ->with($this->callback(static fn ($query) => $query instanceof VectorQuery && $query->getVector() === $vector))
             ->willReturn([$document]);
 
         $similaritySearch = new SimilaritySearch($vectorizer, $store);

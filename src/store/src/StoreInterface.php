@@ -11,8 +11,9 @@
 
 namespace Symfony\AI\Store;
 
-use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\Query\QueryInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -34,6 +35,13 @@ interface StoreInterface
      * @param array<string, mixed> $options
      *
      * @return iterable<VectorDocument>
+     *
+     * @throws UnsupportedQueryTypeException if query type not supported
      */
-    public function query(Vector $vector, array $options = []): iterable;
+    public function query(QueryInterface $query, array $options = []): iterable;
+
+    /**
+     * @param class-string<QueryInterface> $queryClass The query class to check
+     */
+    public function supports(string $queryClass): bool;
 }

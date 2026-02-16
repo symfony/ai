@@ -17,7 +17,11 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\Retriever;
+use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Tests\Double\PlatformTestHandler;
 use Symfony\AI\Store\Tests\Double\TestStore;
 use Symfony\Component\Uid\Uuid;
@@ -49,7 +53,7 @@ final class RetrieverTest extends TestCase
             'text-embedding-3-small'
         );
 
-        $retriever = new Retriever($vectorizer, $store);
+        $retriever = new Retriever($store, $vectorizer);
         $results = iterator_to_array($retriever->retrieve('test query'));
 
         $this->assertCount(2, $results);
@@ -69,7 +73,7 @@ final class RetrieverTest extends TestCase
             'text-embedding-3-small'
         );
 
-        $retriever = new Retriever($vectorizer, $store);
+        $retriever = new Retriever($store, $vectorizer);
         $results = iterator_to_array($retriever->retrieve('test query'));
 
         $this->assertCount(0, $results);
@@ -92,8 +96,184 @@ final class RetrieverTest extends TestCase
             'text-embedding-3-small'
         );
 
-        $retriever = new Retriever($vectorizer, $store);
+        $retriever = new Retriever($store, $vectorizer);
         $results = iterator_to_array($retriever->retrieve('test query', ['maxItems' => 10]));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrieveUsesTextQueryWhenNoVectorizerProvided()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, true],
+                [HybridQuery::class, false],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->with(
+                $this->isInstanceOf(TextQuery::class),
+                $this->anything()
+            )
+            ->willReturn([$document]);
+
+        $retriever = new Retriever($store, null);
+        $results = iterator_to_array($retriever->retrieve('test query'));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrieveUsesTextQueryWhenStoreDoesNotSupportVectorQuery()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $queryVector = new Vector([0.2, 0.3, 0.4]);
+        $vectorizer = new Vectorizer(
+            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            'text-embedding-3-small'
+        );
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, false],
+                [TextQuery::class, true],
+                [HybridQuery::class, false],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->with(
+                $this->isInstanceOf(TextQuery::class),
+                $this->anything()
+            )
+            ->willReturn([$document]);
+
+        $retriever = new Retriever($store, $vectorizer);
+        $results = iterator_to_array($retriever->retrieve('test query'));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrieveUsesHybridQueryWhenStoreSupportsIt()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $queryVector = new Vector([0.2, 0.3, 0.4]);
+        $vectorizer = new Vectorizer(
+            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            'text-embedding-3-small'
+        );
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, true],
+                [HybridQuery::class, true],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->with(
+                $this->isInstanceOf(HybridQuery::class),
+                $this->anything()
+            )
+            ->willReturn([$document]);
+
+        $retriever = new Retriever($store, $vectorizer);
+        $results = iterator_to_array($retriever->retrieve('test query'));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrieveUsesVectorQueryWhenStoreOnlySupportsVectorQuery()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $queryVector = new Vector([0.2, 0.3, 0.4]);
+        $vectorizer = new Vectorizer(
+            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            'text-embedding-3-small'
+        );
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, false],
+                [HybridQuery::class, false],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->with(
+                $this->isInstanceOf(VectorQuery::class),
+                $this->anything()
+            )
+            ->willReturn([$document]);
+
+        $retriever = new Retriever($store, $vectorizer);
+        $results = iterator_to_array($retriever->retrieve('test query'));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrievePassesSemanticRatioToHybridQuery()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $queryVector = new Vector([0.2, 0.3, 0.4]);
+        $vectorizer = new Vectorizer(
+            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            'text-embedding-3-small'
+        );
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, true],
+                [HybridQuery::class, true],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->with(
+                $this->callback(static function ($query) {
+                    return $query instanceof HybridQuery && 0.7 === $query->getSemanticRatio();
+                }),
+                $this->anything()
+            )
+            ->willReturn([$document]);
+
+        $retriever = new Retriever($store, $vectorizer);
+        $results = iterator_to_array($retriever->retrieve('test query', ['semanticRatio' => 0.7]));
 
         $this->assertCount(1, $results);
     }

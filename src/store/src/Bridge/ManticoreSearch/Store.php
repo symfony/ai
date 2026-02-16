@@ -16,7 +16,10 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -44,7 +47,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $this->request('cli', \sprintf(
-            "CREATE TABLE %s (uuid string, metadata JSON, %s FLOAT_VECTOR KNN_TYPE='%s' KNN_DIMS='%s' HNSW_SIMILARITY='%s' QUANTIZATION='%s')",
+            "CREATE TABLE %s (uuid TEXT, metadata JSON, %s FLOAT_VECTOR KNN_TYPE='%s' KNN_DIMS='%s' HNSW_SIMILARITY='%s' QUANTIZATION='%s')",
             $this->table, $this->field, $this->type, $this->dimensions, $this->similarity, $this->quantization,
         ));
     }
@@ -118,8 +121,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
-    public function query(Vector $vector, array $options = []): iterable
+    public function supports(string $queryClass): bool
     {
+        return VectorQuery::class === $queryClass;
+    }
+
+    public function query(QueryInterface $query, array $options = []): iterable
+    {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
+        $vector = $query->getVector();
         $documents = $this->request('search', [
             'table' => $this->table,
             'knn' => [

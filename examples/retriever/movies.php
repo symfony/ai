@@ -39,7 +39,7 @@ $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);
 
-$retriever = new Retriever($vectorizer, $store, logger());
+$retriever = new Retriever($store, $vectorizer, logger());
 
 echo "Searching for movies about 'crime family mafia'\n";
 echo "================================================\n\n";

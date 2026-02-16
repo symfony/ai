@@ -17,6 +17,9 @@ use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -94,14 +97,14 @@ class StoreTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Supabase query failed: Query failed');
-        iterator_to_array($store->query($queryVector));
+        iterator_to_array($store->query(new VectorQuery($queryVector)));
     }
 
     public function testQueryWithDefaultOptions()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
         $store = $this->createStore($httpClient);
-        $result = iterator_to_array($store->query(new Vector([1.0, 2.0])));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0]))));
 
         $this->assertSame([], $result);
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -111,7 +114,7 @@ class StoreTest extends TestCase
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([]));
         $store = $this->createStore($httpClient);
-        $result = iterator_to_array($store->query(new Vector([1.0, 2.0]), ['limit' => 1]));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0])), ['limit' => 1]));
 
         $this->assertSame([], $result);
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -124,7 +127,7 @@ class StoreTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Vector dimension mismatch: expected 2');
-        iterator_to_array($store->query(new Vector([1.0])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([1.0]))));
     }
 
     public function testQuerySuccess()
@@ -140,7 +143,7 @@ class StoreTest extends TestCase
         ];
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 3);
-        $result = iterator_to_array($store->query(new Vector([1.0, 2.0, 3.0]), ['max_items' => 5, 'min_score' => 0.7]));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0, 3.0])), ['max_items' => 5, 'min_score' => 0.7]));
 
         $this->assertCount(1, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
@@ -172,7 +175,7 @@ class StoreTest extends TestCase
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 2);
 
-        $result = iterator_to_array($store->query(new Vector([1.0, 2.0]), ['max_items' => 2, 'min_score' => 0.8]));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0])), ['max_items' => 2, 'min_score' => 0.8]));
 
         $this->assertCount(2, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
@@ -203,7 +206,7 @@ class StoreTest extends TestCase
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 3);
 
-        $result = iterator_to_array($store->query(new Vector([1.0, 2.0, 3.0])));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0, 3.0]))));
 
         $document = $result[0];
         $metadata = $document->getMetadata()->getArrayCopy();
@@ -216,6 +219,24 @@ class StoreTest extends TestCase
         $this->assertSame(['ai', 'test'], $metadata['tags']);
         $this->assertSame(0.92, $metadata['score']);
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $store = $this->createStore(new MockHttpClient());
+        $this->assertTrue($store->supports(VectorQuery::class));
+    }
+
+    public function testStoreDoesNotSupportTextQuery()
+    {
+        $store = $this->createStore(new MockHttpClient());
+        $this->assertFalse($store->supports(TextQuery::class));
+    }
+
+    public function testStoreDoesNotSupportHybridQuery()
+    {
+        $store = $this->createStore(new MockHttpClient());
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 
     private function createStore(MockHttpClient $httpClient, ?int $vectorDimension = 2): SupabaseStore

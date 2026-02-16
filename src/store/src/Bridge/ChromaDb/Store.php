@@ -17,7 +17,11 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -88,30 +92,95 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $collection->delete(ids: $ids);
     }
 
-    /**
-     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, queryTexts?: array<string>} $options
-     */
-    public function query(Vector $vector, array $options = []): iterable
+    public function supports(string $queryClass): bool
     {
-        $include = null;
-        if ([] !== ($options['include'] ?? [])) {
-            $include = array_values(
-                array_unique(
-                    array_merge(['embeddings', 'metadatas', 'distances'], $options['include'])
-                )
-            );
+        return \in_array($queryClass, [
+            VectorQuery::class,
+            TextQuery::class,
+        ], true);
+    }
+
+    /**
+     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, limit?: positive-int} $options
+     */
+    public function query(QueryInterface $query, array $options = []): iterable
+    {
+        if (!$this->supports($query::class)) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
         }
+
+        return match (true) {
+            $query instanceof VectorQuery => $this->queryVector($query, $options),
+            $query instanceof TextQuery => $this->queryText($query, $options),
+            default => throw new UnsupportedQueryTypeException($query::class, $this),
+        };
+    }
+
+    /**
+     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, limit?: positive-int} $options
+     *
+     * @return iterable<VectorDocument>
+     */
+    private function queryVector(VectorQuery $query, array $options): iterable
+    {
+        $include = $this->buildInclude($options);
 
         $collection = $this->client->getOrCreateCollection($this->collectionName);
         $queryResponse = $collection->query(
-            queryEmbeddings: [$vector->getData()],
-            queryTexts: $options['queryTexts'] ?? null,
-            nResults: 4,
+            queryEmbeddings: [$query->getVector()->getData()],
+            nResults: $options['limit'] ?? 4,
             where: $options['where'] ?? null,
             whereDocument: $options['whereDocument'] ?? null,
             include: $include,
         );
 
+        yield from $this->transformResponse($queryResponse);
+    }
+
+    /**
+     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, limit?: positive-int} $options
+     *
+     * @return iterable<VectorDocument>
+     */
+    private function queryText(TextQuery $query, array $options): iterable
+    {
+        $include = $this->buildInclude($options);
+
+        $collection = $this->client->getOrCreateCollection($this->collectionName);
+        $queryResponse = $collection->query(
+            queryTexts: $query->getTexts(),
+            nResults: $options['limit'] ?? 4,
+            where: $options['where'] ?? null,
+            whereDocument: $options['whereDocument'] ?? null,
+            include: $include,
+        );
+
+        yield from $this->transformResponse($queryResponse);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return array<string>|null
+     */
+    private function buildInclude(array $options): ?array
+    {
+        if ([] === ($options['include'] ?? [])) {
+            return null;
+        }
+
+        return array_values(
+            array_unique(
+                array_merge(['embeddings', 'metadatas', 'distances'], $options['include'])
+            )
+        );
+    }
+
+    /**
+     * @return iterable<VectorDocument>
+     */
+    private function transformResponse(object $queryResponse): iterable
+    {
         $metaCount = \count($queryResponse->metadatas[0]);
 
         for ($i = 0; $i < $metaCount; ++$i) {
