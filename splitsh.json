@@ -58,6 +58,7 @@
         "ai-lm-studio-platform": "src/platform/src/Bridge/LmStudio",
         "ai-meta-platform": "src/platform/src/Bridge/Meta",
         "ai-mistral-platform": "src/platform/src/Bridge/Mistral",
+        "ai-models-dev-platform": "src/platform/src/Bridge/ModelsDev",
         "ai-ollama-platform": "src/platform/src/Bridge/Ollama",
         "ai-open-ai-platform": "src/platform/src/Bridge/OpenAi",
         "ai-open-responses-platform": "src/platform/src/Bridge/OpenResponses",
