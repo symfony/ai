@@ -1,0 +1,80 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-04T22:20:17Z
+
+gosh, i feel like we're giving Kai Wegner too much visibility - we should keep in mind to update this after the elections in September
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-05T19:03:19Z
+
+@VincentLanglet you are absolutly right - we should think of adding a new `Message::ofUserWithContext` to avoid the BC break - @chr-hertel what do you think?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-05T19:57:33Z
+
+@VincentLanglet good one, with this implementation we could also just drop it, right?
+
+```php
+$city = new City(name: 'Berlin'); // Partial object
+$messages = new MessageBag(
+    Message::ofUser('Research missing data for this city'),
+);
+$result = $platform->invoke($messages, [
+    'response_format' => $city,
+]);
+// Returns same instance with all fields populated
+```
+
+and as a follow up, work with templates like?
+
+```php
+$messages = new MessageBag(
+    Message::ofUser(Template::string('Research missing data for this city: {city}')),
+);
+$result = $platform->invoke($messages, [
+    'template_vars' => $city,
+    'template_options' => [
+        'encoding' => 'toon',
+        'groups' => 'MySerializationGroup',
+    ],
+    'response_format' => $city,
+]);
+```
+
+just thinking about that since i'm currently confronted with data in messsages as well quite often, and that would be extra value and no BC break, right?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-13T20:12:14Z
+
+@chr-hertel fixed
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-13T20:13:54Z
+
+let's say the php part works :joy:
+
+<img width="1126" height="401" alt="image" src="https://github.com/user-attachments/assets/b1769cf2-e023-413a-a9af-8617679d2b53" />
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-14T18:22:58Z
+
+@OskarStark have extracted the normalizer stuff from the template renderer https://github.com/symfony/ai/pull/1600 - after merging that i can rebase this and fix the RST stuff
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-15T23:09:49Z
+
+Merged #1600 and tested the integration already - looks good :+1:
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-16T05:09:19Z
+
+> Merged #1600 and tested the integration already - looks good :+1:
+
+@chr-hertel will rebase this today
