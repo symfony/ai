@@ -1801,6 +1801,12 @@ final class AiBundle extends AbstractBundle
                     $arguments[6] = $store['async'];
                 }
 
+                if (\array_key_exists('hybrid_enabled', $store)) {
+                    $arguments[] = $store['hybrid_enabled'];
+                    $arguments[] = $store['dense_vector_name'];
+                    $arguments[] = $store['sparse_vector_name'];
+                }
+
                 $definition = new Definition(QdrantStore::class);
                 $definition
                     ->setLazy(true)
