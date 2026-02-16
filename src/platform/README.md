@@ -31,12 +31,14 @@ To use a specific AI platform, install the corresponding bridge package:
 | DeepSeek            | `symfony/ai-deep-seek-platform`           |
 | Docker Model Runner | `symfony/ai-docker-model-runner-platform` |
 | ElevenLabs          | `symfony/ai-eleven-labs-platform`         |
+| Failover            | `symfony/ai-failover-platform`            |
 | Generic             | `symfony/ai-generic-platform`             |
 | Google Gemini       | `symfony/ai-gemini-platform`              |
 | Hugging Face        | `symfony/ai-hugging-face-platform`        |
 | LM Studio           | `symfony/ai-lm-studio-platform`           |
 | Meta Llama          | `symfony/ai-meta-platform`                |
 | Mistral             | `symfony/ai-mistral-platform`             |
+| Models.dev          | `symfony/ai-models-dev-platform`          |
 | Ollama              | `symfony/ai-ollama-platform`              |
 | OpenAI              | `symfony/ai-open-ai-platform`             |
 | Open Responses      | `symfony/ai-open-responses-platform`      |
