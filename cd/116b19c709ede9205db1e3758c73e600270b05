@@ -1,0 +1,31 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-12T11:21:36Z
+
+Could you add an example in `examples/` folder for a chat with OpenAI? This way we can verify the bridge easily, thanks
+
+---------------------------------------------------------------------------
+
+by fabpot at 2026-02-12T19:38:49Z
+
+I've just added some examples.
+Also, we now support all models, not just the OpenAI-compatible ones (via the other existing bridges).
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-13T14:29:42Z
+
+what am i doing wrong here?
+<img width="1478" height="669" alt="image" src="https://github.com/user-attachments/assets/4a875321-744b-4801-9f1e-1da351d31afb" />
+
+(needed to fiddle around with the composer setup anyways, but examples need the `composer require symfony/ai-models-dev-platform` still
+
+---------------------------------------------------------------------------
+
+by fabpot at 2026-02-13T17:23:04Z
+
+> what am i doing wrong here? <img alt="image" width="1478" height="669" src="https://private-user-images.githubusercontent.com/2852185/549490137-4a875321-744b-4801-9f1e-1da351d31afb.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzA5OTM1NjcsIm5iZiI6MTc3MDk5MzI2NywicGF0aCI6Ii8yODUyMTg1LzU0OTQ5MDEzNy00YTg3NTMyMS03NDRiLTQ4MDEtOWYxZS0xZGEzNTFkMzFhZmIucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI2MDIxMyUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNjAyMTNUMTQzNDI3WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9YzgzN2Y2YzhmNThmYTJhMjAyZjgxZDE3NTM3MzEwYWUzMmE0MDQ1ZGIzNTk0YmM0NTA3YmM5MGNlYzdlYTE2MyZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.BUV1jzs7UIhYf74_Jw5rfdKcQLnoTlCvpbZfWr0yeug">
+>
+> (needed to fiddle around with the composer setup anyways, but examples need the `composer require symfony/ai-models-dev-platform` still
+
+Should be better now @chr-hertel
