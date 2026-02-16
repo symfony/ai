@@ -34,12 +34,7 @@ final class ChatTest extends TestCase
         $messages = $chat->loadMessages();
 
         $this->assertInstanceOf(MessageBag::class, $messages);
-        $this->assertCount(1, $messages->getMessages());
-
-        $systemMessage = $messages->getMessages()[0];
-        $this->assertInstanceOf(SystemMessage::class, $systemMessage);
-        $this->assertStringContainsString('helpful assistant', $systemMessage->getContent());
-        $this->assertStringContainsString('similarity_search', $systemMessage->getContent());
+        $this->assertCount(0, $messages->getMessages());
     }
 
     public function testSubmitMessageAddsUserMessageAndAgentResponse()
@@ -61,16 +56,16 @@ final class ChatTest extends TestCase
         $messageList = $messages->getMessages();
 
         // Should have: system message + user message + assistant message = 3 total
-        $this->assertCount(3, $messageList);
+        $this->assertCount(2, $messageList);
 
         // Check user message
-        $userMessage = $messageList[1];
+        $userMessage = $messageList[0];
         $this->assertInstanceOf(UserMessage::class, $userMessage);
         $this->assertInstanceOf(Text::class, $userMessage->getContent()[0]);
         $this->assertSame('What is Symfony?', $userMessage->getContent()[0]->getText());
 
         // Check assistant message
-        $assistantMessage = $messageList[2];
+        $assistantMessage = $messageList[1];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
         $this->assertSame('Symfony is a PHP web framework for building web applications and APIs.', $assistantMessage->getContent());
     }
@@ -92,7 +87,7 @@ final class ChatTest extends TestCase
         $messageList = $messages->getMessages();
 
         // Check assistant used default response
-        $assistantMessage = $messageList[2];
+        $assistantMessage = $messageList[1];
         $this->assertSame('I can help you with Symfony-related questions!', $assistantMessage->getContent());
     }
 
@@ -123,7 +118,7 @@ final class ChatTest extends TestCase
 
         // Verify messages in session
         $messages = $chat->loadMessages();
-        $this->assertCount(5, $messages->getMessages()); // system + user1 + assistant1 + user2 + assistant2
+        $this->assertCount(4, $messages->getMessages()); // system + user1 + assistant1 + user2 + assistant2
     }
 
     public function testResetClearsMessages()
@@ -138,13 +133,13 @@ final class ChatTest extends TestCase
 
         // Verify messages exist
         $messages = $chat->loadMessages();
-        $this->assertCount(3, $messages->getMessages());
+        $this->assertCount(2, $messages->getMessages());
 
         // Reset and verify messages are cleared
         $chat->reset();
 
         $messages = $chat->loadMessages();
-        $this->assertCount(1, $messages->getMessages()); // Only system message remains
+        $this->assertCount(0, $messages->getMessages()); // Only system message remains
     }
 
     public function testAgentReceivesFullConversationHistory()
@@ -168,21 +163,18 @@ final class ChatTest extends TestCase
         // Should contain: system + user1 + assistant1 + user2, but apparently there are 5 messages
         // This might include an additional message from the conversation flow
         $messages = $secondCallMessages->getMessages();
-        $this->assertCount(5, $messages);
+        $this->assertCount(4, $messages);
 
         // Verify the conversation flow (with 5 messages)
-        $this->assertInstanceOf(SystemMessage::class, $messages[0]);
-        $this->assertStringContainsString('helpful assistant', $messages[0]->getContent());
-        $this->assertInstanceOf(UserMessage::class, $messages[1]);
-        $this->assertCount(1, $messages[1]->getContent());
-        $this->assertInstanceOf(Text::class, $messages[1]->getContent()[0]);
-        $this->assertSame('What is Symfony?', $messages[1]->getContent()[0]->getText()); // user1
-        $this->assertSame('Symfony is a PHP web framework for building web applications and APIs.', $messages[2]->getContent()); // assistant1
-        $this->assertInstanceOf(UserMessage::class, $messages[3]);
-        $this->assertCount(1, $messages[3]->getContent());
-        $this->assertInstanceOf(Text::class, $messages[3]->getContent()[0]);
-        $this->assertSame('Tell me more', $messages[3]->getContent()[0]->getText()); // user2
-        // The 5th message appears to be the previous assistant response or another system message
+        $this->assertInstanceOf(UserMessage::class, $messages[0]);
+        $this->assertCount(1, $messages[0]->getContent());
+        $this->assertInstanceOf(Text::class, $messages[0]->getContent()[0]);
+        $this->assertSame('What is Symfony?', $messages[0]->getContent()[0]->getText()); // user1
+        $this->assertSame('Symfony is a PHP web framework for building web applications and APIs.', $messages[1]->getContent()); // assistant1
+        $this->assertInstanceOf(UserMessage::class, $messages[2]);
+        $this->assertCount(1, $messages[2]->getContent());
+        $this->assertInstanceOf(Text::class, $messages[2]->getContent()[0]);
+        $this->assertSame('Tell me more', $messages[2]->getContent()[0]->getText()); // user2
     }
 
     public function testMockAgentAssertionsWork()

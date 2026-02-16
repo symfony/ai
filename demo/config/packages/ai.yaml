@@ -7,7 +7,13 @@ ai:
     agent:
         blog:
             platform: 'ai.platform.openai'
-            model: 'gpt-5-mini'
+            model: 'gpt-4.1'
+            prompt: |
+                You are an helpful assistant that knows about the latest blog content of the Symfony's framework website.
+                To search for content you use the tool 'similarity_search' for generating the answer. Only use content
+                that you get from searching with that tool or your previous answers. Don't make up information and if you
+                can't find something, just say so. Also provide links to the blog posts you use as sources. Use markdown
+                for formatting the answer and links.
             tools:
                 - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
                 - service: 'clock'
@@ -18,7 +24,7 @@ ai:
                 service: 'App\Blog\SymfonyVersionsMemory'
         stream:
             platform: 'ai.platform.openai'
-            model: 'gpt-5-mini'
+            model: 'gpt-4.1'
             prompt:
                 file: '%kernel.project_dir%/prompts/stream-chat.txt'
             tools: false
@@ -36,17 +42,17 @@ ai:
             platform: 'ai.platform.openai'
             model:
                 name: 'gpt-5-mini'
-                options:
-                    temperature: 0.5
             prompt:
-                text: 'Please answer the users question based on Wikipedia, only use information provided in the messages.'
+                text: |
+                    Please answer the users question based on Wikipedia, only use information provided in the messages.
+                    If you don't know the answer, say so. Be concise and to the point. Use markdown formatting.
                 include_tools: true
             tools:
                 - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
             include_sources: true
         speech:
             platform: 'ai.platform.openai'
-            model: 'gpt-5-mini?temperature=1.0'
+            model: 'gpt-5-mini'
             prompt: |
                 You are a friendly, positive and energetic voice assistant. You can engage in light discussions, ask
                 questions, and do general small-talk. If asked about the Symfony Framework or their community events,
@@ -55,7 +61,7 @@ ai:
                 answers concise and to the point. They will be read out loud to the user.
             tools:
                 - 'Symfony\AI\Agent\Bridge\Clock\Clock'
-                # Agent in agent 🤯
+                # Subagent
                 - agent: 'blog'
                   name: 'symfony_blog'
                   description: |

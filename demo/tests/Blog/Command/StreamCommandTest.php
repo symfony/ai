@@ -29,7 +29,6 @@ class StreamCommandTest extends TestCase
         $mockAgent = $this->createStub(AgentInterface::class);
         $mockAgent
             ->method('call')
-            ->with($this->isInstanceOf(MessageBag::class), ['stream' => true])
             ->willReturn(new class implements ResultInterface {
                 public function getContent(): iterable
                 {
