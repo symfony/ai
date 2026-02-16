@@ -43,9 +43,9 @@ final class ElevenLabsResultConverter implements ResultConverterInterface
         $response = $result->getObject();
 
         return match (true) {
-            \array_key_exists('stream', $options) && $options['stream'] => new StreamResult($this->convertToGenerator($response)),
-            str_contains($response->getInfo('url'), 'speech-to-text') => new TextResult($result->getData()['text']),
+            str_contains($response->getInfo('url'), 'text-to-speech') && \array_key_exists('stream', $options) && $options['stream'] => new StreamResult($this->convertToGenerator($response)),
             str_contains($response->getInfo('url'), 'text-to-speech') => new BinaryResult($result->getObject()->getContent(), 'audio/mpeg'),
+            str_contains($response->getInfo('url'), 'speech-to-text') => new TextResult($result->getData()['text']),
             default => throw new RuntimeException('Unsupported ElevenLabs response.'),
         };
     }

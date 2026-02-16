@@ -17,8 +17,10 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsResultConverter;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class ElevenLabsConverterTest extends TestCase
 {
@@ -46,6 +48,20 @@ final class ElevenLabsConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hello there', $result->getContent());
+    }
+
+    public function testConvertTextToSpeechAsStreamResponse()
+    {
+        $converter = new ElevenLabsResultConverter(new MockHttpClient([], 'https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb/stream'));
+        $rawResult = new InMemoryRawResult([], [], MockResponse::fromFile(\dirname(__DIR__).'/Tests/Fixtures/audio.mp3', [
+            'url' => 'https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb/stream',
+        ]));
+
+        $result = $converter->convert($rawResult, [
+            'stream' => true,
+        ]);
+
+        $this->assertInstanceOf(StreamResult::class, $result);
     }
 
     public function testConvertTextToSpeechResponse()
