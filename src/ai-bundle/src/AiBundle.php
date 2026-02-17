@@ -1841,25 +1841,14 @@ final class AiBundle extends AbstractBundle
                         $arguments[10] = $hybrid['default_min_score'];
                     }
 
-                    if (\array_key_exists('fuzzy_primary_threshold', $hybrid)) {
-                        $arguments[11] = $hybrid['fuzzy_primary_threshold'];
-                    }
-
-                    if (\array_key_exists('fuzzy_secondary_threshold', $hybrid)) {
-                        $arguments[12] = $hybrid['fuzzy_secondary_threshold'];
-                    }
-
-                    if (\array_key_exists('fuzzy_strict_threshold', $hybrid)) {
-                        $arguments[13] = $hybrid['fuzzy_strict_threshold'];
+                    if (\array_key_exists('fuzzy_threshold', $hybrid)) {
+                        $arguments[11] = $hybrid['fuzzy_threshold'];
                     }
 
                     if (\array_key_exists('fuzzy_weight', $hybrid)) {
-                        $arguments[14] = $hybrid['fuzzy_weight'];
+                        $arguments[12] = $hybrid['fuzzy_weight'];
                     }
 
-                    if (\array_key_exists('searchable_attributes', $hybrid)) {
-                        $arguments[15] = $hybrid['searchable_attributes'];
-                    }
                 } else {
                     // PostgresStore-specific parameters
                     $arguments[3] = $store['distance'];
