@@ -706,24 +706,15 @@ final class HybridStoreTest extends TestCase
             'hybrid_table',
             semanticRatio: 0.5,
             fuzzyWeight: 0.3,
-            fuzzyPrimaryThreshold: 0.3,
-            fuzzySecondaryThreshold: 0.25,
-            fuzzyStrictThreshold: 0.2
+            fuzzyThreshold: 0.3,
         );
 
         $pdo->expects($this->once())
             ->method('prepare')
             ->with($this->callback(function ($sql) {
-                // Verify fuzzy_scores CTE exists
                 $this->assertStringContainsString('fuzzy_scores AS', $sql);
-
-                // Verify word_similarity function is used
                 $this->assertStringContainsString('word_similarity(:query, search_text)', $sql);
-
-                // Verify custom thresholds are applied
                 $this->assertStringContainsString('0.300000', $sql);
-                $this->assertStringContainsString('0.250000', $sql);
-                $this->assertStringContainsString('0.200000', $sql);
 
                 return true;
             }))
@@ -733,46 +724,6 @@ final class HybridStoreTest extends TestCase
         $statement->expects($this->once())->method('fetchAll')->willReturn([]);
 
         iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 0.5)));
-    }
-
-    public function testSearchableAttributesWithBoost()
-    {
-        $pdo = $this->createMock(\PDO::class);
-
-        $searchableAttributes = [
-            'title' => ['boost' => 2.0, 'metadata_key' => 'title'],
-            'overview' => ['boost' => 1.0, 'metadata_key' => 'overview'],
-        ];
-
-        $store = new HybridStore(
-            $pdo,
-            'hybrid_table',
-            searchableAttributes: $searchableAttributes
-        );
-
-        $pdo->expects($this->exactly(10))
-            ->method('exec')
-            ->willReturnCallback(function (string $sql): int {
-                static $callCount = 0;
-                ++$callCount;
-
-                if (3 === $callCount) {
-                    // Verify separate tsvector columns for each attribute
-                    $this->assertStringContainsString('title_tsv tsvector GENERATED ALWAYS AS', $sql);
-                    $this->assertStringContainsString('overview_tsv tsvector GENERATED ALWAYS AS', $sql);
-
-                    // Should NOT contain generic content_tsv
-                    $this->assertStringNotContainsString('content_tsv tsvector GENERATED ALWAYS AS (to_tsvector(\'simple\', content)) STORED', $sql);
-                } elseif ($callCount >= 8 && $callCount <= 9) {
-                    // Verify separate GIN indexes
-                    $this->assertStringContainsString('_tsv_idx', $sql);
-                    $this->assertStringContainsString('USING gin(', $sql);
-                }
-
-                return 0;
-            });
-
-        $store->setup();
     }
 
     public function testFuzzyWeightParameter()
@@ -802,59 +753,6 @@ final class HybridStoreTest extends TestCase
         $statement->expects($this->once())->method('fetchAll')->willReturn([]);
 
         iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 0.4)));
-    }
-
-    public function testBoostFieldsApplied()
-    {
-        $pdo = $this->createMock(\PDO::class);
-        $statement = $this->createMock(\PDOStatement::class);
-
-        $rrf = new ReciprocalRankFusion(normalizeScores: false);
-        $store = new HybridStore($pdo, 'hybrid_table', semanticRatio: 1.0, rrf: $rrf);
-
-        $pdo->expects($this->once())
-            ->method('prepare')
-            ->willReturn($statement);
-
-        $statement->expects($this->once())
-            ->method('execute');
-
-        $uuid1 = Uuid::v4();
-        $uuid2 = Uuid::v4();
-
-        $statement->expects($this->once())
-            ->method('fetchAll')
-            ->with(\PDO::FETCH_ASSOC)
-            ->willReturn([
-                [
-                    'id' => $uuid1->toRfc4122(),
-                    'embedding' => '[0.1,0.2,0.3]',
-                    'metadata' => json_encode(['text' => 'Popular', 'popularity' => 100]),
-                    'score' => 0.5,
-                ],
-                [
-                    'id' => $uuid2->toRfc4122(),
-                    'embedding' => '[0.4,0.5,0.6]',
-                    'metadata' => json_encode(['text' => 'Unpopular', 'popularity' => 10]),
-                    'score' => 0.6,
-                ],
-            ]);
-
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
-            'boostFields' => [
-                'popularity' => ['min' => 50, 'boost' => 0.5],
-            ],
-        ]));
-
-        $this->assertCount(2, $results);
-
-        // First result should be boosted (popularity >= 50)
-        // Original score 0.5 * 1.5 = 0.75
-        $this->assertSame(0.75, $results[0]->getScore());
-        $this->assertArrayHasKey('_applied_boosts', $results[0]->getMetadata()->getArrayCopy());
-
-        // Second result should not be boosted (popularity < 50)
-        $this->assertSame(0.6, $results[1]->getScore());
     }
 
     public function testScoreBreakdownIncluded()

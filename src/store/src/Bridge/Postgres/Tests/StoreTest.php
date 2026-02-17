@@ -469,6 +469,10 @@ final class StoreTest extends TestCase
 
     public function testFromDbalWithPdoDriver()
     {
+        if (!class_exists(Connection::class)) {
+            $this->markTestSkipped('Doctrine DBAL is not installed.');
+        }
+
         $pdo = $this->createMock(\PDO::class);
         $connection = $this->createMock(Connection::class);
 
@@ -483,6 +487,10 @@ final class StoreTest extends TestCase
 
     public function testFromDbalWithNonPdoDriverThrowsException()
     {
+        if (!class_exists(Connection::class)) {
+            $this->markTestSkipped('Doctrine DBAL is not installed.');
+        }
+
         $connection = $this->createMock(Connection::class);
 
         $connection->expects($this->once())
