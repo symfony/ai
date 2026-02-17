@@ -1845,6 +1845,7 @@ final class AiBundle extends AbstractBundle
                     if (\array_key_exists('fuzzy_weight', $hybrid)) {
                         $arguments[12] = $hybrid['fuzzy_weight'];
                     }
+
                 } else {
                     // PostgresStore-specific parameters
                     $arguments[3] = $store['distance'];
