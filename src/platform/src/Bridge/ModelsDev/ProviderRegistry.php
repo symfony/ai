@@ -25,8 +25,9 @@ final class ProviderRegistry
      */
     private readonly array $providers;
 
-    public function __construct(?string $dataPath = null)
-    {
+    public function __construct(
+        private ?string $dataPath = null,
+    ) {
         $providers = [];
         foreach (DataLoader::load($dataPath) as $providerId => $providerData) {
             $providers[$providerId] = [
@@ -57,6 +58,15 @@ final class ProviderRegistry
         }
 
         return $this->providers[$providerId]['name'];
+    }
+
+    public function getCatalog(string $providerId): ?ModelCatalog
+    {
+        if (!isset($this->providers[$providerId])) {
+            return null;
+        }
+
+        return new ModelCatalog($providerId, $this->dataPath);
     }
 
     public function has(string $providerId): bool
