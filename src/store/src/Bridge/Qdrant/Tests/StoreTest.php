@@ -538,7 +538,7 @@ final class StoreTest extends TestCase
         $this->assertArrayHasKey('values', $point['vector']['bm25']);
     }
 
-    public function testHybridQueryUsesPrefetchAndRrf(): void
+    public function testHybridQueryUsesFormulaWithDefaultRatio(): void
     {
         $capturedBody = null;
 
@@ -576,10 +576,60 @@ final class StoreTest extends TestCase
         $this->assertSame('bm25', $capturedBody['prefetch'][0]['using']);
         $this->assertSame('dense', $capturedBody['prefetch'][1]['using']);
         $this->assertSame(15, $capturedBody['prefetch'][0]['limit']);
-        $this->assertSame(['fusion' => 'rrf'], $capturedBody['query']);
+
+        $this->assertArrayHasKey('formula', $capturedBody['query']);
+        $expectedFormula = [
+            'sum' => [
+                ['mult' => [0.5, '$score[0]']],
+                ['mult' => [0.5, '$score[1]']],
+            ],
+        ];
+        $this->assertSame($expectedFormula, $capturedBody['query']['formula']);
+        $this->assertArrayNotHasKey('defaults', $capturedBody['query']);
+
         $this->assertSame(5, $capturedBody['limit']);
         $this->assertTrue($capturedBody['with_payload']);
         $this->assertCount(1, $results);
+    }
+
+    public function testHybridQueryUsesFormulaWithCustomRatio(): void
+    {
+        $capturedBody = null;
+
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$capturedBody): JsonMockResponse {
+            $capturedBody = json_decode($options['body'], true);
+
+            return new JsonMockResponse([
+                'result' => [
+                    'points' => [
+                        [
+                            'id' => Uuid::v4()->toRfc4122(),
+                            'payload' => [],
+                            'score' => 0.85,
+                        ],
+                    ],
+                ],
+            ], ['http_code' => 200]);
+        }, 'http://127.0.0.1:6333');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:6333',
+            'test',
+            'test',
+            hybridEnabled: true,
+        );
+
+        iterator_to_array($store->query(
+            new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'space exploration', 0.8),
+            ['limit' => 10],
+        ));
+
+        $formula = $capturedBody['query']['formula'];
+        $this->assertEqualsWithDelta(0.2, $formula['sum'][0]['mult'][0], 0.001);
+        $this->assertSame('$score[0]', $formula['sum'][0]['mult'][1]);
+        $this->assertEqualsWithDelta(0.8, $formula['sum'][1]['mult'][0], 0.001);
+        $this->assertSame('$score[1]', $formula['sum'][1]['mult'][1]);
     }
 
     public function testHybridQueryWithVectorQueryFallsToDenseOnly(): void

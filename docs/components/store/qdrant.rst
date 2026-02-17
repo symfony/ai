@@ -2,17 +2,17 @@ Qdrant Bridge
 =============
 
 The Qdrant bridge provides vector storage using `Qdrant`_ with optional hybrid search
-combining dense vectors and BM25 sparse vectors via native RRF fusion.
+combining dense vectors and BM25 sparse vectors via `Formula Queries`_.
 
 Dense vector search understands meaning ("green ogre" finds Shrek) but can miss exact
 keyword matches. BM25 sparse vectors handle precise term matching. Hybrid search combines
-both using Qdrant's built-in `Reciprocal Rank Fusion`_ (RRF), so documents that match
-semantically **and** lexically rank higher.
+both using a weighted formula, so documents that match semantically **and** lexically rank
+higher. The ``semanticRatio`` parameter controls the balance between both methods.
 
 Requirements
 ------------
 
-* `Qdrant`_ v1.10+ (for sparse vectors and Query API fusion)
+* `Qdrant`_ v1.14+ (for sparse vectors, Query API, and Formula Queries)
 * An HTTP client (``symfony/http-client``)
 
 Setup
@@ -65,7 +65,7 @@ Hybrid:
 When ``hybrid_enabled`` is ``false`` (default), behavior is identical to the standard
 Qdrant store.
 
-The ``dsn`` value can reference environment variables:
+The ``endpoint`` and ``api_key`` values can reference environment variables:
 
 .. code-block:: bash
 
@@ -120,7 +120,7 @@ Hybrid search (dense + BM25 sparse):
     use Symfony\AI\Store\Query\HybridQuery;
 
     $results = $store->query(
-        new HybridQuery($embedding, 'search terms'),
+        new HybridQuery($embedding, 'search terms', semanticRatio: 0.7),
         ['limit' => 10],
     );
 
@@ -142,18 +142,23 @@ two prefetch stages:
 2. **Dense vector prefetch**: The embedding vector is searched against the named dense
    vector field.
 
-Both prefetch results are merged using Qdrant's native ``rrf`` fusion. The prefetch
-limit is set to ``3x`` the requested limit to ensure enough candidates for fusion.
+Both prefetch results are merged using a `Formula Query`_ with weighted scoring:
+
+.. code-block:: text
+
+    score = keywordRatio * sparse_score + semanticRatio * dense_score
+
+The ``semanticRatio`` parameter of ``HybridQuery`` controls the balance:
+
+* ``0.0``: BM25 keyword matching only
+* ``0.5``: Balanced hybrid (default)
+* ``1.0``: Dense vector similarity only
+
+The prefetch limit is set to ``3x`` the requested limit to ensure enough candidates
+for fusion.
 
 When a ``VectorQuery`` is used in hybrid mode, only the dense vector is searched
 (using the named vector field).
-
-.. note::
-
-    The ``semanticRatio`` parameter of ``HybridQuery`` is ignored by the Qdrant store.
-    Qdrant handles fusion natively with equal weight for both prefetch stages. The
-    Postgres store uses ``semanticRatio`` to control the balance because it implements
-    RRF in PHP.
 
 Configuration Options
 ---------------------
@@ -166,4 +171,5 @@ Configuration Options
 * ``async`` (bool): Use asynchronous writes
 
 .. _`Qdrant`: https://qdrant.tech/
-.. _`Reciprocal Rank Fusion`: https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf
+.. _`Formula Queries`: https://qdrant.tech/documentation/concepts/hybrid-queries/#formula-queries
+.. _`Formula Query`: https://qdrant.tech/documentation/concepts/hybrid-queries/#formula-queries

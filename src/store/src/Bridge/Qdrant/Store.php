@@ -127,12 +127,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
         if ($query instanceof HybridQuery && $this->hybridEnabled) {
             $limit = $options['limit'] ?? 10;
             $prefetchLimit = $limit * 3;
+            $semanticRatio = $query->getSemanticRatio();
+            $keywordRatio = $query->getKeywordRatio();
+
             $payload = [
                 'prefetch' => [
                     ['query' => $this->tokenize($query->getText()), 'using' => $this->sparseVectorName, 'limit' => $prefetchLimit],
                     ['query' => $query->getVector()->getData(), 'using' => $this->denseVectorName, 'limit' => $prefetchLimit],
                 ],
-                'query' => ['fusion' => 'rrf'],
+                'query' => [
+                    'formula' => [
+                        'sum' => [
+                            ['mult' => [$keywordRatio, '$score[0]']],
+                            ['mult' => [$semanticRatio, '$score[1]']],
+                        ],
+                    ],
+                ],
                 'with_payload' => true,
                 'limit' => $limit,
             ];
