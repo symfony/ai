@@ -104,12 +104,14 @@ Supported Models & Platforms
   * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
   * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
   * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
+  * `Venice's Models`_ with `Venice`_ as Platform
   * `LiteLLM`_ as unified Platform
 * **Embeddings Models**
   * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
   * `Vertex AI Text Embeddings`_ with `Vertex AI`_
   * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
   * `Voyage's Embeddings`_ with `Voyage`_ as Platform
+  * `Venice's Embeddings`_ with `Venice`_ as Platform
   * `Mistral Embed`_ with `Mistral`_ and `OpenRouter`_ as Platform
   * `Qwen`_ with `OpenRouter`_ as Platform
 * **Other Models**
@@ -123,9 +125,13 @@ Supported Models & Platforms
   * `ElevenLabs STT`_ with `ElevenLabs`_ as Platform
   * `Cartesia TTS`_ with `Cartesia`_ as Platform
   * `Cartesia STT`_ with `Cartesia`_ as Platform
+  * `Venice TTS`_ with `Venice`_ as Platform
+  * `Venice STT`_ with `Venice`_ as Platform
 * **Image/Video Models**
   * `Decart T2I`_ with `Decart`_  as Platform
   * `Decart T2V`_ with `Decart`_  as Platform
+  * `Venice T2I`_ with `Venice`_ as Platform
+  * `Venice T2V`_ with `Venice`_ as Platform
 
 Generic Platforms
 ~~~~~~~~~~~~~~~~~
@@ -369,6 +375,7 @@ Code Examples
 * `Streaming Claude`_
 * `Streaming GPT`_
 * `Streaming Mistral`_
+* `Streaming Venice`_
 
 Thinking / Extended Reasoning
 -----------------------------
@@ -594,6 +601,7 @@ Code Examples
 * `Embeddings with OpenAI`_
 * `Embeddings with Voyage`_
 * `Multimodal embeddings with Voyage`_
+* `Embeddings with Venice`_
 * `Embeddings with Mistral`_
 
 Structured Output
@@ -937,3 +945,12 @@ Code Examples
 .. _`LM Studio Catalog`: https://lmstudio.ai/models
 .. _`Cerebras Chat`: https://github.com/symfony/ai/blob/main/examples/cerebras/chat.php
 .. _`Cerebras Streaming`: https://github.com/symfony/ai/blob/main/examples/cerebras/stream.php
+.. _`Venice`: https://venice.ai/
+.. _`Venice's Models`: https://docs.venice.ai/api-reference/endpoint/chat-completions
+.. _`Venice's Embeddings`: https://docs.venice.ai/api-reference/endpoint/generate-embeddings
+.. _`Venice TTS`: https://docs.venice.ai/api-reference/endpoint/text-to-speech
+.. _`Venice STT`: https://docs.venice.ai/api-reference/endpoint/audio-transcription
+.. _`Venice T2I`: https://docs.venice.ai/api-reference/endpoint/generate-image
+.. _`Venice T2V`: https://docs.venice.ai/api-reference/endpoint/queue-video-generation
+.. _`Streaming Venice`: https://github.com/symfony/ai/blob/main/examples/venice/chat-as-stream.php
+.. _`Embeddings with Venice`: https://github.com/symfony/ai/blob/main/examples/venice/embeddings.php
