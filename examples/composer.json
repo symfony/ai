@@ -3,6 +3,9 @@
     "description": "Example scripts about using Symfony AI",
     "license": "MIT",
     "type": "project",
+    "repositories": [
+        {"type": "path", "url": "../src/platform/src/Bridge/Venice" }
+    ],
     "require": {
         "php": ">=8.2",
         "symfony/ai-agent": "^0.7",
@@ -73,6 +76,7 @@
         "symfony/ai-transformers-php-platform": "^0.7",
         "symfony/ai-typesense-store": "^0.7",
         "symfony/ai-vektor-store": "^0.7",
+        "symfony/ai-venice-platform": "dev-main",
         "symfony/ai-vertex-ai-platform": "^0.7",
         "symfony/ai-voyage-platform": "^0.7",
         "symfony/ai-weaviate-store": "^0.7",
