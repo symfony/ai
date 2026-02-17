@@ -32,10 +32,11 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
      * @return array{
      *     role: 'assistant',
      *     content: string|list<array{
-     *         type: 'tool_use',
-     *         id: string,
-     *         name: string,
-     *         input: array<string, mixed>
+     *         type: 'text'|'tool_use',
+     *         id?: string,
+     *         name?: string,
+     *         input?: array<string, mixed>,
+     *         text?: string
      *     }>
      * }
      */
@@ -43,14 +44,17 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     {
         return [
             'role' => 'assistant',
-            'content' => $data->hasToolCalls() ? array_map(static function (ToolCall $toolCall) {
-                return [
-                    'type' => 'tool_use',
-                    'id' => $toolCall->getId(),
-                    'name' => $toolCall->getName(),
-                    'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
-                ];
-            }, $data->getToolCalls()) : $data->getContent(),
+            'content' => $data->hasToolCalls() ? array_merge(
+                null !== $data->getContent() ? [['type' => 'text', 'text' => $data->getContent()]] : [],
+                array_map(static function (ToolCall $toolCall) {
+                    return [
+                        'type' => 'tool_use',
+                        'id' => $toolCall->getId(),
+                        'name' => $toolCall->getName(),
+                        'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
+                    ];
+                }, $data->getToolCalls())
+            ) : $data->getContent(),
         ];
     }
 
