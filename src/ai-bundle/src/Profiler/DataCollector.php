@@ -82,6 +82,15 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
      * @param iterable<TraceableAgent>        $agents
      * @param iterable<TraceableStore>        $stores
      */
+    /** @var TraceablePlatform[] */
+    private readonly array $platforms;
+    /** @var TraceableToolbox[] */
+    private readonly array $toolboxes;
+    /** @var TraceableMessageStore[] */
+    private readonly array $messageStores;
+    /** @var TraceableChat[] */
+    private readonly array $chats;
+
     public function __construct(
         iterable $platforms,
         iterable $toolboxes,
