@@ -1778,8 +1778,8 @@ final class AiBundle extends AbstractBundle
                     $pdo->setArguments([
                         $store['dsn'],
                         $store['username'] ?? null,
-                        $store['password'] ?? null],
-                    );
+                        $store['password'] ?? null,
+                    ]);
 
                     $arguments = [
                         $pdo,

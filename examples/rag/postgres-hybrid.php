@@ -98,7 +98,7 @@ foreach ($ratios as $config) {
     foreach ($results as $i => $result) {
         $metadata = $result->getMetadata()->getArrayCopy();
         echo sprintf(
-            "  %d. %s (Score: %.4f)\n",
+            '  %d. %s (Score: %.4f)'.\PHP_EOL,
             $i + 1,
             $metadata['title'] ?? 'Unknown',
             $result->getScore() ?? 0.0
@@ -107,16 +107,16 @@ foreach ($ratios as $config) {
     echo "\n";
 }
 
-echo "--- Custom query with pure semantic search ---\n";
-echo "Query: Movies about space exploration\n";
+echo '--- Custom query with pure semantic search ---'.\PHP_EOL;
+echo 'Query: Movies about space exploration'.\PHP_EOL;
 $spaceEmbedding = $vectorizer->vectorize('space exploration and cosmic adventures');
 $results = $store->query(new VectorQuery($spaceEmbedding), ['limit' => 3]);
 
-echo "Top 3 results:\n";
+echo 'Top 3 results:'.\PHP_EOL;
 foreach ($results as $i => $result) {
     $metadata = $result->getMetadata()->getArrayCopy();
     echo sprintf(
-        "  %d. %s (Score: %.4f)\n",
+        '  %d. %s (Score: %.4f)'.\PHP_EOL,
         $i + 1,
         $metadata['title'] ?? 'Unknown',
         $result->getScore() ?? 0.0
@@ -127,7 +127,7 @@ echo "\n";
 // Cleanup
 $store->drop();
 
-echo "=== Comparing with Native PostgreSQL FTS ===\n\n";
+echo '=== Comparing with Native PostgreSQL FTS ==='.\PHP_EOL.\PHP_EOL;
 
 $storeFts = new HybridStore(
     connection: $pdo,
@@ -145,11 +145,11 @@ $resultsFts = $storeFts->query(
     ['limit' => 3],
 );
 
-echo "Top 3 results (Native FTS):\n";
+echo 'Top 3 results (Native FTS):'.\PHP_EOL;
 foreach ($resultsFts as $i => $result) {
     $metadata = $result->getMetadata()->getArrayCopy();
     echo sprintf(
-        "  %d. %s (Score: %.4f)\n",
+        '  %d. %s (Score: %.4f)'.\PHP_EOL,
         $i + 1,
         $metadata['title'] ?? 'Unknown',
         $result->getScore() ?? 0.0
