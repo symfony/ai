@@ -29,11 +29,11 @@ use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-echo "=== PostgreSQL Hybrid Search Demo ===\n\n";
-echo "Demonstrates HybridStore with configurable search strategies:\n";
-echo "- Native PostgreSQL FTS vs BM25\n";
-echo "- Semantic ratio adjustment\n";
-echo "- Custom RRF scoring\n\n";
+echo '=== PostgreSQL Hybrid Search Demo ==='.\PHP_EOL.\PHP_EOL;
+echo 'Demonstrates HybridStore with configurable search strategies:'.\PHP_EOL;
+echo '- Native PostgreSQL FTS vs BM25'.\PHP_EOL;
+echo '- Semantic ratio adjustment'.\PHP_EOL;
+echo '- Custom RRF scoring'.\PHP_EOL.\PHP_EOL;
 
 $connection = DriverManager::getConnection((new DsnParser())->parse(env('POSTGRES_URI')));
 $pdo = $connection->getNativeConnection();
@@ -42,7 +42,7 @@ if (!$pdo instanceof PDO) {
     throw new RuntimeException('Unable to get native PDO connection from Doctrine DBAL.');
 }
 
-echo "=== Using BM25 Text Search Strategy ===\n\n";
+echo '=== Using BM25 Text Search Strategy ==='.\PHP_EOL.\PHP_EOL;
 
 $store = new HybridStore(
     connection: $pdo,
@@ -73,7 +73,7 @@ $indexer->index($documents);
 
 // Create a query embedding
 $queryText = 'futuristic technology and artificial intelligence';
-echo "Query: \"$queryText\"\n\n";
+echo sprintf('Query: "%s"', $queryText).\PHP_EOL.\PHP_EOL;
 $queryEmbedding = $vectorizer->vectorize($queryText);
 
 // Test different semantic ratios to compare results
@@ -84,7 +84,7 @@ $ratios = [
 ];
 
 foreach ($ratios as $config) {
-    echo "--- {$config['description']} ---\n";
+    echo sprintf('--- %s ---', $config['description']).\PHP_EOL;
 
     if (1.0 === $config['ratio']) {
         $query = new VectorQuery($queryEmbedding);
@@ -94,7 +94,7 @@ foreach ($ratios as $config) {
 
     $results = $store->query($query, ['limit' => 3]);
 
-    echo "Top 3 results:\n";
+    echo 'Top 3 results:'.\PHP_EOL;
     foreach ($results as $i => $result) {
         $metadata = $result->getMetadata()->getArrayCopy();
         echo sprintf(
