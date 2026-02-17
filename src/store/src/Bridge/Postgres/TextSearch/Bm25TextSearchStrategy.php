@@ -43,8 +43,6 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
 
     public function getSetupSql(string $tableName, string $contentFieldName, string $language): array
     {
-        // BM25 doesn't require additional table setup, it uses the content field directly
-        // The index is managed internally by the bm25topk function
         return [];
     }
 
@@ -54,11 +52,9 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
         string $language,
         string $queryParam = ':query',
     ): string {
-        // BM25 search with deduplication fix for duplicate titles
         return \sprintf(
             "bm25_search AS (
                 SELECT
-                    SUBSTRING(bm25.doc FROM 'title: ([^\n]+)') as extracted_title,
                     bm25.doc,
                     bm25.score as %s,
                     ROW_NUMBER() OVER (ORDER BY bm25.score DESC) as %s
@@ -72,15 +68,15 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
                 ) AS bm25
             ),
             %s AS (
-                SELECT DISTINCT ON (b.%s)
+                SELECT DISTINCT ON (m.id)
                     m.id,
                     m.metadata,
                     m.%s,
                     b.%s,
                     b.%s
                 FROM bm25_search b
-                INNER JOIN %s m ON (m.metadata->>'title') = b.extracted_title
-                ORDER BY b.%s, m.id
+                INNER JOIN %s m ON m.%s = b.doc
+                ORDER BY m.id, b.%s
             )",
             self::SCORE_COLUMN,
             self::RANK_COLUMN,
@@ -90,11 +86,11 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
             $this->topK,
             $this->bm25Language,
             self::CTE_ALIAS,
-            self::RANK_COLUMN,
             $contentFieldName,
             self::SCORE_COLUMN,
             self::RANK_COLUMN,
             $tableName,
+            $contentFieldName,
             self::RANK_COLUMN,
         );
     }
@@ -116,7 +112,6 @@ final class Bm25TextSearchStrategy implements TextSearchStrategyInterface
 
     public function getNormalizedScoreExpression(string $scoreColumn): string
     {
-        // BM25 scores are typically in 0-10+ range, normalize to 0-1
         return \sprintf('LEAST(%s / 10.0, 1.0)', $scoreColumn);
     }
 
