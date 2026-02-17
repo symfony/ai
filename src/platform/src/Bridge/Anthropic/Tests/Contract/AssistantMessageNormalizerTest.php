@@ -57,10 +57,11 @@ final class AssistantMessageNormalizerTest extends TestCase
      *     1: array{
      *         role: 'assistant',
      *         content: string|list<array{
-     *             type: 'tool_use',
-     *             id: string,
-     *             name: string,
-     *             input: array<string, mixed>|\stdClass
+     *             type: 'tool_use'|'text',
+     *             id?: string,
+     *             name?: string,
+     *             input?: array<string, mixed>|\stdClass,
+     *             text?: string
      *         }>
      *     }
      * }>
@@ -99,6 +100,52 @@ final class AssistantMessageNormalizerTest extends TestCase
                         'name' => 'name1',
                         'input' => new \stdClass(),
                     ],
+                ],
+            ],
+        ];
+
+        yield 'text prefix with single tool call' => [
+            new AssistantMessage(
+                'I\'ll look that up for you.',
+                [new ToolCall('id1', 'search', ['query' => 'symfony'])],
+            ),
+            [
+                'role' => 'assistant',
+                'content' => [
+                    ['type' => 'text', 'text' => "I'll look that up for you."],
+                    ['type' => 'tool_use', 'id' => 'id1', 'name' => 'search', 'input' => ['query' => 'symfony']],
+                ],
+            ],
+        ];
+
+        yield 'text prefix with multiple tool calls' => [
+            new AssistantMessage(
+                'Let me run both tools.',
+                [
+                    new ToolCall('id1', 'read', ['path' => '/etc/hosts']),
+                    new ToolCall('id2', 'write', ['path' => '/tmp/out', 'content' => 'ok']),
+                ],
+            ),
+            [
+                'role' => 'assistant',
+                'content' => [
+                    ['type' => 'text', 'text' => 'Let me run both tools.'],
+                    ['type' => 'tool_use', 'id' => 'id1', 'name' => 'read',  'input' => ['path' => '/etc/hosts']],
+                    ['type' => 'tool_use', 'id' => 'id2', 'name' => 'write', 'input' => ['path' => '/tmp/out', 'content' => 'ok']],
+                ],
+            ],
+        ];
+
+        yield 'text prefix with no-argument tool call' => [
+            new AssistantMessage(
+                'Checking the current date.',
+                [new ToolCall('id1', 'get_date')],
+            ),
+            [
+                'role' => 'assistant',
+                'content' => [
+                    ['type' => 'text', 'text' => 'Checking the current date.'],
+                    ['type' => 'tool_use', 'id' => 'id1', 'name' => 'get_date', 'input' => new \stdClass()],
                 ],
             ],
         ];
