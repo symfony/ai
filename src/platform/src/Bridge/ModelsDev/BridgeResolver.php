@@ -11,6 +11,11 @@
 
 namespace Symfony\AI\Platform\Bridge\ModelsDev;
 
+use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
+use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory as BedrockPlatformFactory;
+use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
+use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
+
 /**
  * Resolves which Symfony AI bridge to use based on the provider's NPM package.
  *
@@ -28,30 +33,30 @@ final class BridgeResolver
      */
     private const BRIDGE_MAPPING = [
         '@ai-sdk/anthropic' => [
-            'factory' => 'Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory',
+            'factory' => AnthropicPlatformFactory::class,
             'package' => 'symfony/ai-anthropic-platform',
             'routable' => true, // Compatible factory signature
             'completionsModelClass' => 'Symfony\AI\Platform\Bridge\Anthropic\Claude',
         ],
         '@ai-sdk/google' => [
-            'factory' => 'Symfony\AI\Platform\Bridge\Gemini\PlatformFactory',
+            'factory' => GeminiPlatformFactory::class,
             'package' => 'symfony/ai-gemini-platform',
             'routable' => true, // Compatible factory signature
             'completionsModelClass' => 'Symfony\AI\Platform\Bridge\Gemini\Gemini',
             'embeddingsModelClass' => 'Symfony\AI\Platform\Bridge\Gemini\Embeddings',
         ],
         '@ai-sdk/google-vertex' => [
-            'factory' => 'Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory',
+            'factory' => VertexAiPlatformFactory::class,
             'package' => 'symfony/ai-vertex-ai-platform',
             'routable' => false, // Requires location and projectId
         ],
         '@ai-sdk/google-vertex/anthropic' => [
-            'factory' => 'Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory',
+            'factory' => VertexAiPlatformFactory::class,
             'package' => 'symfony/ai-vertex-ai-platform',
             'routable' => false, // Requires location and projectId
         ],
         '@ai-sdk/amazon-bedrock' => [
-            'factory' => 'Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory',
+            'factory' => BedrockPlatformFactory::class,
             'package' => 'symfony/ai-bedrock-platform',
             'routable' => false, // Requires BedrockRuntimeClient
         ],

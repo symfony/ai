@@ -15,6 +15,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
+use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
@@ -31,12 +32,14 @@ final class PlatformFactory
         string $provider,
         #[\SensitiveParameter] ?string $apiKey = null,
         ?string $baseUrl = null,
+        ?string $dataPath = null,
+        ?Contract $contract = null,
         ?HttpClientInterface $httpClient = null,
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        $data = DataLoader::load();
+        $data = DataLoader::load($dataPath);
         if (!isset($data[$provider])) {
             throw new InvalidArgumentException(\sprintf('Provider "%s" not found in models.dev data.', $provider));
         }
@@ -55,20 +58,24 @@ final class PlatformFactory
                 throw new InvalidArgumentException(\sprintf('Provider "%s" requires "%s" which has a different factory signature; use "%s::create()" directly.', $provider, $package, $factoryClass));
             }
 
+            $modelCatalog = new ModelCatalog(
+                $provider,
+                $dataPath,
+                completionsModelClass: BridgeResolver::getCompletionsModelClass($npmPackage),
+                embeddingsModelClass: BridgeResolver::getEmbeddingsModelClass($npmPackage),
+            );
+
             return $factoryClass::create(
                 apiKey: $apiKey,
-                modelCatalog: new ModelCatalog(
-                    $provider,
-                    completionsModelClass: BridgeResolver::getCompletionsModelClass($npmPackage),
-                    embeddingsModelClass: BridgeResolver::getEmbeddingsModelClass($npmPackage),
-                ),
+                modelCatalog: $modelCatalog,
+                contract: $contract,
                 httpClient: $httpClient,
                 eventDispatcher: $eventDispatcher,
             );
         }
 
         // Use the generic OpenAI-compatible bridge
-        if ((null === $baseUrl) && null === $baseUrl = (new ProviderRegistry())->getApiBaseUrl($provider)) {
+        if ((null === $baseUrl) && null === $baseUrl = (new ProviderRegistry($dataPath))->getApiBaseUrl($provider)) {
             throw new InvalidArgumentException(\sprintf('Provider "%s" does not have a known API base URL; please provide one via the $baseUrl argument.', $provider));
         }
 
@@ -79,7 +86,7 @@ final class PlatformFactory
         // Automatically detect what the provider supports based on its model catalog
         $supportsCompletions = false;
         $supportsEmbeddings = false;
-        $modelCatalog = new ModelCatalog($provider);
+        $modelCatalog = new ModelCatalog($provider, $dataPath);
         foreach ($modelCatalog->getModels() as $modelData) {
             if (CompletionsModel::class === $modelData['class'] || is_subclass_of($modelData['class'], CompletionsModel::class)) {
                 $supportsCompletions = true;
@@ -97,9 +104,9 @@ final class PlatformFactory
         return GenericPlatformFactory::create(
             baseUrl: $baseUrl,
             apiKey: $apiKey,
-            httpClient: $httpClient,
             modelCatalog: $modelCatalog,
-            contract: null, // Let Generic bridge use its default contract
+            contract: $contract,
+            httpClient: $httpClient,
             eventDispatcher: $eventDispatcher,
             supportsCompletions: $supportsCompletions,
             supportsEmbeddings: $supportsEmbeddings,
