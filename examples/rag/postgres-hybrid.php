@@ -17,12 +17,12 @@ use Symfony\AI\Store\Bridge\Postgres\HybridStore;
 use Symfony\AI\Store\Bridge\Postgres\ReciprocalRankFusion;
 use Symfony\AI\Store\Bridge\Postgres\TextSearch\Bm25TextSearchStrategy;
 use Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy;
-use Symfony\AI\Store\Document\Loader\InMemoryLoader;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Exception\RuntimeException;
-use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Indexer\DocumentIndexer;
+use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Uid\Uuid;
@@ -68,7 +68,7 @@ $store->setup();
 // Create embeddings for documents
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $store, logger: logger());
+$indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);
 
 // Create a query embedding
@@ -137,7 +137,7 @@ $storeFts = new HybridStore(
 );
 
 $storeFts->setup();
-$indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $storeFts, logger: logger());
+$indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $storeFts, logger: logger()));
 $indexer->index($documents);
 
 $resultsFts = $storeFts->query(

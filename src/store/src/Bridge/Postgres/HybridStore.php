@@ -57,7 +57,7 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         private readonly string $tableName,
         private readonly string $vectorFieldName = 'embedding',
         private readonly string $contentFieldName = 'content',
-        private readonly float $semanticRatio = 1.0,
+        float $semanticRatio = 1.0,
         private readonly Distance $distance = Distance::L2,
         private readonly string $language = 'simple',
         private readonly TextSearchStrategyInterface $textSearchStrategy = new PostgresTextSearchStrategy(),
