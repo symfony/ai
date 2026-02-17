@@ -102,9 +102,11 @@ use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
-use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
 use Symfony\AI\Store\Bridge\Postgres\HybridStore;
+use Symfony\AI\Store\Bridge\Postgres\ReciprocalRankFusion;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\Bm25TextSearchStrategy;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
@@ -141,9 +143,6 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\AI\Store\Bridge\Postgres\TextSearch\Bm25TextSearchStrategy;
-use Symfony\AI\Store\Bridge\Postgres\ReciprocalRankFusion;
-use Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy;
 
 use function Symfony\Component\String\u;
 
@@ -1851,7 +1850,6 @@ final class AiBundle extends AbstractBundle
                     if (\array_key_exists('fuzzy_weight', $hybrid)) {
                         $arguments[12] = $hybrid['fuzzy_weight'];
                     }
-
                 } else {
                     // PostgresStore-specific parameters
                     $arguments[3] = $store['distance'];

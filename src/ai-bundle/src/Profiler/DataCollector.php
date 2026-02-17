@@ -36,12 +36,6 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  */
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
 {
-    /**
-     * @param TraceablePlatform[]     $platforms
-     * @param TraceableToolbox[]      $toolboxes
-     * @param TraceableMessageStore[] $messageStores
-     * @param TraceableChat[]         $chats
-     */
     /** @var TraceablePlatform[] */
     private readonly array $platforms;
     /** @var TraceableToolbox[] */
@@ -51,6 +45,12 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     /** @var TraceableChat[] */
     private readonly array $chats;
 
+    /**
+     * @param iterable<TraceablePlatform>     $platforms
+     * @param iterable<TraceableToolbox>      $toolboxes
+     * @param iterable<TraceableMessageStore> $messageStores
+     * @param iterable<TraceableChat>         $chats
+     */
     public function __construct(
         iterable $platforms,
         iterable $toolboxes,

@@ -39,21 +39,18 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class HybridStore implements ManagedStoreInterface, StoreInterface
 {
-    private readonly ReciprocalRankFusion $rrf;
-    private readonly TextSearchStrategyInterface $textSearchStrategy;
-
     /**
-     * @param string                                                    $vectorFieldName         Name of the vector field
-     * @param string                                                    $contentFieldName        Name of the text field for FTS
-     * @param float                                                     $semanticRatio           Ratio between semantic and keyword search (0.0 to 1.0)
-     * @param Distance                                                  $distance                Distance metric for vector similarity
-     * @param string                                                    $language                PostgreSQL text search configuration
-     * @param TextSearchStrategyInterface|null                          $textSearchStrategy      Text search strategy (defaults to native PostgreSQL)
-     * @param ReciprocalRankFusion|null                                 $rrf                     RRF calculator (defaults to k=60, normalized)
-     * @param float|null                                                $defaultMaxScore         Default max distance for vector search
-     * @param float|null                                                $defaultMinScore         Default min RRF score threshold
-     * @param float                                                     $fuzzyThreshold          Minimum word_similarity threshold for fuzzy matching
-     * @param float                                                     $fuzzyWeight             Weight of fuzzy matching (0.0 to 1.0, disabled by default)
+     * @param string                      $vectorFieldName    Name of the vector field
+     * @param string                      $contentFieldName   Name of the text field for FTS
+     * @param float                       $semanticRatio      Ratio between semantic and keyword search (0.0 to 1.0)
+     * @param Distance                    $distance           Distance metric for vector similarity
+     * @param string                      $language           PostgreSQL text search configuration
+     * @param TextSearchStrategyInterface $textSearchStrategy Text search strategy (defaults to native PostgreSQL)
+     * @param ReciprocalRankFusion        $rrf                RRF calculator (defaults to k=60, normalized)
+     * @param float|null                  $defaultMaxScore    Default max distance for vector search
+     * @param float|null                  $defaultMinScore    Default min RRF score threshold
+     * @param float                       $fuzzyThreshold     Minimum word_similarity threshold for fuzzy matching
+     * @param float                       $fuzzyWeight        Weight of fuzzy matching (0.0 to 1.0, disabled by default)
      */
     public function __construct(
         private readonly \PDO $connection,
@@ -63,8 +60,8 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         private readonly float $semanticRatio = 1.0,
         private readonly Distance $distance = Distance::L2,
         private readonly string $language = 'simple',
-        ?TextSearchStrategyInterface $textSearchStrategy = null,
-        ?ReciprocalRankFusion $rrf = null,
+        private readonly TextSearchStrategyInterface $textSearchStrategy = new PostgresTextSearchStrategy(),
+        private readonly ReciprocalRankFusion $rrf = new ReciprocalRankFusion(),
         private readonly ?float $defaultMaxScore = null,
         private readonly ?float $defaultMinScore = null,
         private readonly float $fuzzyThreshold = 0.2,
@@ -77,9 +74,6 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         if ($fuzzyWeight < 0.0 || $fuzzyWeight > 1.0) {
             throw new InvalidArgumentException(\sprintf('The fuzzy weight must be between 0.0 and 1.0, "%s" given.', $fuzzyWeight));
         }
-
-        $this->textSearchStrategy = $textSearchStrategy ?? new PostgresTextSearchStrategy();
-        $this->rrf = $rrf ?? new ReciprocalRankFusion();
     }
 
     /**
@@ -604,5 +598,4 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
 
         return $breakdown;
     }
-
 }
