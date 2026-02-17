@@ -34,6 +34,8 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private const DEFAULT_INDEX_METHOD = 'hnsw';
+
     public function __construct(
         private readonly \PDO $connection,
         private readonly string $tableName,
@@ -72,7 +74,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->tableName,
                 $this->vectorFieldName,
                 $this->tableName,
-                $options['index_method'] ?? 'hnsw',
+                $options['index_method'] ?? self::DEFAULT_INDEX_METHOD,
                 $this->vectorFieldName,
                 $options['index_opclass'] ?? 'vector_cosine_ops',
             ),
