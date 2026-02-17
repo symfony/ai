@@ -52,11 +52,8 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
      * @param ReciprocalRankFusion|null                                 $rrf                     RRF calculator (defaults to k=60, normalized)
      * @param float|null                                                $defaultMaxScore         Default max distance for vector search
      * @param float|null                                                $defaultMinScore         Default min RRF score threshold
-     * @param float                                                     $fuzzyPrimaryThreshold   Primary threshold for fuzzy matching
-     * @param float                                                     $fuzzySecondaryThreshold Secondary threshold for fuzzy matching
-     * @param float                                                     $fuzzyStrictThreshold    Strict threshold for double validation
-     * @param float                                                     $fuzzyWeight             Weight of fuzzy matching (0.0 to 1.0)
-     * @param array<string, array{metadata_key: string, boost?: float}> $searchableAttributes    Searchable attributes with boosting config
+     * @param float                                                     $fuzzyThreshold          Minimum word_similarity threshold for fuzzy matching
+     * @param float                                                     $fuzzyWeight             Weight of fuzzy matching (0.0 to 1.0, disabled by default)
      */
     public function __construct(
         private readonly \PDO $connection,
@@ -70,11 +67,8 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         ?ReciprocalRankFusion $rrf = null,
         private readonly ?float $defaultMaxScore = null,
         private readonly ?float $defaultMinScore = null,
-        private readonly float $fuzzyPrimaryThreshold = 0.25,
-        private readonly float $fuzzySecondaryThreshold = 0.2,
-        private readonly float $fuzzyStrictThreshold = 0.15,
-        private readonly float $fuzzyWeight = 0.5,
-        private readonly array $searchableAttributes = [],
+        private readonly float $fuzzyThreshold = 0.2,
+        private readonly float $fuzzyWeight = 0.0,
     ) {
         if ($semanticRatio < 0.0 || $semanticRatio > 1.0) {
             throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $semanticRatio));
@@ -99,9 +93,6 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         // Enable pg_trgm extension for fuzzy matching
         $this->connection->exec('CREATE EXTENSION IF NOT EXISTS pg_trgm');
 
-        // Build tsvector columns
-        $tsvectorColumns = $this->buildTsvectorColumns();
-
         // Create main table
         $this->connection->exec(
             \sprintf(
@@ -109,14 +100,13 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
                     id UUID PRIMARY KEY,
                     metadata JSONB,
                     %s TEXT NOT NULL,
-                    %s %s(%d) NOT NULL%s
+                    %s %s(%d) NOT NULL
                 )',
                 $this->tableName,
                 $this->contentFieldName,
                 $this->vectorFieldName,
                 $options['vector_type'] ?? 'vector',
                 $options['vector_size'] ?? 1536,
-                $tsvectorColumns,
             ),
         );
 
@@ -138,20 +128,14 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
                 $this->tableName,
                 $this->vectorFieldName,
                 $this->tableName,
-                $options['index_method'] ?? 'ivfflat',
+                $options['index_method'] ?? 'hnsw',
                 $this->vectorFieldName,
                 $options['index_opclass'] ?? 'vector_cosine_ops',
             ),
         );
 
-        // Execute text search strategy setup (only if not using searchableAttributes)
-        if ([] === $this->searchableAttributes) {
-            foreach ($this->textSearchStrategy->getSetupSql($this->tableName, $this->contentFieldName, $this->language) as $sql) {
-                $this->connection->exec($sql);
-            }
-        } else {
-            // Create GIN indexes for tsvector columns when using searchableAttributes
-            $this->createTsvectorIndexes();
+        foreach ($this->textSearchStrategy->getSetupSql($this->tableName, $this->contentFieldName, $this->language) as $sql) {
+            $this->connection->exec($sql);
         }
 
         // Create trigram index for fuzzy matching
@@ -237,7 +221,6 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
      *   maxScore?: float,
      *   minScore?: float,
      *   includeScoreBreakdown?: bool,
-     *   boostFields?: array<string, array{min?: float, max?: float, boost: float}>
      * } $options
      *
      * @return iterable<VectorDocument>
@@ -274,10 +257,6 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             $options['includeScoreBreakdown'] ?? false,
         );
 
-        if (isset($options['boostFields']) && [] !== $options['boostFields']) {
-            $documents = $this->applyBoostFields($documents, $options['boostFields']);
-        }
-
         $minScore = $options['minScore'] ?? $this->defaultMinScore;
         if (null !== $minScore) {
             $documents = array_values(array_filter(
@@ -305,27 +284,6 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         return $this->rrf;
     }
 
-    private function buildTsvectorColumns(): string
-    {
-        if ([] !== $this->searchableAttributes) {
-            $columns = '';
-            foreach ($this->searchableAttributes as $fieldName => $config) {
-                $metadataKey = $config['metadata_key'];
-                $columns .= \sprintf(
-                    ",\n                    %s_tsv tsvector GENERATED ALWAYS AS (to_tsvector('%s', COALESCE(metadata->>'%s', ''))) STORED",
-                    $fieldName,
-                    $this->language,
-                    $metadataKey
-                );
-            }
-
-            return $columns;
-        }
-
-        // When not using searchableAttributes, let the TextSearchStrategy handle tsvector columns
-        return '';
-    }
-
     private function createSearchTextTrigger(): void
     {
         $this->connection->exec(
@@ -349,31 +307,6 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
                 $this->tableName,
             ),
         );
-    }
-
-    private function createTsvectorIndexes(): void
-    {
-        if ([] !== $this->searchableAttributes) {
-            foreach ($this->searchableAttributes as $fieldName => $config) {
-                $this->connection->exec(
-                    \sprintf(
-                        'CREATE INDEX IF NOT EXISTS %s_%s_tsv_idx ON %s USING gin(%s_tsv)',
-                        $this->tableName,
-                        $fieldName,
-                        $this->tableName,
-                        $fieldName,
-                    ),
-                );
-            }
-        } else {
-            $this->connection->exec(
-                \sprintf(
-                    'CREATE INDEX IF NOT EXISTS %s_content_tsv_idx ON %s USING gin(content_tsv)',
-                    $this->tableName,
-                    $this->tableName,
-                ),
-            );
-        }
     }
 
     private function validateSemanticRatio(float $ratio): float
@@ -581,16 +514,8 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
     private function buildFuzzyFilter(): string
     {
         return \sprintf(
-            '(
-                word_similarity(:query, search_text) > %f
-                OR (
-                    word_similarity(:query, search_text) > %f
-                    AND similarity(:query, search_text) > %f
-                )
-            )',
-            $this->fuzzyPrimaryThreshold,
-            $this->fuzzySecondaryThreshold,
-            $this->fuzzyStrictThreshold
+            'word_similarity(:query, search_text) > %f',
+            $this->fuzzyThreshold
         );
     }
 
@@ -680,59 +605,4 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
         return $breakdown;
     }
 
-    /**
-     * @param VectorDocument[]                                             $documents
-     * @param array<string, array{min?: float, max?: float, boost: float}> $boostFields
-     *
-     * @return VectorDocument[]
-     */
-    private function applyBoostFields(array $documents, array $boostFields): array
-    {
-        $documents = array_map(function (VectorDocument $doc) use ($boostFields) {
-            $metadata = $doc->getMetadata();
-            $score = $doc->getScore();
-            $appliedBoosts = [];
-
-            foreach ($boostFields as $field => $boostConfig) {
-                if (!isset($metadata[$field])) {
-                    continue;
-                }
-
-                $value = $metadata[$field];
-                $boost = $boostConfig['boost'] ?? 0.0;
-
-                $shouldBoost = true;
-                if (isset($boostConfig['min']) && $value < $boostConfig['min']) {
-                    $shouldBoost = false;
-                }
-                if (isset($boostConfig['max']) && $value > $boostConfig['max']) {
-                    $shouldBoost = false;
-                }
-
-                if ($shouldBoost && 0.0 !== $boost) {
-                    $score *= (1.0 + $boost);
-                    $appliedBoosts[$field] = [
-                        'value' => $value,
-                        'boost' => $boost,
-                        'multiplier' => (1.0 + $boost),
-                    ];
-                }
-            }
-
-            if ([] !== $appliedBoosts) {
-                $metadata['_applied_boosts'] = $appliedBoosts;
-            }
-
-            return new VectorDocument(
-                id: $doc->getId(),
-                vector: $doc->getVector(),
-                metadata: $metadata,
-                score: $score
-            );
-        }, $documents);
-
-        usort($documents, fn (VectorDocument $a, VectorDocument $b) => $b->getScore() <=> $a->getScore());
-
-        return $documents;
-    }
 }
