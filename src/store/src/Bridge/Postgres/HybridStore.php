@@ -240,9 +240,9 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
      *   boostFields?: array<string, array{min?: float, max?: float, boost: float}>
      * } $options
      *
-     * @return VectorDocument[]
+     * @return iterable<VectorDocument>
      */
-    public function query(QueryInterface $query, array $options = []): array
+    public function query(QueryInterface $query, array $options = []): iterable
     {
         if ($query instanceof HybridQuery) {
             $vector = $query->getVector();
@@ -286,7 +286,7 @@ final class HybridStore implements ManagedStoreInterface, StoreInterface
             ));
         }
 
-        return $documents;
+        yield from $documents;
     }
 
     /**

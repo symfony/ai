@@ -308,7 +308,7 @@ final class HybridStoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -363,7 +363,7 @@ final class HybridStoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'PostgreSQL', 0.0));
+        $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'PostgreSQL', 0.0)));
 
         $this->assertCount(1, $results);
         $this->assertSame(0.5, $results[0]->getScore());
@@ -422,7 +422,7 @@ final class HybridStoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'PostgreSQL', 0.0));
+        $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'PostgreSQL', 0.0)));
 
         $this->assertCount(1, $results);
         $this->assertSame(0.5, $results[0]->getScore());
@@ -477,7 +477,7 @@ final class HybridStoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'PostgreSQL', 0.5));
+        $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'PostgreSQL', 0.5)));
 
         $this->assertCount(1, $results);
         $this->assertSame(0.025, $results[0]->getScore());
@@ -517,7 +517,7 @@ final class HybridStoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(0, $results);
     }
@@ -550,7 +550,7 @@ final class HybridStoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxScore' => 0.5]);
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxScore' => 0.5]));
 
         $this->assertCount(0, $results);
     }
@@ -597,7 +597,7 @@ final class HybridStoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         // Only high score result should be returned
         $this->assertCount(1, $results);
@@ -630,7 +630,7 @@ final class HybridStoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 0.5));
+        iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 0.5)));
     }
 
     public function testDrop()
@@ -669,7 +669,7 @@ final class HybridStoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 10]);
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 10]));
     }
 
     public function testPureKeywordSearchReturnsEmptyWhenNoMatch()
@@ -691,7 +691,7 @@ final class HybridStoreTest extends TestCase
             ->with(\PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $results = $store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'zzzzzzzzzzzzz', 0.0));
+        $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'zzzzzzzzzzzzz', 0.0)));
 
         $this->assertCount(0, $results);
     }
@@ -732,7 +732,7 @@ final class HybridStoreTest extends TestCase
         $statement->expects($this->once())->method('execute');
         $statement->expects($this->once())->method('fetchAll')->willReturn([]);
 
-        $store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 0.5));
+        iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 0.5)));
     }
 
     public function testSearchableAttributesWithBoost()
@@ -801,7 +801,7 @@ final class HybridStoreTest extends TestCase
         $statement->expects($this->once())->method('execute');
         $statement->expects($this->once())->method('fetchAll')->willReturn([]);
 
-        $store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 0.4));
+        iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 0.4)));
     }
 
     public function testBoostFieldsApplied()
@@ -840,11 +840,11 @@ final class HybridStoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'boostFields' => [
                 'popularity' => ['min' => 50, 'boost' => 0.5],
             ],
-        ]);
+        ]));
 
         $this->assertCount(2, $results);
 
@@ -895,9 +895,9 @@ final class HybridStoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 0.5), [
+        $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 0.5), [
             'includeScoreBreakdown' => true,
-        ]);
+        ]));
 
         $this->assertCount(1, $results);
 
@@ -941,7 +941,7 @@ final class HybridStoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'FTS', 0.0));
+        $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'FTS', 0.0)));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(NullVector::class, $results[0]->getVector());
@@ -980,7 +980,7 @@ final class HybridStoreTest extends TestCase
                 ],
             ]);
 
-        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
 
