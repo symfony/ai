@@ -116,7 +116,7 @@ jobs:
 
             # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
             - name: Clean vendor folders
-              run: rm -rf vendor src/platform/src/Bridge/${{ matrix.bridge.bridge }}/vendor
+              run: rm -rf vendor src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}/vendor
 
             - name: Install dependencies
               uses: ramsey/composer-install@v3
@@ -225,7 +225,7 @@ jobs:
 
             # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
             - name: Clean vendor folders
-              run: rm -rf vendor src/platform/src/Bridge/${{ matrix.bridge.bridge }}/vendor
+              run: rm -rf vendor src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}/vendor
 
             - name: Install dependencies
               uses: ramsey/composer-install@v3
@@ -269,7 +269,7 @@ jobs:
 
             # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
             - name: Clean vendor folders
-              run: rm -rf vendor src/platform/src/Bridge/${{ matrix.bridge.bridge }}/vendor
+              run: rm -rf vendor src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}/vendor
 
             - name: Install dependencies
               uses: ramsey/composer-install@v3
@@ -313,7 +313,7 @@ jobs:
 
             # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
             - name: Clean vendor folders
-              run: rm -rf vendor src/platform/src/Bridge/${{ matrix.bridge.bridge }}/vendor
+              run: rm -rf vendor src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}/vendor
 
             - name: Install dependencies
               uses: ramsey/composer-install@v3
@@ -357,7 +357,7 @@ jobs:
 
             # Remove root vendor and bridge vendor to avoid circular symlinks when installing bridge dependencies
             - name: Clean vendor folders
-              run: rm -rf vendor src/platform/src/Bridge/${{ matrix.bridge.bridge }}/vendor
+              run: rm -rf vendor src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}/vendor
 
             - name: Install dependencies
               uses: ramsey/composer-install@v3

@@ -34,6 +34,8 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private const DEFAULT_INDEX_METHOD = 'hnsw';
+
     public function __construct(
         private readonly \PDO $connection,
         private readonly string $tableName,
@@ -47,7 +49,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *
      * Good configuration $options are:
      * - For Mistral: ['vector_size' => 1024]
-     * - For Gemini: ['vector_type' => 'halfvec', 'vector_size' => 3072, 'index_method' => 'hnsw', 'index_opclass' => 'halfvec_cosine_ops']
+     * - For Gemini: ['vector_type' => 'halfvec', 'vector_size' => 3072, 'index_opclass' => 'halfvec_cosine_ops']
      */
     public function setup(array $options = []): void
     {
@@ -72,7 +74,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->tableName,
                 $this->vectorFieldName,
                 $this->tableName,
-                $options['index_method'] ?? 'ivfflat',
+                $options['index_method'] ?? self::DEFAULT_INDEX_METHOD,
                 $this->vectorFieldName,
                 $options['index_opclass'] ?? 'vector_cosine_ops',
             ),

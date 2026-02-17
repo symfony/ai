@@ -102,8 +102,11 @@ use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
-use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
+use Symfony\AI\Store\Bridge\Postgres\HybridStore;
+use Symfony\AI\Store\Bridge\Postgres\ReciprocalRankFusion;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\Bm25TextSearchStrategy;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
@@ -140,7 +143,6 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-
 use function Symfony\Component\String\u;
 
 /**
@@ -1743,16 +1745,41 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $definition = new Definition(PostgresStore::class);
+                $isHybrid = isset($store['hybrid']) && true === $store['hybrid']['enabled'];
 
-                if (\array_key_exists('dbal_connection', $store)) {
-                    $definition->setFactory([PostgresStore::class, 'fromDbal']);
+                // Determine the store class based on hybrid mode
+                $storeClass = $isHybrid ? HybridStore::class : PostgresStore::class;
+                $definition = new Definition($storeClass);
+
+                // Handle connection (PDO service reference, DBAL connection, or DSN)
+                if (\array_key_exists('connection', $store)) {
+                    // Direct PDO service reference
+                    $serviceId = ltrim($store['connection'], '@');
+                    $connection = new Reference($serviceId);
                     $arguments = [
-                        new Reference($store['dbal_connection']),
+                        $connection,
                         $store['table_name'] ?? $name,
-                        $store['vector_field'],
                     ];
+                } elseif (\array_key_exists('dbal_connection', $store)) {
+                    // DBAL connection
+                    if ($isHybrid) {
+                        // Hybrid store requires PDO directly
+                        $connection = (new Definition(\PDO::class))
+                            ->setFactory([new Reference($store['dbal_connection']), 'getNativeConnection']);
+                        $arguments = [
+                            $connection,
+                            $store['table_name'] ?? $name,
+                        ];
+                    } else {
+                        // Regular store can use fromDbal factory
+                        $definition->setFactory([PostgresStore::class, 'fromDbal']);
+                        $arguments = [
+                            new Reference($store['dbal_connection']),
+                            $store['table_name'] ?? $name,
+                        ];
+                    }
                 } else {
+                    // Create new PDO instance from DSN
                     $pdo = new Definition(\PDO::class);
                     $pdo->setArguments([
                         $store['dsn'],
@@ -1763,11 +1790,70 @@ final class AiBundle extends AbstractBundle
                     $arguments = [
                         $pdo,
                         $store['table_name'] ?? $name,
-                        $store['vector_field'],
                     ];
                 }
 
-                $arguments[3] = PostgresDistance::from($store['distance']);
+                // Add common parameters
+                $arguments[2] = $store['vector_field'];
+
+                if ($isHybrid) {
+                    // HybridStore-specific parameters
+                    $hybrid = $store['hybrid'];
+
+                    if (\array_key_exists('content_field', $hybrid)) {
+                        $arguments[3] = $hybrid['content_field'];
+                    }
+
+                    if (\array_key_exists('semantic_ratio', $hybrid)) {
+                        $arguments[4] = $hybrid['semantic_ratio'];
+                    }
+
+                    $arguments[5] = $store['distance'];
+
+                    if (\array_key_exists('language', $hybrid)) {
+                        $arguments[6] = $hybrid['language'];
+                    }
+
+                    // Text search strategy
+                    $textSearchStrategy = null;
+                    if (isset($hybrid['text_search_strategy']) && 'bm25' === $hybrid['text_search_strategy']) {
+                        $textSearchStrategy = new Definition(Bm25TextSearchStrategy::class);
+                        $textSearchStrategy->setArguments([$hybrid['bm25_language'] ?? 'en']);
+                    } else {
+                        $textSearchStrategy = new Definition(PostgresTextSearchStrategy::class);
+                    }
+                    $arguments[7] = $textSearchStrategy;
+
+                    // RRF configuration
+                    if (isset($hybrid['rrf_k']) || isset($hybrid['normalize_scores'])) {
+                        $rrfDefinition = new Definition(ReciprocalRankFusion::class);
+                        $rrfDefinition->setArguments([
+                            $hybrid['rrf_k'] ?? 60,
+                            $hybrid['normalize_scores'] ?? true,
+                        ]);
+                        $arguments[8] = $rrfDefinition;
+                    }
+
+                    if (\array_key_exists('default_max_score', $hybrid)) {
+                        $arguments[9] = $hybrid['default_max_score'];
+                    }
+
+                    if (\array_key_exists('default_min_score', $hybrid)) {
+                        $arguments[10] = $hybrid['default_min_score'];
+                    }
+
+                    if (\array_key_exists('fuzzy_threshold', $hybrid)) {
+                        $arguments[11] = $hybrid['fuzzy_threshold'];
+                    }
+
+                    if (\array_key_exists('fuzzy_weight', $hybrid)) {
+                        $arguments[12] = $hybrid['fuzzy_weight'];
+                    }
+
+                } else {
+                    // PostgresStore-specific parameters
+                    $arguments[3] = $store['distance'];
+                }
 
                 $definition
                     ->setLazy(true)
