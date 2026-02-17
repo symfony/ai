@@ -23,6 +23,8 @@ use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Indexer;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -84,21 +86,22 @@ $ratios = [
 foreach ($ratios as $config) {
     echo "--- {$config['description']} ---\n";
 
-    // Override the semantic ratio for this specific query
-    $results = $store->query($queryEmbedding, [
-        'semanticRatio' => $config['ratio'],
-        'q' => 'technology', // Full-text search keyword
-        'limit' => 3,
-    ]);
+    if (1.0 === $config['ratio']) {
+        $query = new VectorQuery($queryEmbedding);
+    } else {
+        $query = new HybridQuery($queryEmbedding, 'technology', $config['ratio']);
+    }
+
+    $results = $store->query($query, ['limit' => 3]);
 
     echo "Top 3 results:\n";
     foreach ($results as $i => $result) {
-        $metadata = $result->metadata->getArrayCopy();
+        $metadata = $result->getMetadata()->getArrayCopy();
         echo sprintf(
             "  %d. %s (Score: %.4f)\n",
             $i + 1,
             $metadata['title'] ?? 'Unknown',
-            $result->score ?? 0.0
+            $result->getScore() ?? 0.0
         );
     }
     echo "\n";
@@ -107,19 +110,16 @@ foreach ($ratios as $config) {
 echo "--- Custom query with pure semantic search ---\n";
 echo "Query: Movies about space exploration\n";
 $spaceEmbedding = $vectorizer->vectorize('space exploration and cosmic adventures');
-$results = $store->query($spaceEmbedding, [
-    'semanticRatio' => 1.0, // Pure semantic search
-    'limit' => 3,
-]);
+$results = $store->query(new VectorQuery($spaceEmbedding), ['limit' => 3]);
 
 echo "Top 3 results:\n";
 foreach ($results as $i => $result) {
-    $metadata = $result->metadata->getArrayCopy();
+    $metadata = $result->getMetadata()->getArrayCopy();
     echo sprintf(
         "  %d. %s (Score: %.4f)\n",
         $i + 1,
         $metadata['title'] ?? 'Unknown',
-        $result->score ?? 0.0
+        $result->getScore() ?? 0.0
     );
 }
 echo "\n";
@@ -140,20 +140,19 @@ $storeFts->setup();
 $indexer = new Indexer(new InMemoryLoader($documents), $vectorizer, $storeFts, logger: logger());
 $indexer->index($documents);
 
-$resultsFts = $storeFts->query($queryEmbedding, [
-    'semanticRatio' => 0.5,
-    'q' => 'technology',
-    'limit' => 3,
-]);
+$resultsFts = $storeFts->query(
+    new HybridQuery($queryEmbedding, 'technology', 0.5),
+    ['limit' => 3],
+);
 
 echo "Top 3 results (Native FTS):\n";
 foreach ($resultsFts as $i => $result) {
-    $metadata = $result->metadata->getArrayCopy();
+    $metadata = $result->getMetadata()->getArrayCopy();
     echo sprintf(
         "  %d. %s (Score: %.4f)\n",
         $i + 1,
         $metadata['title'] ?? 'Unknown',
-        $result->score ?? 0.0
+        $result->getScore() ?? 0.0
     );
 }
 
