@@ -39,6 +39,7 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
+use Symfony\AI\Platform\Bridge\Venice\Factory as VeniceFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
@@ -7707,6 +7708,159 @@ class AiBundleTest extends TestCase
         $this->assertEquals([Capability::INPUT_TEXT, Capability::OUTPUT_TEXT], $arguments[0]['my-custom-model']['capabilities']);
     }
 
+    public function testVenicePlatformCanBeConfigured()
+    {
+        // Default configuration
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'venice' => [
+                        'api_key' => 'foo',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.venice'));
+
+        $definition = $container->getDefinition('ai.platform.venice');
+        $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+
+        $this->assertSame([
+            ['interface' => PlatformInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $venice'));
+
+        // Custom endpoint
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'venice' => [
+                        'api_key' => 'foo',
+                        'endpoint' => 'https://api.venice.ai/api/v2/',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.venice'));
+
+        $definition = $container->getDefinition('ai.platform.venice');
+        $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('https://api.venice.ai/api/v2/', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+
+        $this->assertSame([
+            ['interface' => PlatformInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $venice'));
+
+        // Custom HttpClient
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'venice' => [
+                        'api_key' => 'foo',
+                        'http_client' => 'foo',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.venice'));
+
+        $definition = $container->getDefinition('ai.platform.venice');
+        $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('foo', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+
+        $this->assertSame([
+            ['interface' => PlatformInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $venice'));
+
+        // Scoped HttpClient
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'venice' => [
+                        'http_client' => 'scoped_http_client',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.venice'));
+
+        $definition = $container->getDefinition('ai.platform.venice');
+        $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertNull($definition->getArgument(0));
+        $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('scoped_http_client', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+
+        $this->assertSame([
+            ['interface' => PlatformInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $venice'));
+    }
+
     #[TestDox('Model configuration for vertexai uses correct catalog service id')]
     public function testModelConfigurationForVertexAiUsesCorrectCatalogServiceId()
     {
@@ -8427,6 +8581,9 @@ class AiBundleTest extends TestCase
                     ],
                     'voyage' => [
                         'api_key' => 'voyage_key_full',
+                    ],
+                    'venice' => [
+                        'api_key' => 'venice_api_key',
                     ],
                     'vertexai' => [
                         'location' => 'global',

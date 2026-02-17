@@ -81,6 +81,7 @@ use Symfony\AI\Platform\Bridge\Ovh\Factory as OvhFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\Factory as PerplexityFactory;
 use Symfony\AI\Platform\Bridge\Scaleway\Factory as ScalewayFactory;
 use Symfony\AI\Platform\Bridge\TransformersPhp\Factory as TransformersPhpFactory;
+use Symfony\AI\Platform\Bridge\Venice\Factory as VeniceFactory;
 use Symfony\AI\Platform\Bridge\VertexAi\Factory as VertexAiFactory;
 use Symfony\AI\Platform\Bridge\Voyage\Factory as VoyageFactory;
 use Symfony\AI\Platform\Capability;
@@ -747,6 +748,31 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'huggingface']);
 
             $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('venice' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-venice-platform', VeniceFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Venice platform configuration requires "symfony/ai-venice-platform" package. Try running "composer require symfony/ai-venice-platform".');
+            }
+
+            $definition = (new Definition(Platform::class))
+                ->setFactory(VeniceFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->setArguments([
+                    $platform['api_key'] ?? null,
+                    $platform['endpoint'],
+                    new Reference($platform['http_client']),
+                    new Reference(ClockInterface::class),
+                    new Reference('ai.platform.contract.'.$type),
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform', ['name' => $type]);
+
+            $container->setDefinition('ai.platform.'.$type, $definition);
+            $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type);
 
             return;
         }
