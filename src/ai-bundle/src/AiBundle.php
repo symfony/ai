@@ -141,6 +141,9 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\Bm25TextSearchStrategy;
+use Symfony\AI\Store\Bridge\Postgres\ReciprocalRankFusion;
+use Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy;
 
 use function Symfony\Component\String\u;
 
@@ -1816,16 +1819,16 @@ final class AiBundle extends AbstractBundle
                     // Text search strategy
                     $textSearchStrategy = null;
                     if (isset($hybrid['text_search_strategy']) && 'bm25' === $hybrid['text_search_strategy']) {
-                        $textSearchStrategy = new Definition(\Symfony\AI\Store\Bridge\Postgres\TextSearch\Bm25TextSearchStrategy::class);
+                        $textSearchStrategy = new Definition(Bm25TextSearchStrategy::class);
                         $textSearchStrategy->setArguments([$hybrid['bm25_language'] ?? 'en']);
                     } else {
-                        $textSearchStrategy = new Definition(\Symfony\AI\Store\Bridge\Postgres\TextSearch\PostgresTextSearchStrategy::class);
+                        $textSearchStrategy = new Definition(PostgresTextSearchStrategy::class);
                     }
                     $arguments[7] = $textSearchStrategy;
 
                     // RRF configuration
                     if (isset($hybrid['rrf_k']) || isset($hybrid['normalize_scores'])) {
-                        $rrfDefinition = new Definition(\Symfony\AI\Store\Bridge\Postgres\ReciprocalRankFusion::class);
+                        $rrfDefinition = new Definition(ReciprocalRankFusion::class);
                         $rrfDefinition->setArguments([
                             $hybrid['rrf_k'] ?? 60,
                             $hybrid['normalize_scores'] ?? true,
