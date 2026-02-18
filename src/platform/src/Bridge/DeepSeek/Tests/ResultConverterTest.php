@@ -17,8 +17,11 @@ use Symfony\AI\Platform\Bridge\DeepSeek\ResultConverter;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\InvalidRequestException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingContent;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -139,5 +142,82 @@ final class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
 
         $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testStreamingReasoningContentYieldsThinkingContent()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['reasoning_content' => 'Let me ']]]],
+            ['choices' => [['index' => 0, 'delta' => ['reasoning_content' => 'think about this.']]]],
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'The answer ']]]],
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'is 42.']]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
+        ];
+
+        $raw = new InMemoryRawResult(dataStream: $events);
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $streamResult);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $this->assertCount(3, $chunks);
+
+        $this->assertInstanceOf(ThinkingContent::class, $chunks[0]);
+        $this->assertSame('Let me think about this.', $chunks[0]->thinking);
+        $this->assertNull($chunks[0]->signature);
+
+        $this->assertSame('The answer ', $chunks[1]);
+        $this->assertSame('is 42.', $chunks[2]);
+    }
+
+    public function testStreamingReasoningOnlyYieldsThinkingContent()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['reasoning_content' => 'Deep reasoning here.']]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
+        ];
+
+        $raw = new InMemoryRawResult(dataStream: $events);
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $this->assertCount(1, $chunks);
+        $this->assertInstanceOf(ThinkingContent::class, $chunks[0]);
+        $this->assertSame('Deep reasoning here.', $chunks[0]->thinking);
+    }
+
+    public function testStreamingTextWithoutReasoningUnchanged()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'Hello, ']]]],
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'world!']]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
+        ];
+
+        $raw = new InMemoryRawResult(dataStream: $events);
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $this->assertCount(2, $chunks);
+        $this->assertSame('Hello, ', $chunks[0]);
+        $this->assertSame('world!', $chunks[1]);
     }
 }

@@ -47,6 +47,10 @@ final class ModelClient implements ModelClientInterface
             $options['tool_choice'] = ['type' => 'auto'];
         }
 
+        if (isset($options['thinking'])) {
+            $options['beta_features'][] = 'interleaved-thinking-2025-05-14';
+        }
+
         if (isset($options['response_format'])) {
             $options['beta_features'][] = 'structured-outputs-2025-11-13';
             $options['output_format'] = [

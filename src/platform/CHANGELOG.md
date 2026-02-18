@@ -4,6 +4,7 @@ CHANGELOG
 0.4
 ---
 
+ * Add thinking support to `AssistantMessage`
  * Add support for object serialization in template variables via `template_vars` option
  * Add support for populating existing object instances in structured output via `response_format` option
 
