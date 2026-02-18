@@ -41,6 +41,7 @@
         },
         "ai-ai-ml-api-platform": "src/platform/src/Bridge/AiMlApi",
         "ai-albert-platform": "src/platform/src/Bridge/Albert",
+        "ai-amazeeai-platform": "src/platform/src/Bridge/AmazeeAi",
         "ai-anthropic-platform": "src/platform/src/Bridge/Anthropic",
         "ai-azure-platform": "src/platform/src/Bridge/Azure",
         "ai-bedrock-platform": "src/platform/src/Bridge/Bedrock",

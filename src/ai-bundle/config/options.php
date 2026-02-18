@@ -28,6 +28,7 @@ return static function (DefinitionConfigurator $configurator): void {
             ->arrayNode('platform')
                 ->children()
                     ->append($import('platform/albert'))
+                    ->append($import('platform/amazeeai'))
                     ->append($import('platform/anthropic'))
                     ->append($import('platform/azure'))
                     ->append($import('platform/bedrock'))
