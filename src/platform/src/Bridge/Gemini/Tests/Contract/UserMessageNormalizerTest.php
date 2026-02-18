@@ -57,9 +57,9 @@ final class UserMessageNormalizerTest extends TestCase
      */
     public static function binaryContentProvider(): iterable
     {
-        yield 'image' => [Image::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/image.jpg'), 'image/jpeg', '/9j/'];
-        yield 'document' => [Document::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/document.pdf'), 'application/pdf', 'JVBE'];
-        yield 'audio' => [Audio::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/audio.mp3'), 'audio/mpeg', 'SUQz'];
+        yield 'image' => [Image::fromFile(\dirname(__DIR__).'/Fixtures/image.jpg'), 'image/jpeg', '/9j/'];
+        yield 'document' => [Document::fromFile(\dirname(__DIR__).'/Fixtures/document.pdf'), 'application/pdf', 'JVBE'];
+        yield 'audio' => [Audio::fromFile(\dirname(__DIR__).'/Fixtures/audio.mp3'), 'audio/mpeg', 'SUQz'];
     }
 
     #[DataProvider('binaryContentProvider')]

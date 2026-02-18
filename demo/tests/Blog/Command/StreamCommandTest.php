@@ -14,7 +14,6 @@ namespace App\Tests\Blog\Command;
 use App\Blog\Command\StreamCommand;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
