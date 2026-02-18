@@ -24,7 +24,8 @@
         "php": ">=8.2",
         "symfony/ai-platform": "^0.3",
         "symfony/http-client": "^7.3|^8.0",
-        "symfony/json-path": "^7.3|^8.0"
+        "symfony/json-path": "^7.3|^8.0",
+        "symfony/string": "^7.3|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",

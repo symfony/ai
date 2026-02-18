@@ -18,7 +18,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class VeniceModelCatalog implements ModelCatalogInterface
+final class VeniceApiModelCatalog implements ModelCatalogInterface
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
@@ -27,11 +27,13 @@ final class VeniceModelCatalog implements ModelCatalogInterface
 
     public function getModel(string $modelName): Model
     {
-        // TODO: Implement getModel() method.
+        $models = $this->getModels();
     }
 
     public function getModels(): array
     {
         $results = $this->httpClient->request('GET', 'models');
+
+        dd($results->toArray());
     }
 }

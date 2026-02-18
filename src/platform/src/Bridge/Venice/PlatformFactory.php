@@ -28,9 +28,9 @@ final class PlatformFactory
 {
     public static function create(
         #[\SensitiveParameter] string $apiKey,
-        string $endpoint = 'https://api.venice.ai/api/v1',
+        string $endpoint = 'https://api.venice.ai/api/v1/',
         ?HttpClientInterface $httpClient = null,
-        ModelCatalogInterface $modelCatalog = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
     ): PlatformInterface {
@@ -43,7 +43,7 @@ final class PlatformFactory
         return new Platform(
             [new VeniceClient($httpClient)],
             [new ResultConverter()],
-            $modelCatalog ?? new VeniceModelCatalog($httpClient),
+            $modelCatalog ?? new VeniceApiModelCatalog($httpClient),
             $contract ?? VeniceContract::create(),
             $eventDispatcher,
         );

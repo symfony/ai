@@ -20,6 +20,14 @@ use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
 final class VeniceClientTest extends TestCase
 {
+    public function testClientCanTriggerCompletion()
+    {
+    }
+
+    public function testClientCanTriggerTextToSpeech()
+    {
+    }
+
     public function testClientCanTriggerEmbeddings()
     {
         $httpClient = new MockHttpClient([
@@ -42,7 +50,7 @@ final class VeniceClientTest extends TestCase
                     'total_tokens' => 8,
                 ],
             ]),
-        ], 'https://api.venice.ai/api/v1');
+        ], 'https://api.venice.ai/api/v1/');
 
         $client = new VeniceClient($httpClient);
 
