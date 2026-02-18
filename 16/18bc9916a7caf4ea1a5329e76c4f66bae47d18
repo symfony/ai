@@ -1,0 +1,111 @@
+---------------------------------------------------------------------------
+
+by santysisi at 2026-02-01T01:03:59Z
+
+Status: needs work
+
+I do not finish the manual tests yet
+
+---------------------------------------------------------------------------
+
+by santysisi at 2026-02-01T16:33:51Z
+
+Thanks for the approval! ❤️
+But please don't merge this yet.
+I think there's an issue with both stores. they're not cleaning the memory properly. I think is because are proxy objects
+
+I'll continue investigating.
+
+Edit:
+
+I found and pushed a solution, but I'm not sure if it's correct
+```diff
+diff --git a/src/ai-bundle/src/Profiler/TraceableChat.php b/src/ai-bundle/src/Profiler/TraceableChat.php
+index 6755669d..df838b31 100644
+--- a/src/ai-bundle/src/Profiler/TraceableChat.php
++++ b/src/ai-bundle/src/Profiler/TraceableChat.php
+@@ -70,6 +70,9 @@ final class TraceableChat implements ChatInterface, ResetInterface
+
+     public function reset(): void
+     {
++        if ($this->chat instanceof ResetInterface) {
++            $this->chat->reset();
++        }
+         $this->calls = [];
+     }
+ }
+diff --git a/src/ai-bundle/src/Profiler/TraceableMessageStore.php b/src/ai-bundle/src/Profiler/TraceableMessageStore.php
+index d8eb416e..077f7ef6 100644
+--- a/src/ai-bundle/src/Profiler/TraceableMessageStore.php
++++ b/src/ai-bundle/src/Profiler/TraceableMessageStore.php
+@@ -73,6 +73,9 @@ final class TraceableMessageStore implements ManagedStoreInterface, MessageStore
+
+     public function reset(): void
+     {
++        if ($this->messageStore instanceof ResetInterface) {
++            $this->messageStore->reset();
++        }
+         $this->calls = [];
+     }
+ }
+```
+
+---------------------------------------------------------------------------
+
+by santysisi at 2026-02-01T16:55:18Z
+
+I think another alternative could be to delete the proxies and set lazy to false in these two services:
+`Symfony\AI\Store\InMemory\Store` and `Symfony\AI\Chat\InMemory\Store`.
+
+WDYT?
+
+Edit:
+I think both options are okay, the current one and this other one. I don’t have any other solutions in mind
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-01T18:32:34Z
+
+Friendly Ping @Guikingone
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-02-02T08:18:38Z
+
+Hi @santysisi 👋🏻
+
+Good for me to remove `lazy` on both services 👍🏻
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-05T13:42:30Z
+
+rebase unlocked
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-07T12:23:57Z
+
+after a rebase, we can merge this PR
+
+---------------------------------------------------------------------------
+
+by santysisi at 2026-02-07T18:31:37Z
+
+Hi, I don't have my computer right now 😔
+I am on vacation
+I will have my computer again after vacation ( 10 days aprox ), after that I will rebase and resolve conflicts 😊
+
+---------------------------------------------------------------------------
+
+by santysisi at 2026-02-18T01:53:17Z
+
+I think errors are not related with the content of this PR
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-18T11:54:04Z
+
+> I think errors are not related with the content of this PR
+
+A rebase will fix the CI
