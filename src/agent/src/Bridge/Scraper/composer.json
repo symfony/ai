@@ -28,7 +28,7 @@
     "require": {
         "php": ">=8.2",
         "masterminds/html5": "^2.8",
-        "symfony/ai-agent": "^0.3",
+        "symfony/ai-agent": "^0.4",
         "symfony/css-selector": "^7.3|^8.0",
         "symfony/dom-crawler": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0"
@@ -38,7 +38,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
-        "symfony/ai-platform": "^0.3"
+        "symfony/ai-platform": "^0.4"
     },
     "minimum-stability": "dev",
     "autoload": {
