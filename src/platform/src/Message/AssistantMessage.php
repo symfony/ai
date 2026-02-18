@@ -13,6 +13,8 @@ namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -27,8 +29,9 @@ final class AssistantMessage implements MessageInterface
      * @param ?ToolCall[] $toolCalls
      */
     public function __construct(
-        private ?string $content = null,
-        private ?array $toolCalls = null,
+        private readonly ?string $content = null,
+        private readonly ?array $toolCalls = null,
+        private readonly ClockInterface $clock = new MonotonicClock(),
     ) {
         $this->id = Uuid::v7();
     }
@@ -54,5 +57,18 @@ final class AssistantMessage implements MessageInterface
     public function getContent(): ?string
     {
         return $this->content;
+    }
+
+    public function asStream(): \Generator
+    {
+        $len = strlen($this->content);
+
+        $chunkLength = rand(2, 5);
+
+        for ($i = 0; $i < $len; $i += $chunkLength) {
+            $this->clock->sleep(0.015);
+
+            yield substr($this->content, $i, $chunkLength);
+        }
     }
 }
