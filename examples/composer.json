@@ -7,6 +7,10 @@
         {
             "type": "path",
             "url": "../src/platform/src/Bridge/OpenResponses"
+        },
+        {
+            "type": "path",
+            "url": "../src/platform/src/Bridge/Venice"
         }
     ],
     "require": {
@@ -75,6 +79,7 @@
         "symfony/ai-tavily-tool": "^0.3",
         "symfony/ai-transformers-php-platform": "^0.3",
         "symfony/ai-typesense-store": "^0.3",
+        "symfony/ai-venice-platform": "@dev",
         "symfony/ai-vertex-ai-platform": "^0.3",
         "symfony/ai-voyage-platform": "^0.3",
         "symfony/ai-weaviate-store": "^0.3",
