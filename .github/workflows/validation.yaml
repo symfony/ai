@@ -142,7 +142,7 @@ jobs:
               run: .github/scripts/validate-bridge-type.sh mate
 
     validate_dependency_versions:
-        name: "${{ matrix.package }} ${{ matrix.version }}"
+        name: "Validate ${{ matrix.package }} requires version ${{ matrix.version }}"
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
