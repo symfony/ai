@@ -14,6 +14,7 @@ namespace Symfony\AI\Store\Bridge\Qdrant\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Qdrant\Store;
+use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
@@ -41,7 +42,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test".');
@@ -68,7 +69,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $store->setup();
 
@@ -83,7 +84,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test".');
@@ -104,7 +105,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $store->drop();
 
@@ -130,7 +131,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $store->setup();
 
@@ -145,7 +146,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points?wait=true".');
@@ -178,7 +179,7 @@ final class StoreTest extends TestCase
             ]);
         }, 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $store->add($document);
 
@@ -205,7 +206,7 @@ final class StoreTest extends TestCase
             ]);
         }, 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test', async: true);
+        $store = new Store($httpClient, 'test', async: true);
 
         $store->add($document);
 
@@ -220,12 +221,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:6333',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points/query".');
@@ -256,7 +252,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
@@ -287,7 +283,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'filter' => [
@@ -311,19 +307,19 @@ final class StoreTest extends TestCase
 
     public function testStoreSupportsVectorQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:6333', 'test-api-key', 'test_collection');
+        $store = StoreFactory::create('test', 'http://127.0.0.1:6333', 'test', new MockHttpClient());
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 
     public function testStoreDoesNotSupportTextQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:6333', 'test-api-key', 'test_collection');
+        $store = StoreFactory::create('test', 'http://127.0.0.1:6333', 'test', new MockHttpClient());
         $this->assertFalse($store->supports(TextQuery::class));
     }
 
     public function testStoreDoesNotSupportHybridQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:6333', 'test-api-key', 'test_collection');
+        $store = StoreFactory::create('test', 'http://127.0.0.1:6333', 'test', new MockHttpClient());
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 }
