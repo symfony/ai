@@ -4,6 +4,7 @@ on:
     push:
         paths:
             - 'src/*/src/Bridge/**/*'
+            - 'src/*/composer.json'
             - 'src/ai-bundle/config/options.php'
             - 'splitsh.json'
             - '.github/workflows/validation.yaml'
@@ -11,9 +12,11 @@ on:
             - '.github/scripts/validate-bridge-splitsh.sh'
             - '.github/scripts/validate-bridge-files.sh'
             - '.github/scripts/validate-bridge-type.sh'
+            - '.github/scripts/validate-phpunit-version.sh'
     pull_request:
         paths:
             - 'src/*/src/Bridge/**/*'
+            - 'src/*/composer.json'
             - 'src/ai-bundle/config/options.php'
             - 'splitsh.json'
             - '.github/workflows/validation.yaml'
@@ -21,6 +24,7 @@ on:
             - '.github/scripts/validate-bridge-splitsh.sh'
             - '.github/scripts/validate-bridge-files.sh'
             - '.github/scripts/validate-bridge-type.sh'
+            - '.github/scripts/validate-phpunit-version.sh'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -136,3 +140,13 @@ jobs:
 
             - name: Validate Mate bridges have correct type
               run: .github/scripts/validate-bridge-type.sh mate
+
+    validate_phpunit_version:
+        name: PHPUnit Version
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Validate phpunit/phpunit version in all composer.json files
+              run: .github/scripts/validate-phpunit-version.sh
