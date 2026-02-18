@@ -13,6 +13,6 @@ namespace Symfony\AI\Platform\Bridge\Venice\Tests;
 
 use PHPUnit\Framework\TestCase;
 
-final class VeniceModelCatalogTest extends TestCase
+final class ResultConverterTest extends TestCase
 {
 }

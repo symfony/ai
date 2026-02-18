@@ -37,9 +37,38 @@ final class VeniceClient implements ModelClientInterface
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
         return match (true) {
+            $model->supports(Capability::INPUT_MESSAGES) => $this->doGenerateCompletion($model, $payload, $options),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, $options),
             $model->supports(Capability::EMBEDDINGS) => $this->doGenerateEmbeddings($model, $payload),
             default => throw new InvalidArgumentException('Unsupported model capability for Venice client'),
         };
+    }
+
+    private function doGenerateCompletion(Model $model, array|string $payload, array $options): RawResultInterface
+    {
+        if (\is_array($payload) && !\array_key_exists('messages', $payload)) {
+            throw new InvalidArgumentException('Payload must contain "messages" key for completion.');
+        }
+
+        return new RawHttpResult($this->httpClient->request('POST', 'chat/completions', [
+            'json' => [
+                'messages' => $payload['messages'],
+                'model' => $model->getName(),
+                ...$options,
+            ],
+        ]));
+    }
+
+    private function doTextToSpeech(Model $model, array|string $payload, array $options): RawResultInterface
+    {
+        return new RawHttpResult($this->httpClient->request('POST', 'audio/speech', [
+            'json' => [
+                'response_format' => 'mp3',
+                'input' => \is_string($payload) ? $payload : $payload['text'],
+                'model' => $model->getName(),
+                ...$options,
+            ],
+        ]));
     }
 
     private function doGenerateEmbeddings(Model $model, array|string $payload): RawResultInterface
