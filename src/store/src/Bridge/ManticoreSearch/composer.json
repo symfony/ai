@@ -26,8 +26,8 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-platform": "^0.3",
-        "symfony/ai-store": "^0.3",
+        "symfony/ai-platform": "^0.4",
+        "symfony/ai-store": "^0.4",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/uid": "^7.3|^8.0"
     },
