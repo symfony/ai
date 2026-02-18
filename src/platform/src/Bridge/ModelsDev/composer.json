@@ -30,7 +30,10 @@
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
         "symfony/ai-anthropic-platform": "^0.3",
-        "symfony/ai-gemini-platform": "^0.3"
+        "symfony/ai-bedrock-platform": "^0.3",
+        "symfony/ai-gemini-platform": "^0.3",
+        "symfony/ai-meta-platform": "^0.3",
+        "symfony/ai-vertex-ai-platform": "^0.3"
     },
     "minimum-stability": "dev",
     "autoload": {

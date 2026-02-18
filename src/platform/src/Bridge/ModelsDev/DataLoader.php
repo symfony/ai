@@ -55,10 +55,13 @@ final class DataLoader
             throw new RuntimeException('Invalid models.dev API data.');
         }
 
-        self::$cachedData = $data;
+        // Sort providers alphabetically and sort models within each provider by release date
+        $sortedData = self::sortData($data);
+
+        self::$cachedData = $sortedData;
         self::$cachedPath = $dataPath;
 
-        return $data;
+        return $sortedData;
     }
 
     /**
@@ -70,5 +73,39 @@ final class DataLoader
     {
         self::$cachedData = null;
         self::$cachedPath = null;
+    }
+
+    /**
+     * Sort providers alphabetically and models by release date (newest first).
+     *
+     * @param array<string, array<string, mixed>> $data
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private static function sortData(array $data): array
+    {
+        // Sort providers alphabetically
+        ksort($data);
+
+        // Sort models within each provider by release date (newest first)
+        foreach ($data as $providerId => &$provider) {
+            if (isset($provider['models']) && \is_array($provider['models'])) {
+                // Convert models to array with keys preserved
+                $models = $provider['models'];
+
+                // Sort models by release_date descending
+                uasort($models, static function ($a, $b) {
+                    $dateA = $a['release_date'] ?? '1970-01-01';
+                    $dateB = $b['release_date'] ?? '1970-01-01';
+
+                    // Compare dates in descending order (newer dates first)
+                    return strcmp($dateB, $dateA);
+                });
+
+                $provider['models'] = $models;
+            }
+        }
+
+        return $data;
     }
 }
