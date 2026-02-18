@@ -5086,6 +5086,61 @@ class AiBundleTest extends TestCase
         $this->assertSame('Static memory context for this agent', $staticProviderArgs[0]);
     }
 
+    #[TestDox('Compression configuration creates compression input processor')]
+    public function testCompressionConfiguration()
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.debug', false);
+        $container->setParameter('kernel.environment', 'test');
+        $container->setParameter('kernel.build_dir', 'test');
+
+        // Register a compression strategy service
+        $container->register('app.compression.sliding_window', \stdClass::class);
+
+        $extension = (new AiBundle())->getContainerExtension();
+        $extension->load([
+            'ai' => [
+                'agent' => [
+                    'test_agent' => [
+                        'model' => 'gpt-4',
+                        'compression' => 'app.compression.sliding_window',
+                    ],
+                ],
+            ],
+        ], $container);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.test_agent.compression_input_processor'));
+
+        $definition = $container->getDefinition('ai.agent.test_agent.compression_input_processor');
+        $arguments = $definition->getArguments();
+
+        // Check that the compression processor references the strategy service
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('app.compression.sliding_window', (string) $arguments[0]);
+
+        // Check that the processor has the correct tags with proper priority
+        $tags = $definition->getTag('ai.agent.input_processor');
+        $this->assertNotEmpty($tags);
+        $this->assertSame('ai.agent.test_agent', $tags[0]['agent']);
+        $this->assertSame(-50, $tags[0]['priority']);
+    }
+
+    #[TestDox('Agent without compression configuration does not create compression processor')]
+    public function testAgentWithoutCompressionConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'test_agent' => [
+                        'model' => 'gpt-4',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.agent.test_agent.compression_input_processor'));
+    }
+
     #[TestDox('Model configuration with query parameters in model name works correctly')]
     public function testModelConfigurationWithQueryParameters()
     {

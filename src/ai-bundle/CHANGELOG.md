@@ -8,6 +8,7 @@ CHANGELOG
  * [BC BREAK] Rename service ID prefix `ai.toolbox.{agent}.agent_wrapper.` to `ai.toolbox.{agent}.subagent.`
  * Add support for `DocumentIndexer` when no loader is configured for an indexer
  * [BC BREAK] The `host_url` configuration key for `Ollama` has been renamed `endpoint`
+ * Add `compression` option to agent configuration for context compression strategies
 
 0.2
 ---
