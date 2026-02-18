@@ -57,11 +57,11 @@ final class DocumentNormalizerTest extends TestCase
     public static function normalizeDataProvider(): iterable
     {
         yield 'document from file' => [
-            Document::fromFile(\dirname(__DIR__, 5).'/tests/Fixtures/document.pdf'),
+            Document::fromFile(\dirname(__DIR__).'/Fixtures/document.pdf'),
             [
                 'type' => 'document_url',
                 'document_name' => 'document.pdf',
-                'document_url' => 'data:application/pdf;base64,'.base64_encode(file_get_contents(\dirname(__DIR__, 5).'/tests/Fixtures/document.pdf')),
+                'document_url' => 'data:application/pdf;base64,'.base64_encode(file_get_contents(\dirname(__DIR__).'/Fixtures/document.pdf')),
             ],
         ];
     }

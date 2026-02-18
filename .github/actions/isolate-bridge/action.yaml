@@ -1,0 +1,23 @@
+name: Isolate Bridge
+description: Moves a bridge package to a target directory to prevent circular symlink issues with Composer path repositories
+
+inputs:
+    component:
+        description: The component name (e.g. store, platform, mate)
+        required: true
+    bridge:
+        description: The bridge name (e.g. MariaDb, Gemini)
+        required: true
+    target:
+        description: The target directory to move the bridge into (e.g. tmp)
+        required: true
+
+runs:
+    using: composite
+    steps:
+        - name: Isolate Bridge
+          shell: bash
+          run: |
+              mkdir -p ${{ inputs.target }}/${{ inputs.component }}/src/Bridge
+              mv src/${{ inputs.component }}/src/Bridge/${{ inputs.bridge }} ${{ inputs.target }}/${{ inputs.component }}/src/Bridge
+              rm -rf vendor
