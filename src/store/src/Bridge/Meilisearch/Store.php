@@ -179,7 +179,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = !\array_key_exists($this->vectorFieldName, $data) || null === $data[$this->vectorFieldName]
             ? new NullVector()
-            : ($options['include_vectors'] ?? false ? new Vector($data[$this->vectorFieldName][$this->embedder]['embeddings']) : new NullVector());
+            : ($options['include_vectors'] ?? true ? new Vector($data[$this->vectorFieldName][$this->embedder]['embeddings']) : new NullVector());
 
         $score = $data['_rankingScore'] ?? null;
 

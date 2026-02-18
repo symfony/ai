@@ -197,7 +197,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = !\array_key_exists($this->field, $payload) || null === $payload[$this->field]
             ? new NullVector()
-            : ($options['include_vectors'] ?? false ? new Vector($payload[$this->field]) : new NullVector());
+            : ($options['include_vectors'] ?? true ? new Vector($payload[$this->field]) : new NullVector());
 
         return new VectorDocument(
             id: $payload['uuid'],

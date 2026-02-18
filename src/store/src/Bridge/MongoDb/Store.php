@@ -171,7 +171,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             unset($options['minScore']);
         }
 
-        $withVectors = $options['include_vectors'] ?? false;
+        $withVectors = $options['include_vectors'] ?? true;
         if (\array_key_exists('include_vectors', $options)) {
             unset($options['include_vectors']);
         }

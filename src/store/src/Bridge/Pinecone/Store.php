@@ -138,7 +138,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         foreach ($result->json()['matches'] as $match) {
             yield new VectorDocument(
                 id: $match['id'],
-                vector: $options['include_vectors'] ?? false ? new Vector($match['values']) : new NullVector(),
+                vector: $options['include_vectors'] ?? true ? new Vector($match['values']) : new NullVector(),
                 metadata: new Metadata($match['metadata']),
                 score: $match['score'],
             );

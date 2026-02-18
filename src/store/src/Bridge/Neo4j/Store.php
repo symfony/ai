@@ -149,7 +149,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = !\array_key_exists($this->embeddingsField, $payload['properties']) || null === $payload['properties'][$this->embeddingsField]
             ? new NullVector()
-            : ($options['include_vectors'] ?? false ? new Vector($payload['properties'][$this->embeddingsField]) : new NullVector());
+            : ($options['include_vectors'] ?? true ? new Vector($payload['properties'][$this->embeddingsField]) : new NullVector());
 
         return new VectorDocument(
             id: $id,

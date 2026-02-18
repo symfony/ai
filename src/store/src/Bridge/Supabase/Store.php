@@ -162,7 +162,7 @@ final class Store implements StoreInterface
 
             yield new VectorDocument(
                 id: $record['id'],
-                vector: $options['include_vectors'] ?? false ? new Vector($embedding) : new NullVector(),
+                vector: $options['include_vectors'] ?? true ? new Vector($embedding) : new NullVector(),
                 metadata: new Metadata($metadata),
                 score: (float) $record['score'],
             );

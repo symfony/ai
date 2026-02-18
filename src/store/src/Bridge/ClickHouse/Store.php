@@ -127,7 +127,7 @@ class Store implements ManagedStoreInterface, StoreInterface
         foreach ($results as $result) {
             yield new VectorDocument(
                 id: $result['id'],
-                vector: $options['include_vectors'] ?? false ? new Vector($result['embedding']) : new NullVector(),
+                vector: $options['include_vectors'] ?? true ? new Vector($result['embedding']) : new NullVector(),
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );

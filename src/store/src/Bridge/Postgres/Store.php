@@ -293,7 +293,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{limit?: positive-int, maxScore?: float} $options
+     * @param array{limit?: positive-int, maxScore?: float, include_vectors?: bool} $options
      *
      * @return iterable<VectorDocument>
      */
@@ -359,7 +359,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
             yield new VectorDocument(
                 id: $result['id'],
-                vector: $options['include_vectors'] ?? false ? new Vector($this->fromPgvector($result['embedding'])) : new NullVector(),
+                vector: $options['include_vectors'] ?? true ? new Vector($this->fromPgvector($result['embedding'])) : new NullVector(),
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );

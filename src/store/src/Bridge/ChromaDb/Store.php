@@ -200,7 +200,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
             yield new VectorDocument(
                 id: $queryResponse->ids[0][$i],
-                vector: $options['include_vectors'] ?? false ? new Vector($queryResponse->embeddings[0][$i]) : new NullVector(),
+                vector: $options['include_vectors'] ?? true ? new Vector($queryResponse->embeddings[0][$i]) : new NullVector(),
                 metadata: $metaData,
                 score: $queryResponse->distances[0][$i] ?? null,
             );

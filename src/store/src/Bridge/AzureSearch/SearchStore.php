@@ -131,7 +131,7 @@ final class SearchStore implements StoreInterface
             id: $data['id'],
             vector: !\array_key_exists($this->vectorFieldName, $data) || null === $data[$this->vectorFieldName]
                 ? new NullVector()
-                : ($options['include_vectors'] ?? false ? new Vector($data[$this->vectorFieldName]) : new NullVector()),
+                : ($options['include_vectors'] ?? true ? new Vector($data[$this->vectorFieldName]) : new NullVector()),
             metadata: new Metadata($data),
         );
     }

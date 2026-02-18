@@ -162,7 +162,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = !\array_key_exists($this->vectorFieldName, $document) || null === $document[$this->vectorFieldName]
             ? new NullVector()
-            : ($options['include_vectors'] ?? false ? new Vector($document[$this->vectorFieldName]) : new NullVector());
+            : ($options['include_vectors'] ?? true ? new Vector($document[$this->vectorFieldName]) : new NullVector());
 
         $score = $data['vector_distance'] ?? null;
 

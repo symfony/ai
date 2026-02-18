@@ -152,7 +152,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vectorDocuments = array_map(static fn (array $document): VectorDocument => new VectorDocument(
             id: $document['id'],
-            vector: $options['include_vectors'] ?? false ? new Vector($document['vector']) : new NullVector(),
+            vector: $options['include_vectors'] ?? true ? new Vector($document['vector']) : new NullVector(),
             metadata: new Metadata($document['metadata']),
         ), $documents);
 

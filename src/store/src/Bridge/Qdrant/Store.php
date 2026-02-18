@@ -174,7 +174,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = !\array_key_exists('vector', $data) || null === $data['vector']
             ? new NullVector()
-            : ($options['include_vectors'] ?? false ? new Vector($data['vector']) : new NullVector());
+            : ($options['include_vectors'] ?? true ? new Vector($data['vector']) : new NullVector());
 
         return new VectorDocument(
             id: $id,

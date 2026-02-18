@@ -206,7 +206,7 @@ class Store implements ManagedStoreInterface, StoreInterface
 
             yield new VectorDocument(
                 id: $data['$.id'],
-                vector: $options['include_vectors'] ?? false ? new Vector($data['$.embedding'] ?? []) : new NullVector(),
+                vector: $options['include_vectors'] ?? true ? new Vector($data['$.embedding'] ?? []) : new NullVector(),
                 metadata: new Metadata($data['$.metadata'] ?? []),
                 score: $score,
             );
