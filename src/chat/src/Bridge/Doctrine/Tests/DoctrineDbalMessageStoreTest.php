@@ -76,7 +76,12 @@ final class DoctrineDbalMessageStoreTest extends TestCase
     public function testMessageStoreTableCanBeSetupOnExistingStructure()
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $comparator = $connection->createSchemaManager()->createComparator(new ComparatorConfig(false, false));
+        if (class_exists(ComparatorConfig::class)) {
+            $comparator = $connection->createSchemaManager()->createComparator(new ComparatorConfig(false, false));
+        } else {
+            // Backwards compatibility for doctrine/dbal 3.x
+            $comparator = $connection->createSchemaManager()->createComparator();
+        }
 
         $schema = $connection->createSchemaManager()->introspectSchema();
 
