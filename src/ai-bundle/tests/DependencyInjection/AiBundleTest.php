@@ -66,6 +66,7 @@ use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
+use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
@@ -2667,17 +2668,19 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
+        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
-
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(6, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
+
+        $this->assertCount(7, $definition->getArguments());
+        $this->assertSame('my_qdrant_store', $definition->getArgument(0));
         $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
         $this->assertSame('test', $definition->getArgument(2));
-        $this->assertSame('my_qdrant_store', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(3));
         $this->assertSame(1536, $definition->getArgument(4));
         $this->assertSame('Cosine', $definition->getArgument(5));
+        $this->assertFalse($definition->getArgument(6));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -2691,10 +2694,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
-    }
 
-    public function testQdrantStoreWithCustomCollectionCanBeConfigured()
-    {
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -2712,17 +2712,19 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
+        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
-
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(6, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
+
+        $this->assertCount(7, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
         $this->assertSame('test', $definition->getArgument(2));
-        $this->assertSame('foo', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(3));
         $this->assertSame(1536, $definition->getArgument(4));
         $this->assertSame('Cosine', $definition->getArgument(5));
+        $this->assertFalse($definition->getArgument(6));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -2736,10 +2738,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
-    }
 
-    public function testQdrantStoreWithAsyncCanBeConfigured()
-    {
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -2758,18 +2757,108 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
+        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
-
         $this->assertTrue($definition->isLazy());
+
         $this->assertCount(7, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
         $this->assertSame('test', $definition->getArgument(2));
-        $this->assertSame('foo', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(3));
         $this->assertSame(1536, $definition->getArgument(4));
         $this->assertSame('Cosine', $definition->getArgument(5));
         $this->assertTrue($definition->getArgument(6));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'qdrant' => [
+                        'my_qdrant_store' => [
+                            'endpoint' => 'http://127.0.0.1:8000',
+                            'api_key' => 'test',
+                            'collection_name' => 'foo',
+                            'async' => true,
+                            'http_client' => 'http_client',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
+
+        $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
+        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(QdrantStore::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(7, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
+        $this->assertSame('test', $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(3));
+        $this->assertSame(1536, $definition->getArgument(4));
+        $this->assertSame('Cosine', $definition->getArgument(5));
+        $this->assertTrue($definition->getArgument(6));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'qdrant' => [
+                        'my_qdrant_store' => [
+                            'collection_name' => 'foo',
+                            'http_client' => 'scoped_http_client',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
+
+        $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
+        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(QdrantStore::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(7, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertNull($definition->getArgument(1));
+        $this->assertNull($definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('scoped_http_client', (string) $definition->getArgument(3));
+        $this->assertSame(1536, $definition->getArgument(4));
+        $this->assertSame('Cosine', $definition->getArgument(5));
+        $this->assertFalse($definition->getArgument(6));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
