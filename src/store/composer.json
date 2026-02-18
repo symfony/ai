@@ -52,7 +52,7 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.46",
+        "phpunit/phpunit": "^11.5.53",
         "symfony/console": "^7.3|^8.0",
         "symfony/dom-crawler": "^7.3|^8.0",
         "symfony/dependency-injection": "^7.3|^8.0",
