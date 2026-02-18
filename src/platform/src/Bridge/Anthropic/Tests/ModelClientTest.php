@@ -97,6 +97,49 @@ class ModelClientTest extends TestCase
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
+    public function testThinkingOptionAddsBetaHeaderAndPassesThrough()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertArrayHasKey('anthropic-beta', $headers);
+            $this->assertSame('interleaved-thinking-2025-05-14', $headers['anthropic-beta']);
+
+            $body = json_decode($options['body'], true);
+            $this->assertSame(['type' => 'enabled', 'budget_tokens' => 10000], $body['thinking']);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = [
+            'thinking' => ['type' => 'enabled', 'budget_tokens' => 10000],
+        ];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testThinkingBetaHeaderCombinesWithOtherBetaFeatures()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertArrayHasKey('anthropic-beta', $headers);
+            $this->assertStringContainsString('interleaved-thinking-2025-05-14', $headers['anthropic-beta']);
+            $this->assertStringContainsString('other-feature', $headers['anthropic-beta']);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = [
+            'thinking' => ['type' => 'enabled', 'budget_tokens' => 5000],
+            'beta_features' => ['other-feature'],
+        ];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
     /**
      * @param list<string> $headers
      *

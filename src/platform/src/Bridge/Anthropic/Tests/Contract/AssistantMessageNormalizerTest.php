@@ -57,11 +57,13 @@ final class AssistantMessageNormalizerTest extends TestCase
      *     1: array{
      *         role: 'assistant',
      *         content: string|list<array{
-     *             type: 'tool_use'|'text',
+     *             type: 'tool_use'|'text'|'thinking',
      *             id?: string,
      *             name?: string,
      *             input?: array<string, mixed>|\stdClass,
-     *             text?: string
+     *             text?: string,
+     *             thinking?: string,
+     *             signature?: string
      *         }>
      *     }
      * }>
@@ -146,6 +148,70 @@ final class AssistantMessageNormalizerTest extends TestCase
                 'content' => [
                     ['type' => 'text', 'text' => 'Checking the current date.'],
                     ['type' => 'tool_use', 'id' => 'id1', 'name' => 'get_date', 'input' => new \stdClass()],
+                ],
+            ],
+        ];
+
+        yield 'thinking with text' => [
+            new AssistantMessage(
+                'The answer is 42.',
+                null,
+                'Let me reason about this...',
+                'sig_abc123',
+            ),
+            [
+                'role' => 'assistant',
+                'content' => [
+                    ['type' => 'thinking', 'thinking' => 'Let me reason about this...', 'signature' => 'sig_abc123'],
+                    ['type' => 'text', 'text' => 'The answer is 42.'],
+                ],
+            ],
+        ];
+
+        yield 'thinking with text and tool calls' => [
+            new AssistantMessage(
+                'Let me search.',
+                [new ToolCall('id1', 'search', ['query' => 'symfony'])],
+                'I need to look this up.',
+                'sig_xyz',
+            ),
+            [
+                'role' => 'assistant',
+                'content' => [
+                    ['type' => 'thinking', 'thinking' => 'I need to look this up.', 'signature' => 'sig_xyz'],
+                    ['type' => 'text', 'text' => 'Let me search.'],
+                    ['type' => 'tool_use', 'id' => 'id1', 'name' => 'search', 'input' => ['query' => 'symfony']],
+                ],
+            ],
+        ];
+
+        yield 'thinking without signature' => [
+            new AssistantMessage(
+                'Done.',
+                null,
+                'Quick thought.',
+            ),
+            [
+                'role' => 'assistant',
+                'content' => [
+                    ['type' => 'thinking', 'thinking' => 'Quick thought.'],
+                    ['type' => 'text', 'text' => 'Done.'],
+                ],
+            ],
+        ];
+
+        yield 'thinking with tool calls but no text' => [
+            new AssistantMessage(
+                null,
+                [new ToolCall('id1', 'read', ['path' => '/etc/hosts'])],
+                'I should read this file.',
+                'sig_123',
+            ),
+            [
+                'role' => 'assistant',
+                'content' => [
+                    ['type' => 'thinking', 'thinking' => 'I should read this file.', 'signature' => 'sig_123'],
+                    ['type' => 'tool_use', 'id' => 'id1', 'name' => 'read', 'input' => ['path' => '/etc/hosts']],
                 ],
             ],
         ];
