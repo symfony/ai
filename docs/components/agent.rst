@@ -405,6 +405,107 @@ If you need to react more granularly to the lifecycle of individual tool calls, 
         // Let the client know, that the tool $event->toolCall->name failed with the exception: $event->exception
     });
 
+Human-in-the-Loop Confirmation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Agent component provides a confirmation system for implementing human-in-the-loop patterns when executing tools.
+This allows you to require user approval before potentially dangerous operations are performed.
+
+The confirmation system uses the :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallRequested` event, which is
+dispatched before each tool execution. A :class:`Symfony\\AI\\Agent\\Toolbox\\Confirmation\\ConfirmationSubscriber`
+listens to this event and applies a policy-based confirmation workflow::
+
+    use Symfony\AI\Agent\Toolbox\Confirmation\ConfirmationSubscriber;
+    use Symfony\AI\Agent\Toolbox\Confirmation\DefaultPolicy;
+    use Symfony\AI\Agent\Toolbox\Toolbox;
+    use Symfony\Component\EventDispatcher\EventDispatcher;
+
+    // Create a policy that auto-allows read operations
+    $policy = new DefaultPolicy();
+
+    // Create a confirmation handler (implement ConfirmationHandlerInterface)
+    $handler = new MyConfirmationHandler();
+
+    // Wire everything together
+    $dispatcher = new EventDispatcher();
+    $dispatcher->addSubscriber(new ConfirmationSubscriber($policy, $handler));
+
+    $toolbox = new Toolbox($tools, eventDispatcher: $dispatcher);
+
+Policy Configuration
+....................
+
+The :class:`Symfony\\AI\\Agent\\Toolbox\\Confirmation\\DefaultPolicy` provides smart defaults:
+
+- **Auto-allows** read-only operations (tools with names containing: read, get, list, search, find, show, describe)
+- **Asks the user** for all other operations
+- **Remembers** user decisions for subsequent calls
+
+You can customize the policy behavior::
+
+    $policy = new DefaultPolicy();
+
+    // Explicitly allow specific tools without confirmation
+    $policy->allow('safe_tool');
+
+    // Explicitly deny tools (blocked without asking)
+    $policy->deny('dangerous_tool');
+
+    // Customize read patterns
+    $policy->setReadPatterns(['fetch', 'query', 'lookup']);
+
+For scenarios where no confirmation is needed, use the :class:`Symfony\\AI\\Agent\\Toolbox\\Confirmation\\AlwaysAllowPolicy`::
+
+    use Symfony\AI\Agent\Toolbox\Confirmation\AlwaysAllowPolicy;
+
+    $policy = new AlwaysAllowPolicy(); // Bypasses all confirmation - use with caution
+
+Implementing a Confirmation Handler
+...................................
+
+To ask the user for confirmation, implement the :class:`Symfony\\AI\\Agent\\Toolbox\\Confirmation\\ConfirmationHandlerInterface`.
+Here's an example CLI handler::
+
+    use Symfony\AI\Agent\Toolbox\Confirmation\ConfirmationHandlerInterface;
+    use Symfony\AI\Agent\Toolbox\Confirmation\ConfirmationResult;
+    use Symfony\AI\Platform\Result\ToolCall;
+
+    class CliConfirmationHandler implements ConfirmationHandlerInterface
+    {
+        public function requestConfirmation(ToolCall $toolCall): ConfirmationResult
+        {
+            echo sprintf(
+                "Allow tool '%s' with args %s? [y/N/always/never] ",
+                $toolCall->getName(),
+                json_encode($toolCall->getArguments())
+            );
+
+            $input = strtolower(trim(fgets(\STDIN)));
+
+            return match ($input) {
+                'y', 'yes' => ConfirmationResult::confirmed(),
+                'always' => ConfirmationResult::always(),
+                'never' => ConfirmationResult::never(),
+                default => ConfirmationResult::denied(),
+            };
+        }
+    }
+
+The :class:`Symfony\\AI\\Agent\\Toolbox\\Confirmation\\ConfirmationResult` supports remembering decisions:
+
+- ``ConfirmationResult::confirmed()`` - Allow this execution only
+- ``ConfirmationResult::always()`` - Allow this and future executions of the same tool
+- ``ConfirmationResult::denied()`` - Deny this execution only
+- ``ConfirmationResult::never()`` - Deny this and future executions of the same tool
+
+When a tool is denied, the toolbox returns the denial reason as the tool result, allowing the LLM to handle
+the situation gracefully.
+
+Code Examples
+.............
+
+* `Human-in-the-Loop Confirmation`_
+
 Excluding Tool Messages from MessageBag
 ---------------------------------------
 
@@ -755,3 +856,4 @@ Code Examples
 .. _`RAG with Pinecone`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
 .. _`Chat with static memory`: https://github.com/symfony/ai/blob/main/examples/memory/static.php
 .. _`Chat with embedding search memory`: https://github.com/symfony/ai/blob/main/examples/memory/mariadb.php
+.. _`Human-in-the-Loop Confirmation`: https://github.com/symfony/ai/blob/main/examples/toolbox/confirmation.php
