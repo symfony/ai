@@ -15,6 +15,7 @@ use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -24,7 +25,7 @@ use Symfony\Component\Clock\ClockInterface;
  *      saved_at: \DateTimeImmutable,
  *  }
  */
-final class TraceableMessageStore implements ManagedStoreInterface, MessageStoreInterface
+final class TraceableMessageStore implements ManagedStoreInterface, MessageStoreInterface, ResetInterface
 {
     /**
      * @var MessageStoreData[]
@@ -68,5 +69,13 @@ final class TraceableMessageStore implements ManagedStoreInterface, MessageStore
         }
 
         $this->messageStore->drop();
+    }
+
+    public function reset(): void
+    {
+        if ($this->messageStore instanceof ResetInterface) {
+            $this->messageStore->reset();
+        }
+        $this->calls = [];
     }
 }

@@ -490,4 +490,17 @@ final class StoreTest extends TestCase
         $store = new Store();
         $this->assertTrue($store->supports(HybridQuery::class));
     }
+
+    public function testResetClearsDocuments()
+    {
+        $store = new Store();
+        $store->add(new VectorDocument('1', new Vector([1.0, 2.0])));
+        $store->add(new VectorDocument('2', new Vector([3.0, 4.0])));
+
+        $this->assertCount(2, iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0])))));
+
+        $store->reset();
+
+        $this->assertCount(0, iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0])))));
+    }
 }

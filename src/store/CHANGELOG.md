@@ -16,6 +16,7 @@ CHANGELOG
  * [BC BREAK] Reduce visibility of `VectorDocument` and `RssItem` properties to `private` and add getters
  * Add `MarkdownLoader`
  * Add `JsonFileLoader`
+ * Add `ResetInterface` support to in-memory store
 
 0.3
 ---

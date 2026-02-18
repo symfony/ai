@@ -13,6 +13,7 @@ namespace Symfony\AI\Chat\Tests\InMemory;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\InMemory\Store;
+use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -101,5 +102,19 @@ final class StoreTest extends TestCase
 
         $messages = $store->load();
         $this->assertInstanceOf(MessageBag::class, $messages);
+    }
+
+    public function testResetClearsMessages()
+    {
+        $store = new Store();
+        $store->setup();
+        $store->save(new MessageBag(new UserMessage(new Text('Hello'))));
+        $store->save(new MessageBag(new UserMessage(new Text('Hello')), new AssistantMessage('Hi')));
+
+        $this->assertCount(2, $store->load());
+
+        $store->reset();
+
+        $this->assertCount(0, $store->load());
     }
 }
