@@ -12,6 +12,8 @@
 namespace Symfony\AI\Chat\Bridge\Doctrine\Tests;
 
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Schema\ComparatorConfig;
+use Doctrine\DBAL\Types\Types;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\Doctrine\DoctrineDbalMessageStore;
@@ -64,6 +66,57 @@ final class DoctrineDbalMessageStoreTest extends TestCase
 
         $messageStore = new DoctrineDbalMessageStore('foo', $connection);
         $messageStore->setup();
+
+        // Verify table was created by checking we can load from it
+        $messages = $messageStore->load();
+        $this->assertInstanceOf(MessageBag::class, $messages);
+        $this->assertCount(0, $messages);
+    }
+
+    public function testMessageStoreTableCanBeSetupOnExistingStructure()
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $comparator = $connection->createSchemaManager()->createComparator(new ComparatorConfig(false, false));
+
+        $schema = $connection->createSchemaManager()->introspectSchema();
+
+        $table = $schema->createTable('bar');
+        $table->addColumn('barColumn', Types::INTEGER)->setNotnull(true)->setDefault(0);
+
+        $migrations = $connection->getDatabasePlatform()->getAlterSchemaSQL($comparator->compareSchemas($connection->createSchemaManager()->introspectSchema(), $schema));
+
+        foreach ($migrations as $sql) {
+            $connection->executeQuery($sql);
+        }
+
+        $messageStore = new DoctrineDbalMessageStore('foo', $connection);
+        $messageStore->setup();
+
+        $finalSchema = $connection->createSchemaManager()->introspectSchema();
+
+        // Verify table schema was updated without dropping existing table
+        $this->assertSame(2, \count($finalSchema->getTables()));
+        $this->assertTrue($finalSchema->hasTable('foo'));
+        $this->assertTrue($finalSchema->hasTable('bar'));
+
+        // Verify table was created by checking we can load from it
+        $messages = $messageStore->load();
+        $this->assertInstanceOf(MessageBag::class, $messages);
+        $this->assertCount(0, $messages);
+    }
+
+    public function testMessageStoreTableCanBeSetupOnEmptyStructure()
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+
+        $messageStore = new DoctrineDbalMessageStore('foo', $connection);
+        $messageStore->setup();
+
+        $finalSchema = $connection->createSchemaManager()->introspectSchema();
+
+        // Verify table schema was updated
+        $this->assertSame(1, \count($finalSchema->getTables()));
+        $this->assertTrue($finalSchema->hasTable('foo'));
 
         // Verify table was created by checking we can load from it
         $messages = $messageStore->load();
