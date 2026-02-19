@@ -4,7 +4,7 @@ CHANGELOG
 0.5
 ---
 
- * [BC BREAK] The `host_url` configuration key for `ElevenLabs` has been renamed `endpoint`
+ * Add `setup_options` configuration for MongoDB store to pass extra fields to `ai:store:setup`
 
 0.4
 ---
