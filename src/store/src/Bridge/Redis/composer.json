@@ -28,8 +28,8 @@
         "php": ">=8.2",
         "ext-redis": "*",
         "oskarstark/enum-helper": "^1.5",
-        "symfony/ai-platform": "^0.4",
-        "symfony/ai-store": "^0.4",
+        "symfony/ai-platform": "^0.5",
+        "symfony/ai-store": "^0.5",
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {

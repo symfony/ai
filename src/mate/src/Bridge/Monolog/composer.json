@@ -27,7 +27,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-mate": "^0.4",
+        "symfony/ai-mate": "^0.5",
         "monolog/monolog": "^2.0|^3.0"
     },
     "require-dev": {

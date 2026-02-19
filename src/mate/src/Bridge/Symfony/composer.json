@@ -28,7 +28,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-mate": "^0.4",
+        "symfony/ai-mate": "^0.5",
         "symfony/dependency-injection": "^7.3|^8.0"
     },
     "require-dev": {

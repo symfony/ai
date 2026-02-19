@@ -21,19 +21,19 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-generic-platform": "^0.4",
-        "symfony/ai-platform": "^0.4"
+        "symfony/ai-generic-platform": "^0.5",
+        "symfony/ai-platform": "^0.5"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
-        "symfony/ai-anthropic-platform": "^0.4",
-        "symfony/ai-bedrock-platform": "^0.4",
-        "symfony/ai-gemini-platform": "^0.4",
-        "symfony/ai-meta-platform": "^0.4",
-        "symfony/ai-vertex-ai-platform": "^0.4"
+        "symfony/ai-anthropic-platform": "^0.5",
+        "symfony/ai-bedrock-platform": "^0.5",
+        "symfony/ai-gemini-platform": "^0.5",
+        "symfony/ai-meta-platform": "^0.5",
+        "symfony/ai-vertex-ai-platform": "^0.5"
     },
     "minimum-stability": "dev",
     "autoload": {
