@@ -150,6 +150,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 'with_payload' => true,
                 'limit' => $limit,
             ];
+
+            if (\array_key_exists('offset', $options)) {
+                $payload['offset'] = $options['offset'];
+            }
         } elseif ($query instanceof VectorQuery && $this->hybridEnabled) {
             $payload = [
                 'query' => $query->getVector()->getData(),
@@ -159,6 +163,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
             if (\array_key_exists('limit', $options)) {
                 $payload['limit'] = $options['limit'];
+            }
+
+            if (\array_key_exists('offset', $options)) {
+                $payload['offset'] = $options['offset'];
             }
         } elseif ($query instanceof VectorQuery) {
             $payload = [
