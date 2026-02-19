@@ -21,6 +21,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Agent\\Bridge\\Clock\\.*
+    - name: FilesystemTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Filesystem\\.*
     - name: FirecrawlTool
       collectors:
         - type: classLike
@@ -29,6 +33,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Agent\\Bridge\\Mapbox\\.*
+    - name: OllamaTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Ollama\\.*
     - name: OpenMeteoTool
       collectors:
         - type: classLike
@@ -109,6 +117,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\Albert\\.*
+    - name: AmazeeAiPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\AmazeeAi\\.*
     - name: AnthropicPlatform
       collectors:
         - type: classLike
@@ -121,6 +133,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\Bedrock\\.*
+    - name: CachePlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Cache\\.*
     - name: CartesiaPlatform
       collectors:
         - type: classLike
@@ -145,6 +161,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\ElevenLabs\\.*
+    - name: FailoverPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Failover\\.*
     - name: GeminiPlatform
       collectors:
         - type: classLike
@@ -169,6 +189,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\Mistral\\.*
+    - name: ModelsDevPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\ModelsDev\\.*
     - name: OllamaPlatform
       collectors:
         - type: classLike
@@ -177,10 +201,18 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\OpenAi\\.*
+    - name: OpenResponsesPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\OpenResponses\\.*
     - name: OpenRouterPlatform
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\OpenRouter\\.*
+    - name: OvhPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Ovh\\.*
     - name: PerplexityPlatform
       collectors:
         - type: classLike
@@ -229,6 +261,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Store\\Bridge\\Cloudflare\\.*
+    - name: ElasticsearchStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Elasticsearch\\.*
     - name: ManticoreSearchStore
       collectors:
         - type: classLike
@@ -289,6 +325,18 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Store\\Bridge\\Weaviate\\.*
+    - name: MateComponent
+      collectors:
+        - type: classLike
+          value: ^Symfony\\AI\\Mate\\(?!Bridge\\).*
+    - name: MateMonologBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Mate\\Bridge\\Monolog\\.*
+    - name: MateSymfonyBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Mate\\Bridge\\Symfony\\.*
   ruleset:
     Fixtures: ~
     AgentComponent:
@@ -299,11 +347,15 @@ deptrac:
       - PlatformComponent
     ClockTool:
       - AgentComponent
+    FilesystemTool:
+      - AgentComponent
     FirecrawlTool:
       - AgentComponent
     MapboxTool:
       - AgentComponent
       - PlatformComponent
+    OllamaTool:
+      - AgentComponent
     OpenMeteoTool:
       - AgentComponent
       - PlatformComponent
@@ -357,6 +409,9 @@ deptrac:
     AlbertPlatform:
       - PlatformComponent
       - GenericPlatform
+    AmazeeAiPlatform:
+      - PlatformComponent
+      - GenericPlatform
     AnthropicPlatform:
       - PlatformComponent
     AzurePlatform:
@@ -368,6 +423,8 @@ deptrac:
       - PlatformComponent
       - MetaPlatform
       - AnthropicPlatform
+    CachePlatform:
+      - PlatformComponent
     CartesiaPlatform:
       - PlatformComponent
     CerebrasPlatform:
@@ -379,6 +436,8 @@ deptrac:
     DockerModelRunnerPlatform:
       - PlatformComponent
     ElevenLabsPlatform:
+      - PlatformComponent
+    FailoverPlatform:
       - PlatformComponent
     GeminiPlatform:
       - PlatformComponent
@@ -393,11 +452,24 @@ deptrac:
       - PlatformComponent
     MistralPlatform:
       - PlatformComponent
+    ModelsDevPlatform:
+      - PlatformComponent
+      - GenericPlatform
+      - AnthropicPlatform
+      - BedrockPlatform
+      - GeminiPlatform
+      - VertexAiPlatform
     OllamaPlatform:
       - PlatformComponent
     OpenAiPlatform:
       - PlatformComponent
+      - OpenResponsesPlatform
+    OpenResponsesPlatform:
+      - PlatformComponent
     OpenRouterPlatform:
+      - PlatformComponent
+      - GenericPlatform
+    OvhPlatform:
       - PlatformComponent
       - GenericPlatform
     PerplexityPlatform:
@@ -429,6 +501,9 @@ deptrac:
       - StoreComponent
       - PlatformComponent
     CloudflareStore:
+      - StoreComponent
+      - PlatformComponent
+    ElasticsearchStore:
       - StoreComponent
       - PlatformComponent
     ManticoreSearchStore:
@@ -476,3 +551,8 @@ deptrac:
     WeaviateStore:
       - StoreComponent
       - PlatformComponent
+    MateComponent: ~
+    MateMonologBridge:
+      - MateComponent
+    MateSymfonyBridge:
+      - MateComponent
