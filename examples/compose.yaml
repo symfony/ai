@@ -196,7 +196,7 @@ services:
             - '5432:5432'
 
     qdrant:
-        image: qdrant/qdrant
+        image: qdrant/qdrant:v1.14.0
         environment:
             QDRANT__SERVICE__API_KEY: '${QDRAT_SERVICE_API_KEY:-changeMe}'
         ports:
