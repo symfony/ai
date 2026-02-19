@@ -47,16 +47,12 @@ final class StoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1])),
         ]);
 
-        $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'include_vectors' => true,
-        ]));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6]))));
         $this->assertCount(3, $result);
 
         $store->drop();
 
-        $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'include_vectors' => true,
-        ]));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6]))));
         $this->assertCount(0, $result);
     }
 
