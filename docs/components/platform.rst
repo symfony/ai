@@ -202,7 +202,7 @@ have different content types, like :class:`Symfony\\AI\\Platform\\Message\\Conte
 
     // Create a message bag with a user message
     $messageBag = new MessageBag(
-        Message::forSystem('You are a helpful assistant.')
+        Message::forSystem('You are a helpful assistant.'),
         Message::ofUser('Please describe this picture?', Image::fromFile('/path/to/image.jpg')),
     );
 
@@ -323,12 +323,12 @@ Since LLMs usually generate a result word by word, most of them also support str
 Events. Symfony AI supports that by abstracting the conversion and returning a :class:`Generator` as content of the result::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Message\Message;
-    use Symfony\AI\Message\MessageBag;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
 
     // Initialize Platform and LLM
 
-    $agent = new Agent($model);
+    $agent = new Agent($platform, $model);
     $messages = new MessageBag(
         Message::forSystem('You are a thoughtful philosopher.'),
         Message::ofUser('What is the purpose of an ant?'),
@@ -469,6 +469,7 @@ Some LLMs also support images as input, which Symfony AI supports as content
 type within the :class:`Symfony\\AI\\Platform\\Message\\UserMessage`::
 
     use Symfony\AI\Platform\Message\Content\Image;
+    use Symfony\AI\Platform\Message\Content\ImageUrl;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
@@ -764,6 +765,7 @@ Vector Results
 ::
 
     use Symfony\AI\Platform\Result\VectorResult;
+    use Symfony\AI\Platform\Vector\Vector;
 
     $platform = new InMemoryPlatform(
         fn() => new VectorResult(new Vector([0.1, 0.2, 0.3, 0.4]))

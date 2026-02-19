@@ -30,7 +30,7 @@ The URL Context tool allows Gemini to fetch and analyze content from web pages. 
         Message::ofUser('What was the 12 month Euribor rate a week ago based on https://www.euribor-rates.eu/en/current-euribor-rates/4/euribor-rate-12-months/')
     );
 
-    $result = $platform->invoke('gemini-2.5-pro-preview-03-25, $messages, [
+    $result = $platform->invoke('gemini-2.5-pro-preview-03-25', $messages, [
         'server_tools' => [
             'url_context' => true,
         ]
@@ -60,7 +60,7 @@ The Code Execution tool provides a sandboxed environment for running code::
         Message::ofUser('Calculate the factorial of 20 and show me the code')
     );
 
-    $result = $platform->invoke('gemini-2.5-pro-preview-03-25', [
+    $result = $platform->invoke('gemini-2.5-pro-preview-03-25', $messages, [
         'server_tools' => [
             'code_execution' => true,
         ]
@@ -75,7 +75,7 @@ You can enable multiple server tools simultaneously::
         Message::ofUser('Calculate the factorial of 20 and show me the code')
     );
 
-    $result = $platform->invoke('gemini-2.5-pro-preview-03-25', [
+    $result = $platform->invoke('gemini-2.5-pro-preview-03-25', $messages, [
         'server_tools' => [
             'url_context' => true,
             'google_search' => true,

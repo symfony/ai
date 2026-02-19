@@ -43,7 +43,7 @@ search for documents in a store based on a query string. It vectorizes the query
 
     use Symfony\AI\Store\Retriever;
 
-    $retriever = new Retriever($vectorizer, $store);
+    $retriever = new Retriever($store, $vectorizer);
     $documents = $retriever->retrieve('What is the capital of France?');
 
     foreach ($documents as $document) {
@@ -90,7 +90,9 @@ Supported Stores
 
 * `Azure AI Search`_
 * `Chroma`_ (requires ``codewithkyrian/chromadb-php`` as additional dependency)
+* `ClickHouse`_
 * `Cloudflare`_
+* `Elasticsearch`_
 * `InMemory`_
 * `Manticore Search`_
 * `MariaDB`_ (requires ``ext-pdo``)
@@ -102,6 +104,7 @@ Supported Stores
 * `Pinecone`_ (requires ``probots-io/pinecone-php`` as additional dependency)
 * `Postgres`_ (requires ``ext-pdo``)
 * `Qdrant`_
+* `Redis`_
 * `Supabase`_ (requires manual database setup)
 * `SurrealDB`_
 * `Symfony Cache`_ (requires ``symfony/cache`` as additional dependency)
@@ -169,25 +172,36 @@ Implementing a Bridge
 ---------------------
 
 The main extension points of the Store component is the :class:`Symfony\\AI\\Store\\StoreInterface`, that defines the methods
-for adding vectorized documents to the store, and querying the store for documents with a vector.
+for adding, removing and querying vectorized documents in the store.
 
-This leads to a store implementing two methods::
+This leads to a store implementing the following methods::
 
-    use Symfony\AI\Platform\Vector\Vector;
     use Symfony\AI\Store\Document\VectorDocument;
+    use Symfony\AI\Store\Query\QueryInterface;
     use Symfony\AI\Store\StoreInterface;
 
     class MyStore implements StoreInterface
     {
-        public function add(VectorDocument ...$documents): void
+        public function add(VectorDocument|array $documents): void
         {
             // Implementation to add a document to the store
         }
 
-        public function query(Vector $vector, array $options = []): iterable
+        public function remove(string|array $ids, array $options = []): void
+        {
+            // Implementation to remove documents from the store
+        }
+
+        public function query(QueryInterface $query, array $options = []): iterable
         {
             // Implementation to query the store for documents
             return $documents;
+        }
+
+        public function supports(string $queryClass): bool
+        {
+            // Return true if the given query class is supported
+            return false;
         }
     }
 
@@ -237,7 +251,9 @@ This leads to a store implementing two methods::
 .. _`Similarity Search with Weaviate (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/weaviate.php
 .. _`Azure AI Search`: https://azure.microsoft.com/products/ai-services/ai-search
 .. _`Chroma`: https://www.trychroma.com/
+.. _`ClickHouse`: https://clickhouse.com/
 .. _`Cloudflare`: https://developers.cloudflare.com/vectorize/
+.. _`Elasticsearch`: https://www.elastic.co/elasticsearch
 .. _`Manticore Search`: https://manticoresearch.com/
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
 .. _`Pinecone`: https://www.pinecone.io/
@@ -248,9 +264,10 @@ This leads to a store implementing two methods::
 .. _`SurrealDB`: https://surrealdb.com/
 .. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
 .. _`Qdrant`: https://qdrant.tech/
+.. _`Redis`: https://redis.io/
 .. _`Neo4j`: https://neo4j.com/
 .. _`OpenSearch`: https://opensearch.org/
 .. _`Typesense`: https://typesense.org/
 .. _`Symfony Cache`: https://symfony.com/doc/current/components/cache.html
 .. _`Weaviate`: https://weaviate.io/
-.. _`Supabase`: https://https://supabase.com/
+.. _`Supabase`: https://supabase.com/

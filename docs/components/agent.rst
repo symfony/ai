@@ -276,7 +276,7 @@ to the LLM::
     $toolbox = new FaultTolerantToolbox($innerToolbox);
     $toolProcessor = new AgentProcessor($toolbox);
 
-    $agent = new Agent($platform, $model, inputProcessor: [$toolProcessor], outputProcessor: [$toolProcessor]);
+    $agent = new Agent($platform, $model, inputProcessors: [$toolProcessor], outputProcessors: [$toolProcessor]);
 
 If you want to expose the underlying error to the LLM, you can throw a custom exception that implements :class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\ToolExecutionExceptionInterface`::
 
@@ -430,7 +430,7 @@ to ensure those messages will be removed from your :class:`Symfony\\AI\\Platform
     $toolbox = new Toolbox([$tool]);
     $toolProcessor = new AgentProcessor($toolbox, excludeToolMessages: true);
 
-    $agent = new Agent($platform, $model, inputProcessor: [$toolProcessor], outputProcessor: [$toolProcessor]);
+    $agent = new Agent($platform, $model, inputProcessors: [$toolProcessor], outputProcessors: [$toolProcessor]);
     $result = $agent->call($messages);
     // $messages will now exclude the tool messages
 
