@@ -43,6 +43,10 @@ final class ModelClient implements ModelClientInterface
             'anthropic-version' => '2023-06-01',
         ];
 
+        // Consumed by PromptCacheNormalizer during payload creation; strip
+        // before the request so it is never forwarded to the Anthropic API.
+        unset($options['cacheRetention']);
+
         if (isset($options['tools'])) {
             $options['tool_choice'] = ['type' => 'auto'];
         }

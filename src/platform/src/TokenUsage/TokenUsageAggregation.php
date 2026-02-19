@@ -79,6 +79,16 @@ final class TokenUsageAggregation implements TokenUsageInterface, MergeableMetad
         return $this->sum(static fn (TokenUsageInterface $usage) => $usage->getCachedTokens());
     }
 
+    public function getCacheCreationTokens(): ?int
+    {
+        return $this->sum(static fn (TokenUsageInterface $usage) => $usage->getCacheCreationTokens());
+    }
+
+    public function getCacheReadTokens(): ?int
+    {
+        return $this->sum(static fn (TokenUsageInterface $usage) => $usage->getCacheReadTokens());
+    }
+
     public function getRemainingTokens(): ?int
     {
         return $this->min(static fn (TokenUsageInterface $usage) => $usage->getRemainingTokens());
