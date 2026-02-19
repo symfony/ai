@@ -5196,6 +5196,42 @@ class AiBundleTest extends TestCase
         ]);
     }
 
+    #[TestDox('Model configuration with period in option key works correctly')]
+    public function testModelConfigurationWithPeriodInOptionKey()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'test' => [
+                        'model' => 'gpt-5?reasoning.effort=medium',
+                    ],
+                ],
+            ],
+        ]);
+
+        $agentDefinition = $container->getDefinition('ai.agent.test');
+        // Period should be preserved in the query string
+        $this->assertSame('gpt-5?reasoning.effort=medium', $agentDefinition->getArgument(1));
+    }
+
+    #[TestDox('Vectorizer model configuration with period in option key works correctly')]
+    public function testVectorizerModelConfigurationWithPeriodInOptionKey()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'vectorizer' => [
+                    'test' => [
+                        'model' => 'text-embedding-3-small?custom.dimension=512',
+                    ],
+                ],
+            ],
+        ]);
+
+        $vectorizerDefinition = $container->getDefinition('ai.vectorizer.test');
+        // Period should be preserved in the query string
+        $this->assertSame('text-embedding-3-small?custom.dimension=512', $vectorizerDefinition->getArgument(1));
+    }
+
     public function testVectorizerConfiguration()
     {
         $container = $this->buildContainer([

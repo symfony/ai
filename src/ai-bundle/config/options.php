@@ -13,6 +13,7 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\StoreInterface;
@@ -153,7 +154,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                             if ([] !== $options) {
                                                 throw new InvalidConfigurationException('Cannot use both query parameters in model name and options array.');
                                             }
-                                            parse_str($parsed['query'], $existingOptions);
+                                            $existingOptions = AbstractModelCatalog::parseQueryString($parsed['query']);
                                             $options = $existingOptions;
                                         }
                                     }
@@ -444,7 +445,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                             if ([] !== $options) {
                                                 throw new InvalidConfigurationException('Cannot use both query parameters in model name and options array.');
                                             }
-                                            parse_str($parsed['query'], $existingOptions);
+                                            $existingOptions = AbstractModelCatalog::parseQueryString($parsed['query']);
                                             $options = $existingOptions;
                                         }
                                     }
