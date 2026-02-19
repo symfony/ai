@@ -39,10 +39,13 @@ $store->setup();
 
 $documents = [];
 foreach (Movies::all() as $movie) {
+    $content = 'Title: '.$movie['title'].\PHP_EOL.'Director: '.$movie['director'].\PHP_EOL.'Description: '.$movie['description'];
+    $metadata = new Metadata($movie);
+    $metadata->setText($content);
     $documents[] = new TextDocument(
         id: Uuid::v4(),
-        content: 'Title: '.$movie['title'].\PHP_EOL.'Director: '.$movie['director'].\PHP_EOL.'Description: '.$movie['description'],
-        metadata: new Metadata($movie),
+        content: $content,
+        metadata: $metadata,
     );
 }
 
