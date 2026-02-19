@@ -12,7 +12,9 @@ on:
             - '.github/scripts/validate-bridge-splitsh.sh'
             - '.github/scripts/validate-bridge-files.sh'
             - '.github/scripts/validate-bridge-type.sh'
+            - '.github/scripts/validate-bridge-deptrac.sh'
             - '.github/scripts/validate-dependency-versions.sh'
+            - 'deptrac.yaml'
     pull_request:
         paths:
             - 'src/*/src/Bridge/**/*'
@@ -24,7 +26,9 @@ on:
             - '.github/scripts/validate-bridge-splitsh.sh'
             - '.github/scripts/validate-bridge-files.sh'
             - '.github/scripts/validate-bridge-type.sh'
+            - '.github/scripts/validate-bridge-deptrac.sh'
             - '.github/scripts/validate-dependency-versions.sh'
+            - 'deptrac.yaml'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -53,6 +57,9 @@ jobs:
             - name: Validate store bridges have correct type
               run: .github/scripts/validate-bridge-type.sh store
 
+            - name: Validate store bridges are covered in deptrac.yaml
+              run: .github/scripts/validate-bridge-deptrac.sh store store
+
     validate_tools:
         name: Tool Bridges
         runs-on: ubuntu-latest
@@ -74,6 +81,9 @@ jobs:
 
             - name: Validate tool bridges have correct type
               run: .github/scripts/validate-bridge-type.sh tool agent
+
+            - name: Validate tool bridges are covered in deptrac.yaml
+              run: .github/scripts/validate-bridge-deptrac.sh tool agent
 
     validate_message_stores:
         name: Message Store Bridges
@@ -97,6 +107,9 @@ jobs:
             - name: Validate message store bridges have correct type
               run: .github/scripts/validate-bridge-type.sh message-store chat
 
+            - name: Validate message store bridges are covered in deptrac.yaml
+              run: .github/scripts/validate-bridge-deptrac.sh message-store chat
+
     validate_platforms:
         name: Platform Bridges
         runs-on: ubuntu-latest
@@ -119,6 +132,9 @@ jobs:
             - name: Validate platform bridges have correct type
               run: .github/scripts/validate-bridge-type.sh platform
 
+            - name: Validate platform bridges are covered in deptrac.yaml
+              run: .github/scripts/validate-bridge-deptrac.sh platform platform
+
     validate_mate_bridges:
         name: Mate Bridges
         runs-on: ubuntu-latest
@@ -140,6 +156,9 @@ jobs:
 
             - name: Validate Mate bridges have correct type
               run: .github/scripts/validate-bridge-type.sh mate
+
+            - name: Validate Mate bridges are covered in deptrac.yaml
+              run: .github/scripts/validate-bridge-deptrac.sh mate-extension mate
 
     validate_dependency_versions:
         name: "Validate ${{ matrix.package }} requires version ${{ matrix.version }}"
