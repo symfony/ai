@@ -87,11 +87,15 @@ Adding Documents
     use Symfony\AI\Store\Indexer\DocumentProcessor;
     use Symfony\Component\Uid\Uuid;
 
+    $content = 'Document text used for embedding and BM25 indexing.';
+    $metadata = new Metadata(['title' => 'My Document']);
+    $metadata->setText($content);
+
     $documents = [
         new TextDocument(
             id: Uuid::v4(),
-            content: 'Document text used for embedding and BM25 indexing.',
-            metadata: new Metadata(['title' => 'My Document']),
+            content: $content,
+            metadata: $metadata,
         ),
     ];
 
