@@ -141,7 +141,7 @@ final class ResultConverter implements ResultConverterInterface
      *             type: 'function',
      *             function: array{
      *                 name: string,
-     *                 arguments: string
+     *                 arguments?: string
      *             },
      *         },
      *         refusal: ?mixed
@@ -169,7 +169,7 @@ final class ResultConverter implements ResultConverterInterface
      *     type: 'function',
      *     function: array{
      *         name: string,
-     *         arguments: string
+     *         arguments?: string
      *     }
      * } $toolCall
      */
