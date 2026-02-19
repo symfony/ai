@@ -25,4 +25,42 @@
             }
         }
     }
+
+    .share-overlay {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(20, 30, 20, 0.55);
+        z-index: 1055;
+    }
+
+    .share-overlay.is-open {
+        display: flex;
+    }
+
+    .share-panel {
+        position: relative;
+        width: min(520px, 92vw);
+        padding: 24px 24px 20px;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    .share-close {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        border-radius: 16px;
+        text-align: center;
+        line-height: 32px;
+        text-decoration: none;
+        color: #2f3f2f;
+        background: #f0f4ef;
+    }
 }
