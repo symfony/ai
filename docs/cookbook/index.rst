@@ -12,7 +12,9 @@ Getting Started Guides
 
     chatbot-with-memory
     dynamic-tools
+    multi-agent-orchestration
     rag-implementation
+    streaming-responses
     structured-output-object-instances
 
 Memory & Context Management
@@ -25,10 +27,20 @@ Tools
 
 * :doc:`dynamic-tools` - Build a dynamic Toolbox for flexible tool management at runtime
 
+Multi-Agent Systems
+-------------------
+
+* :doc:`multi-agent-orchestration` - Orchestrate multiple specialized agents with automatic routing and handoffs
+
 Retrieval Augmented Generation
 ------------------------------
 
 * :doc:`rag-implementation` - Implement complete RAG systems with vector stores and semantic search
+
+Streaming
+---------
+
+* :doc:`streaming-responses` - Stream AI responses token by token for a faster user experience
 
 Structured Output
 -----------------
