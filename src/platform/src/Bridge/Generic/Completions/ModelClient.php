@@ -44,6 +44,11 @@ class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        // cacheRetention is an internal Symfony AI option consumed by PromptCacheNormalizer
+        // (Anthropic-only).  Strip it here so it is never forwarded to OpenAI-compatible
+        // endpoints, which reject unknown request body fields with a 400 error.
+        unset($options['cacheRetention']);
+
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],

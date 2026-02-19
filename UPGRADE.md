@@ -7,6 +7,8 @@ Platform
  * The `hostUrl` parameter for `ElevenLabsClient` has been removed
  * The `host` parameter for `ElevenLabsApiCatalog` has been removed
  * The `hostUrl` parameter for `PlatformFactory::create()` in `ElevenLabs` has been renamed to `endpoint`
+ * `Symfony\AI\Platform\TokenUsage\TokenUsageInterface` has two new methods:
+   `getCacheCreationTokens()` and `getCacheReadTokens()`
 
 UPGRADE FROM 0.3 to 0.4
 =======================
