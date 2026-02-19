@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.5
+---
+
+ * Add `TranslationCollectorFormatter` to expose Symfony Translation data (locale, fallback locales, message states) to AI via the profiler
+
 0.3
 ---
 
