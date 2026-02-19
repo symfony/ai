@@ -88,27 +88,29 @@ Similarity Search Examples
 Supported Stores
 ----------------
 
-* :doc:`store/azure-search` – Azure AI Search
-* :doc:`store/chromadb` – ChromaDB (requires ``codewithkyrian/chromadb-php``)
-* :doc:`store/clickhouse` – ClickHouse
-* :doc:`store/cloudflare` – Cloudflare Vectorize
-* :doc:`store/elasticsearch` – Elasticsearch
-* :doc:`store/local` – InMemory & Symfony Cache (for development and testing)
-* :doc:`store/manticoresearch` – ManticoreSearch
-* :doc:`store/mariadb` – MariaDB (requires ``ext-pdo``, MariaDB 11.7+)
-* :doc:`store/meilisearch` – Meilisearch
-* :doc:`store/milvus` – Milvus
-* :doc:`store/mongodb` – MongoDB Atlas (requires ``mongodb/mongodb``)
-* :doc:`store/neo4j` – Neo4j
-* :doc:`store/opensearch` – OpenSearch
-* :doc:`store/pinecone` – Pinecone (requires ``probots-io/pinecone-php``)
-* :doc:`store/postgres` – Postgres with pgvector (requires ``ext-pdo``)
-* :doc:`store/qdrant` – Qdrant
-* :doc:`store/redis` – Redis Stack (requires ``ext-redis``)
-* :doc:`store/supabase` – Supabase (requires manual database setup)
-* :doc:`store/surrealdb` – SurrealDB
-* :doc:`store/typesense` – Typesense
-* :doc:`store/weaviate` – Weaviate
+See :doc:`store/bridges` for installation and configuration details for all supported bridges:
+
+* `Azure AI Search`_
+* `ChromaDB`_ (requires ``codewithkyrian/chromadb-php``)
+* `ClickHouse`_
+* `Cloudflare Vectorize`_
+* `Elasticsearch`_
+* InMemory & Symfony Cache (for development and testing)
+* `ManticoreSearch`_
+* `MariaDB`_ (requires ``ext-pdo``, MariaDB 11.7+)
+* `Meilisearch`_
+* `Milvus`_
+* `MongoDB Atlas`_ (requires ``mongodb/mongodb``)
+* `Neo4j`_
+* `OpenSearch`_
+* `Pinecone`_ (requires ``probots-io/pinecone-php``)
+* `Postgres`_ with pgvector (requires ``ext-pdo``)
+* `Qdrant`_
+* `Redis Stack`_ (requires ``ext-redis``)
+* `Supabase`_
+* `SurrealDB`_
+* `Typesense`_
+* `Weaviate`_
 
 Document Loader
 ---------------
@@ -234,27 +236,7 @@ This leads to a store implementing two methods::
     :maxdepth: 1
     :hidden:
 
-    store/local
-    store/azure-search
-    store/chromadb
-    store/clickhouse
-    store/cloudflare
-    store/elasticsearch
-    store/manticoresearch
-    store/mariadb
-    store/meilisearch
-    store/milvus
-    store/mongodb
-    store/neo4j
-    store/opensearch
-    store/pinecone
-    store/postgres
-    store/qdrant
-    store/redis
-    store/supabase
-    store/surrealdb
-    store/typesense
-    store/weaviate
+    store/bridges
 
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
 .. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php
@@ -274,4 +256,24 @@ This leads to a store implementing two methods::
 .. _`Similarity Search with Typesense (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/typesense.php
 .. _`Similarity Search with Supabase (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/supabase.php
 .. _`Similarity Search with Weaviate (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/weaviate.php
+.. _`Azure AI Search`: https://azure.microsoft.com/products/ai-services/ai-search
+.. _`ChromaDB`: https://www.trychroma.com/
+.. _`ClickHouse`: https://clickhouse.com/
+.. _`Cloudflare Vectorize`: https://developers.cloudflare.com/vectorize/
+.. _`Elasticsearch`: https://www.elastic.co/elasticsearch
+.. _`ManticoreSearch`: https://manticoresearch.com/
+.. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
+.. _`Meilisearch`: https://www.meilisearch.com/
+.. _`Milvus`: https://milvus.io/
+.. _`MongoDB Atlas`: https://www.mongodb.com/atlas
+.. _`Neo4j`: https://neo4j.com/
+.. _`OpenSearch`: https://opensearch.org/
+.. _`Pinecone`: https://www.pinecone.io/
+.. _`Postgres`: https://www.postgresql.org/about/news/pgvector-070-released-2852/
+.. _`Qdrant`: https://qdrant.tech/
+.. _`Redis Stack`: https://redis.io/docs/stack/
+.. _`Supabase`: https://supabase.com/
+.. _`SurrealDB`: https://surrealdb.com/
+.. _`Typesense`: https://typesense.org/
 .. _`Symfony Cache`: https://symfony.com/doc/current/components/cache.html
+.. _`Weaviate`: https://weaviate.io/
