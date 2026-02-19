@@ -148,6 +148,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     ],
                 ],
                 'with_payload' => true,
+                'with_vector' => true,
                 'limit' => $limit,
             ];
 
@@ -159,6 +160,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 'query' => $query->getVector()->getData(),
                 'using' => $this->denseVectorName,
                 'with_payload' => true,
+                'with_vector' => true,
             ];
 
             if (\array_key_exists('limit', $options)) {
