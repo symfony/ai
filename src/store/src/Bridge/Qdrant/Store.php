@@ -24,6 +24,10 @@ use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
+/**
+ * @author Guillaume Loulier <personal@guillaumeloulier.fr>
+ * @author Ahmed EBEN HASSINE <ahmedbhs123@gmail.com>
+ */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
     public function __construct(
