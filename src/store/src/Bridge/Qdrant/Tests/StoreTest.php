@@ -440,7 +440,7 @@ final class StoreTest extends TestCase
         $this->assertTrue($store->supports(HybridQuery::class));
     }
 
-    public function testHybridSetupCreatesNamedVectors(): void
+    public function testHybridSetupCreatesNamedVectors()
     {
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
@@ -467,7 +467,7 @@ final class StoreTest extends TestCase
         $this->assertSame(2, $httpClient->getRequestsCount());
     }
 
-    public function testHybridSetupPayloadStructure(): void
+    public function testHybridSetupPayloadStructure()
     {
         $capturedBody = null;
 
@@ -504,7 +504,7 @@ final class StoreTest extends TestCase
         $this->assertSame('idf', $capturedBody['sparse_vectors']['bm25']['modifier']);
     }
 
-    public function testHybridAddIncludesSparseVector(): void
+    public function testHybridAddIncludesSparseVector()
     {
         $capturedBody = null;
 
@@ -538,7 +538,7 @@ final class StoreTest extends TestCase
         $this->assertArrayHasKey('values', $point['vector']['bm25']);
     }
 
-    public function testHybridQueryUsesFormulaWithDefaultRatio(): void
+    public function testHybridQueryUsesFormulaWithDefaultRatio()
     {
         $capturedBody = null;
 
@@ -592,7 +592,7 @@ final class StoreTest extends TestCase
         $this->assertCount(1, $results);
     }
 
-    public function testHybridQueryUsesFormulaWithCustomRatio(): void
+    public function testHybridQueryUsesFormulaWithCustomRatio()
     {
         $capturedBody = null;
 
@@ -632,7 +632,7 @@ final class StoreTest extends TestCase
         $this->assertSame('$score[1]', $formula['sum'][1]['mult'][1]);
     }
 
-    public function testHybridQueryWithVectorQueryFallsToDenseOnly(): void
+    public function testHybridQueryWithVectorQueryFallsToDenseOnly()
     {
         $capturedBody = null;
 
@@ -667,7 +667,7 @@ final class StoreTest extends TestCase
         $this->assertSame('dense', $capturedBody['using']);
     }
 
-    public function testTokenize(): void
+    public function testTokenize()
     {
         $store = new Store(
             new MockHttpClient([], 'http://127.0.0.1:6333'),
@@ -695,7 +695,7 @@ final class StoreTest extends TestCase
         $this->assertSame(1.0, $result['values'][$worldIndex]);
     }
 
-    public function testNonHybridSetupUsesUnnamedVector(): void
+    public function testNonHybridSetupUsesUnnamedVector()
     {
         $capturedBody = null;
 
@@ -719,7 +719,7 @@ final class StoreTest extends TestCase
         $this->assertArrayNotHasKey('sparse_vectors', $capturedBody);
     }
 
-    public function testNonHybridAddUsesPlainVector(): void
+    public function testNonHybridAddUsesPlainVector()
     {
         $capturedBody = null;
 

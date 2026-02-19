@@ -23,9 +23,9 @@ use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-echo '=== Qdrant Hybrid Search Demo ==='.PHP_EOL.PHP_EOL;
-echo 'This example demonstrates hybrid search combining dense vector similarity'.PHP_EOL;
-echo 'with BM25 sparse vectors, using Formula Queries to control the balance.'.PHP_EOL.PHP_EOL;
+echo '=== Qdrant Hybrid Search Demo ==='.\PHP_EOL.\PHP_EOL;
+echo 'This example demonstrates hybrid search combining dense vector similarity'.\PHP_EOL;
+echo 'with BM25 sparse vectors, using Formula Queries to control the balance.'.\PHP_EOL.\PHP_EOL;
 
 $store = new Store(
     httpClient: http_client(),
@@ -52,7 +52,7 @@ $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger
 $indexer->index($documents);
 
 $queryText = 'futuristic technology and artificial intelligence';
-echo 'Query: "'.$queryText.'"'.PHP_EOL.PHP_EOL;
+echo 'Query: "'.$queryText.'"'.\PHP_EOL.\PHP_EOL;
 $queryEmbedding = $vectorizer->vectorize($queryText);
 
 $ratios = [
@@ -62,45 +62,45 @@ $ratios = [
 ];
 
 foreach ($ratios as $config) {
-    echo '--- '.$config['description'].' ---'.PHP_EOL;
+    echo '--- '.$config['description'].' ---'.\PHP_EOL;
 
     $results = $store->query(new HybridQuery($queryEmbedding, $queryText, $config['ratio']));
 
-    echo 'Top 3 results:'.PHP_EOL;
+    echo 'Top 3 results:'.\PHP_EOL;
     foreach (array_slice(iterator_to_array($results), 0, 3) as $i => $result) {
         $metadata = $result->getMetadata()->getArrayCopy();
         echo sprintf(
-            "  %d. %s (Score: %.4f)".PHP_EOL,
+            '  %d. %s (Score: %.4f)'.\PHP_EOL,
             $i + 1,
             $metadata['title'] ?? 'Unknown',
             $result->getScore() ?? 0.0
         );
     }
-    echo PHP_EOL;
+    echo \PHP_EOL;
 }
 
-echo '--- Pure semantic search with VectorQuery ---'.PHP_EOL;
-echo 'Query: Movies about space exploration'.PHP_EOL;
+echo '--- Pure semantic search with VectorQuery ---'.\PHP_EOL;
+echo 'Query: Movies about space exploration'.\PHP_EOL;
 $spaceEmbedding = $vectorizer->vectorize('space exploration and cosmic adventures');
 $results = $store->query(new VectorQuery($spaceEmbedding));
 
-echo 'Top 3 results:'.PHP_EOL;
+echo 'Top 3 results:'.\PHP_EOL;
 foreach (array_slice(iterator_to_array($results), 0, 3) as $i => $result) {
     $metadata = $result->getMetadata()->getArrayCopy();
     echo sprintf(
-        "  %d. %s (Score: %.4f)".PHP_EOL,
+        '  %d. %s (Score: %.4f)'.\PHP_EOL,
         $i + 1,
         $metadata['title'] ?? 'Unknown',
         $result->getScore() ?? 0.0
     );
 }
-echo PHP_EOL;
+echo \PHP_EOL;
 
 $store->drop();
 
-echo '=== Summary ==='.PHP_EOL;
-echo '- semanticRatio = 0.0: Best for exact keyword matches (pure BM25)'.PHP_EOL;
-echo '- semanticRatio = 0.5: Balanced approach combining both methods'.PHP_EOL;
-echo '- semanticRatio = 1.0: Best for conceptual similarity searches'.PHP_EOL;
-echo PHP_EOL.'Qdrant uses Formula Queries to weight the BM25 and dense prefetch scores.'.PHP_EOL;
-echo 'The collection requires hybrid_enabled: true and Qdrant >= 1.14.'.PHP_EOL;
+echo '=== Summary ==='.\PHP_EOL;
+echo '- semanticRatio = 0.0: Best for exact keyword matches (pure BM25)'.\PHP_EOL;
+echo '- semanticRatio = 0.5: Balanced approach combining both methods'.\PHP_EOL;
+echo '- semanticRatio = 1.0: Best for conceptual similarity searches'.\PHP_EOL;
+echo \PHP_EOL.'Qdrant uses Formula Queries to weight the BM25 and dense prefetch scores.'.\PHP_EOL;
+echo 'The collection requires hybrid_enabled: true and Qdrant >= 1.14.'.\PHP_EOL;
