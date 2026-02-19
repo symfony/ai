@@ -434,8 +434,14 @@ to ensure those messages will be removed from your :class:`Symfony\\AI\\Platform
     $result = $agent->call($messages);
     // $messages will now exclude the tool messages
 
+Built-in Tools
+~~~~~~~~~~~~~~
+
+Symfony AI ships with a collection of ready-made tool bridges for common tasks like web search,
+geocoding, weather data, file access, and more. See :doc:`agent/tools` for the full list.
+
 Code Examples (with built-in tools)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * `Brave Tool`_
 * `Clock Tool`_
@@ -737,6 +743,12 @@ Code Examples
 * `Chat with static memory`_
 * `Chat with embedding search memory`_
 
+
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+
+    agent/tools
 
 .. _`Platform Component`: https://github.com/symfony/ai-platform
 .. _`Anthropic Toolbox Example`: https://github.com/symfony/ai/blob/main/examples/anthropic/toolcall.php
