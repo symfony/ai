@@ -20,13 +20,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: string, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: string, label: string, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'sonar' => [
                 'class' => Perplexity::class,
+                'label' => 'Sonar',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_PDF,
@@ -38,6 +39,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'sonar-pro' => [
                 'class' => Perplexity::class,
+                'label' => 'Sonar Pro',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_PDF,
@@ -49,6 +51,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'sonar-reasoning' => [
                 'class' => Perplexity::class,
+                'label' => 'Sonar Reasoning',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_PDF,
@@ -60,6 +63,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'sonar-reasoning-pro' => [
                 'class' => Perplexity::class,
+                'label' => 'Sonar Reasoning Pro',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_PDF,
@@ -71,6 +75,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'sonar-deep-research' => [
                 'class' => Perplexity::class,
+                'label' => 'Sonar Deep Research',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_PDF,

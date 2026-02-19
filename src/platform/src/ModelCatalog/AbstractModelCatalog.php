@@ -22,7 +22,7 @@ use Symfony\AI\Platform\Model;
 abstract class AbstractModelCatalog implements ModelCatalogInterface
 {
     /**
-     * @var array<string, array{class: class-string, capabilities: list<Capability>}>
+     * @var array<string, array{class: class-string, label: string, capabilities: list<Capability>}>
      */
     protected array $models;
 
@@ -48,7 +48,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
             throw new InvalidArgumentException(\sprintf('Model class "%s" does not exist.', $modelClass));
         }
 
-        $model = new $modelClass($actualModelName, $modelConfig['capabilities'], $options);
+        $model = new $modelClass($actualModelName, $modelConfig['label'], $modelConfig['capabilities'], $options);
         if (!$model instanceof Model) {
             throw new InvalidArgumentException(\sprintf('Model class "%s" must extend "%s".', $modelClass, Model::class));
         }
@@ -57,7 +57,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
     }
 
     /**
-     * @return array<string, array{class: class-string, capabilities: list<Capability>}>
+     * @return array<string, array{class: class-string, label: string, capabilities: list<Capability>}>
      */
     public function getModels(): array
     {

@@ -20,16 +20,22 @@ class Model
 {
     /**
      * @param non-empty-string     $name
+     * @param non-empty-string     $label       Human-readable display name
      * @param Capability[]         $capabilities
      * @param array<string, mixed> $options      The default options for the model usage
      */
     public function __construct(
         private readonly string $name,
+        private readonly string $label,
         private readonly array $capabilities = [],
         private readonly array $options = [],
     ) {
         if ('' === trim($name)) {
             throw new InvalidArgumentException('Model name cannot be empty.');
+        }
+
+        if ('' === trim($label)) {
+            throw new InvalidArgumentException('Model label cannot be empty.');
         }
     }
 
@@ -39,6 +45,14 @@ class Model
     public function getName(): string
     {
         return $this->name;
+    }
+
+    /**
+     * @return non-empty-string
+     */
+    public function getLabel(): string
+    {
+        return $this->label;
     }
 
     /**

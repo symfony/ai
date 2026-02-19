@@ -20,13 +20,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: string, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: string, label: string, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'deepseek-chat' => [
                 'class' => DeepSeek::class,
+                'label' => 'DeepSeek Chat',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -36,6 +37,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'deepseek-reasoner' => [
                 'class' => DeepSeek::class,
+                'label' => 'DeepSeek Reasoner',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
