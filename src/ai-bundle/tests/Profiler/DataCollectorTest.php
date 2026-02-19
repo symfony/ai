@@ -178,4 +178,17 @@ class DataCollectorTest extends TestCase
         $this->assertStringNotContainsString('\\', $name);
         $this->assertStringNotContainsString('DataCollector', $name);
     }
+
+    public function testLateCollectWithRewindableGeneratorAsToolboxes()
+    {
+        $generator = (static function (): \Generator {
+            yield from [];
+        })();
+
+        $dataCollector = new DataCollector([], $generator, [], []);
+        $dataCollector->lateCollect();
+
+        $this->assertSame([], $dataCollector->getTools());
+        $this->assertSame([], $dataCollector->getToolCalls());
+    }
 }

@@ -37,17 +37,41 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
 {
     /**
-     * @param TraceablePlatform[]     $platforms
-     * @param TraceableToolbox[]      $toolboxes
-     * @param TraceableMessageStore[] $messageStores
-     * @param TraceableChat[]         $chats
+     * @var TraceablePlatform[]
+     */
+    private readonly array $platforms;
+
+    /**
+     * @var TraceableToolbox[]
+     */
+    private readonly array $toolboxes;
+
+    /**
+     * @var TraceableMessageStore[]
+     */
+    private readonly array $messageStores;
+
+    /**
+     * @var TraceableChat[]
+     */
+    private readonly array $chats;
+
+    /**
+     * @param iterable<TraceablePlatform>     $platforms
+     * @param iterable<TraceableToolbox>      $toolboxes
+     * @param iterable<TraceableMessageStore> $messageStores
+     * @param iterable<TraceableChat>         $chats
      */
     public function __construct(
-        private readonly iterable $platforms,
-        private readonly iterable $toolboxes,
-        private readonly iterable $messageStores,
-        private readonly iterable $chats,
+        iterable $platforms,
+        iterable $toolboxes,
+        iterable $messageStores,
+        iterable $chats,
     ) {
+        $this->platforms = iterator_to_array($platforms);
+        $this->toolboxes = iterator_to_array($toolboxes);
+        $this->messageStores = iterator_to_array($messageStores);
+        $this->chats = iterator_to_array($chats);
     }
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
