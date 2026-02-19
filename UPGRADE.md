@@ -10,6 +10,8 @@ Platform
 --------
 
  * The `PlatformFactory` is now in charge of creating `ElevenLabsApiCatalog` if `apiCatalog` is provided as `true`
+ * `Symfony\AI\Platform\TokenUsage\TokenUsageInterface` has two new methods:
+   `getCacheCreationTokens()` and `getCacheReadTokens()`
 
 UPGRADE FROM 0.4 to 0.5
 =======================

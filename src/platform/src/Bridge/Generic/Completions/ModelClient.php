@@ -49,6 +49,11 @@ class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        // cacheRetention is an internal Symfony AI option consumed by PromptCacheNormalizer
+        // (Anthropic-only).  Strip it here so it is never forwarded to OpenAI-compatible
+        // endpoints, which reject unknown request body fields with a 400 error.
+        unset($options['cacheRetention']);
+
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
