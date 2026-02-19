@@ -605,13 +605,29 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('ElevenLabs platform configuration requires "symfony/ai-eleven-labs-platform" package. Try running "composer require symfony/ai-eleven-labs-platform".');
             }
 
+            $httpClientReference = new Reference($platform['http_client']);
+
+            $scopedHttpClientDefinition = (new Definition(ScopingHttpClient::class))
+                ->setFactory([ScopingHttpClient::class, 'forBaseUri'])
+                ->setArguments([
+                    $httpClientReference,
+                    $platform['endpoint'],
+                    [
+                        'headers' => [
+                            'x-api-key' => $platform['api_key'],
+                        ],
+                    ],
+                ]);
+
+            $container->setDefinition('ai.platform.elevenlabs.scoped_http_client', $scopedHttpClientDefinition);
+
+            $httpClientReference = new Reference('ai.platform.elevenlabs.scoped_http_client');
+
             if (\array_key_exists('api_catalog', $platform) && $platform['api_catalog']) {
                 $catalogDefinition = (new Definition(ElevenLabsApiCatalog::class))
                     ->setLazy(true)
                     ->setArguments([
-                        new Reference($platform['http_client']),
-                        $platform['api_key'],
-                        $platform['host'],
+                        $httpClientReference,
                     ])
                     ->addTag('proxy', ['interface' => ModelCatalogInterface::class]);
 
@@ -623,10 +639,10 @@ final class AiBundle extends AbstractBundle
                 ->setLazy(true)
                 ->setArguments([
                     $platform['api_key'],
-                    $platform['host'],
-                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $platform['endpoint'],
+                    $httpClientReference,
                     new Reference('ai.platform.model_catalog.'.$type),
-                    null,
+                    new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])

@@ -14,10 +14,7 @@ use Symfony\AI\Platform\Message\Content\Audio;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(
-    apiKey: env('ELEVEN_LABS_API_KEY'),
-    httpClient: http_client()
-);
+$platform = PlatformFactory::create(env('ELEVEN_LABS_API_KEY'), httpClient: http_client());
 
 $result = $platform->invoke('scribe_v1', Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'));
 

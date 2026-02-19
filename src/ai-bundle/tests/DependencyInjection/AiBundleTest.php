@@ -3895,7 +3895,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($foundOutput, 'Default tool processor should have output tag with full agent ID');
     }
 
-    public function testElevenLabsPlatformCanBeRegistered()
+    public function testElevenLabsPlatformCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -3910,18 +3910,18 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
 
         $definition = $container->getDefinition('ai.platform.elevenlabs');
-
         $this->assertTrue($definition->isLazy());
         $this->assertSame([ElevenLabsPlatformFactory::class, 'create'], $definition->getFactory());
 
         $this->assertCount(6, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
-        $this->assertSame('https://api.elevenlabs.io/v1', $definition->getArgument(1));
+        $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
-        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertSame('ai.platform.elevenlabs.scoped_http_client', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
         $this->assertSame('ai.platform.model_catalog.elevenlabs', (string) $definition->getArgument(3));
-        $this->assertNull($definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.elevenlabs', (string) $definition->getArgument(4));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
         $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
 
@@ -3940,16 +3940,13 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($modelCatalogDefinition->hasTag('proxy'));
         $this->assertSame([['interface' => ModelCatalogInterface::class]], $modelCatalogDefinition->getTag('proxy'));
-    }
 
-    public function testElevenLabsPlatformWithCustomEndpointCanBeRegistered()
-    {
         $container = $this->buildContainer([
             'ai' => [
                 'platform' => [
                     'elevenlabs' => [
+                        'endpoint' => 'https://api.elevenlabs.io/v2',
                         'api_key' => 'foo',
-                        'host' => 'https://api.elevenlabs.io/v2',
                     ],
                 ],
             ],
@@ -3958,7 +3955,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
 
         $definition = $container->getDefinition('ai.platform.elevenlabs');
-
         $this->assertTrue($definition->isLazy());
         $this->assertSame([ElevenLabsPlatformFactory::class, 'create'], $definition->getFactory());
 
@@ -3966,10 +3962,11 @@ class AiBundleTest extends TestCase
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.elevenlabs.io/v2', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
-        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertSame('ai.platform.elevenlabs.scoped_http_client', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
         $this->assertSame('ai.platform.model_catalog.elevenlabs', (string) $definition->getArgument(3));
-        $this->assertNull($definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.elevenlabs', (string) $definition->getArgument(4));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
         $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
 
@@ -3988,10 +3985,7 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($modelCatalogDefinition->hasTag('proxy'));
         $this->assertSame([['interface' => ModelCatalogInterface::class]], $modelCatalogDefinition->getTag('proxy'));
-    }
 
-    public function testElevenLabsPlatformWithCustomHttpClientCanBeRegistered()
-    {
         $container = $this->buildContainer([
             'ai' => [
                 'platform' => [
@@ -4012,12 +4006,13 @@ class AiBundleTest extends TestCase
 
         $this->assertCount(6, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
-        $this->assertSame('https://api.elevenlabs.io/v1', $definition->getArgument(1));
+        $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
-        $this->assertSame('foo', (string) $definition->getArgument(2));
+        $this->assertSame('ai.platform.elevenlabs.scoped_http_client', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
         $this->assertSame('ai.platform.model_catalog.elevenlabs', (string) $definition->getArgument(3));
-        $this->assertNull($definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.elevenlabs', (string) $definition->getArgument(4));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
         $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
 
@@ -4036,10 +4031,7 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($modelCatalogDefinition->hasTag('proxy'));
         $this->assertSame([['interface' => ModelCatalogInterface::class]], $modelCatalogDefinition->getTag('proxy'));
-    }
 
-    public function testElevenLabsPlatformWithApiCatalogCanBeRegistered()
-    {
         $container = $this->buildContainer([
             'ai' => [
                 'platform' => [
@@ -4061,12 +4053,13 @@ class AiBundleTest extends TestCase
 
         $this->assertCount(6, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
-        $this->assertSame('https://api.elevenlabs.io/v1', $definition->getArgument(1));
+        $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
-        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertSame('ai.platform.elevenlabs.scoped_http_client', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
         $this->assertSame('ai.platform.model_catalog.elevenlabs', (string) $definition->getArgument(3));
-        $this->assertNull($definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.elevenlabs', (string) $definition->getArgument(4));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
         $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
 
@@ -4082,11 +4075,9 @@ class AiBundleTest extends TestCase
 
         $this->assertSame(ElevenLabsApiCatalog::class, $modelCatalogDefinition->getClass());
         $this->assertTrue($modelCatalogDefinition->isLazy());
-        $this->assertCount(3, $modelCatalogDefinition->getArguments());
+        $this->assertCount(1, $modelCatalogDefinition->getArguments());
         $this->assertInstanceOf(Reference::class, $modelCatalogDefinition->getArgument(0));
-        $this->assertSame('http_client', (string) $modelCatalogDefinition->getArgument(0));
-        $this->assertSame('foo', $modelCatalogDefinition->getArgument(1));
-        $this->assertSame('https://api.elevenlabs.io/v1', $modelCatalogDefinition->getArgument(2));
+        $this->assertSame('ai.platform.elevenlabs.scoped_http_client', (string) $modelCatalogDefinition->getArgument(0));
 
         $this->assertTrue($modelCatalogDefinition->hasTag('proxy'));
         $this->assertSame([['interface' => ModelCatalogInterface::class]], $modelCatalogDefinition->getTag('proxy'));
@@ -7602,7 +7593,7 @@ class AiBundleTest extends TestCase
                         'api_key' => 'foo',
                     ],
                     'elevenlabs' => [
-                        'host' => 'https://api.elevenlabs.io/v1',
+                        'endpoint' => 'https://api.elevenlabs.io/v1',
                         'api_key' => 'elevenlabs_key_full',
                     ],
                     'failover' => [
