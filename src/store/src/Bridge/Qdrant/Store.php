@@ -266,6 +266,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
+     * Tokenizes text into a sparse vector format for BM25 indexing.
+     * Term frequencies are computed client-side; IDF normalization is handled server-side by Qdrant.
+     *
+     * Note: this implementation does not handle stop words, stemming, or language-specific tokenization.
+     *
      * @return array{indices: list<int>, values: list<float>}
      */
     private function tokenize(string $text): array
