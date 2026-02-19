@@ -462,6 +462,40 @@ You can check if a model supports thinking before enabling it::
         $options['thinking'] = ['type' => 'enabled', 'budget_tokens' => 10000];
     }
 
+Prompt Caching (Anthropic)
+--------------------------
+
+Anthropic supports `prompt caching`_, which can significantly reduce costs and
+latency for repeated prompts. Symfony AI automatically enables prompt caching
+when using the Anthropic bridge by annotating the last user message with a
+``cache_control`` marker.
+
+The caching behavior is configured via the ``cacheRetention`` parameter on the
+:class:`Symfony\\AI\\Platform\\Bridge\\Anthropic\\ModelClient`::
+
+    use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory;
+
+    // Using the PlatformFactory (defaults to 'short')
+    $platform = PlatformFactory::create($apiKey);
+
+    // Explicitly setting the cache retention
+    $platform = PlatformFactory::create($apiKey, cacheRetention: 'long');
+
+    // Disabling prompt caching
+    $platform = PlatformFactory::create($apiKey, cacheRetention: 'none');
+
+Supported values:
+
+* ``short`` (default): 5-minute cache window using Anthropic's ephemeral TTL
+* ``long``: 1-hour cache window (only available on ``api.anthropic.com``)
+* ``none``: disables prompt caching entirely
+
+.. note::
+
+    OpenAI caches prompt prefixes automatically without any configuration needed.
+
+.. _`prompt caching`: https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching
+
 Image Processing
 ----------------
 

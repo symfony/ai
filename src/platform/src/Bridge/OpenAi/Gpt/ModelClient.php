@@ -48,6 +48,11 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        // OpenAI performs automatic prompt caching; no explicit cache_control
+        // annotation is needed and cacheRetention is not an OpenAI concept.
+        // Strip it so it is never forwarded to the Responses API.
+        unset($options['cacheRetention']);
+
         if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
             $schema = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema'];
             $options['text']['format'] = $schema;

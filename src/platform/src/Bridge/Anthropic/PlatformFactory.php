@@ -24,17 +24,21 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class PlatformFactory
 {
+    /**
+     * @param 'none'|'short'|'long' $cacheRetention
+     */
     public static function create(
         #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
+        string $cacheRetention = 'short',
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [new ModelClient($httpClient, $apiKey)],
+            [new ModelClient($httpClient, $apiKey, $cacheRetention)],
             [new ResultConverter()],
             $modelCatalog,
             $contract ?? AnthropicContract::create(),
