@@ -137,26 +137,21 @@ Configure your location in your environment file:
 Token Usage Tracking
 --------------------
 
-Track token usage with the TokenOutputProcessor::
+Token usage is automatically tracked and available in the result metadata::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Platform\Bridge\VertexAi\TokenOutputProcessor;
+    use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
-    $agent = new Agent(
-        $platform,
-        $model,
-        outputProcessors: [new TokenOutputProcessor()],
-        logger: $logger
-    );
-
+    $agent = new Agent($platform, $model);
     $result = $agent->call($messages);
+
     $tokenUsage = $result->getMetadata()->get('token_usage');
 
     assert($tokenUsage instanceof TokenUsage);
 
-    echo 'Prompt Tokens: ' . $tokenUsage->promptTokens . PHP_EOL;
-    echo 'Completion Tokens: ' . $tokenUsage->completionTokens . PHP_EOL;
-    echo 'Total Tokens: ' . $tokenUsage->totalTokens . PHP_EOL;
+    echo 'Prompt Tokens: ' . $tokenUsage->getPromptTokens() . PHP_EOL;
+    echo 'Completion Tokens: ' . $tokenUsage->getCompletionTokens() . PHP_EOL;
+    echo 'Total Tokens: ' . $tokenUsage->getTotalTokens() . PHP_EOL;
 
 Server Tools
 ------------

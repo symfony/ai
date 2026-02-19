@@ -63,7 +63,7 @@ automatically::
         baseUrl: 'https://api.groq.com/openai',
     );
 
-Bu default, the bridge uses the generic bridge for all OpenAI-compatible
+By default, the bridge uses the generic bridge for all OpenAI-compatible
 providers. However, some providers require specialized API. In that case, the
 bridge automatically detects and routes to specialized bridges when installed::
 

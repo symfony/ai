@@ -519,7 +519,7 @@ When using a service reference, the memory service must implement the
 
     final class MyMemoryProvider implements MemoryProviderInterface
     {
-        public function loadMemory(Input $input): array
+        public function load(Input $input): array
         {
             // Return an array of Memory objects containing relevant conversation history
             return [
@@ -793,7 +793,7 @@ Use the :class:`Symfony\\AI\\Agent\\Agent` service to leverage models and tools:
                 Message::ofUser($message),
             );
 
-            return $this->agent->call($messages);
+            return $this->agent->call($messages)->asText();
         }
     }
 

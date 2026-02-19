@@ -46,7 +46,7 @@ Basic multimodal embedding usage example::
     $result = $platform->invoke(
         'voyage-multimodal-3',
         new ImageUrl('https://example.com/image1.jpg'),
-        new Collection(new Text('Hello, world!'), new ImageUrl('https://example.com/image2.jpg')
+        new Collection(new Text('Hello, world!'), new ImageUrl('https://example.com/image2.jpg'))
     );
 
     echo $result->getContent();
