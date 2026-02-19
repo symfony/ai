@@ -1630,6 +1630,8 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+
+                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
             }
         }
 

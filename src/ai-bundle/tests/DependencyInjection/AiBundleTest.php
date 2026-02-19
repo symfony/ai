@@ -192,7 +192,10 @@ class AiBundleTest extends TestCase
 
         $setupStoreCommandDefinition = $container->getDefinition('ai.command.setup_store');
         $this->assertCount(2, $setupStoreCommandDefinition->getArguments());
-        $this->assertSame(['ai.store.mariadb.my_mariadb_store' => ['dimensions' => 1024]], $setupStoreCommandDefinition->getArgument(1));
+        $this->assertSame([
+            'ai.store.mariadb.my_mariadb_store' => ['dimensions' => 1024],
+            'ai.store.mongodb.my_mongo_store' => ['fields' => [['path' => 'metadata.store_code', 'type' => 'filter']]],
+        ], $setupStoreCommandDefinition->getArgument(1));
         $this->assertArrayHasKey('console.command', $setupStoreCommandDefinition->getTags());
 
         $this->assertTrue($container->hasDefinition('ai.command.drop_store'));
@@ -7817,6 +7820,11 @@ class AiBundleTest extends TestCase
                             'index_name' => 'vector_index',
                             'vector_field' => 'embedding',
                             'bulk_write' => true,
+                            'setup_options' => [
+                                'fields' => [
+                                    ['path' => 'metadata.store_code', 'type' => 'filter'],
+                                ],
+                            ],
                         ],
                     ],
                     'neo4j' => [
