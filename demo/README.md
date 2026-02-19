@@ -211,3 +211,26 @@ Create tools in `mate/src/` and register them in `mate/config.php`. See the
 # Test with MCP Inspector
 npx @modelcontextprotocol/inspector ./vendor/bin/mate serve
 ```
+
+## Integration Tests
+
+The demo includes comprehensive Panther-based browser tests that verify all scenarios and profiler integration.
+
+### Running Tests
+
+```shell
+# Run standard unit tests (no API key required)
+vendor/bin/phpunit
+
+# Run Panther integration tests (requires OpenAI API key)
+export OPENAI_API_KEY='your-api-key'
+vendor/bin/bdi driver:chromedriver --install
+symfony server:start -d --port=9080 --no-tls
+vendor/bin/phpunit --testsuite=panther
+```
+
+See [tests/PANTHER_TESTS.md](tests/PANTHER_TESTS.md) for detailed information about the Panther test suite.
+
+### CI Integration
+
+In CI, Panther tests run when the `Run demo tests` label is added to a pull request, similar to the `Run examples` workflow. The CI workflow automatically sets up the required environment and API keys from repository secrets.
