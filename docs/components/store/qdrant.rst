@@ -79,7 +79,7 @@ Usage
 Adding Documents
 ~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Store\Document\Metadata;
     use Symfony\AI\Store\Document\TextDocument;
@@ -105,17 +105,13 @@ and a sparse BM25 vector (term frequencies computed from the ``_text`` metadata)
 Querying Documents
 ~~~~~~~~~~~~~~~~~~
 
-Vector-only search:
-
-.. code-block:: php
+Vector-only search::
 
     use Symfony\AI\Store\Query\VectorQuery;
 
     $results = $store->query(new VectorQuery($embedding), ['limit' => 10]);
 
-Hybrid search (dense + BM25 sparse):
-
-.. code-block:: php
+Hybrid search (dense + BM25 sparse)::
 
     use Symfony\AI\Store\Query\HybridQuery;
 
