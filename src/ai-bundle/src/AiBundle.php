@@ -30,12 +30,9 @@ use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
+use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
-use Symfony\AI\AiBundle\Profiler\TraceableChat;
-use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
-use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
-use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
 use Symfony\AI\Chat\Bridge\Cloudflare\MessageStore as CloudflareMessageStore;
@@ -142,8 +139,6 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-use function Symfony\Component\String\u;
-
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -153,6 +148,7 @@ final class AiBundle extends AbstractBundle
     {
         parent::build($container);
 
+        $container->addCompilerPass(new DebugCompilerPass());
         $container->addCompilerPass(new ProcessorCompilerPass());
     }
 
@@ -180,17 +176,6 @@ final class AiBundle extends AbstractBundle
         $platforms = array_keys($builder->findTaggedServiceIds('ai.platform'));
         if (1 === \count($platforms)) {
             $builder->setAlias(PlatformInterface::class, reset($platforms));
-        }
-        if ($builder->getParameter('kernel.debug')) {
-            foreach ($platforms as $platform) {
-                $traceablePlatformDefinition = (new Definition(TraceablePlatform::class))
-                    ->setDecoratedService($platform, priority: -1024)
-                    ->setArguments([new Reference('.inner')])
-                    ->addTag('ai.traceable_platform')
-                    ->addTag('kernel.reset', ['method' => 'reset']);
-                $suffix = u($platform)->after('ai.platform.')->toString();
-                $builder->setDefinition('ai.traceable_platform.'.$suffix, $traceablePlatformDefinition);
-            }
         }
 
         if ([] !== ($config['agent'] ?? [])) {
@@ -256,21 +241,6 @@ final class AiBundle extends AbstractBundle
             $builder->setAlias(MessageStoreInterface::class, reset($messageStores));
         }
 
-        if ($builder->getParameter('kernel.debug')) {
-            foreach ($messageStores as $messageStore) {
-                $traceableMessageStoreDefinition = (new Definition(TraceableMessageStore::class))
-                    ->setDecoratedService($messageStore, priority: -1024)
-                    ->setArguments([
-                        new Reference('.inner'),
-                        new Reference(ClockInterface::class),
-                    ])
-                    ->addTag('ai.traceable_message_store')
-                    ->addTag('kernel.reset', ['method' => 'reset']);
-                $suffix = u($messageStore)->afterLast('.')->toString();
-                $builder->setDefinition('ai.traceable_message_store.'.$suffix, $traceableMessageStoreDefinition);
-            }
-        }
-
         if ([] === $messageStores) {
             $builder->removeDefinition('ai.command.setup_message_store');
             $builder->removeDefinition('ai.command.drop_message_store');
@@ -290,21 +260,6 @@ final class AiBundle extends AbstractBundle
 
         if (1 === \count($chats)) {
             $builder->setAlias(ChatInterface::class, reset($chats));
-        }
-
-        if ($builder->getParameter('kernel.debug')) {
-            foreach ($chats as $chat) {
-                $traceableChatDefinition = (new Definition(TraceableChat::class))
-                    ->setDecoratedService($chat, priority: -1024)
-                    ->setArguments([
-                        new Reference('.inner'),
-                        new Reference(ClockInterface::class),
-                    ])
-                    ->addTag('ai.traceable_chat')
-                    ->addTag('kernel.reset', ['method' => 'reset']);
-                $suffix = u($chat)->afterLast('.')->toString();
-                $builder->setDefinition('ai.traceable_chat.'.$suffix, $traceableChatDefinition);
-            }
         }
 
         if ([] !== ($config['vectorizer'] ?? [])) {
@@ -1187,16 +1142,6 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.fault_tolerant_toolbox.'.$name, new Definition(FaultTolerantToolbox::class))
                     ->setArguments([new Reference('.inner')])
                     ->setDecoratedService('ai.toolbox.'.$name, priority: -1024);
-            }
-
-            if ($container->getParameter('kernel.debug')) {
-                $traceableToolboxDefinition = (new Definition('ai.traceable_toolbox.'.$name))
-                    ->setClass(TraceableToolbox::class)
-                    ->setArguments([new Reference('.inner')])
-                    ->setDecoratedService('ai.toolbox.'.$name, priority: -1024)
-                    ->addTag('ai.traceable_toolbox')
-                    ->addTag('kernel.reset', ['method' => 'reset']);
-                $container->setDefinition('ai.traceable_toolbox.'.$name, $traceableToolboxDefinition);
             }
 
             $toolProcessorDefinition = (new ChildDefinition('ai.tool.agent_processor.abstract'))

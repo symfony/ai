@@ -27,6 +27,7 @@ use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\AiBundle\AiBundle;
+use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
@@ -7557,6 +7558,8 @@ class AiBundleTest extends TestCase
 
         $extension = (new AiBundle())->getContainerExtension();
         $extension->load($configuration, $container);
+
+        (new DebugCompilerPass())->process($container);
 
         return $container;
     }
