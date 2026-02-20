@@ -26,7 +26,7 @@ final class AssistantMessageNormalizerTest extends TestCase
         $normalizer = new AssistantMessageNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
-            Contract::CONTEXT_MODEL => new Model('gemini-2.5-pro'),
+            Contract::CONTEXT_MODEL => new Model('gemini-2.5-pro', 'Gemini 2.5 Pro'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not an assistant message'));
     }

@@ -46,7 +46,7 @@ final class ModelApiCatalog extends AbstractModelCatalog
     }
 
     /**
-     * @return array<string, array{class: class-string, capabilities: list<Capability>}>
+     * @return array<string, array{class: class-string, label: string, capabilities: list<Capability>}>
      */
     public function getModels(): array
     {
@@ -66,7 +66,7 @@ final class ModelApiCatalog extends AbstractModelCatalog
     }
 
     /**
-     * @return iterable<string, array{class: class-string<Model>, capabilities: list<Capability>}>
+     * @return iterable<string, array{class: class-string<Model>, label: string, capabilities: list<Capability>}>
      */
     private function fetchRemoteModels(): iterable
     {
@@ -85,18 +85,65 @@ final class ModelApiCatalog extends AbstractModelCatalog
             $info = $modelInfo['model_info'] ?? [];
             $mode = $info['mode'] ?? null;
 
+            $label = $this->inferLabel($name, $modelInfo);
+
             if ('embedding' === $mode) {
                 yield $name => [
                     'class' => EmbeddingsModel::class,
+                    'label' => $label,
                     'capabilities' => $this->buildEmbeddingCapabilities($info),
                 ];
             } else {
                 yield $name => [
                     'class' => CompletionsModel::class,
+                    'label' => $label,
                     'capabilities' => $this->buildCompletionsCapabilities($info),
                 ];
             }
         }
+    }
+
+    private function inferLabel(string $name, array $modelInfo): string
+    {
+        // Generic static mapping for well-known generic names
+        $map = [
+            'chat' => 'Chat',
+            'embeddings' => 'Embeddings',
+            'chat_with_image_vision' => 'Chat With Image Vision',
+            'chat_with_complex_json' => 'Chat With Complex JSON',
+            'chat_with_image' => 'Chat With Image',
+        ];
+
+        if (isset($map[$name])) {
+            return $map[$name];
+        }
+
+        // Prefer explicit model key if available (e.g. anthropic.claude-3-haiku-20240307-v1:0)
+        $raw = $modelInfo['model_info']['key'] ?? $modelInfo['litellm_params']['model'] ?? $name;
+
+        // Try to extract Claude patterns like "claude-3-5-haiku" or
+        // anthropic.claude-3-5-sonnet-20240620-v1:0
+        if (preg_match('/claude[-._]?([0-9]+)(?:-([0-9]+))?(?:-([a-z]+))?/i', $raw, $m)) {
+            $major = $m[1] ?? null;
+            $minor = $m[2] ?? null;
+            $suffix = $m[3] ?? null;
+
+            $version = $major;
+            if (null !== $minor) {
+                $version .= '.'.$minor;
+            }
+
+            $label = 'Claude '.trim($version);
+            if ($suffix) {
+                $label .= ' '.ucfirst($suffix);
+            }
+
+            return $label;
+        }
+
+        // Fall back to humanizing the model name (replace -, _, . with spaces and title-case)
+        $human = str_replace(['-', '_', '.'], ' ', $name);
+        return ucwords($human);
     }
 
     /**

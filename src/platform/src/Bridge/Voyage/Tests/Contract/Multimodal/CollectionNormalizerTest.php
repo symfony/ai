@@ -101,7 +101,7 @@ class CollectionNormalizerTest extends TestCase
         yield 'unsupported model' => [
             new Collection(),
             [
-                Contract::CONTEXT_MODEL => new Model('some-model', [Capability::INPUT_MULTIMODAL]),
+                Contract::CONTEXT_MODEL => new Model('some-model', 'Some Model', [Capability::INPUT_MULTIMODAL]),
             ],
             false,
         ];

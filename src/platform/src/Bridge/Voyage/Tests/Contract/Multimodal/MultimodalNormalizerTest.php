@@ -98,7 +98,7 @@ class MultimodalNormalizerTest extends TestCase
 
         yield 'unsupported model' => [
             [$text],
-            new Model('some-model', [Capability::INPUT_MULTIMODAL]),
+            new Model('some-model', 'Some Model', [Capability::INPUT_MULTIMODAL]),
             false,
         ];
 

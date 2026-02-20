@@ -32,7 +32,7 @@ final class MessageBagNormalizerTest extends TestCase
         $normalizer = new MessageBagNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new MessageBag(), context: [
-            Contract::CONTEXT_MODEL => new Model('gemini-2.5-pro'),
+            Contract::CONTEXT_MODEL => new Model('gemini-2.5-pro', 'Gemini 2.5 Pro'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a message bag'));
     }

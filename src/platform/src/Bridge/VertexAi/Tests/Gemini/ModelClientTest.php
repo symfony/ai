@@ -35,7 +35,7 @@ final class ModelClientTest extends TestCase
 
         $client = new ModelClient($httpClient, 'global', 'test');
 
-        $result = $client->request(new Model('gemini-2.0-flash'), $payload);
+        $result = $client->request(new Model('gemini-2.0-flash', 'Gemini 2.0 Flash'), $payload);
         $data = $result->getData();
         $info = $result->getObject()->getInfo();
 
@@ -77,6 +77,6 @@ final class ModelClientTest extends TestCase
         );
 
         $client = new ModelClient($httpClient, 'global', 'test');
-        $client->request(new Model('gemini-2.0-flash'), $payload, ['server_tools' => ['google_search' => true]]);
+        $client->request(new Model('gemini-2.0-flash', 'Gemini 2.0 Flash'), $payload, ['server_tools' => ['google_search' => true]]);
     }
 }

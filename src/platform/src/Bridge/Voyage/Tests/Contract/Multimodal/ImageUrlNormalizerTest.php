@@ -56,6 +56,6 @@ final class ImageUrlNormalizerTest extends TestCase
         yield 'supported' => [$url, new Voyage('voyage-multimodal-3', [Capability::INPUT_MULTIMODAL]), true];
         yield 'not an image' => [[], new Voyage('voyage-multimodal-3', [Capability::INPUT_MULTIMODAL]), false];
         yield 'non-multimodal model' => [$url, new Voyage('voyage-3.5'), false];
-        yield 'unsupported model' => [$url, new Model('gpt-40'), false];
+        yield 'unsupported model' => [$url, new Model('gpt-40', 'GPT-40'), false];
     }
 }
