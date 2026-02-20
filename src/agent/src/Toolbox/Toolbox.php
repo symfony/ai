@@ -57,7 +57,12 @@ final class Toolbox implements ToolboxInterface
         }
 
         $toolsMetadata = [];
+        $processedClasses = [];
         foreach ($this->tools as $tool) {
+            if (in_array($tool::class, $processedClasses, true)) {
+                continue;
+            }
+            $processedClasses[] = $tool::class;
             foreach ($this->toolFactory->getTool($tool::class) as $metadata) {
                 $toolsMetadata[] = $metadata;
             }

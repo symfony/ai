@@ -255,6 +255,21 @@ final class ToolboxTest extends TestCase
         $this->assertSame('Happy Birthday, John! You are 30 years old.', $result->getResult());
     }
 
+    public function testToolboxMapWithMultipleInstancesOfSameClass()
+    {
+        $memoryFactory = (new MemoryToolFactory())
+            ->addTool(ToolNoAttribute1::class, 'happy_birthday_alice', 'Generates birthday message for Alice')
+            ->addTool(ToolNoAttribute1::class, 'happy_birthday_bob', 'Generates birthday message for Bob');
+
+        $toolbox = new Toolbox([new ToolNoAttribute1(), new ToolNoAttribute1()], $memoryFactory);
+
+        $tools = $toolbox->getTools();
+
+        self::assertCount(2, $tools);
+        self::assertSame('happy_birthday_alice', $tools[0]->getName());
+        self::assertSame('happy_birthday_bob', $tools[1]->getName());
+    }
+
     public function testToolboxMapWithOverrideViaChain()
     {
         $factory1 = (new MemoryToolFactory())
