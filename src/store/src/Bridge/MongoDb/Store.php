@@ -207,9 +207,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         );
 
         foreach ($results as $result) {
+            $vector = new Vector($result[$this->vectorFieldName]);
+
+            if (!$withVectors) {
+                unset($result[$this->vectorFieldName]);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: $result['_id'],
-                vector: $withVectors ? new Vector($result[$this->vectorFieldName]) : new NullVector(),
+                vector: $vector,
                 metadata: new Metadata($result['metadata'] ?? []),
                 score: $result['score'],
             );

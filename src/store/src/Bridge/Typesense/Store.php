@@ -160,9 +160,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $id = $document['id'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
 
-        $vector = !\array_key_exists($this->vectorFieldName, $document) || null === $document[$this->vectorFieldName]
-            ? new NullVector()
-            : ($options['include_vectors'] ?? true ? new Vector($document[$this->vectorFieldName]) : new NullVector());
+        $vector = new Vector($document[$this->vectorFieldName]);
+
+        if (!($options['include_vectors'] ?? true)) {
+            unset($document[$this->vectorFieldName]);
+
+            $vector = new NullVector();
+        }
 
         $score = $data['vector_distance'] ?? null;
 

@@ -150,11 +150,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $vectorDocuments = array_map(static fn (array $document): VectorDocument => new VectorDocument(
-            id: $document['id'],
-            vector: $options['include_vectors'] ?? true ? new Vector($document['vector']) : new NullVector(),
-            metadata: new Metadata($document['metadata']),
-        ), $documents);
+        $vectorDocuments = array_map(static function (array $document): VectorDocument {
+            $vector = new Vector($document['vector_field']);
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($document['vector_field']);
+
+                $vector = new NullVector();
+            }
+
+            return new VectorDocument(
+                id: $document['id'],
+                vector: $vector,
+                metadata: new Metadata($document['metadata']),
+            );
+        }, $documents);
 
         if (isset($options['filter'])) {
             $vectorDocuments = array_values(array_filter($vectorDocuments, $options['filter']));

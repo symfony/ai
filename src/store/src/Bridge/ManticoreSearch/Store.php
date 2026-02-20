@@ -195,9 +195,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('Missing "uuid" field in the document data.');
         }
 
-        $vector = !\array_key_exists($this->field, $payload) || null === $payload[$this->field]
-            ? new NullVector()
-            : ($options['include_vectors'] ?? true ? new Vector($payload[$this->field]) : new NullVector());
+        $vector = new Vector($payload[$this->field]);
+
+        if (!($options['include_vectors'] ?? true)) {
+            unset($payload[$this->field]);
+
+            $vector = new NullVector();
+        }
 
         return new VectorDocument(
             id: $payload['uuid'],

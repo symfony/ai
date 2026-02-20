@@ -127,11 +127,19 @@ final class SearchStore implements StoreInterface
      */
     private function convertToVectorDocument(array $data, array $options): VectorDocument
     {
+        $vector = !\array_key_exists($this->vectorFieldName, $data) || null === $data[$this->vectorFieldName]
+            ? new NullVector()
+            : new Vector($data[$this->vectorFieldName]);
+
+        if (!($options['include_vectors'] ?? true)) {
+            unset($data[$this->vectorFieldName]);
+
+            $vector = new NullVector();
+        }
+
         return new VectorDocument(
             id: $data['id'],
-            vector: !\array_key_exists($this->vectorFieldName, $data) || null === $data[$this->vectorFieldName]
-                ? new NullVector()
-                : ($options['include_vectors'] ?? true ? new Vector($data[$this->vectorFieldName]) : new NullVector()),
+            vector: $vector,
             metadata: new Metadata($data),
         );
     }

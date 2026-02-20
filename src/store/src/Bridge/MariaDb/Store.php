@@ -227,9 +227,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
+            $vector = new Vector(json_decode((string) $result['embedding'], true));
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($result['embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: Uuid::fromRfc4122($result['id']),
-                vector: $options['include_vectors'] ?? true ? new Vector(json_decode((string) $result['embedding'], true)) : new NullVector(),
+                vector: $vector,
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true)),
                 score: $result['score'],
             );

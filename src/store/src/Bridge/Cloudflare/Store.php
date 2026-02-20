@@ -153,9 +153,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
     {
         $id = $data['id'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
 
-        $vector = !\array_key_exists('values', $data) || null === $data['values']
-            ? new NullVector()
-            : ($options['include_vectors'] ?? true ? new Vector($data['values']) : new NullVector());
+        $vector = new Vector($data['values']);
+
+        if (!($options['include_vectors'] ?? true)) {
+            unset($data['values']);
+
+            $vector = new NullVector();
+        }
 
         return new VectorDocument(
             id: $id,

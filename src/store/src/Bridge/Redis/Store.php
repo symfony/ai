@@ -204,9 +204,17 @@ class Store implements ManagedStoreInterface, StoreInterface
                 continue;
             }
 
+            $vector = new Vector($data['$.embedding'] ?? []);
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($data['$.embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: $data['$.id'],
-                vector: $options['include_vectors'] ?? true ? new Vector($data['$.embedding'] ?? []) : new NullVector(),
+                vector: $vector,
                 metadata: new Metadata($data['$.metadata'] ?? []),
                 score: $score,
             );

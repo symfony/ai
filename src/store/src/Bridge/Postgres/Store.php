@@ -228,9 +228,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
+            $vector = new Vector($this->fromPgvector($result['embedding']));
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($result['embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: $result['id'],
-                vector: new Vector($this->fromPgvector($result['embedding'])),
+                vector: $vector,
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );
@@ -283,9 +291,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
+            $vector = new Vector($this->fromPgvector($result['embedding']));
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($result['embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: $result['id'],
-                vector: new Vector($this->fromPgvector($result['embedding'])),
+                vector: $vector,
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );
@@ -357,9 +373,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
+            $vector = new Vector($this->fromPgvector($result['embedding']));
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($result['embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: $result['id'],
-                vector: $options['include_vectors'] ?? true ? new Vector($this->fromPgvector($result['embedding'])) : new NullVector(),
+                vector: $vector,
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );

@@ -187,7 +187,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = !\array_key_exists($this->vectorsField, $document['_source']) || null === $document['_source'][$this->vectorsField]
             ? new NullVector()
-            : ($options['include_vectors'] ?? true ? new Vector($document['_source'][$this->vectorsField]) : new NullVector());
+            : new Vector($document['_source'][$this->vectorsField]);
+
+        if (!($options['include_vectors'] ?? true)) {
+            unset($document['_source'][$this->vectorsField]);
+
+            $vector = new NullVector();
+        }
 
         return new VectorDocument(Uuid::fromString($id), $vector, new Metadata(json_decode($document['_source']['metadata'], true)), $document['_score'] ?? null);
     }
