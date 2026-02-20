@@ -168,7 +168,7 @@ Retrieval Augmented Generation
 SimilaritySearch
 ~~~~~~~~~~~~~~~~
 
-Performs a similarity search against a `Store Component`_ to enable RAG (Retrieval Augmented Generation).
+Performs a similarity search against the :doc:`/components/store` to enable RAG (Retrieval Augmented Generation).
 Requires a vectorizer and a configured vector store.
 
 .. code-block:: terminal
@@ -199,4 +199,3 @@ See :doc:`/components/agent` for a full RAG integration example.
 .. _`Ollama Webpage Fetch Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/ollama-webpage-fetch.php
 .. _`Clock Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/clock.php
 .. _`Symfony Clock`: https://symfony.com/doc/current/components/clock.html
-.. _`Store Component`: /components/store
