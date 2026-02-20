@@ -27,5 +27,8 @@ return (new ArrayNodeDefinition('qdrant'))
                 ->defaultValue('Cosine')
             ->end()
             ->booleanNode('async')->end()
+            ->booleanNode('hybrid_enabled')->defaultFalse()->end()
+            ->scalarNode('dense_vector_name')->defaultValue('dense')->end()
+            ->scalarNode('sparse_vector_name')->defaultValue('bm25')->end()
         ->end()
     ->end();
