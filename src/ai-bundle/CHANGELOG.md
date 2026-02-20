@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.6
+---
+
+ * Move debug service decorating to compiler pass to cover user-defined services
+
 0.5
 ---
 
