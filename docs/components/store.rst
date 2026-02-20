@@ -275,5 +275,4 @@ This leads to a store implementing two methods::
 .. _`Supabase`: https://supabase.com/
 .. _`SurrealDB`: https://surrealdb.com/
 .. _`Typesense`: https://typesense.org/
-.. _`Symfony Cache`: https://symfony.com/doc/current/components/cache.html
 .. _`Weaviate`: https://weaviate.io/
