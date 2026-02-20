@@ -166,6 +166,7 @@ final class AbstractModelCatalogTest extends TestCase
                 $this->models = [
                     'test-model' => [
                         'class' => Model::class,
+                        'label' => 'Test Model',
                         'capabilities' => [Capability::INPUT_TEXT],
                     ],
                 ];
