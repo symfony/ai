@@ -441,7 +441,7 @@ Symfony AI ships with a collection of ready-made tool bridges for common tasks l
 geocoding, weather data, file access, and more. See :doc:`agent/tools` for the full list.
 
 Code Examples (with built-in tools)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * `Brave Tool`_
 * `Clock Tool`_
