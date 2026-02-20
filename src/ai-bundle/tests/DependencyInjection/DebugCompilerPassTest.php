@@ -17,12 +17,13 @@ use Symfony\AI\AiBundle\Profiler\TraceableAgent;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
+use Symfony\AI\AiBundle\Profiler\TraceableStore;
 use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-class DebugCompilerPassTest extends TestCase
+final class DebugCompilerPassTest extends TestCase
 {
     public function testProcessAddsTraceableDefinitionsInDebug()
     {
@@ -34,6 +35,7 @@ class DebugCompilerPassTest extends TestCase
         $container->register('ai.chat.main', \stdClass::class)->addTag('ai.chat');
         $container->register('ai.toolbox.my_agent', \stdClass::class)->addTag('ai.toolbox');
         $container->register('ai.agent.my_agent', \stdClass::class)->addTag('ai.agent');
+        $container->register('ai.store.store', \stdClass::class)->addTag('ai.store');
 
         (new DebugCompilerPass())->process($container);
 
@@ -71,6 +73,13 @@ class DebugCompilerPassTest extends TestCase
         $this->assertEquals([new Reference('.inner')], $traceableAgent->getArguments());
         $this->assertTrue($traceableAgent->hasTag('ai.traceable_agent'));
         $this->assertSame([['method' => 'reset']], $traceableAgent->getTag('kernel.reset'));
+
+        $traceableStore = $container->getDefinition('ai.traceable_store.store');
+        $this->assertSame(TraceableStore::class, $traceableStore->getClass());
+        $this->assertSame(['ai.store.store', null, -1024], $traceableStore->getDecoratedService());
+        $this->assertEquals([new Reference('.inner')], $traceableStore->getArguments());
+        $this->assertTrue($traceableStore->hasTag('ai.traceable_store'));
+        $this->assertSame([['method' => 'reset']], $traceableStore->getTag('kernel.reset'));
     }
 
     public function testProcessSkipsWhenDebugDisabled()
@@ -83,6 +92,7 @@ class DebugCompilerPassTest extends TestCase
         $container->register('ai.chat.main', \stdClass::class)->addTag('ai.chat');
         $container->register('ai.toolbox.my_agent', \stdClass::class)->addTag('ai.toolbox');
         $container->register('ai.agent.my_agent', \stdClass::class)->addTag('ai.agent');
+        $container->register('ai.store.store', \stdClass::class)->addTag('ai.store');
 
         (new DebugCompilerPass())->process($container);
 
@@ -91,5 +101,6 @@ class DebugCompilerPassTest extends TestCase
         $this->assertFalse($container->hasDefinition('ai.traceable_chat.main'));
         $this->assertFalse($container->hasDefinition('ai.traceable_toolbox.my_agent'));
         $this->assertFalse($container->hasDefinition('ai.traceable_agent.my_agent'));
+        $this->assertFalse($container->hasDefinition('ai.traceable_store.store'));
     }
 }
