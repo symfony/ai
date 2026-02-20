@@ -1,7 +1,7 @@
 Built-in Tools
 ==============
 
-Symfony AI ships with a collection of ready-made tool bridges that can be added to any agent.
+The Agent component ships with a collection of ready-made tool bridges that can be added to any agent.
 Each bridge is a separate Composer package and provides one or more tools registered via the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute.
 
 .. tip::
