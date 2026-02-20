@@ -10,7 +10,7 @@ Each bridge is a separate Composer package and provides one or more tools regist
     to handle errors gracefully instead of letting them propagate to the agent loop.
 
 Web Search & Content
----------------------
+--------------------
 
 Brave Search
 ~~~~~~~~~~~~
@@ -358,7 +358,7 @@ Returns the current date and time. Compatible with `Symfony Clock`_. No API key 
 `Clock Example`_
 
 Retrieval Augmented Generation
--------------------------------
+------------------------------
 
 SimilaritySearch
 ~~~~~~~~~~~~~~~~
