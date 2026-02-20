@@ -75,6 +75,7 @@ use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
+use Symfony\AI\Platform\Bridge\Ovh\PlatformFactory as OvhPlatformFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory as PerplexityPlatformFactory;
 use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory as ScalewayPlatformFactory;
 use Symfony\AI\Platform\Bridge\TransformersPhp\PlatformFactory as TransformersPhpPlatformFactory;
@@ -1118,6 +1119,30 @@ final class AiBundle extends AbstractBundle
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     new Reference('ai.platform.model_catalog.transformersphp'),
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform');
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('ovh' === $type && isset($platform['api_key'])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-ovh-platform', OvhPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('OVH platform configuration requires "symfony/ai-ovh-platform" package. Try running "composer require symfony/ai-ovh-platform".');
+            }
+
+            $platformId = 'ai.platform.ovh';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(OvhPlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.ovh'),
+                    null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform');
