@@ -17,7 +17,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactoryInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class ChainFactory implements ToolFactoryInterface
+final class ChainFactory implements ToolFactoryInterface, InstanceLocatorInterface
 {
     /**
      * @param iterable<ToolFactoryInterface> $factories
@@ -45,5 +45,19 @@ final class ChainFactory implements ToolFactoryInterface
         if ($invalid === \count($this->factories)) {
             throw ToolException::invalidReference($reference);
         }
+    }
+
+    public function findInstanceByName(string $toolName): ?object
+    {
+        foreach ($this->factories as $factory) {
+            if ($factory instanceof InstanceLocatorInterface) {
+                $instance = $factory->findInstanceByName($toolName);
+                if (null !== $instance) {
+                    return $instance;
+                }
+            }
+        }
+
+        return null;
     }
 }
