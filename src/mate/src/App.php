@@ -35,7 +35,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 final class App
 {
     public const NAME = 'Symfony AI Mate';
-    public const VERSION = '0.4.0';
+    public const VERSION = '0.5.0';
 
     public static function build(ContainerInterface $container): Application
     {
