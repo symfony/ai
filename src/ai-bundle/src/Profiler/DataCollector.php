@@ -25,6 +25,7 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  * @phpstan-import-type PlatformCallData from TraceablePlatform
  * @phpstan-import-type MessageStoreData from TraceableMessageStore
  * @phpstan-import-type ChatData from TraceableChat
+ * @phpstan-import-type AgentData from TraceableAgent
  *
  * @phpstan-type CollectedPlatformCallData array{
  *     model: string,
@@ -57,21 +58,29 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     private readonly array $chats;
 
     /**
+     * @var TraceableAgent[]
+     */
+    private readonly array $agents;
+
+    /**
      * @param iterable<TraceablePlatform>     $platforms
      * @param iterable<TraceableToolbox>      $toolboxes
      * @param iterable<TraceableMessageStore> $messageStores
      * @param iterable<TraceableChat>         $chats
+     * @param iterable<TraceableAgent>        $agents
      */
     public function __construct(
         iterable $platforms,
         iterable $toolboxes,
         iterable $messageStores,
         iterable $chats,
+        iterable $agents,
     ) {
         $this->platforms = iterator_to_array($platforms);
         $this->toolboxes = iterator_to_array($toolboxes);
         $this->messageStores = iterator_to_array($messageStores);
         $this->chats = iterator_to_array($chats);
+        $this->agents = iterator_to_array($agents);
     }
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
@@ -87,6 +96,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
             'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
             'messages' => array_merge(...array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->calls, $this->messageStores)),
             'chats' => array_merge(...array_map(static fn (TraceableChat $chat): array => $chat->calls, $this->chats)),
+            'agents' => array_merge(...array_map(static fn (TraceableAgent $agent): array => $agent->calls, $this->agents)),
         ];
     }
 
@@ -138,6 +148,14 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function getChats(): array
     {
         return $this->data['chats'] ?? [];
+    }
+
+    /**
+     * @return AgentData[]
+     */
+    public function getAgents(): array
+    {
+        return $this->data['agents'] ?? [];
     }
 
     /**
