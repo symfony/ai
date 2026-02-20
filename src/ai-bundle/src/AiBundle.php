@@ -50,6 +50,8 @@ use Symfony\AI\Chat\InMemory\Store as InMemoryMessageStore;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\Albert\PlatformFactory as AlbertPlatformFactory;
+use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatalog;
+use Symfony\AI\Platform\Bridge\AmazeeAi\PlatformFactory as AmazeeAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory as BedrockFactory;
@@ -397,6 +399,41 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'albert']);
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('amazeeai' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-amazee-ai-platform', AmazeeAiPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('amazee.ai platform configuration requires "symfony/ai-amazee-ai-platform" package. Try running "composer require symfony/ai-amazee-ai-platform".');
+            }
+
+            $container->setDefinition('ai.platform.model_catalog.amazeeai', (new Definition(AmazeeAiModelApiCatalog::class))
+                ->setLazy(true)
+                ->setArguments([
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $platform['base_url'],
+                    $platform['api_key'],
+                ])
+                ->addTag('proxy', ['interface' => ModelCatalogInterface::class])
+            );
+
+            $platformId = 'ai.platform.amazeeai';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(AmazeeAiPlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['base_url'],
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.amazeeai'),
+                    null,
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform', ['name' => 'amazeeai']);
 
             $container->setDefinition($platformId, $definition);
 
