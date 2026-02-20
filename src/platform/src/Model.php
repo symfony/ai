@@ -28,12 +28,13 @@ class Model
      * @var array<string, mixed>
      */
     private readonly array $options;
+
     /**
-     * @param non-empty-string     $name
+     * @param non-empty-string                               $name
      * @param non-empty-string|array<int|string, mixed>|null $labelOrCapabilities
-     *        Either the human-readable label (string) or the capabilities array (legacy callers)
-     * @param Capability[]         $capabilities
-     * @param array<string, mixed> $options      The default options for the model usage
+     *                                                                            Either the human-readable label (string) or the capabilities array (legacy callers)
+     * @param Capability[]                                   $capabilities
+     * @param array<string, mixed>                           $options             The default options for the model usage
      */
     public function __construct(
         string $name,

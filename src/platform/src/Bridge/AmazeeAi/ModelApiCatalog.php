@@ -143,6 +143,7 @@ final class ModelApiCatalog extends AbstractModelCatalog
 
         // Fall back to humanizing the model name (replace -, _, . with spaces and title-case)
         $human = str_replace(['-', '_', '.'], ' ', $name);
+
         return ucwords($human);
     }
 

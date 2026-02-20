@@ -154,7 +154,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'claude-opus-4-1-20250805' =>[ 'class' => Claude::class,
+            'claude-opus-4-1-20250805' => ['class' => Claude::class,
                 'label' => 'Claude Opus 4.1',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
