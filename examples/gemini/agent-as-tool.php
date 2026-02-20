@@ -39,11 +39,9 @@ $conversionAgent = new Agent(
     [new SystemPromptInputProcessor('You are a unit conversion specialist. Convert values between different units of measurement and return the result with a brief explanation.')],
 );
 
-// Wrap both agents as tools
 $mathTool = new Subagent($mathAgent);
 $conversionTool = new Subagent($conversionAgent);
 
-// Use MemoryToolFactory to register each subagent tool with its own metadata
 $memoryFactory = new MemoryToolFactory();
 $memoryFactory->addTool(
     $mathTool,
@@ -56,7 +54,6 @@ $memoryFactory->addTool(
     'Converts values between units of measurement (e.g. km to miles, kg to pounds, Celsius to Fahrenheit).',
 );
 
-// Combine with ReflectionToolFactory using ChainFactory
 $chainFactory = new ChainFactory([
     $memoryFactory,
     new ReflectionToolFactory(),
