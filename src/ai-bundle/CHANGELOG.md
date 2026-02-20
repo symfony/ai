@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `setup_options` configuration for MongoDB store to pass extra fields to `ai:store:setup`
+ * Add `ovh` support for platform configuration
 
 0.4
 ---

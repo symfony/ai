@@ -7505,6 +7505,32 @@ class AiBundleTest extends TestCase
         }
     }
 
+    public function testOvhPlatformConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ovh' => [
+                        'api_key' => 'ovh-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.ovh'));
+
+        $definition = $container->getDefinition('ai.platform.ovh');
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(5, $arguments);
+        $this->assertSame('ovh-test-key', $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('http_client', (string) $arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('ai.platform.model_catalog.ovh', (string) $arguments[2]);
+        $this->assertNull($definition->getArgument(3));
+    }
+
     /**
      * @param array<string, mixed> $configuration
      */
@@ -7625,6 +7651,9 @@ class AiBundleTest extends TestCase
                     ],
                     'ollama' => [
                         'endpoint' => 'http://127.0.0.1:11434',
+                    ],
+                    'ovh' => [
+                        'api_key' => 'ovh_key_full',
                     ],
                     'cerebras' => [
                         'api_key' => 'csk-cerebras_key_full',
