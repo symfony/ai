@@ -88,26 +88,27 @@ Similarity Search Examples
 Supported Stores
 ----------------
 
+See :doc:`store/bridges` for installation and configuration details for all supported bridges:
+
 * `Azure AI Search`_
-* `Chroma`_ (requires ``codewithkyrian/chromadb-php`` as additional dependency)
+* `ChromaDB`_ (requires ``codewithkyrian/chromadb-php``)
 * `ClickHouse`_
-* `Cloudflare`_
+* `Cloudflare Vectorize`_
 * `Elasticsearch`_
-* `InMemory`_
-* `Manticore Search`_
-* `MariaDB`_ (requires ``ext-pdo``)
+* InMemory & Symfony Cache (for development and testing)
+* `ManticoreSearch`_
+* `MariaDB`_ (requires ``ext-pdo``, MariaDB 11.7+)
 * `Meilisearch`_
 * `Milvus`_
-* `MongoDB Atlas`_ (requires ``mongodb/mongodb`` as additional dependency)
+* `MongoDB Atlas`_ (requires ``mongodb/mongodb``)
 * `Neo4j`_
 * `OpenSearch`_
-* `Pinecone`_ (requires ``probots-io/pinecone-php`` as additional dependency)
-* `Postgres`_ (requires ``ext-pdo``)
+* `Pinecone`_ (requires ``probots-io/pinecone-php``)
+* `Postgres`_ with pgvector (requires ``ext-pdo``)
 * `Qdrant`_
-* `Redis`_
-* `Supabase`_ (requires manual database setup)
+* `Redis Stack`_ (requires ``ext-redis``)
+* `Supabase`_
 * `SurrealDB`_
-* `Symfony Cache`_ (requires ``symfony/cache`` as additional dependency)
 * `Typesense`_
 * `Weaviate`_
 
@@ -231,6 +232,12 @@ This leads to a store implementing two methods::
         }
     }
 
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+
+    store/bridges
+
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
 .. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php
 .. _`Similarity Search with Cloudflare (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cloudflare.php
@@ -250,24 +257,22 @@ This leads to a store implementing two methods::
 .. _`Similarity Search with Supabase (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/supabase.php
 .. _`Similarity Search with Weaviate (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/weaviate.php
 .. _`Azure AI Search`: https://azure.microsoft.com/products/ai-services/ai-search
-.. _`Chroma`: https://www.trychroma.com/
+.. _`ChromaDB`: https://www.trychroma.com/
 .. _`ClickHouse`: https://clickhouse.com/
-.. _`Cloudflare`: https://developers.cloudflare.com/vectorize/
+.. _`Cloudflare Vectorize`: https://developers.cloudflare.com/vectorize/
 .. _`Elasticsearch`: https://www.elastic.co/elasticsearch
-.. _`Manticore Search`: https://manticoresearch.com/
+.. _`ManticoreSearch`: https://manticoresearch.com/
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
-.. _`Pinecone`: https://www.pinecone.io/
-.. _`Postgres`: https://www.postgresql.org/about/news/pgvector-070-released-2852/
 .. _`Meilisearch`: https://www.meilisearch.com/
 .. _`Milvus`: https://milvus.io/
 .. _`MongoDB Atlas`: https://www.mongodb.com/atlas
-.. _`SurrealDB`: https://surrealdb.com/
-.. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
-.. _`Qdrant`: https://qdrant.tech/
-.. _`Redis`: https://redis.io/
 .. _`Neo4j`: https://neo4j.com/
 .. _`OpenSearch`: https://opensearch.org/
-.. _`Typesense`: https://typesense.org/
-.. _`Symfony Cache`: https://symfony.com/doc/current/components/cache.html
-.. _`Weaviate`: https://weaviate.io/
+.. _`Pinecone`: https://www.pinecone.io/
+.. _`Postgres`: https://www.postgresql.org/about/news/pgvector-070-released-2852/
+.. _`Qdrant`: https://qdrant.tech/
+.. _`Redis Stack`: https://redis.io/docs/stack/
 .. _`Supabase`: https://supabase.com/
+.. _`SurrealDB`: https://surrealdb.com/
+.. _`Typesense`: https://typesense.org/
+.. _`Weaviate`: https://weaviate.io/
