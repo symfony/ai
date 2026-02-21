@@ -6,6 +6,7 @@ CHANGELOG
 
  * Move debug service decorating to compiler pass to cover user-defined services
  * Add `TraceableAgent`
+ * Add support for VertexAI global endpoint with API key authentication (no `location`/`project_id` required)
 
 0.5
 ---

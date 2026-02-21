@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.6
+---
+
+ * Add support for VertexAI global endpoint with API key authentication
+
 0.4
 ---
 
