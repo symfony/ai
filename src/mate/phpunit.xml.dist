@@ -11,6 +11,7 @@
     <testsuites>
         <testsuite name="Symony AI Mate Test Suite">
             <directory>tests</directory>
+            <directory>src/Bridge/*/Tests</directory>
         </testsuite>
     </testsuites>
 

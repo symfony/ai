@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.5
+---
+
+ * Add `MailerCollectorFormatter` to expose Symfony Mailer data (recipients, body preview, links, attachments, transport) to AI via the profiler
+
 0.3
 ---
 
