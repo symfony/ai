@@ -167,6 +167,92 @@ final class DeferredResultTest extends TestCase
         $this->assertSame(123456, $tokenUsage->getPromptTokens());
     }
 
+    public function testOnResolvedCallbackRunsWhenResultGetsResolved()
+    {
+        $resolvedCount = 0;
+        $deferredResult = new DeferredResult(
+            new PlainConverter(new TextResult('resolved')),
+            new InMemoryRawResult(),
+        );
+        $deferredResult->onResolved(static function () use (&$resolvedCount): void {
+            ++$resolvedCount;
+        });
+
+        $this->assertEquals(0, $resolvedCount);
+
+        $deferredResult->asText();
+
+        $this->assertEquals(1, $resolvedCount);
+    }
+
+    public function testOnResolvedCallbackRunsWhenStreamStopsEarly()
+    {
+        $resolvedCount = 0;
+        $deferredResult = new DeferredResult(
+            new PlainConverter(new StreamResult((static function (): \Generator {
+                yield 'part 1';
+                yield 'part 2';
+            })())),
+            new InMemoryRawResult(),
+        );
+        $deferredResult->onResolved(static function () use (&$resolvedCount): void {
+            ++$resolvedCount;
+        });
+
+        $stream = $deferredResult->asStream();
+        $this->assertTrue($stream->valid());
+        $this->assertSame('part 1', $stream->current());
+        $this->assertEquals(0, $resolvedCount);
+
+        unset($stream);
+        gc_collect_cycles();
+
+        $this->assertEquals(1, $resolvedCount);
+    }
+
+    public function testOnResolvedCallbackRunsImmediatelyWhenAlreadyResolved()
+    {
+        $resolvedCount = 0;
+        $deferredResult = new DeferredResult(
+            new PlainConverter(new TextResult('resolved')),
+            new InMemoryRawResult(),
+        );
+
+        $deferredResult->asText();
+        $deferredResult->onResolved(static function () use (&$resolvedCount): void {
+            ++$resolvedCount;
+        });
+
+        $this->assertEquals(1, $resolvedCount);
+    }
+
+    public function testOnResolvedCallbackRunsWhenGetResultThrows()
+    {
+        $httpResponse = $this->createStub(SymfonyHttpResponse::class);
+        $rawHttpResult = new RawHttpResult($httpResponse);
+
+        $resultConverter = $this->createMock(ResultConverterInterface::class);
+        $resultConverter->expects($this->once())
+            ->method('convert')
+            ->willThrowException(new \RuntimeException('test exception'));
+
+        $resolvedCount = 0;
+        $deferredResult = new DeferredResult($resultConverter, $rawHttpResult);
+        $deferredResult->onResolved(static function () use (&$resolvedCount): void {
+            ++$resolvedCount;
+        });
+
+        $this->assertEquals(0, $resolvedCount);
+
+        try {
+            $deferredResult->asText();
+            $this->fail('Expected RuntimeException was not thrown');
+        } catch (\RuntimeException) {
+        }
+
+        $this->assertEquals(1, $resolvedCount);
+    }
+
     /**
      * Workaround for low deps because mocking the ResponseInterface leads to an exception with
      * mock creation "Type Traversable|object|array|string|null contains both object and a class type"
