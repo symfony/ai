@@ -15,6 +15,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RequestCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TranslationCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -55,9 +56,15 @@ return static function (ContainerConfigurator $configurator) {
 
         // Built-in collector formatters
         $services->set(RequestCollectorFormatter::class)
+            ->lazy()
             ->tag('ai_mate.profiler_collector_formatter');
 
         $services->set(ExceptionCollectorFormatter::class)
+            ->lazy()
+            ->tag('ai_mate.profiler_collector_formatter');
+
+        $services->set(TranslationCollectorFormatter::class)
+            ->lazy()
             ->tag('ai_mate.profiler_collector_formatter');
 
         // MCP Capabilities
