@@ -273,6 +273,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Store\\Bridge\\MariaDb\\.*
+    - name: S3Vectors
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\S3Vectors\\.*
     - name: MeilisearchStore
       collectors:
         - type: classLike
@@ -510,6 +514,9 @@ deptrac:
       - StoreComponent
       - PlatformComponent
     MariaDbStore:
+      - StoreComponent
+      - PlatformComponent
+    S3Vectors:
       - StoreComponent
       - PlatformComponent
     MeilisearchStore:

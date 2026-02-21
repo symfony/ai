@@ -85,6 +85,7 @@
         "symfony/ai-redis-message-store": "^0.5",
         "symfony/ai-redis-store": "^0.5",
         "symfony/ai-replicate-platform": "^0.5",
+        "symfony/ai-s3vectors-store": "^0.6",
         "symfony/ai-scaleway-platform": "^0.5",
         "symfony/ai-session-message-store": "^0.5",
         "symfony/ai-store": "^0.5",

@@ -105,6 +105,7 @@ Supported Stores
 * `Postgres`_ (requires ``ext-pdo``)
 * `Qdrant`_
 * `Redis`_
+* `S3 Vectors`_
 * `Supabase`_ (requires manual database setup)
 * `SurrealDB`_
 * `Symfony Cache`_ (requires ``symfony/cache`` as additional dependency)
@@ -265,6 +266,7 @@ This leads to a store implementing two methods::
 .. _`InMemory`: https://www.php.net/manual/en/language.types.array.php
 .. _`Qdrant`: https://qdrant.tech/
 .. _`Redis`: https://redis.io/
+.. _`S3 Vectors`: https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors.html
 .. _`Neo4j`: https://neo4j.com/
 .. _`OpenSearch`: https://opensearch.org/
 .. _`Typesense`: https://typesense.org/
