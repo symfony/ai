@@ -37,7 +37,7 @@ final class TemplateRendererListenerTest extends TestCase
         ]);
 
         $this->listener = new TemplateRendererListener($registry);
-        $this->model = new Model('gpt-4o');
+        $this->model = new Model('gpt-4o', 'GPT-4o');
     }
 
     public function testRendersTemplateWhenTemplateVarsProvided()

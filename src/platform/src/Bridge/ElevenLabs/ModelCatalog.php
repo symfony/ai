@@ -20,13 +20,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: class-string, capabilities: list<string>}> $additionalModels
+     * @param array<string, array{class: class-string, label: string, capabilities: list<string>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'eleven_v3' => [
                 'class' => ElevenLabs::class,
+                'label' => 'ElevenLabs V3 (TTS)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
@@ -35,6 +36,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'eleven_ttv_v3' => [
                 'class' => ElevenLabs::class,
+                'label' => 'ElevenLabs TTV V3 (TTS)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
@@ -43,6 +45,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'eleven_multilingual_v2' => [
                 'class' => ElevenLabs::class,
+                'label' => 'ElevenLabs Multilingual V2 (TTS)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
@@ -51,6 +54,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'eleven_flash_v2_5' => [
                 'class' => ElevenLabs::class,
+                'label' => 'ElevenLabs Flash V2.5 (TTS)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
@@ -59,6 +63,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'eleven_flashv2' => [
                 'class' => ElevenLabs::class,
+                'label' => 'ElevenLabs Flash V2 (TTS)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
@@ -67,6 +72,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'eleven_turbo_v2_5' => [
                 'class' => ElevenLabs::class,
+                'label' => 'ElevenLabs Turbo V2.5 (TTS)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
@@ -75,6 +81,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'eleven_turbo_v2' => [
                 'class' => ElevenLabs::class,
+                'label' => 'ElevenLabs Turbo V2 (TTS)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
@@ -83,6 +90,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'eleven_multilingual_sts_v2' => [
                 'class' => ElevenLabs::class,
+                'label' => 'ElevenLabs Multilingual STS V2 (TTS)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
@@ -91,6 +99,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'eleven_multilingual_ttv_v2' => [
                 'class' => ElevenLabs::class,
+                'label' => 'ElevenLabs Multilingual TTV V2 (TTS)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
@@ -99,6 +108,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'eleven_english_sts_v2' => [
                 'class' => ElevenLabs::class,
+                'label' => 'ElevenLabs English STS V2 (TTS)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
@@ -107,6 +117,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'scribe_v1' => [
                 'class' => ElevenLabs::class,
+                'label' => 'Scribe V1 (STT)',
                 'capabilities' => [
                     Capability::INPUT_AUDIO,
                     Capability::OUTPUT_TEXT,
@@ -115,6 +126,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'scribe_v1_experimental' => [
                 'class' => ElevenLabs::class,
+                'label' => 'Scribe V1 Experimental (STT)',
                 'capabilities' => [
                     Capability::INPUT_AUDIO,
                     Capability::OUTPUT_TEXT,

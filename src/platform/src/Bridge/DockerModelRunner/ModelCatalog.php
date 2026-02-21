@@ -20,7 +20,7 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: class-string, capabilities: list<string>}> $additionalModels
+     * @param array<string, array{class: class-string, capabilities: list<string>, label: string}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
@@ -28,6 +28,7 @@ final class ModelCatalog extends AbstractModelCatalog
             // Completions models
             'ai/gemma3n' => [
                 'class' => Completions::class,
+                'label' => 'Gemma 3 Nano',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -35,6 +36,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/gemma3' => [
                 'class' => Completions::class,
+                'label' => 'Gemma 3',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -42,6 +44,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/qwen2.5' => [
                 'class' => Completions::class,
+                'label' => 'Qwen 2.5',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -49,6 +52,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/qwen3' => [
                 'class' => Completions::class,
+                'label' => 'Qwen 3',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -56,6 +60,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/qwen3-coder' => [
                 'class' => Completions::class,
+                'label' => 'Qwen 3 Coder',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -63,6 +68,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/llama3.1' => [
                 'class' => Completions::class,
+                'label' => 'Llama 3.1',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -70,6 +76,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/llama3.2' => [
                 'class' => Completions::class,
+                'label' => 'Llama 3.2',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -77,6 +84,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/llama3.3' => [
                 'class' => Completions::class,
+                'label' => 'Llama 3.3',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -84,6 +92,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/mistral' => [
                 'class' => Completions::class,
+                'label' => 'Mistral',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -91,6 +100,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/mistral-nemo' => [
                 'class' => Completions::class,
+                'label' => 'Mistral Nemo',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -98,6 +108,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/phi4' => [
                 'class' => Completions::class,
+                'label' => 'Phi 4',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -105,6 +116,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/deepseek-r1-distill-llama' => [
                 'class' => Completions::class,
+                'label' => 'DeepSeek R1 Distill Llama',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -112,6 +124,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/seed-oss' => [
                 'class' => Completions::class,
+                'label' => 'Seed-OSS',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -119,6 +132,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/gpt-oss' => [
                 'class' => Completions::class,
+                'label' => 'GPT-OSS',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -126,6 +140,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/smollm2' => [
                 'class' => Completions::class,
+                'label' => 'SmolLM 2',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -133,6 +148,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/smollm3' => [
                 'class' => Completions::class,
+                'label' => 'SmolLM 3',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -141,6 +157,7 @@ final class ModelCatalog extends AbstractModelCatalog
             // Embeddings models
             'ai/nomic-embed-text-v1.5' => [
                 'class' => Embeddings::class,
+                'label' => 'Nomic Embed Text v1.5 (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
@@ -148,6 +165,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/mxbai-embed-large' => [
                 'class' => Embeddings::class,
+                'label' => 'MXBai Embed Large (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
@@ -155,6 +173,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/embeddinggemma' => [
                 'class' => Embeddings::class,
+                'label' => 'Embedding Gemma (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
@@ -162,6 +181,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ai/granite-embedding-multilingual' => [
                 'class' => Embeddings::class,
+                'label' => 'Granite Embedding Multilingual (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,

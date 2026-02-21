@@ -23,13 +23,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: class-string<Model>, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: class-string<Model>, label: string, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'openweight-small' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Openweight Small',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -38,6 +39,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'openweight-medium' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Openweight Medium',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -46,6 +48,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'openweight-large' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Openweight Large',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -54,6 +57,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'openweight-embeddings' => [
                 'class' => EmbeddingsModel::class,
+                'label' => 'Openweight Embeddings (Embeddings)',
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ],
         ];

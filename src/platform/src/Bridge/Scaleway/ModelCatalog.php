@@ -20,13 +20,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: string, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: string, label: string, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'deepseek-r1-distill-llama-70b' => [
                 'class' => Scaleway::class,
+                'label' => 'DeepSeek R1 Distill Llama 70B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -37,6 +38,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemma-3-27b-it' => [
                 'class' => Scaleway::class,
+                'label' => 'Gemma 3 27B IT',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -47,6 +49,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.1-8b-instruct' => [
                 'class' => Scaleway::class,
+                'label' => 'Llama 3.1 8B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -57,6 +60,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.3-70b-instruct' => [
                 'class' => Scaleway::class,
+                'label' => 'Llama 3.3 70B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -67,6 +71,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'devstral-small-2505' => [
                 'class' => Scaleway::class,
+                'label' => 'Devstral Small',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -77,6 +82,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'mistral-nemo-instruct-2407' => [
                 'class' => Scaleway::class,
+                'label' => 'Mistral Nemo Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -87,6 +93,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'pixtral-12b-2409' => [
                 'class' => Scaleway::class,
+                'label' => 'Pixtral 12B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -98,6 +105,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'mistral-small-3.2-24b-instruct-2506' => [
                 'class' => Scaleway::class,
+                'label' => 'Mistral Small 3.2 24B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -108,6 +116,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-oss-120b' => [
                 'class' => Scaleway::class,
+                'label' => 'GPT-OSS 120B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -118,6 +127,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'qwen3-coder-30b-a3b-instruct' => [
                 'class' => Scaleway::class,
+                'label' => 'Qwen3 Coder 30B A3B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -128,6 +138,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'qwen3-235b-a22b-instruct-2507' => [
                 'class' => Scaleway::class,
+                'label' => 'Qwen3 235B A22B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -138,6 +149,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'bge-multilingual-gemma2' => [
                 'class' => Embeddings::class,
+                'label' => 'BGE Multilingual Gemma2 (Embeddings)',
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ],
         ];

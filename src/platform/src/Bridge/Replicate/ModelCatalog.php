@@ -21,13 +21,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: class-string, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: class-string, label: string, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'llama-3.3-70B-Instruct' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.3 70B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -35,6 +36,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.2-90b-vision-instruct' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.2 90B Vision Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -42,6 +44,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.2-11b-vision-instruct' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.2 11B Vision Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -49,6 +52,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.2-3b' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.2 3B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -56,6 +60,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.2-3b-instruct' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.2 3B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -63,6 +68,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.2-1b' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.2 1B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -70,6 +76,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.2-1b-instruct' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.2 1B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -77,6 +84,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.1-405b-instruct' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.1 405B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -84,6 +92,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.1-70b' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.1 70B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -91,6 +100,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3-70b-instruct' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3 70B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -98,6 +108,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.1-8b' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.1 8B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -105,6 +116,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3.1-8b-instruct' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3.1 8B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -112,6 +124,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3-70b' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3 70B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -119,6 +132,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3-8b-instruct' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3 8B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -126,6 +140,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama-3-8b' => [
                 'class' => Llama::class,
+                'label' => 'Llama 3 8B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,

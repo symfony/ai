@@ -20,13 +20,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: string, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: string, label: string, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'gemini-3-flash-preview' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 3 Flash',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -39,6 +40,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-3-pro-preview' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 3 Pro',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -51,6 +53,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-3-pro-image-preview' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 3 Pro Vision',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -60,6 +63,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.5-flash-image' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 2.5 Flash Vision',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -69,6 +73,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.5-flash' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 2.5 Flash',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -81,6 +86,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.5-pro' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 2.5 Pro',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -93,6 +99,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.5-flash-lite' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 2.5 Flash Lite',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -105,6 +112,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.0-flash' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 2.0 Flash',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -116,6 +124,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.0-pro-exp-02-05' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 2.0 Pro',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -127,6 +136,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.0-flash-lite-preview-02-05' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 2.0 Flash Lite',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -138,6 +148,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.0-flash-thinking-exp-01-21' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 2.0 Flash Thinking',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -149,6 +160,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-1.5-flash' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 1.5 Flash',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -160,6 +172,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.5-flash-preview-tts' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 2.5 Flash (TTS)',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_AUDIO,
@@ -168,6 +181,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.5-pro-preview-tts' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 2.5 Pro (TTS)',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_AUDIO,
@@ -176,14 +190,17 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-embedding-exp-03-07' => [
                 'class' => Embeddings::class,
+                'label' => 'Gemini Embedding (Embeddings)',
                 'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'text-embedding-004' => [
                 'class' => Embeddings::class,
+                'label' => 'Text Embedding 004 (Embeddings)',
                 'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             'embedding-001' => [
                 'class' => Embeddings::class,
+                'label' => 'Embedding 001 (Embeddings)',
                 'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
         ];

@@ -26,7 +26,7 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: class-string, capabilities: list<string>}> $additionalModels
+     * @param array<string, array{class: class-string, label: string, capabilities: list<string>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
@@ -34,6 +34,7 @@ final class ModelCatalog extends AbstractModelCatalog
             // Gemini models
             'gemini-3-pro-preview' => [
                 'class' => Gemini::class,
+                'label' => 'Gemini 3 Pro Preview',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -46,6 +47,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.5-pro' => [
                 'class' => GeminiModel::class,
+                'label' => 'Gemini 2.5 Pro',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -59,6 +61,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.5-flash' => [
                 'class' => GeminiModel::class,
+                'label' => 'Gemini 2.5 Flash',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -72,6 +75,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.0-flash' => [
                 'class' => GeminiModel::class,
+                'label' => 'Gemini 2.0 Flash',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -84,6 +88,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.5-flash-lite' => [
                 'class' => GeminiModel::class,
+                'label' => 'Gemini 2.5 Flash Lite',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -97,6 +102,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemini-2.0-flash-lite' => [
                 'class' => GeminiModel::class,
+                'label' => 'Gemini 2.0 Flash Lite',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -110,6 +116,7 @@ final class ModelCatalog extends AbstractModelCatalog
             // Embeddings models
             'gemini-embedding-001' => [
                 'class' => EmbeddingsModel::class,
+                'label' => 'Gemini Embedding 001 (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,
@@ -118,6 +125,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'text-embedding-005' => [
                 'class' => EmbeddingsModel::class,
+                'label' => 'Text Embedding 005 (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,
@@ -126,6 +134,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'text-multilingual-embedding-002' => [
                 'class' => EmbeddingsModel::class,
+                'label' => 'Text Multilingual Embedding 002 (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,

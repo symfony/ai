@@ -21,13 +21,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: class-string<Model>, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: class-string<Model>, capabilities: list<Capability>, label: string}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'deepseek-r1' => [
                 'class' => Ollama::class,
+                'label' => 'DeepSeek R1',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -37,6 +38,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-oss' => [
                 'class' => Ollama::class,
+                'label' => 'GPT-OSS',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -46,6 +48,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama3.1' => [
                 'class' => Ollama::class,
+                'label' => 'Llama 3.1',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -55,6 +58,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama3.2' => [
                 'class' => Ollama::class,
+                'label' => 'Llama 3.2',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -64,6 +68,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama3' => [
                 'class' => Ollama::class,
+                'label' => 'Llama 3',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -73,6 +78,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'mistral' => [
                 'class' => Ollama::class,
+                'label' => 'Mistral',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -82,6 +88,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'qwen3' => [
                 'class' => Ollama::class,
+                'label' => 'Qwen 3',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -91,6 +98,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'qwen' => [
                 'class' => Ollama::class,
+                'label' => 'Qwen',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -100,6 +108,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'qwen2' => [
                 'class' => Ollama::class,
+                'label' => 'Qwen 2',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -109,6 +118,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'qwen2.5' => [
                 'class' => Ollama::class,
+                'label' => 'Qwen 2.5',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -118,6 +128,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'qwen2.5-coder' => [
                 'class' => Ollama::class,
+                'label' => 'Qwen 2.5 Coder',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -127,6 +138,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemma3n' => [
                 'class' => Ollama::class,
+                'label' => 'Gemma 3 Nano',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -135,6 +147,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemma3' => [
                 'class' => Ollama::class,
+                'label' => 'Gemma 3',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -143,6 +156,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'qwen2.5vl' => [
                 'class' => Ollama::class,
+                'label' => 'Qwen 2.5 VL',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -151,6 +165,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llava' => [
                 'class' => Ollama::class,
+                'label' => 'LLaVA',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -159,6 +174,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'phi3' => [
                 'class' => Ollama::class,
+                'label' => 'Phi 3',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -167,6 +183,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemma2' => [
                 'class' => Ollama::class,
+                'label' => 'Gemma 2',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -175,6 +192,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gemma' => [
                 'class' => Ollama::class,
+                'label' => 'Gemma',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -183,6 +201,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'llama2' => [
                 'class' => Ollama::class,
+                'label' => 'Llama 2',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -191,6 +210,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'nomic-embed-text' => [
                 'class' => Ollama::class,
+                'label' => 'Nomic Embed Text (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,
@@ -199,6 +219,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'bge-m3' => [
                 'class' => Ollama::class,
+                'label' => 'BGE-M3 (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,
@@ -207,6 +228,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'all-minilm' => [
                 'class' => Ollama::class,
+                'label' => 'All MiniLM (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MULTIPLE,

@@ -55,6 +55,6 @@ final class TextNormalizerTest extends TestCase
         yield 'supported' => [$text, new Voyage('voyage-multimodal-3', [Capability::INPUT_MULTIMODAL]), true];
         yield 'not text' => [[], new Voyage('voyage-multimodal-3', [Capability::INPUT_MULTIMODAL]), false];
         yield 'non-multimodal model' => [$text, new Voyage('voyage-3.5'), false];
-        yield 'unsupported model' => [$text, new Model('gpt-40'), false];
+        yield 'unsupported model' => [$text, new Model('gpt-40', 'GPT-40'), false];
     }
 }

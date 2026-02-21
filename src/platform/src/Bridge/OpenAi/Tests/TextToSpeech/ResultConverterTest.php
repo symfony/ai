@@ -36,7 +36,7 @@ final class ResultConverterTest extends TestCase
     public function testDoesntSupportOtherModels()
     {
         $converter = new ResultConverter();
-        $model = new Model('test-model');
+        $model = new Model('test-model', 'Test Model');
 
         $this->assertFalse($converter->supports($model));
     }

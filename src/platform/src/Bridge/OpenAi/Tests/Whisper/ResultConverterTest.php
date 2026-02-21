@@ -38,7 +38,7 @@ final class ResultConverterTest extends TestCase
 
     public function testDoesNotSupportOtherModels()
     {
-        $this->assertFalse($this->resultConverter->supports(new Model('generic-model')));
+        $this->assertFalse($this->resultConverter->supports(new Model('generic-model', 'Generic Model')));
     }
 
     public function testConvertNonVerboseResult()

@@ -25,7 +25,11 @@ interface ModelCatalogInterface
     public function getModel(string $modelName): Model;
 
     /**
-     * @return array<string, array{class: string, capabilities: list<Capability>}>
+     * @return array<string, array{
+     *     class: string,
+     *     label: string,
+     *     capabilities: list<Capability>
+     * }>
      */
     public function getModels(): array;
 }

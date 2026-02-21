@@ -19,21 +19,28 @@ final class ModelTest extends TestCase
 {
     public function testReturnsName()
     {
-        $model = new Model('gpt-4');
+        $model = new Model('gpt-4', 'GPT-4');
 
         $this->assertSame('gpt-4', $model->getName());
     }
 
+    public function testReturnsLabel()
+    {
+        $model = new Model('gpt-4', 'GPT-4');
+
+        $this->assertSame('GPT-4', $model->getLabel());
+    }
+
     public function testReturnsCapabilities()
     {
-        $model = new Model('gpt-4', [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT]);
+        $model = new Model('gpt-4', 'GPT-4', [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT]);
 
         $this->assertSame([Capability::INPUT_TEXT, Capability::OUTPUT_TEXT], $model->getCapabilities());
     }
 
     public function testChecksSupportForCapability()
     {
-        $model = new Model('gpt-4', [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT]);
+        $model = new Model('gpt-4', 'GPT-4', [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT]);
 
         $this->assertTrue($model->supports(Capability::INPUT_TEXT));
         $this->assertTrue($model->supports(Capability::OUTPUT_TEXT));
@@ -42,7 +49,7 @@ final class ModelTest extends TestCase
 
     public function testReturnsEmptyCapabilitiesByDefault()
     {
-        $model = new Model('gpt-4');
+        $model = new Model('gpt-4', 'GPT-4');
 
         $this->assertSame([], $model->getCapabilities());
     }
@@ -53,14 +60,14 @@ final class ModelTest extends TestCase
             'temperature' => 0.7,
             'max_tokens' => 1024,
         ];
-        $model = new Model('gpt-4', [], $options);
+        $model = new Model('gpt-4', 'GPT-4', [], $options);
 
         $this->assertSame($options, $model->getOptions());
     }
 
     public function testReturnsEmptyOptionsByDefault()
     {
-        $model = new Model('gpt-4');
+        $model = new Model('gpt-4', 'GPT-4');
 
         $this->assertSame([], $model->getOptions());
     }

@@ -35,7 +35,7 @@ final class CartesiaClientTest extends TestCase
         );
 
         $this->assertTrue($client->supports(new Cartesia('sonic-3')));
-        $this->assertFalse($client->supports(new Model('any-model')));
+        $this->assertFalse($client->supports(new Model('any-model', 'Any Model')));
     }
 
     public function testClientCannotPerformOnInvalidModel()

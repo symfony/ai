@@ -81,7 +81,7 @@ class ToolNormalizerTest extends TestCase
         $gpt = new Gpt('o3');
 
         yield 'supported' => [$tool, $gpt, true];
-        yield 'unsupported model' => [$tool, new Model('foo'), false];
+        yield 'unsupported model' => [$tool, new Model('foo', 'Foo'), false];
         yield 'unsupported data' => [new Text('foo'), $gpt, false];
     }
 }
