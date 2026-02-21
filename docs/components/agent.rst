@@ -564,6 +564,244 @@ in case the processor implemented the :class:`Symfony\\AI\\Agent\\AgentAwareInte
         }
     }
 
+Guardrails
+----------
+
+Guardrails validate agent input and output to block prompt injections, restricted content, or
+sensitive data leakage. They plug into the agent's processor pipeline: the
+:class:`Symfony\\AI\\Agent\\Guardrail\\GuardrailInputProcessor` runs **before** the LLM call, and the
+:class:`Symfony\\AI\\Agent\\Guardrail\\GuardrailOutputProcessor` runs **after** it. When a guardrail
+is triggered, a :class:`Symfony\\AI\\Agent\\Exception\\GuardrailException` is thrown and the agent
+execution halts.
+
+Scanners are executed in registration order. The first scanner that returns a
+:class:`Symfony\\AI\\Agent\\Guardrail\\GuardrailResult` with ``isTriggered() === true`` stops the pipeline
+immediately — remaining scanners are skipped.
+
+Built-in Scanners
+~~~~~~~~~~~~~~~~~
+
+The component ships with the following scanners:
+
+``PromptInjectionScanner``
+..........................
+
+Detects instruction overrides, role hijacking, system prompt extraction attempts, and known
+jailbreak patterns. Implements :class:`Symfony\\AI\\Agent\\Guardrail\\InputGuardrailInterface`::
+
+    use Symfony\AI\Agent\Guardrail\Scanner\PromptInjectionScanner;
+
+    // Default patterns cover 11 common injection techniques
+    $scanner = new PromptInjectionScanner();
+
+    // Add domain-specific patterns alongside defaults
+    $scanner = new PromptInjectionScanner(additionalPatterns: [
+        ['pattern' => '/\bDeveloper Mode\b/i', 'description' => 'Developer mode jailbreak'],
+    ]);
+
+    // Replace defaults entirely with your own patterns
+    $scanner = new PromptInjectionScanner(
+        additionalPatterns: [['pattern' => '/.../', 'description' => '...']],
+        includeDefaults: false,
+    );
+
+``InvisibleCharacterScanner``
+.............................
+
+Detects zero-width Unicode characters (U+200B, U+FEFF, etc.) used to hide instructions from
+human review. Implements :class:`Symfony\\AI\\Agent\\Guardrail\\InputGuardrailInterface`::
+
+    use Symfony\AI\Agent\Guardrail\Scanner\InvisibleCharacterScanner;
+
+    $scanner = new InvisibleCharacterScanner();             // trigger on any match
+    $scanner = new InvisibleCharacterScanner(maxAllowed: 2); // allow up to 2
+
+``RegexScanner``
+................
+
+Matches text against user-defined regex patterns. Implements **both**
+:class:`Symfony\\AI\\Agent\\Guardrail\\InputGuardrailInterface` and
+:class:`Symfony\\AI\\Agent\\Guardrail\\OutputGuardrailInterface`, so a single instance can guard
+input, output, or both::
+
+    use Symfony\AI\Agent\Guardrail\Scanner\RegexScanner;
+
+    // Block fraud/social-engineering requests in a customer support chatbot
+    $bannedTopics = new RegexScanner(
+        patterns: [
+            '/\b(?:create|build|write|draft|generate)\b.*\b(?:phishing|malware|ransomware|exploit)\b/i',
+            '/\b(?:phishing|malware|ransomware|exploit)\b.*\b(?:create|build|write|draft|generate)\b/i',
+        ],
+        reason: 'Request relates to a prohibited topic (fraud/malware).',
+    );
+
+    // Prevent an HR assistant from leaking PII in generated employee records
+    $piiDetector = new RegexScanner(
+        patterns: [
+            '/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/',                       // Email
+            '/\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/',         // Phone
+        ],
+        reason: 'Response contains PII (email or phone number).',
+    );
+
+Wiring Guardrails to Agents
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pass one or more scanners to :class:`Symfony\\AI\\Agent\\Guardrail\\GuardrailInputProcessor` and/or
+:class:`Symfony\\AI\\Agent\\Guardrail\\GuardrailOutputProcessor`, then register the processors on the
+agent like any other input/output processor::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Guardrail\GuardrailInputProcessor;
+    use Symfony\AI\Agent\Guardrail\GuardrailOutputProcessor;
+    use Symfony\AI\Agent\Guardrail\Scanner\InvisibleCharacterScanner;
+    use Symfony\AI\Agent\Guardrail\Scanner\PromptInjectionScanner;
+    use Symfony\AI\Agent\Guardrail\Scanner\RegexScanner;
+
+    // Platform instantiation
+
+    // Protect a customer support chatbot from prompt injection, invisible
+    // character smuggling, and fraud/social-engineering requests
+    $inputGuardrails = new GuardrailInputProcessor([
+        new PromptInjectionScanner(),
+        new InvisibleCharacterScanner(),
+        new RegexScanner(
+            patterns: [
+                '/\b(?:create|build|write|draft|generate)\b.*\b(?:phishing|malware|ransomware|exploit)\b/i',
+                '/\b(?:phishing|malware|ransomware|exploit)\b.*\b(?:create|build|write|draft|generate)\b/i',
+            ],
+            reason: 'Request relates to a prohibited topic (fraud/malware).',
+        ),
+    ]);
+
+    // Prevent an HR assistant from leaking PII in generated content
+    $outputGuardrails = new GuardrailOutputProcessor([
+        new RegexScanner(
+            patterns: [
+                '/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/',                       // Email
+                '/\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/',         // Phone
+            ],
+            reason: 'Response contains PII (email or phone number).',
+        ),
+    ]);
+
+    $agent = new Agent(
+        $platform,
+        $model,
+        inputProcessors: [$inputGuardrails],
+        outputProcessors: [$outputGuardrails],
+    );
+
+.. note::
+
+    Guardrail processors can be combined with other processors in the same list. For example,
+    you can pass both a :class:`Symfony\\AI\\Agent\\Guardrail\\GuardrailInputProcessor` and an
+    :class:`Symfony\\AI\\Agent\\Toolbox\\AgentProcessor` as input processors on the same agent.
+
+Handling Violations
+~~~~~~~~~~~~~~~~~~~
+
+Catch :class:`Symfony\\AI\\Agent\\Exception\\GuardrailException` to inspect which scanner triggered and
+why. The :class:`Symfony\\AI\\Agent\\Guardrail\\GuardrailResult` object exposes the scanner name, a
+human-readable reason, and a confidence score between ``0.0`` and ``1.0``::
+
+    use Symfony\AI\Agent\Exception\GuardrailException;
+
+    try {
+        $result = $agent->call($messages);
+    } catch (GuardrailException $e) {
+        $r = $e->getGuardrailResult();
+
+        $r->getScanner();    // "prompt_injection"
+        $r->getReason();     // "Instruction override attempt"
+        $r->getScore();      // 1.0
+        $r->isTriggered();   // true
+    }
+
+Custom Scanners
+~~~~~~~~~~~~~~~
+
+Create your own scanner by implementing :class:`Symfony\\AI\\Agent\\Guardrail\\InputGuardrailInterface`
+(for input validation) or :class:`Symfony\\AI\\Agent\\Guardrail\\OutputGuardrailInterface` (for output
+validation). Return ``GuardrailResult::pass()`` to allow the message through, or
+``GuardrailResult::block()`` to reject it::
+
+    use Symfony\AI\Agent\Guardrail\GuardrailResult;
+    use Symfony\AI\Agent\Guardrail\InputGuardrailInterface;
+    use Symfony\AI\Agent\Input;
+    use Symfony\AI\Platform\Message\UserMessage;
+
+    final readonly class MaxLengthScanner implements InputGuardrailInterface
+    {
+        public function __construct(
+            private int $maxLength = 5000,
+        ) {
+        }
+
+        public function validateInput(Input $input): GuardrailResult
+        {
+            foreach ($input->getMessageBag()->getMessages() as $message) {
+                if (!$message instanceof UserMessage) {
+                    continue;
+                }
+
+                $text = $message->asText();
+
+                if (null !== $text && \strlen($text) > $this->maxLength) {
+                    return GuardrailResult::block(
+                        'max_length',
+                        \sprintf('Message exceeds %d characters.', $this->maxLength),
+                    );
+                }
+            }
+
+            return GuardrailResult::pass();
+        }
+    }
+
+An output scanner follows the same pattern::
+
+    use Symfony\AI\Agent\Guardrail\GuardrailResult;
+    use Symfony\AI\Agent\Guardrail\OutputGuardrailInterface;
+    use Symfony\AI\Agent\Output;
+
+    final readonly class CompetitorMentionScanner implements OutputGuardrailInterface
+    {
+        /**
+         * @param list<string> $competitors
+         */
+        public function __construct(
+            private array $competitors,
+        ) {
+        }
+
+        public function validateOutput(Output $output): GuardrailResult
+        {
+            $content = $output->getResult()->getContent();
+
+            if (!\is_string($content)) {
+                return GuardrailResult::pass();
+            }
+
+            foreach ($this->competitors as $name) {
+                if (str_contains(strtolower($content), strtolower($name))) {
+                    return GuardrailResult::block(
+                        'competitor_mention',
+                        \sprintf('Response mentions competitor "%s".', $name),
+                    );
+                }
+            }
+
+            return GuardrailResult::pass();
+        }
+    }
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `Input Guardrail Example`_
+* `Output Guardrail Example`_
+
 Agent Memory Management
 -----------------------
 
@@ -755,3 +993,5 @@ Code Examples
 .. _`RAG with Pinecone`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
 .. _`Chat with static memory`: https://github.com/symfony/ai/blob/main/examples/memory/static.php
 .. _`Chat with embedding search memory`: https://github.com/symfony/ai/blob/main/examples/memory/mariadb.php
+.. _`Input Guardrail Example`: https://github.com/symfony/ai/blob/main/examples/openai/guardrail-input.php
+.. _`Output Guardrail Example`: https://github.com/symfony/ai/blob/main/examples/openai/guardrail-output.php
