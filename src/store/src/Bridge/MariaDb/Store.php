@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Bridge\MariaDb;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception as DBALException;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -169,6 +170,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     maxScore?: float|null,
      *     where?: string,
      *     params?: array<string, mixed>,
+     *     include_vectors?: bool,
      * } $options
      */
     public function query(QueryInterface $query, array $options = []): iterable
@@ -225,9 +227,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
+            $vector = new Vector(json_decode((string) $result['embedding'], true));
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($result['embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: Uuid::fromRfc4122($result['id']),
-                vector: new Vector(json_decode((string) $result['embedding'], true)),
+                vector: $vector,
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true)),
                 score: $result['score'],
             );

@@ -71,7 +71,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         foreach ($documents as $document) {
-            $this->request('POST', \sprintf('collections/%s/documents', $this->collection), $this->convertToIndexableArray($document));
+            $this->request('POST', \sprintf('collections/%s/documents', $this->collection), [
+                'id' => $document->getId(),
+                $this->vectorFieldName => $document->getVector()->getData(),
+                'metadata' => json_encode($document->getMetadata()->getArrayCopy()),
+            ]);
         }
     }
 
@@ -119,7 +123,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
 
         foreach ($documents['results'][0]['hits'] as $item) {
-            yield $this->convertToVectorDocument($item);
+            yield $this->convertToVectorDocument($item, $options);
         }
     }
 
@@ -147,29 +151,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    private function convertToIndexableArray(VectorDocument $document): array
-    {
-        return [
-            'id' => $document->getId(),
-            $this->vectorFieldName => $document->getVector()->getData(),
-            'metadata' => json_encode($document->getMetadata()->getArrayCopy()),
-        ];
-    }
-
-    /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data, array $options): VectorDocument
     {
         $document = $data['document'] ?? throw new InvalidArgumentException('Missing "document" field in the document data.');
 
         $id = $document['id'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
 
-        $vector = !\array_key_exists($this->vectorFieldName, $document) || null === $document[$this->vectorFieldName]
-            ? new NullVector()
-            : new Vector($document[$this->vectorFieldName]);
+        $vector = new Vector($document[$this->vectorFieldName]);
+
+        if (!($options['include_vectors'] ?? true)) {
+            unset($document[$this->vectorFieldName]);
+
+            $vector = new NullVector();
+        }
 
         $score = $data['vector_distance'] ?? null;
 

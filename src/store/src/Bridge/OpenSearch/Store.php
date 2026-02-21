@@ -145,7 +145,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
 
         foreach ($documents['hits']['hits'] as $document) {
-            yield $this->convertToVectorDocument($document);
+            yield $this->convertToVectorDocument($document, $options);
         }
     }
 
@@ -182,14 +182,19 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     '_source': array<string, mixed>,
      *     '_score': float,
      * } $document
+     * @param array{include_vectors?: bool} $options
      */
-    private function convertToVectorDocument(array $document): VectorDocument
+    private function convertToVectorDocument(array $document, array $options): VectorDocument
     {
         $id = $document['_id'] ?? throw new InvalidArgumentException('Missing "_id" field in the document data.');
 
-        $vector = !\array_key_exists($this->vectorsField, $document['_source']) || null === $document['_source'][$this->vectorsField]
-            ? new NullVector()
-            : new Vector($document['_source'][$this->vectorsField]);
+        $vector = new Vector($document['_source']);
+
+        if (!($options['include_vectors'] ?? true)) {
+            unset($document['_source']);
+
+            $vector = new NullVector();
+        }
 
         return new VectorDocument($id, $vector, new Metadata(json_decode($document['_source']['metadata'], true)), $document['_score'] ?? null);
     }

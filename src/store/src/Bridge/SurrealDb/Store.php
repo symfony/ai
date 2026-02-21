@@ -63,7 +63,13 @@ class Store implements ManagedStoreInterface, StoreInterface
         }
 
         foreach ($documents as $document) {
-            $this->request('POST', \sprintf('key/%s', $this->table), $this->convertToIndexableArray($document));
+            $this->request('POST', \sprintf('key/%s', $this->table), [
+                'id' => $document->getId(),
+                $this->vectorFieldName => $document->getVector()->getData(),
+                '_metadata' => array_merge($document->getMetadata()->getArrayCopy(), [
+                    '_id' => $document->getId(),
+                ]),
+            ]);
         }
     }
 
@@ -101,7 +107,7 @@ class Store implements ManagedStoreInterface, StoreInterface
         ));
 
         foreach ($results[0]['result'] as $item) {
-            yield $this->convertToVectorDocument($item);
+            yield $this->convertToVectorDocument($item, $options);
         }
     }
 
@@ -152,29 +158,20 @@ class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    private function convertToIndexableArray(VectorDocument $document): array
-    {
-        return [
-            'id' => $document->getId(),
-            $this->vectorFieldName => $document->getVector()->getData(),
-            '_metadata' => array_merge($document->getMetadata()->getArrayCopy(), [
-                '_id' => $document->getId(),
-            ]),
-        ];
-    }
-
-    /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data, array $options): VectorDocument
     {
         $id = $data['_metadata']['_id'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
 
-        $vector = !\array_key_exists($this->vectorFieldName, $data) || null === $data[$this->vectorFieldName]
-            ? new NullVector()
-            : new Vector($data[$this->vectorFieldName]);
+        $vector = new Vector($data[$this->vectorFieldName]);
+
+        if (!($options['include_vectors'] ?? true)) {
+            unset($data[$this->vectorFieldName]);
+
+            $vector = new NullVector();
+        }
 
         unset($data['_metadata']['_id']);
 

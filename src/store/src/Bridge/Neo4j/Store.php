@@ -109,7 +109,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
 
         foreach ($response['data']['values'] as $item) {
-            yield $this->convertToVectorDocument($item);
+            yield $this->convertToVectorDocument($item, $options);
         }
     }
 
@@ -138,9 +138,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array<string|int, mixed> $data
+     * @param array<string|int, mixed>      $data
+     * @param array{include_vectors?: bool} $options
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data, array $options): VectorDocument
     {
         $payload = $data[0];
 
@@ -149,6 +150,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $vector = !\array_key_exists($this->embeddingsField, $payload['properties']) || null === $payload['properties'][$this->embeddingsField]
             ? new NullVector()
             : new Vector($payload['properties'][$this->embeddingsField]);
+
+        if (!($options['include_vectors'] ?? true)) {
+            unset($payload['properties'][$this->embeddingsField]);
+
+            $vector = new NullVector();
+        }
 
         return new VectorDocument(
             id: $id,

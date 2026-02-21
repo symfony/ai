@@ -143,7 +143,11 @@ class StoreTest extends TestCase
         ];
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 3);
-        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0, 3.0])), ['max_items' => 5, 'min_score' => 0.7]));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0, 3.0])), [
+            'max_items' => 5,
+            'min_score' => 0.7,
+            'include_vectors' => true,
+        ]));
 
         $this->assertCount(1, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
@@ -175,7 +179,11 @@ class StoreTest extends TestCase
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 2);
 
-        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0])), ['max_items' => 2, 'min_score' => 0.8]));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0])), [
+            'max_items' => 2,
+            'min_score' => 0.8,
+            'include_vectors' => true,
+        ]));
 
         $this->assertCount(2, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
@@ -206,7 +214,9 @@ class StoreTest extends TestCase
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 3);
 
-        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0, 3.0]))));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0, 3.0])), [
+            'include_vectors' => true,
+        ]));
 
         $document = $result[0];
         $metadata = $document->getMetadata()->getArrayCopy();

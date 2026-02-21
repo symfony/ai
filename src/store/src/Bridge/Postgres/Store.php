@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Postgres;
 
 use Doctrine\DBAL\Connection;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
@@ -227,9 +228,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
+            $vector = new Vector($this->fromPgvector($result['embedding']));
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($result['embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: $result['id'],
-                vector: new Vector($this->fromPgvector($result['embedding'])),
+                vector: $vector,
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );
@@ -282,9 +291,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
+            $vector = new Vector($this->fromPgvector($result['embedding']));
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($result['embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: $result['id'],
-                vector: new Vector($this->fromPgvector($result['embedding'])),
+                vector: $vector,
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );
@@ -292,7 +309,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{limit?: positive-int, maxScore?: float} $options
+     * @param array{limit?: positive-int, maxScore?: float, include_vectors?: bool} $options
      *
      * @return iterable<VectorDocument>
      */
@@ -356,9 +373,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $result) {
+            $vector = new Vector($this->fromPgvector($result['embedding']));
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($result['embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: $result['id'],
-                vector: new Vector($this->fromPgvector($result['embedding'])),
+                vector: $vector,
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\ClickHouse;
 
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
@@ -124,9 +125,19 @@ class Store implements ManagedStoreInterface, StoreInterface
         ;
 
         foreach ($results as $result) {
+            $vector = !\array_key_exists('embedding', $result) || null === $result['embedding']
+                ? new NullVector()
+                : new Vector($result['embedding']);
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($result['embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: $result['id'],
-                vector: new Vector($result['embedding']),
+                vector: $vector,
                 metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
                 score: $result['score'],
             );
