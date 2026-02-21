@@ -6,6 +6,7 @@ CHANGELOG
 
  * Move debug service decorating to compiler pass to cover user-defined services
  * Add `TraceableAgent`
+ * Add `TraceableStore`
 
 0.5
 ---
