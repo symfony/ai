@@ -365,6 +365,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('store/surrealdb'))
                     ->append($import('store/typesense'))
                     ->append($import('store/weaviate'))
+                    ->append($import('store/vektor'))
                 ->end()
             ->end()
             ->arrayNode('message_store')

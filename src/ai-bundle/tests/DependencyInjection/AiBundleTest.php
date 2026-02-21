@@ -71,6 +71,7 @@ use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
+use Symfony\AI\Store\Bridge\Vektor\Store as VektorStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
@@ -3505,6 +3506,115 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testVektorStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'vektor' => [
+                        'main' => [],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.vektor.main'));
+
+        $definition = $container->getDefinition('ai.store.vektor.main');
+        $this->assertSame(VektorStore::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(3, $definition->getArguments());
+        $this->assertSame('%kernel.project_dir%/var/share', $definition->getArgument(0));
+        $this->assertSame(1536, $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('filesystem', (string) $definition->getArgument(2));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $main'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $vektor_main'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $vektorMain'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'vektor' => [
+                        'main' => [
+                            'storage_path' => '%kernel.project_dir%/var/share/vektor',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.vektor.main'));
+
+        $definition = $container->getDefinition('ai.store.vektor.main');
+        $this->assertSame(VektorStore::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(3, $definition->getArguments());
+        $this->assertSame('%kernel.project_dir%/var/share/vektor', $definition->getArgument(0));
+        $this->assertSame(1536, $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('filesystem', (string) $definition->getArgument(2));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $main'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $vektor_main'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $vektorMain'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'vektor' => [
+                        'main' => [
+                            'dimensions' => 764,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.vektor.main'));
+
+        $definition = $container->getDefinition('ai.store.vektor.main');
+        $this->assertSame(VektorStore::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(3, $definition->getArguments());
+        $this->assertSame('%kernel.project_dir%/var/share', $definition->getArgument(0));
+        $this->assertSame(764, $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('filesystem', (string) $definition->getArgument(2));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $main'));
+        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $vektor_main'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $vektorMain'));
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
     }
 
     public function testConfigurationWithUseAttributeAsKeyWorksWithoutNormalizeKeys()
@@ -8031,6 +8141,15 @@ class AiBundleTest extends TestCase
                             'endpoint' => 'http://localhost:8080',
                             'api_key' => 'bar',
                             'collection' => 'my_weaviate_collection',
+                        ],
+                    ],
+                    'vektor' => [
+                        'my_vektor_store' => [],
+                        'my_vektor_store_with_custom_path' => [
+                            'storage_path' => 'foo',
+                        ],
+                        'my_vektor_store_with_custom_dimensions' => [
+                            'dimensions' => 764,
                         ],
                     ],
                 ],
