@@ -17,17 +17,28 @@ use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class MemoryToolFactory extends AbstractToolFactory
+final class MemoryToolFactory extends AbstractToolFactory implements InstanceLocatorInterface
 {
     /**
      * @var array<string, AsTool[]>
      */
     private array $tools = [];
 
+    /**
+     * Maps tool name to the specific object instance that was registered for it.
+     *
+     * @var array<string, object>
+     */
+    private array $instances = [];
+
     public function addTool(string|object $class, string $name, string $description, string $method = '__invoke'): self
     {
         $className = \is_object($class) ? $class::class : $class;
         $this->tools[$className][] = new AsTool($name, $description, $method);
+
+        if (\is_object($class)) {
+            $this->instances[$name] = $class;
+        }
 
         return $this;
     }
@@ -44,5 +55,10 @@ final class MemoryToolFactory extends AbstractToolFactory
         foreach ($this->tools[$className] as $tool) {
             yield $this->convertAttribute($className, $tool);
         }
+    }
+
+    public function findInstanceByName(string $toolName): ?object
+    {
+        return $this->instances[$toolName] ?? null;
     }
 }
