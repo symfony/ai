@@ -21,6 +21,7 @@ use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
+use Symfony\AI\Agent\Toolbox\ToolFactory\InstanceLocatorInterface;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
@@ -118,6 +119,13 @@ final class Toolbox implements ToolboxInterface
 
     private function getExecutable(Tool $metadata): object
     {
+        if ($this->toolFactory instanceof InstanceLocatorInterface) {
+            $instance = $this->toolFactory->findInstanceByName($metadata->getName());
+            if (null !== $instance) {
+                return $instance;
+            }
+        }
+
         $className = $metadata->getReference()->getClass();
         foreach ($this->tools as $tool) {
             if ($tool instanceof $className) {
