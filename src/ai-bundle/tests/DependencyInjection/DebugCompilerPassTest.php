@@ -13,6 +13,7 @@ namespace Symfony\AI\AiBundle\Tests\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
+use Symfony\AI\AiBundle\Profiler\TraceableAgent;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
@@ -32,6 +33,7 @@ class DebugCompilerPassTest extends TestCase
         $container->register('ai.message_store.memory.main', \stdClass::class)->addTag('ai.message_store');
         $container->register('ai.chat.main', \stdClass::class)->addTag('ai.chat');
         $container->register('ai.toolbox.my_agent', \stdClass::class)->addTag('ai.toolbox');
+        $container->register('ai.agent.my_agent', \stdClass::class)->addTag('ai.agent');
 
         (new DebugCompilerPass())->process($container);
 
@@ -62,16 +64,25 @@ class DebugCompilerPassTest extends TestCase
         $this->assertEquals([new Reference('.inner')], $traceableToolbox->getArguments());
         $this->assertTrue($traceableToolbox->hasTag('ai.traceable_toolbox'));
         $this->assertSame([['method' => 'reset']], $traceableToolbox->getTag('kernel.reset'));
+
+        $traceableAgent = $container->getDefinition('ai.traceable_agent.my_agent');
+        $this->assertSame(TraceableAgent::class, $traceableAgent->getClass());
+        $this->assertSame(['ai.agent.my_agent', null, -1024], $traceableAgent->getDecoratedService());
+        $this->assertEquals([new Reference('.inner')], $traceableAgent->getArguments());
+        $this->assertTrue($traceableAgent->hasTag('ai.traceable_agent'));
+        $this->assertSame([['method' => 'reset']], $traceableAgent->getTag('kernel.reset'));
     }
 
     public function testProcessSkipsWhenDebugDisabled()
     {
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', false);
+
         $container->register('ai.platform.anthropic', \stdClass::class)->addTag('ai.platform');
         $container->register('ai.message_store.memory.main', \stdClass::class)->addTag('ai.message_store');
         $container->register('ai.chat.main', \stdClass::class)->addTag('ai.chat');
         $container->register('ai.toolbox.my_agent', \stdClass::class)->addTag('ai.toolbox');
+        $container->register('ai.agent.my_agent', \stdClass::class)->addTag('ai.agent');
 
         (new DebugCompilerPass())->process($container);
 
@@ -79,5 +90,6 @@ class DebugCompilerPassTest extends TestCase
         $this->assertFalse($container->hasDefinition('ai.traceable_message_store.main'));
         $this->assertFalse($container->hasDefinition('ai.traceable_chat.main'));
         $this->assertFalse($container->hasDefinition('ai.traceable_toolbox.my_agent'));
+        $this->assertFalse($container->hasDefinition('ai.traceable_agent.my_agent'));
     }
 }

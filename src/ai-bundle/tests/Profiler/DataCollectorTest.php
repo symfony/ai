@@ -13,7 +13,9 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
+use Symfony\AI\AiBundle\Profiler\TraceableAgent;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
@@ -29,6 +31,7 @@ use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Clock\MonotonicClock;
 
 class DataCollectorTest extends TestCase
@@ -45,7 +48,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
         $this->assertSame('Assistant response', $result->asText());
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -69,7 +72,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
         $this->assertSame('Assistant response', implode('', iterator_to_array($result->asStream())));
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -93,7 +96,7 @@ class DataCollectorTest extends TestCase
         // Invoke but do NOT consume the stream
         $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -133,7 +136,7 @@ class DataCollectorTest extends TestCase
             Message::ofUser('Hello World'),
         ));
 
-        $dataCollector = new DataCollector([], [], [$traceableMessageStore], []);
+        $dataCollector = new DataCollector([], [], [$traceableMessageStore], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getMessages();
@@ -156,7 +159,7 @@ class DataCollectorTest extends TestCase
 
         $traceableChat->submit(Message::ofUser('Hello World'));
 
-        $dataCollector = new DataCollector([], [], [], [$traceableChat]);
+        $dataCollector = new DataCollector([], [], [], [$traceableChat], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getChats();
@@ -169,7 +172,7 @@ class DataCollectorTest extends TestCase
 
     public function testGetNameReturnsShortName()
     {
-        $dataCollector = new DataCollector([], [], [], []);
+        $dataCollector = new DataCollector([], [], [], [], []);
 
         $name = $dataCollector->getName();
 
@@ -185,10 +188,36 @@ class DataCollectorTest extends TestCase
             yield from [];
         })();
 
-        $dataCollector = new DataCollector([], $generator, [], []);
+        $dataCollector = new DataCollector([], $generator, [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertSame([], $dataCollector->getTools());
         $this->assertSame([], $dataCollector->getToolCalls());
+    }
+
+    public function testItCollectDataFromAgent()
+    {
+        $clock = new MockClock('2020-01-01 10:00:00');
+
+        $traceableAgent = new TraceableAgent(new MockAgent([
+            'Hello there' => 'General Kenobi',
+        ]), $clock);
+
+        $messageBag = new MessageBag(
+            Message::ofUser('Hello there'),
+        );
+
+        $traceableAgent->call($messageBag);
+
+        $dataCollector = new DataCollector([], [], [], [], [$traceableAgent]);
+        $dataCollector->lateCollect();
+
+        $this->assertCount(1, $dataCollector->getAgents());
+        $this->assertCount(1, $traceableAgent->calls);
+        $this->assertEquals([
+            'messages' => $messageBag,
+            'options' => [],
+            'called_at' => $clock->now(),
+        ], $dataCollector->getAgents()[0]);
     }
 }
