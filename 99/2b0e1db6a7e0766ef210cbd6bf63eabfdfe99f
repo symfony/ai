@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by aszenz at 2026-02-06T00:38:43Z
+
+CI is failing bcz examples don't include aws key, let me know if that's intended then i can comment the example for CI
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-14T14:01:17Z
+
+Hey @aszenz, we merged a few BC breaks lately and a new integration testing setup - is there a way to adopt this here in combination with a local docker image or is that strictly bound to AWS infrastructure?
+
+---------------------------------------------------------------------------
+
+by aszenz at 2026-02-15T09:43:40Z
+
+> Hey @aszenz, we merged a few BC breaks lately and a new integration testing setup - is there a way to adopt this here in combination with a local docker image or is that strictly bound to AWS infrastructure?
+
+We need to wait on https://github.com/localstack/localstack/issues/13498 to enable local integration tests
