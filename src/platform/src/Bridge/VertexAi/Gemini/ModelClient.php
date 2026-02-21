@@ -28,8 +28,8 @@ final class ModelClient implements ModelClientInterface
 
     public function __construct(
         HttpClientInterface $httpClient,
-        private readonly string $location,
-        private readonly string $projectId,
+        private readonly ?string $location = null,
+        private readonly ?string $projectId = null,
         #[\SensitiveParameter] private readonly ?string $apiKey = null,
     ) {
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
@@ -45,13 +45,23 @@ final class ModelClient implements ModelClientInterface
      */
     public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
     {
-        $url = \sprintf(
-            'https://aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
-            $this->projectId,
-            $this->location,
-            $model->getName(),
-            $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent',
-        );
+        $method = $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent';
+
+        if (null !== $this->location && null !== $this->projectId) {
+            $url = \sprintf(
+                'https://aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
+                $this->projectId,
+                $this->location,
+                $model->getName(),
+                $method,
+            );
+        } else {
+            $url = \sprintf(
+                'https://aiplatform.googleapis.com/v1/publishers/google/models/%s:%s',
+                $model->getName(),
+                $method,
+            );
+        }
 
         $query = [];
         if (null !== $this->apiKey) {
