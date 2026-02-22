@@ -24,8 +24,8 @@ final class ModelClient implements ModelClientInterface
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $location,
-        private readonly string $projectId,
+        private readonly ?string $location = null,
+        private readonly ?string $projectId = null,
         #[\SensitiveParameter] private readonly ?string $apiKey = null,
     ) {
     }
@@ -40,13 +40,21 @@ final class ModelClient implements ModelClientInterface
      */
     public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
     {
-        $url = \sprintf(
-            'https://aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
-            $this->projectId,
-            $this->location,
-            $model->getName(),
-            'predict',
-        );
+        if (null !== $this->location && null !== $this->projectId) {
+            $url = \sprintf(
+                'https://aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
+                $this->projectId,
+                $this->location,
+                $model->getName(),
+                'predict',
+            );
+        } else {
+            $url = \sprintf(
+                'https://aiplatform.googleapis.com/v1/publishers/google/models/%s:%s',
+                $model->getName(),
+                'predict',
+            );
+        }
 
         $query = [];
         if (null !== $this->apiKey) {

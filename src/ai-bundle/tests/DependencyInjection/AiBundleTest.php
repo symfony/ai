@@ -7570,6 +7570,32 @@ class AiBundleTest extends TestCase
         $this->assertSame('withOptions', $factory[1]);
     }
 
+    #[TestDox('VertexAI platform uses global endpoint with api_key only')]
+    public function testVertexAiPlatformUsesGlobalEndpoint()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'vertexai' => [
+                        'api_key' => 'my-vertex-api-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.vertexai'));
+
+        $definition = $container->getDefinition('ai.platform.vertexai');
+        $arguments = $definition->getArguments();
+
+        $this->assertNull($arguments[0]);
+        $this->assertNull($arguments[1]);
+        $this->assertSame('my-vertex-api-key', $arguments[2]);
+
+        // For global endpoint, http client should be a plain Reference, not a bearer-token-wrapping Definition
+        $this->assertInstanceOf(Reference::class, $arguments[3]);
+    }
+
     #[TestDox('Model configuration is ignored for unknown platform')]
     public function testModelConfigurationIsIgnoredForUnknownPlatform()
     {
