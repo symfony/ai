@@ -3,12 +3,6 @@
     "description": "Example scripts about using Symfony AI",
     "license": "MIT",
     "type": "project",
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../src/platform/src/Bridge/OpenResponses"
-        }
-    ],
     "require": {
         "php": ">=8.2",
         "symfony/ai-agent": "^0.5",
