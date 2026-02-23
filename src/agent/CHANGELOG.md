@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `ToolCallRequested` event dispatched before tool execution
+ * Add `ValidateToolCallArgumentsListener`
 
 0.4
 ---
