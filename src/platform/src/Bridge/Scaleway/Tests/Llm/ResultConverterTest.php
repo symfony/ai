@@ -49,7 +49,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('Hello world', $result->getContent());
     }
 
-    public function testConvertToolCallResult()
+    public function testConvertToolWithArgsCallResult()
     {
         $converter = new ResultConverter();
         $httpResponse = self::createMock(ResponseInterface::class);
@@ -83,6 +83,41 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('call_123', $toolCalls[0]->getId());
         $this->assertSame('test_function', $toolCalls[0]->getName());
         $this->assertSame(['arg1' => 'value1'], $toolCalls[0]->getArguments());
+    }
+
+    public function testConvertToolWithoutArgsCallResult()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'choices' => [
+                [
+                    'message' => [
+                        'role' => 'assistant',
+                        'content' => null,
+                        'tool_calls' => [
+                            [
+                                'id' => 'call_123',
+                                'type' => 'function',
+                                'function' => [
+                                    'name' => 'test_function',
+                                ],
+                            ],
+                        ],
+                    ],
+                    'finish_reason' => 'tool_calls',
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(ToolCallResult::class, $result);
+        $toolCalls = $result->getContent();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('call_123', $toolCalls[0]->getId());
+        $this->assertSame('test_function', $toolCalls[0]->getName());
+        $this->assertSame([], $toolCalls[0]->getArguments());
     }
 
     public function testConvertMultipleChoices()
