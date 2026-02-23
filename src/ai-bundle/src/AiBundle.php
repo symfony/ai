@@ -345,6 +345,10 @@ final class AiBundle extends AbstractBundle
             );
         }
 
+        if (!ContainerBuilder::willBeAvailable('symfony/validator', ValidatorInterface::class, ['symfony/ai-bundle'])) {
+            $builder->removeDefinition('ai.tool.validate_tool_call_arguments_listener');
+        }
+
         if (false === $builder->getParameter('kernel.debug')) {
             $builder->removeDefinition('ai.data_collector');
             $builder->removeDefinition('ai.traceable_toolbox');
