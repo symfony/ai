@@ -20,6 +20,7 @@ use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\BackedEnumNormalizer;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer as BaseSerializer;
 
@@ -39,6 +40,7 @@ class Serializer extends BaseSerializer
         $propertyInfo = new PropertyInfoExtractor([], [new PhpDocExtractor(), new ReflectionExtractor()]);
 
         $normalizers = [
+            new DateTimeNormalizer(),
             new BackedEnumNormalizer(),
             new ObjectNormalizer(
                 propertyTypeExtractor: $propertyInfo,
