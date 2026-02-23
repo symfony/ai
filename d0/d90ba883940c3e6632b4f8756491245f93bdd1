@@ -1,0 +1,29 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-14T14:04:35Z
+
+Hey @Guikingone, we had quite some BC breaks in store lately and a new integration test setup - can you adopt that here please?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-02-18T15:44:16Z
+
+Fabbot is complaining due to the name of the library, not a big deal IMHO 😅
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-02-18T17:07:32Z
+
+@centamiv If you want to take a look 🙂
+
+---------------------------------------------------------------------------
+
+by centamiv at 2026-02-19T08:13:36Z
+
+@Guikingone thanks for working on this integration! I took a look at the code and the implementation seems perfectly aligned with the library. Just let me know if you need me to add any tests or features to solve specific use cases.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-02-19T10:40:02Z
+
+I closed two suggestions of Copilot about using `self::assertCount`, not used in the project 😄
