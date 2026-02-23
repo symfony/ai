@@ -30,8 +30,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $endpointUrl,
-        #[\SensitiveParameter] private readonly string $apiKey,
         private readonly string $collectionName,
         private readonly int $embeddingsDimension = 1536,
         private readonly string $embeddingsDistance = 'Cosine',
@@ -69,7 +67,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'PUT',
             \sprintf('collections/%s/points', $this->collectionName),
             [
-                'points' => array_map($this->convertToIndexableArray(...), $documents),
+                'points' => array_map(static fn (VectorDocument $document): array => [
+                    'id' => $document->getId(),
+                    'vector' => $document->getVector()->getData(),
+                    'payload' => $document->getMetadata()->getArrayCopy(),
+                ], $documents),
             ],
             ['wait' => $this->async ? 'false' : 'true'],
         );
@@ -147,29 +149,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function request(string $method, string $endpoint, array $payload = [], array $queryParameters = []): array
     {
-        $url = \sprintf('%s/%s', $this->endpointUrl, $endpoint);
-
-        $response = $this->httpClient->request($method, $url, [
-            'headers' => [
-                'api-key' => $this->apiKey,
-            ],
+        $response = $this->httpClient->request($method, $endpoint, [
             'query' => $queryParameters,
             'json' => $payload,
         ]);
 
         return $response->toArray();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function convertToIndexableArray(VectorDocument $document): array
-    {
-        return [
-            'id' => $document->getId(),
-            'vector' => $document->getVector()->getData(),
-            'payload' => $document->getMetadata()->getArrayCopy(),
-        ];
     }
 
     /**

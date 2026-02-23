@@ -17,7 +17,7 @@ use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Bridge\Qdrant\Store;
+use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -28,12 +28,7 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = new Store(
-    http_client(),
-    env('QDRANT_HOST'),
-    env('QDRANT_SERVICE_API_KEY'),
-    'movies',
-);
+$store = StoreFactory::create('movies', env('QDRANT_HOST'), env('QDRANT_SERVICE_API_KEY'));
 
 // initialize the collection (needs to be called before the indexer)
 $store->setup();

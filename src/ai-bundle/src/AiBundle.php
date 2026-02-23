@@ -103,6 +103,7 @@ use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
+use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
@@ -1780,23 +1781,18 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    new Reference('http_client'),
-                    $store['endpoint'],
-                    $store['api_key'],
-                    $store['collection_name'] ?? $name,
-                    $store['dimensions'],
-                    $store['distance'],
-                ];
-
-                if (\array_key_exists('async', $store)) {
-                    $arguments[6] = $store['async'];
-                }
-
-                $definition = new Definition(QdrantStore::class);
-                $definition
+                $definition = (new Definition(QdrantStore::class))
+                    ->setFactory(StoreFactory::class.'::create')
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        $store['collection_name'] ?? $name,
+                        $store['endpoint'] ?? null,
+                        $store['api_key'] ?? null,
+                        new Reference($store['http_client']),
+                        $store['dimensions'],
+                        $store['distance'],
+                        $store['async'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
