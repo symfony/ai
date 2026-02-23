@@ -66,13 +66,14 @@ use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
-use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
+use Symfony\AI\Store\Bridge\Qdrant\StoreFactory as QdrantStoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Vektor\Store as VektorStore;
+use Symfony\AI\Store\Bridge\Vektor\StoreFactory as VektorStoreFactory;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
@@ -2669,7 +2670,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
-        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([QdrantStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -2713,7 +2714,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
-        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([QdrantStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -2758,7 +2759,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
-        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([QdrantStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -2804,7 +2805,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
-        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([QdrantStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -2847,7 +2848,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
-        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([QdrantStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -3612,6 +3613,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.vektor.main'));
 
         $definition = $container->getDefinition('ai.store.vektor.main');
+        $this->assertSame([VektorStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(VektorStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -3648,6 +3650,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.vektor.main'));
 
         $definition = $container->getDefinition('ai.store.vektor.main');
+        $this->assertSame([VektorStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(VektorStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -3684,6 +3687,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.vektor.main'));
 
         $definition = $container->getDefinition('ai.store.vektor.main');
+        $this->assertSame([VektorStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(VektorStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
