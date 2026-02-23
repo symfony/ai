@@ -139,6 +139,10 @@ Store
  * The `ChatInterface` now has a `stream()` method. If you implement this interface,
    you need to add this method to your implementation.
 
+ * The `endpointUrl` parameter for Weaviate `Store` has been removed
+ * The `apiKey` parameter for Weaviate `Store` has been removed
+
+
 UPGRADE FROM 0.5 to 0.6
 =======================
 
