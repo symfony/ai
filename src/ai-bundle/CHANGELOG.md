@@ -8,6 +8,7 @@ CHANGELOG
  * Add `TraceableAgent`
  * Add `TraceableStore`
  * Add `setup_options` configuration for PostgreSQL store to pass extra fields to `ai:store:setup`
+ * Add support for custom HttpClient for `Qdrant` and `Weaviate` stores
 
 0.5
 ---

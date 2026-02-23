@@ -113,6 +113,7 @@ use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Vektor\Store as VektorStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
+use Symfony\AI\Store\Bridge\Weaviate\StoreFactory as WeaviateStoreFactory;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -2005,14 +2006,14 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $definition = new Definition(WeaviateStore::class);
-                $definition
+                $definition = (new Definition(WeaviateStore::class))
+                    ->setFactory(WeaviateStoreFactory::class.'::create')
                     ->setLazy(true)
                     ->setArguments([
-                        new Reference('http_client'),
+                        $store['collection'] ?? $name,
                         $store['endpoint'],
                         $store['api_key'],
-                        $store['collection'] ?? $name,
+                        new Reference($store['http_client']),
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])

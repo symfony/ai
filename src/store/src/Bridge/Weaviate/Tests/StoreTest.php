@@ -28,12 +28,7 @@ final class StoreTest extends TestCase
 {
     public function testStoreCannotSetupWithExtraOptions()
     {
-        $store = new Store(
-            new MockHttpClient(),
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store(new MockHttpClient(), 'test');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('No supported options.');
@@ -55,12 +50,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 422 returned for "http://127.0.0.1:8080/v1/schema".');
@@ -83,12 +73,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $store->setup();
 
@@ -107,12 +92,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $store->setup();
 
@@ -131,12 +111,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $store->setup();
 
@@ -155,12 +130,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 422 returned for "http://127.0.0.1:8080/v1/schema/test".');
@@ -176,12 +146,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $store->drop();
 
@@ -200,12 +165,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 422 returned for "http://127.0.0.1:8080/v1/batch/objects".');
@@ -229,12 +189,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
 
@@ -253,12 +208,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 422 returned for "http://127.0.0.1:8080/v1/graphql".');
@@ -291,12 +241,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
@@ -306,19 +251,19 @@ final class StoreTest extends TestCase
 
     public function testStoreSupportsVectorQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:8080', 'test-api-key', 'TestClass');
+        $store = new Store(new MockHttpClient(), 'http://localhost:8080');
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 
     public function testStoreDoesNotSupportTextQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:8080', 'test-api-key', 'TestClass');
+        $store = new Store(new MockHttpClient(), 'http://localhost:8080');
         $this->assertFalse($store->supports(TextQuery::class));
     }
 
     public function testStoreDoesNotSupportHybridQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:8080', 'test-api-key', 'TestClass');
+        $store = new Store(new MockHttpClient(), 'http://localhost:8080');
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 }
