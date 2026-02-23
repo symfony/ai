@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Capability\InputCapabilityInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**
@@ -19,12 +20,14 @@ use Symfony\AI\Platform\Message\MessageBag;
 final class Input
 {
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>       $options
+     * @param InputCapabilityInterface[] $capabilities
      */
     public function __construct(
         private string $model,
         private MessageBag $messageBag,
         private array $options = [],
+        private readonly iterable $capabilities = [],
     ) {
     }
 
@@ -62,5 +65,13 @@ final class Input
     public function setOptions(array $options): void
     {
         $this->options = $options;
+    }
+
+    /**
+     * @return InputCapabilityInterface[]
+     */
+    public function getCapabilities(): iterable
+    {
+        return $this->capabilities;
     }
 }

@@ -15,14 +15,21 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentAwareInterface;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Capability\CapabilityHandlerRegistry;
+use Symfony\AI\Agent\Capability\DelayCapabilityHandler;
+use Symfony\AI\Agent\Capability\InputDelayCapability;
+use Symfony\AI\Agent\Capability\OutputDelayCapability;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\InputProcessor\CapabilityProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
+use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlainConverter;
@@ -31,6 +38,7 @@ use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Test\InMemoryPlatform;
+use Symfony\Component\Clock\MockClock;
 
 final class AgentTest extends TestCase
 {
@@ -246,8 +254,31 @@ final class AgentTest extends TestCase
         $platform = $this->createMock(PlatformInterface::class);
         $name = 'test';
 
-        $agent = new Agent($platform, 'gpt-4', [], [], $name);
+        $agent = new Agent($platform, 'gpt-4', [], [], name: $name);
 
         $this->assertSame($name, $agent->getName());
+    }
+
+    public function testAgentCanUseCapability()
+    {
+        $clock = new MockClock('01-01-2020 10:00:00');
+
+        $platform = new InMemoryPlatform('foo');
+
+        $processor = new CapabilityProcessor(new CapabilityHandlerRegistry([
+            new DelayCapabilityHandler($clock),
+        ]));
+        $processor->setAgent(new MockAgent());
+
+        $agent = new Agent($platform, 'bar', [$processor], [$processor]);
+
+        $agent->call(new MessageBag(
+            Message::ofUser('Hello there'),
+        ), capabilities: [
+            new InputDelayCapability(60),
+            new OutputDelayCapability(30),
+        ]);
+
+        $this->assertSame('2020-01-01 10:01:30', $clock->now()->format('Y-m-d H:i:s'));
     }
 }

@@ -266,12 +266,10 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->treatNullLike(['enabled' => true])
                             ->beforeNormalization()
                                 ->ifArray()
-                                ->then(static function (array $v): array {
-                                    return [
-                                        'enabled' => $v['enabled'] ?? true,
-                                        'services' => $v['services'] ?? $v,
-                                    ];
-                                })
+                                ->then(static fn (array $v): array => [
+                                    'enabled' => $v['enabled'] ?? true,
+                                    'services' => $v['services'] ?? $v,
+                                ])
                             ->end()
                             ->children()
                                 ->booleanNode('enabled')->defaultTrue()->end()
@@ -286,13 +284,40 @@ return static function (DefinitionConfigurator $configurator): void {
                                         ->end()
                                         ->beforeNormalization()
                                             ->ifString()
-                                            ->then(static function (string $v) {
-                                                return ['service' => $v];
-                                            })
+                                            ->then(static fn (string $v): array => ['service' => $v])
                                         ->end()
                                         ->validate()
-                                            ->ifTrue(static fn ($v) => !(empty($v['agent']) xor empty($v['service'])))
+                                            ->ifTrue(static fn (array $v): bool => !(empty($v['agent']) xor empty($v['service'])))
                                             ->thenInvalid('Either "agent" or "service" must be configured, and never both.')
+                                        ->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('capabilities')
+                            ->addDefaultsIfNotSet()
+                            ->treatFalseLike(['enabled' => false])
+                            ->treatTrueLike(['enabled' => true])
+                            ->treatNullLike(['enabled' => true])
+                            ->beforeNormalization()
+                                ->ifArray()
+                                ->then(static fn (array $v): array => [
+                                    'enabled' => $v['enabled'] ?? true,
+                                    'handlers' => $v['handlers'] ?? $v,
+                                ])
+                            ->end()
+                            ->children()
+                                ->booleanNode('enabled')->defaultTrue()->end()
+                                ->arrayNode('handlers')
+                                    ->arrayPrototype()
+                                        ->children()
+                                            ->stringNode('service')->cannotBeEmpty()->end()
+                                        ->end()
+                                        ->beforeNormalization()
+                                            ->ifString()
+                                            ->then(static fn (string $v): array => [
+                                                'service' => $v,
+                                            ])
                                         ->end()
                                     ->end()
                                 ->end()

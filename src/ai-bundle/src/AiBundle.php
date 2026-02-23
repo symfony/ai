@@ -19,6 +19,12 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Capability\CapabilityHandlerInterface;
+use Symfony\AI\Agent\Capability\CapabilityHandlerRegistry;
+use Symfony\AI\Agent\Capability\CapabilityHandlerRegistryInterface;
+use Symfony\AI\Agent\Capability\InputCapabilityInterface;
+use Symfony\AI\Agent\Capability\OutputCapabilityInterface;
+use Symfony\AI\Agent\InputProcessor\CapabilityProcessor;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -329,6 +335,12 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.agent.input_processor', ['tagged_by' => 'interface']);
             $builder->registerForAutoconfiguration(OutputProcessorInterface::class)
                 ->addTag('ai.agent.output_processor', ['tagged_by' => 'interface']);
+            $builder->registerForAutoconfiguration(CapabilityHandlerInterface::class)
+                ->addTag('ai.agent.capability_handler', ['tagged_by' => 'interface']);
+            $builder->registerForAutoconfiguration(InputCapabilityInterface::class)
+                ->addResourceTag('ai.agent.input_capability');
+            $builder->registerForAutoconfiguration(OutputCapabilityInterface::class)
+                ->addResourceTag('ai.agent.output_capability');
         }
 
         $builder->registerForAutoconfiguration(ModelClientInterface::class)
@@ -1249,6 +1261,35 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -40]);
 
             $container->setDefinition('ai.agent.'.$name.'.memory_input_processor', $memoryInputProcessorDefinition);
+        }
+
+        // CAPABILITIES
+        if ($config['capabilities']['enabled']) {
+            if ([] !== $config['capabilities']['handlers']) {
+                $capabilityHandlerRegistryDefinition = (new Definition(CapabilityHandlerRegistry::class))
+                    ->setLazy(true)
+                    ->setArgument(0, array_map(
+                        static fn (array $handler): Reference => new Reference($handler['service']),
+                        $config['capabilities']['handlers'],
+                    ))
+                    ->addTag('proxy', ['interface' => CapabilityHandlerRegistryInterface::class])
+                ;
+
+                $container->setDefinition('ai.agent.capability_handler_registry', $capabilityHandlerRegistryDefinition);
+
+                $capabilityProcessorDefinition = (new Definition(CapabilityProcessor::class))
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference('ai.agent.capability_handler_registry'),
+                    ])
+                    ->addTag('proxy', ['interface' => InputProcessorInterface::class])
+                    ->addTag('proxy', ['interface' => OutputProcessorInterface::class])
+                    ->addTag('ai.agent.input_processor')
+                    ->addTag('ai.agent.output_processor')
+                ;
+
+                $container->setDefinition('ai.agent.capability_processor', $capabilityProcessorDefinition);
+            }
         }
 
         $agentDefinition
