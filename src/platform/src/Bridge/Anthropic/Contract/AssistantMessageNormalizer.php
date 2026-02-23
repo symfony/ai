@@ -48,7 +48,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         if (!$hasBlocks) {
             return [
                 'role' => 'assistant',
-                'content' => $data->getContent(),
+                'content' => $data->getContent() ?? '',
             ];
         }
 
