@@ -1,0 +1,6 @@
+home:
+    title_prefix: 'Welcome to the'
+    title_suffix: 'Demo'
+    intro: 'This is a small demo app that can be used to explore the capabilities of Symfony AI Components together with'
+    intro_suffix: 'Symfony UX and Twig Live Components.'
+    examples: 'Examples'
