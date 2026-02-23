@@ -10,6 +10,7 @@ CHANGELOG
  * [BC BREAK] Replace variadic constructor parameters with array parameters in `VectorResult`, `ToolCallResult`, `RerankingResult`, `ToolCallComplete`, and `ImageResult` (OpenAI DallE bridge)
  * [BC BREAK] Rename `#[With]` attribute to `#[Schema]` and `WithAttributeDescriber` to `SchemaAttributeDescriber`
  * Add `ref` property to `#[Schema]` attribute to allow providing schema as file
+ * Add support for `DiscriminatorMap` and `DateTimeImmutable` for structured output and tool calls
 
 0.7
 ---
