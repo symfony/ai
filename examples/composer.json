@@ -70,6 +70,7 @@
         "symfony/ai-tavily-tool": "^0.5",
         "symfony/ai-transformers-php-platform": "^0.5",
         "symfony/ai-typesense-store": "^0.5",
+        "symfony/ai-vektor-store": "^0.6",
         "symfony/ai-vertex-ai-platform": "^0.5",
         "symfony/ai-voyage-platform": "^0.5",
         "symfony/ai-weaviate-store": "^0.5",

@@ -109,6 +109,7 @@ use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
+use Symfony\AI\Store\Bridge\Vektor\Store as VektorStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
@@ -1990,6 +1991,30 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->setLazy(true)
                     ->setArguments($arguments)
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('vektor' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-vektor-store', VektorStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Vektor store configuration requires "symfony/ai-vektor-store" package. Try running "composer require symfony/ai-vektor-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(VektorStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments([
+                        $store['storage_path'],
+                        $store['dimensions'],
+                        new Reference('filesystem'),
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');

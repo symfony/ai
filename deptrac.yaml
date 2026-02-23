@@ -325,6 +325,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Store\\Bridge\\Typesense\\.*
+    - name: VektorStore
+      collectors:
+          - type: classLike
+            value: Symfony\\AI\\Store\\Bridge\\Vektor\\.*
     - name: WeaviateStore
       collectors:
         - type: classLike
@@ -555,6 +559,9 @@ deptrac:
     TypesenseStore:
       - StoreComponent
       - PlatformComponent
+    VektorStore:
+        - StoreComponent
+        - PlatformComponent
     WeaviateStore:
       - StoreComponent
       - PlatformComponent
