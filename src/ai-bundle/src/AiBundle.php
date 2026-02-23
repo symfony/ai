@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\AiBundle;
 
+use AsyncAws\S3Vectors\S3VectorsClient;
 use Google\Auth\ApplicationDefaultCredentials;
 use Google\Auth\FetchAuthTokenInterface;
 use Psr\Log\LoggerInterface;
@@ -1423,6 +1424,33 @@ final class AiBundle extends AbstractBundle
             }
         }
 
+        if ('elasticsearch' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-elasticsearch-store', ElasticsearchStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Elasticsearch store configuration requires "symfony/ai-elasticsearch-store" package. Try running "composer require symfony/ai-elasticsearch-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(ElasticsearchStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference($store['http_client']),
+                        $store['endpoint'],
+                        $store['index_name'] ?? $name,
+                        $store['vectors_field'],
+                        $store['dimensions'],
+                        $store['similarity'],
+                    ])
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
         if ('manticoresearch' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-manticore-search-store', ManticoreSearchStore::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('ManticoreSearch store configuration requires "symfony/ai-manticore-search-store" package. Try running "composer require symfony/ai-manticore-search-store".');
@@ -1645,33 +1673,6 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        if ('elasticsearch' === $type) {
-            if (!ContainerBuilder::willBeAvailable('symfony/ai-elasticsearch-store', ElasticsearchStore::class, ['symfony/ai-bundle'])) {
-                throw new RuntimeException('Elasticsearch store configuration requires "symfony/ai-elasticsearch-store" package. Try running "composer require symfony/ai-elasticsearch-store".');
-            }
-
-            foreach ($stores as $name => $store) {
-                $definition = new Definition(ElasticsearchStore::class);
-                $definition
-                    ->setLazy(true)
-                    ->setArguments([
-                        new Reference($store['http_client']),
-                        $store['endpoint'],
-                        $store['index_name'] ?? $name,
-                        $store['vectors_field'],
-                        $store['dimensions'],
-                        $store['similarity'],
-                    ])
-                    ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
-
-                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-            }
-        }
-
         if ('opensearch' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-open-search-store', OpenSearchStore::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('OpenSearch store configuration requires "symfony/ai-open-search-store" package. Try running "composer require symfony/ai-open-search-store".');
@@ -1835,6 +1836,47 @@ final class AiBundle extends AbstractBundle
             }
         }
 
+        if ('s3vectors' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-s3vectors-store', S3VectorsStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('S3Vectors store configuration requires "symfony/ai-s3vectors-store" package. Try running "composer require symfony/ai-s3vectors-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                if (isset($store['client'])) {
+                    $s3VectorsClient = new Reference($store['client']);
+                } else {
+                    $s3VectorsClient = new Definition(S3VectorsClient::class);
+                    $s3VectorsClient->setArguments([$store['configuration'] ?? []]);
+                }
+
+                $arguments = [
+                    $s3VectorsClient,
+                    $store['vector_bucket_name'],
+                    $store['index_name'] ?? $name,
+                ];
+
+                if (\array_key_exists('filter', $store)) {
+                    $arguments[3] = $store['filter'];
+                }
+
+                if (\array_key_exists('top_k', $store)) {
+                    $arguments[4] = $store['top_k'];
+                }
+
+                $definition = new Definition(S3VectorsStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments($arguments)
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
         if ('supabase' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-supabase-store', SupabaseStore::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('Supabase store configuration requires "symfony/ai-supabase-store" package. Try running "composer require symfony/ai-supabase-store".');
@@ -1931,6 +1973,30 @@ final class AiBundle extends AbstractBundle
             }
         }
 
+        if ('vektor' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-vektor-store', VektorStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Vektor store configuration requires "symfony/ai-vektor-store" package. Try running "composer require symfony/ai-vektor-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(VektorStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments([
+                        $store['storage_path'],
+                        $store['dimensions'],
+                        new Reference('filesystem'),
+                    ])
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
         if ('weaviate' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-weaviate-store', WeaviateStore::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('Weaviate store configuration requires "symfony/ai-weaviate-store" package. Try running "composer require symfony/ai-weaviate-store".');
@@ -1945,71 +2011,6 @@ final class AiBundle extends AbstractBundle
                         $store['endpoint'],
                         $store['api_key'],
                         $store['collection'] ?? $name,
-                    ])
-                    ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
-
-                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-            }
-        }
-
-        if ('s3vectors' === $type) {
-            if (!ContainerBuilder::willBeAvailable('symfony/ai-s3vectors-store', S3VectorsStore::class, ['symfony/ai-bundle'])) {
-                throw new RuntimeException('S3Vectors store configuration requires "symfony/ai-s3vectors-store" package. Try running "composer require symfony/ai-s3vectors-store".');
-            }
-
-            foreach ($stores as $name => $store) {
-                if (isset($store['client'])) {
-                    $s3VectorsClient = new Reference($store['client']);
-                } else {
-                    $s3VectorsClient = new Definition(\AsyncAws\S3Vectors\S3VectorsClient::class);
-                    $s3VectorsClient->setArguments([$store['configuration'] ?? []]);
-                }
-
-                $arguments = [
-                    $s3VectorsClient,
-                    $store['vector_bucket_name'],
-                    $store['index_name'] ?? $name,
-                ];
-
-                if (\array_key_exists('filter', $store)) {
-                    $arguments[3] = $store['filter'];
-                }
-
-                if (\array_key_exists('top_k', $store)) {
-                    $arguments[4] = $store['top_k'];
-                }
-
-                $definition = new Definition(S3VectorsStore::class);
-                $definition
-                    ->setLazy(true)
-                    ->setArguments($arguments)
-                    ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
-
-                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-            }
-        }
-
-        if ('vektor' === $type) {
-            if (!ContainerBuilder::willBeAvailable('symfony/ai-vektor-store', VektorStore::class, ['symfony/ai-bundle'])) {
-                throw new RuntimeException('Vektor store configuration requires "symfony/ai-vektor-store" package. Try running "composer require symfony/ai-vektor-store".');
-            }
-
-            foreach ($stores as $name => $store) {
-                $definition = new Definition(VektorStore::class);
-                $definition
-                    ->setLazy(true)
-                    ->setArguments([
-                        $store['storage_path'],
-                        $store['dimensions'],
-                        new Reference('filesystem'),
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
