@@ -27,6 +27,7 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  * @phpstan-import-type ChatData from TraceableChat
  * @phpstan-import-type AgentData from TraceableAgent
  * @phpstan-import-type StoreData from TraceableStore
+ * @phpstan-import-type CapabilityHandlerData from TraceableCapabilityHandler
  *
  * @phpstan-type CollectedPlatformCallData array{
  *     model: string,
@@ -69,12 +70,18 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     private readonly array $stores;
 
     /**
-     * @param iterable<TraceablePlatform>     $platforms
-     * @param iterable<TraceableToolbox>      $toolboxes
-     * @param iterable<TraceableMessageStore> $messageStores
-     * @param iterable<TraceableChat>         $chats
-     * @param iterable<TraceableAgent>        $agents
-     * @param iterable<TraceableStore>        $stores
+     * @var TraceableCapabilityHandler[]
+     */
+    private readonly array $capabilityHandlers;
+
+    /**
+     * @param iterable<TraceablePlatform>          $platforms
+     * @param iterable<TraceableToolbox>           $toolboxes
+     * @param iterable<TraceableMessageStore>      $messageStores
+     * @param iterable<TraceableChat>              $chats
+     * @param iterable<TraceableAgent>             $agents
+     * @param iterable<TraceableStore>             $stores
+     * @param iterable<TraceableCapabilityHandler> $capabilityHandlers
      */
     public function __construct(
         iterable $platforms,
@@ -83,6 +90,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         iterable $chats,
         iterable $agents,
         iterable $stores,
+        iterable $capabilityHandlers,
     ) {
         $this->platforms = iterator_to_array($platforms);
         $this->toolboxes = iterator_to_array($toolboxes);
@@ -90,6 +98,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         $this->chats = iterator_to_array($chats);
         $this->agents = iterator_to_array($agents);
         $this->stores = iterator_to_array($stores);
+        $this->capabilityHandlers = iterator_to_array($capabilityHandlers);
     }
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
@@ -102,11 +111,12 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         $this->data = [
             'tools' => $this->getAllTools(),
             'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
-            'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
+            'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox): array => $toolbox->calls, $this->toolboxes)),
             'messages' => array_merge(...array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->calls, $this->messageStores)),
             'chats' => array_merge(...array_map(static fn (TraceableChat $chat): array => $chat->calls, $this->chats)),
             'agents' => array_merge(...array_map(static fn (TraceableAgent $agent): array => $agent->calls, $this->agents)),
             'stores' => array_merge(...array_map(static fn (TraceableStore $store): array => $store->calls, $this->stores)),
+            'capability_handlers' => array_merge(...array_map(static fn (TraceableCapabilityHandler $capabilityHandler): array => $capabilityHandler->calls, $this->capabilityHandlers)),
         ];
     }
 
@@ -177,11 +187,19 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     }
 
     /**
+     * @return CapabilityHandlerData[]
+     */
+    public function getCapabilityHandlers(): array
+    {
+        return $this->data['capability_handlers'] ?? [];
+    }
+
+    /**
      * @return Tool[]
      */
     private function getAllTools(): array
     {
-        return array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->getTools(), $this->toolboxes));
+        return array_merge(...array_map(static fn (TraceableToolbox $toolbox): array => $toolbox->getTools(), $this->toolboxes));
     }
 
     /**
