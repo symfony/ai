@@ -12,6 +12,7 @@
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Symfony\AI\Agent\Toolbox\AgentProcessor as ToolProcessor;
+use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Agent\Toolbox\ToolFactory\AbstractToolFactory;
@@ -210,6 +211,11 @@ return static function (ContainerConfigurator $container): void {
                 false,
                 false,
             ])
+        ->set('ai.tool.validate_tool_call_arguments_listener', ValidateToolCallArgumentsListener::class)
+            ->args([
+                service('validator'),
+            ])
+            ->tag('kernel.event_listener')
         ->set('ai.security.is_granted_attribute_listener', IsGrantedToolAttributeListener::class)
             ->args([
                 service('security.authorization_checker'),

@@ -141,6 +141,7 @@ use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -342,6 +343,10 @@ final class AiBundle extends AbstractBundle
                 IsGrantedTool::class,
                 static fn () => throw new InvalidArgumentException('Using #[IsGrantedTool] attribute requires additional dependencies. Try running "composer install symfony/security-core".'),
             );
+        }
+
+        if (!ContainerBuilder::willBeAvailable('symfony/validator', ValidatorInterface::class, ['symfony/ai-bundle'])) {
+            $builder->removeDefinition('ai.tool.validate_tool_call_arguments_listener');
         }
 
         if (false === $builder->getParameter('kernel.debug')) {
