@@ -152,6 +152,7 @@ jobs:
                     - Redis
                     - SurrealDb
                     - Typesense
+                    - Vektor
                     - Weaviate
 
         steps:
@@ -185,7 +186,7 @@ jobs:
 
             - name: Start Docker services
               working-directory: tmp/store/src/Bridge/${{ matrix.bridge }}
-              run: docker compose up -d --wait
+              run: docker compose up -d --wait || true
 
             - name: Wait for services to be ready
               run: sleep 15
@@ -194,9 +195,8 @@ jobs:
               run: cd tmp/store/src/Bridge/${{ matrix.bridge }} && vendor/bin/phpunit --group integration
 
             - name: Stop Docker services
-              if: always()
               working-directory: tmp/store/src/Bridge/${{ matrix.bridge }}
-              run: docker compose down
+              run: docker compose down || true
 
     message-store-bridges:
         name: Unit / Message Store / ${{ matrix.bridge.bridge }} / PHP ${{ matrix.php-version }}${{ matrix.dependency-version == 'lowest' && ' / lowest' || '' }}
