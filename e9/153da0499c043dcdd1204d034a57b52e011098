@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-18T10:28:59Z
+
+Rebase unlocked after #1628
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-19T20:59:49Z
+
+@OskarStark fixed everything - but wait with a final review, i have to test it in a real world app and maybe also integrate it into the demo
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-23T19:32:15Z
+
+@OskarStark fixed and added a usage in the demo
