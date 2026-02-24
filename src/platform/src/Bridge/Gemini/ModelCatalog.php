@@ -146,6 +146,17 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            // TTS
+            'gemini-2.5-flash-native-audio-preview-12-2025' => [
+                'class' => Gemini::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_VIDEO,
+                    Capability::INPUT_AUDIO,
+                    Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
+                ],
+            ],
             'gemini-2.5-flash-preview-tts' => [
                 'class' => Gemini::class,
                 'capabilities' => [
@@ -162,10 +173,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TEXT_TO_SPEECH,
                 ],
             ],
-            'text-embedding-004' => [
-                'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
-            ],
+            // Embeddings
             'gemini-embedding-001' => [
                 'class' => Embeddings::class,
                 'capabilities' => [
