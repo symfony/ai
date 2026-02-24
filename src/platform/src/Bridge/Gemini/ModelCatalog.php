@@ -135,17 +135,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'gemini-1.5-flash' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_PDF,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
             // TTS
             'gemini-2.5-flash-native-audio-preview-12-2025' => [
                 'class' => Gemini::class,
