@@ -162,17 +162,16 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TEXT_TO_SPEECH,
                 ],
             ],
-            'gemini-embedding-exp-03-07' => [
-                'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
-            ],
             'text-embedding-004' => [
                 'class' => Embeddings::class,
                 'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
-            'embedding-001' => [
+            'gemini-embedding-001' => [
                 'class' => Embeddings::class,
-                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::EMBEDDINGS
+                ],
             ],
         ];
 
