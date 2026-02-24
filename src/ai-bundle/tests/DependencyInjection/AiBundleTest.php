@@ -198,6 +198,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([
             'ai.store.mariadb.my_mariadb_store' => ['dimensions' => 1024],
             'ai.store.mongodb.my_mongo_store' => ['fields' => [['path' => 'metadata.store_code', 'type' => 'filter']]],
+            'ai.store.postgres.my_postgres_store' => ['vector_type' => 'vector', 'vector_size' => 1536, 'index_method' => 'ivfflat', 'index_opclass' => 'vector_cosine_ops'],
         ], $setupStoreCommandDefinition->getArgument(1));
         $this->assertArrayHasKey('console.command', $setupStoreCommandDefinition->getTags());
 
@@ -8119,6 +8120,12 @@ class AiBundleTest extends TestCase
                             'password' => 'pass',
                             'table_name' => 'my_table',
                             'vector_field' => 'my_embedding',
+                            'setup_options' => [
+                                'vector_type' => 'vector',
+                                'vector_size' => 1536,
+                                'index_method' => 'ivfflat',
+                                'index_opclass' => 'vector_cosine_ops',
+                            ],
                         ],
                     ],
                     'qdrant' => [

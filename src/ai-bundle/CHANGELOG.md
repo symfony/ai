@@ -7,6 +7,7 @@ CHANGELOG
  * Move debug service decorating to compiler pass to cover user-defined services
  * Add `TraceableAgent`
  * Add `TraceableStore`
+ * Add `setup_options` configuration for PostgreSQL store to pass extra fields to `ai:store:setup`
 
 0.5
 ---
