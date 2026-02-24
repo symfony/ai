@@ -25,6 +25,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 {
     public static function modelsProvider(): iterable
     {
+        yield 'gemini-3.1-pro-preview' => ['gemini-3.1-pro-preview', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::OUTPUT_TEXT, Capability::TOOL_CALLING, Capability::THINKING]];
         yield 'gemini-2.5-flash' => ['gemini-2.5-flash', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'gemini-2.5-pro' => ['gemini-2.5-pro', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'gemini-2.5-flash-lite' => ['gemini-2.5-flash-lite', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
