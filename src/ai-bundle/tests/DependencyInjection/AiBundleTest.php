@@ -143,6 +143,14 @@ class AiBundleTest extends TestCase
         }
     }
 
+    public function testDataCollectorTagIncludesId()
+    {
+        $container = $this->buildContainer($this->getFullConfig());
+        $definition = $container->getDefinition('ai.data_collector');
+        $this->assertTrue($definition->hasTag('data_collector'));
+        $this->assertSame([['id' => 'ai']], $definition->getTag('data_collector'));
+    }
+
     public function testStoreCommandsArentDefinedWithoutStore()
     {
         $container = $this->buildContainer([

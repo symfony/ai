@@ -43,6 +43,14 @@ class McpBundleTest extends TestCase
         $this->assertSame([], $container->getParameter('mcp.discovery.exclude_dirs'));
     }
 
+    public function testDataCollectorTagIncludesId()
+    {
+        $container = $this->buildContainer([]);
+        $definition = $container->getDefinition('mcp.data_collector');
+        $this->assertTrue($definition->hasTag('data_collector'));
+        $this->assertSame([['id' => 'mcp']], $definition->getTag('data_collector'));
+    }
+
     public function testCustomConfiguration()
     {
         $container = $this->buildContainer([
