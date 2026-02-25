@@ -23,6 +23,11 @@ use Symfony\AI\Platform\Test\ModelCatalogTestCase;
  */
 final class ModelCatalogTest extends ModelCatalogTestCase
 {
+    protected function setUp(): void
+    {
+        $this->expectUserDeprecationMessageMatches('/gemini-2.0-flash/');
+    }
+
     public static function modelsProvider(): iterable
     {
         yield 'gemini-3.1-pro-preview' => ['gemini-3.1-pro-preview', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::OUTPUT_TEXT, Capability::TOOL_CALLING, Capability::THINKING]];
