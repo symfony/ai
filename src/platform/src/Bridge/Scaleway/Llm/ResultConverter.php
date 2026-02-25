@@ -175,7 +175,7 @@ final class ResultConverter implements ResultConverterInterface
      */
     private function convertToolCall(array $toolCall): ToolCall
     {
-        if (isset($toolCall['function']['arguments'])) {
+        if (!empty($toolCall['function']['arguments'])) {
             $arguments = json_decode($toolCall['function']['arguments'], true, flags: \JSON_THROW_ON_ERROR);
         } else {
             $arguments = [];
