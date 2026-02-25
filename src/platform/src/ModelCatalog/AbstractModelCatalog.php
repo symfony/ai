@@ -57,7 +57,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
             $deprecationMessage = \sprintf('Using "%s" is deprecated.', $catalogKey);
 
             if (true === \is_string($modelConfig['deprecated'])) {
-                $deprecationMessage = $modelConfig['deprecated'];
+                $deprecationMessage .= ' '.$modelConfig['deprecated'];
             }
 
             trigger_deprecation('', '', $deprecationMessage);

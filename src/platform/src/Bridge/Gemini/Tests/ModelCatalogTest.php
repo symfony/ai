@@ -23,18 +23,13 @@ use Symfony\AI\Platform\Test\ModelCatalogTestCase;
  */
 final class ModelCatalogTest extends ModelCatalogTestCase
 {
-    protected function setUp(): void
-    {
-        $this->expectUserDeprecationMessageMatches('/gemini-2.0-flash/');
-    }
-
     public static function modelsProvider(): iterable
     {
         yield 'gemini-3.1-pro-preview' => ['gemini-3.1-pro-preview', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::OUTPUT_TEXT, Capability::TOOL_CALLING, Capability::THINKING]];
         yield 'gemini-2.5-flash' => ['gemini-2.5-flash', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'gemini-2.5-pro' => ['gemini-2.5-pro', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'gemini-2.5-flash-lite' => ['gemini-2.5-flash-lite', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
-        yield 'gemini-2.0-flash' => ['gemini-2.0-flash', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
+        yield 'gemini-2.0-flash' => ['gemini-2.0-flash', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING], true];
         yield 'gemini-2.0-pro-exp-02-05' => ['gemini-2.0-pro-exp-02-05', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
         yield 'gemini-2.0-flash-lite-preview-02-05' => ['gemini-2.0-flash-lite-preview-02-05', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
         yield 'gemini-2.0-flash-thinking-exp-01-21' => ['gemini-2.0-flash-thinking-exp-01-21', Gemini::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_AUDIO, Capability::INPUT_PDF, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
