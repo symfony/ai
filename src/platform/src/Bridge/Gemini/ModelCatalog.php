@@ -127,7 +127,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                 ],
-                'deprecated' => 'The model will be shutdown on June 1, 2026. Use "gemini-2.5-flash" instead (https://ai.google.dev/gemini-api/docs/changelog?hl=en#02-18-2026).',
             ],
             'gemini-2.0-pro-exp-02-05' => [
                 'class' => Gemini::class,
