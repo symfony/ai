@@ -53,6 +53,16 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
             throw new InvalidArgumentException(\sprintf('Model class "%s" must extend "%s".', $modelClass, Model::class));
         }
 
+        if (true === isset($modelConfig['deprecated'])) {
+            $deprecationMessage = \sprintf('Using "%s" is deprecated.', $catalogKey);
+
+            if (true === \is_string($modelConfig['deprecated'])) {
+                $deprecationMessage = $modelConfig['deprecated'];
+            }
+
+            trigger_deprecation('', '', $deprecationMessage);
+        }
+
         return $model;
     }
 
