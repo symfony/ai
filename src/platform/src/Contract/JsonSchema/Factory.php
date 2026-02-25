@@ -233,6 +233,23 @@ final class Factory
                     return ['type' => 'string', 'format' => 'date-time'];
                 }
 
+                // Check for the DiscriminatorMap attribute to handle polymorphic interfaces
+                // Using anyOf instead of oneOf because oneOf is not supported by
+                // Anthropic and Gemini. For discriminated unions with a type property,
+                // anyOf and oneOf are semantically equivalent since each instance
+                // matches exactly one subschema.
+                $discriminatorMapping = $this->classMetadataFactory->getMetadataFor($className)->getClassDiscriminatorMapping()?->getTypesMapping();
+                if ($discriminatorMapping) {
+                    $discriminators = [];
+                    foreach ($discriminatorMapping as $_ => $discriminator) {
+                        $discriminators[] = $this->buildProperties($discriminator);
+                    }
+
+                    return [
+                        'anyOf' => $discriminators,
+                    ];
+                }
+
                 // Recursively build the schema for an object type
                 return $this->buildProperties($className) ?? ['type' => 'object'];
 

@@ -14,7 +14,14 @@ namespace Symfony\AI\Agent\Toolbox;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
+use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
+use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\BackedEnumNormalizer;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -27,12 +34,28 @@ use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
  */
 final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterface
 {
+    private readonly DenormalizerInterface $denormalizer;
     private readonly TypeResolver $typeResolver;
 
     public function __construct(
-        private readonly DenormalizerInterface $denormalizer = new Serializer([new DateTimeNormalizer(), new ObjectNormalizer(), new ArrayDenormalizer()]),
+        ?DenormalizerInterface $denormalizer = null,
         ?TypeResolver $typeResolver = null,
     ) {
+        if (null === $denormalizer) {
+            $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
+            $propertyTypeExtractor = new PropertyInfoExtractor([], [new PhpDocExtractor(), new ReflectionExtractor()]);
+            $denormalizer = new Serializer([
+                new DateTimeNormalizer(),
+                new BackedEnumNormalizer(),
+                new ObjectNormalizer(
+                    classDiscriminatorResolver: new ClassDiscriminatorFromClassMetadata($classMetadataFactory),
+                    propertyTypeExtractor: $propertyTypeExtractor,
+                ),
+                new ArrayDenormalizer(),
+            ]);
+        }
+
+        $this->denormalizer = $denormalizer;
         $this->typeResolver = $typeResolver ?? TypeResolver::create();
     }
 
