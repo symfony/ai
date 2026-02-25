@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Cache;
 
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Document\Metadata;
@@ -113,7 +114,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     maxItems?: positive-int,
-     *     filter?: callable(VectorDocument): bool
+     *     filter?: callable(VectorDocument): bool,
+     *     include_vectors?: bool,
      * } $options If maxItems is provided, only the top N results will be returned.
      *            If filter is provided, only documents matching the filter will be considered.
      */
@@ -148,11 +150,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $vectorDocuments = array_map(static fn (array $document): VectorDocument => new VectorDocument(
-            id: $document['id'],
-            vector: new Vector($document['vector']),
-            metadata: new Metadata($document['metadata']),
-        ), $documents);
+        $vectorDocuments = array_map(static function (array $document): VectorDocument {
+            $vector = new Vector($document['vector_field']);
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($document['vector_field']);
+
+                $vector = new NullVector();
+            }
+
+            return new VectorDocument(
+                id: $document['id'],
+                vector: $vector,
+                metadata: new Metadata($document['metadata']),
+            );
+        }, $documents);
 
         if (isset($options['filter'])) {
             $vectorDocuments = array_values(array_filter($vectorDocuments, $options['filter']));

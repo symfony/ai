@@ -188,6 +188,15 @@ Store
 
    This change aligns the constructor with the primary dependency (the store) being first, followed by the optional vectorizer.
 
+ * When using `Store::query()`, use `include_vectors` option to retrieve `VectorDocument` without vectors:
+
+   ```php
+   use Symfony\AI\Store\Bridge\Cache;
+
+   $store = new Store(new ArrayAdapter());
+   $results = $store->query(new VectorQuery($vector), ['include_vectors' => false])
+   ```
+
 UPGRADE FROM 0.2 to 0.3
 =======================
 

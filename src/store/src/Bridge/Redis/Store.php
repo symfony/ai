@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\Redis;
 
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
@@ -137,7 +138,7 @@ class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{limit?: positive-int, maxScore?: float, where?: string} $options
+     * @param array{limit?: positive-int, maxScore?: float, where?: string, include_vectors?: bool} $options
      *
      * @return VectorDocument[]
      */
@@ -203,9 +204,17 @@ class Store implements ManagedStoreInterface, StoreInterface
                 continue;
             }
 
+            $vector = new Vector($data['$.embedding'] ?? []);
+
+            if (!($options['include_vectors'] ?? true)) {
+                unset($data['$.embedding']);
+
+                $vector = new NullVector();
+            }
+
             yield new VectorDocument(
                 id: $data['$.id'],
-                vector: new Vector($data['$.embedding'] ?? []),
+                vector: $vector,
                 metadata: new Metadata($data['$.metadata'] ?? []),
                 score: $score,
             );

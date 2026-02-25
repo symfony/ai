@@ -132,7 +132,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $response = $this->request('POST', \sprintf('collections/%s/points/query', $this->collectionName), $payload);
 
         foreach ($response['result']['points'] as $item) {
-            yield $this->convertToVectorDocument($item);
+            yield $this->convertToVectorDocument($item, $options);
         }
     }
 
@@ -159,14 +159,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data, array $options): VectorDocument
     {
         $id = $data['id'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
 
         $vector = !\array_key_exists('vector', $data) || null === $data['vector']
             ? new NullVector()
             : new Vector($data['vector']);
+
+        if (!($options['include_vectors'] ?? true)) {
+            unset($data['vector']);
+
+            $vector = new NullVector();
+        }
 
         return new VectorDocument(
             id: $id,

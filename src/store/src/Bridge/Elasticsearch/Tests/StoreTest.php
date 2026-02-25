@@ -191,7 +191,9 @@ final class StoreTest extends TestCase
         ]);
 
         $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
-        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])));
+        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
+            'include_vectors' => true,
+        ]);
 
         $this->assertCount(2, iterator_to_array($results));
         $this->assertSame(1, $httpClient->getRequestsCount());
