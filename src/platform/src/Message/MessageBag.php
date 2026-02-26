@@ -78,6 +78,17 @@ class MessageBag implements \Countable, \IteratorAggregate
         return null;
     }
 
+    public function getAssistantMessage(): ?AssistantMessage
+    {
+        foreach ($this->messages as $message) {
+            if ($message instanceof AssistantMessage) {
+                return $message;
+            }
+        }
+
+        return null;
+    }
+
     public function with(MessageInterface $message): self
     {
         $messages = clone $this;

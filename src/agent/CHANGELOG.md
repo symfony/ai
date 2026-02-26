@@ -8,6 +8,7 @@ CHANGELOG
  * [BC BREAK] Change AgentProcessor `keepToolMessages` to `excludeToolMessages` and default behaviour to preserve tool messages
  * Add `MetaDataAwareTrait` to `MockResponse`, the metadata will also be set on the returned `TextResult` when calling the `toResult` function
  * Add `HasSourcesTrait` to `Symfony\AI\Agent\Toolbox\Tool\Subagent`
+ * Add custom policies for agents
 
 0.3
 ---

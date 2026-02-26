@@ -21,11 +21,17 @@ use PHPUnit\Framework\TestCase;
 use Probots\Pinecone\Client as PineconeClient;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Capability\CapabilityHandlerRegistry;
+use Symfony\AI\Agent\Capability\CapabilityHandlerRegistryInterface;
+use Symfony\AI\Agent\InputProcessor\CapabilityProcessor;
+use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
+use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -7732,6 +7738,124 @@ class AiBundleTest extends TestCase
         $this->assertNull($definition->getArgument(3));
     }
 
+    public function testAgentCanEnableCapabilitiesHandlers()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'agent_without_capability_handlers' => [
+                        'model' => 'gpt-4',
+                        'capabilities' => [],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.agent_without_capability_handlers'));
+        $this->assertFalse($container->hasDefinition('ai.agent.capability_handler_registry'));
+        $this->assertFalse($container->hasDefinition('ai.agent.capability_processor'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'agent_with_capability_handlers' => [
+                        'model' => 'gpt-4',
+                        'capabilities' => [
+                            'enabled' => true,
+                            'handlers' => [
+                                'default_capability_handler',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.agent_with_capability_handlers'));
+        $this->assertTrue($container->hasDefinition('ai.agent.capability_handler_registry'));
+        $this->assertTrue($container->hasDefinition('ai.agent.capability_processor'));
+
+        $agentDefinition = $container->getDefinition('ai.agent.agent_with_capability_handlers');
+        $this->assertSame(Agent::class, $agentDefinition->getClass());
+
+        $capabilityHandlerRegistryDefinition = $container->getDefinition('ai.agent.capability_handler_registry');
+        $this->assertSame(CapabilityHandlerRegistry::class, $capabilityHandlerRegistryDefinition->getClass());
+        $this->assertTrue($capabilityHandlerRegistryDefinition->isLazy());
+        $this->assertCount(1, $capabilityHandlerRegistryDefinition->getArguments());
+        $this->assertEquals([
+            new Reference('default_capability_handler'),
+        ], $capabilityHandlerRegistryDefinition->getArgument(0));
+
+        $this->assertSame([
+            ['interface' => CapabilityHandlerRegistryInterface::class],
+        ], $capabilityHandlerRegistryDefinition->getTag('proxy'));
+
+        $capabilityProcessorDefinition = $container->getDefinition('ai.agent.capability_processor');
+        $this->assertSame(CapabilityProcessor::class, $capabilityProcessorDefinition->getClass());
+        $this->assertTrue($capabilityProcessorDefinition->isLazy());
+        $this->assertCount(1, $capabilityProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $capabilityProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.agent.capability_handler_registry', (string) $capabilityProcessorDefinition->getArgument(0));
+
+        $this->assertSame([
+            ['interface' => InputProcessorInterface::class],
+            ['interface' => OutputProcessorInterface::class],
+        ], $capabilityProcessorDefinition->getTag('proxy'));
+
+        $this->assertTrue($capabilityProcessorDefinition->hasTag('ai.agent.input_processor'));
+        $this->assertTrue($capabilityProcessorDefinition->hasTag('ai.agent.output_processor'));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'agent_with_capability_handlers' => [
+                        'model' => 'gpt-4',
+                        'capabilities' => [
+                            'enabled' => true,
+                            'handlers' => [
+                                ['service' => 'new_capability_handler'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.agent_with_capability_handlers'));
+        $this->assertTrue($container->hasDefinition('ai.agent.capability_handler_registry'));
+        $this->assertTrue($container->hasDefinition('ai.agent.capability_processor'));
+
+        $agentDefinition = $container->getDefinition('ai.agent.agent_with_capability_handlers');
+        $this->assertSame(Agent::class, $agentDefinition->getClass());
+
+        $capabilityHandlerRegistryDefinition = $container->getDefinition('ai.agent.capability_handler_registry');
+        $this->assertSame(CapabilityHandlerRegistry::class, $capabilityHandlerRegistryDefinition->getClass());
+        $this->assertTrue($capabilityHandlerRegistryDefinition->isLazy());
+        $this->assertCount(1, $capabilityHandlerRegistryDefinition->getArguments());
+        $this->assertEquals([
+            new Reference('new_capability_handler'),
+        ], $capabilityHandlerRegistryDefinition->getArgument(0));
+
+        $this->assertSame([
+            ['interface' => CapabilityHandlerRegistryInterface::class],
+        ], $capabilityHandlerRegistryDefinition->getTag('proxy'));
+
+        $capabilityProcessorDefinition = $container->getDefinition('ai.agent.capability_processor');
+        $this->assertSame(CapabilityProcessor::class, $capabilityProcessorDefinition->getClass());
+        $this->assertTrue($capabilityProcessorDefinition->isLazy());
+        $this->assertCount(1, $capabilityProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $capabilityProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.agent.capability_handler_registry', (string) $capabilityProcessorDefinition->getArgument(0));
+
+        $this->assertSame([
+            ['interface' => InputProcessorInterface::class],
+            ['interface' => OutputProcessorInterface::class],
+        ], $capabilityProcessorDefinition->getTag('proxy'));
+
+        $this->assertTrue($capabilityProcessorDefinition->hasTag('ai.agent.input_processor'));
+        $this->assertTrue($capabilityProcessorDefinition->hasTag('ai.agent.output_processor'));
+    }
+
     /**
      * @param array<string, mixed> $configuration
      */
@@ -7901,6 +8025,15 @@ class AiBundleTest extends TestCase
                     'another_agent' => [
                         'model' => 'claude-3-opus-20240229',
                         'prompt' => 'Be concise.',
+                    ],
+                    'another_agent_with_capability_handlers' => [
+                        'model' => 'gpt-4',
+                        'capabilities' => [
+                            'enabled' => true,
+                            'handlers' => [
+                                'default_capability_handler',
+                            ],
+                        ],
                     ],
                 ],
                 'store' => [

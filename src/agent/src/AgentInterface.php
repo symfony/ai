@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Capability\InputCapabilityInterface;
+use Symfony\AI\Agent\Capability\OutputCapabilityInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -21,11 +23,12 @@ use Symfony\AI\Platform\Result\ResultInterface;
 interface AgentInterface
 {
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>                                   $options
+     * @param InputCapabilityInterface[]|OutputCapabilityInterface[] $capabilities
      *
      * @throws ExceptionInterface When the agent encounters an error (e.g., unsupported model capabilities, invalid arguments, network failures, or processor errors)
      */
-    public function call(MessageBag $messages, array $options = []): ResultInterface;
+    public function call(MessageBag $messages, array $options = [], array $capabilities = []): ResultInterface;
 
     /**
      * Get the agent's name, which can be used for debugging or multi-agent configuration.

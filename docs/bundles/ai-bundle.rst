@@ -917,6 +917,129 @@ The attribute :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool`
 times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
 
+Capabilities
+------------
+
+An agent need tools to interact with its ecosystem and perform actions like creating/reading files, obtaining current time and more,
+apart from tools, agents also requires extra configuration, especially at runtime where user actions can determine next steps (in workflows and so on).
+
+To interact with the agent configuration at runtime and add extra behavior, capabilities can be used.
+
+Configuration
+^^^^^^^^^^^^^
+
+To use capabilities and allow them to be executed, class implementing :class:`Symfony\\AI\\Agent\\Capability\\CapabilityHandlerInterface`
+must be defined and added to the agent configuration.
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            # ...
+        agent:
+            platform: 'ai.platform.anthropic'
+            model: 'claude-3-7-sonnet'
+            capabilities:
+                enabled: true
+                handlers:
+                    - 'Symfony\AI\Agent\Capability\DelayCapabilityHandler' # Allow to apply delay to agent responses
+
+Creating Custom Capability
+--------------------------
+
+Custom capability can be registered by either implementing :class:`Symfony\\AI\\Agent\\Capability\\InputCapabilityInterface`
+or :class:`Symfony\\AI\\Agent\\Capability\\OutputCapabilityInterface`::
+
+    namespace App\Capability;
+
+    use Symfony\AI\Agent\Capability\InputCapabilityInterface;
+
+    final class NotificationCapability implements OutputCapabilityInterface
+    {
+        public function __construct(
+            public readonly string $message,
+        ) {
+        }
+    }
+
+Once the capability is created, create a handler by implementing :class:`Symfony\\AI\\Agent\\Capability\\CapabilityHandlerInterface`::
+
+    namespace App\Agent\Capability;
+
+    use App\Capability\NotificationCapability;
+    use Symfony\AI\Agent\AgentInterface;
+    use Symfony\AI\Agent\Capability\CapabilityHandlerInterface;
+    use Symfony\AI\Agent\Capability\InputCapabilityInterface;
+    use Symfony\AI\Agent\Capability\OutputCapabilityInterface;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\Component\Validator\Validator\ValidatorInterface;
+
+    final class NotificationCapabilityHandler implements CapabilityHandlerInterface
+    {
+        public function __construct(
+            private readonly NotifierInterface $notifier,
+        ) {
+        }
+
+        public function handle(AgentInterface $agent, MessageBag $messages, array $options, InputCapabilityInterface|OutputCapabilityInterface $capability): void
+        {
+            // ...
+        }
+
+        public function support(InputCapabilityInterface|OutputCapabilityInterface $capability): bool
+        {
+            return $capability instanceof NotificationCapability;
+        }
+    }
+
+To use the capability, inject the :class:`Symfony\\AI\\Agent\\Agent` service and use the `call` method::
+
+    use App\Capability\NotificationCapability;
+    use Symfony\AI\Agent\AgentInterface;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    final readonly class MyService
+    {
+        public function __construct(
+            private AgentInterface $agent,
+        ) {
+        }
+
+        public function submit(string $message): string
+        {
+            $messages = new MessageBag(
+                Message::forSystem('Speak like a pirate.'),
+                Message::ofUser($message),
+            );
+
+            return $this->agent->call($messages, policies: [
+                new NotificationCapability(...),
+            ]);
+        }
+    }
+
+Register Capability Handlers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, all services implementing the :class:`Symfony\\AI\\Agent\\Capability\\CapabilityHandlerInterface` interface
+are automatically configured as capability handlers, to enable them, use the `handlers` option in agent definition:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            # ...
+        agent:
+            platform: 'ai.platform.anthropic'
+            model: 'claude-3-7-sonnet'
+            capabilities:
+                enabled: true
+                handlers:
+                    - 'App\Agent\Capability\NotificationCapabilityHandler'
+
 Token Usage Tracking
 --------------------
 

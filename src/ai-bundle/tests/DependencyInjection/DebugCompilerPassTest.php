@@ -14,6 +14,7 @@ namespace Symfony\AI\AiBundle\Tests\DependencyInjection;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\Profiler\TraceableAgent;
+use Symfony\AI\AiBundle\Profiler\TraceableCapabilityHandler;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
@@ -36,6 +37,7 @@ final class DebugCompilerPassTest extends TestCase
         $container->register('ai.toolbox.my_agent', \stdClass::class)->addTag('ai.toolbox');
         $container->register('ai.agent.my_agent', \stdClass::class)->addTag('ai.agent');
         $container->register('ai.store.store', \stdClass::class)->addTag('ai.store');
+        $container->register('ai.capability_handler.capability_handler', \stdClass::class)->addTag('ai.capability_handler');
 
         (new DebugCompilerPass())->process($container);
 
@@ -80,6 +82,13 @@ final class DebugCompilerPassTest extends TestCase
         $this->assertEquals([new Reference('.inner')], $traceableStore->getArguments());
         $this->assertTrue($traceableStore->hasTag('ai.traceable_store'));
         $this->assertSame([['method' => 'reset']], $traceableStore->getTag('kernel.reset'));
+
+        $traceableCapabilityHandler = $container->getDefinition('ai.traceable_capability_handler.capability_handler');
+        $this->assertSame(TraceableCapabilityHandler::class, $traceableCapabilityHandler->getClass());
+        $this->assertSame(['ai.capability_handler.capability_handler', null, -1024], $traceableCapabilityHandler->getDecoratedService());
+        $this->assertEquals([new Reference('.inner')], $traceableCapabilityHandler->getArguments());
+        $this->assertTrue($traceableCapabilityHandler->hasTag('ai.traceable_capability_handler'));
+        $this->assertSame([['method' => 'reset']], $traceableCapabilityHandler->getTag('kernel.reset'));
     }
 
     public function testProcessSkipsWhenDebugDisabled()
@@ -93,6 +102,7 @@ final class DebugCompilerPassTest extends TestCase
         $container->register('ai.toolbox.my_agent', \stdClass::class)->addTag('ai.toolbox');
         $container->register('ai.agent.my_agent', \stdClass::class)->addTag('ai.agent');
         $container->register('ai.store.store', \stdClass::class)->addTag('ai.store');
+        $container->register('ai.capability_handler.capability_handler', \stdClass::class)->addTag('ai.capability_handler');
 
         (new DebugCompilerPass())->process($container);
 
@@ -102,5 +112,6 @@ final class DebugCompilerPassTest extends TestCase
         $this->assertFalse($container->hasDefinition('ai.traceable_toolbox.my_agent'));
         $this->assertFalse($container->hasDefinition('ai.traceable_agent.my_agent'));
         $this->assertFalse($container->hasDefinition('ai.traceable_store.store'));
+        $this->assertFalse($container->hasDefinition('ai.traceable_capability_handler.capability_handler'));
     }
 }
