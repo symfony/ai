@@ -137,23 +137,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                bridge:
-                    - ChromaDb
-                    - ClickHouse
-                    - Elasticsearch
-                    - ManticoreSearch
-                    - MariaDb
-                    - Meilisearch
-                    - Milvus
-                    - Neo4j
-                    - OpenSearch
-                    - Postgres
-                    - Qdrant
-                    - Redis
-                    - SurrealDb
-                    - Typesense
-                    - Vektor
-                    - Weaviate
+                bridge: ${{ fromJson(needs.matrix.outputs.store-bridges-integration) }}
 
         steps:
             - name: Checkout
