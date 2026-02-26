@@ -158,6 +158,44 @@ final class AbstractModelCatalogTest extends TestCase
         $this->assertFalse($options['a']['e']);
     }
 
+    public function testExplainedDeprecatedModelTriggersUserDeprecation()
+    {
+        $catalog = new class extends AbstractModelCatalog {
+            public function __construct()
+            {
+                $this->models = [
+                    'old-model' => [
+                        'class' => Model::class,
+                        'capabilities' => [Capability::INPUT_TEXT],
+                        'deprecated' => 'foo/bar::baz',
+                    ],
+                ];
+            }
+        };
+
+        $catalog->getModel('old-model');
+        $this->expectUserDeprecationMessage('Since foo/bar baz: Using "old-model" is deprecated.');
+    }
+
+    public function testDeprecatedModelTriggersUserDeprecation()
+    {
+        $catalog = new class extends AbstractModelCatalog {
+            public function __construct()
+            {
+                $this->models = [
+                    'old-model' => [
+                        'class' => Model::class,
+                        'capabilities' => [Capability::INPUT_TEXT],
+                        'deprecated' => true,
+                    ],
+                ];
+            }
+        };
+
+        $catalog->getModel('old-model');
+        $this->expectUserDeprecationMessage('Using "old-model" is deprecated.');
+    }
+
     private function createTestCatalog(): AbstractModelCatalog
     {
         return new class extends AbstractModelCatalog {

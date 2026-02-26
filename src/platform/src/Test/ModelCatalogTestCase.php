@@ -36,8 +36,12 @@ abstract class ModelCatalogTestCase extends TestCase
      * @param list<Capability>    $expectedCapabilities
      */
     #[DataProvider('modelsProvider')]
-    public function testGetModel(string $modelName, string $expectedClass, array $expectedCapabilities)
+    public function testGetModel(string $modelName, string $expectedClass, array $expectedCapabilities, bool $deprecated = false)
     {
+        if (true === $deprecated) {
+            $this->expectUserDeprecationMessageMatches(\sprintf('/Using "%s" is deprecated/', $modelName));
+        }
+
         $catalog = $this->createModelCatalog();
         $model = $catalog->getModel($modelName);
 
