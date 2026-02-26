@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\Generic;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;

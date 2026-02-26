@@ -13,6 +13,9 @@ namespace Symfony\AI\Platform\Bridge\AmazeeAi\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\AmazeeAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -53,5 +56,21 @@ final class PlatformFactoryTest extends TestCase
         );
 
         $this->assertInstanceOf(Platform::class, $platform);
+    }
+
+    public function testDefaultCatalogCreatesCompletionsModel()
+    {
+        $catalog = new FallbackModelCatalog();
+        $model = $catalog->getModel('gpt-4o');
+
+        $this->assertInstanceOf(CompletionsModel::class, $model);
+    }
+
+    public function testDefaultCatalogCreatesEmbeddingsModel()
+    {
+        $catalog = new FallbackModelCatalog();
+        $model = $catalog->getModel('text-embedding-3-small');
+
+        $this->assertInstanceOf(EmbeddingsModel::class, $model);
     }
 }
