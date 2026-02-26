@@ -167,14 +167,14 @@ final class AbstractModelCatalogTest extends TestCase
                     'old-model' => [
                         'class' => Model::class,
                         'capabilities' => [Capability::INPUT_TEXT],
-                        'deprecated' => 'The model will be removed in future.',
+                        'deprecated' => 'foo/bar::baz',
                     ],
                 ];
             }
         };
 
         $catalog->getModel('old-model');
-        $this->expectUserDeprecationMessage('Using "old-model" is deprecated. The model will be removed in future.');
+        $this->expectUserDeprecationMessage('Since foo/bar baz: Using "old-model" is deprecated.');
     }
 
     public function testDeprecatedModelTriggersUserDeprecation()

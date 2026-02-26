@@ -38,7 +38,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
         $options = $parsed['options'];
 
         if (!isset($this->models[$catalogKey])) {
-            throw new ModelNotFoundException(\sprintf('Model "%s" not found in "%s".', $actualModelName, static::class));
+            throw new ModelNotFoundException(\sprintf('Model "%s" not found in %s.', $actualModelName, static::class));
         }
 
         $modelConfig = $this->models[$catalogKey];
@@ -53,14 +53,13 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
             throw new InvalidArgumentException(\sprintf('Model class "%s" must extend "%s".', $modelClass, Model::class));
         }
 
-        if (true === isset($modelConfig['deprecated'])) {
-            $deprecationMessage = \sprintf('Using "%s" is deprecated.', $catalogKey);
+        if (isset($modelConfig['deprecated'])) {
+            $deprecation = \is_string($modelConfig['deprecated']) ? $modelConfig['deprecated'] : '';
+            $r = preg_match('#(?<package>[^:]*)::(?<version>.*)#', $deprecation, $packageDestructuration);
+            $package = $packageDestructuration['package'] ?? '';
+            $version = $packageDestructuration['version'] ?? '';
 
-            if (true === \is_string($modelConfig['deprecated'])) {
-                $deprecationMessage .= ' '.$modelConfig['deprecated'];
-            }
-
-            trigger_deprecation('', '', $deprecationMessage);
+            trigger_deprecation($package, $version, \sprintf('Using "%s" is deprecated.', $catalogKey));
         }
 
         return $model;

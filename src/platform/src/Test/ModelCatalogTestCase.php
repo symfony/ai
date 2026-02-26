@@ -36,9 +36,9 @@ abstract class ModelCatalogTestCase extends TestCase
      * @param list<Capability>    $expectedCapabilities
      */
     #[DataProvider('modelsProvider')]
-    public function testGetModel(string $modelName, string $expectedClass, array $expectedCapabilities, bool $isDeprecated = false)
+    public function testGetModel(string $modelName, string $expectedClass, array $expectedCapabilities, bool $deprecated = false)
     {
-        if (true === $isDeprecated) {
+        if (true === $deprecated) {
             $this->expectUserDeprecationMessageMatches(\sprintf('/Using "%s" is deprecated/', $modelName));
         }
 
