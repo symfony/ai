@@ -55,7 +55,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
 
         if (isset($modelConfig['deprecated'])) {
             $deprecation = \is_string($modelConfig['deprecated']) ? $modelConfig['deprecated'] : '';
-            $r = preg_match('#(?<package>[^:]*)::(?<version>.*)#', $deprecation, $packageDestructuration);
+            preg_match('#(?<package>[^:]*)::(?<version>.*)#', $deprecation, $packageDestructuration);
             $package = $packageDestructuration['package'] ?? '';
             $version = $packageDestructuration['version'] ?? '';
 
