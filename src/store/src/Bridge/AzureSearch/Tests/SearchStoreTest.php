@@ -37,13 +37,7 @@ final class SearchStoreTest extends TestCase
             ]),
         ]);
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-        );
+        $store = new SearchStore($httpClient, 'test-index');
 
         $uuid = Uuid::v4();
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]));
@@ -58,12 +52,10 @@ final class SearchStoreTest extends TestCase
         $httpClient = new MockHttpClient([
             function (string $method, string $url, array $options): JsonMockResponse {
                 $this->assertSame('POST', $method);
-                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/index?api-version=2023-11-01', $url);
+                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/index', $url);
                 // Check normalized headers as Symfony HTTP client might lowercase them
                 $this->assertArrayHasKey('normalized_headers', $options);
                 $this->assertIsArray($options['normalized_headers']);
-                $this->assertArrayHasKey('api-key', $options['normalized_headers']);
-                $this->assertSame(['api-key: test-api-key'], $options['normalized_headers']['api-key']);
 
                 $this->assertArrayHasKey('body', $options);
                 $this->assertIsString($options['body']);
@@ -85,15 +77,9 @@ final class SearchStoreTest extends TestCase
                     'http_code' => 200,
                 ]);
             },
-        ]);
+        ], 'https://test.search.windows.net/');
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-        );
+        $store = new SearchStore($httpClient, 'test-index');
 
         $uuid = Uuid::v4();
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]), new Metadata(['title' => 'Test Document']));
@@ -116,13 +102,7 @@ final class SearchStoreTest extends TestCase
             ]),
         ]);
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-        );
+        $store = new SearchStore($httpClient, 'test-index');
 
         $uuid = Uuid::v4();
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]));
@@ -160,13 +140,7 @@ final class SearchStoreTest extends TestCase
             ]),
         ]);
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-        );
+        $store = new SearchStore($httpClient, 'test-index');
 
         $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
@@ -208,14 +182,7 @@ final class SearchStoreTest extends TestCase
             },
         ]);
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-            'custom_vector_field',
-        );
+        $store = new SearchStore($httpClient, 'test-index', 'custom_vector_field');
 
         $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
@@ -236,13 +203,7 @@ final class SearchStoreTest extends TestCase
             ]),
         ]);
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-        );
+        $store = new SearchStore($httpClient, 'test-index');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned');
@@ -270,13 +231,7 @@ final class SearchStoreTest extends TestCase
             ]),
         ]);
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-        );
+        $store = new SearchStore($httpClient, 'test-index');
 
         $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
@@ -290,7 +245,7 @@ final class SearchStoreTest extends TestCase
         $httpClient = new MockHttpClient([
             function (string $method, string $url, array $options): JsonMockResponse {
                 $this->assertSame('POST', $method);
-                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/index?api-version=2023-11-01', $url);
+                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/index', $url);
 
                 $this->assertArrayHasKey('body', $options);
                 $this->assertIsString($options['body']);
@@ -312,15 +267,9 @@ final class SearchStoreTest extends TestCase
                     'http_code' => 200,
                 ]);
             },
-        ]);
+        ], 'https://test.search.windows.net/');
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-        );
+        $store = new SearchStore($httpClient, 'test-index');
 
         $store->remove('doc1');
 
@@ -332,7 +281,7 @@ final class SearchStoreTest extends TestCase
         $httpClient = new MockHttpClient([
             function (string $method, string $url, array $options): JsonMockResponse {
                 $this->assertSame('POST', $method);
-                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/index?api-version=2023-11-01', $url);
+                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/index', $url);
 
                 $this->assertArrayHasKey('body', $options);
                 $this->assertIsString($options['body']);
@@ -367,15 +316,9 @@ final class SearchStoreTest extends TestCase
                     'http_code' => 200,
                 ]);
             },
-        ]);
+        ], 'https://test.search.windows.net/');
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-        );
+        $store = new SearchStore($httpClient, 'test-index');
 
         $store->remove(['doc1', 'doc2', 'doc3']);
 
@@ -386,13 +329,7 @@ final class SearchStoreTest extends TestCase
     {
         $httpClient = new MockHttpClient([]);
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-        );
+        $store = new SearchStore($httpClient, 'test-index');
 
         $store->remove([]);
 
@@ -412,13 +349,7 @@ final class SearchStoreTest extends TestCase
             ]),
         ]);
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
-        );
+        $store = new SearchStore($httpClient, 'test-index');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 404 returned');
@@ -429,7 +360,7 @@ final class SearchStoreTest extends TestCase
 
     public function testStoreSupportsVectorQuery()
     {
-        $store = new SearchStore(new MockHttpClient(), 'https://test.search.windows.net', 'test-key', 'test-index', '2023-11-01');
+        $store = new SearchStore(new MockHttpClient(), 'test-index');
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 }
