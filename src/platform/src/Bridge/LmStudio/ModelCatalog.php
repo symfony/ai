@@ -22,13 +22,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: string, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: string, label: string, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'gemma-3-4b-it-qat' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Gemma 3 4B IT QAT',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -39,6 +40,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'text-embedding-nomic-embed-text-v2-moe' => [
                 'class' => EmbeddingsModel::class,
+                'label' => 'Text Embedding Nomic EMbed Text V2 MOE (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,

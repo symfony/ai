@@ -50,7 +50,7 @@ class ToolCallNormalizerTest extends TestCase
         $gpt = new Gpt('o3');
 
         yield 'supported' => [$toolCall, $gpt, true];
-        yield 'unsupported model' => [$toolCall, new Model('foo'), false];
+        yield 'unsupported model' => [$toolCall, new Model('foo', 'Foo'), false];
         yield 'unsupported data' => [new Text('foo'), $gpt, false];
     }
 }

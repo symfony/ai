@@ -20,13 +20,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: string, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: string, label: string, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'codestral-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Codestral',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -37,6 +38,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'devstral-medium-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Devstral Medium',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -47,6 +49,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'devstral-small-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Devstral Small',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -57,6 +60,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'mistral-large-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Mistral Large',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -67,6 +71,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'mistral-medium-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Mistral Medium',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -78,6 +83,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'mistral-small-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Mistral Small',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -89,6 +95,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'open-mistral-nemo' => [
                 'class' => Mistral::class,
+                'label' => 'Open Mistral Nemo',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -99,6 +106,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'mistral-saba-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Mistral Saba',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -108,6 +116,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ministral-3b-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Ministral 3B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -118,6 +127,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ministral-8b-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Ministral 8B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -128,6 +138,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'ministral-14b-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Ministral 14B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -138,6 +149,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'pixstral-large-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Pixstral Large',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -149,6 +161,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'pixstral-12b-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Pixstral 12B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -160,6 +173,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'voxtral-small-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Voxtral Small',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -171,6 +185,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'voxtral-mini-latest' => [
                 'class' => Mistral::class,
+                'label' => 'Voxtral Mini',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -182,6 +197,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'mistral-embed' => [
                 'class' => Embeddings::class,
+                'label' => 'Mistral Embed (Embeddings)',
                 'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
         ];

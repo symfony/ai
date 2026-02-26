@@ -26,7 +26,7 @@ final class CartesiaResultConverterTest extends TestCase
         $converter = new CartesiaResultConverter();
 
         $this->assertTrue($converter->supports(new Cartesia('sonic-3')));
-        $this->assertFalse($converter->supports(new Model('any-model')));
+        $this->assertFalse($converter->supports(new Model('any-model', 'Any Model')));
     }
 
     public function testConvertSpeechToTextResponse()

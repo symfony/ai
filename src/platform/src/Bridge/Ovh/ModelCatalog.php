@@ -22,13 +22,14 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 final class ModelCatalog extends AbstractModelCatalog
 {
     /**
-     * @param array<string, array{class: string, capabilities: list<Capability>}> $additionalModels
+     * @param array<string, array{class: string, label: string, capabilities: list<Capability>}> $additionalModels
      */
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
             'Qwen3Guard-Gen-8B' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Qwen3 Guard Gen 8B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -37,6 +38,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'Qwen3Guard-Gen-0.6B' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Qwen3 Guard Gen 0.6B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -45,6 +47,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'Qwen3-Coder-30B-A3B-Instruct' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Qwen3 Coder 30B A3B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -55,6 +58,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-oss-20b' => [
                 'class' => CompletionsModel::class,
+                'label' => 'GPT-OSS 20B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -65,6 +69,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'gpt-oss-120b' => [
                 'class' => CompletionsModel::class,
+                'label' => 'GPT-OSS 120B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -75,6 +80,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'Qwen3-32B' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Qwen3 32B',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -85,6 +91,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'Mistral-Small-3.2-24B-Instruct-2506' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Mistral Small 3.2 24B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -96,6 +103,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'Qwen2.5-VL-72B-Instruct' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Qwen2.5 VL 72B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
@@ -106,6 +114,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'Llama-3.1-8B-Instruct' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Llama 3.1 8B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -116,6 +125,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'Mistral-7B-Instruct-v0.3' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Mistral 7B Instruct v0.3',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -126,6 +136,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'Meta-Llama-3_3-70B-Instruct' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Llama 3.3 70B Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -136,6 +147,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'Mistral-Nemo-Instruct-2407' => [
                 'class' => CompletionsModel::class,
+                'label' => 'Mistral Nemo Instruct',
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
@@ -145,6 +157,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'bge-multilingual-gemma2' => [
                 'class' => EmbeddingsModel::class,
+                'label' => 'BGE Multilingual Gemma2 (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,
@@ -152,6 +165,7 @@ final class ModelCatalog extends AbstractModelCatalog
             ],
             'bge-m3' => [
                 'class' => EmbeddingsModel::class,
+                'label' => 'BGE M3 (Embeddings)',
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::EMBEDDINGS,

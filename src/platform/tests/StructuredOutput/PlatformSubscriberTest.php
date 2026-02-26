@@ -56,7 +56,7 @@ final class PlatformSubscriberTest extends TestCase
     public function testProcessInputWithoutOutputStructure()
     {
         $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory());
-        $event = new InvocationEvent(new Model('gpt-4'), new MessageBag());
+        $event = new InvocationEvent(new Model('gpt-4', 'GPT-4'), new MessageBag());
 
         $processor->processInput($event);
 
@@ -81,7 +81,7 @@ final class PlatformSubscriberTest extends TestCase
 
         $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory());
 
-        $model = new Model('gpt-3');
+        $model = new Model('gpt-3', 'GPT-3');
         $event = new InvocationEvent($model, new MessageBag(), ['response_format' => SomeStructure::class]);
 
         $processor->processInput($event);
@@ -277,7 +277,7 @@ final class PlatformSubscriberTest extends TestCase
 
         $converter = new PlainConverter($result = new TextResult('{"some": "data"}'));
         $deferred = new DeferredResult($converter, new InMemoryRawResult());
-        $event = new ResultEvent(new Model('gpt4', [Capability::OUTPUT_STRUCTURED]), $deferred);
+        $event = new ResultEvent(new Model('gpt4', 'GPT-4', [Capability::OUTPUT_STRUCTURED]), $deferred);
 
         $processor->processResult($event);
 

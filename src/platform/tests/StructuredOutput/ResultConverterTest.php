@@ -104,8 +104,8 @@ final class ResultConverterTest extends TestCase
         $innerConverter = new PlainConverter(new TextResult('{}'));
         $converter = new ResultConverter($innerConverter, new Serializer());
 
-        $this->assertTrue($converter->supports(new Model('any-model')));
-        $this->assertTrue($converter->supports(new Model('gpt-4')));
+        $this->assertTrue($converter->supports(new Model('any-model', 'Any Model')));
+        $this->assertTrue($converter->supports(new Model('gpt-4', 'GPT-4')));
     }
 
     public function testConvertReturnsNonTextResultUnchanged()
