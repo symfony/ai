@@ -158,6 +158,19 @@ final class AbstractModelCatalogTest extends TestCase
         $this->assertFalse($options['a']['e']);
     }
 
+    public function testScientificNotationIsConvertedToFloat()
+    {
+        $catalog = $this->createTestCatalog();
+        $model = $catalog->getModel('test-model?frequency_penalty=1e-5&presence_penalty=2.5E3');
+
+        $options = $model->getOptions();
+
+        $this->assertIsFloat($options['frequency_penalty']);
+        $this->assertSame(1e-5, $options['frequency_penalty']);
+        $this->assertIsFloat($options['presence_penalty']);
+        $this->assertSame(2.5E3, $options['presence_penalty']);
+    }
+
     private function createTestCatalog(): AbstractModelCatalog
     {
         return new class extends AbstractModelCatalog {
