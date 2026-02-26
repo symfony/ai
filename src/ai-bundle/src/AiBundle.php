@@ -77,6 +77,7 @@ use Symfony\AI\Platform\Bridge\Ovh\PlatformFactory as OvhPlatformFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory as PerplexityPlatformFactory;
 use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory as ScalewayPlatformFactory;
 use Symfony\AI\Platform\Bridge\TransformersPhp\PlatformFactory as TransformersPhpPlatformFactory;
+use Symfony\AI\Platform\Bridge\Venice\PlatformFactory as VenicePlatformFactory;
 use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory as VertexAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
 use Symfony\AI\Platform\Capability;
@@ -718,6 +719,30 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'huggingface']);
 
             $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('venice' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-venice-platform', VoyagePlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Voyage platform configuration requires "symfony/ai-venice-platform" package. Try running "composer require symfony/ai-venice-platform".');
+            }
+
+            $definition = (new Definition(Platform::class))
+                ->setFactory(VenicePlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->setArguments([
+                    $platform['api_key'] ?? null,
+                    $platform['endpoint'],
+                    new Reference($platform['http_client']),
+                    new Reference('ai.platform.contract.'.$type),
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform', ['name' => $type]);
+
+            $container->setDefinition('ai.platform.'.$type, $definition);
+            $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type);
 
             return;
         }

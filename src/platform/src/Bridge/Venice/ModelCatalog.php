@@ -12,55 +12,90 @@
 namespace Symfony\AI\Platform\Bridge\Venice;
 
 use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class ModelCatalog extends AbstractModelCatalog
+final class ModelCatalog implements ModelCatalogInterface
 {
-    /**
-     * @param array<string, array{class: class-string<Model>, capabilities: list<Capability>}> $additionalModels
-     */
-    public function __construct(array $additionalModels = [])
+    public function __construct(
+        private readonly HttpClientInterface $httpClient,
+    ) {
+    }
+
+    public function getModel(string $modelName): Venice
     {
-        $defaultModels = [
-            'venice-uncensored' => [
+        $models = $this->getModels();
+
+        if (!\array_key_exists($modelName, $models)) {
+            throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieved from the API.', $modelName));
+        }
+
+        if ([] === $models[$modelName]['capabilities']) {
+            throw new InvalidArgumentException(\sprintf('The model "%s" is not supported, please check the Venice API.', $modelName));
+        }
+
+        return new Venice($modelName, $models[$modelName]['capabilities']);
+    }
+
+    public function getModels(): array
+    {
+        $results = $this->httpClient->request('GET', 'models', [
+            'query' => [
+                'type' => 'all',
+            ],
+        ]);
+
+        $models = $results->toArray();
+
+        if ([] === $models['data']) {
+            return [];
+        }
+
+        $payload = static fn (array $model): array => match ($model['type']) {
+            'asr' => [
                 'class' => Venice::class,
                 'capabilities' => [
-                    Capability::INPUT_MESSAGES,
+                    Capability::SPEECH_RECOGNITION,
+                    Capability::INPUT_TEXT,
                 ],
             ],
-            'tts-kokoro' => [
-                'class' => Venice::class,
-                'capabilities' => [
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'nvidia/parakeet-tdt-0.6b-v3' => [
-                'class' => Venice::class,
-                'capabilities' => [
-                    Capability::SPEECH_TO_TEXT,
-                ],
-            ],
-            'openai/whisper-large-v3' => [
-                'class' => Venice::class,
-                'capabilities' => [
-                    Capability::SPEECH_TO_TEXT,
-                ],
-            ],
-            'text-embedding-bge-m3' => [
+            'embedding' => [
                 'class' => Venice::class,
                 'capabilities' => [
                     Capability::EMBEDDINGS,
+                    Capability::INPUT_TEXT,
                 ],
             ],
-        ];
+            'text' => [
+                'class' => Venice::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_MESSAGES,
+                ],
+            ],
+            'tts' => [
+                'class' => Venice::class,
+                'capabilities' => [
+                    Capability::TEXT_TO_SPEECH,
+                    Capability::INPUT_TEXT,
+                ],
+            ],
+            'video' => [
+                'class' => Venice::class,
+                'capabilities' => [
+                    Capability::IMAGE_TO_VIDEO,
+                    Capability::INPUT_IMAGE,
+                ],
+            ],
+        };
 
-        $this->models = [
-            ...$defaultModels,
-            ...$additionalModels,
-        ];
+        return array_combine(
+            array_map(static fn (array $model): string => $model['id'], $models['data']),
+            array_map(static fn (array $model): array => $payload($model), $models['data']),
+        );
     }
 }

@@ -22,6 +22,46 @@ final class VeniceClientTest extends TestCase
 {
     public function testClientCanTriggerCompletion()
     {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'choices' => [
+                    [
+                        'finish_reason' => 'stop',
+                        'index' => 0,
+                        'logprobs' => null,
+                        'message' => [
+                            'content' => 'foo',
+                            'reasoning_content' => null,
+                            'role' => 'assistant',
+                            'tool_calls' => [],
+                        ],
+                        'stop_reason' => null,
+                    ],
+                ],
+                'model' => 'text-embedding-bge-m3',
+                'object' => 'list',
+                'usage' => [
+                    'prompt_tokens' => 8,
+                    'total_tokens' => 8,
+                ],
+            ]),
+        ], 'https://api.venice.ai/api/v1/');
+
+        $client = new VeniceClient($httpClient);
+
+        $client->request(new Venice('text-embedding-bge-m3', [
+            Capability::EMBEDDINGS,
+        ]), 'foo');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testClientCanTriggerCompletionAsStream()
+    {
+    }
+
+    public function testClientCanTriggerImageGeneration()
+    {
     }
 
     public function testClientCanTriggerTextToSpeech()

@@ -7872,6 +7872,9 @@ class AiBundleTest extends TestCase
                     'voyage' => [
                         'api_key' => 'voyage_key_full',
                     ],
+                    'venice' => [
+                        'api_key' => 'venice_api_key',
+                    ],
                     'vertexai' => [
                         'location' => 'global',
                         'project_id' => '123',

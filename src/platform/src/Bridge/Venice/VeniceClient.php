@@ -50,6 +50,10 @@ final class VeniceClient implements ModelClientInterface
             throw new InvalidArgumentException('Payload must contain "messages" key for completion.');
         }
 
+        if (($options['stream'] ?? false) && !isset($options['stream_options']['include_usage'])) {
+            $options['stream_options']['include_usage'] = true;
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', 'chat/completions', [
             'json' => [
                 'messages' => $payload['messages'],

@@ -27,23 +27,24 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class PlatformFactory
 {
     public static function create(
-        #[\SensitiveParameter] string $apiKey,
+        #[\SensitiveParameter] ?string $apiKey = null,
         string $endpoint = 'https://api.venice.ai/api/v1/',
         ?HttpClientInterface $httpClient = null,
-        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
     ): PlatformInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, [
-            'auth_bearer' => $apiKey,
-        ]);
+        if (null !== $apiKey) {
+            $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, [
+                'auth_bearer' => $apiKey,
+            ]);
+        }
 
         return new Platform(
             [new VeniceClient($httpClient)],
             [new ResultConverter()],
-            $modelCatalog ?? new VeniceApiModelCatalog($httpClient),
+            new ModelCatalog($httpClient),
             $contract ?? VeniceContract::create(),
             $eventDispatcher,
         );

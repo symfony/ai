@@ -1,7 +1,7 @@
-Ollama Platform
+Venice Platform
 ===============
 
-Ollama platform bridge for Symfony AI.
+Venice platform bridge for Symfony AI.
 
 Resources
 ---------
