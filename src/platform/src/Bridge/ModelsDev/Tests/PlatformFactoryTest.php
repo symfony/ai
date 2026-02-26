@@ -45,26 +45,25 @@ final class PlatformFactoryTest extends TestCase
         $this->assertInstanceOf(Platform::class, $platform);
     }
 
+    public function testCreateWithWellKnownNpmPackageProvider()
+    {
+        $platform = PlatformFactory::create(
+            provider: 'openai',
+            apiKey: 'test-key',
+        );
+
+        $this->assertInstanceOf(Platform::class, $platform);
+    }
+
     public function testCreateThrowsWhenNoBaseUrlAvailable()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('does not have a known API base URL');
 
         PlatformFactory::create(
-            provider: 'openai',
+            provider: 'azure',
             apiKey: 'test-key',
         );
-    }
-
-    public function testCreateWithGroq()
-    {
-        $platform = PlatformFactory::create(
-            provider: 'groq',
-            apiKey: 'test-key',
-            baseUrl: 'https://api.groq.com/openai/v1',
-        );
-
-        $this->assertInstanceOf(Platform::class, $platform);
     }
 
     public function testCreateWithProviderHavingApiUrl()

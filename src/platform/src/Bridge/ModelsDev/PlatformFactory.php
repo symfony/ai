@@ -28,6 +28,25 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class PlatformFactory
 {
+    /**
+     * Well-known API base URLs for providers whose models.dev entry
+     * omits the "api" field because the Vercel AI SDK hardcodes the
+     * URL inside their dedicated npm packages.
+     *
+     * @var array<string, string> npm package => base URL
+     */
+    private const NPM_PACKAGE_BASE_URLS = [
+        '@ai-sdk/cerebras' => 'https://api.cerebras.ai',
+        '@ai-sdk/cohere' => 'https://api.cohere.com/compatibility',
+        '@ai-sdk/deepinfra' => 'https://api.deepinfra.com/v1/openai',
+        '@ai-sdk/groq' => 'https://api.groq.com/openai',
+        '@ai-sdk/mistral' => 'https://api.mistral.ai',
+        '@ai-sdk/openai' => 'https://api.openai.com',
+        '@ai-sdk/perplexity' => 'https://api.perplexity.ai',
+        '@ai-sdk/togetherai' => 'https://api.together.xyz',
+        '@ai-sdk/xai' => 'https://api.x.ai',
+    ];
+
     public static function create(
         string $provider,
         #[\SensitiveParameter] ?string $apiKey = null,
@@ -75,7 +94,13 @@ final class PlatformFactory
         }
 
         // Use the generic OpenAI-compatible bridge
-        if ((null === $baseUrl) && null === $baseUrl = (new ProviderRegistry($dataPath))->getApiBaseUrl($provider)) {
+        if (null === $baseUrl) {
+            $baseUrl = (new ProviderRegistry($dataPath))->getApiBaseUrl($provider);
+        }
+        if (null === $baseUrl && null !== $npmPackage) {
+            $baseUrl = self::NPM_PACKAGE_BASE_URLS[$npmPackage] ?? null;
+        }
+        if (null === $baseUrl) {
             throw new InvalidArgumentException(\sprintf('Provider "%s" does not have a known API base URL; please provide one via the $baseUrl argument.', $provider));
         }
 
