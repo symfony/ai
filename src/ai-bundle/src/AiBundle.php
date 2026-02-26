@@ -88,6 +88,7 @@ use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureSearchStore;
+use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
@@ -1278,22 +1279,17 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    new Reference('http_client'),
-                    $store['endpoint'],
-                    $store['api_key'],
-                    $store['index_name'],
-                    $store['api_version'],
-                ];
-
-                if (\array_key_exists('vector_field', $store)) {
-                    $arguments[5] = $store['vector_field'];
-                }
-
-                $definition = new Definition(AzureSearchStore::class);
-                $definition
+                $definition = (new Definition(AzureSearchStore::class))
+                    ->setFactory(AzureSearchStoreFactory::class.'::create')
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        $store['index_name'] ?? $name,
+                        $store['vector_field'],
+                        $store['endpoint'] ?? null,
+                        $store['api_key'] ?? null,
+                        $store['api_version'] ?? null,
+                        new Reference($store['http_client']),
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('ai.store');
 

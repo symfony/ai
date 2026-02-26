@@ -8,6 +8,7 @@ CHANGELOG
  * Add `TraceableAgent`
  * Add `TraceableStore`
  * Add `setup_options` configuration for PostgreSQL store to pass extra fields to `ai:store:setup`
+ * Add support for `ScopingHttpClient` usage in `AzureSearch` store
 
 0.5
 ---

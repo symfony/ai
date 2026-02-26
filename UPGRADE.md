@@ -1,3 +1,15 @@
+UPGRADE FROM 0.5 to 0.6
+=======================
+
+Store
+--------
+
+ * Add support for `ScopingHttpClient` in `AzureSearchStore`
+ * The `endpointUrl` parameter for `AzureSearchStore` has been removed
+ * The `apiKey` parameter for `AzureSearchStore` has been removed
+ * The `apiVersion` parameter for `AzureSearchStore` has been removed
+ * A `StoreFactory` has been introduced for `AzureSearchStore`
+
 UPGRADE FROM 0.4 to 0.5
 =======================
 

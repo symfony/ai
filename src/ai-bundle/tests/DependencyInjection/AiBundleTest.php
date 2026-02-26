@@ -51,6 +51,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
+use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickhouseStore;
@@ -66,7 +67,7 @@ use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
-use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
+use Symfony\AI\Store\Bridge\Qdrant\StoreFactory as QdrantStoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
@@ -485,16 +486,18 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.azuresearch.my_azuresearch_store'));
 
         $definition = $container->getDefinition('ai.store.azuresearch.my_azuresearch_store');
+        $this->assertSame([AzureSearchStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(AzureStore::class, $definition->getClass());
-
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
-        $this->assertSame('https://mysearch.search.windows.net', $definition->getArgument(1));
-        $this->assertSame('azure_search_key', $definition->getArgument(2));
-        $this->assertSame('my-documents', $definition->getArgument(3));
+
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('my-documents', (string) $definition->getArgument(0));
+        $this->assertSame('vector', $definition->getArgument(1));
+        $this->assertSame('https://mysearch.search.windows.net', $definition->getArgument(2));
+        $this->assertSame('azure_search_key', $definition->getArgument(3));
         $this->assertSame('2023-11-01', $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('http_client', (string) $definition->getArgument(5));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
@@ -504,10 +507,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myAzuresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $azuresearchMyAzuresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
-    }
 
-    public function testAzureStoreCanBeConfiguredWithCustomVectorField()
-    {
+        // Custom vector field
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -527,17 +528,56 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.azuresearch.my_azuresearch_store'));
 
         $definition = $container->getDefinition('ai.store.azuresearch.my_azuresearch_store');
+        $this->assertSame([AzureSearchStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(AzureStore::class, $definition->getClass());
-
         $this->assertTrue($definition->isLazy());
+
         $this->assertCount(6, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
-        $this->assertSame('https://mysearch.search.windows.net', $definition->getArgument(1));
-        $this->assertSame('azure_search_key', $definition->getArgument(2));
-        $this->assertSame('my-documents', $definition->getArgument(3));
+        $this->assertSame('my-documents', (string) $definition->getArgument(0));
+        $this->assertSame('foo', $definition->getArgument(1));
+        $this->assertSame('https://mysearch.search.windows.net', $definition->getArgument(2));
+        $this->assertSame('azure_search_key', $definition->getArgument(3));
         $this->assertSame('2023-11-01', $definition->getArgument(4));
-        $this->assertSame('foo', $definition->getArgument(5));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('http_client', (string) $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_azuresearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myAzuresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $azuresearchMyAzuresearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+
+        // Scoped HttpClient
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'azuresearch' => [
+                        'my_azuresearch_store' => [
+                            'http_client' => 'scoped_http_client',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.azuresearch.my_azuresearch_store'));
+
+        $definition = $container->getDefinition('ai.store.azuresearch.my_azuresearch_store');
+        $this->assertSame([AzureSearchStoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(AzureStore::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('my_azuresearch_store', (string) $definition->getArgument(0));
+        $this->assertSame('vector', $definition->getArgument(1));
+        $this->assertNull($definition->getArgument(2));
+        $this->assertNull($definition->getArgument(3));
+        $this->assertNull($definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('scoped_http_client', (string) $definition->getArgument(5));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
@@ -2678,7 +2718,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
-        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([QdrantStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -2722,7 +2762,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
-        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([QdrantStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -2767,7 +2807,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
-        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([QdrantStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -2813,7 +2853,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
-        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([QdrantStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -2856,7 +2896,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.qdrant.my_qdrant_store'));
 
         $definition = $container->getDefinition('ai.store.qdrant.my_qdrant_store');
-        $this->assertSame([StoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([QdrantStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(QdrantStore::class, $definition->getClass());
         $this->assertTrue($definition->isLazy());
 
@@ -7919,6 +7959,9 @@ class AiBundleTest extends TestCase
                             'index_name' => 'my-documents',
                             'api_version' => '2023-11-01',
                             'vector_field' => 'contentVector',
+                        ],
+                        'my_azuresearch_store_with_scoped_http_client' => [
+                            'http_client' => 'scoped_http_client',
                         ],
                     ],
                     'cache' => [
