@@ -82,7 +82,7 @@ final class McpBundle extends AbstractBundle
 
             $dataCollector = (new Definition(DataCollector::class))
                 ->setArguments([new Reference('mcp.traceable_registry')])
-                ->addTag('data_collector');
+                ->addTag('data_collector', ['id' => 'mcp']);
             $builder->setDefinition('mcp.data_collector', $dataCollector);
         }
 

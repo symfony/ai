@@ -227,7 +227,7 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('ai.traceable_agent'),
                 tagged_iterator('ai.traceable_store'),
             ])
-            ->tag('data_collector')
+            ->tag('data_collector', ['id' => 'ai'])
 
         // serializer
         ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
