@@ -13,6 +13,8 @@ namespace Symfony\AI\Agent\Tests\Toolbox;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\MockAgent;
+use Symfony\AI\Agent\MockResponse;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolCustomException;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolException;
@@ -31,6 +33,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
+use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
@@ -253,6 +256,51 @@ final class ToolboxTest extends TestCase
         $result = $toolbox->execute(new ToolCall('call_1234', 'happy_birthday', ['name' => 'John', 'years' => 30]));
 
         $this->assertSame('Happy Birthday, John! You are 30 years old.', $result->getResult());
+    }
+
+    public function testToolboxMapWithMultipleSubagents()
+    {
+        $mathAgent = new MockAgent(['2+2' => '4']);
+        $conversionAgent = new MockAgent(['100km' => '62 miles']);
+
+        $mathTool = new Subagent($mathAgent);
+        $conversionTool = new Subagent($conversionAgent);
+
+        $memoryFactory = (new MemoryToolFactory())
+            ->addTool($mathTool, 'calculate', 'Performs calculations')
+            ->addTool($conversionTool, 'convert', 'Converts units');
+
+        $toolbox = new Toolbox([$mathTool, $conversionTool], $memoryFactory);
+
+        $tools = $toolbox->getTools();
+
+        self::assertCount(2, $tools);
+        self::assertSame('calculate', $tools[0]->getName());
+        self::assertSame('convert', $tools[1]->getName());
+    }
+
+    public function testToolboxExecutionWithMultipleSubagentsDispatchesToCorrectOne()
+    {
+        $mathAgent = new MockAgent(['2+2' => '4']);
+        $conversionAgent = new MockAgent(['100km' => '62 miles']);
+
+        $mathTool = new Subagent($mathAgent);
+        $conversionTool = new Subagent($conversionAgent);
+
+        $memoryFactory = (new MemoryToolFactory())
+            ->addTool($mathTool, 'calculate', 'Performs calculations')
+            ->addTool($conversionTool, 'convert', 'Converts units');
+
+        $toolbox = new Toolbox([$mathTool, $conversionTool], $memoryFactory);
+
+        $mathResult = $toolbox->execute(new ToolCall('call_math', 'calculate', ['message' => '2+2']));
+        self::assertSame('4', $mathResult->getResult());
+
+        $conversionResult = $toolbox->execute(new ToolCall('call_convert', 'convert', ['message' => '100km']));
+        self::assertSame('62 miles', $conversionResult->getResult());
+
+        $mathAgent->assertCallCount(1);
+        $conversionAgent->assertCallCount(1);
     }
 
     public function testToolboxMapWithOverrideViaChain()
