@@ -42,6 +42,7 @@ enum Capability: string
     // VOICE
     case TEXT_TO_SPEECH = 'text-to-speech';
     case SPEECH_TO_TEXT = 'speech-to-text';
+    case SPEECH_RECOGNITION = 'speech-recognition';
 
     // IMAGE
     case TEXT_TO_IMAGE = 'text-to-image';

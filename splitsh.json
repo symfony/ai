@@ -69,6 +69,7 @@
         "ai-replicate-platform": "src/platform/src/Bridge/Replicate",
         "ai-scaleway-platform": "src/platform/src/Bridge/Scaleway",
         "ai-transformers-php-platform": "src/platform/src/Bridge/TransformersPhp",
+        "ai-venice-platform": "src/platform/src/Bridge/Venice",
         "ai-vertex-ai-platform": "src/platform/src/Bridge/VertexAi",
         "ai-voyage-platform": "src/platform/src/Bridge/Voyage",
         "ai-store": {
