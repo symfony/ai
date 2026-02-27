@@ -1,7 +1,7 @@
 CHANGELOG
 ---------
 
-0.5
+0.6
 ---
 
  * Add well-known base URLs for providers with dedicated npm packages
