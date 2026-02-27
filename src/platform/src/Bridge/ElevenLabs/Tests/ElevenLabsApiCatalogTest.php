@@ -23,9 +23,12 @@ final class ElevenLabsApiCatalogTest extends TestCase
 {
     public function testModelCatalogCannotReturnModelFromApiWhenUndefined()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([]),
-        ]);
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([]);
+        }, 'https://api.elevenlabs.io/v1/');
 
         $modelCatalog = new ElevenLabsApiCatalog($httpClient);
 
@@ -37,16 +40,19 @@ final class ElevenLabsApiCatalogTest extends TestCase
 
     public function testModelCatalogCannotReturnUnsupportedModelFromApi()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([
                 [
                     'model_id' => 'foo',
                     'name' => 'foo',
                     'can_do_text_to_speech' => false,
                     'can_do_voice_conversion' => false,
                 ],
-            ]),
-        ]);
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
 
         $modelCatalog = new ElevenLabsApiCatalog($httpClient);
 
@@ -58,8 +64,11 @@ final class ElevenLabsApiCatalogTest extends TestCase
 
     public function testModelCatalogCanReturnSpecificTtsModelFromApi()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([
                 [
                     'model_id' => 'foo',
                     'name' => 'foo',
@@ -72,8 +81,8 @@ final class ElevenLabsApiCatalogTest extends TestCase
                     'can_do_text_to_speech' => false,
                     'can_do_voice_conversion' => true,
                 ],
-            ]),
-        ]);
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
 
         $modelCatalog = new ElevenLabsApiCatalog($httpClient);
 
@@ -91,16 +100,19 @@ final class ElevenLabsApiCatalogTest extends TestCase
 
     public function testModelCatalogCanReturnSpecificSttModelFromApi()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([
                 [
                     'model_id' => 'foo',
                     'name' => 'foo',
                     'can_do_text_to_speech' => false,
                     'can_do_voice_conversion' => true,
                 ],
-            ]),
-        ]);
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
 
         $modelCatalog = new ElevenLabsApiCatalog($httpClient);
 
@@ -118,8 +130,11 @@ final class ElevenLabsApiCatalogTest extends TestCase
 
     public function testModelCatalogCanReturnModelsFromApi()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([
                 [
                     'model_id' => 'foo',
                     'name' => 'foo',
@@ -132,8 +147,8 @@ final class ElevenLabsApiCatalogTest extends TestCase
                     'can_do_text_to_speech' => true,
                     'can_do_voice_conversion' => false,
                 ],
-            ]),
-        ]);
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
 
         $modelCatalog = new ElevenLabsApiCatalog($httpClient);
 

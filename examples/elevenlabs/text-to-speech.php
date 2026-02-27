@@ -14,7 +14,7 @@ use Symfony\AI\Platform\Message\Content\Text;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('ELEVEN_LABS_API_KEY'), httpClient: http_client());
+$platform = PlatformFactory::create(apiKey: env('ELEVEN_LABS_API_KEY'), httpClient: http_client());
 
 $result = $platform->invoke('eleven_multilingual_v2', new Text('Hello world'), [
     'voice' => 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
