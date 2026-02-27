@@ -40,11 +40,18 @@ final class AgentInstructionsAggregator
     ) {
     }
 
-    public function aggregate(): ?string
+    /**
+     * @param array<string, ExtensionData>|null $extensions
+     */
+    public function aggregate(?array $extensions = null): ?string
     {
+        if (null === $extensions) {
+            $extensions = $this->extensions;
+        }
+
         $extensionInstructions = [];
 
-        foreach ($this->extensions as $packageName => $data) {
+        foreach ($extensions as $packageName => $data) {
             if ('_custom' === $packageName) {
                 $content = $this->loadRootProjectInstructions($data);
             } else {
@@ -62,7 +69,7 @@ final class AgentInstructionsAggregator
 
         $sections = [$this->getGlobalHeader()];
         foreach ($extensionInstructions as $content) {
-            $sections[] = $content;
+            $sections[] = $this->deepenMarkdownHeadings($content);
         }
 
         return implode("\n\n---\n\n", $sections);
@@ -144,11 +151,31 @@ final class AgentInstructionsAggregator
     private function getGlobalHeader(): string
     {
         return <<<'MD'
-            # AI Mate Agent Instructions
+            ## AI Mate Agent Instructions
 
             This MCP server provides specialized tools for PHP development.
             The following extensions are installed and provide MCP tools that you should
             prefer over running CLI commands directly.
             MD;
+    }
+
+    private function deepenMarkdownHeadings(string $content): string
+    {
+        $lines = explode("\n", $content);
+
+        foreach ($lines as $index => $line) {
+            if (!preg_match('/^(#{1,6})(\s+.*)$/', $line, $matches)) {
+                continue;
+            }
+
+            $level = \strlen($matches[1]);
+            if ($level < 6) {
+                ++$level;
+            }
+
+            $lines[$index] = str_repeat('#', $level).$matches[2];
+        }
+
+        return implode("\n", $lines);
     }
 }
