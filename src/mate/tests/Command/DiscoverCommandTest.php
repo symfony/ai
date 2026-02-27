@@ -13,8 +13,11 @@ namespace Symfony\AI\Mate\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\AI\Mate\Agent\AgentInstructionsAggregator;
+use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
 use Symfony\AI\Mate\Command\DiscoverCommand;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
+use Symfony\AI\Mate\Service\ExtensionConfigSynchronizer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -40,7 +43,10 @@ final class DiscoverCommandTest extends TestCase
             $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
             $logger = new NullLogger();
             $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
-            $command = new DiscoverCommand($rootDir, $discoverer);
+            $synchronizer = new ExtensionConfigSynchronizer($rootDir);
+            $aggregator = new AgentInstructionsAggregator($rootDir, [], $logger);
+            $materializer = new AgentInstructionsMaterializer($rootDir, $aggregator, $logger);
+            $command = new DiscoverCommand($discoverer, $synchronizer, $materializer);
             $tester = new CommandTester($command);
 
             $tester->execute([]);
@@ -56,10 +62,19 @@ final class DiscoverCommandTest extends TestCase
             $this->assertIsArray($extensions['vendor/package-b']);
             $this->assertTrue($extensions['vendor/package-a']['enabled']);
             $this->assertTrue($extensions['vendor/package-b']['enabled']);
+            $this->assertFileExists($tempDir.'/mate/AGENT_INSTRUCTIONS.md');
+            $this->assertFileExists($tempDir.'/AGENTS.md');
+
+            $agentsContent = file_get_contents($tempDir.'/AGENTS.md');
+            $this->assertIsString($agentsContent);
+            $this->assertStringContainsString(AgentInstructionsMaterializer::AGENTS_START_MARKER, $agentsContent);
+            $this->assertStringContainsString(AgentInstructionsMaterializer::AGENTS_END_MARKER, $agentsContent);
+
             $output = $tester->getDisplay();
             $this->assertStringContainsString('Discovered 2 Extension', $output);
             $this->assertStringContainsString('vendor/package-a', $output);
             $this->assertStringContainsString('vendor/package-b', $output);
+            $this->assertStringContainsString('Updated mate/AGENT_INSTRUCTIONS.md', $output);
         } finally {
             $this->removeDirectory($tempDir);
         }
@@ -84,7 +99,10 @@ PHP
             $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
             $logger = new NullLogger();
             $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
-            $command = new DiscoverCommand($rootDir, $discoverer);
+            $synchronizer = new ExtensionConfigSynchronizer($rootDir);
+            $aggregator = new AgentInstructionsAggregator($rootDir, [], $logger);
+            $materializer = new AgentInstructionsMaterializer($rootDir, $aggregator, $logger);
+            $command = new DiscoverCommand($discoverer, $synchronizer, $materializer);
             $tester = new CommandTester($command);
 
             $tester->execute([]);
@@ -118,7 +136,10 @@ PHP
             $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
             $logger = new NullLogger();
             $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
-            $command = new DiscoverCommand($rootDir, $discoverer);
+            $synchronizer = new ExtensionConfigSynchronizer($rootDir);
+            $aggregator = new AgentInstructionsAggregator($rootDir, [], $logger);
+            $materializer = new AgentInstructionsMaterializer($rootDir, $aggregator, $logger);
+            $command = new DiscoverCommand($discoverer, $synchronizer, $materializer);
             $tester = new CommandTester($command);
 
             $tester->execute([]);
@@ -143,7 +164,10 @@ PHP
             $rootDir = $this->createConfiguration($this->fixturesDir.'/without-ai-mate-config', $tempDir);
             $logger = new NullLogger();
             $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
-            $command = new DiscoverCommand($rootDir, $discoverer);
+            $synchronizer = new ExtensionConfigSynchronizer($rootDir);
+            $aggregator = new AgentInstructionsAggregator($rootDir, [], $logger);
+            $materializer = new AgentInstructionsMaterializer($rootDir, $aggregator, $logger);
+            $command = new DiscoverCommand($discoverer, $synchronizer, $materializer);
             $tester = new CommandTester($command);
 
             $tester->execute([]);
@@ -152,6 +176,8 @@ PHP
 
             $output = $tester->getDisplay();
             $this->assertStringContainsString('No MCP extensions found', $output);
+            $this->assertFileExists($tempDir.'/mate/AGENT_INSTRUCTIONS.md');
+            $this->assertFileExists($tempDir.'/AGENTS.md');
         } finally {
             $this->removeDirectory($tempDir);
         }
@@ -161,6 +187,9 @@ PHP
     {
         // Copy fixture to temp directory for testing
         $this->copyDirectory($rootDir.'/vendor', $tempDir.'/vendor');
+        if (file_exists($rootDir.'/composer.json')) {
+            copy($rootDir.'/composer.json', $tempDir.'/composer.json');
+        }
 
         return $tempDir;
     }

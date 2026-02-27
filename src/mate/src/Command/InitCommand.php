@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -18,7 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Add some config in the project root, automatically discover tools.
+ * Add some config in the project root and scaffold integration helpers.
  * Basically do every thing you need to set things up.
  *
  * @author Johannes Wachter <johannes@sulu.io>
@@ -29,6 +30,7 @@ class InitCommand extends Command
 {
     public function __construct(
         private string $rootDir,
+        private AgentInstructionsMaterializer $instructionsMaterializer,
     ) {
         parent::__construct(self::getDefaultName());
     }
@@ -59,15 +61,26 @@ class InitCommand extends Command
             $actions[] = ['✓', 'Created', 'mate/ directory'];
         }
 
-        $files = ['mate/extensions.php', 'mate/config.php', 'mate/.env', 'mate/.gitignore', 'mcp.json'];
+        $files = [
+            'mate/extensions.php',
+            'mate/config.php',
+            'mate/.env',
+            'mate/.gitignore',
+            'mate/AGENT_INSTRUCTIONS.md',
+            'mcp.json',
+            'bin/codex',
+            'bin/codex.bat',
+        ];
         foreach ($files as $file) {
             $fullPath = $this->rootDir.'/'.$file;
             if (!file_exists($fullPath)) {
                 $this->copyTemplate($file, $fullPath);
+                $this->postCopyTemplateAction($file, $fullPath);
                 $actions[] = ['✓', 'Created', $file];
             } elseif ($io->confirm(\sprintf('<question>%s already exists. Overwrite?</question>', $fullPath), false)) {
                 unlink($fullPath);
                 $this->copyTemplate($file, $fullPath);
+                $this->postCopyTemplateAction($file, $fullPath);
                 $actions[] = ['✓', 'Updated', $file];
             } else {
                 $actions[] = ['○', 'Skipped', $file.' (already exists)'];
@@ -105,6 +118,13 @@ class InitCommand extends Command
         $composerActions = $this->updateComposerJson();
         $actions = array_merge($actions, $composerActions);
 
+        $materializationResult = $this->instructionsMaterializer->synchronizeFromCurrentInstructionsFile();
+        if ($materializationResult['agents_file_updated']) {
+            $actions[] = ['✓', 'Updated', 'AGENTS.md (AI Mate managed instructions block)'];
+        } else {
+            $actions[] = ['⚠', 'Warning', 'Could not update AGENTS.md managed instructions block'];
+        }
+
         $io->section('Summary');
         $io->table(['', 'Action', 'Item'], $actions);
 
@@ -113,9 +133,10 @@ class InitCommand extends Command
         $io->comment([
             'Next steps:',
             '  1. Run "composer dump-autoload" to update the autoloader',
-            '  2. Run "vendor/bin/mate discover" to find MCP extensions',
+            '  2. Run "vendor/bin/mate discover" to find MCP extensions and refresh AGENT instructions',
             '  3. Add your custom MCP tools/resources/prompts to the mate/src/ directory',
             '  4. Run "vendor/bin/mate serve" to start the MCP server',
+            '  5. Run "./bin/codex" to start Codex with project-local Mate MCP integration',
         ]);
 
         $io->note([
@@ -130,7 +151,21 @@ class InitCommand extends Command
 
     private function copyTemplate(string $template, string $destination): void
     {
+        $directory = \dirname($destination);
+        if (!is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
         copy(__DIR__.'/../../resources/'.$template, $destination);
+    }
+
+    private function postCopyTemplateAction(string $template, string $destination): void
+    {
+        if ('bin/codex' !== $template) {
+            return;
+        }
+
+        chmod($destination, 0755);
     }
 
     /**
