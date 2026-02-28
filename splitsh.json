@@ -48,6 +48,7 @@
         "ai-cache-platform": "src/platform/src/Bridge/Cache",
         "ai-cartesia-platform": "src/platform/src/Bridge/Cartesia",
         "ai-cerebras-platform": "src/platform/src/Bridge/Cerebras",
+        "ai-claude-code-platform": "src/platform/src/Bridge/ClaudeCode",
         "ai-decart-platform": "src/platform/src/Bridge/Decart",
         "ai-deep-seek-platform": "src/platform/src/Bridge/DeepSeek",
         "ai-docker-model-runner-platform": "src/platform/src/Bridge/DockerModelRunner",
