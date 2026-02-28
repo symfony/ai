@@ -21,6 +21,7 @@ final class Metadata extends \ArrayObject
     public const KEY_PARENT_ID = '_parent_id';
     public const KEY_TEXT = '_text';
     public const KEY_SOURCE = '_source';
+    public const KEY_SUMMARY = '_summary';
 
     public function hasParentId(): bool
     {
@@ -71,5 +72,22 @@ final class Metadata extends \ArrayObject
     public function setSource(string $source): void
     {
         $this->offsetSet(self::KEY_SOURCE, $source);
+    }
+
+    public function hasSummary(): bool
+    {
+        return $this->offsetExists(self::KEY_SUMMARY);
+    }
+
+    public function getSummary(): ?string
+    {
+        return $this->offsetExists(self::KEY_SUMMARY)
+            ? $this->offsetGet(self::KEY_SUMMARY)
+            : null;
+    }
+
+    public function setSummary(string $summary): void
+    {
+        $this->offsetSet(self::KEY_SUMMARY, $summary);
     }
 }
