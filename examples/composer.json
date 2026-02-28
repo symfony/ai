@@ -3,6 +3,10 @@
     "description": "Example scripts about using Symfony AI",
     "license": "MIT",
     "type": "project",
+    "repositories": [
+        {"type": "path", "url": "../src/store/src/Bridge/S3Vectors" },
+        {"type": "path", "url": "../src/store/src/Bridge/Vektor" }
+    ],
     "require": {
         "php": ">=8.2",
         "symfony/ai-agent": "^0.5",
@@ -58,7 +62,7 @@
         "symfony/ai-qdrant-store": "^0.5",
         "symfony/ai-redis-message-store": "^0.5",
         "symfony/ai-redis-store": "^0.5",
-        "symfony/ai-s3vectors-store": "^0.6",
+        "symfony/ai-s3vectors-store": "dev-main",
         "symfony/ai-scaleway-platform": "^0.5",
         "symfony/ai-scraper-tool": "^0.5",
         "symfony/ai-serp-api-tool": "^0.5",
@@ -70,7 +74,7 @@
         "symfony/ai-tavily-tool": "^0.5",
         "symfony/ai-transformers-php-platform": "^0.5",
         "symfony/ai-typesense-store": "^0.5",
-        "symfony/ai-vektor-store": "^0.6",
+        "symfony/ai-vektor-store": "dev-main",
         "symfony/ai-vertex-ai-platform": "^0.5",
         "symfony/ai-voyage-platform": "^0.5",
         "symfony/ai-weaviate-store": "^0.5",
