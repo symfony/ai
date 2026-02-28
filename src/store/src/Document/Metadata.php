@@ -22,6 +22,8 @@ final class Metadata extends \ArrayObject
     public const KEY_TEXT = '_text';
     public const KEY_SOURCE = '_source';
     public const KEY_SUMMARY = '_summary';
+    public const KEY_SECTION_TITLE = '_section_title';
+    public const KEY_DEPTH = '_depth';
 
     public function hasParentId(): bool
     {
@@ -89,5 +91,39 @@ final class Metadata extends \ArrayObject
     public function setSummary(string $summary): void
     {
         $this->offsetSet(self::KEY_SUMMARY, $summary);
+    }
+
+    public function hasSectionTitle(): bool
+    {
+        return $this->offsetExists(self::KEY_SECTION_TITLE);
+    }
+
+    public function getSectionTitle(): ?string
+    {
+        return $this->offsetExists(self::KEY_SECTION_TITLE)
+            ? $this->offsetGet(self::KEY_SECTION_TITLE)
+            : null;
+    }
+
+    public function setSectionTitle(string $sectionTitle): void
+    {
+        $this->offsetSet(self::KEY_SECTION_TITLE, $sectionTitle);
+    }
+
+    public function hasDepth(): bool
+    {
+        return $this->offsetExists(self::KEY_DEPTH);
+    }
+
+    public function getDepth(): ?int
+    {
+        return $this->offsetExists(self::KEY_DEPTH)
+            ? $this->offsetGet(self::KEY_DEPTH)
+            : null;
+    }
+
+    public function setDepth(int $depth): void
+    {
+        $this->offsetSet(self::KEY_DEPTH, $depth);
     }
 }

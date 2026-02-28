@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `SummaryGeneratorTransformer` for generating LLM-based summaries of documents
+ * Add `RstToctreeLoader` for loading RST documentation files by following toctree directives
 
 0.4
 ---
