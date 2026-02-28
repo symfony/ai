@@ -14,9 +14,9 @@ namespace Symfony\AI\Platform\Result;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
+use Symfony\AI\Platform\Result\Stream\CallbackStreamListener;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\StreamListener;
-use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
@@ -27,7 +27,13 @@ final class DeferredResult
     use MetadataAwareTrait;
 
     private bool $isConverted = false;
+    private bool $isResolved = false;
     private ResultInterface $convertedResult;
+
+    /**
+     * @var list<\Closure(): void>
+     */
+    private array $onResolvedCallbacks = [];
 
     /**
      * @param array<string, mixed> $options
@@ -39,39 +45,78 @@ final class DeferredResult
     ) {
     }
 
+    public function __destruct()
+    {
+        try {
+            $this->resolve();
+        } catch (\Throwable) {
+        }
+    }
+
     /**
-     * @throws ExceptionInterface
+     * @throws ExceptionInterface|\Throwable
      */
     public function getResult(): ResultInterface
     {
         if (!$this->isConverted) {
-            $this->convertedResult = $this->resultConverter->convert($this->rawResult, $this->options);
+            try {
+                $this->convertedResult = $this->resultConverter->convert($this->rawResult, $this->options);
 
-            if (null === $this->convertedResult->getRawResult()) {
-                // Fallback to set the raw result when it was not handled by the ResultConverter itself
-                $this->convertedResult->setRawResult($this->rawResult);
-            }
-
-            if ($this->convertedResult instanceof StreamResult) {
-                // Register listener to promote TokenUsage to metadata
-                $this->convertedResult->addListener(new StreamListener());
-            }
-
-            $metadata = $this->convertedResult->getMetadata();
-            $metadata->merge($this->getMetadata());
-
-            if (null !== $tokenUsageExtractor = $this->resultConverter->getTokenUsageExtractor()) {
-                if (null !== $tokenUsage = $tokenUsageExtractor->extract($this->rawResult, $this->options)) {
-                    $metadata->add('token_usage', $tokenUsage);
+                if (null === $this->convertedResult->getRawResult()) {
+                    // Fallback to set the raw result when it was not handled by the ResultConverter itself
+                    $this->convertedResult->setRawResult($this->rawResult);
                 }
+
+                if ($this->convertedResult instanceof StreamResult) {
+                    // Register listener to promote TokenUsage to metadata
+                    $this->convertedResult->addListener(new StreamListener());
+
+                    // Release resources when stream completes or is abandoned
+                    $this->convertedResult->addListener(new CallbackStreamListener(function (): void {
+                        $this->resolve();
+                    }));
+                }
+
+                $metadata = $this->convertedResult->getMetadata();
+                $metadata->merge($this->getMetadata());
+
+                if (null !== $tokenUsageExtractor = $this->resultConverter->getTokenUsageExtractor()) {
+                    if (null !== $tokenUsage = $tokenUsageExtractor->extract($this->rawResult, $this->options)) {
+                        $metadata->add('token_usage', $tokenUsage);
+                    }
+                }
+
+                $this->metadata->set($metadata->all());
+
+                $this->isConverted = true;
+            } catch (\Throwable $throwable) {
+                $this->resolve();
+
+                throw $throwable;
             }
+        }
 
-            $this->metadata->set($metadata->all());
-
-            $this->isConverted = true;
+        if (!$this->convertedResult instanceof StreamResult) {
+            $this->resolve();
         }
 
         return $this->convertedResult;
+    }
+
+    /**
+     * @param \Closure(): void $callback
+     */
+    public function onResolved(\Closure $callback): self
+    {
+        if ($this->isResolved) {
+            $callback();
+
+            return $this;
+        }
+
+        $this->onResolvedCallbacks[] = $callback;
+
+        return $this;
     }
 
     public function getResultConverter(): ResultConverterInterface
@@ -162,5 +207,20 @@ final class DeferredResult
         }
 
         return $result;
+    }
+
+    private function resolve(): void
+    {
+        if ($this->isResolved) {
+            return;
+        }
+
+        $this->isResolved = true;
+
+        foreach ($this->onResolvedCallbacks as $callback) {
+            $callback();
+        }
+
+        $this->onResolvedCallbacks = [];
     }
 }
