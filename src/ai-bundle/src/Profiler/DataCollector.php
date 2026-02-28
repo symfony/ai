@@ -76,7 +76,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
-        $this->lateCollect();
+        // Deferred to lateCollect() to avoid blocking the response.
     }
 
     public function lateCollect(): void
