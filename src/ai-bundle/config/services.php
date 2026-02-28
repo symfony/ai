@@ -60,7 +60,12 @@ use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract as VertexAiGemin
 use Symfony\AI\Platform\Bridge\VertexAi\ModelCatalog as VertexAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Voyage\ModelCatalog as VoyageModelCatalog;
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\Contract\JsonSchema\DescriptionParser;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyInfoDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\WithAttributeDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
@@ -159,12 +164,35 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('ai.platform.json_schema_factory'),
             ])
-        ->set('ai.platform.json_schema.description_parser', DescriptionParser::class)
+        ->set('ai.platform.json_schema.describer.type_info', TypeInfoDescriber::class)
+            ->args([
+                service('type_info.resolver')->nullOnInvalid(),
+            ])
+            ->tag('ai.platform.json_schema.describer')
+        ->set('ai.platform.json_schema.describer.method', MethodDescriber::class)
+            ->tag('ai.platform.json_schema.describer')
+        ->set('ai.platform.json_schema.describer.property_info', PropertyInfoDescriber::class)
+            ->args([
+                service('property_info')->ignoreOnInvalid(),
+                service('property_info')->ignoreOnInvalid(),
+                service('property_info.reflection_extractor')->ignoreOnInvalid(),
+                service('property_info')->ignoreOnInvalid(),
+            ])
+            ->tag('ai.platform.json_schema.describer')
+        ->set('ai.platform.json_schema.describer.serializer', SerializerDescriber::class)
+            ->args([
+                service('serializer.mapping.class_metadata_factory')->ignoreOnInvalid(),
+            ])
+            ->tag('ai.platform.json_schema.describer')
+        ->set('ai.platform.json_schema.describer.with_attribute', WithAttributeDescriber::class)
+            ->tag('ai.platform.json_schema.describer')
+        ->set('ai.platform.json_schema.describer', Describer::class)
+            ->args([
+                tagged_iterator('ai.platform.json_schema.describer'),
+            ])
         ->set('ai.platform.json_schema_factory', SchemaFactory::class)
             ->args([
-                service('ai.platform.json_schema.description_parser'),
-                service('type_info.resolver')->nullOnInvalid(),
-                service('serializer.mapping.class_metadata_factory')->ignoreOnInvalid(),
+                service('ai.platform.json_schema.describer'),
             ])
         ->alias(ResponseFormatFactoryInterface::class, 'ai.platform.response_format_factory')
         ->set('ai.platform.structured_output_serializer', StructuredOutputSerializer::class)
