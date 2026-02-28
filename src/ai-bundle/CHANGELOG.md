@@ -8,6 +8,7 @@ CHANGELOG
  * Add `TraceableAgent`
  * Add `TraceableStore`
  * Add `setup_options` configuration for PostgreSQL store to pass extra fields to `ai:store:setup`
+ * Validate tool call arguments using `symfony/validator` when available
 
 0.5
 ---
