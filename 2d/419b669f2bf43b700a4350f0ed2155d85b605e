@@ -1,0 +1,39 @@
+---------------------------------------------------------------------------
+
+by EdouardCourty at 2026-02-23T23:02:52Z
+
+> Hey @EdouardCourty, thanks for working on this 👍
+>
+> I just released the v0.4.0 tho, and it contains a BC break with the name of that store implementation: `Psr16StoreSession` => `Psr16SessionStore`.
+>
+> Can you please adopt this here, and bump dependencies to v0.4.0?
+
+Hi, for sure!
+Thanks for letting me know.
+
+---------------------------------------------------------------------------
+
+by EdouardCourty at 2026-02-23T23:21:55Z
+
+> Hey @EdouardCourty, thanks for working on this 👍
+>
+> I just released the v0.4.0 tho, and it contains a BC break with the name of that store implementation: `Psr16StoreSession` => `Psr16SessionStore`.
+>
+> Can you please adopt this here, and bump dependencies to v0.4.0?
+
+I also has to bump the SDK to `0.4` in ai-mate
+-> https://github.com/symfony/ai/actions/runs/22328712390/job/64605809599
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-28T15:11:01Z
+
+@wachterjohannes any concerns from your end with bumping Mate to v0.4 of mcp/sdk? could we just drop `v0.3`?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-28T15:12:10Z
+
+> @wachterjohannes any concerns from your end with bumping Mate to v0.4 of mcp/sdk? could we just drop `v0.3`?
+
+Just do it 😅 dont see any downsides
