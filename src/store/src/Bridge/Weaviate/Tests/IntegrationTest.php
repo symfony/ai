@@ -12,10 +12,9 @@
 namespace Symfony\AI\Store\Bridge\Weaviate\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
-use Symfony\AI\Store\Bridge\Weaviate\Store;
+use Symfony\AI\Store\Bridge\Weaviate\StoreFactory;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
-use Symfony\Component\HttpClient\HttpClient;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -25,11 +24,6 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        return new Store(
-            HttpClient::create(),
-            'http://127.0.0.1:8080',
-            'symfony',
-            'TestCollection',
-        );
+        return StoreFactory::create('TestCollection', 'http://127.0.0.1:8080', 'symfony');
     }
 }

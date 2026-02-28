@@ -30,8 +30,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $endpointUrl,
-        #[\SensitiveParameter] private readonly string $apiKey,
         private readonly string $collection,
     ) {
     }
@@ -137,17 +135,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function request(string $method, string $endpoint, array $payload): array
     {
-        $url = \sprintf('%s/%s', $this->endpointUrl, $endpoint);
-
-        $finalPayload = [
-            'auth_bearer' => $this->apiKey,
-        ];
-
         if ([] !== $payload) {
             $finalPayload['json'] = $payload;
         }
 
-        $response = $this->httpClient->request($method, $url, $finalPayload);
+        $response = $this->httpClient->request($method, $endpoint, $finalPayload ?? []);
 
         if (200 === $response->getStatusCode() && '' === $response->getContent(false)) {
             return [];

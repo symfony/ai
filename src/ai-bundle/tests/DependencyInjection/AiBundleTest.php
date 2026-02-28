@@ -74,6 +74,7 @@ use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Vektor\Store as VektorStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
+use Symfony\AI\Store\Bridge\Weaviate\StoreFactory as WeaviateStoreFactory;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Filter\TextContainsFilter;
@@ -3521,7 +3522,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
-    public function testWevaviateStoreCanBeConfigured()
+    public function testWeaviateStoreCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -3540,14 +3541,15 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.weaviate.my_weaviate_store');
         $this->assertSame(WeaviateStore::class, $definition->getClass());
-
+        $this->assertSame([WeaviateStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
+
         $this->assertCount(4, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('my_weaviate_store', $definition->getArgument(0));
         $this->assertSame('http://localhost:8080', $definition->getArgument(1));
         $this->assertSame('bar', $definition->getArgument(2));
-        $this->assertSame('my_weaviate_store', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -3561,10 +3563,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
-    }
 
-    public function testWevaviateStoreWithCustomCollectionCanBeConfigured()
-    {
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -3582,15 +3581,58 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.weaviate.my_weaviate_store'));
 
         $definition = $container->getDefinition('ai.store.weaviate.my_weaviate_store');
+        $this->assertSame([WeaviateStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(WeaviateStore::class, $definition->getClass());
-
         $this->assertTrue($definition->isLazy());
+
         $this->assertCount(4, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('my_weaviate_collection', $definition->getArgument(0));
         $this->assertSame('http://localhost:8080', $definition->getArgument(1));
         $this->assertSame('bar', $definition->getArgument(2));
-        $this->assertSame('my_weaviate_collection', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_weaviate_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myWeaviateStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'weaviate' => [
+                        'my_weaviate_store' => [
+                            'endpoint' => 'http://localhost:8080',
+                            'api_key' => 'bar',
+                            'collection' => 'my_weaviate_collection',
+                            'http_client' => 'scoped_http_client',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.weaviate.my_weaviate_store'));
+
+        $definition = $container->getDefinition('ai.store.weaviate.my_weaviate_store');
+        $this->assertSame([WeaviateStoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(WeaviateStore::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(4, $definition->getArguments());
+        $this->assertSame('my_weaviate_collection', $definition->getArgument(0));
+        $this->assertSame('http://localhost:8080', $definition->getArgument(1));
+        $this->assertSame('bar', $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('scoped_http_client', (string) $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([

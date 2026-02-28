@@ -1,3 +1,14 @@
+UPGRADE FROM 0.5 to 0.6
+=======================
+
+Store
+-----
+
+ * The `endpointUrl` parameter for `QdrantStore` has been removed
+ * The `apiKey` parameter for `QdrantStore` has been removed
+ * The `endpointUrl` parameter for `WeaviateStore` has been removed
+ * The `apiKey` parameter for `WeaviateStore` has been removed
+
 UPGRADE FROM 0.4 to 0.5
 =======================
 
