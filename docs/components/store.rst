@@ -120,9 +120,12 @@ Document loaders are responsible for fetching and preparing documents for indexi
 
 To help loading documents and integrate them into your RAG system, you can use the provided document loaders or create your own custom loaders to suit your specific needs:
 
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\CsvLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\InMemoryLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\JsonFileLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\MarkdownLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RssFeedLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\RstToctreeLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\TextFileLoader`
 
 Create a Custom Loader
