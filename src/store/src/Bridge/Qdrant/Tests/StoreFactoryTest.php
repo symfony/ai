@@ -14,20 +14,11 @@ namespace Symfony\AI\Store\Bridge\Qdrant\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Bridge\Qdrant\Store;
 use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
-use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpClient\ScopingHttpClient;
 
 final class StoreFactoryTest extends TestCase
 {
-    public function testStoreCannotBeCreatedWithoutScopingHttpClientAndRequiredInfos()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(\sprintf('The HttpClient must be an instance of "%s" or both "endpoint" and "apiKey" must be provided.', ScopingHttpClient::class));
-        $this->expectExceptionCode(0);
-        StoreFactory::create('foo', httpClient: HttpClient::create());
-    }
-
     public function testStoreCanBeCreatedWithHttpClientAndRequiredInfos()
     {
         $store = StoreFactory::create('foo', 'http://127.0.0.1:6333', 'bar');

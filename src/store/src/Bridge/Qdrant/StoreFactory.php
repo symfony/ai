@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Store\Bridge\Qdrant;
 
-use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\HttpClient\HttpClient;
@@ -32,12 +31,6 @@ final class StoreFactory
         string $embeddingsDistance = 'Cosine',
         bool $async = false,
     ): StoreInterface&ManagedStoreInterface {
-        $httpClient = $httpClient instanceof ScopingHttpClient ? $httpClient : HttpClient::create();
-
-        if (!$httpClient instanceof ScopingHttpClient && (null === $endpoint || null === $apiKey)) {
-            throw new InvalidArgumentException(\sprintf('The HttpClient must be an instance of "%s" or both "endpoint" and "apiKey" must be provided.', ScopingHttpClient::class));
-        }
-
         if (null !== $endpoint) {
             $defaultOptions = [];
             if (null !== $apiKey) {
@@ -46,7 +39,7 @@ final class StoreFactory
                 ];
             }
 
-            $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, $defaultOptions);
+            $httpClient = ScopingHttpClient::forBaseUri($httpClient ?? HttpClient::create(), $endpoint, $defaultOptions);
         }
 
         return new Store($httpClient, $collectionName, $embeddingsDimension, $embeddingsDistance, $async);
