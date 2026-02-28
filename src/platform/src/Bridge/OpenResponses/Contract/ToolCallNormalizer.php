@@ -31,7 +31,7 @@ final class ToolCallNormalizer extends ModelContractNormalizer
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         return [
-            'arguments' => json_encode($data->getArguments()),
+            'arguments' => json_encode($data->getArguments() ?: new \stdClass()),
             'call_id' => $data->getId(),
             'name' => $data->getName(),
             'type' => 'function_call',

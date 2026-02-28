@@ -94,11 +94,10 @@ final class AssistantMessageNormalizerTest extends TestCase
 
         $this->normalizer->setNormalizer($innerNormalizer);
 
-        $expected = [
-            'role' => 'assistant',
-            'tool_calls' => $expectedToolCalls,
-        ];
+        $result = $this->normalizer->normalize($message);
 
-        $this->assertSame($expected, $this->normalizer->normalize($message));
+        $this->assertSame('assistant', $result['role']);
+        $this->assertNull($result['content']);
+        $this->assertSame($expectedToolCalls, $result['tool_calls']);
     }
 }
