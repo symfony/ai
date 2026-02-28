@@ -21,6 +21,7 @@ use Mcp\Server\Handler\Notification\NotificationHandlerInterface;
 use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
+use Mcp\Server\Session\Psr16SessionStore;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
@@ -29,6 +30,7 @@ use Symfony\AI\McpBundle\Profiler\TraceableRegistry;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
+use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -116,8 +118,8 @@ final class McpBundle extends AbstractBundle
     }
 
     /**
-     * @param array{stdio: bool, http: bool}                                                  $transports
-     * @param array{path: string, session: array{store: string, directory: string, ttl: int}} $httpConfig
+     * @param array{stdio: bool, http: bool}                                                                                      $transports
+     * @param array{path: string, session: array{store: string, directory: string, cache_pool: string, prefix: string, ttl: int}} $httpConfig
      */
     private function configureClient(array $transports, array $httpConfig, ContainerBuilder $container): void
     {
@@ -175,13 +177,28 @@ final class McpBundle extends AbstractBundle
     }
 
     /**
-     * @param array{store: string, directory: string, ttl: int} $sessionConfig
+     * @param array{store: string, directory: string, cache_pool: string, prefix: string, ttl: int} $sessionConfig
      */
     private function configureSessionStore(array $sessionConfig, ContainerBuilder $container): void
     {
         if ('memory' === $sessionConfig['store']) {
             $container->register('mcp.session.store', InMemorySessionStore::class)
                 ->setArguments([$sessionConfig['ttl']]);
+        } elseif ('cache' === $sessionConfig['store']) {
+            $cachePoolId = $sessionConfig['cache_pool'];
+
+            // Create the default cache pool as a PSR-16 wrapper around cache.app if it doesn't exist
+            if ('cache.mcp.sessions' === $cachePoolId && !$container->hasDefinition($cachePoolId) && !$container->hasAlias($cachePoolId)) {
+                $container->register($cachePoolId, Psr16Cache::class)
+                    ->setArguments([new Reference('cache.app')]);
+            }
+
+            $container->register('mcp.session.store', Psr16SessionStore::class)
+                ->setArguments([
+                    new Reference($sessionConfig['cache_pool']),
+                    $sessionConfig['prefix'],
+                    $sessionConfig['ttl'],
+                ]);
         } else {
             $container->register('mcp.session.store', FileSessionStore::class)
                 ->setArguments([$sessionConfig['directory'], $sessionConfig['ttl']]);

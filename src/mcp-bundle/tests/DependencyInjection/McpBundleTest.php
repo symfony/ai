@@ -20,11 +20,14 @@ use Mcp\Server\Handler\Notification\NotificationHandlerInterface;
 use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
+use Mcp\Server\Session\Psr16SessionStore;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\McpBundle;
+use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Reference;
 
 class McpBundleTest extends TestCase
 {
@@ -363,6 +366,72 @@ class McpBundleTest extends TestCase
         $arguments = $sessionStoreDefinition->getArguments();
         $this->assertSame('/var/cache/mcp', $arguments[0]); // Custom directory
         $this->assertSame(1800, $arguments[1]); // Custom TTL
+    }
+
+    public function testSessionStoreCacheConfigurationDefault()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'session' => [
+                        'store' => 'cache',
+                    ],
+                ],
+            ],
+        ]);
+
+        // Verify session store is configured with Psr16SessionStore
+        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
+        $this->assertSame(Psr16SessionStore::class, $sessionStoreDefinition->getClass());
+        $arguments = $sessionStoreDefinition->getArguments();
+
+        // Check arguments
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('cache.mcp.sessions', (string) $arguments[0]); // Default cache pool
+        $this->assertSame('mcp-', $arguments[1]); // Default prefix
+        $this->assertSame(3600, $arguments[2]); // Default TTL
+
+        // Verify default cache pool was created as PSR-16 wrapper
+        $this->assertTrue($container->hasDefinition('cache.mcp.sessions'));
+        $cachePoolDefinition = $container->getDefinition('cache.mcp.sessions');
+        $this->assertSame(Psr16Cache::class, $cachePoolDefinition->getClass());
+        $cachePoolArgs = $cachePoolDefinition->getArguments();
+        $this->assertInstanceOf(Reference::class, $cachePoolArgs[0]);
+        $this->assertSame('cache.app', (string) $cachePoolArgs[0]);
+    }
+
+    public function testSessionStoreCacheConfigurationCustom()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'session' => [
+                        'store' => 'cache',
+                        'cache_pool' => 'app.custom_cache',
+                        'prefix' => 'session-',
+                        'ttl' => 7200,
+                    ],
+                ],
+            ],
+        ]);
+
+        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
+        $this->assertSame(Psr16SessionStore::class, $sessionStoreDefinition->getClass());
+        $arguments = $sessionStoreDefinition->getArguments();
+
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('app.custom_cache', (string) $arguments[0]); // Custom cache pool
+        $this->assertSame('session-', $arguments[1]); // Custom prefix
+        $this->assertSame(7200, $arguments[2]); // Custom TTL
+
+        // No default cache pool definition should be created for custom cache pool
+        $this->assertFalse($container->hasDefinition('cache.mcp.sessions'));
     }
 
     public function testDiscoveryDefaultConfiguration()
