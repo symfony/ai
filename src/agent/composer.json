@@ -35,7 +35,8 @@
         "symfony/property-access": "^7.3|^8.0",
         "symfony/property-info": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0",
-        "symfony/type-info": "^7.3|^8.0"
+        "symfony/type-info": "^7.3|^8.0",
+        "symfony/workflow": "^7.3|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
