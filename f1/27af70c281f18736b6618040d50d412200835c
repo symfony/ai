@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-21T09:15:57Z
+
+Thanks @alenpokos, that's a very valid point - i think that shouldn't be the default behavior after all, but we should use the container for that - would provide caching out of the box.
