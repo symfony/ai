@@ -45,12 +45,11 @@ final class ElevenLabsClientTest extends TestCase
                 ],
             ]),
             new JsonMockResponse([]),
-        ]);
-        $normalizer = new AudioNormalizer();
+        ], 'https://api.elevenlabs.io/v1/');
 
         $client = new ElevenLabsClient($mockHttpClient);
 
-        $payload = $normalizer->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
+        $payload = (new AudioNormalizer())->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The model "foo" does not support text-to-speech or speech-to-text, please check the model information.');
@@ -60,9 +59,7 @@ final class ElevenLabsClientTest extends TestCase
 
     public function testClientCannotPerformSpeechToTextRequestWithInvalidPayload()
     {
-        $client = new ElevenLabsClient(
-            new MockHttpClient(),
-        );
+        $client = new ElevenLabsClient(new MockHttpClient());
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The payload must be an array, received "string".');
@@ -72,16 +69,18 @@ final class ElevenLabsClientTest extends TestCase
 
     public function testClientCanPerformSpeechToTextRequest()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/speech-to-text', $url);
+
+            return new JsonMockResponse([
                 'text' => 'foo',
-            ]),
-        ]);
-        $normalizer = new AudioNormalizer();
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
 
         $client = new ElevenLabsClient($httpClient);
 
-        $payload = $normalizer->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
+        $payload = (new AudioNormalizer())->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
 
         $client->request(new ElevenLabs('scribe_v1', [
             Capability::INPUT_AUDIO,
@@ -94,16 +93,18 @@ final class ElevenLabsClientTest extends TestCase
 
     public function testClientCanPerformSpeechToTextRequestWithExperimentalModel()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/speech-to-text', $url);
+
+            return new JsonMockResponse([
                 'text' => 'foo',
-            ]),
-        ]);
-        $normalizer = new AudioNormalizer();
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
 
         $client = new ElevenLabsClient($httpClient);
 
-        $payload = $normalizer->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
+        $payload = (new AudioNormalizer())->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
 
         $client->request(new ElevenLabs('scribe_v1_experimental', [
             Capability::INPUT_AUDIO,
@@ -118,7 +119,7 @@ final class ElevenLabsClientTest extends TestCase
     {
         $mockHttpClient = new MockHttpClient([
             new JsonMockResponse([]),
-        ]);
+        ], 'https://api.elevenlabs.io/v1/');
 
         $client = new ElevenLabsClient($mockHttpClient);
 
@@ -134,9 +135,12 @@ final class ElevenLabsClientTest extends TestCase
     {
         $payload = Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3');
 
-        $httpClient = new MockHttpClient([
-            new MockResponse($payload->asBinary()),
-        ]);
+        $httpClient = new MockHttpClient(function (string $method, string $url) use ($payload): MockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/text-to-speech/Dslrhjl3ZpzrctukrQSN', $url);
+
+            return new MockResponse($payload->asBinary());
+        }, 'https://api.elevenlabs.io/v1/');
 
         $client = new ElevenLabsClient($httpClient);
 
@@ -153,9 +157,12 @@ final class ElevenLabsClientTest extends TestCase
     {
         $payload = Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3');
 
-        $httpClient = new MockHttpClient([
-            new MockResponse($payload->asBinary()),
-        ]);
+        $httpClient = new MockHttpClient(function (string $method, string $url) use ($payload): MockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/text-to-speech/Dslrhjl3ZpzrctukrQSN', $url);
+
+            return new MockResponse($payload->asBinary());
+        }, 'https://api.elevenlabs.io/v1/');
 
         $client = new ElevenLabsClient($httpClient);
 
@@ -172,9 +179,12 @@ final class ElevenLabsClientTest extends TestCase
     {
         $payload = Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3');
 
-        $httpClient = new MockHttpClient([
-            new MockResponse($payload->asBinary()),
-        ]);
+        $httpClient = new MockHttpClient(function (string $method, string $url) use ($payload): MockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/text-to-speech/Dslrhjl3ZpzrctukrQSN/stream', $url);
+
+            return new MockResponse($payload->asBinary());
+        }, 'https://api.elevenlabs.io/v1/');
 
         $client = new ElevenLabsClient($httpClient);
 
@@ -193,9 +203,12 @@ final class ElevenLabsClientTest extends TestCase
     {
         $payload = Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3');
 
-        $httpClient = new MockHttpClient([
-            new MockResponse($payload->asBinary()),
-        ]);
+        $httpClient = new MockHttpClient(function (string $method, string $url) use ($payload): MockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/text-to-speech/Dslrhjl3ZpzrctukrQSN/stream', $url);
+
+            return new MockResponse($payload->asBinary());
+        }, 'https://api.elevenlabs.io/v1/');
 
         $client = new ElevenLabsClient($httpClient);
 
@@ -230,26 +243,22 @@ final class ElevenLabsClientTest extends TestCase
             ], $body['voice_settings']);
 
             return new MockResponse($payload->asBinary());
-        });
+        }, 'https://api.elevenlabs.io/v1/');
 
         $client = new ElevenLabsClient($httpClient);
 
-        $client->request(
-            new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH]),
-            [
-                'text' => 'foo',
+        $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH]), [
+            'text' => 'foo',
+        ], [
+            'voice' => 'Dslrhjl3ZpzrctukrQSN',
+            'voice_settings' => [
+                'stability' => 0.5,
+                'use_speaker_boost' => 1,
+                'similarity_boost' => 0.7,
+                'style' => 0.2,
+                'speed' => 1.2,
             ],
-            [
-                'voice' => 'Dslrhjl3ZpzrctukrQSN',
-                'voice_settings' => [
-                    'stability' => 0.5,
-                    'use_speaker_boost' => 1,
-                    'similarity_boost' => 0.7,
-                    'style' => 0.2,
-                    'speed' => 1.2,
-                ],
-            ]
-        );
+        ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

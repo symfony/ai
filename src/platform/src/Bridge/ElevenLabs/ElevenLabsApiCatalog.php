@@ -43,7 +43,7 @@ final class ElevenLabsApiCatalog implements ModelCatalogInterface
 
     public function getModels(): array
     {
-        $response = $this->httpClient->request('GET', '/models');
+        $response = $this->httpClient->request('GET', 'models');
 
         $models = $response->toArray();
 

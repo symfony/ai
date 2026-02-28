@@ -60,7 +60,6 @@ use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFacto
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\DeepSeek\PlatformFactory as DeepSeekPlatformFactory;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory as DockerModelRunnerPlatformFactory;
-use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsApiCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
@@ -565,42 +564,14 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('ElevenLabs platform configuration requires "symfony/ai-eleven-labs-platform" package. Try running "composer require symfony/ai-eleven-labs-platform".');
             }
 
-            $httpClientReference = new Reference($platform['http_client']);
-
-            $scopedHttpClientDefinition = (new Definition(ScopingHttpClient::class))
-                ->setFactory([ScopingHttpClient::class, 'forBaseUri'])
-                ->setArguments([
-                    $httpClientReference,
-                    $platform['endpoint'],
-                    [
-                        'headers' => [
-                            'x-api-key' => $platform['api_key'],
-                        ],
-                    ],
-                ]);
-
-            $container->setDefinition('ai.platform.elevenlabs.scoped_http_client', $scopedHttpClientDefinition);
-
-            $httpClientReference = new Reference('ai.platform.elevenlabs.scoped_http_client');
-
-            if (\array_key_exists('api_catalog', $platform) && $platform['api_catalog']) {
-                $catalogDefinition = (new Definition(ElevenLabsApiCatalog::class))
-                    ->setLazy(true)
-                    ->setArguments([
-                        $httpClientReference,
-                    ])
-                    ->addTag('proxy', ['interface' => ModelCatalogInterface::class]);
-
-                $container->setDefinition('ai.platform.model_catalog.'.$type, $catalogDefinition);
-            }
-
             $definition = (new Definition(Platform::class))
                 ->setFactory(ElevenLabsPlatformFactory::class.'::create')
                 ->setLazy(true)
                 ->setArguments([
-                    $platform['api_key'],
                     $platform['endpoint'],
-                    $httpClientReference,
+                    $platform['api_key'] ?? null,
+                    new Reference($platform['http_client']),
+                    $platform['api_catalog'] ?? false,
                     new Reference('ai.platform.model_catalog.'.$type),
                     new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),

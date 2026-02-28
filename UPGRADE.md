@@ -1,3 +1,16 @@
+UPGRADE FROM 0.5 to 0.6
+=======================
+
+AI Bundle
+---------
+
+ * The `api_key` option for `ElevenLabs` is not required anymore if a `ScopedHttpClient` is used in `http_client` option
+
+Platform
+--------
+
+ * The `PlatformFactory` is now in charge of creating `ElevenLabsApiCatalog` if `apiCatalog` is provided as `true`
+
 UPGRADE FROM 0.4 to 0.5
 =======================
 
