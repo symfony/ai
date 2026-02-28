@@ -39,6 +39,7 @@ final class MetadataTest extends TestCase
         $this->assertSame('_parent_id', Metadata::KEY_PARENT_ID);
         $this->assertSame('_text', Metadata::KEY_TEXT);
         $this->assertSame('_source', Metadata::KEY_SOURCE);
+        $this->assertSame('_summary', Metadata::KEY_SUMMARY);
     }
 
     #[DataProvider('parentIdProvider')]
@@ -125,12 +126,41 @@ final class MetadataTest extends TestCase
         ];
     }
 
+    #[DataProvider('summaryProvider')]
+    public function testSummaryMethods(?string $summary)
+    {
+        $metadata = new Metadata();
+
+        $this->assertFalse($metadata->hasSummary());
+        $this->assertNull($metadata->getSummary());
+
+        $metadata->setSummary($summary);
+
+        $this->assertTrue($metadata->hasSummary());
+        $this->assertSame($summary, $metadata->getSummary());
+    }
+
+    /**
+     * @return \Iterator<string, array{summary: string|null}>
+     */
+    public static function summaryProvider(): \Iterator
+    {
+        yield 'string summary' => [
+            'summary' => 'This document covers authentication patterns.',
+        ];
+
+        yield 'empty string summary' => [
+            'summary' => '',
+        ];
+    }
+
     public function testMetadataInitializedWithSpecialKeys()
     {
         $data = [
             Metadata::KEY_PARENT_ID => 'parent-123',
             Metadata::KEY_TEXT => 'This is the text content',
             Metadata::KEY_SOURCE => 'document.pdf',
+            Metadata::KEY_SUMMARY => 'A brief summary.',
             'title' => 'Test Document',
         ];
 
@@ -144,6 +174,9 @@ final class MetadataTest extends TestCase
 
         $this->assertTrue($metadata->hasSource());
         $this->assertSame('document.pdf', $metadata->getSource());
+
+        $this->assertTrue($metadata->hasSummary());
+        $this->assertSame('A brief summary.', $metadata->getSummary());
 
         $this->assertSame('Test Document', $metadata['title']);
     }
@@ -187,6 +220,7 @@ final class MetadataTest extends TestCase
         $this->assertNull($metadata->getParentId());
         $this->assertNull($metadata->getText());
         $this->assertNull($metadata->getSource());
+        $this->assertNull($metadata->getSummary());
     }
 
     public function testHasMethodsReturnFalseForMissingKeys()
@@ -196,6 +230,7 @@ final class MetadataTest extends TestCase
         $this->assertFalse($metadata->hasParentId());
         $this->assertFalse($metadata->hasText());
         $this->assertFalse($metadata->hasSource());
+        $this->assertFalse($metadata->hasSummary());
     }
 
     public function testOverwritingSpecialKeys()
@@ -205,13 +240,16 @@ final class MetadataTest extends TestCase
         $metadata->setParentId('parent-1');
         $metadata->setText('initial text');
         $metadata->setSource('initial.pdf');
+        $metadata->setSummary('initial summary');
 
         $metadata->setParentId('parent-2');
         $metadata->setText('updated text');
         $metadata->setSource('updated.pdf');
+        $metadata->setSummary('updated summary');
 
         $this->assertSame('parent-2', $metadata->getParentId());
         $this->assertSame('updated text', $metadata->getText());
         $this->assertSame('updated.pdf', $metadata->getSource());
+        $this->assertSame('updated summary', $metadata->getSummary());
     }
 }
