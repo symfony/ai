@@ -11,10 +11,12 @@
 
 namespace Symfony\AI\Store;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorizerInterface;
+use Symfony\AI\Store\Event\PostQueryEvent;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\TextQuery;
@@ -28,6 +30,7 @@ final class Retriever implements RetrieverInterface
     public function __construct(
         private readonly StoreInterface $store,
         private readonly ?VectorizerInterface $vectorizer = null,
+        private readonly ?EventDispatcherInterface $eventDispatcher = null,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -47,6 +50,20 @@ final class Retriever implements RetrieverInterface
 
         $documents = $this->store->query($queryObject, $options);
 
+        if (null !== $this->eventDispatcher) {
+            $documents = $this->dispatchPostRetrieval($query, $documents, $options);
+        }
+
+        return $this->yieldDocuments($documents);
+    }
+
+    /**
+     * @param iterable<VectorDocument> $documents
+     *
+     * @return \Generator<VectorDocument>
+     */
+    private function yieldDocuments(iterable $documents): \Generator
+    {
         $count = 0;
         foreach ($documents as $document) {
             ++$count;
@@ -54,6 +71,20 @@ final class Retriever implements RetrieverInterface
         }
 
         $this->logger->debug('Document retrieval completed', ['retrieved_count' => $count]);
+    }
+
+    /**
+     * @param iterable<VectorDocument> $documents
+     * @param array<string, mixed>     $options
+     *
+     * @return iterable<VectorDocument>
+     */
+    private function dispatchPostRetrieval(string $query, iterable $documents, array $options): iterable
+    {
+        $event = new PostQueryEvent($query, $documents, $options);
+        $this->eventDispatcher?->dispatch($event);
+
+        return $event->getDocuments();
     }
 
     /**

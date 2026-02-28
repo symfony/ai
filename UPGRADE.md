@@ -1,3 +1,18 @@
+UPGRADE FROM 0.6 to 0.7
+=======================
+
+Store
+-----
+
+ * The `Retriever` constructor has a new `?EventDispatcherInterface $eventDispatcher` parameter
+   inserted as 3rd argument before `LoggerInterface $logger`. If you pass `$logger` positionally,
+   update to use a named argument:
+
+   ```diff
+   -$retriever = new Retriever($store, $vectorizer, $logger);
+   +$retriever = new Retriever($store, $vectorizer, logger: $logger);
+   ```
+
 UPGRADE FROM 0.5 to 0.6
 =======================
 

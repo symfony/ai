@@ -55,7 +55,7 @@ $indexer->index($docsDir.'/index.rst');
 output()->writeln('<info>Indexing complete.</info>');
 
 // 3. Retrieve
-$retriever = new Retriever($store, $vectorizer, logger());
+$retriever = new Retriever($store, $vectorizer, logger: logger());
 $question = $argv[1] ?? 'How do I create a custom console command in Symfony?';
 
 output()->writeln('');

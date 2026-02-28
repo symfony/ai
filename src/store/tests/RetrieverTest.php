@@ -12,11 +12,13 @@
 namespace Symfony\AI\Store\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Event\PostQueryEvent;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -276,5 +278,100 @@ final class RetrieverTest extends TestCase
         $results = iterator_to_array($retriever->retrieve('test query', ['semanticRatio' => 0.7]));
 
         $this->assertCount(1, $results);
+    }
+
+    public function testRetrieveWithEventDispatcherDispatchesPostQueryEvent()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $store = new TestStore();
+        $store->add([$document]);
+
+        $queryVector = new Vector([0.2, 0.3, 0.4]);
+        $vectorizer = new Vectorizer(
+            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            'text-embedding-3-small'
+        );
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(static function ($event) {
+                return $event instanceof PostQueryEvent
+                    && 'test query' === $event->getQuery()
+                    && 1 === \count(iterator_to_array($event->getDocuments()));
+            }))
+            ->willReturnArgument(0);
+
+        $retriever = new Retriever($store, $vectorizer, $dispatcher);
+        $results = iterator_to_array($retriever->retrieve('test query'));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrieveWithEventDispatcherReturnsModifiedDocuments()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Original']),
+        );
+        $rerankedDocument = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.4, 0.5, 0.6]),
+            new Metadata(['title' => 'Reranked']),
+        );
+
+        $store = new TestStore();
+        $store->add([$document]);
+
+        $queryVector = new Vector([0.2, 0.3, 0.4]);
+        $vectorizer = new Vectorizer(
+            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            'text-embedding-3-small'
+        );
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->method('dispatch')
+            ->willReturnCallback(static function (PostQueryEvent $event) use ($rerankedDocument) {
+                $event->setDocuments([$rerankedDocument]);
+
+                return $event;
+            });
+
+        $retriever = new Retriever($store, $vectorizer, $dispatcher);
+        $results = iterator_to_array($retriever->retrieve('test query'));
+
+        $this->assertCount(1, $results);
+        $this->assertSame('Reranked', $results[0]->getMetadata()['title']);
+    }
+
+    public function testRetrieveWithoutEventDispatcherYieldsDocuments()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $store = new TestStore();
+        $store->add([$document]);
+
+        $queryVector = new Vector([0.2, 0.3, 0.4]);
+        $vectorizer = new Vectorizer(
+            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            'text-embedding-3-small'
+        );
+
+        $retriever = new Retriever($store, $vectorizer);
+        $results = $retriever->retrieve('test query');
+
+        // Without dispatcher, should be a Generator (yield behavior)
+        $this->assertInstanceOf(\Generator::class, $results);
+        $this->assertCount(1, iterator_to_array($results));
     }
 }

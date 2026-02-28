@@ -2382,6 +2382,7 @@ final class AiBundle extends AbstractBundle
         $definition = new Definition(Retriever::class, [
             new Reference($config['store']),
             new Reference($config['vectorizer']),
+            new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE),
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
         $definition->addTag('ai.retriever', ['name' => $name]);

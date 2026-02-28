@@ -6158,8 +6158,11 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $arguments[1]);
         $this->assertSame('ai.vectorizer.my_vectorizer', (string) $arguments[1]);
 
-        $this->assertInstanceOf(Reference::class, $arguments[2]); // logger
-        $this->assertSame('logger', (string) $arguments[2]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]); // eventDispatcher
+        $this->assertSame('event_dispatcher', (string) $arguments[2]);
+
+        $this->assertInstanceOf(Reference::class, $arguments[3]); // logger
+        $this->assertSame('logger', (string) $arguments[3]);
     }
 
     public function testRetrieverAliasIsRegistered()

@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\FileNormalizer;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\MessageBagNormalizer;
 use Symfony\AI\Platform\Bridge\HuggingFace\ModelClient;
+use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -28,7 +29,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 final class ModelClientTest extends TestCase
 {
     #[DataProvider('urlTestCases')]
-    public function testGetUrlForDifferentInputsAndTasks(?string $task, string $expectedUrl)
+    public function testGetUrlForDifferentInputsAndTasks(?string $task, string $expectedUrl, ?string $provider = null)
     {
         $response = new MockResponse('{"result": "test"}', [
             'http_code' => 200,
@@ -46,6 +47,9 @@ final class ModelClientTest extends TestCase
 
         // Make a request to trigger URL generation
         $options = $task ? ['task' => $task] : [];
+        if (null !== $provider) {
+            $options['provider'] = $provider;
+        }
         $modelClient->request($model, 'test input', $options);
     }
 
@@ -67,12 +71,126 @@ final class ModelClientTest extends TestCase
         ];
         yield 'feature extraction' => [
             'task' => Task::FEATURE_EXTRACTION,
-            'expectedUrl' => 'https://router.huggingface.co/test-provider/pipeline/feature-extraction/test-model',
+            'expectedUrl' => 'https://router.huggingface.co/test-provider/models/test-model',
         ];
-        yield 'message bag' => [
+        yield 'chat completion with hf-inference' => [
             'task' => Task::CHAT_COMPLETION,
-            'expectedUrl' => 'https://router.huggingface.co/test-provider/models/test-model/v1/chat/completions',
+            'expectedUrl' => 'https://router.huggingface.co/hf-inference/models/test-model/v1/chat/completions',
+            'provider' => Provider::HF_INFERENCE,
         ];
+        yield 'chat completion with third-party provider' => [
+            'task' => Task::CHAT_COMPLETION,
+            'expectedUrl' => 'https://router.huggingface.co/featherless-ai/v1/chat/completions',
+            'provider' => Provider::FEATHERLESS_AI,
+        ];
+        yield 'feature extraction with third-party provider uses standard url' => [
+            'task' => Task::FEATURE_EXTRACTION,
+            'expectedUrl' => 'https://router.huggingface.co/together/models/test-model',
+            'provider' => Provider::TOGETHER,
+        ];
+        yield 'text ranking' => [
+            'task' => Task::TEXT_RANKING,
+            'expectedUrl' => 'https://router.huggingface.co/test-provider/models/test-model',
+        ];
+    }
+
+    public function testThirdPartyProviderInjectsModelNameInPayload()
+    {
+        $response = new MockResponse('{"result": "test"}');
+        $httpClient = new MockHttpClient($response);
+
+        $model = new Model('HuggingFaceH4/zephyr-7b-beta');
+        $modelClient = new ModelClient($httpClient, Provider::FEATHERLESS_AI, 'test-api-key');
+
+        $contract = Contract::create(
+            new FileNormalizer(),
+            new MessageBagNormalizer()
+        );
+
+        $messageBag = new MessageBag();
+        $messageBag->add(new UserMessage(new Text('Test message')));
+
+        $payload = $contract->createRequestPayload($model, $messageBag);
+
+        $modelClient->request($model, $payload, [
+            'task' => Task::CHAT_COMPLETION,
+        ]);
+
+        $requestOptions = $response->getRequestOptions();
+        $body = json_decode($requestOptions['body'], true);
+
+        $this->assertSame('HuggingFaceH4/zephyr-7b-beta', $body['model']);
+    }
+
+    public function testProviderOptionOverridesDefaultProvider()
+    {
+        $response = new MockResponse('{"result": "test"}', [
+            'http_code' => 200,
+        ]);
+
+        $expectedUrl = 'https://router.huggingface.co/hyperbolic/v1/chat/completions';
+
+        $httpClient = new MockHttpClient(function (string $method, string $url) use ($expectedUrl, $response): MockResponse {
+            $this->assertSame($expectedUrl, $url);
+
+            return $response;
+        });
+
+        $model = new Model('test-model');
+        // Default provider is hf-inference, but we override with hyperbolic
+        $modelClient = new ModelClient($httpClient, Provider::HF_INFERENCE, 'test-api-key');
+
+        $modelClient->request($model, 'test input', [
+            'task' => Task::CHAT_COMPLETION,
+            'provider' => Provider::HYPERBOLIC,
+        ]);
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        $this->assertSame('test-model', $body['model']);
+    }
+
+    public function testThirdPartyProviderWithNonChatTaskDoesNotInjectModelName()
+    {
+        $response = new MockResponse('{"result": "test"}');
+        $httpClient = new MockHttpClient($response);
+
+        $model = new Model('BAAI/bge-small-en-v1.5');
+        $modelClient = new ModelClient($httpClient, Provider::TOGETHER, 'test-api-key');
+
+        $modelClient->request($model, 'Some text to embed', [
+            'task' => Task::FEATURE_EXTRACTION,
+        ]);
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        $this->assertArrayNotHasKey('model', $body);
+    }
+
+    public function testHfInferenceDoesNotInjectModelNameInPayload()
+    {
+        $response = new MockResponse('{"result": "test"}');
+        $httpClient = new MockHttpClient($response);
+
+        $model = new Model('test-model');
+        $modelClient = new ModelClient($httpClient, Provider::HF_INFERENCE, 'test-api-key');
+
+        $contract = Contract::create(
+            new FileNormalizer(),
+            new MessageBagNormalizer()
+        );
+
+        $messageBag = new MessageBag();
+        $messageBag->add(new UserMessage(new Text('Test message')));
+
+        $payload = $contract->createRequestPayload($model, $messageBag);
+
+        $modelClient->request($model, $payload, [
+            'task' => Task::CHAT_COMPLETION,
+        ]);
+
+        $requestOptions = $response->getRequestOptions();
+        $body = json_decode($requestOptions['body'], true);
+
+        $this->assertArrayNotHasKey('model', $body);
     }
 
     /**
@@ -137,6 +255,46 @@ final class ModelClientTest extends TestCase
         }
     }
 
+    public function testStringInputWithOptionsWrapsInParametersKey()
+    {
+        $response = new MockResponse('{"result": "test"}');
+        $httpClient = new MockHttpClient($response);
+
+        $model = new Model('test-model');
+        $modelClient = new ModelClient($httpClient, 'test-provider', 'test-api-key');
+
+        $modelClient->request($model, 'Hello world', [
+            'temperature' => 0.7,
+            'max_tokens' => 50,
+        ]);
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+
+        $this->assertSame('Hello world', $body['inputs']);
+        $this->assertSame(0.7, $body['parameters']['temperature']);
+        $this->assertSame(50, $body['parameters']['max_tokens']);
+    }
+
+    public function testPreBuiltBodyPayloadIsPassedThrough()
+    {
+        $response = new MockResponse('{"result": "test"}');
+        $httpClient = new MockHttpClient($response);
+
+        $model = new Model('test-model');
+        $modelClient = new ModelClient($httpClient, 'test-provider', 'test-api-key');
+
+        $binaryContent = 'fake-binary-image-data';
+        $modelClient->request($model, [
+            'body' => $binaryContent,
+            'headers' => ['Content-Type' => 'image/jpeg'],
+        ]);
+
+        $requestOptions = $response->getRequestOptions();
+
+        $this->assertSame($binaryContent, $requestOptions['body']);
+        $this->assertContains('Content-Type: image/jpeg', $requestOptions['headers']);
+    }
+
     public static function payloadTestCases(): \Iterator
     {
         yield 'string input' => [
@@ -170,6 +328,19 @@ final class ModelClientTest extends TestCase
             'expectedValues' => [
                 'headers.Content-Type' => 'application/json',
                 'json.max_tokens' => 100,
+            ],
+        ];
+
+        yield 'text ranking' => [
+            'input' => ['query' => 'search query', 'texts' => ['doc one', 'doc two']],
+            'options' => ['task' => Task::TEXT_RANKING],
+            'expectedKeys' => ['headers', 'json'],
+            'expectedValues' => [
+                'headers.Content-Type' => 'application/json',
+                'json.inputs' => [
+                    ['text' => 'search query', 'text_pair' => 'doc one'],
+                    ['text' => 'search query', 'text_pair' => 'doc two'],
+                ],
             ],
         ];
     }
