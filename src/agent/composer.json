@@ -44,6 +44,7 @@
         "phpunit/phpunit": "^11.5.53",
         "symfony/ai-store": "^0.5",
         "symfony/event-dispatcher": "^7.3|^8.0",
+        "symfony/options-resolver": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0",
         "symfony/translation-contracts": "^3.6"
     },

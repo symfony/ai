@@ -17,9 +17,12 @@ use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
 
 final class MessageBagTest extends TestCase
 {
@@ -299,5 +302,29 @@ final class MessageBagTest extends TestCase
         $this->assertSame($systemMessage, $collectedMessages[0]);
         $this->assertSame($assistantMessage, $collectedMessages[1]);
         $this->assertSame($userMessage, $collectedMessages[2]);
+    }
+
+    public function testMessageBagCanReplaceMessage()
+    {
+        $userMessage = Message::ofUser('Hello World');
+
+        $messageBag = new MessageBag($userMessage);
+
+        /** @var AbstractUid&TimeBasedUidInterface $existingMessageUuid */
+        $existingMessageUuid = $userMessage->getId();
+
+        $messageBag->replace($existingMessageUuid, Message::ofUser('Hello from a new user message'));
+
+        $this->assertSame('Hello from a new user message', $messageBag->getUserMessage()->asText());
+    }
+
+    public function testMessageBagCanReturnLatestAs()
+    {
+        $latestMessageAsUser = Message::ofUser('Hello world');
+        $latestMessageAsAssistant = Message::ofAssistant('Hello from an assistant');
+
+        $messageBag = new MessageBag($latestMessageAsUser, $latestMessageAsAssistant);
+
+        $this->assertSame($latestMessageAsUser, $messageBag->latestAs(Role::User));
     }
 }

@@ -31,7 +31,8 @@
         "replicate",
         "transformers",
         "vertexai",
-        "voyage"
+        "voyage",
+        "speech"
     ],
     "authors": [
         {
@@ -74,6 +75,7 @@
         "symfony/finder": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/http-client-contracts": "^3.5",
+        "symfony/options-resolver": "^7.3|^8.0",
         "symfony/process": "^7.3|^8.0",
         "symfony/var-dumper": "^7.3|^8.0"
     },

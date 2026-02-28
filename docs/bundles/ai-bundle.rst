@@ -1174,6 +1174,40 @@ Chats are defined in the ``chat`` section of your configuration:
                 agent: 'ai.agent.youtube'
                 message_store: 'ai.message_store.cache.youtube'
 
+Speech
+------
+
+Speech can be used to create a `stt` / `tts` / `sts` pipelines, leading to a more "human-like" conversation flow,
+the main drawback is the latency that it can introduce due to network calls.
+
+Configuring speech
+~~~~~~~~~~~~~~~~~~
+
+When using the bundle, the configuration allows to configure models and voices::
+
+    ai:
+        platform:
+            elevenlabs:
+                api_key: '%env(ELEVEN_LABS_API_KEY)%'
+            openai:
+                api_key: '%env(OPENAI_API_KEY)%'
+
+        agent:
+            sts_openai:
+                platform: ai.platform.openai
+                model: gpt-4o
+                speech:
+                    platform: 'ai.platform.elevenlabs'
+                    tts_model: '%env(ELEVEN_LABS_TTS_MODEL)%'
+                    tts_options:
+                        voice: '%env(ELEVEN_LABS_VOICE_IDENTIFIER)%'
+                    stt_model: '%env(ELEVEN_LABS_STT_MODEL)%'
+
+.. note::
+
+    The current example is built for "TTS / STT sandwich", a pattern that handles both input and output as audio,
+    both STT and TTS can be enabled independently.
+
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
 .. _`Symfony AI Chat`: https://github.com/symfony/ai-chat
 .. _`Symfony AI Platform`: https://github.com/symfony/ai-platform

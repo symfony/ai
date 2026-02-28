@@ -69,15 +69,11 @@ final class ElevenLabsClient implements ModelClientInterface
      */
     private function doTextToSpeechRequest(Model $model, array|string $payload, array $options): RawHttpResult
     {
-        if (!\array_key_exists('voice', $options)) {
-            throw new InvalidArgumentException('The voice option is required.');
-        }
-
         if (!\array_key_exists('text', $payload)) {
             throw new InvalidArgumentException('The payload must contain a "text" key.');
         }
 
-        $voice = $options['voice'];
+        $voice = $model->getOptions()['voice'] ?? $options['voice'] ?? throw new InvalidArgumentException('The voice option is required.');
         $stream = $options['stream'] ?? false;
 
         $url = $stream

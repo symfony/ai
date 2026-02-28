@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
@@ -94,6 +95,24 @@ class MessageBag implements \Countable, \IteratorAggregate
         return $messages;
     }
 
+    public function replace(AbstractUid&TimeBasedUidInterface $uuid, MessageInterface $newMessage): self
+    {
+        $messagesByUuid = array_filter(
+            $this->messages,
+            static fn (MessageInterface $message): bool => $message->getId()->equals($uuid)
+        );
+
+        if (1 < \count($messagesByUuid)) {
+            throw new InvalidArgumentException(\sprintf('More than one message found for Uuid: "%s"', $uuid->toRfc4122()));
+        }
+
+        $currentMessage = array_search(array_values($messagesByUuid)[0], $this->messages, true);
+
+        $this->messages[$currentMessage] = $newMessage;
+
+        return $this;
+    }
+
     public function withoutSystemMessage(): self
     {
         $messages = clone $this;
@@ -114,6 +133,22 @@ class MessageBag implements \Countable, \IteratorAggregate
         $messages->messages = array_merge([$message], $messages->messages);
 
         return $messages;
+    }
+
+    public function latestAs(Role $role): MessageInterface
+    {
+        $messages = array_filter(
+            $this->messages,
+            static fn (MessageInterface $message): bool => $message->getRole() === $role,
+        );
+
+        $message = array_pop($messages);
+
+        if (!$message instanceof MessageInterface) {
+            throw new InvalidArgumentException(\sprintf('No message found for role "%s".', $role->name));
+        }
+
+        return $message;
     }
 
     public function containsAudio(): bool

@@ -47,6 +47,7 @@ composer update
 - **Template**: Message templating with type-based rendering strategies
 - **Tool**: Function calling capabilities
 - **Bridge**: Provider-specific implementations (OpenAI, Anthropic, etc.)
+- **Speech**: Speech configuration and listener for `stt` / `tts` and `sts` support
 
 ### Key Directories
 - `src/Bridge/`: Provider-specific implementations
