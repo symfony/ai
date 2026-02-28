@@ -256,6 +256,10 @@ Configuration
 
             Example contexts: logging, debugging, time-sensitive operations.
 
+        # Provide configuration for modelcontextprotocol/php-sdk built in discovery
+        discovery:
+            scan_dirs: ['src/Mcp'] # limit discovery scanning to a directory where you can group all your tools, resources, prompts, etc ...
+
         client_transports:
             stdio: true # Enable STDIO via command
             http: true # Enable HTTP transport via controller
