@@ -73,10 +73,11 @@ Similar to the first approach, but instead of authenticating with the `gcloud` c
 
     GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 
-3. API Key
-..........
+3. API Key (Project-Scoped Endpoint)
+....................................
 
-Similar to the first approach, but instead of authenticating with the `gcloud` command, you provide the API keys when creating the platform::
+You can provide an API key together with a location and project ID. This still uses the
+project-scoped endpoint but authenticates with the API key instead of ADC::
 
     $platform = PlatformFactory::create(
         $_ENV['GOOGLE_CLOUD_LOCATION'],
@@ -85,6 +86,23 @@ Similar to the first approach, but instead of authenticating with the `gcloud` c
     );
 
 To get an API key, visit: `Vertex AI Studio (API keys)`_.
+
+4. API Key (Global Endpoint)
+............................
+
+If you only provide an API key without a location or project ID, the platform uses the
+VertexAI **global endpoint** (``https://aiplatform.googleapis.com/v1/publishers/google/models/...``).
+This is the simplest setup and does not require the ``google/auth`` package::
+
+    $platform = PlatformFactory::create(
+        apiKey: $_ENV['GOOGLE_CLOUD_VERTEX_API_KEY'],
+    );
+
+.. caution::
+
+    API keys only identify the calling project for billing purposes. They do not provide
+    identity-based access control. For production workloads that require IAM, audit logging,
+    or data residency, use the project-scoped endpoint with ADC or a service account.
 
 Model Availability by Location
 ------------------------------

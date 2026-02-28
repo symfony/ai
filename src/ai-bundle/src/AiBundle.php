@@ -722,30 +722,36 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('vertexai' === $type && isset($platform['location'], $platform['project_id'])) {
+        if ('vertexai' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-vertex-ai-platform', VertexAiPlatformFactory::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('VertexAI platform configuration requires "symfony/ai-vertex-ai-platform" package. Try running "composer require symfony/ai-vertex-ai-platform".');
             }
 
-            if (!class_exists(ApplicationDefaultCredentials::class)) {
-                throw new RuntimeException('For using the Vertex AI platform, google/auth package is required. Try running "composer require google/auth".');
+            $isProjectScoped = isset($platform['location'], $platform['project_id']);
+
+            if ($isProjectScoped) {
+                if (!class_exists(ApplicationDefaultCredentials::class)) {
+                    throw new RuntimeException('For using the project-scoped Vertex AI endpoint, google/auth package is required. Try running "composer require google/auth".');
+                }
+
+                $credentials = (new Definition(FetchAuthTokenInterface::class))
+                    ->setFactory([ApplicationDefaultCredentials::class, 'getCredentials'])
+                    ->setArguments([
+                        'https://www.googleapis.com/auth/cloud-platform',
+                    ])
+                ;
+
+                $credentialsObject = new Definition(\ArrayObject::class, [(new Definition('array'))->setFactory([$credentials, 'fetchAuthToken'])]);
+
+                $httpClient = (new Definition(HttpClientInterface::class))
+                    ->setFactory([new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE), 'withOptions'])
+                    ->setArgument(0, [
+                        'auth_bearer' => (new Definition('string', ['access_token']))->setFactory([$credentialsObject, 'offsetGet']),
+                    ])
+                ;
+            } else {
+                $httpClient = new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE);
             }
-
-            $credentials = (new Definition(FetchAuthTokenInterface::class))
-                ->setFactory([ApplicationDefaultCredentials::class, 'getCredentials'])
-                ->setArguments([
-                    'https://www.googleapis.com/auth/cloud-platform',
-                ])
-            ;
-
-            $credentialsObject = new Definition(\ArrayObject::class, [(new Definition('array'))->setFactory([$credentials, 'fetchAuthToken'])]);
-
-            $httpClient = (new Definition(HttpClientInterface::class))
-                ->setFactory([new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE), 'withOptions'])
-                ->setArgument(0, [
-                    'auth_bearer' => (new Definition('string', ['access_token']))->setFactory([$credentialsObject, 'offsetGet']),
-                ])
-            ;
 
             $platformId = 'ai.platform.vertexai';
             $definition = (new Definition(Platform::class))
@@ -753,8 +759,8 @@ final class AiBundle extends AbstractBundle
                 ->setLazy(true)
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
-                    $platform['location'],
-                    $platform['project_id'],
+                    $platform['location'] ?? null,
+                    $platform['project_id'] ?? null,
                     $platform['api_key'] ?? null,
                     $httpClient,
                     new Reference('ai.platform.model_catalog.vertexai.gemini'),

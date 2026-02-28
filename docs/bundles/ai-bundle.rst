@@ -64,10 +64,15 @@ Advanced Example with Multiple Agents
                 api_key: '%env(GEMINI_API_KEY)%'
             perplexity:
                 api_key: '%env(PERPLEXITY_API_KEY)%'
+            # VertexAI with project-scoped endpoint (requires google/auth)
             vertexai:
                 location: '%env(GOOGLE_CLOUD_LOCATION)%'
                 project_id: '%env(GOOGLE_CLOUD_PROJECT)%'
-                api_key: '%env(GOOGLE_CLOUD_VERTEX_API_KEY)%' # Only needed if authenticating with API keys
+                api_key: '%env(GOOGLE_CLOUD_VERTEX_API_KEY)%' # Optional: uses ADC by default
+
+            # Or with global endpoint (API key only, no google/auth needed)
+            # vertexai:
+            #     api_key: '%env(GOOGLE_CLOUD_VERTEX_API_KEY)%'
             ollama:
                 host_url: '%env(OLLAMA_HOST_URL)%'
             transformersphp: ~
