@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.6
+---
+
+ * Add `SummaryGeneratorTransformer` for generating LLM-based summaries of documents
+
 0.4
 ---
 
