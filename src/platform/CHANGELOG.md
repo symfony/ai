@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.6
+---
+
+* [BC BREAK] Change `Symfony\AI\Platform\Contract\JsonSchema\Factory` constructor signature in order to make schema generation extensible
+* Generate JSON schema from Symfony Validator constraints when available
+
 0.4
 ---
 

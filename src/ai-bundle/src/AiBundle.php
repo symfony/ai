@@ -141,6 +141,7 @@ use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -371,6 +372,10 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.chat.message_bag.normalizer');
             $builder->removeDefinition('ai.command.setup_message_store');
             $builder->removeDefinition('ai.command.drop_message_store');
+        }
+
+        if (!ContainerBuilder::willBeAvailable('symfony/validator', ValidatorInterface::class, ['symfony/ai-bundle'])) {
+            $builder->removeDefinition('ai.platform.json_schema.describer.validator');
         }
     }
 

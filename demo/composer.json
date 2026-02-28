@@ -43,6 +43,7 @@
         "symfony/ux-live-component": "^2.31",
         "symfony/ux-turbo": "^2.31",
         "symfony/ux-typed": "^2.31",
+        "symfony/validator": "8.0.*",
         "symfony/yaml": "^8.0",
         "twig/extra-bundle": "^3.22.1",
         "twig/markdown-extra": "^3.22",
