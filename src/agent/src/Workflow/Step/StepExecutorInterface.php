@@ -24,6 +24,4 @@ interface StepExecutorInterface
      * @return ResultInterface[]
      */
     public function execute(array $steps, AgentInterface $agent, WorkflowStateInterface $state): array;
-
-    public function supportsParallel(): bool;
 }

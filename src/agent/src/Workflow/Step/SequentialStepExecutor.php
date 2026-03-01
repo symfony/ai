@@ -17,21 +17,16 @@ use Symfony\AI\Platform\Result\ResultInterface;
 
 final class SequentialStepExecutor implements StepExecutorInterface
 {
-    public function supportsParallel(): bool
-    {
-        return false;
-    }
-
     /**
      * @param StepInterface[] $steps
      *
      * @return ResultInterface[]
      */
-    public function execute(
-        array $steps,
-        AgentInterface $agent,
-        WorkflowStateInterface $state,
-    ): array {
-        return array_map(static fn (StepInterface $step): ResultInterface => $step->execute($agent, $state), $steps);
+    public function execute(array $steps, AgentInterface $agent, WorkflowStateInterface $state): array
+    {
+        return array_map(
+            static fn (StepInterface $step): ResultInterface => $step->execute($agent, $state),
+            $steps,
+        );
     }
 }

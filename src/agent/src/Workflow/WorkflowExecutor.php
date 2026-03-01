@@ -128,14 +128,9 @@ final class WorkflowExecutor implements WorkflowExecutorInterface
             ]);
 
             try {
-                // Si le step est marqué comme parallel et que l'executor le supporte, utiliser l'executor
-                if ($step->isParallel() && $this->stepExecutor->supportsParallel()) {
-                    $this->logger->debug('Using parallel execution for step', ['step' => $currentStep]);
-                    $results = $this->stepExecutor->execute([$step], $agent, $state);
-                    $result = reset($results);
-                } else {
-                    $result = $step->execute($agent, $state);
-                }
+                $results = $this->stepExecutor->execute([$step], $agent, $state);
+
+                $result = reset($results);
 
                 $state->mergeContext([
                     'last_result' => $result->getContent(),
@@ -160,7 +155,7 @@ final class WorkflowExecutor implements WorkflowExecutorInterface
 
             $enabledTransitions = $this->workflowAdapter->getEnabledTransitions($state);
 
-            if (empty($enabledTransitions)) {
+            if ([] === $enabledTransitions) {
                 break;
             }
 

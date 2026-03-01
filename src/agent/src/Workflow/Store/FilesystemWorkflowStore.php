@@ -14,20 +14,28 @@ namespace Symfony\AI\Agent\Workflow\Store;
 use Symfony\AI\Agent\Workflow\ManagedWorkflowStoreInterface;
 use Symfony\AI\Agent\Workflow\WorkflowState;
 use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+use Symfony\AI\Agent\Workflow\WorkflowStateNormalizer;
 use Symfony\AI\Agent\Workflow\WorkflowStoreInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
 final class FilesystemWorkflowStore implements WorkflowStoreInterface, ManagedWorkflowStoreInterface
 {
-    private array $locks = [];
-
     public function __construct(
         private readonly string $storagePath,
-        private readonly bool $useLocking = true,
         private readonly Filesystem $filesystem = new Filesystem(),
+        private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new WorkflowStateNormalizer(),
+        ], [new JsonEncoder()]),
     ) {
     }
 
@@ -44,29 +52,9 @@ final class FilesystemWorkflowStore implements WorkflowStoreInterface, ManagedWo
     public function save(WorkflowStateInterface $state): void
     {
         $filename = $this->getFilename($state->getId());
-        $lockFile = $filename.'.lock';
 
-        if ($this->useLocking) {
-            $lock = fopen($lockFile, 'c+');
-            if (!flock($lock, \LOCK_EX)) {
-                throw new \RuntimeException('Could not acquire lock for workflow '.$state->getId());
-            }
-        }
-
-        try {
-            $tempFile = $filename.'.tmp';
-            file_put_contents(
-                $tempFile,
-                json_encode($state->toArray(), \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR)
-            );
-            rename($tempFile, $filename);
-        } finally {
-            if ($this->useLocking && isset($lock)) {
-                flock($lock, \LOCK_UN);
-                fclose($lock);
-                @unlink($lockFile);
-            }
-        }
+        $this->filesystem->touch($filename);
+        $this->filesystem->dumpFile($filename, $this->serializer->serialize($state, 'json'));
     }
 
     public function load(string $id): ?WorkflowStateInterface
@@ -77,21 +65,14 @@ final class FilesystemWorkflowStore implements WorkflowStoreInterface, ManagedWo
             return null;
         }
 
-        $data = json_decode(file_get_contents($filename), true, 512, \JSON_THROW_ON_ERROR);
+        $state = $this->filesystem->readFile($filename);
 
-        return WorkflowState::fromArray($data);
+        return $this->serializer->deserialize($state, WorkflowState::class, 'json');
     }
 
-    public function delete(string $id): void
+    public function remove(string $id): void
     {
-        $filename = $this->getFilename($id);
-
-        $this->filesystem->remove($filename);
-    }
-
-    public function exists(string $id): bool
-    {
-        return $this->filesystem->exists($this->getFilename($id));
+        $this->filesystem->remove($this->getFilename($id));
     }
 
     private function getFilename(string $id): string

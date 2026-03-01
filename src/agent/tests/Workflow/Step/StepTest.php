@@ -21,7 +21,7 @@ final class StepTest extends TestCase
 {
     public function testConstruction(): void
     {
-        $executor = fn ($agent, $state) => $this->createMock(ResultInterface::class);
+        $executor = fn ($agent, $state): ResultInterface => $this->createMock(ResultInterface::class);
         $step = new Step('test-step', $executor);
 
         $this->assertSame('test-step', $step->getName());
@@ -33,7 +33,7 @@ final class StepTest extends TestCase
     public function testExecuteSuccess(): void
     {
         $result = $this->createMock(ResultInterface::class);
-        $executor = static fn ($agent, $state) => $result;
+        $executor = static fn ($agent, $state): ResultInterface => $result;
 
         $step = new Step('test-step', $executor);
         $agent = $this->createMock(AgentInterface::class);

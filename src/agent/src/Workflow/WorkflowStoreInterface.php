@@ -19,4 +19,6 @@ interface WorkflowStoreInterface
     public function save(WorkflowStateInterface $state): void;
 
     public function load(string $id): ?WorkflowStateInterface;
+
+    public function remove(string $id): void;
 }

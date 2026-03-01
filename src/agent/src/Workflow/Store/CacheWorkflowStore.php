@@ -12,10 +12,17 @@
 namespace Symfony\AI\Agent\Workflow\Store;
 
 use Symfony\AI\Agent\Workflow\ManagedWorkflowStoreInterface;
-use Symfony\AI\Agent\Workflow\WorkflowState;
 use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+use Symfony\AI\Agent\Workflow\WorkflowStateNormalizer;
 use Symfony\AI\Agent\Workflow\WorkflowStoreInterface;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -26,6 +33,10 @@ final class CacheWorkflowStore implements WorkflowStoreInterface, ManagedWorkflo
         private readonly CacheInterface $cache,
         private readonly int $ttl = 3600,
         private readonly string $key = 'workflow_',
+        private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new WorkflowStateNormalizer(),
+        ], [new JsonEncoder()]),
     ) {
     }
 
@@ -41,12 +52,11 @@ final class CacheWorkflowStore implements WorkflowStoreInterface, ManagedWorkflo
 
     public function save(WorkflowStateInterface $state): void
     {
-        $item = $this->cache->getItem($this->getKey($state->getId()));
+        $this->cache->get($this->getKey($state->getId()), function (ItemInterface $item) use ($state) {
+            $item->expiresAfter($this->ttl);
 
-        $item->set($state->toArray());
-        $item->expiresAfter($this->ttl);
-
-        $this->cache->save($item);
+            return $this->serializer->serialize($state, 'json');
+        });
     }
 
     public function load(string $id): ?WorkflowStateInterface
@@ -57,7 +67,12 @@ final class CacheWorkflowStore implements WorkflowStoreInterface, ManagedWorkflo
             return null;
         }
 
-        return WorkflowState::fromArray($item->get());
+        return $this->serializer->deserialize($item->get(), WorkflowStateInterface::class, 'json');
+    }
+
+    public function remove(string $id): void
+    {
+        $this->cache->deleteItem($this->getKey($id));
     }
 
     private function getKey(string $id): string

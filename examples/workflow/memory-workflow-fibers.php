@@ -11,9 +11,9 @@
 
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Agent\Workflow\Step\ParallelStepExecutor;
+use Symfony\AI\Agent\Workflow\Step\FiberStepExecutor;
 use Symfony\AI\Agent\Workflow\Step\Step;
-use Symfony\AI\Agent\Workflow\Store\CacheWorkflowStore;
+use Symfony\AI\Agent\Workflow\Store\InMemoryWorkflowStore;
 use Symfony\AI\Agent\Workflow\Transition\Transition;
 use Symfony\AI\Agent\Workflow\Transition\TransitionRegistry;
 use Symfony\AI\Agent\Workflow\WorkflowExecutor;
@@ -23,7 +23,6 @@ use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Uid\Uuid;
 
@@ -32,9 +31,6 @@ require_once dirname(__DIR__).'/bootstrap.php';
 // agent
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $agent = new Agent($platform, 'gpt-5.2');
-
-// Store
-$store = new CacheWorkflowStore(new ArrayAdapter());
 
 $transitionRegistry = new TransitionRegistry();
 
@@ -68,8 +64,8 @@ $transitionRegistry->addTransition(new Transition(
 // Executor
 $executor = new WorkflowExecutor(
     $transitionRegistry,
-    $store,
-    new ParallelStepExecutor(),
+    new InMemoryWorkflowStore(),
+    new FiberStepExecutor(),
     new EventDispatcher(),
     logger(),
     maxExecutionTime: 600

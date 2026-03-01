@@ -13,7 +13,14 @@ namespace Symfony\AI\Agent\Workflow\Store;
 
 use Symfony\AI\Agent\Workflow\ManagedWorkflowStoreInterface;
 use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+use Symfony\AI\Agent\Workflow\WorkflowStateNormalizer;
 use Symfony\AI\Agent\Workflow\WorkflowStoreInterface;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -24,6 +31,14 @@ final class InMemoryWorkflowStore implements WorkflowStoreInterface, ManagedWork
      * @var WorkflowStateInterface[]
      */
     private array $states = [];
+
+    public function __construct(
+        private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new WorkflowStateNormalizer(),
+        ], [new JsonEncoder()]),
+    ) {
+    }
 
     public function setup(array $options = []): void
     {
@@ -37,11 +52,17 @@ final class InMemoryWorkflowStore implements WorkflowStoreInterface, ManagedWork
 
     public function save(WorkflowStateInterface $state): void
     {
-        $this->states[$state->getId()] = $state;
+        $this->states[$state->getId()] = $this->serializer->serialize($state, 'json');
     }
 
     public function load(string $id): ?WorkflowStateInterface
     {
-        return $this->states[$id] ?? null;
+        $state = $this->states[$id] ?? null;
+
+        if (!$state instanceof WorkflowStateInterface) {
+            return null;
+        }
+
+        return $this->serializer->deserialize($state, WorkflowStateInterface::class, 'json');
     }
 }

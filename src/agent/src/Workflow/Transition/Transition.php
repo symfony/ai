@@ -19,13 +19,13 @@ use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
 final class Transition implements TransitionInterface
 {
     /**
-     * @param \Closure[]|null $guards
+     * @param \Closure[] $guards
      */
     public function __construct(
         private readonly string $name,
         private readonly string $from,
         private readonly string $to,
-        private readonly ?array $guards = null,
+        private readonly array $guards = [],
         private readonly ?\Closure $beforeCallback = null,
         private readonly ?\Closure $afterCallback = null,
     ) {
@@ -52,7 +52,7 @@ final class Transition implements TransitionInterface
             return false;
         }
 
-        if (null === $this->guards) {
+        if ([] === $this->guards) {
             return true;
         }
 

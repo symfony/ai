@@ -20,13 +20,6 @@ use Symfony\AI\Platform\Result\ResultInterface;
 
 final class SequentialStepExecutorTest extends TestCase
 {
-    public function testSupportsParallel(): void
-    {
-        $executor = new SequentialStepExecutor();
-
-        $this->assertFalse($executor->supportsParallel());
-    }
-
     public function testExecuteMultipleSteps(): void
     {
         $executor = new SequentialStepExecutor();
@@ -55,7 +48,7 @@ final class SequentialStepExecutorTest extends TestCase
         $state = new WorkflowState('id', 'start');
 
         $result = $this->createMock(ResultInterface::class);
-        $steps = [new Step('step1', static fn () => $result)];
+        $steps = [new Step('step1', static fn (): ResultInterface => $result)];
 
         $results = $executor->execute($steps, $agent, $state);
 
@@ -73,17 +66,17 @@ final class SequentialStepExecutorTest extends TestCase
         $result = $this->createMock(ResultInterface::class);
 
         $steps = [
-            new Step('step1', static function () use (&$executionOrder, $result) {
+            new Step('step1', static function () use (&$executionOrder, $result): ResultInterface {
                 $executionOrder[] = 'step1';
 
                 return $result;
             }),
-            new Step('step2', static function () use (&$executionOrder, $result) {
+            new Step('step2', static function () use (&$executionOrder, $result): ResultInterface {
                 $executionOrder[] = 'step2';
 
                 return $result;
             }),
-            new Step('step3', static function () use (&$executionOrder, $result) {
+            new Step('step3', static function () use (&$executionOrder, $result): ResultInterface {
                 $executionOrder[] = 'step3';
 
                 return $result;

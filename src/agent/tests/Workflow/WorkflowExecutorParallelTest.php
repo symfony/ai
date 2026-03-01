@@ -14,7 +14,7 @@ namespace Symfony\AI\Agent\Tests\Workflow;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Agent\Workflow\Step\ParallelStepExecutor;
+use Symfony\AI\Agent\Workflow\Step\FiberStepExecutor;
 use Symfony\AI\Agent\Workflow\Step\SequentialStepExecutor;
 use Symfony\AI\Agent\Workflow\Step\Step;
 use Symfony\AI\Agent\Workflow\Transition\TransitionRegistry;
@@ -54,7 +54,7 @@ final class WorkflowExecutorParallelTest extends TestCase
         $property->setAccessible(true);
         $stepExecutor = $property->getValue($executor);
 
-        $this->assertInstanceOf(ParallelStepExecutor::class, $stepExecutor);
+        $this->assertInstanceOf(FiberStepExecutor::class, $stepExecutor);
         $this->assertTrue($stepExecutor->supportsParallel());
     }
 
@@ -87,7 +87,7 @@ final class WorkflowExecutorParallelTest extends TestCase
         $executor = new WorkflowExecutor(
             $this->registry,
             $this->store,
-            new ParallelStepExecutor(),
+            new FiberStepExecutor(),
             logger: new NullLogger()
         );
 
@@ -133,7 +133,7 @@ final class WorkflowExecutorParallelTest extends TestCase
         $executor = new WorkflowExecutor(
             $this->registry,
             $this->store,
-            new ParallelStepExecutor(),
+            new FiberStepExecutor(),
             logger: new NullLogger()
         );
 

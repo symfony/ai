@@ -14,12 +14,14 @@ namespace Symfony\AI\Agent\Workflow\Step;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 
-final class ParallelStepExecutor implements StepExecutorInterface
+final class FiberStepExecutor implements StepExecutorInterface
 {
-    public function supportsParallel(): bool
-    {
-        return true;
+    public function __construct(
+        private readonly ClockInterface $clock = new MonotonicClock(),
+    ) {
     }
 
     /**
@@ -27,11 +29,8 @@ final class ParallelStepExecutor implements StepExecutorInterface
      *
      * @return ResultInterface[]
      */
-    public function execute(
-        array $steps,
-        AgentInterface $agent,
-        WorkflowStateInterface $state,
-    ): array {
+    public function execute(array $steps, AgentInterface $agent, WorkflowStateInterface $state): array
+    {
         $fibers = [];
         $results = [];
         $exceptions = [];
@@ -69,12 +68,12 @@ final class ParallelStepExecutor implements StepExecutorInterface
             }
 
             if (\count($completed) < \count($fibers)) {
-                usleep(10000); // 10ms
+                $this->clock->sleep(0.01);
             }
         }
 
-        if (!empty($exceptions)) {
-            throw new \RuntimeException(\sprintf('Parallel execution failed with %d errors', \count($exceptions)), 0, reset($exceptions));
+        if ([] !== $exceptions) {
+            throw new \RuntimeException(\sprintf('Fibers execution failed with %d errors', \count($exceptions)), 0, reset($exceptions));
         }
 
         return $results;
