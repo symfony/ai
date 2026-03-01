@@ -65,6 +65,10 @@ final class OllamaClient implements ModelClientInterface
      */
     private function doCompletionRequest(array|string $payload, array $options = []): RawHttpResult
     {
+        if (\is_string($payload)) {
+            throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
+        }
+
         // Revert Ollama's default streaming behavior
         $options['stream'] ??= false;
 

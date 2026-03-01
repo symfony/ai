@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\Completions\ModelClient;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -29,6 +30,16 @@ final class ModelClientTest extends TestCase
         $modelClient = new ModelClient(new MockHttpClient(), 'http://localhost:8000');
 
         $this->assertTrue($modelClient->supports(new CompletionsModel('gpt-4o')));
+    }
+
+    public function testStringPayloadThrowsException()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'http://localhost:8000');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Payload must be an array, but a string was given');
+
+        $modelClient->request(new CompletionsModel('gpt-4o'), 'string payload');
     }
 
     public function testItIsExecutingTheCorrectRequest()

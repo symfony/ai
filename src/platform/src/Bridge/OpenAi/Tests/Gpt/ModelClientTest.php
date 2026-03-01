@@ -78,6 +78,16 @@ final class ModelClientTest extends TestCase
         $this->assertTrue($modelClient->supports(new Gpt('gpt-4o')));
     }
 
+    public function testStringPayloadThrowsException()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Payload must be an array, but a string was given');
+
+        $modelClient->request(new Gpt('gpt-4o'), 'string payload');
+    }
+
     public function testItIsExecutingTheCorrectRequest()
     {
         $resultCallback = static function (string $method, string $url, array $options): HttpResponse {

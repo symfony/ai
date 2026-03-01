@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Mistral\Llm;
 
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -39,6 +40,10 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        if (\is_string($payload)) {
+            throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.mistral.ai/v1/chat/completions', [
             'auth_bearer' => $this->apiKey,
             'headers' => [
