@@ -30,7 +30,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
      * @param MessageBag $data
      *
      * @return array{
-     *     messages: array<string, mixed>,
+     *     messages: list<array<string, mixed>>,
      *     model?: string,
      *     system?: string,
      * }

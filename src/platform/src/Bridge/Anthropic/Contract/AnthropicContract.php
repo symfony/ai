@@ -27,7 +27,7 @@ final class AnthropicContract extends Contract
             new DocumentUrlNormalizer(),
             new ImageNormalizer(),
             new ImageUrlNormalizer(),
-            new MessageBagNormalizer(),
+            new PromptCacheNormalizer(), // replaces MessageBagNormalizer; also handles cache injection
             new ToolCallMessageNormalizer(),
             new ToolNormalizer(),
             ...$normalizer,

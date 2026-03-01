@@ -25,6 +25,8 @@ final class TokenUsage implements MergeableMetadataInterface, TokenUsageInterfac
         private readonly ?int $thinkingTokens = null,
         private readonly ?int $toolTokens = null,
         private readonly ?int $cachedTokens = null,
+        private readonly ?int $cacheCreationTokens = null,
+        private readonly ?int $cacheReadTokens = null,
         private readonly ?int $remainingTokens = null,
         private readonly ?int $remainingTokensMinute = null,
         private readonly ?int $remainingTokensMonth = null,
@@ -64,6 +66,16 @@ final class TokenUsage implements MergeableMetadataInterface, TokenUsageInterfac
     public function getCachedTokens(): ?int
     {
         return $this->cachedTokens;
+    }
+
+    public function getCacheCreationTokens(): ?int
+    {
+        return $this->cacheCreationTokens;
+    }
+
+    public function getCacheReadTokens(): ?int
+    {
+        return $this->cacheReadTokens;
     }
 
     public function getRemainingTokens(): ?int

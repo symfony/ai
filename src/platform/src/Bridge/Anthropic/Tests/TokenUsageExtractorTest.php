@@ -55,8 +55,48 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(20, $tokenUsage->getCompletionTokens());
         $this->assertNull($tokenUsage->getRemainingTokens());
         $this->assertNull($tokenUsage->getThinkingTokens());
+        // Combined total
         $this->assertSame(90, $tokenUsage->getCachedTokens());
+        // Breakdown fields
+        $this->assertSame(40, $tokenUsage->getCacheCreationTokens());
+        $this->assertSame(50, $tokenUsage->getCacheReadTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+    }
+
+    public function testItExtractsCacheCreationTokensOnly()
+    {
+        $extractor = new TokenUsageExtractor();
+        $result = new InMemoryRawResult([
+            'usage' => [
+                'input_tokens' => 100,
+                'output_tokens' => 20,
+                'cache_creation_input_tokens' => 80,
+            ],
+        ]);
+
+        $tokenUsage = $extractor->extract($result);
+
+        $this->assertSame(80, $tokenUsage->getCachedTokens());
+        $this->assertSame(80, $tokenUsage->getCacheCreationTokens());
+        $this->assertNull($tokenUsage->getCacheReadTokens());
+    }
+
+    public function testItExtractsCacheReadTokensOnly()
+    {
+        $extractor = new TokenUsageExtractor();
+        $result = new InMemoryRawResult([
+            'usage' => [
+                'input_tokens' => 5,
+                'output_tokens' => 10,
+                'cache_read_input_tokens' => 200,
+            ],
+        ]);
+
+        $tokenUsage = $extractor->extract($result);
+
+        $this->assertSame(200, $tokenUsage->getCachedTokens());
+        $this->assertNull($tokenUsage->getCacheCreationTokens());
+        $this->assertSame(200, $tokenUsage->getCacheReadTokens());
     }
 
     public function testItHandlesMissingUsageFields()
@@ -76,5 +116,8 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertNull($tokenUsage->getRemainingTokens());
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertNull($tokenUsage->getCachedTokens());
+        $this->assertNull($tokenUsage->getCacheCreationTokens());
+        $this->assertNull($tokenUsage->getCacheReadTokens());
     }
 }

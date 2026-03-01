@@ -45,7 +45,7 @@ final class Platform implements PlatformInterface
         $event = new InvocationEvent($model, $input, $options);
         $this->eventDispatcher?->dispatch($event);
 
-        $payload = $this->contract->createRequestPayload($event->getModel(), $event->getInput());
+        $payload = $this->contract->createRequestPayload($event->getModel(), $event->getInput(), $event->getOptions());
         $options = array_merge($model->getOptions(), $event->getOptions());
 
         if (isset($options['tools'])) {
