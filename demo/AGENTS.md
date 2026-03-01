@@ -77,3 +77,10 @@ symfony console mcp:server
 - ChromaDB on port 8080
 - LiveComponents for real-time UI
 - Symfony DI and best practices
+
+<!-- BEGIN AI_MATE_INSTRUCTIONS -->
+AI Mate Summary:
+- Role: MCP-powered, project-aware coding guidance and tools.
+- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer MCP tools over raw CLI commands whenever possible.
+- Installed extensions: symfony/ai-mate, symfony/ai-monolog-mate-extension, symfony/ai-symfony-mate-extension.
+<!-- END AI_MATE_INSTRUCTIONS -->

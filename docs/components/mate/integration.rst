@@ -66,6 +66,25 @@ To add Symfony AI Mate to Claude Code (see `Claude Code MCP documentation`_ for 
     $ claude mcp add mate $(pwd)/vendor/bin/mate serve --scope local
     $ claude mcp list  # Verify: mate - ✓ Connected
 
+Codex
+-----
+
+Symfony AI Mate initializes project-local Codex wrappers:
+
+* ``bin/codex`` (macOS/Linux)
+* ``bin/codex.bat`` (Windows)
+
+Use these wrappers to start Codex with runtime MCP injection:
+
+.. code-block:: terminal
+
+    $ ./bin/codex
+
+.. note::
+
+    Codex does not read this project's ``mcp.json``. The wrappers pass
+    runtime ``-c mcp_servers...`` options so no persistent Codex config is written.
+
 Troubleshooting
 ---------------
 
@@ -126,6 +145,26 @@ Claude Code Not Connecting
        $ claude mcp add mate $(pwd)/vendor/bin/mate serve --scope local
 
 3. **Check for conflicting servers** with similar names.
+
+Codex Not Showing Mate Tools
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. **Use the wrapper**:
+
+   .. code-block:: terminal
+
+       $ ./bin/codex
+
+2. **Refresh extension and agent instructions**:
+
+   .. code-block:: terminal
+
+       $ vendor/bin/mate discover
+
+3. **Check wrapper scripts exist**:
+
+   - macOS/Linux: ``bin/codex``
+   - Windows: ``bin/codex.bat``
 
 For general server issues and debugging tips, see the :doc:`troubleshooting` guide.
 

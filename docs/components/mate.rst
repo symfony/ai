@@ -45,7 +45,9 @@ This creates:
 
 * ``mate/`` directory with configuration files
 * ``mate/src`` directory for custom extensions
-* ``mcp.json`` for MCP client configuration
+* ``mate/AGENT_INSTRUCTIONS.md`` placeholder (refreshed by ``mate discover``)
+* ``mcp.json`` for MCP clients that support it (e.g. Claude Desktop)
+* ``bin/codex`` and ``bin/codex.bat`` wrappers for Codex runtime MCP injection
 
 It also updates your ``composer.json`` with the following configuration:
 
@@ -77,11 +79,22 @@ Discover available extensions:
 
     $ vendor/bin/mate discover
 
+This command also refreshes:
+
+* ``mate/AGENT_INSTRUCTIONS.md``
+* Managed AI Mate instruction section in ``AGENTS.md``
+
 Start the MCP server:
 
 .. code-block:: terminal
 
     $ vendor/bin/mate serve
+
+For Codex, start with the generated wrapper (``./bin/codex``); Codex does not read this project's ``mcp.json``:
+
+.. code-block:: terminal
+
+    $ ./bin/codex
 
 Add Custom Tools
 ----------------
