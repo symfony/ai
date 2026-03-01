@@ -37,6 +37,7 @@ use Symfony\AI\Platform\ResultConverterInterface;
  * @phpstan-type Refusal array{type: 'refusal', refusal: string}
  * @phpstan-type FunctionCall array{id: string, arguments: string, call_id: string, name: string, type: 'function_call'}
  * @phpstan-type Reasoning array{summary: array{text?: string}, id: string}
+ * @phpstan-type Error array{code?: string|null, type?: string|null, param?: string|null, message?: string|null}
  */
 final class ResultConverter implements ResultConverterInterface
 {
@@ -81,7 +82,7 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if (isset($data['error'])) {
-            throw new RuntimeException(\sprintf('Error "%s"-%s (%s): "%s".', $data['error']['code'] ?? '-', $data['error']['type'] ?? '-', $data['error']['param'] ?? '-', $data['error']['message'] ?? '-'));
+            throw new RuntimeException($this->generateErrorMessage($data['error']));
         }
 
         if (!isset($data[self::KEY_OUTPUT])) {
@@ -133,6 +134,10 @@ final class ResultConverter implements ResultConverterInterface
     {
         foreach ($result->getDataStream() as $event) {
             $type = $event['type'] ?? '';
+
+            if ('error' === $type && isset($event['error'])) {
+                throw new RuntimeException($this->generateErrorMessage($event['error']));
+            }
 
             if (isset($event['response']['usage'])) {
                 yield $this->getTokenUsageExtractor()->fromDataArray($event['response']);
@@ -235,5 +240,13 @@ final class ResultConverter implements ResultConverterInterface
         $summary = $item['summary']['text'] ?? null;
 
         return $summary ? new TextResult($summary) : null;
+    }
+
+    /**
+     * @param Error $error
+     */
+    private function generateErrorMessage(array $error): string
+    {
+        return \sprintf('Error "%s"-%s (%s): "%s".', $error['code'] ?? '-', $error['type'] ?? '-', $error['param'] ?? '-', $error['message'] ?? '-');
     }
 }
