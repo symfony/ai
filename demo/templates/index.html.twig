@@ -4,14 +4,14 @@
 
 {% block content %}
     <div class="container">
-        <h1 class="text-dark-emphasis">Welcome to the <strong class="text-dark">Symfony AI</strong> Demo</h1>
+        <h1 class="text-dark-emphasis">{{ 'home.title_prefix'|trans }} <strong class="text-dark">Symfony AI</strong> {{ 'home.title_suffix'|trans }}</h1>
         <p class="my-4 text-dark">
-            This is a small demo app that can be used to explore the capabilities of Symfony AI Components together with
-            Symfony UX and Twig Live Components.<br />
+            {{ 'home.intro'|trans }}<br />
+            {{ 'home.intro_suffix'|trans }}<br />
             Central to this demo are five chatbot examples that are implemented in <code>src/**/Chat.php</code> and AI
             configuration can be found in <code>config/packages/ai.yaml</code>.
         </p>
-        <h3 class="text-dark">Examples</h3>
+        <h3 class="text-dark">{{ 'home.examples'|trans }}</h3>
         <div class="row">
             <div class="col-md-3">
                 <div class="card youtube bg-body shadow-sm">
