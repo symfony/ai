@@ -47,6 +47,10 @@ final class ModelClient implements ModelClientInterface
 
     public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
     {
+        if (\is_string($payload)) {
+            throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
+        }
+
         return new RawHttpResult(
             $this->httpClient->request(
                 'POST', 'https://api.cerebras.ai/v1/chat/completions',
@@ -55,7 +59,7 @@ final class ModelClient implements ModelClientInterface
                         'Content-Type' => 'application/json',
                         'Authorization' => \sprintf('Bearer %s', $this->apiKey),
                     ],
-                    'json' => \is_array($payload) ? array_merge($payload, $options) : $payload,
+                    'json' => array_merge($payload, $options),
                 ]
             )
         );
