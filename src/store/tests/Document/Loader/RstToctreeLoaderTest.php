@@ -33,7 +33,7 @@ final class RstToctreeLoaderTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('RstToctreeLoader requires a file path as source, null given.');
-        iterator_to_array($loader->load());
+        iterator_to_array($loader->load(), false);
     }
 
     public function testLoadThrowsForNonExistentFile()
@@ -42,13 +42,13 @@ final class RstToctreeLoaderTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('File "/nonexistent/file.rst" does not exist.');
-        iterator_to_array($loader->load('/nonexistent/file.rst'));
+        iterator_to_array($loader->load('/nonexistent/file.rst'), false);
     }
 
     public function testLoadSimpleFlatRst()
     {
         $loader = new RstToctreeLoader();
-        $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'));
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'), false);
 
         $this->assertCount(3, $documents);
         foreach ($documents as $doc) {
@@ -59,7 +59,7 @@ final class RstToctreeLoaderTest extends TestCase
     public function testLoadSimpleRstSectionTitles()
     {
         $loader = new RstToctreeLoader();
-        $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'));
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'), false);
 
         $titles = array_map(
             static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getSectionTitle() ?? '',
@@ -74,7 +74,7 @@ final class RstToctreeLoaderTest extends TestCase
     public function testLoadSimpleRstMetadataFields()
     {
         $loader = new RstToctreeLoader();
-        $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'));
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'), false);
 
         $source = $this->fixturesDir.'/simple.rst';
         foreach ($documents as $doc) {
@@ -87,7 +87,7 @@ final class RstToctreeLoaderTest extends TestCase
     public function testLoadSimpleRstSectionContent()
     {
         $loader = new RstToctreeLoader();
-        $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'));
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'), false);
 
         $contentMap = [];
         foreach ($documents as $doc) {
@@ -103,7 +103,7 @@ final class RstToctreeLoaderTest extends TestCase
     public function testLoadRstWithToctree()
     {
         $loader = new RstToctreeLoader();
-        $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_toctree/index.rst'));
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_toctree/index.rst'), false);
 
         // Should have sections from both index.rst and page.rst
         $this->assertGreaterThanOrEqual(2, \count($documents));
@@ -120,7 +120,7 @@ final class RstToctreeLoaderTest extends TestCase
     public function testLoadToctreeIncreasesSectionDepth()
     {
         $loader = new RstToctreeLoader();
-        $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_toctree/index.rst'));
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_toctree/index.rst'), false);
 
         $depthByTitle = [];
         foreach ($documents as $doc) {
@@ -138,7 +138,7 @@ final class RstToctreeLoaderTest extends TestCase
     public function testLoadToctreePageSectionsHaveCorrectSource()
     {
         $loader = new RstToctreeLoader();
-        $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_toctree/index.rst'));
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_toctree/index.rst'), false);
 
         $pageSource = $this->fixturesDir.'/with_toctree/page.rst';
         $pageDocs = array_filter(
@@ -152,7 +152,7 @@ final class RstToctreeLoaderTest extends TestCase
     public function testLoadSetsTextMetadata()
     {
         $loader = new RstToctreeLoader();
-        $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'));
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'), false);
 
         foreach ($documents as $doc) {
             $this->assertTrue($doc->getMetadata()->hasText());
@@ -169,7 +169,7 @@ final class RstToctreeLoaderTest extends TestCase
 
         try {
             $loader = new RstToctreeLoader();
-            $documents = iterator_to_array($loader->load($tempFile));
+            $documents = iterator_to_array($loader->load($tempFile), false);
 
             // The section is longer than 15K chars, so it should be split
             $this->assertGreaterThan(1, \count($documents));

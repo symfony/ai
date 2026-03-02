@@ -42,13 +42,7 @@ final class RstToctreeLoader implements LoaderInterface
             throw new InvalidArgumentException('RstToctreeLoader requires a file path as source, null given.');
         }
 
-        if (!file_exists($source)) {
-            throw new RuntimeException(\sprintf('File "%s" does not exist.', $source));
-        }
-
-        foreach ($this->processFile($source, 0) as $document) {
-            yield $document;
-        }
+        yield from $this->processFile($source, 0);
     }
 
     /**
@@ -56,6 +50,10 @@ final class RstToctreeLoader implements LoaderInterface
      */
     private function processFile(string $path, int $depth): iterable
     {
+        if (!file_exists($path)) {
+            throw new RuntimeException(\sprintf('File "%s" does not exist.', $path));
+        }
+
         $content = file_get_contents($path);
 
         if (false === $content) {
@@ -64,14 +62,10 @@ final class RstToctreeLoader implements LoaderInterface
 
         $dir = \dirname($path);
 
-        foreach ($this->splitIntoSections($content, $path, $depth) as $document) {
-            yield $document;
-        }
+        yield from $this->splitIntoSections($content, $path, $depth);
 
         foreach ($this->parseToctreeEntries($content, $dir) as $entryPath) {
-            foreach ($this->processFile($entryPath, $depth + 1) as $document) {
-                yield $document;
-            }
+            yield from $this->processFile($entryPath, $depth + 1);
         }
     }
 
@@ -80,7 +74,7 @@ final class RstToctreeLoader implements LoaderInterface
      */
     private function splitIntoSections(string $content, string $source, int $depth): iterable
     {
-        $lines = explode("\n", $content);
+        $lines = explode(\PHP_EOL, $content);
         $count = \count($lines);
 
         $currentTitle = '';
@@ -94,11 +88,9 @@ final class RstToctreeLoader implements LoaderInterface
             if ($this->isHeading($line, $nextLine)) {
                 if ($i > $sectionStartIndex) {
                     $sectionLines = \array_slice($lines, $sectionStartIndex, $i - $sectionStartIndex);
-                    $sectionText = implode("\n", $sectionLines);
+                    $sectionText = implode(\PHP_EOL, $sectionLines);
                     if ('' !== trim($sectionText)) {
-                        foreach ($this->yieldSection($sectionText, $currentTitle, $source, $depth, null) as $document) {
-                            yield $document;
-                        }
+                        yield from $this->yieldSection($sectionText, $currentTitle, $source, $depth, null);
                     }
                 }
 
@@ -114,11 +106,9 @@ final class RstToctreeLoader implements LoaderInterface
 
         if ($sectionStartIndex < $count) {
             $sectionLines = \array_slice($lines, $sectionStartIndex);
-            $sectionText = implode("\n", $sectionLines);
+            $sectionText = implode(\PHP_EOL, $sectionLines);
             if ('' !== trim($sectionText)) {
-                foreach ($this->yieldSection($sectionText, $currentTitle, $source, $depth, null) as $document) {
-                    yield $document;
-                }
+                yield from $this->yieldSection($sectionText, $currentTitle, $source, $depth, null);
             }
         }
     }
@@ -206,7 +196,7 @@ final class RstToctreeLoader implements LoaderInterface
      */
     private function parseToctreeEntries(string $content, string $baseDir): array
     {
-        $lines = explode("\n", $content);
+        $lines = explode(\PHP_EOL, $content);
         $count = \count($lines);
         $entries = [];
         $i = 0;
