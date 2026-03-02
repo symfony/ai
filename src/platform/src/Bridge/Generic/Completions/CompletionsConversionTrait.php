@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 /**
  * Shared streaming and tool-call conversion logic for OpenAI-compatible completions APIs.
@@ -31,6 +32,15 @@ trait CompletionsConversionTrait
     {
         $toolCalls = [];
         foreach ($result->getDataStream() as $data) {
+            if (isset($data['usage']) && \is_array($data['usage'])) {
+                yield new TokenUsage(
+                    promptTokens: $data['usage']['prompt_tokens'] ?? null,
+                    completionTokens: $data['usage']['completion_tokens'] ?? null,
+                    cachedTokens: $data['usage']['num_cached_tokens'] ?? null,
+                    totalTokens: $data['usage']['total_tokens'] ?? null,
+                );
+            }
+
             if ($this->streamIsToolCall($data)) {
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
