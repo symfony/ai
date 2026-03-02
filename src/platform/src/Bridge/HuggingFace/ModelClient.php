@@ -54,8 +54,7 @@ final class ModelClient implements ModelClientInterface
 
     private function getUrl(Model $model, string $provider, ?string $task): string
     {
-        $endpoint = Task::FEATURE_EXTRACTION === $task ? 'pipeline/feature-extraction' : 'models';
-        $url = \sprintf('https://router.huggingface.co/%s/%s/%s', $provider, $endpoint, $model->getName());
+        $url = \sprintf('https://router.huggingface.co/%s/models/%s', $provider, $model->getName());
 
         if (Task::CHAT_COMPLETION === $task) {
             $url .= '/v1/chat/completions';

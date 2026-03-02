@@ -67,7 +67,7 @@ final class ModelClientTest extends TestCase
         ];
         yield 'feature extraction' => [
             'task' => Task::FEATURE_EXTRACTION,
-            'expectedUrl' => 'https://router.huggingface.co/test-provider/pipeline/feature-extraction/test-model',
+            'expectedUrl' => 'https://router.huggingface.co/test-provider/models/test-model',
         ];
         yield 'message bag' => [
             'task' => Task::CHAT_COMPLETION,
