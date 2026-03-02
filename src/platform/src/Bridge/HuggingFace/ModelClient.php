@@ -48,7 +48,7 @@ final class ModelClient implements ModelClientInterface
 
         return new RawHttpResult($this->httpClient->request('POST', $this->getUrl($model, $provider, $task), [
             'auth_bearer' => $this->apiKey,
-            ...$this->getPayload($payload, $options),
+            ...$this->getPayload($payload, $options, $task),
         ]));
     }
 
@@ -70,8 +70,21 @@ final class ModelClient implements ModelClientInterface
      *
      * @return array<string, mixed>
      */
-    private function getPayload(array|string $payload, array $options): array
+    private function getPayload(array|string $payload, array $options, ?string $task = null): array
     {
+        // Text ranking: convert {query, texts} into text/text_pair pairs for the HF text-classification pipeline
+        if (Task::TEXT_RANKING === $task && \is_array($payload) && isset($payload['query'], $payload['texts'])) {
+            $inputs = [];
+            foreach ($payload['texts'] as $text) {
+                $inputs[] = ['text' => $payload['query'], 'text_pair' => $text];
+            }
+
+            return [
+                'json' => ['inputs' => $inputs],
+                'headers' => ['Content-Type' => 'application/json'],
+            ];
+        }
+
         // Expect JSON input if string or not
         if (\is_string($payload) || !(isset($payload['body']) || isset($payload['json']))) {
             $payload = ['json' => ['inputs' => $payload]];

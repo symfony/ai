@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.6
+---
+
+ * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
+
 0.4
 ---
 

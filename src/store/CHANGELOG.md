@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.6
+---
+
+ * Add platform-based `Reranker` for cross-encoder reranking via `PlatformInterface`
+ * Add `HybridRetriever` combining vector and text retrieval with Reciprocal Rank Fusion (RRF)
+ * Add automatic text content preservation in `Vectorizer` metadata
+
 0.4
 ---
 
