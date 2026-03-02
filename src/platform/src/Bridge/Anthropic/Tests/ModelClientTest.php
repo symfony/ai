@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Anthropic\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelClient;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -173,6 +174,16 @@ class ModelClientTest extends TestCase
         ];
 
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testStringPayloadThrowsException()
+    {
+        $this->modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Payload must be an array, but a string was given');
+
+        $this->modelClient->request($this->model, 'string payload');
     }
 
     /**

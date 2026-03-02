@@ -58,6 +58,10 @@ final class CompletionsModelClient implements ModelClientInterface
 
     public function request(Model $model, object|array|string $payload, array $options = []): RawHttpResult
     {
+        if (!\is_array($payload)) {
+            throw new InvalidArgumentException(\sprintf('Payload must be an array, but a %s was given to "%s".', get_debug_type($payload), self::class));
+        }
+
         $url = \sprintf('https://%s/openai/deployments/%s/chat/completions', $this->baseUrl, $this->deployment);
 
         return new RawHttpResult($this->httpClient->request('POST', $url, [
