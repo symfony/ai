@@ -66,7 +66,7 @@ final class DocumentProcessorTest extends TestCase
         $this->assertCount(1, $store->documents);
         $this->assertSame($id, $store->documents[0]->getId());
         $this->assertSame($vector, $store->documents[0]->getVector());
-        $this->assertSame(['key' => 'value'], $store->documents[0]->getMetadata()->getArrayCopy());
+        $this->assertSame(['key' => 'value', '_text' => 'Test content'], $store->documents[0]->getMetadata()->getArrayCopy());
     }
 
     public function testProcessMultipleDocuments()

@@ -4,7 +4,8 @@ CHANGELOG
 0.6
 ---
 
-* [BC BREAK] Change `Symfony\AI\Platform\Contract\JsonSchema\Factory` constructor signature in order to make schema generation extensible
+ * [BC BREAK] Change `Symfony\AI\Platform\Contract\JsonSchema\Factory` constructor signature in order to make schema generation extensible
+ * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
 
 0.4
 ---

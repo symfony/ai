@@ -10,8 +10,7 @@
  */
 
 use Symfony\AI\Fixtures\Movies;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
-use Symfony\AI\Store\Bridge\Cohere\Reranker;
+use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -19,15 +18,16 @@ use Symfony\AI\Store\HybridRetriever;
 use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
+use Symfony\AI\Store\Reranker\Reranker;
 use Symfony\AI\Store\Retriever;
-use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-echo "=== Hybrid Retrieval with RRF + Cohere Reranking ===\n\n";
+echo "=== Hybrid Retrieval with RRF + HuggingFace Reranking ===\n\n";
 echo "This example demonstrates combining vector (semantic) and text (keyword)\n";
-echo "retrieval using Reciprocal Rank Fusion (RRF), with optional Cohere reranking.\n\n";
+echo "retrieval using Reciprocal Rank Fusion (RRF), with optional reranking via\n";
+echo "the Platform abstraction (HuggingFace Inference API).\n\n";
 
 $store = new InMemoryStore();
 
@@ -40,8 +40,8 @@ foreach (Movies::all() as $movie) {
     );
 }
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
+$platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
+$vectorizer = new Vectorizer($platform, 'BAAI/bge-small-en-v1.5?task=feature-extraction', logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);
 
@@ -102,12 +102,9 @@ foreach ($results as $i => $document) {
 }
 echo "\n";
 
-// 4. Hybrid retrieval with RRF + Cohere reranking
-echo "--- Hybrid RRF + Cohere Reranking Results ---\n";
-$reranker = new Reranker(
-    client: HttpClient::create(),
-    apiKey: env('COHERE_API_KEY'),
-);
+// 4. Hybrid retrieval with RRF + Platform reranking
+echo "--- Hybrid RRF + HuggingFace Reranking Results ---\n";
+$reranker = new Reranker($platform, 'BAAI/bge-reranker-base?task=text-ranking', logger());
 
 $hybridWithReranker = new HybridRetriever(
     vectorRetriever: $vectorRetriever,
@@ -134,4 +131,4 @@ echo "=== Summary ===\n";
 echo "- Vector retrieval finds semantically similar documents via embeddings\n";
 echo "- Text retrieval matches documents by keyword overlap\n";
 echo "- RRF merges both result lists using rank-based scoring\n";
-echo "- Adding a reranker (Cohere) further refines results using a cross-encoder\n";
+echo "- Adding a reranker (HuggingFace) further refines results using a cross-encoder\n";

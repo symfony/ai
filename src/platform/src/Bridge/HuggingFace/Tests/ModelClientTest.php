@@ -73,6 +73,10 @@ final class ModelClientTest extends TestCase
             'task' => Task::CHAT_COMPLETION,
             'expectedUrl' => 'https://router.huggingface.co/test-provider/models/test-model/v1/chat/completions',
         ];
+        yield 'text ranking' => [
+            'task' => Task::TEXT_RANKING,
+            'expectedUrl' => 'https://router.huggingface.co/test-provider/models/test-model',
+        ];
     }
 
     /**
@@ -170,6 +174,19 @@ final class ModelClientTest extends TestCase
             'expectedValues' => [
                 'headers.Content-Type' => 'application/json',
                 'json.max_tokens' => 100,
+            ],
+        ];
+
+        yield 'text ranking' => [
+            'input' => ['query' => 'search query', 'texts' => ['doc one', 'doc two']],
+            'options' => ['task' => Task::TEXT_RANKING],
+            'expectedKeys' => ['headers', 'json'],
+            'expectedValues' => [
+                'headers.Content-Type' => 'application/json',
+                'json.inputs' => [
+                    ['text' => 'search query', 'text_pair' => 'doc one'],
+                    ['text' => 'search query', 'text_pair' => 'doc two'],
+                ],
             ],
         ];
     }
