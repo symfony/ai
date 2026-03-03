@@ -136,7 +136,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'pixstral-large-latest' => [
+            'pixtral-large-latest' => [
                 'class' => Mistral::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -147,7 +147,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'pixstral-12b-latest' => [
+            'pixtral-12b-latest' => [
                 'class' => Mistral::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,

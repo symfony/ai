@@ -27,15 +27,16 @@
     "require": {
         "php": ">=8.2",
         "codewithkyrian/chromadb-php": "^1.0",
-        "symfony/ai-platform": "^0.3",
-        "symfony/ai-store": "^0.3",
+        "symfony/ai-platform": "^0.5",
+        "symfony/ai-store": "^0.5",
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
+        "nyholm/psr7": "^1.8",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.46"
+        "phpunit/phpunit": "^11.5.53"
     },
     "minimum-stability": "dev",
     "autoload": {

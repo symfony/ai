@@ -39,7 +39,7 @@ $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);
 
-$retriever = new Retriever($vectorizer, $store, logger());
+$retriever = new Retriever($store, $vectorizer, logger());
 
 echo "Searching for movies about 'crime family mafia'\n";
 echo "================================================\n\n";
@@ -47,9 +47,9 @@ echo "================================================\n\n";
 $results = $retriever->retrieve('crime family mafia');
 
 foreach ($results as $i => $document) {
-    $title = $document->metadata['title'];
-    $director = $document->metadata['director'];
-    $score = $document->score;
+    $title = $document->getMetadata()['title'];
+    $director = $document->getMetadata()['director'];
+    $score = $document->getScore();
 
     echo sprintf("%d. %s (Director: %s)\n", $i + 1, $title, $director);
     echo sprintf("   Score: %.4f\n\n", $score ?? 0);

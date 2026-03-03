@@ -16,8 +16,10 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -38,6 +40,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
     {
         if ([] !== $options) {
             throw new InvalidArgumentException('No supported options.');
+        }
+
+        if ($this->collectionExists()) {
+            return;
         }
 
         $this->request('POST', 'v1/schema', [
@@ -61,11 +67,43 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $whereConditions = array_map(static fn (string $id) => [
+            'path' => ['id'],
+            'operator' => 'Equal',
+            'valueText' => $id,
+        ], $ids);
+
+        $this->request('DELETE', 'v1/batch/objects', [
+            'match' => [
+                'class' => $this->collection,
+                'where' => 1 === \count($whereConditions) ? $whereConditions[0] : [
+                    'operator' => 'Or',
+                    'operands' => $whereConditions,
+                ],
+            ],
+        ]);
     }
 
-    public function query(Vector $vector, array $options = []): iterable
+    public function supports(string $queryClass): bool
     {
+        return VectorQuery::class === $queryClass;
+    }
+
+    public function query(QueryInterface $query, array $options = []): iterable
+    {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
+        $vector = $query->getVector();
         $results = $this->request('POST', 'v1/graphql', [
             'query' => \sprintf('{
                 Get {
@@ -125,12 +163,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
     {
         return [
             'class' => $this->collection,
-            'id' => $document->id,
-            'vector' => $document->vector->getData(),
+            'id' => $document->getId(),
+            'vector' => $document->getVector()->getData(),
             'properties' => [
-                'uuid' => $document->id,
-                'vector' => $document->vector->getData(),
-                '_metadata' => json_encode($document->metadata->getArrayCopy()),
+                'uuid' => $document->getId(),
+                'vector' => $document->getVector()->getData(),
+                '_metadata' => json_encode($document->getMetadata()->getArrayCopy()),
             ],
         ];
     }
@@ -147,5 +185,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
             : new Vector($data['vector']);
 
         return new VectorDocument($id, $vector, new Metadata(json_decode($data['_metadata'], true)));
+    }
+
+    private function collectionExists(): bool
+    {
+        $response = $this->request('GET', 'v1/schema', []);
+
+        if (!isset($response['classes'])) {
+            return false;
+        }
+
+        foreach ($response['classes'] as $class) {
+            if (0 === strcasecmp($class['class'], $this->collection)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

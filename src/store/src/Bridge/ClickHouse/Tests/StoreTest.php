@@ -18,6 +18,9 @@ use Symfony\AI\Store\Bridge\ClickHouse\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Uid\Uuid;
@@ -57,11 +60,11 @@ final class StoreTest extends TestCase
 
     public function testAddSingleDocument()
     {
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]), new Metadata(['title' => 'Test Document']));
 
         $expectedJsonData = json_encode([
-            'id' => $uuid->toRfc4122(),
+            'id' => $uuid,
             'metadata' => json_encode(['title' => 'Test Document']),
             'embedding' => [0.1, 0.2, 0.3],
         ])."\n";
@@ -83,17 +86,17 @@ final class StoreTest extends TestCase
 
     public function testAddMultipleDocuments()
     {
-        $uuid1 = Uuid::v4();
-        $uuid2 = Uuid::v4();
+        $uuid1 = Uuid::v4()->toString();
+        $uuid2 = Uuid::v4()->toString();
         $document1 = new VectorDocument($uuid1, new Vector([0.1, 0.2, 0.3]));
         $document2 = new VectorDocument($uuid2, new Vector([0.4, 0.5, 0.6]), new Metadata(['title' => 'Second']));
 
         $expectedJsonData = json_encode([
-            'id' => $uuid1->toRfc4122(),
+            'id' => $uuid1,
             'metadata' => json_encode([]),
             'embedding' => [0.1, 0.2, 0.3],
         ])."\n".json_encode([
-            'id' => $uuid2->toRfc4122(),
+            'id' => $uuid2,
             'metadata' => json_encode(['title' => 'Second']),
             'embedding' => [0.4, 0.5, 0.6],
         ])."\n";
@@ -113,7 +116,7 @@ final class StoreTest extends TestCase
 
     public function testAddThrowsExceptionOnHttpError()
     {
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]));
 
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) {
@@ -131,7 +134,6 @@ final class StoreTest extends TestCase
     public function testQuery()
     {
         $queryVector = new Vector([0.1, 0.2, 0.3]);
-        $uuid = Uuid::v4();
 
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
             $this->assertSame('GET', $method);
@@ -153,12 +155,12 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'test_db', 'test_table');
 
-        $results = iterator_to_array($store->query($queryVector));
+        $results = iterator_to_array($store->query(new VectorQuery($queryVector)));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
-        $this->assertSame(0.95, $results[0]->score);
-        $this->assertSame(['title' => 'Test Document'], $results[0]->metadata->getArrayCopy());
+        $this->assertSame(0.95, $results[0]->getScore());
+        $this->assertSame(['title' => 'Test Document'], $results[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryWithOptions()
@@ -176,7 +178,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'test_db', 'test_table');
 
-        $results = iterator_to_array($store->query($queryVector, [
+        $results = iterator_to_array($store->query(new VectorQuery($queryVector), [
             'limit' => 10,
             'params' => ['custom_param' => 'test_value'],
         ]));
@@ -198,7 +200,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($httpClient, 'test_db', 'test_table');
 
-        $results = iterator_to_array($store->query($queryVector, [
+        $results = iterator_to_array($store->query(new VectorQuery($queryVector), [
             'where' => "JSONExtractString(metadata, 'type') = 'document'",
         ]));
 
@@ -208,12 +210,11 @@ final class StoreTest extends TestCase
     public function testQueryWithNullMetadata()
     {
         $queryVector = new Vector([0.1, 0.2, 0.3]);
-        $uuid = Uuid::v4();
 
         $responseData = [
             'data' => [
                 [
-                    'id' => $uuid->toRfc4122(),
+                    'id' => Uuid::v4()->toString(),
                     'embedding' => [0.1, 0.2, 0.3],
                     'metadata' => null,
                     'score' => 0.95,
@@ -221,29 +222,29 @@ final class StoreTest extends TestCase
             ],
         ];
 
-        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($responseData) {
+        $httpClient = new MockHttpClient(static function () use ($responseData) {
             return new MockResponse(json_encode($responseData));
         });
 
         $store = new Store($httpClient, 'test_db', 'test_table');
 
-        $results = iterator_to_array($store->query($queryVector));
+        $results = iterator_to_array($store->query(new VectorQuery($queryVector)));
 
         $this->assertCount(1, $results);
-        $this->assertSame([], $results[0]->metadata->getArrayCopy());
+        $this->assertSame([], $results[0]->getMetadata()->getArrayCopy());
     }
 
     public function testRemoveSingleDocument()
     {
-        $uuid = Uuid::v4();
-        $id = $uuid->toRfc4122();
+        $id = 'a0d23a85-abfb-4696-a652-73a83b46710b';
 
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($id) {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
             $this->assertSame('POST', $method);
             $this->assertStringContainsString('?', $url); // Check that URL has query parameters
-            $expectedSql = 'ALTER TABLE test_table DELETE WHERE id IN {ids:Array(String)}';
+            $expectedSql = 'DELETE FROM test_table WHERE id IN {ids:Array(UUID)}';
             $this->assertSame($expectedSql, $options['query']['query']);
-            $this->assertSame([$id], $options['query']['param_ids']);
+            $expectedId = "['a0d23a85-abfb-4696-a652-73a83b46710b']";
+            $this->assertSame($expectedId, $options['query']['param_ids']);
 
             return new MockResponse('', ['http_code' => 200]);
         });
@@ -255,17 +256,16 @@ final class StoreTest extends TestCase
 
     public function testRemoveMultipleDocuments()
     {
-        $uuid1 = Uuid::v4();
-        $uuid2 = Uuid::v4();
-        $id1 = $uuid1->toRfc4122();
-        $id2 = $uuid2->toRfc4122();
+        $id1 = '93c1d46a-2a30-4466-a28b-8e92e935a29b';
+        $id2 = 'f5667ae9-e0f1-4fa0-ab16-37e0136680ca';
+        $expectedIds = "['93c1d46a-2a30-4466-a28b-8e92e935a29b','f5667ae9-e0f1-4fa0-ab16-37e0136680ca']";
 
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($id1, $id2) {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($expectedIds) {
             $this->assertSame('POST', $method);
             $this->assertStringContainsString('?', $url); // Check that URL has query parameters
-            $expectedSql = 'ALTER TABLE test_table DELETE WHERE id IN {ids:Array(String)}';
+            $expectedSql = 'DELETE FROM test_table WHERE id IN {ids:Array(UUID)}';
             $this->assertSame($expectedSql, $options['query']['query']);
-            $this->assertSame([$id1, $id2], $options['query']['param_ids']);
+            $this->assertSame($expectedIds, $options['query']['param_ids']);
 
             return new MockResponse('', ['http_code' => 200]);
         });
@@ -285,5 +285,23 @@ final class StoreTest extends TestCase
         $store = new Store($httpClient, 'test_db', 'test_table');
 
         $store->remove([]);
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'default', 'test_table');
+        $this->assertTrue($store->supports(VectorQuery::class));
+    }
+
+    public function testStoreNotSupportsTextQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'default', 'test_table');
+        $this->assertFalse($store->supports(TextQuery::class));
+    }
+
+    public function testStoreNotSupportsHybridQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'default', 'test_table');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

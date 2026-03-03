@@ -15,6 +15,9 @@ use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -67,8 +70,18 @@ final class SearchStore implements StoreInterface
         ]);
     }
 
-    public function query(Vector $vector, array $options = []): iterable
+    public function supports(string $queryClass): bool
     {
+        return VectorQuery::class === $queryClass;
+    }
+
+    public function query(QueryInterface $query, array $options = []): iterable
+    {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
+        $vector = $query->getVector();
         $result = $this->request('search', [
             'vectorQueries' => [$this->buildVectorQuery($vector)],
         ]);
@@ -103,9 +116,9 @@ final class SearchStore implements StoreInterface
     private function convertToIndexableArray(VectorDocument $document): array
     {
         return array_merge([
-            'id' => $document->id,
-            $this->vectorFieldName => $document->vector->getData(),
-        ], $document->metadata->getArrayCopy());
+            'id' => $document->getId(),
+            $this->vectorFieldName => $document->getVector()->getData(),
+        ], $document->getMetadata()->getArrayCopy());
     }
 
     /**

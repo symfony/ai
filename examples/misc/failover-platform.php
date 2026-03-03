@@ -29,7 +29,7 @@ $rateLimiter = new RateLimiterFactory([
 
 // # Ollama will fail as 'gpt-5.2' is not available in the catalog
 $platform = new FailoverPlatform([
-    OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), http_client()),
+    OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), httpClient: http_client()),
     OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), http_client()),
 ], $rateLimiter);
 

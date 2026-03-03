@@ -28,9 +28,9 @@ final class TextContainsFilterTest extends TestCase
     {
         $filter = new TextContainsFilter('Week of Symfony');
         $documents = [
-            new TextDocument(Uuid::v4(), 'This is a regular blog post'),
-            new TextDocument(Uuid::v4(), 'Week of Symfony - News roundup'),
-            new TextDocument(Uuid::v4(), 'Another regular post'),
+            new TextDocument(Uuid::v4()->toString(), 'This is a regular blog post'),
+            new TextDocument(Uuid::v4()->toString(), 'Week of Symfony - News roundup'),
+            new TextDocument(Uuid::v4()->toString(), 'Another regular post'),
         ];
 
         $result = iterator_to_array($filter->filter($documents));
@@ -44,9 +44,9 @@ final class TextContainsFilterTest extends TestCase
     {
         $filter = new TextContainsFilter('initial');
         $documents = [
-            new TextDocument(Uuid::v4(), 'Keep this document'),
-            new TextDocument(Uuid::v4(), 'Remove this SPAM content'),
-            new TextDocument(Uuid::v4(), 'Another good document'),
+            new TextDocument(Uuid::v4()->toString(), 'Keep this document'),
+            new TextDocument(Uuid::v4()->toString(), 'Remove this SPAM content'),
+            new TextDocument(Uuid::v4()->toString(), 'Another good document'),
         ];
 
         $result = iterator_to_array($filter->filter($documents, [
@@ -62,9 +62,9 @@ final class TextContainsFilterTest extends TestCase
     {
         $filter = new TextContainsFilter('Week of Symfony');
         $documents = [
-            new TextDocument(Uuid::v4(), 'Regular post'),
-            new TextDocument(Uuid::v4(), 'Week of Symfony news'),
-            new TextDocument(Uuid::v4(), 'Advertisement content'),
+            new TextDocument(Uuid::v4()->toString(), 'Regular post'),
+            new TextDocument(Uuid::v4()->toString(), 'Week of Symfony news'),
+            new TextDocument(Uuid::v4()->toString(), 'Advertisement content'),
         ];
 
         $result = iterator_to_array($filter->filter($documents, [
@@ -80,10 +80,10 @@ final class TextContainsFilterTest extends TestCase
     {
         $filter = new TextContainsFilter('SPAM', false);
         $documents = [
-            new TextDocument(Uuid::v4(), 'This contains spam'),
-            new TextDocument(Uuid::v4(), 'This contains SPAM'),
-            new TextDocument(Uuid::v4(), 'This contains Spam'),
-            new TextDocument(Uuid::v4(), 'Clean content'),
+            new TextDocument(Uuid::v4()->toString(), 'This contains spam'),
+            new TextDocument(Uuid::v4()->toString(), 'This contains SPAM'),
+            new TextDocument(Uuid::v4()->toString(), 'This contains Spam'),
+            new TextDocument(Uuid::v4()->toString(), 'Clean content'),
         ];
 
         $result = iterator_to_array($filter->filter($documents));
@@ -96,10 +96,10 @@ final class TextContainsFilterTest extends TestCase
     {
         $filter = new TextContainsFilter('SPAM', true);
         $documents = [
-            new TextDocument(Uuid::v4(), 'This contains spam'),
-            new TextDocument(Uuid::v4(), 'This contains SPAM'),
-            new TextDocument(Uuid::v4(), 'This contains Spam'),
-            new TextDocument(Uuid::v4(), 'Clean content'),
+            new TextDocument(Uuid::v4()->toString(), 'This contains spam'),
+            new TextDocument(Uuid::v4()->toString(), 'This contains SPAM'),
+            new TextDocument(Uuid::v4()->toString(), 'This contains Spam'),
+            new TextDocument(Uuid::v4()->toString(), 'Clean content'),
         ];
 
         $result = iterator_to_array($filter->filter($documents));
@@ -114,8 +114,8 @@ final class TextContainsFilterTest extends TestCase
     {
         $filter = new TextContainsFilter('test', false);
         $documents = [
-            new TextDocument(Uuid::v4(), 'This has Test'),
-            new TextDocument(Uuid::v4(), 'Clean content'),
+            new TextDocument(Uuid::v4()->toString(), 'This has Test'),
+            new TextDocument(Uuid::v4()->toString(), 'Clean content'),
         ];
 
         $result = iterator_to_array($filter->filter($documents, [
@@ -132,8 +132,8 @@ final class TextContainsFilterTest extends TestCase
         $metadata = new Metadata(['key' => 'value']);
         $filter = new TextContainsFilter('remove');
         $documents = [
-            new TextDocument(Uuid::v4(), 'keep this', $metadata),
-            new TextDocument(Uuid::v4(), 'remove this content'),
+            new TextDocument(Uuid::v4()->toString(), 'keep this', $metadata),
+            new TextDocument(Uuid::v4()->toString(), 'remove this content'),
         ];
 
         $result = iterator_to_array($filter->filter($documents));
@@ -145,11 +145,11 @@ final class TextContainsFilterTest extends TestCase
 
     public function testFilterPreservesDocumentId()
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $filter = new TextContainsFilter('remove');
         $documents = [
             new TextDocument($id, 'keep this content'),
-            new TextDocument(Uuid::v4(), 'remove this content'),
+            new TextDocument(Uuid::v4()->toString(), 'remove this content'),
         ];
 
         $result = iterator_to_array($filter->filter($documents));
@@ -172,8 +172,8 @@ final class TextContainsFilterTest extends TestCase
     {
         $filter = new TextContainsFilter('nonexistent');
         $documents = [
-            new TextDocument(Uuid::v4(), 'First document'),
-            new TextDocument(Uuid::v4(), 'Second document'),
+            new TextDocument(Uuid::v4()->toString(), 'First document'),
+            new TextDocument(Uuid::v4()->toString(), 'Second document'),
         ];
 
         $result = iterator_to_array($filter->filter($documents));
@@ -187,8 +187,8 @@ final class TextContainsFilterTest extends TestCase
     {
         $filter = new TextContainsFilter('spam');
         $documents = [
-            new TextDocument(Uuid::v4(), 'This is spam content'),
-            new TextDocument(Uuid::v4(), 'More spam here'),
+            new TextDocument(Uuid::v4()->toString(), 'This is spam content'),
+            new TextDocument(Uuid::v4()->toString(), 'More spam here'),
         ];
 
         $result = iterator_to_array($filter->filter($documents));
@@ -200,9 +200,9 @@ final class TextContainsFilterTest extends TestCase
     {
         $filter = new TextContainsFilter('test');
         $documents = [
-            new TextDocument(Uuid::v4(), 'This is a test document'),
-            new TextDocument(Uuid::v4(), 'testing functionality'),
-            new TextDocument(Uuid::v4(), 'Clean content'),
+            new TextDocument(Uuid::v4()->toString(), 'This is a test document'),
+            new TextDocument(Uuid::v4()->toString(), 'testing functionality'),
+            new TextDocument(Uuid::v4()->toString(), 'Clean content'),
         ];
 
         $result = iterator_to_array($filter->filter($documents));
@@ -215,8 +215,8 @@ final class TextContainsFilterTest extends TestCase
     {
         $filter = new TextContainsFilter('TEST', true);
         $documents = [
-            new TextDocument(Uuid::v4(), 'This has test content'),
-            new TextDocument(Uuid::v4(), 'Clean content'),
+            new TextDocument(Uuid::v4()->toString(), 'This has test content'),
+            new TextDocument(Uuid::v4()->toString(), 'Clean content'),
         ];
 
         // Only provide needle option, should use constructor's case sensitivity

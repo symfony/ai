@@ -152,9 +152,11 @@ jobs:
               run: php .github/build-packages.php
 
             - name: Isolate Bridge
-              run: |
-                  mkdir -p tmp/${{ matrix.bridge.component }}/src/Bridge
-                  mv src/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} tmp/${{ matrix.bridge.component }}/src/Bridge
+              uses: ./.github/actions/isolate-bridge
+              with:
+                  component: ${{ matrix.bridge.component }}
+                  bridge: ${{ matrix.bridge.bridge }}
+                  target: tmp
 
             - name: Install dependencies
               uses: ramsey/composer-install@v3

@@ -13,7 +13,7 @@ use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), http_client());
+$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), httpClient: http_client());
 
 $response = $platform->invoke(env('OLLAMA_EMBEDDINGS'), <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.

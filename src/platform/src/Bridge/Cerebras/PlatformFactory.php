@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Cerebras;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\AI\Platform\Bridge\Cerebras\Contract\ToolNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
@@ -36,7 +37,9 @@ final class PlatformFactory
             [new ModelClient($httpClient, $apiKey)],
             [new ResultConverter()],
             $modelCatalog,
-            $contract,
+            $contract ?? Contract::create(
+                new ToolNormalizer(),
+            ),
             $eventDispatcher,
         );
     }

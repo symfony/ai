@@ -18,6 +18,9 @@ use Symfony\AI\Store\Bridge\Redis\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
@@ -34,10 +37,10 @@ final class StoreTest extends TestCase
             ->with(\Redis::PIPELINE)
             ->willReturn($pipeline);
 
-        $uuid = Uuid::v4();
-        $expectedKey = 'vector:'.$uuid->toRfc4122();
+        $uuid = Uuid::v4()->toString();
+        $expectedKey = 'vector:'.$uuid;
         $expectedData = [
-            'id' => $uuid->toRfc4122(),
+            'id' => $uuid,
             'metadata' => ['title' => 'Test Document'],
             'embedding' => [0.1, 0.2, 0.3],
         ];
@@ -101,7 +104,7 @@ final class StoreTest extends TestCase
         $redis = $this->createMock(\Redis::class);
         $store = new Store($redis, 'test_index', 'vector:');
 
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
 
         $redis->expects($this->once())
             ->method('rawCommand')
@@ -117,22 +120,22 @@ final class StoreTest extends TestCase
             )
             ->willReturn([
                 1, // number of results
-                'vector:'.$uuid->toRfc4122(), // document key
+                'vector:'.$uuid, // document key
                 [
-                    '$.id', $uuid->toRfc4122(),
+                    '$.id', $uuid,
                     '$.metadata', json_encode(['title' => 'Test Document']),
                     '$.embedding', json_encode([0.1, 0.2, 0.3]),
                     'vector_score', '0.95',
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
-        $this->assertEquals($uuid, $results[0]->id);
-        $this->assertSame(0.95, $results[0]->score);
-        $this->assertSame(['title' => 'Test Document'], $results[0]->metadata->getArrayCopy());
+        $this->assertEquals($uuid, $results[0]->getId());
+        $this->assertSame(0.95, $results[0]->getScore());
+        $this->assertSame(['title' => 'Test Document'], $results[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryChangedDistanceMethodWithoutMaxScore()
@@ -140,7 +143,7 @@ final class StoreTest extends TestCase
         $redis = $this->createMock(\Redis::class);
         $store = new Store($redis, 'test_index', 'vector:', Distance::L2);
 
-        $uuid = Uuid::v4();
+        $uuid = Uuid::v4()->toString();
 
         $redis->expects($this->once())
             ->method('rawCommand')
@@ -156,22 +159,22 @@ final class StoreTest extends TestCase
             )
             ->willReturn([
                 1,
-                'vector:'.$uuid->toRfc4122(),
+                'vector:'.$uuid,
                 [
-                    '$.id', $uuid->toRfc4122(),
+                    '$.id', $uuid,
                     '$.metadata', json_encode(['title' => 'Test Document']),
                     '$.embedding', json_encode([0.1, 0.2, 0.3]),
                     'vector_score', '0.95',
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
-        $this->assertEquals($uuid, $results[0]->id);
-        $this->assertSame(0.95, $results[0]->score);
-        $this->assertSame(['title' => 'Test Document'], $results[0]->metadata->getArrayCopy());
+        $this->assertEquals($uuid, $results[0]->getId());
+        $this->assertSame(0.95, $results[0]->getScore());
+        $this->assertSame(['title' => 'Test Document'], $results[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryWithMaxScore()
@@ -192,7 +195,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['maxScore' => 0.8]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxScore' => 0.8]));
 
         $this->assertCount(0, $results); // Should be filtered out due to maxScore
     }
@@ -216,7 +219,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn([0]); // No results
 
-        $results = iterator_to_array($store->query(new Vector([0.7, 0.8, 0.9]), ['limit' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.7, 0.8, 0.9])), ['limit' => 10]));
 
         $this->assertCount(0, $results);
     }
@@ -240,7 +243,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn([0]); // No results
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['where' => '@metadata_category:products']));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['where' => '@metadata_category:products']));
 
         $this->assertCount(0, $results);
     }
@@ -273,7 +276,7 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'where' => '@metadata_active:true',
             'maxScore' => 0.8,
         ]));
@@ -301,10 +304,10 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
-        $this->assertSame([], $results[0]->metadata->getArrayCopy());
+        $this->assertSame([], $results[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryFailureThrowsRuntimeException()
@@ -319,7 +322,7 @@ final class StoreTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to execute query: "Search failed".');
 
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testInitialize()
@@ -463,7 +466,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn([0]);
 
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testQueryEmptyResults()
@@ -475,7 +478,7 @@ final class StoreTest extends TestCase
             ->method('rawCommand')
             ->willReturn([0]); // No results
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(0, $results);
     }
@@ -489,7 +492,7 @@ final class StoreTest extends TestCase
             ->method('rawCommand')
             ->willReturn(null); // Invalid results
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(0, $results);
     }
@@ -511,8 +514,29 @@ final class StoreTest extends TestCase
                 ],
             ]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(0, $results); // Should skip documents without required fields
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test:vectors');
+        $this->assertTrue($store->supports(VectorQuery::class));
+    }
+
+    public function testStoreDoesNotSupportTextQuery()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test:vectors');
+        $this->assertFalse($store->supports(TextQuery::class));
+    }
+
+    public function testStoreDoesNotSupportHybridQuery()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test:vectors');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

@@ -32,13 +32,6 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 final class Toolbox implements ToolboxInterface
 {
     /**
-     * List of executable tools.
-     *
-     * @var list<object>
-     */
-    private readonly array $tools;
-
-    /**
      * List of tool metadata objects.
      *
      * @var Tool[]
@@ -49,13 +42,12 @@ final class Toolbox implements ToolboxInterface
      * @param iterable<object> $tools
      */
     public function __construct(
-        iterable $tools,
+        private readonly iterable $tools,
         private readonly ToolFactoryInterface $toolFactory = new ReflectionToolFactory(),
         private readonly ToolCallArgumentResolverInterface $argumentResolver = new ToolCallArgumentResolver(),
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
-        $this->tools = $tools instanceof \Traversable ? iterator_to_array($tools) : $tools;
     }
 
     public function getTools(): array

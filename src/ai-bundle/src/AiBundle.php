@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\AiBundle;
 
+use AsyncAws\S3Vectors\S3VectorsClient;
 use Google\Auth\ApplicationDefaultCredentials;
 use Google\Auth\FetchAuthTokenInterface;
 use Psr\Log\LoggerInterface;
@@ -30,12 +31,9 @@ use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
+use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
-use Symfony\AI\AiBundle\Profiler\TraceableChat;
-use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
-use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
-use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
 use Symfony\AI\Chat\Bridge\Cloudflare\MessageStore as CloudflareMessageStore;
@@ -56,6 +54,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFac
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory as AzureOpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory as BedrockFactory;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
+use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Bridge\Cartesia\PlatformFactory as CartesiaPlatformFactory;
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFactory;
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
@@ -74,6 +73,7 @@ use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
+use Symfony\AI\Platform\Bridge\Ovh\PlatformFactory as OvhPlatformFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory as PerplexityPlatformFactory;
 use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory as ScalewayPlatformFactory;
 use Symfony\AI\Platform\Bridge\TransformersPhp\PlatformFactory as TransformersPhpPlatformFactory;
@@ -104,11 +104,14 @@ use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
+use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
+use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
+use Symfony\AI\Store\Bridge\Vektor\Store as VektorStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
@@ -134,12 +137,11 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-
-use function Symfony\Component\String\u;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -150,6 +152,7 @@ final class AiBundle extends AbstractBundle
     {
         parent::build($container);
 
+        $container->addCompilerPass(new DebugCompilerPass());
         $container->addCompilerPass(new ProcessorCompilerPass());
     }
 
@@ -177,16 +180,6 @@ final class AiBundle extends AbstractBundle
         $platforms = array_keys($builder->findTaggedServiceIds('ai.platform'));
         if (1 === \count($platforms)) {
             $builder->setAlias(PlatformInterface::class, reset($platforms));
-        }
-        if ($builder->getParameter('kernel.debug')) {
-            foreach ($platforms as $platform) {
-                $traceablePlatformDefinition = (new Definition(TraceablePlatform::class))
-                    ->setDecoratedService($platform, priority: -1024)
-                    ->setArguments([new Reference('.inner')])
-                    ->addTag('ai.traceable_platform');
-                $suffix = u($platform)->after('ai.platform.')->toString();
-                $builder->setDefinition('ai.traceable_platform.'.$suffix, $traceablePlatformDefinition);
-            }
         }
 
         if ([] !== ($config['agent'] ?? [])) {
@@ -252,20 +245,6 @@ final class AiBundle extends AbstractBundle
             $builder->setAlias(MessageStoreInterface::class, reset($messageStores));
         }
 
-        if ($builder->getParameter('kernel.debug')) {
-            foreach ($messageStores as $messageStore) {
-                $traceableMessageStoreDefinition = (new Definition(TraceableMessageStore::class))
-                    ->setDecoratedService($messageStore, priority: -1024)
-                    ->setArguments([
-                        new Reference('.inner'),
-                        new Reference(ClockInterface::class),
-                    ])
-                    ->addTag('ai.traceable_message_store');
-                $suffix = u($messageStore)->afterLast('.')->toString();
-                $builder->setDefinition('ai.traceable_message_store.'.$suffix, $traceableMessageStoreDefinition);
-            }
-        }
-
         if ([] === $messageStores) {
             $builder->removeDefinition('ai.command.setup_message_store');
             $builder->removeDefinition('ai.command.drop_message_store');
@@ -285,20 +264,6 @@ final class AiBundle extends AbstractBundle
 
         if (1 === \count($chats)) {
             $builder->setAlias(ChatInterface::class, reset($chats));
-        }
-
-        if ($builder->getParameter('kernel.debug')) {
-            foreach ($chats as $chat) {
-                $traceableChatDefinition = (new Definition(TraceableChat::class))
-                    ->setDecoratedService($chat, priority: -1024)
-                    ->setArguments([
-                        new Reference('.inner'),
-                        new Reference(ClockInterface::class),
-                    ])
-                    ->addTag('ai.traceable_chat');
-                $suffix = u($chat)->afterLast('.')->toString();
-                $builder->setDefinition('ai.traceable_chat.'.$suffix, $traceableChatDefinition);
-            }
         }
 
         if ([] !== ($config['vectorizer'] ?? [])) {
@@ -541,8 +506,13 @@ final class AiBundle extends AbstractBundle
 
             return;
         }
-        if (!ContainerBuilder::willBeAvailable('symfony/ai-cache-platform', CachePlatform::class, ['symfony/ai-bundle'])) {
-            $container->removeDefinition('ai.platform.cache.result_normalizer');
+
+        if (ContainerBuilder::willBeAvailable('symfony/ai-cache-platform', CachePlatform::class, ['symfony/ai-bundle'])) {
+            $container->register('ai.platform.cache.result_normalizer', ResultNormalizer::class)
+                ->setArguments([
+                    new Reference('serializer.normalizer.object'),
+                ])
+                ->addTag('serializer.normalizer');
         }
 
         if ('cartesia' === $type) {
@@ -595,13 +565,29 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('ElevenLabs platform configuration requires "symfony/ai-eleven-labs-platform" package. Try running "composer require symfony/ai-eleven-labs-platform".');
             }
 
+            $httpClientReference = new Reference($platform['http_client']);
+
+            $scopedHttpClientDefinition = (new Definition(ScopingHttpClient::class))
+                ->setFactory([ScopingHttpClient::class, 'forBaseUri'])
+                ->setArguments([
+                    $httpClientReference,
+                    $platform['endpoint'],
+                    [
+                        'headers' => [
+                            'x-api-key' => $platform['api_key'],
+                        ],
+                    ],
+                ]);
+
+            $container->setDefinition('ai.platform.elevenlabs.scoped_http_client', $scopedHttpClientDefinition);
+
+            $httpClientReference = new Reference('ai.platform.elevenlabs.scoped_http_client');
+
             if (\array_key_exists('api_catalog', $platform) && $platform['api_catalog']) {
                 $catalogDefinition = (new Definition(ElevenLabsApiCatalog::class))
                     ->setLazy(true)
                     ->setArguments([
-                        new Reference($platform['http_client']),
-                        $platform['api_key'],
-                        $platform['host'],
+                        $httpClientReference,
                     ])
                     ->addTag('proxy', ['interface' => ModelCatalogInterface::class]);
 
@@ -613,10 +599,10 @@ final class AiBundle extends AbstractBundle
                 ->setLazy(true)
                 ->setArguments([
                     $platform['api_key'],
-                    $platform['host'],
-                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $platform['endpoint'],
+                    $httpClientReference,
                     new Reference('ai.platform.model_catalog.'.$type),
-                    null,
+                    new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
@@ -736,30 +722,36 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
-        if ('vertexai' === $type && isset($platform['location'], $platform['project_id'])) {
+        if ('vertexai' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-vertex-ai-platform', VertexAiPlatformFactory::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('VertexAI platform configuration requires "symfony/ai-vertex-ai-platform" package. Try running "composer require symfony/ai-vertex-ai-platform".');
             }
 
-            if (!class_exists(ApplicationDefaultCredentials::class)) {
-                throw new RuntimeException('For using the Vertex AI platform, google/auth package is required. Try running "composer require google/auth".');
+            $isProjectScoped = isset($platform['location'], $platform['project_id']);
+
+            if ($isProjectScoped) {
+                if (!class_exists(ApplicationDefaultCredentials::class)) {
+                    throw new RuntimeException('For using the project-scoped Vertex AI endpoint, google/auth package is required. Try running "composer require google/auth".');
+                }
+
+                $credentials = (new Definition(FetchAuthTokenInterface::class))
+                    ->setFactory([ApplicationDefaultCredentials::class, 'getCredentials'])
+                    ->setArguments([
+                        'https://www.googleapis.com/auth/cloud-platform',
+                    ])
+                ;
+
+                $credentialsObject = new Definition(\ArrayObject::class, [(new Definition('array'))->setFactory([$credentials, 'fetchAuthToken'])]);
+
+                $httpClient = (new Definition(HttpClientInterface::class))
+                    ->setFactory([new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE), 'withOptions'])
+                    ->setArgument(0, [
+                        'auth_bearer' => (new Definition('string', ['access_token']))->setFactory([$credentialsObject, 'offsetGet']),
+                    ])
+                ;
+            } else {
+                $httpClient = new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE);
             }
-
-            $credentials = (new Definition(FetchAuthTokenInterface::class))
-                ->setFactory([ApplicationDefaultCredentials::class, 'getCredentials'])
-                ->setArguments([
-                    'https://www.googleapis.com/auth/cloud-platform',
-                ])
-            ;
-
-            $credentialsObject = new Definition(\ArrayObject::class, [(new Definition('array'))->setFactory([$credentials, 'fetchAuthToken'])]);
-
-            $httpClient = (new Definition(HttpClientInterface::class))
-                ->setFactory([new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE), 'withOptions'])
-                ->setArgument(0, [
-                    'auth_bearer' => (new Definition('string', ['access_token']))->setFactory([$credentialsObject, 'offsetGet']),
-                ])
-            ;
 
             $platformId = 'ai.platform.vertexai';
             $definition = (new Definition(Platform::class))
@@ -767,8 +759,8 @@ final class AiBundle extends AbstractBundle
                 ->setLazy(true)
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
-                    $platform['location'],
-                    $platform['project_id'],
+                    $platform['location'] ?? null,
+                    $platform['project_id'] ?? null,
                     $platform['api_key'] ?? null,
                     $httpClient,
                     new Reference('ai.platform.model_catalog.vertexai.gemini'),
@@ -884,12 +876,32 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Ollama platform configuration requires "symfony/ai-ollama-platform" package. Try running "composer require symfony/ai-ollama-platform".');
             }
 
+            $httpClientReference = new Reference($platform['http_client']);
+
+            if (null !== $platform['endpoint']) {
+                $defaultOptions = [];
+                if (null !== ($platform['api_key'] ?? null)) {
+                    $defaultOptions['auth_bearer'] = $platform['api_key'];
+                }
+
+                $scopedClientDefinition = (new Definition(ScopingHttpClient::class))
+                    ->setFactory([ScopingHttpClient::class, 'forBaseUri'])
+                    ->setArguments([
+                        $httpClientReference,
+                        $platform['endpoint'],
+                        $defaultOptions,
+                    ]);
+
+                $container->setDefinition('ai.platform.ollama.scoped_http_client', $scopedClientDefinition);
+
+                $httpClientReference = new Reference('ai.platform.ollama.scoped_http_client');
+            }
+
             if (\array_key_exists('api_catalog', $platform)) {
                 $catalogDefinition = (new Definition(OllamaApiCatalog::class))
                     ->setLazy(true)
                     ->setArguments([
-                        $platform['host_url'],
-                        new Reference($platform['http_client']),
+                        $httpClientReference,
                     ])
                     ->addTag('proxy', ['interface' => ModelCatalogInterface::class])
                 ;
@@ -901,8 +913,9 @@ final class AiBundle extends AbstractBundle
                 ->setFactory(OllamaPlatformFactory::class.'::create')
                 ->setLazy(true)
                 ->setArguments([
-                    $platform['host_url'],
-                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $platform['endpoint'],
+                    $platform['api_key'] ?? null,
+                    $httpClientReference,
                     new Reference('ai.platform.model_catalog.ollama'),
                     new Reference('ai.platform.contract.ollama'),
                     new Reference('event_dispatcher'),
@@ -1080,6 +1093,30 @@ final class AiBundle extends AbstractBundle
             return;
         }
 
+        if ('ovh' === $type && isset($platform['api_key'])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-ovh-platform', OvhPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('OVH platform configuration requires "symfony/ai-ovh-platform" package. Try running "composer require symfony/ai-ovh-platform".');
+            }
+
+            $platformId = 'ai.platform.ovh';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(OvhPlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.ovh'),
+                    null,
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform');
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
         throw new InvalidArgumentException(\sprintf('Platform "%s" is not supported for configuration via bundle at this point.', $type));
     }
 
@@ -1115,15 +1152,6 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.fault_tolerant_toolbox.'.$name, new Definition(FaultTolerantToolbox::class))
                     ->setArguments([new Reference('.inner')])
                     ->setDecoratedService('ai.toolbox.'.$name, priority: -1024);
-            }
-
-            if ($container->getParameter('kernel.debug')) {
-                $traceableToolboxDefinition = (new Definition('ai.traceable_toolbox.'.$name))
-                    ->setClass(TraceableToolbox::class)
-                    ->setArguments([new Reference('.inner')])
-                    ->setDecoratedService('ai.toolbox.'.$name, priority: -1024)
-                    ->addTag('ai.traceable_toolbox');
-                $container->setDefinition('ai.traceable_toolbox.'.$name, $traceableToolboxDefinition);
             }
 
             $toolProcessorDefinition = (new ChildDefinition('ai.tool.agent_processor.abstract'))
@@ -1402,6 +1430,33 @@ final class AiBundle extends AbstractBundle
             }
         }
 
+        if ('elasticsearch' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-elasticsearch-store', ElasticsearchStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Elasticsearch store configuration requires "symfony/ai-elasticsearch-store" package. Try running "composer require symfony/ai-elasticsearch-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(ElasticsearchStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference($store['http_client']),
+                        $store['endpoint'],
+                        $store['index_name'] ?? $name,
+                        $store['vectors_field'],
+                        $store['dimensions'],
+                        $store['similarity'],
+                    ])
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
         if ('manticoresearch' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-manticore-search-store', ManticoreSearchStore::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('ManticoreSearch store configuration requires "symfony/ai-manticore-search-store" package. Try running "composer require symfony/ai-manticore-search-store".');
@@ -1509,11 +1564,9 @@ final class AiBundle extends AbstractBundle
 
                 $definition = new Definition(InMemoryStore::class);
                 $definition
-                    ->setLazy(true)
                     ->setArguments($arguments)
-                    ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store')
+                    ->addTag('kernel.reset', ['method' => 'reset']);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -1584,6 +1637,8 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+
+                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
             }
         }
 
@@ -1614,33 +1669,6 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->setLazy(true)
                     ->setArguments($arguments)
-                    ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
-
-                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
-                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-            }
-        }
-
-        if ('elasticsearch' === $type) {
-            if (!ContainerBuilder::willBeAvailable('symfony/ai-elasticsearch-store', ElasticsearchStore::class, ['symfony/ai-bundle'])) {
-                throw new RuntimeException('Elasticsearch store configuration requires "symfony/ai-elasticsearch-store" package. Try running "composer require symfony/ai-elasticsearch-store".');
-            }
-
-            foreach ($stores as $name => $store) {
-                $definition = new Definition(ElasticsearchStore::class);
-                $definition
-                    ->setLazy(true)
-                    ->setArguments([
-                        new Reference($store['http_client']),
-                        $store['endpoint'],
-                        $store['index_name'] ?? $name,
-                        $store['vectors_field'],
-                        $store['dimensions'],
-                        $store['similarity'],
-                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
@@ -1751,6 +1779,8 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+
+                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
             }
         }
 
@@ -1760,23 +1790,18 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    new Reference('http_client'),
-                    $store['endpoint'],
-                    $store['api_key'],
-                    $store['collection_name'] ?? $name,
-                    $store['dimensions'],
-                    $store['distance'],
-                ];
-
-                if (\array_key_exists('async', $store)) {
-                    $arguments[6] = $store['async'];
-                }
-
-                $definition = new Definition(QdrantStore::class);
-                $definition
+                $definition = (new Definition(QdrantStore::class))
+                    ->setFactory(StoreFactory::class.'::create')
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        $store['collection_name'] ?? $name,
+                        $store['endpoint'] ?? null,
+                        $store['api_key'] ?? null,
+                        new Reference($store['http_client']),
+                        $store['dimensions'],
+                        $store['distance'],
+                        $store['async'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
@@ -1809,6 +1834,47 @@ final class AiBundle extends AbstractBundle
                         $store['key_prefix'],
                         RedisDistance::from($store['distance']),
                     ])
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('s3vectors' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-s3vectors-store', S3VectorsStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('S3Vectors store configuration requires "symfony/ai-s3vectors-store" package. Try running "composer require symfony/ai-s3vectors-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                if (isset($store['client'])) {
+                    $s3VectorsClient = new Reference($store['client']);
+                } else {
+                    $s3VectorsClient = new Definition(S3VectorsClient::class);
+                    $s3VectorsClient->setArguments([$store['configuration'] ?? []]);
+                }
+
+                $arguments = [
+                    $s3VectorsClient,
+                    $store['vector_bucket_name'],
+                    $store['index_name'] ?? $name,
+                ];
+
+                if (\array_key_exists('filter', $store)) {
+                    $arguments[3] = $store['filter'];
+                }
+
+                if (\array_key_exists('top_k', $store)) {
+                    $arguments[4] = $store['top_k'];
+                }
+
+                $definition = new Definition(S3VectorsStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
@@ -1904,6 +1970,30 @@ final class AiBundle extends AbstractBundle
                         $store['collection'] ?? $name,
                         $store['vector_field'],
                         $store['dimensions'],
+                    ])
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('vektor' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-vektor-store', VektorStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Vektor store configuration requires "symfony/ai-vektor-store" package. Try running "composer require symfony/ai-vektor-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $definition = new Definition(VektorStore::class);
+                $definition
+                    ->setLazy(true)
+                    ->setArguments([
+                        $store['storage_path'],
+                        $store['dimensions'],
+                        new Reference('filesystem'),
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
@@ -2061,11 +2151,9 @@ final class AiBundle extends AbstractBundle
             foreach ($messageStores as $name => $messageStore) {
                 $definition = new Definition(InMemoryMessageStore::class);
                 $definition
-                    ->setLazy(true)
                     ->setArgument(0, $messageStore['identifier'])
-                    ->addTag('proxy', ['interface' => MessageStoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedMessageStoreInterface::class])
-                    ->addTag('ai.message_store');
+                    ->addTag('ai.message_store')
+                    ->addTag('kernel.reset', ['method' => 'reset']);
 
                 $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $name);
@@ -2320,8 +2408,8 @@ final class AiBundle extends AbstractBundle
     private function processRetrieverConfig(int|string $name, array $config, ContainerBuilder $container): void
     {
         $definition = new Definition(Retriever::class, [
-            new Reference($config['vectorizer']),
             new Reference($config['store']),
+            new Reference($config['vectorizer']),
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
         $definition->addTag('ai.retriever', ['name' => $name]);

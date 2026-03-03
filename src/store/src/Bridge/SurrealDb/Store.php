@@ -16,9 +16,11 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -67,11 +69,30 @@ class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $recordIds = array_map(fn (string $id) => \sprintf('%s:`%s`', $this->table, $id), $ids);
+        $this->request('POST', 'sql', \sprintf('DELETE %s;', implode(', ', $recordIds)));
     }
 
-    public function query(Vector $vector, array $options = []): iterable
+    public function supports(string $queryClass): bool
     {
+        return VectorQuery::class === $queryClass;
+    }
+
+    public function query(QueryInterface $query, array $options = []): iterable
+    {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
+        $vector = $query->getVector();
         $vectors = json_encode($vector->getData());
 
         $results = $this->request('POST', 'sql', \sprintf(
@@ -104,7 +125,7 @@ class Store implements ManagedStoreInterface, StoreInterface
 
         if (\is_array($payload) && [] !== $payload) {
             $finalPayload = [
-                'body' => $payload,
+                'json' => $payload,
             ];
         }
 
@@ -136,10 +157,10 @@ class Store implements ManagedStoreInterface, StoreInterface
     private function convertToIndexableArray(VectorDocument $document): array
     {
         return [
-            'id' => $document->id->toRfc4122(),
-            $this->vectorFieldName => $document->vector->getData(),
-            '_metadata' => array_merge($document->metadata->getArrayCopy(), [
-                '_id' => $document->id->toRfc4122(),
+            'id' => $document->getId(),
+            $this->vectorFieldName => $document->getVector()->getData(),
+            '_metadata' => array_merge($document->getMetadata()->getArrayCopy(), [
+                '_id' => $document->getId(),
             ]),
         ];
     }

@@ -27,15 +27,15 @@
     "require": {
         "async-aws/bedrock-runtime": "^0.1|^1.0",
         "php": ">=8.2",
-        "symfony/ai-anthropic-platform": "^0.3",
-        "symfony/ai-meta-platform": "^0.3",
-        "symfony/ai-platform": "^0.3"
+        "symfony/ai-anthropic-platform": "^0.5",
+        "symfony/ai-meta-platform": "^0.5",
+        "symfony/ai-platform": "^0.5"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.46"
+        "phpunit/phpunit": "^11.5.53"
     },
     "minimum-stability": "dev",
     "autoload": {

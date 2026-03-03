@@ -15,9 +15,11 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Exception\LogicException;
 use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -89,11 +91,11 @@ class Store implements ManagedStoreInterface, StoreInterface
         $pipeline = $this->redis->multi(\Redis::PIPELINE);
 
         foreach ($documents as $document) {
-            $key = $this->keyPrefix.$document->id->toRfc4122();
+            $key = $this->keyPrefix.$document->getId();
             $data = [
-                'id' => $document->id->toRfc4122(),
-                'metadata' => $document->metadata->getArrayCopy(),
-                'embedding' => $document->vector->getData(),
+                'id' => $document->getId(),
+                'metadata' => $document->getMetadata()->getArrayCopy(),
+                'embedding' => $document->getVector()->getData(),
             ];
 
             $pipeline->rawCommand('JSON.SET', $key, '$', json_encode($data, \JSON_THROW_ON_ERROR));
@@ -109,7 +111,29 @@ class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $this->redis->clearLastError();
+
+        $keys = array_map(fn ($id) => $this->keyPrefix.$id, $ids);
+
+        $this->redis->del($keys);
+
+        if ($error = $this->redis->getLastError()) {
+            $e = new \RedisException($error);
+            throw new RuntimeException(\sprintf('Failed to remove documents from Redis: "%s".', $e->getMessage()), 0, $e);
+        }
+    }
+
+    public function supports(string $queryClass): bool
+    {
+        return VectorQuery::class === $queryClass;
     }
 
     /**
@@ -117,20 +141,24 @@ class Store implements ManagedStoreInterface, StoreInterface
      *
      * @return VectorDocument[]
      */
-    public function query(Vector $vector, array $options = []): iterable
+    public function query(QueryInterface $query, array $options = []): iterable
     {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
         $limit = $options['limit'] ?? 5;
         $maxScore = $options['maxScore'] ?? null;
         $whereFilter = $options['where'] ?? '*';
 
-        $query = "({$whereFilter}) => [KNN {$limit} @embedding \$query_vector AS vector_score]";
+        $queryString = "({$whereFilter}) => [KNN {$limit} @embedding \$query_vector AS vector_score]";
 
         try {
             $results = $this->redis->rawCommand(
                 'FT.SEARCH',
                 $this->indexName,
-                $query,
-                'PARAMS', 2, 'query_vector', $this->toRedisVector($vector),
+                $queryString,
+                'PARAMS', 2, 'query_vector', $this->toRedisVector($query->getVector()),
                 'RETURN', 4, '$.id', '$.metadata', '$.embedding', 'vector_score',
                 'SORTBY', 'vector_score', 'ASC',
                 'LIMIT', 0, $limit,

@@ -1,8 +1,43 @@
+UPGRADE FROM 0.4 to 0.5
+=======================
+
+Platform
+--------
+
+ * The `hostUrl` parameter for `ElevenLabsClient` has been removed
+ * The `host` parameter for `ElevenLabsApiCatalog` has been removed
+ * The `hostUrl` parameter for `PlatformFactory::create()` in `ElevenLabs` has been renamed to `endpoint`
+
 UPGRADE FROM 0.3 to 0.4
 =======================
 
 Agent
 -----
+
+ * The `keepToolMessages` parameter of `AgentProcessor` has been removed and replaced with `excludeToolMessages`.
+   Tool messages (`AssistantMessage` with tool call invocations and `ToolCallMessage` with tool call results) are now
+   **preserved** in the `MessageBag` by default.
+
+   If you were opting in to keep tool messages, just remove the parameter:
+
+   ```diff
+   -$processor = new AgentProcessor($toolbox, keepToolMessages: true);
+   +$processor = new AgentProcessor($toolbox);
+   ```
+
+   If you were explicitly discarding tool messages, use the new parameter:
+
+   ```diff
+   -$processor = new AgentProcessor($toolbox, keepToolMessages: false);
+   +$processor = new AgentProcessor($toolbox, excludeToolMessages: true);
+   ```
+
+   If you were relying on the previous default (tool messages discarded), opt in explicitly:
+
+   ```diff
+   -$processor = new AgentProcessor($toolbox);
+   +$processor = new AgentProcessor($toolbox, excludeToolMessages: true);
+   ```
 
  * The `Symfony\AI\Agent\Toolbox\Tool\Agent` class has been renamed to `Symfony\AI\Agent\Toolbox\Tool\Subagent`:
 
@@ -27,6 +62,15 @@ AI Bundle
 
  * An indexer configured with a `source`, now wraps the indexer with a `Symfony\AI\Store\ConfiguredSourceIndexer` decorator. This is
    transparent - the configured source is still used by default, but can be overridden by passing a source to `index()`.
+
+ * The `host_url` parameter for `Ollama` platform has been renamed `endpoint`.
+
+Platform
+-------
+
+ * The `hostUrl` parameter for `OllamaClient` has been removed
+ * The `host` parameter for `OllamaApiCatalog` has been removed
+ * The `hostUrl` parameter for `PlatformFactory::create()` in `Ollama` has been renamed to `endpoint`
 
 Store
 -----
@@ -78,6 +122,71 @@ Store
    -$indexer->withSource('/new/source')->index();
    +$indexer->index('/new/source');
    ```
+
+ * The `Symfony\AI\Store\Document\TextDocument` and `Symfony\AI\Store\Document\VectorDocument` classes now only accept
+   `string` or `int` types for the `$id` property. The `Uuid` type has been removed and auto-casting to `uuid` in store
+   bridges has been removed as well:
+
+   ```diff
+    use Symfony\AI\Store\Document\TextDocument;
+    use Symfony\AI\Store\Document\VectorDocument;
+    use Symfony\Component\Uid\Uuid;
+
+    -$textDoc = new TextDocument(Uuid::v4(), 'content');
+    +$textDoc = new TextDocument(Uuid::v4()->toString(), 'content');
+
+    -$vectorDoc = new VectorDocument(Uuid::v4(), [0.1, ...]);
+    +$vectorDoc = new VectorDocument(Uuid::v4()->toString(), [0.1, ...]);
+    ```
+
+ * The `Symfony\AI\Store\Document\EmbeddableDocumentInterface::getId()` can only return `string` or `int` types now.
+
+ * Properties of `Symfony\AI\Store\Document\VectorDocument` and `Symfony\AI\Store\Document\Loader\Rss\RssItem` have been changed to private, use getters instead of public properties:
+
+   ```diff
+   -$document->id;
+   -$document->metadata;
+   -$document->score;
+   -$document->vector;
+   +$document->getId();
+   +$document->getMetadata();
+   +$document->getScore();
+   +$document->getVector();
+   ```
+
+ * The `StoreInterface::query()` method signature has changed to accept a `QueryInterface` instead of a `Vector`:
+
+   ```diff
+   -use Symfony\AI\Platform\Vector\Vector;
+   +use Symfony\AI\Store\Query\VectorQuery;
+
+   -$results = $store->query($vector, ['limit' => 10]);
+   +$results = $store->query(new VectorQuery($vector), ['limit' => 10]);
+   ```
+
+   The Store component now supports multiple query types through a query abstraction system. Available query types:
+   - `VectorQuery`: For vector similarity search (replaces the old `Vector` parameter)
+   - `TextQuery`: For full-text search (when supported by the store)
+   - `HybridQuery`: For combined vector + text search (when supported by the store)
+
+   Check if a store supports a specific query type using the new `supports()` method:
+
+   ```php
+   if ($store->supports(VectorQuery::class)) {
+       $results = $store->query(new VectorQuery($vector));
+   }
+   ```
+
+ * The `Symfony\AI\Store\Retriever` constructor signature has changed - the first two arguments have been swapped:
+
+   ```diff
+   -use Symfony\AI\Store\Retriever;
+   -
+   -$retriever = new Retriever($vectorizer, $store, $logger);
+   +$retriever = new Retriever($store, $vectorizer, $logger);
+   ```
+
+   This change aligns the constructor with the primary dependency (the store) being first, followed by the optional vectorizer.
 
 UPGRADE FROM 0.2 to 0.3
 =======================

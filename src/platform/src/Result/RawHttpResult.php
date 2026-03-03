@@ -51,7 +51,8 @@ final class RawHttpResult implements RawResultInterface
             $deltas = explode(",\r\n", $jsonDelta);
 
             foreach ($deltas as $delta) {
-                if ('' === trim($delta)) {
+                // lines starting with a colon identify as comment
+                if ('' === trim($delta) || str_starts_with($delta, ':')) {
                     continue;
                 }
 

@@ -27,6 +27,7 @@ use Symfony\AI\Mate\Discovery\CapabilityCollector;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\AI\Mate\Service\Logger;
+use Symfony\AI\Mate\Service\RegistryProvider;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -84,6 +85,8 @@ return static function (ContainerConfigurator $container): void {
         ->set(ComposerExtensionDiscovery::class)
 
         ->set(FilteredDiscoveryLoader::class)
+
+        ->set(RegistryProvider::class)
 
         ->set(CapabilityCollector::class)
 

@@ -34,7 +34,7 @@ final class TextTrimTransformerTest extends TestCase
     public function testTrim(string $input, string $expected)
     {
         $transformer = new TextTrimTransformer();
-        $document = new TextDocument(Uuid::v4(), $input);
+        $document = new TextDocument(Uuid::v4()->toString(), $input);
 
         $result = iterator_to_array($transformer->transform([$document]));
 
@@ -49,16 +49,16 @@ final class TextTrimTransformerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The content shall not be an empty string.');
 
-        new TextDocument(Uuid::v4(), '   ');
+        new TextDocument(Uuid::v4()->toString(), '   ');
     }
 
     public function testTrimProcessesMultipleDocuments()
     {
         $transformer = new TextTrimTransformer();
         $documents = [
-            new TextDocument(Uuid::v4(), '  first  '),
-            new TextDocument(Uuid::v4(), '  second  '),
-            new TextDocument(Uuid::v4(), '  third  '),
+            new TextDocument(Uuid::v4()->toString(), '  first  '),
+            new TextDocument(Uuid::v4()->toString(), '  second  '),
+            new TextDocument(Uuid::v4()->toString(), '  third  '),
         ];
 
         $result = iterator_to_array($transformer->transform($documents));
@@ -73,7 +73,7 @@ final class TextTrimTransformerTest extends TestCase
     {
         $transformer = new TextTrimTransformer();
         $metadata = new Metadata(['key' => 'value']);
-        $document = new TextDocument(Uuid::v4(), '  text  ', $metadata);
+        $document = new TextDocument(Uuid::v4()->toString(), '  text  ', $metadata);
 
         $result = iterator_to_array($transformer->transform([$document]));
 
@@ -85,7 +85,7 @@ final class TextTrimTransformerTest extends TestCase
     public function testTrimPreservesDocumentId()
     {
         $transformer = new TextTrimTransformer();
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $document = new TextDocument($id, '  text  ');
 
         $result = iterator_to_array($transformer->transform([$document]));

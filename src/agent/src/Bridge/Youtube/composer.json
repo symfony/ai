@@ -30,14 +30,14 @@
         "mrmysql/youtube-transcript": "^0.0.5",
         "nyholm/psr7": "^1.8",
         "php-http/discovery": "^1.19",
-        "symfony/ai-agent": "^0.3",
+        "symfony/ai-agent": "^0.5",
         "symfony/http-client": "^7.3|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.46"
+        "phpunit/phpunit": "^11.5.53"
     },
     "minimum-stability": "dev",
     "autoload": {

@@ -23,8 +23,6 @@ final class ElevenLabsApiCatalog implements ModelCatalogInterface
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        #[\SensitiveParameter] private readonly string $apiKey,
-        private readonly string $hostUrl = 'https://api.elevenlabs.io/v1',
     ) {
     }
 
@@ -45,11 +43,7 @@ final class ElevenLabsApiCatalog implements ModelCatalogInterface
 
     public function getModels(): array
     {
-        $response = $this->httpClient->request('GET', \sprintf('%s/models', $this->hostUrl), [
-            'headers' => [
-                'xi-api-key' => $this->apiKey,
-            ],
-        ]);
+        $response = $this->httpClient->request('GET', '/models');
 
         $models = $response->toArray();
 

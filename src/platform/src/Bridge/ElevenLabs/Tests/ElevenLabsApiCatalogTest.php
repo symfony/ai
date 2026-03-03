@@ -27,7 +27,7 @@ final class ElevenLabsApiCatalogTest extends TestCase
             new JsonMockResponse([]),
         ]);
 
-        $modelCatalog = new ElevenLabsApiCatalog($httpClient, 'foo');
+        $modelCatalog = new ElevenLabsApiCatalog($httpClient);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The model "foo" cannot be retrieved from the API.');
@@ -48,7 +48,7 @@ final class ElevenLabsApiCatalogTest extends TestCase
             ]),
         ]);
 
-        $modelCatalog = new ElevenLabsApiCatalog($httpClient, 'foo');
+        $modelCatalog = new ElevenLabsApiCatalog($httpClient);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The model "foo" is not supported, please check the ElevenLabs API.');
@@ -75,7 +75,7 @@ final class ElevenLabsApiCatalogTest extends TestCase
             ]),
         ]);
 
-        $modelCatalog = new ElevenLabsApiCatalog($httpClient, 'foo');
+        $modelCatalog = new ElevenLabsApiCatalog($httpClient);
 
         $model = $modelCatalog->getModel('foo');
 
@@ -102,7 +102,7 @@ final class ElevenLabsApiCatalogTest extends TestCase
             ]),
         ]);
 
-        $modelCatalog = new ElevenLabsApiCatalog($httpClient, 'foo');
+        $modelCatalog = new ElevenLabsApiCatalog($httpClient);
 
         $model = $modelCatalog->getModel('foo');
 
@@ -135,7 +135,7 @@ final class ElevenLabsApiCatalogTest extends TestCase
             ]),
         ]);
 
-        $modelCatalog = new ElevenLabsApiCatalog($httpClient, 'foo');
+        $modelCatalog = new ElevenLabsApiCatalog($httpClient);
 
         $models = $modelCatalog->getModels();
 

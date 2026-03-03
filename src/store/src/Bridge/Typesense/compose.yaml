@@ -1,0 +1,13 @@
+services:
+    typesense:
+        image: typesense/typesense:29.0
+        environment:
+            TYPESENSE_API_KEY: '${TYPESENSE_API_KEY:-changeMe}'
+            TYPESENSE_DATA_DIR: '/data'
+        volumes:
+            - typesense_data:/data
+        ports:
+            - '8108:8108'
+
+volumes:
+    typesense_data:

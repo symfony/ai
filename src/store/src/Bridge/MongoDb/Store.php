@@ -20,8 +20,11 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
+use Symfony\AI\Store\Exception\UnsupportedFeatureException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 /**
@@ -64,6 +67,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $vectorFieldName = 'vector',
         private readonly bool $bulkWrite = false,
         private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly int $embeddingsDimension = 1536,
     ) {
     }
 
@@ -81,7 +85,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 [
                     'fields' => array_merge([
                         [
-                            'numDimensions' => 1536,
+                            'numDimensions' => $this->embeddingsDimension,
                             'path' => $this->vectorFieldName,
                             'similarity' => 'euclidean',
                             'type' => 'vector',
@@ -113,10 +117,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         foreach ($documents as $document) {
             $operation = [
-                ['_id' => (string) $document->id],
+                ['_id' => (string) $document->getId()],
                 array_filter([
-                    'metadata' => $document->metadata->getArrayCopy(),
-                    $this->vectorFieldName => $document->vector->getData(),
+                    'metadata' => $document->getMetadata()->getArrayCopy(),
+                    $this->vectorFieldName => $document->getVector()->getData(),
                 ]),
                 ['upsert' => true], // insert if not exists
             ];
@@ -136,7 +140,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        throw new UnsupportedFeatureException('Method not implemented yet.');
+    }
+
+    public function supports(string $queryClass): bool
+    {
+        return VectorQuery::class === $queryClass;
     }
 
     /**
@@ -147,8 +156,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     minScore?: float,
      * } $options
      */
-    public function query(Vector $vector, array $options = []): iterable
+    public function query(QueryInterface $query, array $options = []): iterable
     {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
+        $vector = $query->getVector();
         $minScore = null;
         if (\array_key_exists('minScore', $options)) {
             $minScore = $options['minScore'];

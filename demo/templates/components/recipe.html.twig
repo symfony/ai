@@ -72,6 +72,13 @@
                                 </div>
                             {% endfor %}
                         </div>
+                        <div class="mt-4 border-top pt-3 d-flex align-items-center justify-content-between">
+                            <div class="fw-semibold text-muted">Share this recipe</div>
+                            <button class="btn btn-outline-secondary" {{ live_action('openShare') }}>
+                                {{ ux_icon('mdi:email-send', { height: '20px', width: '20px', class: 'me-1' }) }}
+                                Share
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -90,6 +97,27 @@
                 <h4 class="text-muted mb-2">The bot is cooking your recipe...</h4>
                 <p class="text-secondary small">This may take a moment</p>
             </div>
+        </div>
+    </div>
+    <div id="recipe-share-overlay" class="share-overlay {{ this.shareOpen ? 'is-open' : '' }}">
+        <div class="share-panel">
+            <button class="share-close" {{ live_action('closeShare') }} aria-label="Close">×</button>
+            <h4 class="mb-2">
+                {{ ux_icon('mdi:email-send', { height: '22px', width: '22px', class: 'me-2' }) }}
+                Share this recipe
+            </h4>
+            <p class="text-muted mb-3">Send the recipe to an email address.</p>
+            <form class="input-group" {{ live_action('share:prevent') }}>
+                <input
+                    type="email"
+                    class="form-control"
+                    placeholder="Email address"
+                    data-model="shareEmail"
+                >
+                <button class="btn btn-outline-secondary">
+                    Send
+                </button>
+            </form>
         </div>
     </div>
     <div class="card-footer p-2">

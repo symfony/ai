@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 
 final class ResultConverter implements ResultConverterInterface
@@ -28,6 +29,7 @@ final class ResultConverter implements ResultConverterInterface
         private readonly ResultConverterInterface $innerConverter,
         private readonly SerializerInterface $serializer,
         private readonly ?string $outputType = null,
+        private readonly ?object $objectToPopulate = null,
     ) {
     }
 
@@ -45,8 +47,19 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         try {
-            $structure = null === $this->outputType ? json_decode($innerResult->getContent(), true, flags: \JSON_THROW_ON_ERROR)
-                : $this->serializer->deserialize($innerResult->getContent(), $this->outputType, 'json');
+            $context = [];
+            if (null !== $this->objectToPopulate) {
+                $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $this->objectToPopulate;
+            }
+
+            $structure = null === $this->outputType
+                ? json_decode($innerResult->getContent(), true, flags: \JSON_THROW_ON_ERROR)
+                : $this->serializer->deserialize(
+                    $innerResult->getContent(),
+                    $this->outputType,
+                    'json',
+                    $context
+                );
         } catch (\JsonException $e) {
             throw new RuntimeException('Cannot json decode the content.', previous: $e);
         } catch (SerializerExceptionInterface $e) {

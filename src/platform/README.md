@@ -21,6 +21,7 @@ To use a specific AI platform, install the corresponding bridge package:
 |---------------------|-------------------------------------------|
 | AI.ML API           | `symfony/ai-ai-ml-api-platform`           |
 | Albert              | `symfony/ai-albert-platform`              |
+| amazee.ai           | `symfony/ai-amazee-ai-platform`           |
 | Anthropic           | `symfony/ai-anthropic-platform`           |
 | Azure OpenAI        | `symfony/ai-azure-platform`               |
 | AWS Bedrock         | `symfony/ai-bedrock-platform`             |
@@ -31,14 +32,17 @@ To use a specific AI platform, install the corresponding bridge package:
 | DeepSeek            | `symfony/ai-deep-seek-platform`           |
 | Docker Model Runner | `symfony/ai-docker-model-runner-platform` |
 | ElevenLabs          | `symfony/ai-eleven-labs-platform`         |
+| Failover            | `symfony/ai-failover-platform`            |
 | Generic             | `symfony/ai-generic-platform`             |
 | Google Gemini       | `symfony/ai-gemini-platform`              |
 | Hugging Face        | `symfony/ai-hugging-face-platform`        |
 | LM Studio           | `symfony/ai-lm-studio-platform`           |
 | Meta Llama          | `symfony/ai-meta-platform`                |
 | Mistral             | `symfony/ai-mistral-platform`             |
+| Models.dev          | `symfony/ai-models-dev-platform`          |
 | Ollama              | `symfony/ai-ollama-platform`              |
 | OpenAI              | `symfony/ai-open-ai-platform`             |
+| Open Responses      | `symfony/ai-open-responses-platform`      |
 | OpenRouter          | `symfony/ai-open-router-platform`         |
 | OVH                 | `symfony/ai-ovh-platform`                 |
 | Perplexity          | `symfony/ai-perplexity-platform`          |

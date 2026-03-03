@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingContent;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -67,6 +68,8 @@ final class ResultConverter implements ResultConverterInterface
     private function convertStream(RawResultInterface $result): \Generator
     {
         $toolCalls = [];
+        $reasoning = '';
+
         foreach ($result->getDataStream() as $data) {
             if ($this->streamIsToolCall($data)) {
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
@@ -76,11 +79,29 @@ final class ResultConverter implements ResultConverterInterface
                 yield new ToolCallResult(...array_map($this->convertToolCall(...), $toolCalls));
             }
 
+            // Handle reasoning_content from DeepSeek R1
+            $reasoningContent = $data['choices'][0]['delta']['reasoning_content'] ?? null;
+            if (null !== $reasoningContent && '' !== $reasoningContent) {
+                $reasoning .= $reasoningContent;
+                continue;
+            }
+
+            // When we transition from reasoning to content, yield the accumulated thinking
+            if ('' !== $reasoning && isset($data['choices'][0]['delta']['content']) && '' !== $data['choices'][0]['delta']['content']) {
+                yield new ThinkingContent($reasoning);
+                $reasoning = '';
+            }
+
             if (!isset($data['choices'][0]['delta']['content'])) {
                 continue;
             }
 
             yield $data['choices'][0]['delta']['content'];
+        }
+
+        // Yield any remaining reasoning if the stream ends without content
+        if ('' !== $reasoning) {
+            yield new ThinkingContent($reasoning);
         }
     }
 

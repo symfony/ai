@@ -9,6 +9,7 @@ parameters:
         - tests/
     excludePaths:
         - src/Bridge/
+    treatPhpDocTypesAsCertain: false
     ignoreErrors:
         -
             message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"

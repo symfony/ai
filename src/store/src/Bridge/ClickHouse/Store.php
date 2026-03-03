@@ -15,8 +15,11 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -77,13 +80,22 @@ class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $this->execute('POST', 'ALTER TABLE {{ table }} DELETE WHERE id IN {ids:Array(String)}', [
-            'ids' => $ids,
+        $this->execute('POST', 'DELETE FROM {{ table }} WHERE id IN {ids:Array(UUID)}', [
+            'ids' => "['".implode("','", $ids)."']",
         ]);
     }
 
-    public function query(Vector $vector, array $options = [], ?float $minScore = null): iterable
+    public function supports(string $queryClass): bool
     {
+        return VectorQuery::class === $queryClass;
+    }
+
+    public function query(QueryInterface $query, array $options = [], ?float $minScore = null): iterable
+    {
+        if (!$query instanceof VectorQuery) {
+            throw new InvalidArgumentException(\sprintf('Query must be instance of "%s", "%s" given.', VectorQuery::class, $query::class));
+        }
+
         $sql = <<<'SQL'
             SELECT
                 id,
@@ -104,7 +116,7 @@ class Store implements ManagedStoreInterface, StoreInterface
 
         $results = $this
             ->execute('GET', $sql, [
-                'query_vector' => $this->toClickHouseVector($vector),
+                'query_vector' => $this->toClickHouseVector($query->getVector()),
                 'limit' => $options['limit'] ?? 5,
                 ...$options['params'] ?? [],
             ])
@@ -127,9 +139,9 @@ class Store implements ManagedStoreInterface, StoreInterface
     protected function formatVectorDocument(VectorDocument $document): array
     {
         return [
-            'id' => $document->id->toRfc4122(),
-            'metadata' => json_encode($document->metadata->getArrayCopy(), \JSON_THROW_ON_ERROR),
-            'embedding' => $document->vector->getData(),
+            'id' => $document->getId(),
+            'metadata' => json_encode($document->getMetadata()->getArrayCopy(), \JSON_THROW_ON_ERROR),
+            'embedding' => $document->getVector()->getData(),
         ];
     }
 

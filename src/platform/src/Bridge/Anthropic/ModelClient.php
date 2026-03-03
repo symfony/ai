@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -38,6 +39,10 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        if (\is_string($payload)) {
+            throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
+        }
+
         $headers = [
             'x-api-key' => $this->apiKey,
             'anthropic-version' => '2023-06-01',
@@ -47,11 +52,16 @@ final class ModelClient implements ModelClientInterface
             $options['tool_choice'] = ['type' => 'auto'];
         }
 
+        if (isset($options['thinking'])) {
+            $options['beta_features'][] = 'interleaved-thinking-2025-05-14';
+        }
+
         if (isset($options['response_format'])) {
-            $options['beta_features'][] = 'structured-outputs-2025-11-13';
-            $options['output_format'] = [
-                'type' => 'json_schema',
-                'schema' => $options['response_format']['json_schema']['schema'] ?? [],
+            $options['output_config'] = [
+                'format' => [
+                    'type' => 'json_schema',
+                    'schema' => $options['response_format']['json_schema']['schema'] ?? [],
+                ],
             ];
             unset($options['response_format']);
         }

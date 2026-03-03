@@ -59,6 +59,10 @@ final class WhisperModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        if (\is_string($payload)) {
+            throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
+        }
+
         $task = $options['task'] ?? Task::TRANSCRIPTION;
         $endpoint = Task::TRANSCRIPTION === $task ? 'transcriptions' : 'translations';
         $url = \sprintf('https://%s/openai/deployments/%s/audio/%s', $this->baseUrl, $this->deployment, $endpoint);

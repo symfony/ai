@@ -156,12 +156,21 @@ final class ProfilerDataProvider
         }
 
         $profile = $profileData->profile;
+        $collectors = $profile->getCollectors();
 
-        if (!$profile->hasCollector($collectorName)) {
+        // Find collector by short name
+        $collectorData = null;
+        foreach ($collectors as $collector) {
+            if ($collector->getName() === $collectorName) {
+                $collectorData = $collector;
+                break;
+            }
+        }
+
+        if (null === $collectorData) {
             throw new InvalidCollectorException(\sprintf('Collector "%s" not found in profile "%s"', $collectorName, $token));
         }
 
-        $collectorData = $profile->getCollector($collectorName);
         $formatter = $this->collectorRegistry->get($collectorName);
 
         if (null === $formatter) {
@@ -190,7 +199,12 @@ final class ProfilerDataProvider
             throw new ProfileNotFoundException(\sprintf('Profile not found for token: "%s"', $token));
         }
 
-        return array_keys($profileData->profile->getCollectors());
+        $collectors = $profileData->profile->getCollectors();
+
+        return array_values(array_map(
+            static fn ($collector) => $collector->getName(),
+            $collectors
+        ));
     }
 
     public function getLatestProfile(): ?ProfileIndex

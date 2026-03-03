@@ -12,7 +12,6 @@
 namespace Symfony\AI\Store\Document;
 
 use Symfony\AI\Platform\Vector\VectorInterface;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -20,10 +19,10 @@ use Symfony\Component\Uid\Uuid;
 final class VectorDocument
 {
     public function __construct(
-        public readonly int|string|Uuid $id,
-        public readonly VectorInterface $vector,
-        public readonly Metadata $metadata = new Metadata(),
-        public readonly ?float $score = null,
+        private readonly int|string $id,
+        private readonly VectorInterface $vector,
+        private readonly Metadata $metadata = new Metadata(),
+        private readonly ?float $score = null,
     ) {
     }
 
@@ -38,5 +37,25 @@ final class VectorDocument
             metadata: $this->metadata,
             score: $score,
         );
+    }
+
+    public function getId(): int|string
+    {
+        return $this->id;
+    }
+
+    public function getVector(): VectorInterface
+    {
+        return $this->vector;
+    }
+
+    public function getMetadata(): Metadata
+    {
+        return $this->metadata;
+    }
+
+    public function getScore(): ?float
+    {
+        return $this->score;
     }
 }

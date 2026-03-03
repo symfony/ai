@@ -26,9 +26,9 @@ final class OllamaApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'capabilities' => ['completion'],
             ]),
-        ]);
+        ], 'http://127.0.0.1:11434');
 
-        $modelCatalog = new OllamaApiCatalog('http://127.0.0.1:11434', $httpClient);
+        $modelCatalog = new OllamaApiCatalog($httpClient);
 
         $model = $modelCatalog->getModel('foo');
 
@@ -53,9 +53,9 @@ final class OllamaApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'capabilities' => ['completion'],
             ]),
-        ]);
+        ], 'http://127.0.0.1:11434');
 
-        $modelCatalog = new OllamaApiCatalog('http://127.0.0.1:11434', $httpClient);
+        $modelCatalog = new OllamaApiCatalog($httpClient);
 
         $models = $modelCatalog->getModels();
 

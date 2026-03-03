@@ -26,16 +26,17 @@ use Symfony\AI\Chat\Command\SetupStoreCommand as SetupMessageStoreCommand;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Bridge\AiMlApi\ModelCatalog as AiMlApiModelCatalog;
 use Symfony\AI\Platform\Bridge\Albert\ModelCatalog as AlbertModelCatalog;
+use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\ModelCatalog as AzureOpenAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Bedrock\ModelCatalog as BedrockModelCatalog;
-use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Bridge\Cartesia\ModelCatalog as CartesiaModelCatalog;
 use Symfony\AI\Platform\Bridge\Cerebras\ModelCatalog as CerebrasModelCatalog;
 use Symfony\AI\Platform\Bridge\Decart\ModelCatalog as DecartModelCatalog;
 use Symfony\AI\Platform\Bridge\DeepSeek\ModelCatalog as DeepSeekModelCatalog;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\ModelCatalog as DockerModelRunnerModelCatalog;
+use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\Gemini\ModelCatalog as GeminiModelCatalog;
@@ -83,6 +84,8 @@ return static function (ContainerConfigurator $container): void {
             ->factory([OpenAiContract::class, 'create'])
         ->set('ai.platform.contract.anthropic', Contract::class)
             ->factory([AnthropicContract::class, 'create'])
+        ->set('ai.platform.contract.elevenlabs', Contract::class)
+            ->factory([ElevenLabsContract::class, 'create'])
         ->set('ai.platform.contract.gemini', Contract::class)
             ->factory([GeminiContract::class, 'create'])
         ->set('ai.platform.contract.huggingface', Contract::class)
@@ -97,6 +100,7 @@ return static function (ContainerConfigurator $container): void {
         // model catalog
         ->set('ai.platform.model_catalog.aimlapi', AiMlApiModelCatalog::class)
         ->set('ai.platform.model_catalog.albert', AlbertModelCatalog::class)
+        ->set('ai.platform.model_catalog.amazeeai', AmazeeAiModelCatalog::class)
         ->set('ai.platform.model_catalog.anthropic', AnthropicModelCatalog::class)
         ->set('ai.platform.model_catalog.azure.openai', AzureOpenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.bedrock', BedrockModelCatalog::class)
@@ -106,7 +110,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.deepseek', DeepSeekModelCatalog::class)
         ->set('ai.platform.model_catalog.dockermodelrunner', DockerModelRunnerModelCatalog::class)
         ->set('ai.platform.model_catalog.elevenlabs', ElevenLabsModelCatalog::class)
-            ->lazy(true)
+            ->lazy()
             ->tag('proxy', ['interface' => ModelCatalogInterface::class])
         ->set('ai.platform.model_catalog.gemini', GeminiModelCatalog::class)
         ->set('ai.platform.model_catalog.huggingface', HuggingFaceModelCatalog::class)
@@ -114,6 +118,8 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.meta', MetaModelCatalog::class)
         ->set('ai.platform.model_catalog.mistral', MistralModelCatalog::class)
         ->set('ai.platform.model_catalog.ollama', OllamaModelCatalog::class)
+            ->lazy()
+            ->tag('proxy', ['interface' => ModelCatalogInterface::class])
         ->set('ai.platform.model_catalog.openai', OpenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.openrouter', OpenRouterModelCatalog::class)
         ->set('ai.platform.model_catalog.ovh', OvhModelCatalog::class)
@@ -218,17 +224,13 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('ai.traceable_toolbox'),
                 tagged_iterator('ai.traceable_message_store'),
                 tagged_iterator('ai.traceable_chat'),
+                tagged_iterator('ai.traceable_agent'),
+                tagged_iterator('ai.traceable_store'),
             ])
-            ->tag('data_collector')
+            ->tag('data_collector', ['id' => 'ai'])
 
         // serializer
         ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
-            ->tag('serializer.normalizer')
-
-        ->set('ai.platform.cache.result_normalizer', ResultNormalizer::class)
-            ->args([
-                service('serializer.normalizer.object'),
-            ])
             ->tag('serializer.normalizer')
 
         // commands

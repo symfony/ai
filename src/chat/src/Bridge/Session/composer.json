@@ -26,14 +26,14 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-chat": "^0.3",
+        "symfony/ai-chat": "^0.5",
         "symfony/http-foundation": "^7.3|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.46"
+        "phpunit/phpunit": "^11.5.53"
     },
     "minimum-stability": "dev",
     "autoload": {

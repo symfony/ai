@@ -25,7 +25,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
     public static function modelsProvider(): iterable
     {
         yield 'deepseek-chat' => ['deepseek-chat', DeepSeek::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
-        yield 'deepseek-reasoner' => ['deepseek-reasoner', DeepSeek::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
+        yield 'deepseek-reasoner' => ['deepseek-reasoner', DeepSeek::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::THINKING]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

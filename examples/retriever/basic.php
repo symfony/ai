@@ -51,7 +51,7 @@ echo "Searching for: 'Roman gladiator revenge'\n\n";
 $results = $retriever->retrieve('Roman gladiator revenge', ['maxItems' => 1]);
 
 foreach ($results as $i => $document) {
-    echo sprintf("%d. Document ID: %s\n", $i + 1, $document->id);
-    echo sprintf("   Score: %s\n", $document->score ?? 'n/a');
-    echo sprintf("   Source: %s\n\n", $document->metadata->getSource() ?? 'unknown');
+    echo sprintf("%d. Document ID: %s\n", $i + 1, $document->getId());
+    echo sprintf("   Score: %s\n", $document->getScore() ?? 'n/a');
+    echo sprintf("   Source: %s\n\n", $document->getMetadata()->getSource() ?? 'unknown');
 }

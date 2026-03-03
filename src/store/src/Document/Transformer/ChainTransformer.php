@@ -16,16 +16,11 @@ use Symfony\AI\Store\Document\TransformerInterface;
 final class ChainTransformer implements TransformerInterface
 {
     /**
-     * @var TransformerInterface[]
-     */
-    private readonly array $transformers;
-
-    /**
      * @param iterable<TransformerInterface> $transformers
      */
-    public function __construct(iterable $transformers)
-    {
-        $this->transformers = $transformers instanceof \Traversable ? iterator_to_array($transformers) : $transformers;
+    public function __construct(
+        private readonly iterable $transformers,
+    ) {
     }
 
     public function transform(iterable $documents, array $options = []): iterable

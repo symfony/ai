@@ -11,14 +11,26 @@ Getting Started Guides
     :maxdepth: 1
 
     chatbot-with-memory
+    dynamic-tools
     rag-implementation
+    structured-output-object-instances
 
 Memory & Context Management
 ---------------------------
 
 * :doc:`chatbot-with-memory` - Build chatbots that remember user preferences and conversation history
 
+Tools
+-----
+
+* :doc:`dynamic-tools` - Build a dynamic Toolbox for flexible tool management at runtime
+
 Retrieval Augmented Generation
 ------------------------------
 
 * :doc:`rag-implementation` - Implement complete RAG systems with vector stores and semantic search
+
+Structured Output
+-----------------
+
+* :doc:`structured-output-object-instances` - Populate existing object instances with AI-generated data

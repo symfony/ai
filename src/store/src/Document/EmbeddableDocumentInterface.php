@@ -13,7 +13,7 @@ namespace Symfony\AI\Store\Document;
 
 interface EmbeddableDocumentInterface
 {
-    public function getId(): mixed;
+    public function getId(): int|string;
 
     public function getContent(): string|object;
 

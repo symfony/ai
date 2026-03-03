@@ -18,6 +18,7 @@ use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -71,15 +72,15 @@ $indexer = new DocumentIndexer(
 $indexer->index($documents);
 
 $vector = $vectorizer->vectorize('technology artificial intelligence');
-$results = $store->query($vector);
+$results = $store->query(new VectorQuery($vector));
 
 $filteredDocuments = 0;
 foreach ($results as $i => $document) {
-    $title = $document->metadata['title'] ?? 'Unknown';
-    $category = $document->metadata['category'] ?? 'Unknown';
+    $title = $document->getMetadata()['title'] ?? 'Unknown';
+    $category = $document->getMetadata()['category'] ?? 'Unknown';
     echo sprintf("%d. %s [%s]\n", $i + 1, $title, $category);
-    echo sprintf("   Content: %s\n", substr($document->metadata->getText() ?? 'No content', 0, 80).'...');
-    echo sprintf("   ID: %s\n\n", substr($document->id, 0, 8).'...');
+    echo sprintf("   Content: %s\n", substr($document->getMetadata()->getText() ?? 'No content', 0, 80).'...');
+    echo sprintf("   ID: %s\n\n", substr($document->getId(), 0, 8).'...');
     ++$filteredDocuments;
 }
 

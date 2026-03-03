@@ -22,6 +22,8 @@ use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
 final class TemplateRendererListenerTest extends TestCase
 {
@@ -208,5 +210,152 @@ final class TemplateRendererListenerTest extends TestCase
         $this->assertSame('Plain text', $content[0]->getText());
         $this->assertInstanceOf(Text::class, $content[1]);
         $this->assertSame(' and dynamic content', $content[1]->getText());
+    }
+
+    public function testSerializesObjectsInTemplateVars()
+    {
+        $normalizer = new ObjectNormalizer();
+        $registry = new TemplateRendererRegistry([new StringTemplateRenderer()]);
+        $listener = new TemplateRendererListener($registry, $normalizer);
+
+        $city = new City(name: 'Berlin', population: 3500000);
+        $template = Template::string('Research missing data for this city: {city.name} (pop: {city.population})');
+        $messageBag = new MessageBag(Message::ofUser($template));
+
+        $event = new InvocationEvent($this->model, $messageBag, [
+            'template_vars' => ['city' => $city],
+        ]);
+
+        $listener($event);
+
+        $input = $event->getInput();
+        $this->assertInstanceOf(MessageBag::class, $input);
+        $messages = $input->getMessages();
+        $content = $messages[0]->getContent();
+
+        $this->assertCount(1, $content);
+        $this->assertInstanceOf(Text::class, $content[0]);
+        $text = $content[0]->getText();
+        $this->assertSame('Research missing data for this city: Berlin (pop: 3500000)', $text);
+    }
+
+    public function testSerializesObjectsWithNormalizerContext()
+    {
+        $normalizer = new ObjectNormalizer();
+        $registry = new TemplateRendererRegistry([new StringTemplateRenderer()]);
+        $listener = new TemplateRendererListener($registry, $normalizer);
+
+        $city = new City(name: 'Paris', population: 2100000);
+        $template = Template::string('City data: {city.name} - {city.population}');
+        $messageBag = new MessageBag(Message::ofUser($template));
+
+        $event = new InvocationEvent($this->model, $messageBag, [
+            'template_vars' => ['city' => $city],
+            'template_options' => [
+                'normalizer_context' => ['groups' => ['default']],
+            ],
+        ]);
+
+        $listener($event);
+
+        $input = $event->getInput();
+        $this->assertInstanceOf(MessageBag::class, $input);
+        $messages = $input->getMessages();
+        $content = $messages[0]->getContent();
+
+        $this->assertInstanceOf(Text::class, $content[0]);
+        $text = $content[0]->getText();
+        $this->assertSame('City data: Paris - 2100000', $text);
+    }
+
+    public function testThrowsExceptionWhenObjectProvidedWithoutNormalizer()
+    {
+        $city = new City(name: 'London');
+        $template = Template::string('City: {city}');
+        $messageBag = new MessageBag(Message::ofUser($template));
+
+        $event = new InvocationEvent($this->model, $messageBag, [
+            'template_vars' => ['city' => $city],
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Template variable "city" is an object but no normalizer is configured');
+
+        ($this->listener)($event);
+    }
+
+    public function testThrowsExceptionWhenTemplateOptionsIsNotArray()
+    {
+        $template = Template::string('Hello {name}!');
+        $messageBag = new MessageBag(Message::forSystem($template));
+
+        $event = new InvocationEvent($this->model, $messageBag, [
+            'template_vars' => ['name' => 'World'],
+            'template_options' => 'not an array',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "template_options" option must be an array.');
+
+        ($this->listener)($event);
+    }
+
+    public function testThrowsExceptionWhenNormalizerContextIsNotArray()
+    {
+        $template = Template::string('Hello {name}!');
+        $messageBag = new MessageBag(Message::forSystem($template));
+
+        $event = new InvocationEvent($this->model, $messageBag, [
+            'template_vars' => ['name' => 'World'],
+            'template_options' => [
+                'normalizer_context' => 'not an array',
+            ],
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "normalizer_context" option must be an array.');
+
+        ($this->listener)($event);
+    }
+
+    public function testRemovesTemplateOptionsFromOptions()
+    {
+        $normalizer = new ObjectNormalizer();
+        $registry = new TemplateRendererRegistry([new StringTemplateRenderer()]);
+        $listener = new TemplateRendererListener($registry, $normalizer);
+
+        $city = new City(name: 'Tokyo');
+        $template = Template::string('City: {city}');
+        $messageBag = new MessageBag(Message::ofUser($template));
+
+        $event = new InvocationEvent($this->model, $messageBag, [
+            'template_vars' => ['city' => $city],
+            'template_options' => [
+                'normalizer_context' => ['groups' => ['api']],
+            ],
+            'other_option' => 'value',
+        ]);
+
+        $listener($event);
+
+        $options = $event->getOptions();
+        $this->assertArrayNotHasKey('template_vars', $options);
+        $this->assertArrayNotHasKey('template_options', $options);
+        $this->assertArrayHasKey('other_option', $options);
+    }
+
+    public function testThrowsExceptionForNonStringTemplateVarKey()
+    {
+        $template = Template::string('Value: {0}');
+        $messageBag = new MessageBag(Message::ofUser($template));
+
+        $event = new InvocationEvent($this->model, $messageBag, [
+            'template_vars' => [0 => 'value'],
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Template variable keys must be strings');
+
+        ($this->listener)($event);
     }
 }

@@ -16,8 +16,10 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -80,13 +82,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $documentToIndex = fn (VectorDocument $document): array => [
             'index' => [
                 '_index' => $this->indexName,
-                '_id' => $document->id,
+                '_id' => $document->getId(),
             ],
         ];
 
         $documentToPayload = fn (VectorDocument $document): array => [
-            $this->vectorsField => $document->vector->getData(),
-            'metadata' => json_encode($document->metadata->getArrayCopy()),
+            $this->vectorsField => $document->getVector()->getData(),
+            'metadata' => json_encode($document->getMetadata()->getArrayCopy()),
         ];
 
         $this->request('POST', '_bulk', static function () use ($documents, $documentToIndex, $documentToPayload) {
@@ -98,11 +100,38 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $this->request('POST', '_bulk', function () use ($ids) {
+            foreach ($ids as $id) {
+                yield json_encode([
+                    'delete' => [
+                        '_index' => $this->indexName,
+                        '_id' => $id,
+                    ],
+                ]).\PHP_EOL;
+            }
+        });
     }
 
-    public function query(Vector $vector, array $options = []): iterable
+    public function supports(string $queryClass): bool
     {
+        return VectorQuery::class === $queryClass;
+    }
+
+    public function query(QueryInterface $query, array $options = []): iterable
+    {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
+        $vector = $query->getVector();
         $documents = $this->request('POST', \sprintf('%s/_search', $this->indexName), [
             'size' => $options['size'] ?? 100,
             'query' => [

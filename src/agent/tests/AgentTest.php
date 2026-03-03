@@ -30,6 +30,7 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Test\InMemoryPlatform;
 
 final class AgentTest extends TestCase
 {
@@ -53,10 +54,17 @@ final class AgentTest extends TestCase
         $this->assertInstanceOf(AgentInterface::class, $agent);
     }
 
-    public function testConstructorSetsAgentOnAgentAwareProcessors()
+    public function testAgentExposesHisModel()
     {
         $platform = $this->createMock(PlatformInterface::class);
 
+        $agent = new Agent($platform, 'gpt-4o');
+
+        $this->assertSame('gpt-4o', $agent->getModel());
+    }
+
+    public function testSetsAgentOnAgentAwareProcessors()
+    {
         $agentAwareProcessor = new class implements InputProcessorInterface, AgentAwareInterface {
             public ?AgentInterface $agent = null;
 
@@ -70,42 +78,30 @@ final class AgentTest extends TestCase
             }
         };
 
-        $agent = new Agent($platform, 'gpt-4o', [$agentAwareProcessor]);
+        $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [$agentAwareProcessor]);
+        $agent->call(new MessageBag());
 
         $this->assertSame($agent, $agentAwareProcessor->agent);
     }
 
     public function testConstructorThrowsExceptionForInvalidInputProcessor()
     {
-        $platform = $this->createMock(PlatformInterface::class);
-        $invalidProcessor = new \stdClass();
-
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(\sprintf('Processor "stdClass" must implement "%s".', InputProcessorInterface::class));
+        $this->expectExceptionMessage(\sprintf('Input processor "stdClass" must implement "%s".', InputProcessorInterface::class));
 
-        /* @phpstan-ignore-next-line */
-        new Agent($platform, 'gpt-4o', [$invalidProcessor]);
+        /** @phpstan-ignore-next-line argument.type */
+        $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [new \stdClass()]);
+        $agent->call(new MessageBag());
     }
 
     public function testConstructorThrowsExceptionForInvalidOutputProcessor()
     {
-        $platform = $this->createMock(PlatformInterface::class);
-        $invalidProcessor = new \stdClass();
-
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(\sprintf('Processor "stdClass" must implement "%s".', OutputProcessorInterface::class));
+        $this->expectExceptionMessage(\sprintf('Output processor "stdClass" must implement "%s".', OutputProcessorInterface::class));
 
-        /* @phpstan-ignore-next-line */
-        new Agent($platform, 'gpt-4o', [], [$invalidProcessor]);
-    }
-
-    public function testAgentExposesHisModel()
-    {
-        $platform = $this->createMock(PlatformInterface::class);
-
-        $agent = new Agent($platform, 'gpt-4o');
-
-        $this->assertSame('gpt-4o', $agent->getModel());
+        /** @phpstan-ignore-next-line argument.type */
+        $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [], [new \stdClass()]);
+        $agent->call(new MessageBag());
     }
 
     public function testCallProcessesInputThroughProcessors()

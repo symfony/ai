@@ -42,7 +42,6 @@ final class OllamaClient implements ModelClientInterface
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $hostUrl,
     ) {
     }
 
@@ -66,6 +65,10 @@ final class OllamaClient implements ModelClientInterface
      */
     private function doCompletionRequest(array|string $payload, array $options = []): RawHttpResult
     {
+        if (\is_string($payload)) {
+            throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
+        }
+
         // Revert Ollama's default streaming behavior
         $options['stream'] ??= false;
 
@@ -76,7 +79,7 @@ final class OllamaClient implements ModelClientInterface
 
         $options = $this->normalizeOllamaOptions($options, self::CHAT_TOP_LEVEL_KEYS);
 
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/api/chat', $this->hostUrl), [
+        return new RawHttpResult($this->httpClient->request('POST', '/api/chat', [
             'headers' => ['Content-Type' => 'application/json'],
             'json' => array_merge($options, $payload),
         ]));
@@ -90,7 +93,7 @@ final class OllamaClient implements ModelClientInterface
     {
         $options = self::normalizeOllamaOptions($options, self::EMBED_TOP_LEVEL_KEYS);
 
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/api/embed', $this->hostUrl), [
+        return new RawHttpResult($this->httpClient->request('POST', '/api/embed', [
             'json' => array_merge($options, [
                 'model' => $model->getName(),
                 'input' => $payload,

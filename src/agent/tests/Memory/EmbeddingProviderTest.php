@@ -24,7 +24,11 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Document\Metadata;
+use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 final class EmbeddingProviderTest extends TestCase
@@ -93,7 +97,7 @@ final class EmbeddingProviderTest extends TestCase
         $store = $this->createMock(StoreInterface::class);
         $store->expects($this->once())
             ->method('query')
-            ->with($vector)
+            ->with($this->callback(static fn ($query) => $query instanceof VectorQuery && $query->getVector() === $vector))
             ->willReturn([]);
 
         $embeddingProvider = new EmbeddingProvider($platform, new Model('text-embedding-3-small'), $store);
@@ -123,12 +127,12 @@ final class EmbeddingProviderTest extends TestCase
 
         $store = $this->createMock(StoreInterface::class);
         $generator = (static function () {
-            yield (object) ['metadata' => ['fact' => 'The sky is blue']];
-            yield (object) ['metadata' => ['fact' => 'Water is wet']];
+            yield new VectorDocument(123, new NullVector(), new Metadata(['fact' => 'The sky is blue']));
+            yield new VectorDocument(234, new NullVector(), new Metadata(['fact' => 'Water is wet']));
         })();
         $store->expects($this->once())
             ->method('query')
-            ->with($vector)
+            ->with($this->callback(static fn ($query) => $query instanceof VectorQuery && $query->getVector() === $vector))
             ->willReturn($generator);
 
         $embeddingProvider = new EmbeddingProvider($platform, new Model('text-embedding-3-small'), $store);

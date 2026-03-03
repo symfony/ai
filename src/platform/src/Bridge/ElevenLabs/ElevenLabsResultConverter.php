@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\Component\HttpClient\Exception\JsonException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -42,10 +43,17 @@ final class ElevenLabsResultConverter implements ResultConverterInterface
     {
         $response = $result->getObject();
 
+        if (200 !== $response->getStatusCode()) {
+            $errorMessage = $this->extractErrorMessage($response)
+                ?? \sprintf('The ElevenLabs API returned a non-successful status code "%d".', $response->getStatusCode());
+
+            throw new RuntimeException($errorMessage);
+        }
+
         return match (true) {
-            \array_key_exists('stream', $options) && $options['stream'] => new StreamResult($this->convertToGenerator($response)),
-            str_contains($response->getInfo('url'), 'speech-to-text') => new TextResult($result->getData()['text']),
+            str_contains($response->getInfo('url'), 'text-to-speech') && \array_key_exists('stream', $options) && $options['stream'] => new StreamResult($this->convertToGenerator($response)),
             str_contains($response->getInfo('url'), 'text-to-speech') => new BinaryResult($result->getObject()->getContent(), 'audio/mpeg'),
+            str_contains($response->getInfo('url'), 'speech-to-text') => new TextResult($result->getData()['text']),
             default => throw new RuntimeException('Unsupported ElevenLabs response.'),
         };
     }
@@ -67,6 +75,17 @@ final class ElevenLabsResultConverter implements ResultConverterInterface
             }
 
             yield $chunk->getContent();
+        }
+    }
+
+    private function extractErrorMessage(ResponseInterface $response): ?string
+    {
+        try {
+            $data = $response->toArray(false);
+
+            return $data['detail']['message'] ?? null;
+        } catch (JsonException) {
+            return null;
         }
     }
 }

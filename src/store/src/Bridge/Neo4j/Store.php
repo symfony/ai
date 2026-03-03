@@ -16,8 +16,10 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -61,9 +63,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
                 'statement' => \sprintf('CREATE (n:%s {id: $id, metadata: $metadata, %s: $embeddings}) RETURN n', $this->nodeName, $this->embeddingsField),
                 'parameters' => [
-                    'id' => $document->id->toRfc4122(),
-                    'metadata' => json_encode($document->metadata->getArrayCopy()),
-                    'embeddings' => $document->vector->getData(),
+                    'id' => $document->getId(),
+                    'metadata' => json_encode($document->getMetadata()->getArrayCopy()),
+                    'embeddings' => $document->getVector()->getData(),
                 ],
             ]);
         }
@@ -71,11 +73,34 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
+            'statement' => \sprintf('MATCH (n:%s) WHERE n.id IN $ids DELETE n', $this->nodeName),
+            'parameters' => [
+                'ids' => $ids,
+            ],
+        ]);
     }
 
-    public function query(Vector $vector, array $options = []): iterable
+    public function supports(string $queryClass): bool
     {
+        return VectorQuery::class === $queryClass;
+    }
+
+    public function query(QueryInterface $query, array $options = []): iterable
+    {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
+        $vector = $query->getVector();
         $response = $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
             'statement' => \sprintf('CALL db.index.vector.queryNodes("%s", 5, $vectors) YIELD node, score RETURN node, score', $this->vectorIndexName),
             'parameters' => [

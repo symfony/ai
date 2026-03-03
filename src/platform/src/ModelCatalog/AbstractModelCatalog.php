@@ -38,7 +38,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
         $options = $parsed['options'];
 
         if (!isset($this->models[$catalogKey])) {
-            throw new ModelNotFoundException(\sprintf('Model "%s" not found in %s.', $actualModelName, static::class));
+            throw new ModelNotFoundException(\sprintf('Model "%s" not found in "%s".', $actualModelName, static::class));
         }
 
         $modelConfig = $this->models[$catalogKey];
@@ -123,7 +123,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
                 $data[$key] = false;
             } elseif (is_numeric($value) && \is_string($value)) {
                 // Convert to int if it's a whole number, otherwise to float
-                $data[$key] = str_contains($value, '.') ? (float) $value : (int) $value;
+                $data[$key] = str_contains($value, '.') || str_contains($value, 'e') || str_contains($value, 'E') ? (float) $value : (int) $value;
             }
         }
 

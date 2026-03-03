@@ -15,6 +15,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Neo4j\Store;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -288,9 +291,27 @@ final class StoreTest extends TestCase
         $store->setup();
         $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(2, $results);
         $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'bolt://localhost:7687', 'neo4j', 'password', 'neo4j', 'vector_index', 'Document');
+        $this->assertTrue($store->supports(VectorQuery::class));
+    }
+
+    public function testStoreDoesNotSupportTextQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'bolt://localhost:7687', 'neo4j', 'password', 'neo4j', 'vector_index', 'Document');
+        $this->assertFalse($store->supports(TextQuery::class));
+    }
+
+    public function testStoreDoesNotSupportHybridQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'bolt://localhost:7687', 'neo4j', 'password', 'neo4j', 'vector_index', 'Document');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

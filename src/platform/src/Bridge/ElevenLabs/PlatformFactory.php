@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -25,8 +26,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class PlatformFactory
 {
     public static function create(
-        string $apiKey,
-        string $hostUrl = 'https://api.elevenlabs.io/v1',
+        #[\SensitiveParameter] string $apiKey,
+        string $endpoint = 'https://api.elevenlabs.io/v1/',
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
@@ -34,8 +35,14 @@ final class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
+        $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, [
+            'headers' => [
+                'xi-api-key' => $apiKey,
+            ],
+        ]);
+
         return new Platform(
-            [new ElevenLabsClient($httpClient, $apiKey, $hostUrl)],
+            [new ElevenLabsClient($httpClient)],
             [new ElevenLabsResultConverter($httpClient)],
             $modelCatalog,
             $contract ?? ElevenLabsContract::create(),

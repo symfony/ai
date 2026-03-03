@@ -1,0 +1,9 @@
+services:
+    postgres:
+        image: pgvector/pgvector:0.8.0-pg17
+        environment:
+            POSTGRES_DB: test_database
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        ports:
+            - '5432:5432'

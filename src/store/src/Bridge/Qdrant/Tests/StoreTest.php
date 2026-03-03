@@ -14,7 +14,11 @@ namespace Symfony\AI\Store\Bridge\Qdrant\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Qdrant\Store;
+use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -38,7 +42,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test".');
@@ -65,7 +69,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $store->setup();
 
@@ -80,7 +84,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test".');
@@ -101,7 +105,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $store->drop();
 
@@ -127,7 +131,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $store->setup();
 
@@ -142,7 +146,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points?wait=true".');
@@ -164,9 +168,9 @@ final class StoreTest extends TestCase
                 'result' => [
                     'points' => [
                         [
-                            'id' => (string) $document->id,
-                            'payload' => (array) $document->metadata,
-                            'vector' => $document->vector->getData(),
+                            'id' => (string) $document->getId(),
+                            'payload' => (array) $document->getMetadata(),
+                            'vector' => $document->getVector()->getData(),
                         ],
                     ],
                 ],
@@ -175,7 +179,7 @@ final class StoreTest extends TestCase
             ]);
         }, 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
         $store->add($document);
 
@@ -202,7 +206,7 @@ final class StoreTest extends TestCase
             ]);
         }, 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test', async: true);
+        $store = new Store($httpClient, 'test', async: true);
 
         $store->add($document);
 
@@ -217,17 +221,12 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:6333',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:6333/collections/test/points/query".');
         $this->expectExceptionCode(400);
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testStoreCanQuery()
@@ -253,9 +252,9 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertSame(1, $httpClient->getRequestsCount());
         $this->assertCount(2, $results);
@@ -284,9 +283,9 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:6333', 'test', 'test');
+        $store = new Store($httpClient, 'test');
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'filter' => [
                 'must' => [
                     ['key' => 'foo', 'match' => ['value' => 'bar']],
@@ -298,11 +297,29 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $results);
 
         foreach ($results as $result) {
-            $this->assertArrayHasKey('foo', $result->metadata);
+            $this->assertArrayHasKey('foo', $result->getMetadata());
             $this->assertTrue(
-                'bar' === $result->metadata['foo'] || (\is_array($result->metadata['foo']) && \in_array('bar', $result->metadata['foo'], true)),
+                'bar' === $result->getMetadata()['foo'] || (\is_array($result->getMetadata()['foo']) && \in_array('bar', $result->getMetadata()['foo'], true)),
                 "Value should be 'bar' or an array containing 'bar'"
             );
         }
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $store = StoreFactory::create('test', 'http://127.0.0.1:6333', 'test', new MockHttpClient());
+        $this->assertTrue($store->supports(VectorQuery::class));
+    }
+
+    public function testStoreDoesNotSupportTextQuery()
+    {
+        $store = StoreFactory::create('test', 'http://127.0.0.1:6333', 'test', new MockHttpClient());
+        $this->assertFalse($store->supports(TextQuery::class));
+    }
+
+    public function testStoreDoesNotSupportHybridQuery()
+    {
+        $store = StoreFactory::create('test', 'http://127.0.0.1:6333', 'test', new MockHttpClient());
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

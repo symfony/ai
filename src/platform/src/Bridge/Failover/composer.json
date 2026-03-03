@@ -24,7 +24,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-platform": "^0.3",
+        "symfony/ai-platform": "^0.5",
         "symfony/clock": "^7.3|^8.0",
         "symfony/rate-limiter": "^7.3|^8.0"
     },
@@ -32,7 +32,7 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5.46"
+        "phpunit/phpunit": "^11.5.53"
     },
     "minimum-stability": "dev",
     "autoload": {

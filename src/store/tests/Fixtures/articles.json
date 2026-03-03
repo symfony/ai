@@ -1,0 +1,20 @@
+{
+    "source": "internal-cms",
+    "generatedAt": "2026-01-10T12:34:56Z",
+    "articles": [
+        {
+            "id": "a-001",
+            "title": "Introduction to Solar Energy",
+            "author": "Paula Schmidt",
+            "tags": ["energy", "solar"],
+            "body": "Solar energy is a renewable energy source derived from the sun. It plays a key role in sustainable power generation."
+        },
+        {
+            "id": "a-002",
+            "title": "Wind Power Basics",
+            "author": "Paula Schmidt",
+            "tags": ["energy", "wind"],
+            "body": "Wind power harnesses kinetic energy from moving air using turbines. It is one of the fastest growing energy sources."
+        }
+    ]
+}

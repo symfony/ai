@@ -1,0 +1,13 @@
+services:
+    manticore:
+        image: manticoresearch/manticore
+        ulimits:
+            nproc: 65535
+            nofile:
+                soft: 65535
+                hard: 65535
+            memlock:
+                soft: -1
+                hard: -1
+        ports:
+            - '9308:9308'

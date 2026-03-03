@@ -97,7 +97,7 @@ class AgentProcessorTest extends TestCase
 
         $agent = $this->createStub(AgentInterface::class);
 
-        $processor = new AgentProcessor($toolbox, keepToolMessages: true);
+        $processor = new AgentProcessor($toolbox, excludeToolMessages: false);
         $processor->setAgent($agent);
 
         $output = new Output('gpt-4', $result, $messageBag);
@@ -123,7 +123,7 @@ class AgentProcessorTest extends TestCase
 
         $agent = $this->createStub(AgentInterface::class);
 
-        $processor = new AgentProcessor($toolbox, keepToolMessages: false);
+        $processor = new AgentProcessor($toolbox, excludeToolMessages: true);
         $processor->setAgent($agent);
 
         $output = new Output('gpt-4', $result, $messageBag);

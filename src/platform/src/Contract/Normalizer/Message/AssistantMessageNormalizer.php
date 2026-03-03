@@ -38,17 +38,14 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
     /**
      * @param AssistantMessage $data
      *
-     * @return array{role: 'assistant', content?: string, tool_calls?: array<array<string, mixed>>}
+     * @return array{role: 'assistant', content: string|null, tool_calls?: array<array<string, mixed>>}
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $array = [
             'role' => $data->getRole()->value,
+            'content' => $data->getContent(),
         ];
-
-        if (null !== $data->getContent()) {
-            $array['content'] = $data->getContent();
-        }
 
         if ($data->hasToolCalls()) {
             $array['tool_calls'] = $this->normalizer->normalize($data->getToolCalls(), $format, $context);

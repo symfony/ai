@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -135,20 +136,20 @@ final class SearchStoreTest extends TestCase
 
     public function testQueryReturnsDocuments()
     {
-        $uuid1 = Uuid::v4();
-        $uuid2 = Uuid::v4();
+        $uuid1 = Uuid::v4()->toString();
+        $uuid2 = Uuid::v4()->toString();
 
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
                 'value' => [
                     [
-                        'id' => $uuid1->toRfc4122(),
+                        'id' => $uuid1,
                         'vector' => [0.1, 0.2, 0.3],
                         '@search.score' => 0.95,
                         'title' => 'First Document',
                     ],
                     [
-                        'id' => $uuid2->toRfc4122(),
+                        'id' => $uuid2,
                         'vector' => [0.4, 0.5, 0.6],
                         '@search.score' => 0.85,
                         'title' => 'Second Document',
@@ -167,15 +168,15 @@ final class SearchStoreTest extends TestCase
             '2023-11-01',
         );
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(2, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
         $this->assertInstanceOf(VectorDocument::class, $results[1]);
-        $this->assertEquals($uuid1, $results[0]->id);
-        $this->assertEquals($uuid2, $results[1]->id);
-        $this->assertSame('First Document', $results[0]->metadata['title']);
-        $this->assertSame('Second Document', $results[1]->metadata['title']);
+        $this->assertEquals($uuid1, $results[0]->getId());
+        $this->assertEquals($uuid2, $results[1]->getId());
+        $this->assertSame('First Document', $results[0]->getMetadata()['title']);
+        $this->assertSame('Second Document', $results[1]->getMetadata()['title']);
     }
 
     public function testQueryWithCustomVectorFieldName()
@@ -216,7 +217,7 @@ final class SearchStoreTest extends TestCase
             'custom_vector_field',
         );
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
@@ -247,7 +248,7 @@ final class SearchStoreTest extends TestCase
         $this->expectExceptionMessage('HTTP 400 returned');
         $this->expectExceptionCode(400);
 
-        iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testQueryWithNullVector()
@@ -277,11 +278,11 @@ final class SearchStoreTest extends TestCase
             '2023-11-01',
         );
 
-        $results = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
-        $this->assertInstanceOf(NullVector::class, $results[0]->vector);
+        $this->assertInstanceOf(NullVector::class, $results[0]->getVector());
     }
 
     public function testRemoveWithSingleId()
@@ -424,5 +425,11 @@ final class SearchStoreTest extends TestCase
         $this->expectExceptionCode(404);
 
         $store->remove('nonexistent-doc');
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $store = new SearchStore(new MockHttpClient(), 'https://test.search.windows.net', 'test-key', 'test-index', '2023-11-01');
+        $this->assertTrue($store->supports(VectorQuery::class));
     }
 }

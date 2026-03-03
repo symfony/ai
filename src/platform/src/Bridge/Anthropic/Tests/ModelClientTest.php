@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Anthropic\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelClient;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -95,6 +96,94 @@ class ModelClientTest extends TestCase
 
         $options = ['some_other_option' => 'value'];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testThinkingOptionAddsBetaHeaderAndPassesThrough()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertArrayHasKey('anthropic-beta', $headers);
+            $this->assertSame('interleaved-thinking-2025-05-14', $headers['anthropic-beta']);
+
+            $body = json_decode($options['body'], true);
+            $this->assertSame(['type' => 'enabled', 'budget_tokens' => 10000], $body['thinking']);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = [
+            'thinking' => ['type' => 'enabled', 'budget_tokens' => 10000],
+        ];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testThinkingBetaHeaderCombinesWithOtherBetaFeatures()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertArrayHasKey('anthropic-beta', $headers);
+            $this->assertStringContainsString('interleaved-thinking-2025-05-14', $headers['anthropic-beta']);
+            $this->assertStringContainsString('other-feature', $headers['anthropic-beta']);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = [
+            'thinking' => ['type' => 'enabled', 'budget_tokens' => 5000],
+            'beta_features' => ['other-feature'],
+        ];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testTransformsResponseFormatToOutputConfig()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertArrayNotHasKey('anthropic-beta', $headers);
+
+            $body = json_decode($options['body'], true);
+            $this->assertArrayHasKey('output_config', $body);
+            $this->assertArrayHasKey('format', $body['output_config']);
+            $this->assertSame('json_schema', $body['output_config']['format']['type']);
+            $this->assertSame(['type' => 'object', 'properties' => ['foo' => ['type' => 'string']]], $body['output_config']['format']['schema']);
+            $this->assertArrayNotHasKey('response_format', $body);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = [
+            'response_format' => [
+                'json_schema' => [
+                    'schema' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'foo' => ['type' => 'string'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testStringPayloadThrowsException()
+    {
+        $this->modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Payload must be an array, but a string was given');
+
+        $this->modelClient->request($this->model, 'string payload');
     }
 
     /**

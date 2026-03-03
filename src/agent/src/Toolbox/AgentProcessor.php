@@ -50,7 +50,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         private readonly ToolboxInterface $toolbox,
         private readonly ToolResultConverter $resultConverter = new ToolResultConverter(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
-        private readonly bool $keepToolMessages = false,
+        private readonly bool $excludeToolMessages = false,
         private readonly bool $includeSources = false,
         private readonly ?int $maxToolCalls = null,
     ) {
@@ -104,7 +104,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
     private function handleToolCallsCallback(Output $output, ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null): ResultInterface
     {
         ++$this->nestingLevel;
-        $messages = $this->keepToolMessages ? $output->getMessageBag() : clone $output->getMessageBag();
+        $messages = $this->excludeToolMessages ? clone $output->getMessageBag() : $output->getMessageBag();
 
         if (null !== $streamedAssistantResponse && '' !== $streamedAssistantResponse->getContent()) {
             $messages->add($streamedAssistantResponse);

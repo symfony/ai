@@ -22,13 +22,14 @@ use Mcp\Schema\Prompt;
 use Mcp\Schema\Resource;
 use Mcp\Schema\ResourceTemplate;
 use Mcp\Schema\Tool;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Decorator for Registry that provides access to capabilities for the profiler.
  *
  * @author Camille Islasse <guiziweb@gmail.com>
  */
-final class TraceableRegistry implements RegistryInterface
+final class TraceableRegistry implements RegistryInterface, ResetInterface
 {
     public function __construct(
         private readonly RegistryInterface $registry,
@@ -136,5 +137,10 @@ final class TraceableRegistry implements RegistryInterface
     public function getPrompt(string $name): PromptReference
     {
         return $this->registry->getPrompt($name);
+    }
+
+    public function reset(): void
+    {
+        $this->clear();
     }
 }

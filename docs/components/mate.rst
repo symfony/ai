@@ -221,7 +221,7 @@ Container Introspection
 Configure the cache directory::
 
     $container->parameters()
-        ->set('ai_mate_symfony.cache_dir', '%root_dir%/var/cache');
+        ->set('ai_mate_symfony.cache_dir', '%mate.root_dir%/var/cache');
 
 **Troubleshooting:**
 
@@ -347,7 +347,7 @@ The Monolog bridge (``symfony/ai-monolog-mate-extension``) provides log search a
 Configure the log directory::
 
     $container->parameters()
-        ->set('ai_mate_monolog.log_dir', '%root_dir%/var/log');
+        ->set('ai_mate_monolog.log_dir', '%mate.root_dir%/var/log');
 
 **Troubleshooting**
 

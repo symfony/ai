@@ -33,7 +33,11 @@ final class StringTemplateRenderer implements TemplateRendererInterface
     {
         $result = $template->getTemplate();
 
-        foreach ($variables as $key => $value) {
+        foreach ($this->flattenVariables($variables) as $key => $value) {
+            if (null === $value) {
+                $value = '';
+            }
+
             if (!\is_string($key)) {
                 throw new InvalidArgumentException(\sprintf('Template variable keys must be strings, "%s" given.', get_debug_type($key)));
             }
@@ -46,5 +50,27 @@ final class StringTemplateRenderer implements TemplateRendererInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $variables
+     *
+     * @return array<string, mixed>
+     */
+    private function flattenVariables(array $variables, string $prefix = ''): array
+    {
+        $flattened = [];
+
+        foreach ($variables as $key => $value) {
+            $fullKey = $prefix ? $prefix.'.'.$key : $key;
+
+            if (\is_array($value)) {
+                $flattened = array_merge($flattened, $this->flattenVariables($value, $fullKey));
+            } else {
+                $flattened[$fullKey] = $value;
+            }
+        }
+
+        return $flattened;
     }
 }

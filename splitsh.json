@@ -41,6 +41,7 @@
         },
         "ai-ai-ml-api-platform": "src/platform/src/Bridge/AiMlApi",
         "ai-albert-platform": "src/platform/src/Bridge/Albert",
+        "ai-amazeeai-platform": "src/platform/src/Bridge/AmazeeAi",
         "ai-anthropic-platform": "src/platform/src/Bridge/Anthropic",
         "ai-azure-platform": "src/platform/src/Bridge/Azure",
         "ai-bedrock-platform": "src/platform/src/Bridge/Bedrock",
@@ -58,8 +59,10 @@
         "ai-lm-studio-platform": "src/platform/src/Bridge/LmStudio",
         "ai-meta-platform": "src/platform/src/Bridge/Meta",
         "ai-mistral-platform": "src/platform/src/Bridge/Mistral",
+        "ai-models-dev-platform": "src/platform/src/Bridge/ModelsDev",
         "ai-ollama-platform": "src/platform/src/Bridge/Ollama",
         "ai-open-ai-platform": "src/platform/src/Bridge/OpenAi",
+        "ai-open-responses-platform": "src/platform/src/Bridge/OpenResponses",
         "ai-open-router-platform": "src/platform/src/Bridge/OpenRouter",
         "ai-ovh-platform": "src/platform/src/Bridge/Ovh",
         "ai-perplexity-platform": "src/platform/src/Bridge/Perplexity",
@@ -91,6 +94,8 @@
         "ai-supabase-store": "src/store/src/Bridge/Supabase",
         "ai-surreal-db-store": "src/store/src/Bridge/SurrealDb",
         "ai-typesense-store": "src/store/src/Bridge/Typesense",
-        "ai-weaviate-store": "src/store/src/Bridge/Weaviate"
+        "ai-vektor-store": "src/store/src/Bridge/Vektor",
+        "ai-weaviate-store": "src/store/src/Bridge/Weaviate",
+        "ai-s3vectors-store": "src/store/src/Bridge/S3Vectors"
     }
 }

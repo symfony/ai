@@ -15,7 +15,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 
-$result = $platform->invoke('gemini-embedding-exp-03-07', <<<TEXT
+$result = $platform->invoke('gemini-embedding-001', <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.
     The people of Japan were very kind and hardworking. They loved their country very much and took care of it. The
     country was very peaceful and prosperous. The people lived happily ever after.

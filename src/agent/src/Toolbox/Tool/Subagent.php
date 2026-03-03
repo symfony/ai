@@ -12,6 +12,8 @@
 namespace Symfony\AI\Agent\Toolbox\Tool;
 
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\TextResult;
@@ -19,8 +21,10 @@ use Symfony\AI\Platform\Result\TextResult;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class Subagent
+final class Subagent implements HasSourcesInterface
 {
+    use HasSourcesTrait;
+
     public function __construct(
         private readonly AgentInterface $agent,
     ) {
@@ -34,6 +38,10 @@ final class Subagent
         $result = $this->agent->call(new MessageBag(Message::ofUser($message)));
 
         \assert($result instanceof TextResult);
+
+        foreach ($result->getMetadata()->get('sources', []) as $source) {
+            $this->addSource($source);
+        }
 
         return $result->getContent();
     }

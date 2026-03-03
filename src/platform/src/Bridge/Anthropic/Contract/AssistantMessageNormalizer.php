@@ -15,7 +15,6 @@ use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 
@@ -32,25 +31,58 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
      * @return array{
      *     role: 'assistant',
      *     content: string|list<array{
-     *         type: 'tool_use',
-     *         id: string,
-     *         name: string,
-     *         input: array<string, mixed>
+     *         type: 'thinking'|'text'|'tool_use',
+     *         id?: string,
+     *         name?: string,
+     *         input?: array<string, mixed>,
+     *         text?: string,
+     *         thinking?: string,
+     *         signature?: string
      *     }>
      * }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        return [
-            'role' => 'assistant',
-            'content' => $data->hasToolCalls() ? array_map(static function (ToolCall $toolCall) {
-                return [
+        $hasBlocks = $data->hasToolCalls() || $data->hasThinkingContent();
+
+        if (!$hasBlocks) {
+            return [
+                'role' => 'assistant',
+                'content' => $data->getContent() ?? '',
+            ];
+        }
+
+        $blocks = [];
+
+        if ($data->hasThinkingContent()) {
+            $thinkingBlock = [
+                'type' => 'thinking',
+                'thinking' => $data->getThinkingContent(),
+            ];
+            if (null !== $data->getThinkingSignature()) {
+                $thinkingBlock['signature'] = $data->getThinkingSignature();
+            }
+            $blocks[] = $thinkingBlock;
+        }
+
+        if (null !== $data->getContent()) {
+            $blocks[] = ['type' => 'text', 'text' => $data->getContent()];
+        }
+
+        if ($data->hasToolCalls()) {
+            foreach ($data->getToolCalls() as $toolCall) {
+                $blocks[] = [
                     'type' => 'tool_use',
                     'id' => $toolCall->getId(),
                     'name' => $toolCall->getName(),
                     'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
                 ];
-            }, $data->getToolCalls()) : $data->getContent(),
+            }
+        }
+
+        return [
+            'role' => 'assistant',
+            'content' => $blocks,
         ];
     }
 

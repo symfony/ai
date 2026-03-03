@@ -26,8 +26,6 @@ final class ElevenLabsClient implements ModelClientInterface
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        #[\SensitiveParameter] private readonly string $apiKey,
-        private readonly string $hostUrl = 'https://api.elevenlabs.io/v1',
     ) {
     }
 
@@ -42,18 +40,14 @@ final class ElevenLabsClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('The payload must be an array, received "%s".', get_debug_type($payload)));
         }
 
-        if ($model->supports(Capability::SPEECH_TO_TEXT)) {
-            return $this->doSpeechToTextRequest($model, $payload);
-        }
-
-        if ($model->supports(Capability::TEXT_TO_SPEECH)) {
-            return $this->doTextToSpeechRequest($model, $payload, [
+        return match (true) {
+            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToTextRequest($model, $payload),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeechRequest($model, $payload, [
                 ...$options,
                 ...$model->getOptions(),
-            ]);
-        }
-
-        throw new InvalidArgumentException(\sprintf('The model "%s" does not support text-to-speech or speech-to-text, please check the model information.', $model->getName()));
+            ]),
+            default => throw new InvalidArgumentException(\sprintf('The model "%s" does not support text-to-speech or speech-to-text, please check the model information.', $model->getName())),
+        };
     }
 
     /**
@@ -61,10 +55,7 @@ final class ElevenLabsClient implements ModelClientInterface
      */
     private function doSpeechToTextRequest(Model $model, array|string $payload): RawHttpResult
     {
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/speech-to-text', $this->hostUrl), [
-            'headers' => [
-                'xi-api-key' => $this->apiKey,
-            ],
+        return new RawHttpResult($this->httpClient->request('POST', 'speech-to-text', [
             'body' => [
                 'file' => fopen($payload['input_audio']['path'], 'r'),
                 'model_id' => $model->getName(),
@@ -90,15 +81,12 @@ final class ElevenLabsClient implements ModelClientInterface
         $stream = $options['stream'] ?? false;
 
         $url = $stream
-            ? \sprintf('%s/text-to-speech/%s/stream', $this->hostUrl, $voice)
-            : \sprintf('%s/text-to-speech/%s', $this->hostUrl, $voice);
+            ? \sprintf('text-to-speech/%s/stream', $voice)
+            : \sprintf('text-to-speech/%s', $voice);
 
         unset($options['voice'], $options['stream']);
 
         return new RawHttpResult($this->httpClient->request('POST', $url, [
-            'headers' => [
-                'xi-api-key' => $this->apiKey,
-            ],
             'json' => [
                 'text' => $payload['text'],
                 'model_id' => $model->getName(),

@@ -23,16 +23,11 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 final class TemplateRendererRegistry implements TemplateRendererRegistryInterface
 {
     /**
-     * @var TemplateRendererInterface[]
-     */
-    private readonly array $renderers;
-
-    /**
      * @param iterable<TemplateRendererInterface> $renderers
      */
-    public function __construct(iterable $renderers)
-    {
-        $this->renderers = $renderers instanceof \Traversable ? iterator_to_array($renderers) : $renderers;
+    public function __construct(
+        private readonly iterable $renderers,
+    ) {
     }
 
     public function getRenderer(string $type): TemplateRendererInterface

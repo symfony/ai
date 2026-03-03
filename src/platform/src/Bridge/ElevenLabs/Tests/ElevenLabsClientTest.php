@@ -28,10 +28,7 @@ final class ElevenLabsClientTest extends TestCase
 {
     public function testSupportsModel()
     {
-        $client = new ElevenLabsClient(
-            new MockHttpClient(),
-            'my-api-key',
-        );
+        $client = new ElevenLabsClient(new MockHttpClient());
 
         $this->assertTrue($client->supports(new ElevenLabs('eleven_multilingual_v2')));
         $this->assertFalse($client->supports(new Model('any-model')));
@@ -51,10 +48,7 @@ final class ElevenLabsClientTest extends TestCase
         ]);
         $normalizer = new AudioNormalizer();
 
-        $client = new ElevenLabsClient(
-            $mockHttpClient,
-            'my-api-key',
-        );
+        $client = new ElevenLabsClient($mockHttpClient);
 
         $payload = $normalizer->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
 
@@ -68,7 +62,6 @@ final class ElevenLabsClientTest extends TestCase
     {
         $client = new ElevenLabsClient(
             new MockHttpClient(),
-            'my-api-key',
         );
 
         $this->expectException(InvalidArgumentException::class);
@@ -86,14 +79,15 @@ final class ElevenLabsClientTest extends TestCase
         ]);
         $normalizer = new AudioNormalizer();
 
-        $client = new ElevenLabsClient(
-            $httpClient,
-            'my-api-key',
-        );
+        $client = new ElevenLabsClient($httpClient);
 
         $payload = $normalizer->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
 
-        $client->request(new ElevenLabs('scribe_v1', [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT]), $payload);
+        $client->request(new ElevenLabs('scribe_v1', [
+            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_TEXT,
+            Capability::SPEECH_TO_TEXT,
+        ]), $payload);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -107,14 +101,15 @@ final class ElevenLabsClientTest extends TestCase
         ]);
         $normalizer = new AudioNormalizer();
 
-        $client = new ElevenLabsClient(
-            $httpClient,
-            'my-api-key',
-        );
+        $client = new ElevenLabsClient($httpClient);
 
         $payload = $normalizer->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
 
-        $client->request(new ElevenLabs('scribe_v1_experimental', [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT]), $payload);
+        $client->request(new ElevenLabs('scribe_v1_experimental', [
+            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_TEXT,
+            Capability::SPEECH_TO_TEXT,
+        ]), $payload);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -125,10 +120,7 @@ final class ElevenLabsClientTest extends TestCase
             new JsonMockResponse([]),
         ]);
 
-        $client = new ElevenLabsClient(
-            $mockHttpClient,
-            'my-api-key',
-        );
+        $client = new ElevenLabsClient($mockHttpClient);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The payload must contain a "text" key');
@@ -146,12 +138,9 @@ final class ElevenLabsClientTest extends TestCase
             new MockResponse($payload->asBinary()),
         ]);
 
-        $client = new ElevenLabsClient(
-            $httpClient,
-            'my-api-key',
-        );
+        $client = new ElevenLabsClient($httpClient);
 
-        $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], options: [
+        $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], [
             'voice' => 'Dslrhjl3ZpzrctukrQSN',
         ]), [
             'text' => 'foo',
@@ -168,10 +157,7 @@ final class ElevenLabsClientTest extends TestCase
             new MockResponse($payload->asBinary()),
         ]);
 
-        $client = new ElevenLabsClient(
-            $httpClient,
-            'my-api-key',
-        );
+        $client = new ElevenLabsClient($httpClient);
 
         $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH]), [
             'text' => 'foo',
@@ -190,12 +176,9 @@ final class ElevenLabsClientTest extends TestCase
             new MockResponse($payload->asBinary()),
         ]);
 
-        $client = new ElevenLabsClient(
-            $httpClient,
-            'my-api-key',
-        );
+        $client = new ElevenLabsClient($httpClient);
 
-        $result = $client->request(new ElevenLabs('eleven_multilingual_v2', capabilities: [Capability::TEXT_TO_SPEECH], options: [
+        $result = $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], [
             'voice' => 'Dslrhjl3ZpzrctukrQSN',
             'stream' => true,
         ]), [
@@ -214,10 +197,7 @@ final class ElevenLabsClientTest extends TestCase
             new MockResponse($payload->asBinary()),
         ]);
 
-        $client = new ElevenLabsClient(
-            $httpClient,
-            'my-api-key',
-        );
+        $client = new ElevenLabsClient($httpClient);
 
         $result = $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH]), [
             'text' => 'foo',
@@ -252,10 +232,7 @@ final class ElevenLabsClientTest extends TestCase
             return new MockResponse($payload->asBinary());
         });
 
-        $client = new ElevenLabsClient(
-            $httpClient,
-            'my-api-key',
-        );
+        $client = new ElevenLabsClient($httpClient);
 
         $client->request(
             new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH]),

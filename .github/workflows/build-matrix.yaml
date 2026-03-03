@@ -15,6 +15,9 @@ on:
             store-bridges:
                 description: 'List of store bridges'
                 value: ${{ jobs.matrix.outputs.store-bridges }}
+            store-bridges-integration:
+                description: 'List of store bridges with integration tests'
+                value: ${{ jobs.matrix.outputs.store-bridges-integration }}
             store-bridges-include:
                 description: 'Store bridges includes for test matrix'
                 value: ${{ jobs.matrix.outputs.store-bridges-include }}
@@ -52,6 +55,7 @@ jobs:
             packages-include: ${{ steps.set-matrix.outputs.packages-include }}
             bridges: ${{ steps.set-matrix.outputs.bridges }}
             store-bridges: ${{ steps.set-matrix.outputs.store-bridges }}
+            store-bridges-integration: ${{ steps.set-matrix.outputs.store-bridges-integration }}
             store-bridges-include: ${{ steps.set-matrix.outputs.store-bridges-include }}
             tool-bridges: ${{ steps.set-matrix.outputs.tool-bridges }}
             tool-bridges-include: ${{ steps.set-matrix.outputs.tool-bridges-include }}
@@ -90,6 +94,16 @@ jobs:
                   # Bridges
                   STORE_BRIDGES=$(ls -1 src/store/src/Bridge/ | sort \
                       | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({component: "store", type: "Store", bridge: .})')
+
+                  # Store bridges with integration tests (detected via #[Group('integration')] attribute)
+                  STORE_BRIDGES_INTEGRATION=$(for bridge in src/store/src/Bridge/*/; do
+                      name=$(basename "$bridge")
+                      if grep -rl "#\[Group('integration')\]" "$bridge" --include="*.php" > /dev/null 2>&1; then
+                          echo "$name"
+                      fi
+                  done | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
+                  echo "store-bridges-integration=$STORE_BRIDGES_INTEGRATION" >> $GITHUB_OUTPUT
+
                   TOOL_BRIDGES=$(ls -1 src/agent/src/Bridge/ | sort \
                       | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({component: "agent", type: "Tool", bridge: .})')
                   PLATFORM_BRIDGES=$(ls -1 src/platform/src/Bridge/ | sort \

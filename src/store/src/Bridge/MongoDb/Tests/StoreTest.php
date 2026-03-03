@@ -23,6 +23,9 @@ use Symfony\AI\Store\Bridge\MongoDb\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Uid\Uuid;
 
 #[RequiresPhpExtension('mongodb')]
@@ -209,17 +212,17 @@ final class StoreTest extends TestCase
             'test-index',
         );
 
-        $documents = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(2, $documents);
         $this->assertInstanceOf(VectorDocument::class, $documents[0]);
         $this->assertInstanceOf(VectorDocument::class, $documents[1]);
-        $this->assertEquals($uuid1->toString(), $documents[0]->id);
-        $this->assertEquals($uuid2->toString(), $documents[1]->id);
-        $this->assertSame(0.95, $documents[0]->score);
-        $this->assertSame(0.85, $documents[1]->score);
-        $this->assertSame('First Document', $documents[0]->metadata['title']);
-        $this->assertSame('Second Document', $documents[1]->metadata['title']);
+        $this->assertEquals($uuid1->toString(), $documents[0]->getId());
+        $this->assertEquals($uuid2->toString(), $documents[1]->getId());
+        $this->assertSame(0.95, $documents[0]->getScore());
+        $this->assertSame(0.85, $documents[1]->getScore());
+        $this->assertSame('First Document', $documents[0]->getMetadata()['title']);
+        $this->assertSame('Second Document', $documents[1]->getMetadata()['title']);
     }
 
     public function testQueryWithMinScore()
@@ -273,7 +276,7 @@ final class StoreTest extends TestCase
             'test-index',
         );
 
-        $documents = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), ['minScore' => 0.8]));
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['minScore' => 0.8]));
 
         $this->assertCount(0, $documents);
     }
@@ -325,7 +328,7 @@ final class StoreTest extends TestCase
             'test-index',
         );
 
-        $documents = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3]), [
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'limit' => 10,
             'numCandidates' => 500,
             'filter' => ['category' => 'test'],
@@ -557,9 +560,30 @@ final class StoreTest extends TestCase
             'custom_embeddings',
         );
 
-        $documents = iterator_to_array($store->query(new Vector([0.1, 0.2, 0.3])));
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $documents);
-        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->vector->getData());
+        $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $client = $this->createMock(Client::class);
+        $store = new Store($client, 'test_db', 'test_collection', 'test_index');
+        $this->assertTrue($store->supports(VectorQuery::class));
+    }
+
+    public function testStoreDoesNotSupportTextQuery()
+    {
+        $client = $this->createMock(Client::class);
+        $store = new Store($client, 'test_db', 'test_collection', 'test_index');
+        $this->assertFalse($store->supports(TextQuery::class));
+    }
+
+    public function testStoreDoesNotSupportHybridQuery()
+    {
+        $client = $this->createMock(Client::class);
+        $store = new Store($client, 'test_db', 'test_collection', 'test_index');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

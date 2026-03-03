@@ -3,6 +3,14 @@ ElevenLabs Platform
 
 ElevenLabs platform bridge for Symfony AI.
 
+
+Test Fixtures
+-------------
+
+The test fixtures in `Tests/Fixtures/` contain binary media content with the following owners and licenses:
+
+* `audio.mp3`: davidbain, Creative Commons, see [freesound.org](https://freesound.org/people/davidbain/sounds/136777/)
+
 Resources
 ---------
 

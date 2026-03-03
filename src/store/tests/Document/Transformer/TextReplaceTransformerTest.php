@@ -26,7 +26,7 @@ final class TextReplaceTransformerTest extends TestCase
     public function testReplaceWithConstructorParameters()
     {
         $transformer = new TextReplaceTransformer('foo', 'bar');
-        $document = new TextDocument(Uuid::v4(), 'foo is foo');
+        $document = new TextDocument(Uuid::v4()->toString(), 'foo is foo');
 
         $result = iterator_to_array($transformer->transform([$document]));
 
@@ -37,7 +37,7 @@ final class TextReplaceTransformerTest extends TestCase
     public function testReplaceWithOptions()
     {
         $transformer = new TextReplaceTransformer('initial', 'value');
-        $document = new TextDocument(Uuid::v4(), 'hello world');
+        $document = new TextDocument(Uuid::v4()->toString(), 'hello world');
 
         $result = iterator_to_array($transformer->transform([$document], [
             TextReplaceTransformer::OPTION_SEARCH => 'hello',
@@ -51,7 +51,7 @@ final class TextReplaceTransformerTest extends TestCase
     public function testOptionsOverrideConstructorParameters()
     {
         $transformer = new TextReplaceTransformer('foo', 'bar');
-        $document = new TextDocument(Uuid::v4(), 'foo hello');
+        $document = new TextDocument(Uuid::v4()->toString(), 'foo hello');
 
         $result = iterator_to_array($transformer->transform([$document], [
             TextReplaceTransformer::OPTION_SEARCH => 'hello',
@@ -65,7 +65,7 @@ final class TextReplaceTransformerTest extends TestCase
     public function testReplaceMultipleOccurrences()
     {
         $transformer = new TextReplaceTransformer('a', 'b');
-        $document = new TextDocument(Uuid::v4(), 'a a a');
+        $document = new TextDocument(Uuid::v4()->toString(), 'a a a');
 
         $result = iterator_to_array($transformer->transform([$document]));
 
@@ -76,7 +76,7 @@ final class TextReplaceTransformerTest extends TestCase
     public function testReplaceWithEmptyString()
     {
         $transformer = new TextReplaceTransformer('remove', '');
-        $document = new TextDocument(Uuid::v4(), 'remove this word');
+        $document = new TextDocument(Uuid::v4()->toString(), 'remove this word');
 
         $result = iterator_to_array($transformer->transform([$document]));
 
@@ -88,7 +88,7 @@ final class TextReplaceTransformerTest extends TestCase
     {
         $metadata = new Metadata(['key' => 'value']);
         $transformer = new TextReplaceTransformer('old', 'new');
-        $document = new TextDocument(Uuid::v4(), 'old text', $metadata);
+        $document = new TextDocument(Uuid::v4()->toString(), 'old text', $metadata);
 
         $result = iterator_to_array($transformer->transform([$document]));
 
@@ -99,7 +99,7 @@ final class TextReplaceTransformerTest extends TestCase
 
     public function testReplacePreservesDocumentId()
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $transformer = new TextReplaceTransformer('old', 'new');
         $document = new TextDocument($id, 'old text');
 
@@ -113,9 +113,9 @@ final class TextReplaceTransformerTest extends TestCase
     {
         $transformer = new TextReplaceTransformer('x', 'y');
         $documents = [
-            new TextDocument(Uuid::v4(), 'x marks the spot'),
-            new TextDocument(Uuid::v4(), 'find x here'),
-            new TextDocument(Uuid::v4(), 'no match'),
+            new TextDocument(Uuid::v4()->toString(), 'x marks the spot'),
+            new TextDocument(Uuid::v4()->toString(), 'find x here'),
+            new TextDocument(Uuid::v4()->toString(), 'no match'),
         ];
 
         $result = iterator_to_array($transformer->transform($documents));
@@ -129,7 +129,7 @@ final class TextReplaceTransformerTest extends TestCase
     public function testReplaceCaseSensitive()
     {
         $transformer = new TextReplaceTransformer('Hello', 'Goodbye');
-        $document = new TextDocument(Uuid::v4(), 'Hello hello HELLO');
+        $document = new TextDocument(Uuid::v4()->toString(), 'Hello hello HELLO');
 
         $result = iterator_to_array($transformer->transform([$document]));
 
@@ -140,7 +140,7 @@ final class TextReplaceTransformerTest extends TestCase
     public function testReplaceHandlesNoMatch()
     {
         $transformer = new TextReplaceTransformer('notfound', 'replacement');
-        $document = new TextDocument(Uuid::v4(), 'original text');
+        $document = new TextDocument(Uuid::v4()->toString(), 'original text');
 
         $result = iterator_to_array($transformer->transform([$document]));
 
@@ -159,7 +159,7 @@ final class TextReplaceTransformerTest extends TestCase
     public function testTransformThrowsExceptionWhenSearchEqualsReplaceInOptions()
     {
         $transformer = new TextReplaceTransformer('initial', 'value');
-        $document = new TextDocument(Uuid::v4(), 'text');
+        $document = new TextDocument(Uuid::v4()->toString(), 'text');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Search and replace strings must be different.');
@@ -181,7 +181,7 @@ final class TextReplaceTransformerTest extends TestCase
     public function testPartialOptionsUseConstructorDefaults()
     {
         $transformer = new TextReplaceTransformer('default', 'replacement');
-        $document = new TextDocument(Uuid::v4(), 'default text');
+        $document = new TextDocument(Uuid::v4()->toString(), 'default text');
 
         // Only provide search option, should use constructor's replace value
         $result = iterator_to_array($transformer->transform([$document], [

@@ -53,7 +53,7 @@ capabilities, and additional options. Usually, bridges to specific providers ext
 start for vendor-specific models and their capabilities.
 
 Capabilities are a list of strings defined by :class:`Symfony\\AI\\Platform\\Capability`, which can be used to check if a model
-supports a specific feature, like ``Capability::INPUT_AUDIO`` or ``Capability::OUTPUT_IMAGE``.
+supports a specific feature, like ``Capability::INPUT_AUDIO``, ``Capability::OUTPUT_IMAGE``, or ``Capability::THINKING``.
 
 Options are additional parameters that can be passed to the model, like ``temperature`` or ``max_output_tokens``, and are
 usually defined by the specific models and their documentation.
@@ -166,6 +166,10 @@ This requires to configure a :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\Mod
 :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\CompletionsModel` or :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\EmbeddingsModel`,
 see `LiteLLM example`_ for more details.
 
+Alternatively, use the :doc:`models.dev bridge <platform/models-dev>` to
+auto-discover model capabilities for many providers without manually curating
+model catalogs.
+
 Options
 -------
 
@@ -198,7 +202,7 @@ have different content types, like :class:`Symfony\\AI\\Platform\\Message\\Conte
 
     // Create a message bag with a user message
     $messageBag = new MessageBag(
-        Message::forSystem('You are a helpful assistant.')
+        Message::forSystem('You are a helpful assistant.'),
         Message::ofUser('Please describe this picture?', Image::fromFile('/path/to/image.jpg')),
     );
 
@@ -319,12 +323,12 @@ Since LLMs usually generate a result word by word, most of them also support str
 Events. Symfony AI supports that by abstracting the conversion and returning a :class:`Generator` as content of the result::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Message\Message;
-    use Symfony\AI\Message\MessageBag;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
 
     // Initialize Platform and LLM
 
-    $agent = new Agent($model);
+    $agent = new Agent($platform, $model);
     $messages = new MessageBag(
         Message::forSystem('You are a thoughtful philosopher.'),
         Message::ofUser('What is the purpose of an ant?'),
@@ -349,12 +353,123 @@ Code Examples
 * `Streaming GPT`_
 * `Streaming Mistral`_
 
+Thinking / Extended Reasoning
+-----------------------------
+
+Some models support "extended thinking" or "reasoning" where the model
+explicitly works through a problem step by step before producing its final
+answer. This is exposed through the ``Capability::THINKING`` capability and the
+:class:`Symfony\\AI\\Platform\\Result\\ThinkingContent` value object.
+
+Enabling Thinking
+~~~~~~~~~~~~~~~~~
+
+To enable thinking, pass the ``thinking`` option when invoking the model. For
+Anthropic, the option configures the thinking budget (maximum tokens the model
+may use for reasoning)::
+
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    // Initialize Anthropic Platform
+
+    $messages = new MessageBag(
+        Message::forSystem('You are a helpful math tutor.'),
+        Message::ofUser('What is the sum of the first 100 prime numbers?'),
+    );
+
+    $result = $platform->invoke('claude-sonnet-4-5', $messages, [
+        'stream' => true,
+        'thinking' => [
+            'type' => 'enabled',
+            'budget_tokens' => 10000,
+        ],
+    ]);
+
+Consuming Thinking in Streams
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When streaming, the generator yields
+:class:`Symfony\\AI\\Platform\\Result\\ThinkingContent` objects alongside
+regular text strings and :class:`Symfony\\AI\\Platform\\Result\\ToolCallResult`
+objects::
+
+    use Symfony\AI\Platform\Result\ThinkingContent;
+    use Symfony\AI\Platform\Result\ToolCallResult;
+
+    foreach ($result->getContent() as $chunk) {
+        if ($chunk instanceof ThinkingContent) {
+            // The model's reasoning (not shown to the user in most UIs)
+            echo '[thinking] ' . $chunk->thinking . "\n";
+
+            // Anthropic includes a cryptographic signature for verification
+            if (null !== $chunk->signature) {
+                // Store signature if you need to echo the thinking block
+                // back in subsequent requests
+            }
+
+            continue;
+        }
+
+        if ($chunk instanceof ToolCallResult) {
+            // Handle tool calls as usual
+            continue;
+        }
+
+        // Regular text content
+        echo $chunk;
+    }
+
+The ``ThinkingContent`` object has two properties:
+
+* ``thinking`` (string): the model's reasoning text
+* ``signature`` (?string): a cryptographic signature (Anthropic only), required
+  when echoing thinking blocks back in multi-turn conversations
+
+Multi-Turn Conversations with Thinking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using thinking in multi-turn conversations, Anthropic requires that
+thinking blocks from previous assistant turns be included in the conversation
+history. The :class:`Symfony\\AI\\Platform\\Message\\AssistantMessage` supports
+this through its ``$thinkingContent`` and ``$thinkingSignature`` parameters::
+
+    use Symfony\AI\Platform\Message\AssistantMessage;
+
+    // Include the model's thinking from a previous turn
+    $assistant = new AssistantMessage(
+        content: 'The answer is 42.',
+        thinkingContent: 'Let me work through this step by step...',
+        thinkingSignature: 'sig_abc123...',
+    );
+
+    $messages = new MessageBag(
+        Message::ofUser('What is the meaning of life?'),
+        $assistant,
+        Message::ofUser('Can you elaborate?'),
+    );
+
+Checking for Thinking Support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can check if a model supports thinking before enabling it::
+
+    use Symfony\AI\Platform\Capability;
+
+    $model = $catalog->getModel('claude-sonnet-4-5');
+
+    if ($model->supports(Capability::THINKING)) {
+        $options['thinking'] = ['type' => 'enabled', 'budget_tokens' => 10000];
+    }
+
 Image Processing
 ----------------
 
-Some LLMs also support images as input, which Symfony AI supports as content type within the :class:`Symfony\\AI\\Platform\\Message\\UserMessage`::
+Some LLMs also support images as input, which Symfony AI supports as content
+type within the :class:`Symfony\\AI\\Platform\\Message\\UserMessage`::
 
     use Symfony\AI\Platform\Message\Content\Image;
+    use Symfony\AI\Platform\Message\Content\ImageUrl;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
@@ -494,6 +609,7 @@ Code Examples
 
 * `Structured Output with PHP class`_
 * `Structured Output with array`_
+* `Populating existing objects`_
 
 Server Tools
 ------------
@@ -649,6 +765,7 @@ Vector Results
 ::
 
     use Symfony\AI\Platform\Result\VectorResult;
+    use Symfony\AI\Platform\Vector\Vector;
 
     $platform = new InMemoryPlatform(
         fn() => new VectorResult(new Vector([0.1, 0.2, 0.3, 0.4]))
@@ -748,6 +865,7 @@ Code Examples
 .. _`Embeddings with Mistral`: https://github.com/symfony/ai/blob/main/examples/mistral/embeddings.php
 .. _`Structured Output with PHP class`: https://github.com/symfony/ai/blob/main/examples/openai/structured-output-math.php
 .. _`Structured Output with array`: https://github.com/symfony/ai/blob/main/examples/openai/structured-output-clock.php
+.. _`Populating existing objects`: https://github.com/symfony/ai/blob/main/examples/platform/structured-output-populate-object.php
 .. _`Parallel GPT Calls`: https://github.com/symfony/ai/blob/main/examples/misc/parallel-chat-gpt.php
 .. _`Parallel Embeddings Calls`: https://github.com/symfony/ai/blob/main/examples/misc/parallel-embeddings.php
 .. _`LM Studio`: https://lmstudio.ai/

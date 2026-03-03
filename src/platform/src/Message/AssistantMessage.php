@@ -29,6 +29,8 @@ final class AssistantMessage implements MessageInterface
     public function __construct(
         private ?string $content = null,
         private ?array $toolCalls = null,
+        private ?string $thinkingContent = null,
+        private ?string $thinkingSignature = null,
     ) {
         $this->id = Uuid::v7();
     }
@@ -54,5 +56,20 @@ final class AssistantMessage implements MessageInterface
     public function getContent(): ?string
     {
         return $this->content;
+    }
+
+    public function hasThinkingContent(): bool
+    {
+        return null !== $this->thinkingContent;
+    }
+
+    public function getThinkingContent(): ?string
+    {
+        return $this->thinkingContent;
+    }
+
+    public function getThinkingSignature(): ?string
+    {
+        return $this->thinkingSignature;
     }
 }

@@ -1,0 +1,9 @@
+services:
+    clickhouse:
+        image: clickhouse/clickhouse-server
+        environment:
+            CLICKHOUSE_DB: 'symfony'
+            CLICKHOUSE_USER: 'symfony'
+            CLICKHOUSE_PASSWORD: 'symfony'
+        ports:
+            - '8123:8123'

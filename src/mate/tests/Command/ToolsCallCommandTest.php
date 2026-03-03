@@ -17,6 +17,7 @@ use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Capability\ServerInfo;
 use Symfony\AI\Mate\Command\ToolsCallCommand;
 use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Service\RegistryProvider;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -124,10 +125,11 @@ final class ToolsCallCommandTest extends TestCase
         $logger = new NullLogger();
         $discoverer = new Discoverer($logger);
         $loader = new FilteredDiscoveryLoader($rootDir, $extensions, [], $discoverer, $logger);
+        $registryProvider = new RegistryProvider($loader, $logger);
 
         $container = new ContainerBuilder();
         $container->set(ServerInfo::class, new ServerInfo());
 
-        return new ToolsCallCommand($loader, $container, $logger);
+        return new ToolsCallCommand($registryProvider, $container);
     }
 }

@@ -31,17 +31,7 @@ final class Chat
 
     public function loadMessages(): MessageBag
     {
-        $messages = new MessageBag(
-            Message::forSystem(<<<PROMPT
-                You are an helpful assistant that knows about the latest blog content of the Symfony's framework website.
-                To search for content you use the tool 'similarity_search' for generating the answer. Only use content
-                that you get from searching with that tool or your previous answers. Don't make up information and if you
-                can't find something, just say so. Also provide links to the blog posts you use as sources.
-                PROMPT
-            )
-        );
-
-        return $this->requestStack->getSession()->get(self::SESSION_KEY, $messages);
+        return $this->requestStack->getSession()->get(self::SESSION_KEY, new MessageBag());
     }
 
     public function submitMessage(string $message): void

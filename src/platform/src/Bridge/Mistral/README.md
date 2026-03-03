@@ -3,6 +3,13 @@ Mistral Platform
 
 Mistral platform bridge for Symfony AI.
 
+Test Fixtures
+-------------
+
+The test fixtures in `Tests/Fixtures/` contain binary media content with the following owners and licenses:
+
+ * `document.pdf`: Chem8240ja, Public Domain, see [Wikipedia](https://en.m.wikipedia.org/wiki/File:Re_example.pdf)
+
 Resources
 ---------
 

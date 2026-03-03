@@ -1,0 +1,16 @@
+services:
+    weaviate:
+        image: cr.weaviate.io/semitechnologies/weaviate:1.35.3
+        command: ['--host', '0.0.0.0', '--port', '8080', '--scheme', 'http']
+        environment:
+            QUERY_DEFAULTS_LIMIT: 25
+            AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'false'
+            AUTHENTICATION_APIKEY_ENABLED: 'true'
+            AUTHENTICATION_APIKEY_ALLOWED_KEYS: 'symfony'
+            AUTHENTICATION_APIKEY_USERS: 'symfony'
+            PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+            ENABLE_API_BASED_MODULES: 'true'
+            CLUSTER_HOSTNAME: 'node1'
+            RAFT_ENABLE_ONE_NODE_RECOVERY: 'true'
+        ports:
+            - '8080:8080'

@@ -15,6 +15,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\SurrealDb\Store;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\TextQuery;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -326,7 +329,7 @@ final class StoreTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/sql".');
         $this->expectExceptionCode(400);
-        iterator_to_array($store->query(new Vector(array_fill(0, 1275, 0.1))));
+        iterator_to_array($store->query(new VectorQuery(new Vector(array_fill(0, 1275, 0.1)))));
     }
 
     public function testStoreCanQueryOnValidEmbeddings()
@@ -400,8 +403,26 @@ final class StoreTest extends TestCase
 
         $store->add([new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1)))]);
 
-        $results = iterator_to_array($store->query(new Vector(array_fill(0, 1275, 0.1))));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector(array_fill(0, 1275, 0.1)))));
 
         $this->assertCount(2, $results);
+    }
+
+    public function testStoreSupportsVectorQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'http://localhost:8000', 'test', 'test', 'test_namespace', 'test_database', 'test_table');
+        $this->assertTrue($store->supports(VectorQuery::class));
+    }
+
+    public function testStoreDoesNotSupportTextQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'http://localhost:8000', 'test', 'test', 'test_namespace', 'test_database', 'test_table');
+        $this->assertFalse($store->supports(TextQuery::class));
+    }
+
+    public function testStoreDoesNotSupportHybridQuery()
+    {
+        $store = new Store(new MockHttpClient(), 'http://localhost:8000', 'test', 'test', 'test_namespace', 'test_database', 'test_table');
+        $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

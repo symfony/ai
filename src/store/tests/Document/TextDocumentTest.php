@@ -23,7 +23,7 @@ use Symfony\Component\Uid\Uuid;
 final class TextDocumentTest extends TestCase
 {
     #[DataProvider('constructorIdDataProvider')]
-    public function testConstructorIdSupportsManyTypes(int|string|Uuid $id)
+    public function testConstructorIdSupportsManyTypes(int|string $id)
     {
         $document = new TextDocument($id, 'content');
 
@@ -34,13 +34,12 @@ final class TextDocumentTest extends TestCase
     {
         yield 'int' => [1];
         yield 'string' => ['id'];
-        yield 'uuid' => [Uuid::v4()];
     }
 
     #[TestDox('Creates document with valid content and metadata')]
     public function testConstructorWithValidContent()
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $content = 'This is valid content';
         $metadata = new Metadata(['title' => 'Test Document']);
 
@@ -54,7 +53,7 @@ final class TextDocumentTest extends TestCase
     #[TestDox('Creates document with default empty metadata when not provided')]
     public function testConstructorWithDefaultMetadata()
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $content = 'This is valid content';
 
         $document = new TextDocument($id, $content);
@@ -78,7 +77,7 @@ final class TextDocumentTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The content shall not be an empty string.');
 
-        new TextDocument(Uuid::v4(), $content);
+        new TextDocument(Uuid::v4()->toString(), $content);
     }
 
     #[TestWith(['Hello, World!'])]
@@ -96,7 +95,7 @@ final class TextDocumentTest extends TestCase
     #[TestDox('Accepts valid content')]
     public function testConstructorAcceptsValidContent(string $content)
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
 
         $document = new TextDocument($id, $content);
 
@@ -107,7 +106,7 @@ final class TextDocumentTest extends TestCase
     #[TestDox('Accepts very long text content')]
     public function testConstructorAcceptsVeryLongContent()
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $content = str_repeat('Lorem ipsum dolor sit amet, ', 1000);
 
         $document = new TextDocument($id, $content);
@@ -119,7 +118,7 @@ final class TextDocumentTest extends TestCase
     #[TestDox('Properties are publicly accessible and readonly')]
     public function testReadonlyProperties()
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $content = 'Test content';
         $metadata = new Metadata(['key' => 'value']);
 
@@ -133,7 +132,7 @@ final class TextDocumentTest extends TestCase
     #[TestDox('Metadata contents can be modified even though the property is readonly')]
     public function testMetadataCanBeModified()
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $content = 'Test content';
         $metadata = new Metadata();
 
@@ -147,32 +146,10 @@ final class TextDocumentTest extends TestCase
         $this->assertSame('test.txt', $document->getMetadata()->getSource());
     }
 
-    #[DataProvider('uuidVersionProvider')]
-    #[TestDox('Accepts UUID version $version')]
-    public function testDifferentUuidVersions(string $version, Uuid $uuid)
-    {
-        $content = 'Test content';
-
-        $document = new TextDocument($uuid, $content);
-
-        $this->assertSame($uuid, $document->getId());
-        $this->assertSame($content, $document->getContent());
-    }
-
-    /**
-     * @return \Iterator<string, array{version: string, uuid: Uuid}>
-     */
-    public static function uuidVersionProvider(): \Iterator
-    {
-        yield 'UUID v4' => ['version' => '4', 'uuid' => Uuid::v4()];
-        yield 'UUID v6' => ['version' => '6', 'uuid' => Uuid::v6()];
-        yield 'UUID v7' => ['version' => '7', 'uuid' => Uuid::v7()];
-    }
-
     #[TestDox('Handles complex nested metadata with special keys')]
     public function testDocumentWithComplexMetadata()
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $content = 'Document content';
         $metadata = new Metadata([
             'title' => 'Test Document',
@@ -216,8 +193,8 @@ final class TextDocumentTest extends TestCase
         $metadata1 = new Metadata(['source' => 'doc1.txt']);
         $metadata2 = new Metadata(['source' => 'doc2.txt']);
 
-        $document1 = new TextDocument(Uuid::v4(), $content, $metadata1);
-        $document2 = new TextDocument(Uuid::v4(), $content, $metadata2);
+        $document1 = new TextDocument(Uuid::v4()->toString(), $content, $metadata1);
+        $document2 = new TextDocument(Uuid::v4()->toString(), $content, $metadata2);
 
         $this->assertSame($content, $document1->getContent());
         $this->assertSame($content, $document2->getContent());
@@ -228,7 +205,7 @@ final class TextDocumentTest extends TestCase
     #[TestDox('Documents can have the same ID but different content')]
     public function testDocumentWithSameIdButDifferentContent()
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
 
         $document1 = new TextDocument($id, 'Content 1');
         $document2 = new TextDocument($id, 'Content 2');
@@ -242,7 +219,7 @@ final class TextDocumentTest extends TestCase
     public function testTrimBehaviorValidation()
     {
         // Content with whitespace that is not purely whitespace should be valid
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $contentWithWhitespace = '  Valid content with spaces  ';
 
         $document = new TextDocument($id, $contentWithWhitespace);
@@ -257,13 +234,13 @@ final class TextDocumentTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The content shall not be an empty string.');
 
-        new TextDocument(Uuid::v4(), '   ');
+        new TextDocument(Uuid::v4()->toString(), '   ');
     }
 
     #[TestDox('withContent creates new instance with updated content')]
     public function testWithContent()
     {
-        $id = Uuid::v4();
+        $id = Uuid::v4()->toString();
         $originalContent = 'Original content';
         $newContent = 'Updated content';
         $metadata = new Metadata(['title' => 'Test Document']);
@@ -281,7 +258,7 @@ final class TextDocumentTest extends TestCase
     #[TestDox('withContent validates new content')]
     public function testWithContentValidatesContent()
     {
-        $document = new TextDocument(Uuid::v4(), 'Valid content');
+        $document = new TextDocument(Uuid::v4()->toString(), 'Valid content');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The content shall not be an empty string.');

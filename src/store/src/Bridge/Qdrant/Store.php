@@ -16,8 +16,10 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
-use Symfony\AI\Store\Exception\LogicException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -28,8 +30,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $endpointUrl,
-        #[\SensitiveParameter] private readonly string $apiKey,
         private readonly string $collectionName,
         private readonly int $embeddingsDimension = 1536,
         private readonly string $embeddingsDistance = 'Cosine',
@@ -67,7 +67,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'PUT',
             \sprintf('collections/%s/points', $this->collectionName),
             [
-                'points' => array_map($this->convertToIndexableArray(...), $documents),
+                'points' => array_map(static fn (VectorDocument $document): array => [
+                    'id' => $document->getId(),
+                    'vector' => $document->getVector()->getData(),
+                    'payload' => $document->getMetadata()->getArrayCopy(),
+                ], $documents),
             ],
             ['wait' => $this->async ? 'false' : 'true'],
         );
@@ -75,7 +79,23 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new LogicException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        $this->request(
+            'POST',
+            \sprintf('collections/%s/points/delete', $this->collectionName),
+            [
+                'points' => $ids,
+            ],
+            ['wait' => $this->async ? 'false' : 'true'],
+        );
+    }
+
+    public function supports(string $queryClass): bool
+    {
+        return VectorQuery::class === $queryClass;
     }
 
     /**
@@ -85,15 +105,19 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     offset?: positive-int
      * } $options
      */
-    public function query(Vector $vector, array $options = []): iterable
+    public function query(QueryInterface $query, array $options = []): iterable
     {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
         $payload = [
-            'query' => $vector->getData(),
+            'query' => $query->getVector()->getData(),
             'with_payload' => true,
             'with_vector' => true,
         ];
 
-        if (\array_key_exists('filter', $options)) {
+        if (isset($options['filter'])) {
             $payload['filter'] = $options['filter'];
         }
 
@@ -125,29 +149,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function request(string $method, string $endpoint, array $payload = [], array $queryParameters = []): array
     {
-        $url = \sprintf('%s/%s', $this->endpointUrl, $endpoint);
-
-        $response = $this->httpClient->request($method, $url, [
-            'headers' => [
-                'api-key' => $this->apiKey,
-            ],
+        $response = $this->httpClient->request($method, $endpoint, [
             'query' => $queryParameters,
             'json' => $payload,
         ]);
 
         return $response->toArray();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function convertToIndexableArray(VectorDocument $document): array
-    {
-        return [
-            'id' => $document->id->toRfc4122(),
-            'vector' => $document->vector->getData(),
-            'payload' => $document->metadata->getArrayCopy(),
-        ];
     }
 
     /**

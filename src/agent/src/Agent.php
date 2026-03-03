@@ -24,16 +24,6 @@ use Symfony\AI\Platform\Result\ResultInterface;
 final class Agent implements AgentInterface
 {
     /**
-     * @var InputProcessorInterface[]
-     */
-    private readonly array $inputProcessors;
-
-    /**
-     * @var OutputProcessorInterface[]
-     */
-    private readonly array $outputProcessors;
-
-    /**
      * @param InputProcessorInterface[]  $inputProcessors
      * @param OutputProcessorInterface[] $outputProcessors
      * @param non-empty-string           $model
@@ -41,12 +31,10 @@ final class Agent implements AgentInterface
     public function __construct(
         private readonly PlatformInterface $platform,
         private readonly string $model,
-        iterable $inputProcessors = [],
-        iterable $outputProcessors = [],
+        private readonly iterable $inputProcessors = [],
+        private readonly iterable $outputProcessors = [],
         private readonly string $name = 'agent',
     ) {
-        $this->inputProcessors = $this->initializeProcessors($inputProcessors, InputProcessorInterface::class);
-        $this->outputProcessors = $this->initializeProcessors($outputProcessors, OutputProcessorInterface::class);
     }
 
     public function getModel(): string
@@ -69,7 +57,17 @@ final class Agent implements AgentInterface
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
         $input = new Input($this->getModel(), $messages, $options);
-        array_map(static fn (InputProcessorInterface $processor) => $processor->processInput($input), $this->inputProcessors);
+        foreach ($this->inputProcessors as $inputProcessor) {
+            if (!$inputProcessor instanceof InputProcessorInterface) {
+                throw new InvalidArgumentException(\sprintf('Input processor "%s" must implement "%s".', $inputProcessor::class, InputProcessorInterface::class));
+            }
+
+            if ($inputProcessor instanceof AgentAwareInterface) {
+                $inputProcessor->setAgent($this);
+            }
+
+            $inputProcessor->processInput($input);
+        }
 
         $model = $input->getModel();
         $messages = $input->getMessageBag();
@@ -78,29 +76,18 @@ final class Agent implements AgentInterface
         $result = $this->platform->invoke($model, $messages, $options)->getResult();
 
         $output = new Output($model, $result, $messages, $options);
-        array_map(static fn (OutputProcessorInterface $processor) => $processor->processOutput($output), $this->outputProcessors);
-
-        return $output->getResult();
-    }
-
-    /**
-     * @param InputProcessorInterface[]|OutputProcessorInterface[] $processors
-     * @param class-string                                         $interface
-     *
-     * @return InputProcessorInterface[]|OutputProcessorInterface[]
-     */
-    private function initializeProcessors(iterable $processors, string $interface): array
-    {
-        foreach ($processors as $processor) {
-            if (!$processor instanceof $interface) {
-                throw new InvalidArgumentException(\sprintf('Processor "%s" must implement "%s".', $processor::class, $interface));
+        foreach ($this->outputProcessors as $outputProcessor) {
+            if (!$outputProcessor instanceof OutputProcessorInterface) {
+                throw new InvalidArgumentException(\sprintf('Output processor "%s" must implement "%s".', $outputProcessor::class, OutputProcessorInterface::class));
             }
 
-            if ($processor instanceof AgentAwareInterface) {
-                $processor->setAgent($this);
+            if ($outputProcessor instanceof AgentAwareInterface) {
+                $outputProcessor->setAgent($this);
             }
+
+            $outputProcessor->processOutput($output);
         }
 
-        return $processors instanceof \Traversable ? iterator_to_array($processors) : $processors;
+        return $output->getResult();
     }
 }

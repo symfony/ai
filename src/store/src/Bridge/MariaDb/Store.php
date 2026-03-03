@@ -17,7 +17,10 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -120,9 +123,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         );
 
         foreach ($documents as $document) {
-            $statement->bindValue(':id', $document->id->toRfc4122());
-            $statement->bindValue(':metadata', json_encode($document->metadata->getArrayCopy()));
-            $statement->bindValue(':vector', json_encode($document->vector->getData()));
+            $statement->bindValue(':id', $document->getId());
+            $statement->bindValue(':metadata', json_encode($document->getMetadata()->getArrayCopy()));
+            $statement->bindValue(':vector', json_encode($document->getVector()->getData()));
 
             $statement->execute();
         }
@@ -155,14 +158,26 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement->execute();
     }
 
+    public function supports(string $queryClass): bool
+    {
+        return VectorQuery::class === $queryClass;
+    }
+
     /**
      * @param array{
      *     limit?: positive-int,
      *     maxScore?: float|null,
+     *     where?: string,
+     *     params?: array<string, mixed>,
      * } $options
      */
-    public function query(Vector $vector, array $options = []): iterable
+    public function query(QueryInterface $query, array $options = []): iterable
     {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
+        $vector = $query->getVector();
         $where = null;
 
         $maxScore = $options['maxScore'] ?? null;
