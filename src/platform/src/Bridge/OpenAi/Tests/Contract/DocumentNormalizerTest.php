@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\DocumentNormalizer;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\Content\Document;
 
@@ -25,6 +26,9 @@ final class DocumentNormalizerTest extends TestCase
         $normalizer = new DocumentNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new Document('some content', 'application/pdf'), context: [
+            Contract::CONTEXT_MODEL => new Gpt('gpt-4o', [Capability::INPUT_PDF]),
+        ]));
+        $this->assertFalse($normalizer->supportsNormalization(new Document('some content', 'application/pdf'), context: [
             Contract::CONTEXT_MODEL => new Gpt('gpt-4o'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a document'));

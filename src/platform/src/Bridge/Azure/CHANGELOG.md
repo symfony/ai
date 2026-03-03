@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.6
+---
+
+ * Switch to OpenResponses contract
+
 0.2
 ---
 
