@@ -4,6 +4,7 @@
     "license": "MIT",
     "type": "project",
     "repositories": [
+        {"type": "path", "url": "../src/platform/src/Bridge/Cohere" },
         {"type": "path", "url": "../src/store/src/Bridge/S3Vectors" },
         {"type": "path", "url": "../src/store/src/Bridge/Vektor" }
     ],
@@ -23,6 +24,7 @@
         "symfony/ai-cartesia-platform": "^0.5",
         "symfony/ai-cerebras-platform": "^0.5",
         "symfony/ai-chat": "^0.5",
+        "symfony/ai-cohere-platform": "@dev",
         "symfony/ai-chroma-db-store": "^0.5",
         "symfony/ai-click-house-store": "^0.5",
         "symfony/ai-clock-tool": "^0.5",
