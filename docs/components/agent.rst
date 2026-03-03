@@ -638,6 +638,446 @@ useful when certain interactions shouldn't be influenced by the memory context::
     ]);
 
 
+Agent Skills
+------------
+
+Agent Skills are reusable, portable knowledge packages that provide agents with specialized expertise in specific domains
+or tasks. Following the `Agent Skills Specification`_, skills are self-contained directories with structured documentation,
+optional reference materials, executable scripts, and assets.
+
+Skills enable agents to:
+
+* Access domain-specific knowledge (frameworks, libraries, APIs)
+* Execute specialized tasks through scripts
+* Follow best practices and guidelines
+* Maintain consistent behavior across different contexts
+
+What are Skills?
+^^^^^^^^^^^^^^^^^
+
+A Skill is a directory containing a ``SKILL.md`` file with YAML frontmatter and Markdown instructions. The structure
+follows the `Agent Skills Specification`_::
+
+    my-skill/
+    ├── SKILL.md           # Required: Skill definition with YAML frontmatter
+    ├── scripts/           # Optional: Executable scripts (.sh, .py, .php, etc.)
+    ├── references/        # Optional: Additional documentation
+    └── assets/            # Optional: Images, files, etc.
+
+The ``SKILL.md`` file contains:
+
+**YAML Frontmatter** (required fields):
+
+.. code-block:: yaml
+
+    ---
+    name: my-skill
+    description: A comprehensive description of what the skill does and when to use it
+    license: MIT                           # Optional
+    allowed-tools: Read Write Bash         # Optional: space-delimited list
+    compatibility: claude >=3.5            # Optional: agent compatibility hints (max 500 chars)
+    metadata:                              # Optional: arbitrary metadata
+      author: Your Name
+      version: "1.0"
+    ---
+
+**Markdown Body**: Instructions, examples, and documentation for the agent to follow.
+
+Loading Skills
+^^^^^^^^^^^^^^
+
+Skills are loaded using an implementation of :class:`Symfony\\AI\\Agent\\Skill\\SkillLoaderInterface`,
+the default one is :class:`Symfony\\AI\\Agent\\Skill\\FilesystemSkillLoader` which scans directories for ``SKILL.md`` files::
+
+    use Symfony\AI\Agent\Skill\FilesystemSkillLoader;
+
+    $loader = new FilesystemSkillLoader([
+        __DIR__.'/skills',
+        __DIR__.'/vendor/skills',
+    ]);
+
+    // Load a specific skill
+    $skill = $loader->loadSkill('my-skill');
+
+    // Load all skills
+    $skills = $loader->loadSkills();
+
+    // Discover skill metadata only (lightweight)
+    $metadata = $loader->discoverMetadata();
+
+Loading Skills from GitHub
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :class:`Symfony\\AI\\Agent\\Skill\\GithubSkillLoader` loads skills from GitHub repositories using
+the `GitHub Contents API`_. This enables sharing and distributing skills across teams and projects
+without local copies::
+
+    use Symfony\AI\Agent\Skill\GithubSkillLoader;
+    use Symfony\Component\HttpClient\HttpClient;
+
+    $loader = new GithubSkillLoader(
+        [['repository' => 'owner/skills-repo']],
+        HttpClient::create(),
+    );
+
+    // Same API as FilesystemSkillLoader
+    $skill = $loader->loadSkill('my-skill');
+    $skills = $loader->loadSkills();
+    $metadata = $loader->discoverMetadata();
+
+Each repository entry supports the following options:
+
+* ``repository`` (required): GitHub repository in ``owner/repo`` format or a full ``https://github.com/owner/repo`` URL
+* ``path`` (optional): Subdirectory within the repository where skills are stored (default: root)
+* ``branch`` (optional): Branch to load from (default: ``main``)
+* ``token`` (optional): GitHub personal access token for private repositories
+
+**Loading from a private repository with a custom path and branch**::
+
+    $loader = new GithubSkillLoader(
+        [[
+            'repository' => 'my-org/private-skills',
+            'path' => 'ai-skills',
+            'branch' => 'develop',
+            'token' => 'ghp_your_token_here',
+        ]],
+        HttpClient::create(),
+    );
+
+**Loading from multiple repositories**::
+
+    $loader = new GithubSkillLoader(
+        [
+            ['repository' => 'my-org/common-skills'],
+            ['repository' => 'my-org/team-skills', 'token' => 'ghp_token'],
+        ],
+        HttpClient::create(),
+    );
+
+The GitHub loader expects the same directory structure as the filesystem loader: each skill is a
+directory containing a ``SKILL.md`` file, with optional ``scripts/``, ``references/``, and ``assets/``
+subdirectories.
+
+Combining Loaders with ChainSkillLoader
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :class:`Symfony\\AI\\Agent\\Skill\\ChainSkillLoader` composes multiple loaders into a single
+transparent loader. This is useful when skills come from both local directories and remote
+repositories::
+
+    use Symfony\AI\Agent\Skill\ChainSkillLoader;
+    use Symfony\AI\Agent\Skill\FilesystemSkillLoader;
+    use Symfony\AI\Agent\Skill\GithubSkillLoader;
+    use Symfony\Component\HttpClient\HttpClient;
+
+    $localLoader = new FilesystemSkillLoader([__DIR__.'/skills']);
+    $githubLoader = new GithubSkillLoader(
+        [['repository' => 'my-org/shared-skills']],
+        HttpClient::create(),
+    );
+
+    $loader = new ChainSkillLoader([$localLoader, $githubLoader]);
+
+    // Uses the same SkillLoaderInterface API
+    $skill = $loader->loadSkill('my-skill');
+
+The chain loader follows a **first-match-wins** strategy:
+
+* ``loadSkill()``: Returns the skill from the first loader that finds it
+* ``loadSkills()`` and ``discoverMetadata()``: Aggregate results from all loaders; when a skill
+  name exists in multiple loaders, the first loader's version takes precedence
+
+This makes it easy to override remote skills with local versions by placing the local loader
+first in the chain.
+
+Using Skills as Context
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The :class:`Symfony\\AI\\Agent\\InputProcessor\\SkillInputProcessor` injects skill content directly into the system
+prompt, providing the agent with contextual knowledge::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\InputProcessor\SkillInputProcessor;
+    use Symfony\AI\Agent\Skill\FilesystemSkillLoader;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    // Initialize platform
+    $loader = new FilesystemSkillLoader([__DIR__.'/skills']);
+
+    // Inject the 'symfony-console' skill into the system context
+    $skillProcessor = new SkillInputProcessor(
+        $loader,
+        ['symfony-console'],  // Skill names to include
+        true                  // Include reference files
+    );
+
+    $agent = new Agent($platform, $model, [$skillProcessor]);
+
+    $messages = new MessageBag(
+        Message::forSystem('You are a Symfony expert.'),
+        Message::ofUser('How do I create a console command?')
+    );
+
+    $result = $agent->call($messages);
+
+This approach is ideal when:
+
+* The agent needs consistent access to specific knowledge
+* The skill content should influence all agent responses
+* You want the agent to follow specific guidelines or patterns
+
+Using Skills as Tools
+^^^^^^^^^^^^^^^^^^^^^
+
+Skills can be exposed as callable tools using :class:`Symfony\\AI\\Agent\\Toolbox\\Tool\\SkillTool`, allowing the agent
+to actively query skills when needed::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Skill\FilesystemSkillLoader;
+    use Symfony\AI\Agent\Toolbox\AgentProcessor;
+    use Symfony\AI\Agent\Toolbox\Tool\SkillTool;
+    use Symfony\AI\Agent\Toolbox\Toolbox;
+    use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
+
+    $loader = new FilesystemSkillLoader([__DIR__.'/skills']);
+    $tool = new SkillTool($loader, 'twig-component');
+
+    // Register the skill as a tool
+    $toolFactory = new MemoryToolFactory();
+    $toolFactory->addTool(
+        $tool,
+        'skill_twig_component',
+        'Consult the twig-component skill for Symfony UX TwigComponent knowledge'
+    );
+
+    $processor = new AgentProcessor(new Toolbox([$tool], $toolFactory));
+    $agent = new Agent($platform, $model, [$processor], [$processor]);
+
+The :class:`Symfony\\AI\\Agent\\Toolbox\\Tool\\SkillTool` provides three built-in tools:
+
+* ``get_skill``: Load a specific skill by name with optional reference files
+* ``get_skills``: Get all available skills
+* ``execute_skill_script``: Execute a script from the skill's ``scripts/`` directory
+
+Loading Skills with References
+...............................
+
+Skills can reference additional documentation files::
+
+    $result = $agent->call(new MessageBag(
+        Message::forSystem('You are a helpful assistant.'),
+        Message::ofUser('Show me advanced patterns for TwigComponent')
+    ));
+
+    // The agent can call: get_skill('twig-component', 'patterns.md')
+    // This loads: skills/twig-component/references/patterns.md
+
+This approach is ideal when:
+
+* The agent should decide when to consult specific knowledge
+* Skills contain large amounts of information
+* You want to minimize token usage by loading skills on-demand
+
+Executing Scripts from Skills
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Skills can include executable scripts in their ``scripts/`` directory. The :class:`Symfony\\AI\\Agent\\Toolbox\\Tool\\SkillTool`
+automatically detects the interpreter based on file extension and executes scripts using Symfony's Process component::
+
+    use Symfony\AI\Agent\Toolbox\Tool\SkillTool;
+
+    // Skill structure:
+    // my-skill/
+    // ├── SKILL.md
+    // └── scripts/
+    //     ├── setup.sh
+    //     ├── analyze.py
+    //     └── process.php
+
+    $loader = new FilesystemSkillLoader([__DIR__.'/skills']);
+    $tool = new SkillTool($loader, 'my-skill');
+
+    // Execute a script
+    $result = $tool->executeScript('setup.sh');
+
+    // Execute with arguments
+    $result = $tool->executeScript('analyze.py', ['--input', 'data.csv']);
+
+    // Execute with custom timeout (default: 60 seconds)
+    $result = $tool->executeScript('process.php', ['arg1', 'arg2'], 120);
+
+**Supported Script Types**:
+
+* ``.php`` → Executed with PHP_BINARY
+* ``.py`` → Executed with python3
+* ``.sh`` → Executed with bash
+* ``.js`` → Executed with node
+* ``.rb`` → Executed with ruby
+* Other extensions → Executed directly (requires execute permissions)
+
+The script output (stdout and stderr) is captured and returned in a formatted markdown string. If the script fails,
+both error output and standard output are included in the result.
+
+.. warning::
+
+    Scripts execute arbitrary code on your system. Only use skills from trusted sources and review script contents
+    before execution. Always set appropriate timeouts and validate script inputs.
+
+Creating Your Own Skills
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Create a new skill by following this structure:
+
+**1. Create the directory and SKILL.md**::
+
+    mkdir -p skills/my-skill
+    cat > skills/my-skill/SKILL.md << 'EOF'
+    ---
+    name: my-skill
+    description: Provides expertise in my-domain with best practices and examples
+    license: MIT
+    metadata:
+      author: Your Name
+      version: "1.0"
+    ---
+
+    # My Skill
+
+    This skill provides guidance on my-domain.
+
+    ## When to Use
+
+    Use this skill when working with my-domain components or implementing my-feature.
+
+    ## Best Practices
+
+    - Always validate inputs
+    - Use dependency injection
+    - Follow PSR standards
+
+    ## Examples
+
+    ```php
+    // Example code here
+    ```
+    EOF
+
+**2. Add optional scripts**::
+
+    mkdir skills/my-skill/scripts
+    cat > skills/my-skill/scripts/validate.sh << 'EOF'
+    #!/bin/bash
+    echo "Validating configuration..."
+    # Your validation logic
+    EOF
+    chmod +x skills/my-skill/scripts/validate.sh
+
+**3. Add optional reference documentation**::
+
+    mkdir skills/my-skill/references
+    cat > skills/my-skill/references/api.md << 'EOF'
+    # API Reference
+
+    Detailed API documentation...
+    EOF
+
+**Best Practices**:
+
+* Keep the main ``SKILL.md`` concise and actionable
+* Use clear, kebab-case names (e.g., ``symfony-console``)
+* Provide comprehensive descriptions (minimum 20 characters)
+* Include trigger words in the description for better LLM matching
+* Place detailed information in ``references/`` to avoid token bloat
+* Document script parameters and expected behavior
+* Include examples and common patterns
+
+Validating Skills
+^^^^^^^^^^^^^^^^^
+
+The AI Bundle provides a console command to validate skills against the specification::
+
+    # Validate all skills
+    php bin/console ai:agent:validate-skills
+
+**Validation checks**:
+
+* Required fields (name, description)
+* Name format (must be kebab-case)
+* Description length (warns if < 20 characters)
+* Field types and formats
+* Unknown frontmatter fields
+* Body content presence
+* Directory structure
+
+**Output example**::
+
+    Agent Skill Validation
+    ======================
+
+    Validating all skills...
+
+    twig-component: ✓ valid
+    symfony-console: ✓ valid ⚠ 1 warning(s)
+      ⚠ Description is short (15 chars). Consider a more descriptive text
+
+    Summary
+    -------
+     Metric         | Count
+    ----------------+-------
+     Total          | 2
+     Valid          | 2
+     Invalid        | 0
+     With warnings  | 1
+
+    [OK] All skills are valid! (1 warning(s) found)
+
+**Exit Codes**:
+
+* ``0`` (SUCCESS): All skills are valid
+* ``1`` (FAILURE): At least one skill has validation errors
+
+Skill Discovery
+^^^^^^^^^^^^^^^
+
+The :class:`Symfony\\AI\\Agent\\Skill\\SkillLoaderInterface` provides methods for efficient skill discovery:
+
+**Level 1 - Metadata Only** (Lightweight)::
+
+    $loader = new FilesystemSkillLoader([__DIR__.'/skills']);
+
+    // Get skill names only
+    $names = $loader->getSkillsNames();
+    // Returns: ['twig-component', 'symfony-console', ...]
+
+    // Get metadata without loading full content
+    $metadata = $loader->discoverMetadata();
+    foreach ($metadata as $skillName => $meta) {
+        echo $meta->getName();
+        echo $meta->getDescription();
+        echo $meta->getVersion();
+    }
+
+**Level 2 - Full Content**::
+
+    // Load complete skill with body, scripts, references
+    $skill = $loader->loadSkill('twig-component');
+    echo $skill->getBody();
+    echo $skill->loadReference('api.md');
+
+Use Level 1 for listings, menus, or selection UIs. Use Level 2 when you need the actual skill content.
+
+Code Examples
+^^^^^^^^^^^^^
+
+* `Skills as Context`_: Inject skills into system prompt
+* `Skills as Tools`_: Expose skills as callable tools
+* `GitHub Skills as Context`_: Load skills from GitHub and inject into system prompt
+* `GitHub Skills as Tools`_: Load skills from GitHub and expose as callable tools
+* `Chain Loader`_: Combine local and GitHub loaders transparently
+* `Script Execution`_: Execute scripts from skills
+* `Skill Validation`_: Validate skill structure
+
 Testing
 -------
 
@@ -738,6 +1178,7 @@ Code Examples
 * `Chat with embedding search memory`_
 
 
+.. _`Agent Skills Specification`: https://agentskills.io/specification
 .. _`Platform Component`: https://github.com/symfony/ai-platform
 .. _`Anthropic Toolbox Example`: https://github.com/symfony/ai/blob/main/examples/anthropic/toolcall.php
 .. _`Brave Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/brave.php
@@ -755,3 +1196,11 @@ Code Examples
 .. _`RAG with Pinecone`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
 .. _`Chat with static memory`: https://github.com/symfony/ai/blob/main/examples/memory/static.php
 .. _`Chat with embedding search memory`: https://github.com/symfony/ai/blob/main/examples/memory/mariadb.php
+.. _`GitHub Contents API`: https://docs.github.com/en/rest/repos/contents
+.. _`Skills as Context`: https://github.com/symfony/ai/blob/main/examples/skills/agent-with-skills.php
+.. _`Skills as Tools`: https://github.com/symfony/ai/blob/main/examples/skills/agent-with-skills-as-tool.php
+.. _`GitHub Skills as Context`: https://github.com/symfony/ai/blob/main/examples/skills/agent-with-github-skills.php
+.. _`GitHub Skills as Tools`: https://github.com/symfony/ai/blob/main/examples/skills/agent-with-github-skills-as-tool.php
+.. _`Chain Loader`: https://github.com/symfony/ai/blob/main/examples/skills/agent-with-chain-loader.php
+.. _`Script Execution`: https://github.com/symfony/ai/blob/main/examples/skills/agent-with-script-execution.php
+.. _`Skill Validation`: https://github.com/symfony/ai/tree/main/src/ai-bundle/src/Command/ValidateSkillCommand.php

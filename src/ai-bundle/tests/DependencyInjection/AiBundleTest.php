@@ -22,10 +22,15 @@ use Probots\Pinecone\Client as PineconeClient;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\InputProcessor\SkillInputProcessor;
+use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
+use Symfony\AI\Agent\Skill\FilesystemSkillLoader;
+use Symfony\AI\Agent\Skill\SkillParser;
+use Symfony\AI\Agent\Skill\SkillParserInterface;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -103,7 +108,7 @@ use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class AiBundleTest extends TestCase
+final class AiBundleTest extends TestCase
 {
     public function testExtensionLoadDoesNotThrow()
     {
@@ -7763,6 +7768,387 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $arguments[2]);
         $this->assertSame('ai.platform.model_catalog.ovh', (string) $arguments[2]);
         $this->assertNull($definition->getArgument(3));
+    }
+
+    public function testAgentCanUseSkills()
+    {
+        // Skils are disabled by default
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'skilled_one' => [
+                        'model' => 'gpt-4',
+                        'platform' => 'ai.platform.openai',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.skilled_one'));
+        $this->assertFalse($container->hasDefinition('ai.skills.parser'));
+        $this->assertFalse($container->hasDefinition('ai.skill.filesystem_loader'));
+        $this->assertFalse($container->hasDefinition('ai.skills.input_processor'));
+
+        // First case, we enable skills
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'skilled_one' => [
+                        'model' => 'gpt-4',
+                        'platform' => 'ai.platform.openai',
+                        'skills' => [
+                            'enabled' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.skilled_one'));
+        $this->assertTrue($container->hasDefinition('ai.skills.parser'));
+        $this->assertTrue($container->hasDefinition('ai.skills.filesystem_loader'));
+        $this->assertTrue($container->hasDefinition('ai.skills.input_processor'));
+
+        $parserDefinition = $container->getDefinition('ai.skills.parser');
+        $this->assertSame(SkillParser::class, $parserDefinition->getClass());
+        $this->assertTrue($parserDefinition->isLazy());
+
+        $this->assertCount(1, $parserDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $parserDefinition->getArgument(0));
+        $this->assertSame('filesystem', (string) $parserDefinition->getArgument(0));
+
+        $this->assertSame([
+            ['interface' => SkillParserInterface::class],
+        ], $parserDefinition->getTag('proxy'));
+
+        $discoveryDefinition = $container->getDefinition('ai.skills.filesystem_loader');
+        $this->assertSame(FilesystemSkillLoader::class, $discoveryDefinition->getClass());
+        $this->assertFalse($discoveryDefinition->isLazy());
+
+        $this->assertCount(3, $discoveryDefinition->getArguments());
+        $this->assertSame(['%kernel.share_dir%/skills'], $discoveryDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $discoveryDefinition->getArgument(1));
+        $this->assertSame('ai.skills.parser', (string) $discoveryDefinition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $discoveryDefinition->getArgument(2));
+        $this->assertSame('filesystem', (string) $discoveryDefinition->getArgument(2));
+
+        $inputProcessorDefinition = $container->getDefinition('ai.skills.input_processor');
+        $this->assertSame(SkillInputProcessor::class, $inputProcessorDefinition->getClass());
+        $this->assertTrue($inputProcessorDefinition->isLazy());
+
+        $this->assertCount(3, $inputProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $inputProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.skills.filesystem_loader', (string) $inputProcessorDefinition->getArgument(0));
+        $this->assertSame([], $inputProcessorDefinition->getArgument(1));
+        $this->assertFalse($inputProcessorDefinition->getArgument(2));
+
+        $this->assertSame([
+            ['interface' => InputProcessorInterface::class],
+        ], $inputProcessorDefinition->getTag('proxy'));
+
+        // Second case, the loaded is changed to a database one
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'skilled_one' => [
+                        'model' => 'gpt-4',
+                        'platform' => 'ai.platform.openai',
+                        'skills' => [
+                            'enabled' => true,
+                            'loader' => 'ai.skill.database_loader',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.skilled_one'));
+        $this->assertFalse($container->hasDefinition('ai.skills.parser'));
+        $this->assertFalse($container->hasDefinition('ai.skills.filesystem_loader'));
+        $this->assertTrue($container->hasDefinition('ai.skills.input_processor'));
+
+        $inputProcessorDefinition = $container->getDefinition('ai.skills.input_processor');
+        $this->assertSame(SkillInputProcessor::class, $inputProcessorDefinition->getClass());
+        $this->assertTrue($inputProcessorDefinition->isLazy());
+
+        $this->assertCount(3, $inputProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $inputProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.skill.database_loader', (string) $inputProcessorDefinition->getArgument(0));
+        $this->assertSame([], $inputProcessorDefinition->getArgument(1));
+        $this->assertFalse($inputProcessorDefinition->getArgument(2));
+
+        $this->assertSame([
+            ['interface' => InputProcessorInterface::class],
+        ], $inputProcessorDefinition->getTag('proxy'));
+
+        // Third case, we add a custom directory for skills
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'skilled_one' => [
+                        'model' => 'gpt-4',
+                        'platform' => 'ai.platform.openai',
+                        'skills' => [
+                            'enabled' => true,
+                            'directories' => [
+                                '%kernel.share_dir%/newdir',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.skilled_one'));
+        $this->assertTrue($container->hasDefinition('ai.skills.parser'));
+        $this->assertTrue($container->hasDefinition('ai.skills.filesystem_loader'));
+        $this->assertTrue($container->hasDefinition('ai.skills.input_processor'));
+
+        $parserDefinition = $container->getDefinition('ai.skills.parser');
+        $this->assertSame(SkillParser::class, $parserDefinition->getClass());
+        $this->assertTrue($parserDefinition->isLazy());
+
+        $this->assertCount(1, $parserDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $parserDefinition->getArgument(0));
+        $this->assertSame('filesystem', (string) $parserDefinition->getArgument(0));
+
+        $this->assertSame([
+            ['interface' => SkillParserInterface::class],
+        ], $parserDefinition->getTag('proxy'));
+
+        $discoveryDefinition = $container->getDefinition('ai.skills.filesystem_loader');
+        $this->assertSame(FilesystemSkillLoader::class, $discoveryDefinition->getClass());
+        $this->assertFalse($discoveryDefinition->isLazy());
+
+        $this->assertCount(3, $discoveryDefinition->getArguments());
+        $this->assertSame(['%kernel.share_dir%/newdir'], $discoveryDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $discoveryDefinition->getArgument(1));
+        $this->assertSame('ai.skills.parser', (string) $discoveryDefinition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $discoveryDefinition->getArgument(2));
+        $this->assertSame('filesystem', (string) $discoveryDefinition->getArgument(2));
+
+        $inputProcessorDefinition = $container->getDefinition('ai.skills.input_processor');
+        $this->assertSame(SkillInputProcessor::class, $inputProcessorDefinition->getClass());
+        $this->assertTrue($inputProcessorDefinition->isLazy());
+
+        $this->assertCount(3, $inputProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $inputProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.skills.filesystem_loader', (string) $inputProcessorDefinition->getArgument(0));
+        $this->assertSame([], $inputProcessorDefinition->getArgument(1));
+        $this->assertFalse($inputProcessorDefinition->getArgument(2));
+
+        $this->assertSame([
+            ['interface' => InputProcessorInterface::class],
+        ], $inputProcessorDefinition->getTag('proxy'));
+
+        // Fourth case, we enable certain skills
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'skilled_one' => [
+                        'model' => 'gpt-4',
+                        'platform' => 'ai.platform.openai',
+                        'skills' => [
+                            'enabled' => true,
+                            'active_skills' => [
+                                'foo',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.skilled_one'));
+        $this->assertTrue($container->hasDefinition('ai.skills.parser'));
+        $this->assertTrue($container->hasDefinition('ai.skills.filesystem_loader'));
+        $this->assertTrue($container->hasDefinition('ai.skills.input_processor'));
+
+        $parserDefinition = $container->getDefinition('ai.skills.parser');
+        $this->assertSame(SkillParser::class, $parserDefinition->getClass());
+        $this->assertTrue($parserDefinition->isLazy());
+
+        $this->assertCount(1, $parserDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $parserDefinition->getArgument(0));
+        $this->assertSame('filesystem', (string) $parserDefinition->getArgument(0));
+
+        $this->assertSame([
+            ['interface' => SkillParserInterface::class],
+        ], $parserDefinition->getTag('proxy'));
+
+        $discoveryDefinition = $container->getDefinition('ai.skills.filesystem_loader');
+        $this->assertSame(FilesystemSkillLoader::class, $discoveryDefinition->getClass());
+        $this->assertFalse($discoveryDefinition->isLazy());
+
+        $this->assertCount(3, $discoveryDefinition->getArguments());
+        $this->assertSame(['%kernel.share_dir%/skills'], $discoveryDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $discoveryDefinition->getArgument(1));
+        $this->assertSame('ai.skills.parser', (string) $discoveryDefinition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $discoveryDefinition->getArgument(2));
+        $this->assertSame('filesystem', (string) $discoveryDefinition->getArgument(2));
+
+        $inputProcessorDefinition = $container->getDefinition('ai.skills.input_processor');
+        $this->assertSame(SkillInputProcessor::class, $inputProcessorDefinition->getClass());
+        $this->assertTrue($inputProcessorDefinition->isLazy());
+
+        $this->assertCount(3, $inputProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $inputProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.skills.filesystem_loader', (string) $inputProcessorDefinition->getArgument(0));
+        $this->assertSame(['foo'], $inputProcessorDefinition->getArgument(1));
+        $this->assertFalse($inputProcessorDefinition->getArgument(2));
+
+        $this->assertSame([
+            ['interface' => InputProcessorInterface::class],
+        ], $inputProcessorDefinition->getTag('proxy'));
+
+        // Fifth case, we include the index in the skill list
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'skilled_one' => [
+                        'model' => 'gpt-4',
+                        'platform' => 'ai.platform.openai',
+                        'skills' => [
+                            'enabled' => true,
+                            'active_skills' => [
+                                'foo',
+                            ],
+                            'include_index' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.skilled_one'));
+        $this->assertTrue($container->hasDefinition('ai.skills.parser'));
+        $this->assertTrue($container->hasDefinition('ai.skills.filesystem_loader'));
+        $this->assertTrue($container->hasDefinition('ai.skills.input_processor'));
+
+        $parserDefinition = $container->getDefinition('ai.skills.parser');
+        $this->assertSame(SkillParser::class, $parserDefinition->getClass());
+        $this->assertTrue($parserDefinition->isLazy());
+
+        $this->assertCount(1, $parserDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $parserDefinition->getArgument(0));
+        $this->assertSame('filesystem', (string) $parserDefinition->getArgument(0));
+
+        $this->assertSame([
+            ['interface' => SkillParserInterface::class],
+        ], $parserDefinition->getTag('proxy'));
+
+        $discoveryDefinition = $container->getDefinition('ai.skills.filesystem_loader');
+        $this->assertSame(FilesystemSkillLoader::class, $discoveryDefinition->getClass());
+        $this->assertFalse($discoveryDefinition->isLazy());
+
+        $this->assertCount(3, $discoveryDefinition->getArguments());
+        $this->assertSame(['%kernel.share_dir%/skills'], $discoveryDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $discoveryDefinition->getArgument(1));
+        $this->assertSame('ai.skills.parser', (string) $discoveryDefinition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $discoveryDefinition->getArgument(2));
+        $this->assertSame('filesystem', (string) $discoveryDefinition->getArgument(2));
+
+        $inputProcessorDefinition = $container->getDefinition('ai.skills.input_processor');
+        $this->assertSame(SkillInputProcessor::class, $inputProcessorDefinition->getClass());
+        $this->assertTrue($inputProcessorDefinition->isLazy());
+
+        $this->assertCount(3, $inputProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $inputProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.skills.filesystem_loader', (string) $inputProcessorDefinition->getArgument(0));
+        $this->assertSame(['foo'], $inputProcessorDefinition->getArgument(1));
+        $this->assertTrue($inputProcessorDefinition->getArgument(2));
+
+        $this->assertSame([
+            ['interface' => InputProcessorInterface::class],
+        ], $inputProcessorDefinition->getTag('proxy'));
+
+        // Sixth case, we enable "skills-as-tools" (for models outside Anthropic)
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'skilled_one' => [
+                        'model' => 'gpt-4',
+                        'platform' => 'ai.platform.openai',
+                        'skills' => [
+                            'enabled' => true,
+                            'active_skills' => [
+                                'foo',
+                            ],
+                        ],
+                        'tools' => [
+                            'enabled' => true,
+                            'services' => [
+                                'custom_tool',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.agent.skilled_one'));
+        $this->assertTrue($container->hasDefinition('ai.skills.parser'));
+        $this->assertTrue($container->hasDefinition('ai.skills.filesystem_loader'));
+        $this->assertTrue($container->hasDefinition('ai.skills.input_processor'));
+        $this->assertTrue($container->hasDefinition('ai.skills.tool.skilled_one.foo'));
+        $this->assertTrue($container->hasDefinition('ai.toolbox.skilled_one.memory_factory'));
+
+        $parserDefinition = $container->getDefinition('ai.skills.parser');
+        $this->assertSame(SkillParser::class, $parserDefinition->getClass());
+        $this->assertTrue($parserDefinition->isLazy());
+
+        $this->assertCount(1, $parserDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $parserDefinition->getArgument(0));
+        $this->assertSame('filesystem', (string) $parserDefinition->getArgument(0));
+
+        $this->assertSame([
+            ['interface' => SkillParserInterface::class],
+        ], $parserDefinition->getTag('proxy'));
+
+        $discoveryDefinition = $container->getDefinition('ai.skills.filesystem_loader');
+        $this->assertSame(FilesystemSkillLoader::class, $discoveryDefinition->getClass());
+        $this->assertFalse($discoveryDefinition->isLazy());
+
+        $this->assertCount(3, $discoveryDefinition->getArguments());
+        $this->assertSame(['%kernel.share_dir%/skills'], $discoveryDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $discoveryDefinition->getArgument(1));
+        $this->assertSame('ai.skills.parser', (string) $discoveryDefinition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $discoveryDefinition->getArgument(2));
+        $this->assertSame('filesystem', (string) $discoveryDefinition->getArgument(2));
+
+        $inputProcessorDefinition = $container->getDefinition('ai.skills.input_processor');
+        $this->assertSame(SkillInputProcessor::class, $inputProcessorDefinition->getClass());
+        $this->assertTrue($inputProcessorDefinition->isLazy());
+
+        $this->assertCount(3, $inputProcessorDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $inputProcessorDefinition->getArgument(0));
+        $this->assertSame('ai.skills.filesystem_loader', (string) $inputProcessorDefinition->getArgument(0));
+        $this->assertSame(['foo'], $inputProcessorDefinition->getArgument(1));
+        $this->assertFalse($inputProcessorDefinition->getArgument(2));
+
+        $this->assertSame([
+            ['interface' => InputProcessorInterface::class],
+        ], $inputProcessorDefinition->getTag('proxy'));
+
+        $skillAsToolDefinition = $container->getDefinition('ai.skills.tool.skilled_one.foo');
+
+        $this->assertCount(2, $skillAsToolDefinition->getArguments());
+        $this->assertInstanceOf(Reference::class, $skillAsToolDefinition->getArgument(0));
+        $this->assertSame('ai.skills.filesystem_loader', (string) $skillAsToolDefinition->getArgument(0));
+        $this->assertSame('foo', $skillAsToolDefinition->getArgument(1));
+        $this->assertTrue($skillAsToolDefinition->hasTag('ai.agent.skill_as_tool'));
+
+        $memoryFactoryDefinition = $container->getDefinition('ai.toolbox.skilled_one.memory_factory');
+        $this->assertEquals([
+            [
+                'addTool',
+                [
+                    new Reference('ai.skills.tool.skilled_one.foo'),
+                    'skill_foo',
+                    'Consult the "foo" skill for specialized knowledge and instructions. Pass an optional reference file path for detailed documentation.',
+                ],
+            ],
+        ], $memoryFactoryDefinition->getMethodCalls());
     }
 
     /**

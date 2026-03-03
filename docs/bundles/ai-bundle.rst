@@ -535,6 +535,121 @@ When using a service reference, the memory service must implement the
         }
     }
 
+Skills Configuration
+--------------------
+
+The AI Bundle provides built-in support for loading and using `Agent Skills`_ from both local
+directories and remote GitHub repositories.
+
+Local Skills
+~~~~~~~~~~~~
+
+Skills stored in local directories are loaded by the default filesystem loader:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: 'gpt-4o-mini'
+                skills:
+                    enabled: true
+                    directories:
+                        - '%kernel.project_dir%/skills'
+                        - '%kernel.project_dir%/vendor/my-org/shared-skills'
+                    active_skills:
+                        - 'twig-component'
+                        - 'symfony-console'
+                    include_index: true
+
+GitHub Skills
+~~~~~~~~~~~~~
+
+Skills can be loaded from GitHub repositories using the ``github_repositories`` option. When
+configured alongside ``directories``, a :class:`Symfony\\AI\\Agent\\Skill\\ChainSkillLoader`
+is automatically created to transparently compose both loaders:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: 'gpt-4o-mini'
+                skills:
+                    enabled: true
+                    directories:
+                        - '%kernel.project_dir%/skills'
+                    github_repositories:
+                        # Public repository
+                        - repository: 'my-org/shared-skills'
+
+                        # Private repository with authentication
+                        - repository: 'my-org/private-skills'
+                          token: '%env(GITHUB_TOKEN)%'
+
+                        # Custom branch and subdirectory
+                        - repository: 'my-org/monorepo'
+                          path: 'ai/skills'
+                          branch: 'develop'
+                          token: '%env(GITHUB_TOKEN)%'
+                    active_skills:
+                        - 'twig-component'
+
+Each repository entry supports:
+
+* ``repository`` (required): GitHub repository in ``owner/repo`` format or full URL
+* ``path`` (optional): Subdirectory where skills are stored (default: repository root)
+* ``branch`` (optional): Branch to load from (default: ``main``)
+* ``token`` (optional): Personal access token for private repositories
+
+When both ``directories`` and ``github_repositories`` are configured, local skills take
+precedence over GitHub skills with the same name.
+
+GitHub-Only Skills
+..................
+
+To use only GitHub-based skills without local directories:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: 'gpt-4o-mini'
+                skills:
+                    enabled: true
+                    directories: []
+                    github_repositories:
+                        - repository: 'my-org/skills'
+                    active_skills:
+                        - 'my-skill'
+
+Skills as Tools
+~~~~~~~~~~~~~~~
+
+When tools are enabled, active skills are automatically registered as callable tools. The agent
+can then decide when to consult specific skills:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: 'gpt-4o-mini'
+                tools: true
+                skills:
+                    enabled: true
+                    directories:
+                        - '%kernel.project_dir%/skills'
+                    github_repositories:
+                        - repository: 'my-org/skills'
+                    active_skills:
+                        - 'twig-component'
+
+Each active skill is registered as a tool named ``skill_{name}`` (with dashes converted to
+underscores). The agent can call these tools to load skill content, reference files, and
+execute scripts on demand.
+
 Multi-Agent Orchestration
 -------------------------
 
@@ -1179,6 +1294,7 @@ Chats are defined in the ``chat`` section of your configuration:
                 agent: 'ai.agent.youtube'
                 message_store: 'ai.message_store.cache.youtube'
 
+.. _`Agent Skills`: https://agentskills.io/specification
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
 .. _`Symfony AI Chat`: https://github.com/symfony/ai-chat
 .. _`Symfony AI Platform`: https://github.com/symfony/ai-platform

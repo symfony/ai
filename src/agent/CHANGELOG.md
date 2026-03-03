@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * [BC BREAK] Change `SkillMetadataInterface::getCompatibility()` return type from `?array` to `?string`
+ * [BC BREAK] Rename `SkillMetadataInterface::getFrontMatters()` to `getFrontmatter()`
+ * Fix missing path separator in `SkillParser` reference and asset loaders
+ * Fix typo in `SkillValidator::ALLOWED_FIELDS` (`licence` → `license`)
+ * Fix `SkillValidator` description max length from `1064` to `1024` (per spec)
+ * Add skill evaluation system with `EvalSuiteLoader`, `EvalRunner`, `LlmGrader`, `WorkspaceManager`, and `BenchmarkAggregator`
+ * Add `GithubSkillLoader` for loading skills from GitHub repositories via the Contents API
+ * Add `ChainSkillLoader` for composing multiple skill loaders transparently
+ * Add `SkillParserInterface::parseFromContent()` and `parseMetadataFromContent()` for source-agnostic skill parsing
+
 0.4
 ---
 

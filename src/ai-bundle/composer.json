@@ -3,6 +3,10 @@
     "description": "Integration bundle for Symfony AI components",
     "license": "MIT",
     "type": "symfony-bundle",
+    "repositories": [
+        {"type": "path", "url": "../store/src/Bridge/S3Vectors" },
+        {"type": "path", "url": "../store/src/Bridge/Vektor" }
+    ],
     "authors": [
         {
             "name": "Christopher Hertel",
