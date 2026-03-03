@@ -46,21 +46,31 @@ final class ModelClient implements ModelClientInterface
         $task = $options['task'] ?? null;
         unset($options['task'], $options['provider']);
 
+        $requestPayload = $this->getPayload($payload, $options, $task);
+
+        // Third-party providers need the model name in the JSON body
+        if (Task::CHAT_COMPLETION === $task && Provider::HF_INFERENCE !== $provider) {
+            $requestPayload['json']['model'] = $model->getName();
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', $this->getUrl($model, $provider, $task), [
             'auth_bearer' => $this->apiKey,
-            ...$this->getPayload($payload, $options, $task),
+            ...$requestPayload,
         ]));
     }
 
     private function getUrl(Model $model, string $provider, ?string $task): string
     {
-        $url = \sprintf('https://router.huggingface.co/%s/models/%s', $provider, $model->getName());
-
         if (Task::CHAT_COMPLETION === $task) {
-            $url .= '/v1/chat/completions';
+            if (Provider::HF_INFERENCE === $provider) {
+                return \sprintf('https://router.huggingface.co/%s/models/%s/v1/chat/completions', $provider, $model->getName());
+            }
+
+            // Third-party providers use OpenAI-compatible endpoint
+            return \sprintf('https://router.huggingface.co/%s/v1/chat/completions', $provider);
         }
 
-        return $url;
+        return \sprintf('https://router.huggingface.co/%s/models/%s', $provider, $model->getName());
     }
 
     /**

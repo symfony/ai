@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\FileNormalizer;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\MessageBagNormalizer;
 use Symfony\AI\Platform\Bridge\HuggingFace\ModelClient;
+use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -28,7 +29,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 final class ModelClientTest extends TestCase
 {
     #[DataProvider('urlTestCases')]
-    public function testGetUrlForDifferentInputsAndTasks(?string $task, string $expectedUrl)
+    public function testGetUrlForDifferentInputsAndTasks(?string $task, string $expectedUrl, ?string $provider = null)
     {
         $response = new MockResponse('{"result": "test"}', [
             'http_code' => 200,
@@ -46,6 +47,9 @@ final class ModelClientTest extends TestCase
 
         // Make a request to trigger URL generation
         $options = $task ? ['task' => $task] : [];
+        if (null !== $provider) {
+            $options['provider'] = $provider;
+        }
         $modelClient->request($model, 'test input', $options);
     }
 
@@ -69,14 +73,76 @@ final class ModelClientTest extends TestCase
             'task' => Task::FEATURE_EXTRACTION,
             'expectedUrl' => 'https://router.huggingface.co/test-provider/models/test-model',
         ];
-        yield 'message bag' => [
+        yield 'chat completion with hf-inference' => [
             'task' => Task::CHAT_COMPLETION,
-            'expectedUrl' => 'https://router.huggingface.co/test-provider/models/test-model/v1/chat/completions',
+            'expectedUrl' => 'https://router.huggingface.co/hf-inference/models/test-model/v1/chat/completions',
+            'provider' => Provider::HF_INFERENCE,
+        ];
+        yield 'chat completion with third-party provider' => [
+            'task' => Task::CHAT_COMPLETION,
+            'expectedUrl' => 'https://router.huggingface.co/featherless-ai/v1/chat/completions',
+            'provider' => Provider::FEATHERLESS_AI,
         ];
         yield 'text ranking' => [
             'task' => Task::TEXT_RANKING,
             'expectedUrl' => 'https://router.huggingface.co/test-provider/models/test-model',
         ];
+    }
+
+    public function testThirdPartyProviderInjectsModelNameInPayload()
+    {
+        $response = new MockResponse('{"result": "test"}');
+        $httpClient = new MockHttpClient($response);
+
+        $model = new Model('HuggingFaceH4/zephyr-7b-beta');
+        $modelClient = new ModelClient($httpClient, Provider::FEATHERLESS_AI, 'test-api-key');
+
+        $contract = Contract::create(
+            new FileNormalizer(),
+            new MessageBagNormalizer()
+        );
+
+        $messageBag = new MessageBag();
+        $messageBag->add(new UserMessage(new Text('Test message')));
+
+        $payload = $contract->createRequestPayload($model, $messageBag);
+
+        $modelClient->request($model, $payload, [
+            'task' => Task::CHAT_COMPLETION,
+        ]);
+
+        $requestOptions = $response->getRequestOptions();
+        $body = json_decode($requestOptions['body'], true);
+
+        $this->assertSame('HuggingFaceH4/zephyr-7b-beta', $body['model']);
+    }
+
+    public function testHfInferenceDoesNotInjectModelNameInPayload()
+    {
+        $response = new MockResponse('{"result": "test"}');
+        $httpClient = new MockHttpClient($response);
+
+        $model = new Model('test-model');
+        $modelClient = new ModelClient($httpClient, Provider::HF_INFERENCE, 'test-api-key');
+
+        $contract = Contract::create(
+            new FileNormalizer(),
+            new MessageBagNormalizer()
+        );
+
+        $messageBag = new MessageBag();
+        $messageBag->add(new UserMessage(new Text('Test message')));
+
+        $payload = $contract->createRequestPayload($model, $messageBag);
+
+        $modelClient->request($model, $payload, [
+            'task' => Task::CHAT_COMPLETION,
+        ]);
+
+        $requestOptions = $response->getRequestOptions();
+        $body = json_decode($requestOptions['body'], true);
+
+        $this->assertArrayNotHasKey('model', $body);
     }
 
     /**

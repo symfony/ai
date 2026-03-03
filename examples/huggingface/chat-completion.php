@@ -10,6 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
+use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -21,6 +22,7 @@ $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_cli
 $messages = new MessageBag(Message::ofUser('Hello, how are you doing today?'));
 $result = $platform->invoke('HuggingFaceH4/zephyr-7b-beta', $messages, [
     'task' => Task::CHAT_COMPLETION,
+    'provider' => Provider::FEATHERLESS_AI,
 ]);
 
 echo $result->asText().\PHP_EOL;
