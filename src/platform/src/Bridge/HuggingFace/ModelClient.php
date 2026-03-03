@@ -48,19 +48,22 @@ final class ModelClient implements ModelClientInterface
 
         return new RawHttpResult($this->httpClient->request('POST', $this->getUrl($model, $provider, $task), [
             'auth_bearer' => $this->apiKey,
-            ...$this->getPayload($payload, $options, $task),
+            ...$this->getPayload($model, $payload, $options, $task, $provider),
         ]));
     }
 
     private function getUrl(Model $model, string $provider, ?string $task): string
     {
-        $url = \sprintf('https://router.huggingface.co/%s/models/%s', $provider, $model->getName());
-
         if (Task::CHAT_COMPLETION === $task) {
-            $url .= '/v1/chat/completions';
+            if (Provider::HF_INFERENCE === $provider) {
+                return \sprintf('https://router.huggingface.co/%s/models/%s/v1/chat/completions', $provider, $model->getName());
+            }
+
+            // Third-party providers use OpenAI-compatible endpoint
+            return \sprintf('https://router.huggingface.co/%s/v1/chat/completions', $provider);
         }
 
-        return $url;
+        return \sprintf('https://router.huggingface.co/%s/models/%s', $provider, $model->getName());
     }
 
     /**
@@ -69,7 +72,7 @@ final class ModelClient implements ModelClientInterface
      *
      * @return array<string, mixed>
      */
-    private function getPayload(array|string $payload, array $options, ?string $task = null): array
+    private function getPayload(Model $model, array|string $payload, array $options, ?string $task, string $provider): array
     {
         // Text ranking: convert {query, texts} into text/text_pair pairs for the HF text-classification pipeline
         if (Task::TEXT_RANKING === $task && \is_array($payload) && isset($payload['query'], $payload['texts'])) {
@@ -96,6 +99,11 @@ final class ModelClient implements ModelClientInterface
         // Merge options into JSON payload
         if (isset($payload['json'])) {
             $payload['json'] = array_merge($payload['json'], $options);
+        }
+
+        // Third-party providers need the model name in the JSON body
+        if (Task::CHAT_COMPLETION === $task && Provider::HF_INFERENCE !== $provider && isset($payload['json'])) {
+            $payload['json']['model'] = $model->getName();
         }
 
         $payload['headers'] ??= ['Content-Type' => 'application/json'];
