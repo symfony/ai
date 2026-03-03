@@ -11,10 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi\Contract;
 
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\Content\Document;
-use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -23,7 +22,7 @@ use Symfony\AI\Platform\Model;
 class DocumentNormalizer extends ModelContractNormalizer
 {
     /**
-     * @param File $data
+     * @param Document $data
      *
      * @return array{type: 'file', file: array{filename: string, file_data: string}}
      */
@@ -45,6 +44,6 @@ class DocumentNormalizer extends ModelContractNormalizer
 
     protected function supportsModel(Model $model): bool
     {
-        return $model instanceof Gpt;
+        return $model->supports(Capability::INPUT_PDF);
     }
 }

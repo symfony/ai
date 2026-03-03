@@ -425,6 +425,7 @@ deptrac:
     AzurePlatform:
       - PlatformComponent
       - OpenAiPlatform
+      - OpenResponsesPlatform
       - GenericPlatform
       - MetaPlatform
     BedrockPlatform:

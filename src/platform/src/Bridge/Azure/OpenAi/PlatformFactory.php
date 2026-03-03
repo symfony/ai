@@ -12,10 +12,11 @@
 namespace Symfony\AI\Platform\Bridge\Azure\OpenAi;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Symfony\AI\Platform\Bridge\Generic\Completions;
+use Symfony\AI\Platform\Bridge\Azure\Responses\ModelClient as ResponsesModelClient;
 use Symfony\AI\Platform\Bridge\Generic\Embeddings;
+use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
-use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
+use Symfony\AI\Platform\Bridge\OpenResponses\ResultConverter as ResponsesResultConverter;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
@@ -41,13 +42,13 @@ final class PlatformFactory
 
         return new Platform(
             [
+                new ResponsesModelClient($httpClient, $baseUrl, $apiKey),
                 new EmbeddingsModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey),
-                new CompletionsModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey),
                 new WhisperModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey),
             ],
-            [new Completions\ResultConverter(), new Embeddings\ResultConverter(), new Whisper\ResultConverter()],
+            [new ResponsesResultConverter(), new Embeddings\ResultConverter(), new Whisper\ResultConverter()],
             $modelCatalog,
-            $contract ?? Contract::create(new AudioNormalizer()),
+            $contract ?? OpenAiContract::create(),
             $eventDispatcher,
         );
     }

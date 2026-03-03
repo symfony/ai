@@ -11,11 +11,11 @@
 
 namespace Symfony\AI\Platform\Bridge\Azure\OpenAi;
 
-use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog as OpenAiModelCatalog;
+use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
@@ -34,7 +34,7 @@ final class ModelCatalog extends AbstractModelCatalog
             $defaultModels[$modelName] = $modelData;
 
             if (Gpt::class === $modelData['class']) {
-                $defaultModels[$modelName]['class'] = CompletionsModel::class;
+                $defaultModels[$modelName]['class'] = ResponsesModel::class;
             }
             if (Embeddings::class === $modelData['class']) {
                 $defaultModels[$modelName]['class'] = EmbeddingsModel::class;
