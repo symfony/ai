@@ -27,6 +27,8 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  * @phpstan-import-type ChatData from TraceableChat
  * @phpstan-import-type AgentData from TraceableAgent
  * @phpstan-import-type StoreData from TraceableStore
+ * @phpstan-import-type SkillLoaderData from TraceableSkillLoader
+ * @phpstan-import-type SkillValidatorData from TraceableSkillValidator
  *
  * @phpstan-type CollectedPlatformCallData array{
  *     model: string,
@@ -69,12 +71,24 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     private readonly array $stores;
 
     /**
-     * @param iterable<TraceablePlatform>     $platforms
-     * @param iterable<TraceableToolbox>      $toolboxes
-     * @param iterable<TraceableMessageStore> $messageStores
-     * @param iterable<TraceableChat>         $chats
-     * @param iterable<TraceableAgent>        $agents
-     * @param iterable<TraceableStore>        $stores
+     * @var TraceableSkillLoader[]
+     */
+    private readonly array $skillLoaders;
+
+    /**
+     * @var TraceableSkillValidator[]
+     */
+    private readonly array $skillValidators;
+
+    /**
+     * @param iterable<TraceablePlatform>       $platforms
+     * @param iterable<TraceableToolbox>        $toolboxes
+     * @param iterable<TraceableMessageStore>   $messageStores
+     * @param iterable<TraceableChat>           $chats
+     * @param iterable<TraceableAgent>          $agents
+     * @param iterable<TraceableStore>          $stores
+     * @param iterable<TraceableSkillLoader>    $skillLoaders
+     * @param iterable<TraceableSkillValidator> $skillValidators
      */
     public function __construct(
         iterable $platforms,
@@ -83,6 +97,8 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         iterable $chats,
         iterable $agents,
         iterable $stores,
+        iterable $skillLoaders,
+        iterable $skillValidators,
     ) {
         $this->platforms = iterator_to_array($platforms);
         $this->toolboxes = iterator_to_array($toolboxes);
@@ -90,6 +106,8 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         $this->chats = iterator_to_array($chats);
         $this->agents = iterator_to_array($agents);
         $this->stores = iterator_to_array($stores);
+        $this->skillLoaders = iterator_to_array($skillLoaders);
+        $this->skillValidators = iterator_to_array($skillValidators);
     }
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
@@ -107,6 +125,8 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
             'chats' => array_merge(...array_map(static fn (TraceableChat $chat): array => $chat->calls, $this->chats)),
             'agents' => array_merge(...array_map(static fn (TraceableAgent $agent): array => $agent->calls, $this->agents)),
             'stores' => array_merge(...array_map(static fn (TraceableStore $store): array => $store->calls, $this->stores)),
+            'skill_loaders' => array_merge(...array_map(static fn (TraceableSkillLoader $skillLoader): array => $skillLoader->calls, $this->skillLoaders)),
+            'skill_validators' => array_merge(...array_map(static fn (TraceableSkillValidator $skillValidator): array => $skillValidator->calls, $this->skillValidators)),
         ];
     }
 
@@ -174,6 +194,26 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function getStores(): array
     {
         return $this->data['stores'] ?? [];
+    }
+
+    /**
+     * @return SkillLoaderData[]
+     */
+    public function getLoadedSkills(): array
+    {
+        $skillLoaderData = $this->data['skill_loaders'] ?? [];
+
+        return array_filter($skillLoaderData, static fn (array $data): bool => 'loadSkills' === $data['method']);
+    }
+
+    /**
+     * @return SkillValidatorData[]
+     */
+    public function getValidatedSkills(): array
+    {
+        $skillValidatorData = $this->data['skill_validators'] ?? [];
+
+        return array_filter($skillValidatorData, static fn (array $data): bool => $data['result']->isValid());
     }
 
     /**

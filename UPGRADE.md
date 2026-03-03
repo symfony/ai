@@ -1,3 +1,38 @@
+UPGRADE FROM 0.6 to 0.7
+=======================
+
+Agent
+-----
+
+ * The `SkillMetadataInterface::getCompatibility()` method now returns `?string` instead of `?array`.
+   The spec defines compatibility as a plain string (max 500 characters):
+
+   ```diff
+   -$compatibility = $metadata->getCompatibility(); // array|null
+   +$compatibility = $metadata->getCompatibility(); // string|null
+   ```
+
+ * The `SkillMetadataInterface::getFrontMatters()` method has been renamed to `getFrontmatter()`:
+
+   ```diff
+   -$frontmatter = $metadata->getFrontMatters();
+   +$frontmatter = $metadata->getFrontmatter();
+   ```
+
+AI Bundle
+---------
+
+ * The `FilesystemSkillLoader` service registration now correctly passes `SkillValidator` as the 3rd argument.
+   If you were manually constructing `FilesystemSkillLoader`, update the constructor call:
+
+   ```diff
+   -$loader = new FilesystemSkillLoader($dirs, $parser, $filesystem);
+   +$loader = new FilesystemSkillLoader($dirs, $parser, $validator, $filesystem);
+   ```
+
+ * A new `evaluation` configuration option has been added under `skills` for agent configuration.
+   This enables the `ai:agent:eval-skill` console command for evaluating skills.
+
 UPGRADE FROM 0.5 to 0.6
 =======================
 

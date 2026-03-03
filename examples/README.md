@@ -87,3 +87,9 @@ If you only want to run a specific subset of examples, you can use a filter opti
 ```bash
 ./runner --filter=toolcall
 ```
+
+## Fixtures
+
+The skills in `skills/.skills` contain files with the following owners and licenses:
+
+* `twig-component`: Simon André, MIT, see [SymfonyUXSkills](https://github.com/smnandre/symfony-ux-skills#)
