@@ -25,7 +25,7 @@ final class DataLoaderTest extends TestCase
         DataLoader::clearCache();
     }
 
-    public function testLoadDefaultFile()
+    public function testLoadFromComposerPackage()
     {
         $data = DataLoader::load();
 

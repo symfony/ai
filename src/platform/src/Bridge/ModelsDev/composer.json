@@ -33,7 +33,8 @@
         "symfony/ai-bedrock-platform": "^0.5",
         "symfony/ai-gemini-platform": "^0.5",
         "symfony/ai-meta-platform": "^0.5",
-        "symfony/ai-vertex-ai-platform": "^0.5"
+        "symfony/ai-vertex-ai-platform": "^0.5",
+        "symfony/models-dev": "^1.0"
     },
     "minimum-stability": "dev",
     "autoload": {

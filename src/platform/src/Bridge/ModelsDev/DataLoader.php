@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\ModelsDev;
 
+use Composer\InstalledVersions;
 use Symfony\AI\Platform\Exception\RuntimeException;
 
 /**
@@ -34,7 +35,7 @@ final class DataLoader
      */
     public static function load(?string $dataPath = null): array
     {
-        $dataPath ??= __DIR__.'/Resources/config/models-dev.json';
+        $dataPath ??= self::resolveDefaultPath();
 
         // Return cached data if path matches
         if (null !== self::$cachedData && self::$cachedPath === $dataPath) {
@@ -73,6 +74,27 @@ final class DataLoader
     {
         self::$cachedData = null;
         self::$cachedPath = null;
+    }
+
+    /**
+     * Resolves the default path to the models.dev JSON file.
+     *
+     * Looks for the "symfony/models-dev" Composer package and returns
+     * the path to its "models-dev.json" file.
+     *
+     * @throws RuntimeException if the package is not installed
+     */
+    private static function resolveDefaultPath(): string
+    {
+        if (class_exists(InstalledVersions::class) && InstalledVersions::isInstalled('symfony/models-dev')) {
+            $installPath = InstalledVersions::getInstallPath('symfony/models-dev');
+
+            if (null !== $installPath) {
+                return $installPath.'/models-dev.json';
+            }
+        }
+
+        throw new RuntimeException('The "models.dev" data file could not be found; either pass an explicit JSON file path or run "composer require symfony/models-dev".');
     }
 
     /**
