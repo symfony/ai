@@ -25,7 +25,6 @@ final class OpenAiContract extends Contract
     {
         return OpenResponsesContract::create(
             new AudioNormalizer(),
-            new DocumentNormalizer(),
             ...$normalizer,
         );
     }
