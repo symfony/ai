@@ -37,6 +37,7 @@
         "symfony/ai-agent": "^0.5",
         "symfony/ai-ai-ml-api-platform": "^0.5",
         "symfony/ai-albert-platform": "^0.5",
+        "symfony/ai-amazee-ai-platform": "^0.5",
         "symfony/ai-anthropic-platform": "^0.5",
         "symfony/ai-azure-platform": "^0.5",
         "symfony/ai-azure-search-store": "^0.5",
