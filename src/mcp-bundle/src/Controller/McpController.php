@@ -42,8 +42,9 @@ final class McpController
             logger: $this->logger,
         );
 
-        return $this->httpFoundationFactory->createResponse(
-            $this->server->run($transport),
-        );
+        $psrResponse = $this->server->run($transport);
+        $streamed = 'text/event-stream' === $psrResponse->getHeaderLine('Content-Type');
+
+        return $this->httpFoundationFactory->createResponse($psrResponse, $streamed);
     }
 }
