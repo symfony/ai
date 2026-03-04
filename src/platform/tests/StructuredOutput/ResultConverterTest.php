@@ -21,6 +21,7 @@ use Symfony\AI\Platform\StructuredOutput\ResultConverter;
 use Symfony\AI\Platform\StructuredOutput\Serializer;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SomeStructure;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithAccessors;
 
 final class ResultConverterTest extends TestCase
 {
@@ -152,5 +153,17 @@ final class ResultConverterTest extends TestCase
         $extractor = $converter->getTokenUsageExtractor();
 
         $this->assertNull($extractor);
+    }
+
+    public function testConvertWithAccessors()
+    {
+        $innerConverter = new PlainConverter(new TextResult('{"age": 10}'));
+        $converter = new ResultConverter($innerConverter, new Serializer(), UserWithAccessors::class);
+
+        $result = $converter->convert(new InMemoryRawResult());
+
+        $this->assertInstanceOf(ObjectResult::class, $result);
+        $this->assertInstanceOf(UserWithAccessors::class, $result->getContent());
+        $this->assertSame(10, $result->getContent()->getAge());
     }
 }
