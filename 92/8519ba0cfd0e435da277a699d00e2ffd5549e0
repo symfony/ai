@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2026-03-04T22:03:31Z
+
+I'm wondering could/should we remove [`StructuredOutput/Serializer`](https://github.com/symfony/ai/blob/6962d6d3026f5f955f4c5f72a0288b99e297b1b2/src/platform/src/StructuredOutput/Serializer.php) now :thinking:
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-04T22:10:56Z
+
+> I'm wondering could/should we remove [`StructuredOutput/Serializer`](https://github.com/symfony/ai/blob/6962d6d3026f5f955f4c5f72a0288b99e297b1b2/src/platform/src/StructuredOutput/Serializer.php) now 🤔
+
+there is no immediate interference when merging this one, right?
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-03-04T22:13:08Z
+
+Nothing should break – not sure if getter/setter would work with structured output though, before wiring the proper serializer.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-04T22:13:45Z
+
+> Nothing should break – not sure if getter/setter would work with structured output though, before wiring the proper serializer.
+
+Let's go with a follow up then, and I'll merge this one! Thanks @valtzu!
