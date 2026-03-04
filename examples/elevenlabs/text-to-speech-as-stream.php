@@ -17,7 +17,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('ELEVEN_LABS_API_KEY'), httpClient: http_client());
 
 $result = $platform->invoke('eleven_multilingual_v2', new Text('The first move is what sets everything in motion.'), [
-    'voice' => 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
+    'voice' => 'pqHfZKP75CvOlQylNhV4', // Bill
     'stream' => true,
 ]);
 
