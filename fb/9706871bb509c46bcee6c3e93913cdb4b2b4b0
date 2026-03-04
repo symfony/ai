@@ -1,0 +1,66 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2026-01-25T16:00:21Z
+
+1. Are you using emulated prepared statements or not? (`PDO::ATTR_EMULATE_PREPARES`/`PDO::MYSQL_ATTR_DIRECT_QUERY`)
+2. Which MariaDB version you're using?
+
+This store is covered by integration tests so it's definitely working with some version & configuration.
+
+For the fix, instead of double-binding and double-encoding (and decoding on DB side) it could also be fixed within SQL which should have better performance:
+
+```sql
+INSERT INTO %1$s (id, metadata, `%2$s`)
+VALUES (:id, @metadata := :metadata, @vector := VEC_FromText(:vector))
+ON DUPLICATE KEY UPDATE metadata = @metadata, `%2$s` = @vector
+```
+
+---------------------------------------------------------------------------
+
+by michielvaneerd at 2026-01-25T17:07:52Z
+
+I am using PHP8.3 and MariaDB 11.8.5.
+
+I think in PHP7 this wasn't allowed as well, but it didn't raise a fatal error, but since PHP8 it does.
+
+And this is the code that raised the error:
+
+```php
+$docs = [new TextDocument(Uuid::v4(), 'Some content', new Metadata(['chunk_num' => 1]))];
+$platform = PlatformFactory::create(config('myapp.mistral_api_key'));
+$store = Store::fromPdo(DB::connection()->getPdo(), 'rag_chunks');
+$store->setup(['dimensions' => 1024]);
+$vectorizer = new Vectorizer($platform, 'mistral-embed', logger());
+$indexer = new Indexer(new InMemoryLoader($docs), $vectorizer, $store, logger: logger());
+$indexer->index($docs); // SQLSTATE[HY093] error
+```
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-01-25T19:35:33Z
+
+I did some testing and indeed the issue only occurs when **not** using emulated prepares. With default config there's no issue.
+
+```php
+$pdo = new PDO('mysql:host=db', 'root');
+$pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false); // comment out this line or set to true and the error is gone
+$stmt = $pdo->prepare("SELECT :a, :a");
+$stmt->execute(['a' => 1]); // throws SQLSTATE[HY093]: Invalid parameter number
+```
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-25T19:49:26Z
+
+Thanks for reporting & fixing @michielvaneerd - and double-checking @valtzu!
+
+Since this fix is neutral for setups with `$pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);` we can safely merge it, right?
+At least I think there's a reason for having that as a default setting
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-02-01T16:49:03Z
+
+I'd say it's safe to merge, though as mentioned, will probably have some performance impact. If you are indexing millions of documents the impact may be noticeable, otherwise probably insignificant.
+
+Let's merge :+1:
