@@ -11,18 +11,24 @@
 
 namespace Symfony\AI\Platform\Tests\StructuredOutput;
 
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithAccessors;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithConstructor;
 
 final class ResponseFormatFactoryTest extends TestCase
 {
-    public function testCreate()
+    #[TestWith(['User', User::class])]
+    #[TestWith(['UserWithConstructor', UserWithConstructor::class])]
+    #[TestWith(['UserWithAccessors', UserWithAccessors::class])]
+    public function testCreate(string $expectedName, string $class)
     {
         $this->assertSame([
             'type' => 'json_schema',
             'json_schema' => [
-                'name' => 'User',
+                'name' => $expectedName,
                 'schema' => [
                     'type' => 'object',
                     'properties' => [
@@ -43,6 +49,6 @@ final class ResponseFormatFactoryTest extends TestCase
                 ],
                 'strict' => true,
             ],
-        ], (new ResponseFormatFactory())->create(User::class));
+        ], (new ResponseFormatFactory())->create($class));
     }
 }
