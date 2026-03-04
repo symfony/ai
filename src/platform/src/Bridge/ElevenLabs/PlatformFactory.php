@@ -26,25 +26,28 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class PlatformFactory
 {
     public static function create(
-        #[\SensitiveParameter] string $apiKey,
         string $endpoint = 'https://api.elevenlabs.io/v1/',
+        #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
+        bool $apiCatalog = false,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, [
-            'headers' => [
-                'xi-api-key' => $apiKey,
-            ],
-        ]);
+        if (null !== $apiKey) {
+            $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, [
+                'headers' => [
+                    'xi-api-key' => $apiKey,
+                ],
+            ]);
+        }
 
         return new Platform(
             [new ElevenLabsClient($httpClient)],
             [new ElevenLabsResultConverter($httpClient)],
-            $modelCatalog,
+            $apiCatalog ? new ElevenLabsApiCatalog($httpClient) : $modelCatalog,
             $contract ?? ElevenLabsContract::create(),
             $eventDispatcher,
         );

@@ -15,7 +15,7 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 return (new ArrayNodeDefinition('elevenlabs'))
     ->children()
-        ->stringNode('api_key')->isRequired()->end()
+        ->stringNode('api_key')->end()
         ->stringNode('endpoint')
             ->defaultValue('https://api.elevenlabs.io/v1/')
         ->end()
