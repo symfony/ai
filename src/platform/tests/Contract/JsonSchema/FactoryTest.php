@@ -16,6 +16,7 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOptionalParam;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithBackedEnums;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithObjectAccessors;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithToolParameterAttribute;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
@@ -229,14 +230,15 @@ final class FactoryTest extends TestCase
                 'items' => [
                     'type' => 'array',
                     'items' => [
+                        'type' => 'object',
                         'anyOf' => [
                             [
-                                'type' => 'object',
                                 'properties' => [
                                     'name' => ['type' => 'string'],
                                     'type' => [
                                         'type' => 'string',
                                         'pattern' => '^name$',
+                                        'const' => 'name',
                                     ],
                                 ],
                                 'required' => [
@@ -246,12 +248,12 @@ final class FactoryTest extends TestCase
                                 'additionalProperties' => false,
                             ],
                             [
-                                'type' => 'object',
                                 'properties' => [
                                     'age' => ['type' => 'integer'],
                                     'type' => [
                                         'type' => 'string',
                                         'pattern' => '^age$',
+                                        'const' => 'age',
                                     ],
                                 ],
                                 'required' => [
@@ -384,6 +386,43 @@ final class FactoryTest extends TestCase
                 ],
             ],
             'required' => ['searchTerms', 'mode', 'priority'],
+            'additionalProperties' => false,
+        ];
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildParametersWithObjectAccessors()
+    {
+        $actual = $this->factory->buildParameters(ToolWithObjectAccessors::class, '__invoke');
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'object' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'value1' => [
+                            'type' => 'integer',
+                            'minimum' => 1,
+                        ],
+                        'value2' => [
+                            'type' => 'number',
+                            'const' => 42,
+                        ],
+                        'value3' => [
+                            'type' => 'string',
+                            'pattern' => '^foo$',
+                        ],
+                    ],
+                    'required' => [
+                        'value1',
+                        'value2',
+                        'value3',
+                    ],
+                    'additionalProperties' => false,
+                ],
+            ],
+            'required' => ['object'],
             'additionalProperties' => false,
         ];
 
