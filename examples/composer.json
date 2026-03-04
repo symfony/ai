@@ -4,6 +4,7 @@
     "license": "MIT",
     "type": "project",
     "repositories": [
+        {"type": "path", "url": "../src/platform/src/Bridge/ClaudeCode" },
         {"type": "path", "url": "../src/store/src/Bridge/S3Vectors" },
         {"type": "path", "url": "../src/store/src/Bridge/Vektor" }
     ],
@@ -22,6 +23,7 @@
         "symfony/ai-cache-store": "^0.5",
         "symfony/ai-cartesia-platform": "^0.5",
         "symfony/ai-cerebras-platform": "^0.5",
+        "symfony/ai-claude-code-platform": "dev-main",
         "symfony/ai-chat": "^0.5",
         "symfony/ai-chroma-db-store": "^0.5",
         "symfony/ai-click-house-store": "^0.5",
