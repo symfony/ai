@@ -418,6 +418,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.anthropic'),
                     new Reference('ai.platform.contract.anthropic'),
                     new Reference('event_dispatcher'),
+                    $platform['cache_retention'],
                 ])
                 ->addTag('ai.platform', ['name' => 'anthropic']);
 

@@ -4,6 +4,7 @@ CHANGELOG
 0.6
 ---
 
+ * Add Anthropic prompt caching support via `cacheRetention` parameter on `ModelClient` and `PlatformFactory`
  * Add structured output support
 
 0.4

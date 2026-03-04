@@ -26,6 +26,16 @@ interface TokenUsageInterface
 
     public function getCachedTokens(): ?int;
 
+    /**
+     * Tokens written into the prompt cache on this request (mainly for Anthropic, null when not reported by the model).
+     */
+    public function getCacheCreationTokens(): ?int;
+
+    /**
+     * Tokens served from the prompt cache on this request (mainly for Anthropic, null when not reported by the model).
+     */
+    public function getCacheReadTokens(): ?int;
+
     public function getRemainingTokens(): ?int;
 
     public function getRemainingTokensMinute(): ?int;

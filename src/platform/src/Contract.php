@@ -34,6 +34,7 @@ use Symfony\Component\Serializer\Serializer;
 class Contract
 {
     public const CONTEXT_MODEL = 'model';
+    public const CONTEXT_OPTIONS = 'options';
 
     final public function __construct(
         protected readonly NormalizerInterface $normalizer,
@@ -71,12 +72,16 @@ class Contract
 
     /**
      * @param object|array<string|int, mixed>|string $input
+     * @param array<string, mixed>                   $options Invocation options forwarded into the normalizer context as CONTEXT_OPTIONS
      *
      * @return array<string, mixed>|string
      */
-    final public function createRequestPayload(Model $model, object|array|string $input): string|array
+    final public function createRequestPayload(Model $model, object|array|string $input, array $options = []): string|array
     {
-        return $this->normalizer->normalize($input, context: [self::CONTEXT_MODEL => $model]);
+        return $this->normalizer->normalize($input, context: [
+            self::CONTEXT_MODEL => $model,
+            self::CONTEXT_OPTIONS => $options,
+        ]);
     }
 
     /**
