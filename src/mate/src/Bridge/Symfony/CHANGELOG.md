@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `MailerCollectorFormatter` to expose Symfony Mailer data (recipients, body preview, links, attachments, transport) to AI via the profiler
+ * Add `TranslationCollectorFormatter` to expose Symfony Translation data (locale, fallback locales, message states) to AI via the profiler
 
 0.3
 ---
