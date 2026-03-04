@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -254,33 +255,7 @@ class ResultConverterTest extends TestCase
             ],
         ];
 
-        $raw = new class($httpResponse, $events) implements RawResultInterface {
-            /**
-             * @param array<array<string, mixed>> $events
-             */
-            public function __construct(
-                private readonly ResponseInterface $response,
-                private readonly array $events,
-            ) {
-            }
-
-            public function getData(): array
-            {
-                return [];
-            }
-
-            public function getDataStream(): iterable
-            {
-                foreach ($this->events as $event) {
-                    yield $event;
-                }
-            }
-
-            public function getObject(): object
-            {
-                return $this->response;
-            }
-        };
+        $raw = new InMemoryRawResult([], $events, $httpResponse);
 
         $streamResult = $converter->convert($raw, ['stream' => true]);
 
@@ -300,5 +275,37 @@ class ResultConverterTest extends TestCase
         $this->assertSame(2, $chunks[2]->getThinkingTokens());
         $this->assertSame(3, $chunks[2]->getCachedTokens());
         $this->assertSame(18, $chunks[2]->getTotalTokens());
+    }
+
+    public function testStreamThrowsExceptionOnErrorEvent()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            [
+                'type' => 'error',
+                'error' => [
+                    'type' => 'insufficient_quota',
+                    'code' => 'insufficient_quota',
+                    'message' => 'You exceeded your current quota',
+                    'param' => null,
+                ],
+                'sequence_number' => 2,
+            ],
+        ];
+
+        $raw = new InMemoryRawResult([], $events, $httpResponse);
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Error "insufficient_quota"-insufficient_quota (-): "You exceeded your current quota".');
+
+        foreach ($streamResult->getContent() as $part) {
+            // Iterate to trigger the generator
+        }
     }
 }
