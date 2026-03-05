@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.6
+---
+
+ * Add `ValidateToolCallArgumentsListener`
+
 0.4
 ---
 
