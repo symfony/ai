@@ -27,15 +27,19 @@
         "ext-fileinfo": "*",
         "phpdocumentor/reflection-docblock": "^5.4",
         "phpstan/phpdoc-parser": "^2.1",
+        "psr/cache": "^3.0",
         "psr/log": "^3.0",
         "symfony/ai-platform": "^0.6",
         "symfony/clock": "^7.3|^8.0",
+        "symfony/filesystem": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/polyfill-php85": "^1.33",
+        "symfony/process": "^7.3|^8.0",
         "symfony/property-access": "^7.3|^8.0",
         "symfony/property-info": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0",
-        "symfony/type-info": "^7.3|^8.0"
+        "symfony/type-info": "^7.3|^8.0",
+        "symfony/workflow": "^7.3|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
@@ -46,6 +50,11 @@
         "symfony/event-dispatcher": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0",
         "symfony/translation-contracts": "^3.6"
+    },
+    "suggest": {
+        "psr/cache-implementation": "Required for Cache WorkflowStateStore bridge",
+        "symfony/filesystem": "Required for Filesystem WorkflowStateStore bridge",
+        "symfony/process": "Required for ProcessExecutor"
     },
     "minimum-stability": "dev",
     "autoload": {

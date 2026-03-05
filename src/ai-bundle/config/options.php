@@ -518,6 +518,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->end()
                 ->end()
             ->end()
+            ->append($import('workflow'))
         ->end()
         ->validate()
             ->ifTrue(static function ($v) {

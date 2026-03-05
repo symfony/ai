@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `Workflow` system for orchestrating multi-step AI agent pipelines using the Symfony Workflow component
+
 0.4
 ---
 
