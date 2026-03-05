@@ -638,6 +638,228 @@ useful when certain interactions shouldn't be influenced by the memory context::
     ]);
 
 
+Workflow
+--------
+
+The Agent component provides workflow capabilities for building multi-step AI pipelines using the
+`Symfony Workflow component`_. A workflow defines a sequence of places (steps) connected by transitions,
+where each place is executed by an :class:`Symfony\\AI\\Agent\\Workflow\\ExecutorInterface`. The workflow
+state is persisted after each step, enabling pause and resume.
+
+Basic Usage
+~~~~~~~~~~~
+
+To create a workflow, define the graph using the Symfony Workflow component, map each place to an executor,
+and run it with an initial :class:`Symfony\\AI\\Agent\\Workflow\\WorkflowState`::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Workflow\AgentWorkflow;
+    use Symfony\AI\Agent\Workflow\Executor\AgentExecutor;
+    use Symfony\AI\Agent\Workflow\Executor\FiberExecutor;
+    use Symfony\AI\Agent\Workflow\InMemory\WorkflowStateStore;
+    use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+    use Symfony\Component\Workflow\DefinitionBuilder;
+    use Symfony\Component\Workflow\MarkingStore\MethodMarkingStore;
+    use Symfony\Component\Workflow\Transition;
+    use Symfony\Component\Workflow\Workflow;
+
+    // Platform and agent instantiation
+
+    $builder = new DefinitionBuilder();
+    $builder
+        ->addPlaces(['generate', 'summarize', 'done'])
+        ->addTransition(new Transition('to_summarize', 'generate', 'summarize'))
+        ->addTransition(new Transition('to_done', 'summarize', 'done'))
+        ->setInitialPlaces(['generate']);
+
+    $workflow = new Workflow(
+        $builder->build(),
+        new MethodMarkingStore(singleState: true, property: 'marking'),
+    );
+
+    $executors = [
+        'generate' => new AgentExecutor($writerAgent, inputKey: 'topic', outputKey: 'draft'),
+        'summarize' => new AgentExecutor($summarizerAgent, inputKey: 'draft', outputKey: 'summary'),
+        'done' => new FiberExecutor(
+            static fn (WorkflowStateInterface $state, string $place): WorkflowStateInterface => $state->set('completed_at', date('c')),
+        ),
+    ];
+
+    $agentWorkflow = new AgentWorkflow($workflow, $executors, new WorkflowStateStore());
+
+    $finalState = $agentWorkflow->run(
+        new WorkflowState('my-run-id', ['topic' => 'Space exploration']),
+    );
+
+    echo $finalState->get('summary');
+
+WorkflowState
+~~~~~~~~~~~~~
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\WorkflowState` is a mutable data bag that flows through the
+entire workflow. Executors read input from it and write their results back::
+
+    $state = new WorkflowState('unique-id', ['key' => 'value']);
+
+    // Read data
+    $state->get('key');          // 'value'
+    $state->get('missing', 42); // 42 (default)
+    $state->has('key');          // true
+    $state->all();               // ['key' => 'value']
+
+    // Write data (fluent)
+    $state->set('output', 'result');
+    $state->merge(['a' => 1, 'b' => 2]);
+    $state->unset('key');
+
+    // Track workflow progress
+    $state->getCurrentPlace();
+    $state->getCompletedPlaces();
+
+Executors
+~~~~~~~~~
+
+Each place in the workflow is associated with an :class:`Symfony\\AI\\Agent\\Workflow\\ExecutorInterface`
+implementation. The component provides three built-in executors.
+
+AgentExecutor
+.............
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\Executor\\AgentExecutor` delegates to an
+:class:`Symfony\\AI\\Agent\\AgentInterface`. It reads input from a configurable state key and writes
+the result to another::
+
+    use Symfony\AI\Agent\Workflow\Executor\AgentExecutor;
+
+    $executor = new AgentExecutor(
+        $agent,
+        inputKey: 'prompt',    // state key to read input from
+        outputKey: 'response', // state key to write result to
+    );
+
+The input value can be a ``string`` (converted to a user message) or a ``MessageBag``.
+
+ProcessExecutor
+...............
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\Executor\\ProcessExecutor` runs a shell command using the
+Symfony Process component. The command can be a static array or a closure that builds it from state::
+
+    use Symfony\AI\Agent\Workflow\Executor\ProcessExecutor;
+
+    // Static command
+    $executor = new ProcessExecutor(
+        command: ['wc', '-w', '/path/to/file'],
+        outputKey: 'word_count',
+        timeout: 30,
+    );
+
+    // Dynamic command built from state
+    $executor = new ProcessExecutor(
+        command: static function (WorkflowState $state, string $place): array {
+            return ['grep', '-c', $state->get('search_term'), $state->get('file_path')];
+        },
+        outputKey: 'match_count',
+    );
+
+FiberExecutor
+.............
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\Executor\\FiberExecutor` wraps a closure in a PHP Fiber
+for cooperative multitasking. The closure receives the state and place name, and must return a
+``WorkflowState``::
+
+    use Symfony\AI\Agent\Workflow\Executor\FiberExecutor;
+
+    $executor = new FiberExecutor(
+        static function (WorkflowState $state, string $place): WorkflowState {
+            // Do work and update state
+            return $state->set('result', 'computed value');
+        },
+    );
+
+Custom Executors
+................
+
+You can create custom executors by implementing the :class:`Symfony\\AI\\Agent\\Workflow\\ExecutorInterface`::
+
+    use Symfony\AI\Agent\Workflow\ExecutorInterface;
+    use Symfony\AI\Agent\Workflow\WorkflowState;
+
+    final class MyExecutor implements ExecutorInterface
+    {
+        public function execute(WorkflowState $state, string $place): WorkflowState
+        {
+            // Your custom logic here
+            return $state->set('result', 'done');
+        }
+    }
+
+Conditional Branching
+~~~~~~~~~~~~~~~~~~~~~
+
+When a place has multiple outgoing transitions, the executor must indicate which one to take by calling
+``withNextTransition()`` on the state. The default
+:class:`Symfony\\AI\\Agent\\Workflow\\TransitionResolver\\StateBasedTransitionResolver` uses this hint
+to resolve the next transition::
+
+    use Symfony\AI\Agent\Workflow\Executor\FiberExecutor;
+
+    $reviewExecutor = new FiberExecutor(
+        static function (WorkflowState $state, string $place) use ($reviewerAgent): WorkflowState {
+            $result = $reviewerAgent->call(new MessageBag(
+                Message::ofUser('Review: '.$state->get('draft')),
+            ));
+
+            $state->set('feedback', $result->getContent());
+
+            if (str_contains($result->getContent(), 'APPROVED')) {
+                return $state->withNextTransition('approve');
+            }
+
+            return $state->withNextTransition('reject');
+        },
+    );
+
+When only one transition is enabled, the resolver picks it automatically without requiring a hint.
+
+You can provide your own transition resolution logic by implementing the
+:class:`Symfony\\AI\\Agent\\Workflow\\TransitionResolverInterface`.
+
+State Persistence
+~~~~~~~~~~~~~~~~~
+
+Workflow state is persisted after each step, enabling pause and resume. The component provides
+several store implementations:
+
+* **InMemory**: ``Symfony\AI\Agent\Workflow\InMemory\WorkflowStateStore`` - for testing and single-request workflows
+* **Cache**: ``Symfony\AI\Agent\Workflow\Bridge\Cache\WorkflowStateStore`` - uses PSR-6 ``CacheItemPoolInterface``
+* **Filesystem**: ``Symfony\AI\Agent\Workflow\Bridge\Filesystem\WorkflowStateStore`` - uses the Symfony Filesystem component
+* **Redis**: ``Symfony\AI\Agent\Workflow\Bridge\Redis\WorkflowStateStore`` - uses the ``\Redis`` extension
+
+To resume a workflow from a previously persisted state, use the ``resume()`` method::
+
+    use Symfony\AI\Agent\Workflow\Bridge\Cache\WorkflowStateStore;
+    use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+
+    $store = new WorkflowStateStore(new FilesystemAdapter());
+
+    $agentWorkflow = new AgentWorkflow($workflow, $executors, $store);
+
+    // First run
+    $state = $agentWorkflow->run(new WorkflowState('my-run'));
+
+    // Later, resume from persisted state
+    $resumedState = $agentWorkflow->resume('my-run');
+
+Workflow Code Examples
+~~~~~~~~~~~~~~~~~~~~~~
+
+* `Linear Workflow`_
+* `Conditional Branching Workflow`_
+* `Mixed Executors Workflow`_
+
+
 Testing
 -------
 
@@ -755,3 +977,7 @@ Code Examples
 .. _`RAG with Pinecone`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
 .. _`Chat with static memory`: https://github.com/symfony/ai/blob/main/examples/memory/static.php
 .. _`Chat with embedding search memory`: https://github.com/symfony/ai/blob/main/examples/memory/mariadb.php
+.. _`Symfony Workflow component`: https://symfony.com/doc/current/components/workflow.html
+.. _`Linear Workflow`: https://github.com/symfony/ai/blob/main/examples/workflow/linear.php
+.. _`Conditional Branching Workflow`: https://github.com/symfony/ai/blob/main/examples/workflow/conditional-branching.php
+.. _`Mixed Executors Workflow`: https://github.com/symfony/ai/blob/main/examples/workflow/process-executor.php
