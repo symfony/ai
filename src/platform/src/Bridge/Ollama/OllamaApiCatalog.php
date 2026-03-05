@@ -52,6 +52,10 @@ final class OllamaApiCatalog implements ModelCatalogInterface
             $payload['capabilities'],
         );
 
+        if (!\in_array(Capability::EMBEDDINGS, $capabilities, true)) {
+            $capabilities[] = Capability::OUTPUT_STRUCTURED;
+        }
+
         return new Ollama($modelName, $capabilities);
     }
 
