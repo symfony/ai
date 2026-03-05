@@ -12,6 +12,7 @@
 namespace Symfony\AI\AiBundle\DependencyInjection;
 
 use Symfony\AI\AiBundle\Profiler\TraceableAgent;
+use Symfony\AI\AiBundle\Profiler\TraceableCapabilityHandler;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
@@ -97,6 +98,16 @@ final class DebugCompilerPass implements CompilerPassInterface
                 ->addTag('kernel.reset', ['method' => 'reset']);
             $suffix = u($store)->afterLast('.')->toString();
             $container->setDefinition('ai.traceable_store.'.$suffix, $traceableStoreDefinition);
+        }
+
+        foreach (array_keys($container->findTaggedServiceIds('ai.capability_handler')) as $capabilityHandler) {
+            $traceableCapabilityHandlerDefinition = (new Definition(TraceableCapabilityHandler::class))
+                ->setDecoratedService($capabilityHandler, priority: -1024)
+                ->setArguments([new Reference('.inner')])
+                ->addTag('ai.traceable_capability_handler')
+                ->addTag('kernel.reset', ['method' => 'reset']);
+            $suffix = u($capabilityHandler)->afterLast('.')->toString();
+            $container->setDefinition('ai.traceable_capability_handler.'.$suffix, $traceableCapabilityHandlerDefinition);
         }
     }
 }

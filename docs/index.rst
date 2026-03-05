@@ -99,6 +99,10 @@ Key Features
 **Testing Tools**
     Mock agents and platforms for reliable testing without external API calls.
 
+**Agent Capabilities**
+    Define custom capabilities for agents to perform specific tasks, such as context compression,
+    guardrails usage, content validation, speech support and more.
+
 Documentation
 -------------
 
