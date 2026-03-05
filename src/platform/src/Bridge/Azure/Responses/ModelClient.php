@@ -30,6 +30,7 @@ final class ModelClient implements ModelClientInterface
     public function __construct(
         HttpClientInterface $httpClient,
         string $baseUrl,
+        private readonly ?string $deployment,
         #[\SensitiveParameter] private readonly string $apiKey,
     ) {
         if ('' === $baseUrl) {
@@ -57,7 +58,7 @@ final class ModelClient implements ModelClientInterface
             'headers' => [
                 'api-key' => $this->apiKey,
             ],
-            'json' => array_merge($options, ['model' => $model->getName()], $payload),
+            'json' => array_merge($options, ['model' => $this->deployment ?? $model->getName()], $payload),
         ]));
     }
 }
