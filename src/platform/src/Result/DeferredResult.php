@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Result;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
+use Symfony\AI\Platform\Reranking\RerankingEntry;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\StreamListener;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
@@ -128,6 +129,16 @@ final class DeferredResult
     public function asVectors(): array
     {
         return $this->as(VectorResult::class)->getContent();
+    }
+
+    /**
+     * @return list<RerankingEntry>
+     *
+     * @throws ExceptionInterface
+     */
+    public function asRerankingResult(): array
+    {
+        return $this->as(RerankingResult::class)->getContent();
     }
 
     /**

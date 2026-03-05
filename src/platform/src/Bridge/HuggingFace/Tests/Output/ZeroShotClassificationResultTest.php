@@ -66,6 +66,22 @@ final class ZeroShotClassificationResultTest extends TestCase
         $this->assertSame($sequence, $result->sequence);
     }
 
+    #[TestDox('fromArray creates instance from new serverless format')]
+    public function testFromArrayWithNewServerlessFormat()
+    {
+        $data = [
+            ['label' => 'refund', 'score' => 0.878],
+            ['label' => 'faq', 'score' => 0.105],
+            ['label' => 'legal', 'score' => 0.017],
+        ];
+
+        $result = ZeroShotClassificationResult::fromArray($data);
+
+        $this->assertSame(['refund', 'faq', 'legal'], $result->labels);
+        $this->assertSame([0.878, 0.105, 0.017], $result->scores);
+        $this->assertNull($result->sequence);
+    }
+
     #[TestDox('fromArray creates instance with required fields')]
     public function testFromArrayWithRequiredFields()
     {

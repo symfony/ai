@@ -10,6 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
+use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -18,6 +19,7 @@ $platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_cli
 
 $result = $platform->invoke('katanemo/Arch-Router-1.5B', 'The quick brown fox jumps over the lazy', [
     'task' => Task::TEXT_GENERATION,
+    'provider' => Provider::HYPERBOLIC,
 ]);
 
 echo $result->asText().\PHP_EOL;

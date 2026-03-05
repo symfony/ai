@@ -23,10 +23,12 @@ use Symfony\AI\Platform\Bridge\HuggingFace\Output\ZeroShotClassificationResult;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Reranking\RerankingEntry;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\RerankingResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\VectorResult;
@@ -80,7 +82,10 @@ final class ResultConverter implements ResultConverterInterface
             Task::AUDIO_CLASSIFICATION, Task::IMAGE_CLASSIFICATION => new ObjectResult(ClassificationResult::fromArray($content)),
             Task::AUTOMATIC_SPEECH_RECOGNITION => new TextResult($content['text'] ?? ''),
             Task::CHAT_COMPLETION => new TextResult($content['choices'][0]['message']['content'] ?? ''),
-            Task::FEATURE_EXTRACTION => new VectorResult(new Vector($content)),
+            Task::FEATURE_EXTRACTION => new VectorResult(...(isset($content[0]) && \is_array($content[0])
+                ? array_map(static fn (array $v): Vector => new Vector($v), $content)
+                : [new Vector($content)]
+            )),
             Task::TEXT_CLASSIFICATION => new ObjectResult(ClassificationResult::fromArray(reset($content) ?? [])),
             Task::FILL_MASK => new ObjectResult(FillMaskResult::fromArray($content)),
             Task::IMAGE_SEGMENTATION => new ObjectResult(ImageSegmentationResult::fromArray($content)),
@@ -90,6 +95,7 @@ final class ResultConverter implements ResultConverterInterface
             Task::QUESTION_ANSWERING => new ObjectResult(QuestionAnsweringResult::fromArray($content)),
             Task::SENTENCE_SIMILARITY => new ObjectResult(SentenceSimilarityResult::fromArray($content)),
             Task::SUMMARIZATION => new TextResult($content[0]['summary_text']),
+            Task::TEXT_RANKING => self::convertTextRanking($content),
             Task::TABLE_QUESTION_ANSWERING => new ObjectResult(TableQuestionAnsweringResult::fromArray($content)),
             Task::TOKEN_CLASSIFICATION => new ObjectResult(TokenClassificationResult::fromArray($content)),
             Task::TRANSLATION => new TextResult($content[0]['translation_text'] ?? ''),
@@ -102,5 +108,35 @@ final class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
     {
         return null;
+    }
+
+    /**
+     * The HF serverless API runs reranker models as text-classification and returns
+     * [[{label, score}, {label, score}, ...]] — one score per input pair.
+     * TEI returns [{index, score}, ...] directly.
+     *
+     * @param array<mixed> $content
+     */
+    private static function convertTextRanking(array $content): RerankingResult
+    {
+        // TEI format: [{index: 0, score: 0.95}, ...]
+        if (isset($content[0]['index'])) {
+            return new RerankingResult(...array_map(
+                static fn (array $item): RerankingEntry => new RerankingEntry((int) $item['index'], (float) $item['score']),
+                $content,
+            ));
+        }
+
+        // HF serverless format: [[{label, score}, ...]] — one result per input pair.
+        // Cross-encoder reranker models (e.g. bge-reranker-base) use a single output class
+        // where the score directly represents relevance.
+        $items = isset($content[0][0]) ? $content[0] : $content;
+
+        $entries = [];
+        foreach ($items as $index => $item) {
+            $entries[] = new RerankingEntry($index, (float) $item['score']);
+        }
+
+        return new RerankingResult(...$entries);
     }
 }
