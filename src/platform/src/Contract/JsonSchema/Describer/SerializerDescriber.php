@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Contract\JsonSchema\Describer;
 
+use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
