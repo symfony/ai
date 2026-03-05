@@ -43,6 +43,10 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
             if ($data->getToolCalls()[0]->getArguments()) {
                 $normalized['functionCall']['args'] = $data->getToolCalls()[0]->getArguments();
             }
+
+            if ($data->getMetadata()->has('thought')) {
+                $normalized['thoughtSignature'] = $data->getMetadata()->get('thought');
+            }
         }
 
         return [$normalized];

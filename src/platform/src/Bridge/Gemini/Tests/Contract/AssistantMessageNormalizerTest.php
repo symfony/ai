@@ -68,5 +68,14 @@ final class AssistantMessageNormalizerTest extends TestCase
             new AssistantMessage(toolCalls: [new ToolCall('id1', 'name1')]),
             [['functionCall' => ['id' => 'id1', 'name' => 'name1']]],
         ];
+
+        $thoughtMessage = new AssistantMessage(toolCalls: [new ToolCall('id1', 'name1')]);
+        $thoughtMessage->getMetadata()->add('thought', 'fake-signature');
+        yield 'function call with thought' => [
+            $thoughtMessage,
+            [
+                ['functionCall' => ['id' => 'id1', 'name' => 'name1'], 'thoughtSignature' => 'fake-signature'],
+            ],
+        ];
     }
 }
