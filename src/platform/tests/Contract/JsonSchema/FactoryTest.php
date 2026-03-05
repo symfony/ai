@@ -230,9 +230,9 @@ final class FactoryTest extends TestCase
                 'items' => [
                     'type' => 'array',
                     'items' => [
-                        'type' => 'object',
                         'anyOf' => [
                             [
+                                'type' => 'object',
                                 'properties' => [
                                     'name' => ['type' => 'string'],
                                     'type' => [
@@ -248,6 +248,7 @@ final class FactoryTest extends TestCase
                                 'additionalProperties' => false,
                             ],
                             [
+                                'type' => 'object',
                                 'properties' => [
                                     'age' => ['type' => 'integer'],
                                     'type' => [

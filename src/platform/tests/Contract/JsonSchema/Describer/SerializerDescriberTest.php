@@ -41,7 +41,6 @@ final class SerializerDescriberTest extends TestCase
         $describer->describeObject(new ObjectSubject(ListItemDiscriminator::class, new \ReflectionClass(ListItemDiscriminator::class)), $schema);
 
         $expectedSchema = [
-            'type' => 'object',
             'anyOf' => [
                 [
                     'description' => ListItemName::class,

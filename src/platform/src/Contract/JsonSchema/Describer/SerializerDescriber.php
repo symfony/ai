@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Contract\JsonSchema\Describer;
 
-use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
@@ -58,15 +57,11 @@ final class SerializerDescriber implements ObjectDescriberInterface, ObjectDescr
 
         $discriminatorMapping = $classMetadata->getClassDiscriminatorMapping();
         if ($discriminatorMapping) {
-            $type = $schema['type'] ??= 'object';
             $typeProperty = $discriminatorMapping->getTypeProperty();
             foreach ($discriminatorMapping->getTypesMapping() as $discriminatorValue => $discriminatorClass) {
                 $subSchema = &$schema['anyOf'][];
                 $this->describer->describeObject(new ObjectSubject($discriminatorClass, new \ReflectionClass($discriminatorClass)), $subSchema);
                 $subSchema['properties'][$typeProperty]['enum'] = [$discriminatorValue];
-                if ($type === ($subSchema['type'] ?? null)) {
-                    unset($subSchema['type']);
-                }
             }
         }
 
