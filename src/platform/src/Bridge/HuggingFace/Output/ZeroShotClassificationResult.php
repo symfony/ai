@@ -32,7 +32,7 @@ final class ZeroShotClassificationResult
      */
     public static function fromArray(array $data): self
     {
-        // New HF serverless format: [{label: "refund", score: 0.97}, ...]
+        // Serverless format: [{label: "refund", score: 0.97}, ...]
         if (isset($data[0]['label'])) {
             return new self(
                 array_map(static fn (array $item): string => $item['label'], $data),
