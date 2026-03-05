@@ -238,7 +238,7 @@ final class FactoryTest extends TestCase
                                     'type' => [
                                         'type' => 'string',
                                         'pattern' => '^name$',
-                                        'const' => 'name',
+                                        'enum' => ['name'],
                                     ],
                                 ],
                                 'required' => [
@@ -253,7 +253,7 @@ final class FactoryTest extends TestCase
                                     'type' => [
                                         'type' => 'string',
                                         'pattern' => '^age$',
-                                        'const' => 'age',
+                                        'enum' => ['age'],
                                     ],
                                 ],
                                 'required' => [
