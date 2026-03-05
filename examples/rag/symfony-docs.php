@@ -63,7 +63,7 @@ foreach ($retriever->retrieve($question, ['maxItems' => 5]) as $document) {
     output()->writeln(sprintf(
         '<info>[%.4f]</info> <comment>%s</comment> (%s)',
         $document->getScore() ?? 0.0,
-        $metadata->getSectionTitle() ?? '(no title)',
+        $metadata->getTitle() ?? '(no title)',
         $metadata->getSource() ?? '(unknown)',
     ));
 

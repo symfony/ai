@@ -62,7 +62,7 @@ final class RstToctreeLoaderTest extends TestCase
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'), false);
 
         $titles = array_map(
-            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getSectionTitle() ?? '',
+            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
             $documents,
         );
 
@@ -91,7 +91,7 @@ final class RstToctreeLoaderTest extends TestCase
 
         $contentMap = [];
         foreach ($documents as $doc) {
-            $title = $doc->getMetadata()->getSectionTitle() ?? '';
+            $title = $doc->getMetadata()->getTitle() ?? '';
             $contentMap[$title] = $doc->getContent();
         }
 
@@ -109,7 +109,7 @@ final class RstToctreeLoaderTest extends TestCase
         $this->assertGreaterThanOrEqual(2, \count($documents));
 
         $titles = array_map(
-            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getSectionTitle() ?? '',
+            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
             $documents,
         );
 
@@ -124,7 +124,7 @@ final class RstToctreeLoaderTest extends TestCase
 
         $depthByTitle = [];
         foreach ($documents as $doc) {
-            $title = $doc->getMetadata()->getSectionTitle() ?? '';
+            $title = $doc->getMetadata()->getTitle() ?? '';
             $depthByTitle[$title] = $doc->getMetadata()->getDepth();
         }
 
@@ -176,7 +176,7 @@ final class RstToctreeLoaderTest extends TestCase
 
             // All chunks should have the same section title
             foreach ($documents as $doc) {
-                $this->assertSame('Long Section', $doc->getMetadata()->getSectionTitle());
+                $this->assertSame('Long Section', $doc->getMetadata()->getTitle());
             }
 
             // Overflow chunks should have parent_id set
