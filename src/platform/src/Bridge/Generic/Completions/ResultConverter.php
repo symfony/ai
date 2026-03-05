@@ -11,23 +11,23 @@
 
 namespace Symfony\AI\Platform\Bridge\Generic\Completions;
 
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\Result\ChoiceResult;
-use Symfony\AI\Platform\Result\StreamResult;
-use Symfony\AI\Platform\Result\RawHttpResult;
-use Symfony\AI\Platform\Result\ToolCallResult;
-use Symfony\AI\Platform\TokenUsage\TokenUsage;
-use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\AI\Platform\Result\RawResultInterface;
-use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
-use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\AuthenticationException;
+use Symfony\AI\Platform\Exception\BadRequestException;
+use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
+use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
