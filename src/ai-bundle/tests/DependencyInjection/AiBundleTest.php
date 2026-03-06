@@ -7783,12 +7783,7 @@ class AiBundleTest extends TestCase
             ],
             'workflow' => [
                 'content_pipeline' => [
-                    'places' => ['generate', 'summarize', 'done'],
-                    'transitions' => [
-                        'to_summarize' => ['from' => 'generate', 'to' => 'summarize'],
-                        'to_done' => ['from' => 'summarize', 'to' => 'done'],
-                    ],
-                    'initial_place' => 'generate',
+                    'workflow' => 'content_pipeline',
                     'executors' => [
                         'generate' => ['type' => 'agent', 'agent' => 'writer', 'input_key' => 'topic', 'output_key' => 'draft'],
                         'summarize' => ['type' => 'agent', 'agent' => 'summarizer', 'input_key' => 'draft', 'output_key' => 'summary'],
@@ -7802,6 +7797,10 @@ class AiBundleTest extends TestCase
         $def = $container->getDefinition('ai.workflow.content_pipeline');
         $this->assertSame(AgentWorkflow::class, $def->getClass());
         $this->assertCount(5, $def->getArguments());
+
+        // References the existing Symfony Workflow service
+        $this->assertInstanceOf(Reference::class, $def->getArgument(0));
+        $this->assertSame('workflow.content_pipeline', (string) $def->getArgument(0));
 
         $tags = $def->getTag('ai.workflow');
         $this->assertCount(1, $tags);
@@ -7837,9 +7836,7 @@ class AiBundleTest extends TestCase
             'agent' => ['writer' => ['model' => 'gpt-4']],
             'workflow' => [
                 'pipeline' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
+                    'workflow' => 'pipeline',
                     'executors' => [
                         'start' => ['type' => 'agent', 'agent' => 'writer'],
                         'end' => ['type' => 'agent', 'agent' => 'writer'],
@@ -7863,9 +7860,7 @@ class AiBundleTest extends TestCase
             'agent' => ['writer' => ['model' => 'gpt-4']],
             'workflow' => [
                 'pipeline' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
+                    'workflow' => 'pipeline',
                     'executors' => [
                         'start' => ['type' => 'agent', 'agent' => 'writer'],
                         'end' => ['type' => 'agent', 'agent' => 'writer'],
@@ -7887,9 +7882,7 @@ class AiBundleTest extends TestCase
             'agent' => ['writer' => ['model' => 'gpt-4']],
             'workflow' => [
                 'pipeline' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
+                    'workflow' => 'pipeline',
                     'executors' => [
                         'start' => ['type' => 'agent', 'agent' => 'writer'],
                         'end' => ['type' => 'agent', 'agent' => 'writer'],
@@ -7912,9 +7905,7 @@ class AiBundleTest extends TestCase
             'agent' => ['writer' => ['model' => 'gpt-4']],
             'workflow' => [
                 'pipeline' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
+                    'workflow' => 'pipeline',
                     'executors' => [
                         'start' => ['type' => 'agent', 'agent' => 'writer'],
                         'end' => ['type' => 'agent', 'agent' => 'writer'],
@@ -7935,9 +7926,7 @@ class AiBundleTest extends TestCase
             'agent' => ['writer' => ['model' => 'gpt-4']],
             'workflow' => [
                 'pipeline' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
+                    'workflow' => 'pipeline',
                     'executors' => [
                         'start' => ['type' => 'agent', 'agent' => 'writer'],
                         'end' => ['type' => 'agent', 'agent' => 'writer'],
@@ -7966,9 +7955,7 @@ class AiBundleTest extends TestCase
             'agent' => ['writer' => ['model' => 'gpt-4']],
             'workflow' => [
                 'pipeline' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
+                    'workflow' => 'pipeline',
                     'executors' => [
                         'start' => ['type' => 'agent', 'agent' => 'writer'],
                         'end' => ['type' => 'agent', 'agent' => 'writer'],
@@ -7992,18 +7979,14 @@ class AiBundleTest extends TestCase
             'agent' => ['writer' => ['model' => 'gpt-4']],
             'workflow' => [
                 'pipeline_a' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
+                    'workflow' => 'pipeline_a',
                     'executors' => [
                         'start' => ['type' => 'agent', 'agent' => 'writer'],
                         'end' => ['type' => 'agent', 'agent' => 'writer'],
                     ],
                 ],
                 'pipeline_b' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
+                    'workflow' => 'pipeline_b',
                     'executors' => [
                         'start' => ['type' => 'agent', 'agent' => 'writer'],
                         'end' => ['type' => 'agent', 'agent' => 'writer'],
@@ -8024,9 +8007,7 @@ class AiBundleTest extends TestCase
             'agent' => ['writer' => ['model' => 'gpt-4']],
             'workflow' => [
                 'pipeline' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
+                    'workflow' => 'pipeline',
                     'executors' => [
                         'start' => ['type' => 'agent', 'agent' => 'writer'],
                         'end' => ['type' => 'service', 'service' => 'App\\CustomExecutor'],
@@ -8046,51 +8027,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.workflow.pipeline.executor.start'));
     }
 
-    public function testWorkflowInvalidInitialPlace()
-    {
-        $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('initial_place');
-
-        $this->buildContainer(['ai' => [
-            'platform' => ['openai' => ['api_key' => 'sk-test']],
-            'agent' => ['writer' => ['model' => 'gpt-4']],
-            'workflow' => [
-                'pipeline' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'nonexistent',
-                    'executors' => [
-                        'start' => ['type' => 'agent', 'agent' => 'writer'],
-                        'end' => ['type' => 'agent', 'agent' => 'writer'],
-                    ],
-                ],
-            ],
-        ]]);
-    }
-
-    public function testWorkflowExecutorForNonExistentPlace()
-    {
-        $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('non-existent place');
-
-        $this->buildContainer(['ai' => [
-            'platform' => ['openai' => ['api_key' => 'sk-test']],
-            'agent' => ['writer' => ['model' => 'gpt-4']],
-            'workflow' => [
-                'pipeline' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
-                    'executors' => [
-                        'start' => ['type' => 'agent', 'agent' => 'writer'],
-                        'end' => ['type' => 'agent', 'agent' => 'writer'],
-                        'ghost' => ['type' => 'agent', 'agent' => 'writer'],
-                    ],
-                ],
-            ],
-        ]]);
-    }
-
     public function testWorkflowDebugDecoration()
     {
         $container = $this->buildContainer(['ai' => [
@@ -8098,9 +8034,7 @@ class AiBundleTest extends TestCase
             'agent' => ['writer' => ['model' => 'gpt-4']],
             'workflow' => [
                 'pipeline' => [
-                    'places' => ['start', 'end'],
-                    'transitions' => ['to_end' => ['from' => 'start', 'to' => 'end']],
-                    'initial_place' => 'start',
+                    'workflow' => 'pipeline',
                     'executors' => [
                         'start' => ['type' => 'agent', 'agent' => 'writer'],
                         'end' => ['type' => 'agent', 'agent' => 'writer'],
@@ -8287,12 +8221,7 @@ class AiBundleTest extends TestCase
                 ],
                 'workflow' => [
                     'content_pipeline' => [
-                        'places' => ['generate', 'summarize', 'done'],
-                        'transitions' => [
-                            'to_summarize' => ['from' => 'generate', 'to' => 'summarize'],
-                            'to_done' => ['from' => 'summarize', 'to' => 'done'],
-                        ],
-                        'initial_place' => 'generate',
+                        'workflow' => 'content_pipeline',
                         'executors' => [
                             'generate' => ['type' => 'agent', 'agent' => 'my_chat_agent', 'input_key' => 'topic', 'output_key' => 'draft'],
                             'summarize' => ['type' => 'agent', 'agent' => 'another_agent', 'input_key' => 'draft', 'output_key' => 'summary'],

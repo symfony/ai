@@ -17,9 +17,6 @@ use Symfony\AI\Agent\Workflow\WorkflowState;
 use Symfony\AI\AiBundle\Profiler\TraceableAgentWorkflow;
 use Symfony\Component\Clock\MockClock;
 
-/**
- * @author Guillaume Loulier <personal@guillaumeloulier.fr>
- */
 final class TraceableAgentWorkflowTest extends TestCase
 {
     public function testRunDelegatesToInnerAndRecords()

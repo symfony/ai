@@ -74,6 +74,15 @@ Supports vector stores for document retrieval:
 - Cloud stores (Azure Search, Pinecone, Qdrant)
 - Database stores (MongoDB, ClickHouse, Neo4j)
 
+### Workflow Configuration
+Configures `AgentWorkflow` services that orchestrate multi-step AI pipelines using the Symfony Workflow component:
+- References an existing Symfony Workflow defined in `config/packages/workflow.yaml` (service `workflow.<name>`)
+- Maps executors to workflow places (agent-based or custom service implementations)
+- Supports multiple state store backends (memory, cache, filesystem, redis, custom service)
+- Optional guards per place for pre-execution checks
+- Optional custom transition resolver (defaults to `StateBasedTransitionResolver`)
+- Automatic `AgentWorkflowInterface` alias when a single workflow is configured
+
 ### Security Integration
 - `#[IsGrantedTool]` attribute for method-level authorization
 - Integration with Symfony Security component
@@ -97,7 +106,7 @@ Automatic tagging for:
 
 ### Profiler Integration
 In debug mode, the bundle provides:
-- Traceable decorators for platforms and toolboxes
+- Traceable decorators for platforms, toolboxes, agents, stores, chats, message stores, and workflows
 - Data collector for Symfony Profiler toolbar
 - Monitoring of AI interactions and token usage
 

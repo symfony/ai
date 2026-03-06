@@ -14,12 +14,23 @@ namespace Symfony\AI\AiBundle\Profiler;
 use Symfony\AI\Agent\Workflow\ManagedWorkflowStateStoreInterface;
 use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
 use Symfony\AI\Agent\Workflow\WorkflowStateStoreInterface;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class TraceableWorkflowStateStore implements WorkflowStateStoreInterface, ManagedWorkflowStateStoreInterface
+final class TraceableWorkflowStateStore implements WorkflowStateStoreInterface, ManagedWorkflowStateStoreInterface, ResetInterface
 {
+    public array $calls = [];
+
+    public function __construct(
+        private readonly WorkflowStateStoreInterface&ManagedWorkflowStateStoreInterface $store,
+        private readonly ClockInterface $clock = new MonotonicClock(),
+    ) {
+    }
+
     public function setup(array $options = []): void
     {
         // TODO: Implement setup() method.
@@ -42,11 +53,28 @@ final class TraceableWorkflowStateStore implements WorkflowStateStoreInterface, 
 
     public function has(string $id): bool
     {
-        // TODO: Implement has() method.
+        $this->calls[] = [
+            'method' => 'has',
+            'id' => $id,
+            'called_at' => $this->clock->now(),
+        ];
+
+        return $this->store->has($id);
     }
 
     public function delete(string $id): void
     {
-        // TODO: Implement delete() method.
+        $this->calls[] = [
+            'method' => 'delete',
+            'id' => $id,
+            'called_at' => $this->clock->now(),
+        ];
+
+        $this->store->delete($id);
+    }
+
+    public function reset(): void
+    {
+        $this->calls = [];
     }
 }

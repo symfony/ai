@@ -149,11 +149,6 @@ use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
-use Symfony\Component\Workflow\Definition as WorkflowDefinition;
-use Symfony\Component\Workflow\DefinitionBuilder;
-use Symfony\Component\Workflow\MarkingStore\MethodMarkingStore;
-use Symfony\Component\Workflow\Transition;
-use Symfony\Component\Workflow\Workflow;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -2504,41 +2499,7 @@ final class AiBundle extends AbstractBundle
      */
     private function processWorkflowConfig(string $name, array $config, ContainerBuilder $container): void
     {
-        if (!class_exists(DefinitionBuilder::class)) {
-            return;
-        }
-
-        // 1. Build Symfony Workflow Definition
-        $definitionBuilderDef = new Definition(DefinitionBuilder::class);
-        $definitionBuilderDef->addMethodCall('addPlaces', [$config['places']]);
-
-        foreach ($config['transitions'] as $transitionName => $transition) {
-            $transitionDef = new Definition(Transition::class, [
-                $transitionName,
-                $transition['from'],
-                $transition['to'],
-            ]);
-
-            $definitionBuilderDef->addMethodCall('addTransition', [$transitionDef]);
-        }
-
-        $definitionBuilderDef->addMethodCall('setInitialPlaces', [[$config['initial_place']]]);
-        $container->setDefinition('ai.workflow.'.$name.'.definition_builder', $definitionBuilderDef);
-
-        // Create the Workflow Definition (built from builder)
-        $builtDefinitionDef = (new Definition(WorkflowDefinition::class))
-            ->setFactory([new Reference('ai.workflow.'.$name.'.definition_builder'), 'build']);
-        $container->setDefinition('ai.workflow.'.$name.'.built_definition', $builtDefinitionDef);
-
-        // Create the Symfony Workflow service
-        $markingStoreDef = new Definition(MethodMarkingStore::class, [true, 'marking']);
-        $workflowDef = new Definition(Workflow::class, [
-            new Reference('ai.workflow.'.$name.'.built_definition'),
-            $markingStoreDef,
-        ]);
-        $container->setDefinition('ai.workflow.'.$name.'.symfony_workflow', $workflowDef);
-
-        // 2. Register executors
+        // 1. Register executors
         $executorReferences = [];
         foreach ($config['executors'] as $place => $executorConfig) {
             if ('agent' === $executorConfig['type']) {
@@ -2555,7 +2516,7 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        // 3. Register state store
+        // 2. Register state store
         $storeConfig = $config['store'];
 
         if ('memory' === $storeConfig['type']) {
@@ -2580,7 +2541,7 @@ final class AiBundle extends AbstractBundle
             $container->setAlias('ai.workflow.'.$name.'.store', $storeConfig['service']);
         }
 
-        // 4. Register guards
+        // 3. Register guards
         $guardReferences = [];
         foreach ($config['guards'] ?? [] as $place => $guardServices) {
             $placeGuards = [];
@@ -2591,7 +2552,7 @@ final class AiBundle extends AbstractBundle
             $guardReferences[$place] = $placeGuards;
         }
 
-        // 5. Register transition resolver
+        // 4. Register transition resolver
         if (null !== $config['transition_resolver']) {
             $transitionResolverRef = new Reference($config['transition_resolver']);
         } else {
@@ -2600,11 +2561,11 @@ final class AiBundle extends AbstractBundle
             $transitionResolverRef = new Reference($transitionResolverId);
         }
 
-        // 6. Register the AgentWorkflow service
+        // 5. Register the AgentWorkflow service, referencing the existing Symfony Workflow
         $agentWorkflowDef = (new Definition(AgentWorkflow::class))
             ->setLazy(true)
             ->setArguments([
-                new Reference('ai.workflow.'.$name.'.symfony_workflow'),
+                new Reference('workflow.'.$config['workflow']),
                 $executorReferences,
                 new Reference('ai.workflow.'.$name.'.store'),
                 $transitionResolverRef,
