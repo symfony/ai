@@ -43,6 +43,7 @@ final class GithubSkillLoader implements SkillLoaderInterface
         private readonly HttpClientInterface $httpClient,
         private readonly SkillParserInterface $parser = new SkillParser(),
         private readonly SkillValidatorInterface $skillValidator = new SkillValidator(),
+        private readonly string $githubVersion = '2022-11-28',
     ) {
     }
 
@@ -231,7 +232,9 @@ final class GithubSkillLoader implements SkillLoaderInterface
             'headers' => array_merge($this->buildHeaders($config['token']), [
                 'Accept' => 'application/vnd.github.raw+json',
             ]),
-            'query' => ['ref' => $config['branch']],
+            'query' => [
+                'ref' => $config['branch'],
+            ],
         ]);
 
         if (200 !== $response->getStatusCode()) {
@@ -246,9 +249,7 @@ final class GithubSkillLoader implements SkillLoaderInterface
      */
     private function createScriptsLoader(array $config, string $skillName): \Closure
     {
-        return function (string $script) use ($config, $skillName): string {
-            return $this->fetchRawFile($config, $this->buildSkillPath($config['path'], $skillName, 'scripts/'.$script));
-        };
+        return fn (string $script): string => $this->fetchRawFile($config, $this->buildSkillPath($config['path'], $skillName, 'scripts/'.$script));
     }
 
     /**
@@ -293,7 +294,7 @@ final class GithubSkillLoader implements SkillLoaderInterface
     {
         $headers = [
             'Accept' => 'application/vnd.github+json',
-            'X-GitHub-Api-Version' => '2022-11-28',
+            'X-GitHub-Api-Version' => $this->githubVersion,
         ];
 
         if (null !== $token) {

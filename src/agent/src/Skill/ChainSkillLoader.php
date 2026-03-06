@@ -12,11 +12,6 @@
 namespace Symfony\AI\Agent\Skill;
 
 /**
- * Composes multiple skill loaders into a single transparent loader.
- *
- * Skills are loaded from each loader in order. The first match wins for loadSkill(),
- * while loadSkills() and discoverMetadata() aggregate results from all loaders.
- *
  * @author Guillaume Loulier <contact@guillaumeloulier.fr>
  */
 final class ChainSkillLoader implements SkillLoaderInterface
@@ -34,9 +29,11 @@ final class ChainSkillLoader implements SkillLoaderInterface
         foreach ($this->loaders as $loader) {
             $skill = $loader->loadSkill($name);
 
-            if (null !== $skill) {
-                return $skill;
+            if (!$skill instanceof SkillInterface) {
+                continue;
             }
+
+            return $skill;
         }
 
         return null;

@@ -24,10 +24,10 @@ final class ChainSkillLoaderTest extends TestCase
         $skill = new Skill('Body.', new SkillMetadata('my-skill', 'A skill'));
 
         $loader1 = $this->createMock(SkillLoaderInterface::class);
-        $loader1->method('loadSkill')->with('my-skill')->willReturn(null);
+        $loader1->expects(self::once())->method('loadSkill')->with('my-skill')->willReturn(null);
 
         $loader2 = $this->createMock(SkillLoaderInterface::class);
-        $loader2->method('loadSkill')->with('my-skill')->willReturn($skill);
+        $loader2->expects(self::once())->method('loadSkill')->with('my-skill')->willReturn($skill);
 
         $chain = new ChainSkillLoader([$loader1, $loader2]);
 
@@ -37,10 +37,10 @@ final class ChainSkillLoaderTest extends TestCase
     public function testLoadSkillReturnsNullWhenNoneFound()
     {
         $loader1 = $this->createMock(SkillLoaderInterface::class);
-        $loader1->method('loadSkill')->willReturn(null);
+        $loader1->expects(self::once())->method('loadSkill')->willReturn(null);
 
         $loader2 = $this->createMock(SkillLoaderInterface::class);
-        $loader2->method('loadSkill')->willReturn(null);
+        $loader2->expects(self::once())->method('loadSkill')->willReturn(null);
 
         $chain = new ChainSkillLoader([$loader1, $loader2]);
 
@@ -52,10 +52,10 @@ final class ChainSkillLoaderTest extends TestCase
         $skill = new Skill('Body.', new SkillMetadata('my-skill', 'A skill'));
 
         $loader1 = $this->createMock(SkillLoaderInterface::class);
-        $loader1->method('loadSkill')->willReturn($skill);
+        $loader1->expects(self::once())->method('loadSkill')->willReturn($skill);
 
         $loader2 = $this->createMock(SkillLoaderInterface::class);
-        $loader2->expects($this->never())->method('loadSkill');
+        $loader2->expects(self::never())->method('loadSkill');
 
         $chain = new ChainSkillLoader([$loader1, $loader2]);
 
@@ -68,10 +68,10 @@ final class ChainSkillLoaderTest extends TestCase
         $skill2 = new Skill('Body 2.', new SkillMetadata('skill-two', 'Second skill'));
 
         $loader1 = $this->createMock(SkillLoaderInterface::class);
-        $loader1->method('loadSkills')->willReturn(['skill-one' => $skill1]);
+        $loader1->expects(self::once())->method('loadSkills')->willReturn(['skill-one' => $skill1]);
 
         $loader2 = $this->createMock(SkillLoaderInterface::class);
-        $loader2->method('loadSkills')->willReturn(['skill-two' => $skill2]);
+        $loader2->expects(self::once())->method('loadSkills')->willReturn(['skill-two' => $skill2]);
 
         $chain = new ChainSkillLoader([$loader1, $loader2]);
         $skills = $chain->loadSkills();
@@ -87,10 +87,10 @@ final class ChainSkillLoaderTest extends TestCase
         $skill2 = new Skill('From loader 2.', new SkillMetadata('my-skill', 'Second version'));
 
         $loader1 = $this->createMock(SkillLoaderInterface::class);
-        $loader1->method('loadSkills')->willReturn(['my-skill' => $skill1]);
+        $loader1->expects(self::once())->method('loadSkills')->willReturn(['my-skill' => $skill1]);
 
         $loader2 = $this->createMock(SkillLoaderInterface::class);
-        $loader2->method('loadSkills')->willReturn(['my-skill' => $skill2]);
+        $loader2->expects(self::once())->method('loadSkills')->willReturn(['my-skill' => $skill2]);
 
         $chain = new ChainSkillLoader([$loader1, $loader2]);
         $skills = $chain->loadSkills();
@@ -105,10 +105,10 @@ final class ChainSkillLoaderTest extends TestCase
         $meta2 = new SkillMetadata('skill-two', 'Second');
 
         $loader1 = $this->createMock(SkillLoaderInterface::class);
-        $loader1->method('discoverMetadata')->willReturn(['skill-one' => $meta1]);
+        $loader1->expects(self::once())->method('discoverMetadata')->willReturn(['skill-one' => $meta1]);
 
         $loader2 = $this->createMock(SkillLoaderInterface::class);
-        $loader2->method('discoverMetadata')->willReturn(['skill-two' => $meta2]);
+        $loader2->expects(self::once())->method('discoverMetadata')->willReturn(['skill-two' => $meta2]);
 
         $chain = new ChainSkillLoader([$loader1, $loader2]);
         $metadata = $chain->discoverMetadata();
@@ -124,10 +124,10 @@ final class ChainSkillLoaderTest extends TestCase
         $meta2 = new SkillMetadata('my-skill', 'Second version');
 
         $loader1 = $this->createMock(SkillLoaderInterface::class);
-        $loader1->method('discoverMetadata')->willReturn(['my-skill' => $meta1]);
+        $loader1->expects(self::once())->method('discoverMetadata')->willReturn(['my-skill' => $meta1]);
 
         $loader2 = $this->createMock(SkillLoaderInterface::class);
-        $loader2->method('discoverMetadata')->willReturn(['my-skill' => $meta2]);
+        $loader2->expects(self::once())->method('discoverMetadata')->willReturn(['my-skill' => $meta2]);
 
         $chain = new ChainSkillLoader([$loader1, $loader2]);
         $metadata = $chain->discoverMetadata();

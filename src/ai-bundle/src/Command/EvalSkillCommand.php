@@ -14,6 +14,7 @@ namespace Symfony\AI\AiBundle\Command;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Skill\Evaluation\Aggregator\BenchmarkAggregatorInterface;
 use Symfony\AI\Agent\Skill\Evaluation\EvalRunResult;
+use Symfony\AI\Agent\Skill\Evaluation\EvalSuite;
 use Symfony\AI\Agent\Skill\Evaluation\EvalSuiteLoaderInterface;
 use Symfony\AI\Agent\Skill\Evaluation\Grader\GraderInterface;
 use Symfony\AI\Agent\Skill\Evaluation\Runner\EvalRunner;
@@ -134,14 +135,8 @@ final class EvalSkillCommand extends Command
     /**
      * @return EvalRunResult[]
      */
-    private function runEvals(
-        SymfonyStyle $io,
-        \Symfony\AI\Agent\Skill\Evaluation\EvalSuite $suite,
-        string $agentName,
-        int $iteration,
-        string $configuration,
-        bool $skipGrading,
-    ): array {
+    private function runEvals(SymfonyStyle $io, EvalSuite $suite, string $agentName, int $iteration, string $configuration, bool $skipGrading): array
+    {
         /** @var AgentInterface $agent */
         $agent = $this->agentLocator->get($agentName);
         $runner = new EvalRunner($agent, $this->clock);

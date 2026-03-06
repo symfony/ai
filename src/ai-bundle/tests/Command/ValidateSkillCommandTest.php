@@ -152,7 +152,7 @@ final class ValidateSkillCommandTest extends TestCase
         $this->assertStringContainsString('warning', $commandTester->getDisplay());
     }
 
-    public function testDisplaysSsummary()
+    public function testDisplaysSummary()
     {
         $metadata1 = new SkillMetadata('skill-one', 'First skill with proper description');
         $skill1 = new Skill('Body 1.', $metadata1);

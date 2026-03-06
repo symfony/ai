@@ -28,8 +28,8 @@ $localLoader = new FilesystemSkillLoader([__DIR__.'/.skills']);
 
 $githubLoader = new GithubSkillLoader(
     [
-        ['repository' => 'owner/public-skills'],
-        ['repository' => 'owner/private-skills', 'token' => env('GITHUB_TOKEN'), 'branch' => 'main'],
+        ['repository' => 'smnandre/symfony-ux-skills'],
+        ['repository' => 'smnandre/symfony-ux-skills', 'token' => env('GITHUB_TOKEN'), 'branch' => 'main'],
     ],
     http_client(),
 );

@@ -122,7 +122,7 @@ final class EvalSkillCommandTest extends TestCase
     {
         $locatorMap = [];
         foreach ($agents as $name => $agent) {
-            $locatorMap[$name] = static fn () => $agent;
+            $locatorMap[$name] = static fn (): AgentInterface => $agent;
         }
 
         return new EvalSkillCommand(

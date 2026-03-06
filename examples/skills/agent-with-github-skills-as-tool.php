@@ -23,23 +23,22 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
-// Load skills from a private GitHub repository using a token
 $loader = new GithubSkillLoader(
-    [['repository' => 'owner/private-skills', 'token' => env('GITHUB_TOKEN')]],
+    [['repository' => 'smnandre/symfony-ux-skills']],
     http_client(),
 );
 
-$tool = new SkillTool($loader, 'my-skill');
+$tool = new SkillTool($loader, 'twig-component');
 
 $toolFactory = new MemoryToolFactory();
-$toolFactory->addTool($tool, 'skill_my_skill', 'Consult the my-skill skill for specialized knowledge. Optionally pass a reference path for detailed docs.');
+$toolFactory->addTool($tool, 'skill_twig_component', 'Consult the my-skill skill for specialized knowledge. Optionally pass a reference path for detailed docs.', 'loadSkill');
 
 $processor = new AgentProcessor(new Toolbox([$tool], $toolFactory));
 $agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);
 
 $result = $agent->call(new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
-    Message::ofUser('Help me with a task using the loaded skill.'),
+    Message::ofUser('Explain to me the concept behind Twig components and their advantages.'),
 ));
 
 echo $result->getContent().\PHP_EOL;

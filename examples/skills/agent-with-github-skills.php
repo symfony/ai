@@ -22,7 +22,7 @@ $platform = PlatformFactory::create(env('ANTHROPIC_API_KEY'), http_client());
 
 // Load skills from a public GitHub repository
 $loader = new GithubSkillLoader(
-    [['repository' => 'owner/skills-repo']],
+    [['repository' => 'smnandre/symfony-ux-skills']],
     http_client(),
 );
 

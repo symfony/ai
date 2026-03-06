@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 
 /**
  * Runs a single eval case against an agent, measuring timing and token usage.
@@ -29,7 +30,7 @@ final class EvalRunner implements EvalRunnerInterface
 {
     public function __construct(
         private readonly AgentInterface $agent,
-        private readonly ClockInterface $clock,
+        private readonly ClockInterface $clock = new MonotonicClock(),
     ) {
     }
 

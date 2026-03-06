@@ -22,6 +22,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * @author Guillaume Loulier <contact@guillaumeloulier.fr>
  *
  * @phpstan-type SkillLoaderData array{
+ *     method: string,
  *     skill: string,
  *     skills?: string[],
  *     metadata?: array<string, SkillMetadataInterface>,
@@ -44,6 +45,7 @@ final class TraceableSkillLoader implements SkillLoaderInterface, ResetInterface
     public function loadSkill(string $name): ?SkillInterface
     {
         $this->calls[] = [
+            'method' => 'loadSkill',
             'skill' => $name,
             'loaded_at' => $this->clock->now(),
         ];
@@ -56,6 +58,7 @@ final class TraceableSkillLoader implements SkillLoaderInterface, ResetInterface
         $skills = $this->skillLoader->loadSkills();
 
         $this->calls[] = [
+            'method' => 'loadSkills',
             'skills' => array_keys($skills),
             'loaded_at' => $this->clock->now(),
         ];
@@ -68,6 +71,7 @@ final class TraceableSkillLoader implements SkillLoaderInterface, ResetInterface
         $metadata = $this->skillLoader->discoverMetadata();
 
         $this->calls[] = [
+            'method' => 'discoverMetadata',
             'metadata' => $metadata,
             'loaded_at' => $this->clock->now(),
         ];

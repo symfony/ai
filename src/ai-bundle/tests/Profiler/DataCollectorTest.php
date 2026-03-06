@@ -39,7 +39,7 @@ use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Uid\Uuid;
 
-class DataCollectorTest extends TestCase
+final class DataCollectorTest extends TestCase
 {
     public function testCollectsDataForNonStreamingResponse()
     {
@@ -53,7 +53,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
         $this->assertSame('Assistant response', $result->asText());
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -77,7 +77,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
         $this->assertSame('Assistant response', implode('', iterator_to_array($result->asStream())));
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -101,7 +101,7 @@ class DataCollectorTest extends TestCase
         // Invoke but do NOT consume the stream
         $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -141,7 +141,7 @@ class DataCollectorTest extends TestCase
             Message::ofUser('Hello World'),
         ));
 
-        $dataCollector = new DataCollector([], [], [$traceableMessageStore], [], [], []);
+        $dataCollector = new DataCollector([], [], [$traceableMessageStore], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getMessages();
@@ -164,7 +164,7 @@ class DataCollectorTest extends TestCase
 
         $traceableChat->submit(Message::ofUser('Hello World'));
 
-        $dataCollector = new DataCollector([], [], [], [$traceableChat], [], []);
+        $dataCollector = new DataCollector([], [], [], [$traceableChat], [], [], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getChats();
@@ -177,7 +177,7 @@ class DataCollectorTest extends TestCase
 
     public function testGetNameReturnsShortName()
     {
-        $dataCollector = new DataCollector([], [], [], [], [], []);
+        $dataCollector = new DataCollector([], [], [], [], [], [], [], []);
 
         $name = $dataCollector->getName();
 
@@ -193,7 +193,7 @@ class DataCollectorTest extends TestCase
             yield from [];
         })();
 
-        $dataCollector = new DataCollector([], $generator, [], [], [], []);
+        $dataCollector = new DataCollector([], $generator, [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertSame([], $dataCollector->getTools());
@@ -214,7 +214,7 @@ class DataCollectorTest extends TestCase
 
         $traceableAgent->call($messageBag);
 
-        $dataCollector = new DataCollector([], [], [], [], [$traceableAgent], []);
+        $dataCollector = new DataCollector([], [], [], [], [$traceableAgent], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getAgents());
@@ -231,9 +231,17 @@ class DataCollectorTest extends TestCase
         $traceableStore = new TraceableStore(new Store());
         $traceableStore->add(new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.3])));
 
-        $dataCollector = new DataCollector([], [], [], [], [], [$traceableStore]);
+        $dataCollector = new DataCollector([], [], [], [], [], [$traceableStore], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getStores());
+    }
+
+    public function testCollectsDataForSkillLoader()
+    {
+    }
+
+    public function testCollectsDataForSkillValidators()
+    {
     }
 }

@@ -650,6 +650,42 @@ Each active skill is registered as a tool named ``skill_{name}`` (with dashes co
 underscores). The agent can call these tools to load skill content, reference files, and
 execute scripts on demand.
 
+Skill Evaluation
+~~~~~~~~~~~~~~~~
+
+The evaluation system measures how well an agent performs with and without a skill. Configure
+it under the ``evaluation`` key within your skills configuration:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: 'gpt-4o-mini'
+                skills:
+                    enabled: true
+                    directories:
+                        - '%kernel.project_dir%/skills'
+                    active_skills:
+                        - 'my-skill'
+                    evaluation:
+                        workspace: '%kernel.project_dir%/var/skill-evals'
+                        grading_model: 'gpt-4o-mini'
+                        grading_platform: 'ai.platform.openai'
+
+Configuration options:
+
+* ``workspace`` (string, default: ``%kernel.project_dir%/var/skill-evals``): Directory to store evaluation
+  results (timing, grading, benchmark JSON files)
+* ``grading_model`` (string, optional): Model to use for LLM-based assertion grading (e.g. ``gpt-4o-mini``)
+* ``grading_platform`` (string, optional): Platform service reference for the grading model
+  (e.g. ``ai.platform.openai``)
+
+.. note::
+
+    Both ``grading_model`` and ``grading_platform`` must be configured to enable LLM grading.
+    Without them, the evaluation still runs but assertions are not graded.
+
 Multi-Agent Orchestration
 -------------------------
 
@@ -886,6 +922,56 @@ This is useful for ad-hoc indexing operations or testing different data sources.
 
     This command only works with indexers that have a ``loader`` configured. Document indexers
     (those without a loader) must be used programmatically in your code.
+
+``ai:agent:eval-skill``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``ai:agent:eval-skill`` command evaluates an Agent Skill using its ``evals/evals.json`` test suite.
+It runs each eval case against a configured agent, optionally grades assertions using an LLM, and
+compares results against a baseline agent.
+
+.. code-block:: terminal
+
+    $ php bin/console ai:agent:eval-skill <skill-directory> --agent=<agent>
+
+    # Evaluate a skill using the "my_agent" agent
+    $ php bin/console ai:agent:eval-skill skills/my-skill --agent=my_agent
+
+    # Compare with a baseline agent (without the skill)
+    $ php bin/console ai:agent:eval-skill skills/my-skill --agent=my_agent --baseline-agent=baseline_agent
+
+    # Run a specific iteration (useful for repeated benchmarks)
+    $ php bin/console ai:agent:eval-skill skills/my-skill --agent=my_agent --iteration=3
+
+    # Skip LLM grading (only measure timing and token usage)
+    $ php bin/console ai:agent:eval-skill skills/my-skill --agent=my_agent --skip-grading
+
+**Arguments**:
+
+* ``skill-directory`` (required): Path to the skill directory containing ``evals/evals.json``
+* ``workspace`` (optional): Path to the workspace directory for storing results (overrides config)
+
+**Options**:
+
+* ``--agent`` (required): Agent service name to evaluate (must be a configured agent)
+* ``--baseline-agent`` (optional): Agent service name for baseline comparison (without skill)
+* ``--iteration``, ``-i`` (default: ``1``): Iteration number for organizing results
+* ``--skip-grading``: Skip LLM grading, only capture timing and output
+
+When a baseline agent is provided, the command displays a benchmark comparison table:
+
+.. code-block:: text
+
+    Benchmark Results
+    =================
+
+     Metric      | With Skill | Without Skill | Delta
+    -------------+------------+---------------+--------
+     Pass Rate   | 0.85       | 0.60          | +0.25
+     Time (ms)   | 1200       | 1050          | +150
+     Tokens      | 850        | 620           | +230
+
+All results are persisted in the workspace directory as JSON files for later analysis.
 
 Usage
 -----

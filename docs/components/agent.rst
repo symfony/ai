@@ -1067,6 +1067,203 @@ The :class:`Symfony\\AI\\Agent\\Skill\\SkillLoaderInterface` provides methods fo
 
 Use Level 1 for listings, menus, or selection UIs. Use Level 2 when you need the actual skill content.
 
+Evaluating Skills
+^^^^^^^^^^^^^^^^^
+
+The evaluation system measures how well an agent performs with and without a skill, using
+LLM-based grading of assertions. This helps you validate that a skill actually improves
+agent output quality before deploying it.
+
+The evaluation flow is:
+
+1. Write an ``evals.json`` test suite for your skill
+2. Run the eval cases against an agent configured with the skill
+3. Optionally run the same cases against a baseline agent (without the skill)
+4. Grade outputs using an LLM grader that checks assertions
+5. Compare benchmark results (pass rate, response time, token usage)
+
+Writing an Evaluation Suite
+...........................
+
+Each skill can include an ``evals/`` directory containing an ``evals.json`` file::
+
+    my-skill/
+    ├── SKILL.md
+    ├── evals/
+    │   └── evals.json
+    ├── references/
+    └── scripts/
+
+The ``evals.json`` file defines test cases for the skill:
+
+.. code-block:: json
+
+    {
+        "skill_name": "my-skill",
+        "evals": [
+            {
+                "id": 1,
+                "prompt": "What is dependency injection?",
+                "expected_output": "A design pattern that allows objects to receive dependencies from external sources rather than creating them internally.",
+                "files": [],
+                "assertions": [
+                    "Mentions constructor injection",
+                    "Explains benefits of loose coupling"
+                ]
+            },
+            {
+                "id": 2,
+                "prompt": "Show me a service container example",
+                "expected_output": "A container that manages service instantiation and dependency resolution.",
+                "files": ["src/Container.php"],
+                "assertions": [
+                    "Includes a PHP code example",
+                    "References the Container class"
+                ]
+            }
+        ]
+    }
+
+**Required fields**:
+
+* ``skill_name`` (string): Name of the skill being evaluated
+* ``evals`` (array): Array of evaluation cases, each with:
+
+  * ``id`` (integer): Unique identifier within the suite
+  * ``prompt`` (string): User prompt to send to the agent
+  * ``expected_output`` (string): Reference output for grading comparison
+
+**Optional fields** (per eval case):
+
+* ``files`` (array of strings): File paths to provide as additional context
+* ``assertions`` (array of strings): Natural-language assertions that the LLM grader
+  will evaluate against the agent output
+
+Running Evaluations Programmatically
+.....................................
+
+**Loading an evaluation suite**:
+
+The :class:`Symfony\\AI\\Agent\\Skill\\Evaluation\\EvalSuiteLoader` loads and validates the
+``evals/evals.json`` file from a skill directory::
+
+    use Symfony\AI\Agent\Skill\Evaluation\EvalSuiteLoader;
+
+    $loader = new EvalSuiteLoader();
+    $suite = $loader->load(__DIR__.'/skills/my-skill');
+
+    echo $suite->getSkillName(); // "my-skill"
+
+    foreach ($suite->getEvals() as $evalCase) {
+        echo $evalCase->getPrompt();
+        echo $evalCase->getExpectedOutput();
+    }
+
+    // Find a specific eval case by ID
+    $case = $suite->getEvalById(1);
+
+**Running eval cases against an agent**:
+
+The :class:`Symfony\\AI\\Agent\\Skill\\Evaluation\\Runner\\EvalRunner` executes an eval case
+against an agent and captures timing and token usage::
+
+    use Symfony\AI\Agent\Skill\Evaluation\Runner\EvalRunner;
+
+    // $agent is an AgentInterface instance
+    $runner = new EvalRunner($agent);
+
+    foreach ($suite->getEvals() as $evalCase) {
+        $result = $runner->run($evalCase);
+
+        echo $result->getOutput();                    // Agent response text
+        echo $result->getTiming()->getDurationMs();    // Execution time in ms
+        echo $result->getTiming()->getTotalTokens();   // Total tokens used
+    }
+
+**Grading with LLM**:
+
+The :class:`Symfony\\AI\\Agent\\Skill\\Evaluation\\Grader\\LlmGrader` uses a language model
+to evaluate each assertion against the agent output::
+
+    use Symfony\AI\Agent\Skill\Evaluation\Grader\LlmGrader;
+
+    // $platform is a PlatformInterface instance
+    $grader = new LlmGrader($platform, 'gpt-4o-mini');
+
+    $gradingResult = $grader->grade(
+        $result->getOutput(),
+        $evalCase->getAssertions(),
+        $evalCase->getExpectedOutput(),
+    );
+
+    $summary = $gradingResult->getSummary();
+    // ['passed' => 2, 'failed' => 0, 'total' => 2, 'pass_rate' => 1.0]
+
+    foreach ($gradingResult->getAssertionResults() as $assertion) {
+        echo $assertion->getText();      // "Mentions constructor injection"
+        echo $assertion->isPassed();     // true
+        echo $assertion->getEvidence();  // "The output explicitly discusses..."
+    }
+
+**Comparing with and without skill**:
+
+The :class:`Symfony\\AI\\Agent\\Skill\\Evaluation\\Aggregator\\BenchmarkAggregator` computes
+statistics (mean, standard deviation) from multiple eval runs and calculates the delta
+between with-skill and without-skill results::
+
+    use Symfony\AI\Agent\Skill\Evaluation\Aggregator\BenchmarkAggregator;
+
+    $aggregator = new BenchmarkAggregator();
+    $benchmark = $aggregator->aggregate($withSkillResults, $withoutSkillResults);
+
+    // Access statistics (mean + stddev)
+    $benchmark->getWithSkillPassRate()->getMean();
+    $benchmark->getWithoutSkillPassRate()->getMean();
+
+    // Delta: positive = skill improved, negative = skill worsened
+    $delta = $benchmark->getDelta();
+    // ['pass_rate' => 0.25, 'time_ms' => -150.0, 'tokens' => -200.0]
+
+**Persisting results**:
+
+The :class:`Symfony\\AI\\Agent\\Skill\\Evaluation\\Workspace\\WorkspaceManager` saves all
+evaluation artifacts as JSON files in a structured directory::
+
+    use Symfony\AI\Agent\Skill\Evaluation\Workspace\WorkspaceManager;
+
+    $workspace = new WorkspaceManager('/path/to/workspace');
+    $workspace->initializeIteration(1);
+
+    $evalDir = $workspace->getEvalDirectory(1, '1', 'with_skill');
+    $workspace->saveOutput($evalDir, $result->getOutput());
+    $workspace->saveTimingResult($evalDir, $result->getTiming());
+    $workspace->saveGradingResult($evalDir, $gradingResult);
+    $workspace->saveBenchmarkResult(1, $benchmark);
+
+Workspace Output Structure
+..........................
+
+After an evaluation run, the workspace directory contains::
+
+    var/skill-evals/
+    └── iteration-1/
+        ├── eval-1/
+        │   ├── with_skill/
+        │   │   ├── outputs/
+        │   │   ├── timing.json
+        │   │   └── grading.json
+        │   └── without_skill/
+        │       ├── outputs/
+        │       ├── timing.json
+        │       └── grading.json
+        ├── eval-2/
+        │   └── ...
+        └── benchmark.json
+
+Each ``timing.json`` contains token count and duration. Each ``grading.json`` contains
+per-assertion pass/fail results with evidence. The ``benchmark.json`` contains aggregated
+statistics comparing with-skill and without-skill runs.
+
 Code Examples
 ^^^^^^^^^^^^^
 

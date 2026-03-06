@@ -77,13 +77,7 @@ final class EvalSuiteLoader implements EvalSuiteLoaderInterface
                 $assertions = $evalData['assertions'];
             }
 
-            $evals[] = new EvalCase(
-                $evalData['id'],
-                $evalData['prompt'],
-                $evalData['expected_output'],
-                $files,
-                $assertions,
-            );
+            $evals[] = new EvalCase($evalData['id'], $evalData['prompt'], $evalData['expected_output'], $files, $assertions);
         }
 
         return new EvalSuite($data['skill_name'], $evals);
