@@ -19,6 +19,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\InputProcessor\SkillInputProcessor;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -26,8 +27,21 @@ use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Agent\Skill\Evaluation\Aggregator\BenchmarkAggregator;
+use Symfony\AI\Agent\Skill\Evaluation\EvalSuiteLoader;
+use Symfony\AI\Agent\Skill\Evaluation\Grader\LlmGrader;
+use Symfony\AI\Agent\Skill\Evaluation\Workspace\WorkspaceManager;
+use Symfony\AI\AiBundle\Command\EvalSkillCommand;
+use Symfony\AI\Agent\Skill\ChainSkillLoader;
+use Symfony\AI\Agent\Skill\FilesystemSkillLoader;
+use Symfony\AI\Agent\Skill\GithubSkillLoader;
+use Symfony\AI\Agent\Skill\SkillParser;
+use Symfony\AI\Agent\Skill\SkillParserInterface;
+use Symfony\AI\Agent\Skill\Validation\SkillValidator;
+use Symfony\AI\Agent\Skill\Validation\SkillValidatorInterface;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
+use Symfony\AI\Agent\Toolbox\Tool\SkillTool;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
@@ -135,10 +149,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\String\UnicodeString;
 use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -193,6 +209,8 @@ final class AiBundle extends AbstractBundle
                 $builder->setAlias(AgentInterface::class, 'ai.agent.'.$agentName);
             }
         }
+
+        $this->processSkillEvaluationConfig($config['agent'] ?? [], $builder);
 
         if ([] !== ($config['multi_agent'] ?? [])) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
@@ -1229,6 +1247,101 @@ final class AiBundle extends AbstractBundle
             $container->setDefinition('ai.agent.'.$name.'.memory_input_processor', $memoryInputProcessorDefinition);
         }
 
+        // Skills
+        if ($config['skills']['enabled']) {
+            if ('ai.skills.filesystem_loader' === $config['skills']['loader']) {
+                $skillParserDefinition = (new Definition(SkillParser::class))
+                    ->setLazy(true)
+                    ->setArgument(0, new Reference('filesystem'))
+                    ->addTag('proxy', ['interface' => SkillParserInterface::class])
+                ;
+
+                $container->setDefinition('ai.skills.parser', $skillParserDefinition);
+
+                $skillValidatorDefinition = (new Definition(SkillValidator::class))
+                    ->setLazy(true)
+                    ->addTag('proxy', ['interface' => SkillValidatorInterface::class])
+                ;
+
+                $container->setDefinition('ai.skills.validator', $skillValidatorDefinition);
+
+                $filesystemSkillLoaderDefinition = (new Definition(FilesystemSkillLoader::class))
+                    ->setArguments([
+                        $config['skills']['directories'],
+                        new Reference('ai.skills.parser'),
+                        new Reference('ai.skills.validator'),
+                        new Reference('filesystem'),
+                    ])
+                ;
+
+                $container->setDefinition('ai.skills.filesystem_loader', $filesystemSkillLoaderDefinition);
+
+                $githubRepositories = $config['skills']['github_repositories'] ?? [];
+                if ([] !== $githubRepositories) {
+                    $githubSkillLoaderDefinition = (new Definition(GithubSkillLoader::class))
+                        ->setArguments([
+                            $githubRepositories,
+                            new Reference(HttpClientInterface::class),
+                            new Reference('ai.skills.parser'),
+                            new Reference('ai.skills.validator'),
+                        ])
+                    ;
+
+                    $container->setDefinition('ai.skills.github_loader', $githubSkillLoaderDefinition);
+
+                    $chainSkillLoaderDefinition = (new Definition(ChainSkillLoader::class))
+                        ->setArguments([[
+                            new Reference('ai.skills.filesystem_loader'),
+                            new Reference('ai.skills.github_loader'),
+                        ]])
+                    ;
+
+                    $container->setDefinition('ai.skills.chain_loader', $chainSkillLoaderDefinition);
+                }
+            }
+
+            $effectiveLoaderId = $config['skills']['loader'];
+            if ('ai.skills.filesystem_loader' === $effectiveLoaderId && [] !== ($config['skills']['github_repositories'] ?? [])) {
+                $effectiveLoaderId = 'ai.skills.chain_loader';
+            }
+
+            $skillInputProcessorDefinition = (new Definition(SkillInputProcessor::class))
+                ->setLazy(true)
+                ->setArguments([
+                    new Reference($effectiveLoaderId),
+                    array_map(
+                        static fn (array $skill): string => $skill['name'],
+                        $config['skills']['active_skills'],
+                    ),
+                    $config['skills']['include_index'],
+                ])
+                ->addTag('proxy', ['interface' => InputProcessorInterface::class])
+                ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -50])
+            ;
+
+            $container->setDefinition('ai.skills.input_processor', $skillInputProcessorDefinition);
+
+            if ($config['tools']['enabled']) {
+                foreach ($config['skills']['active_skills'] as $activeSkill) {
+                    $skillToolServiceIdentifier = \sprintf('ai.skills.tool.%s.%s', $name, $activeSkill['name']);
+
+                    $skillToolDefinition = (new Definition(SkillTool::class, [
+                        new Reference($effectiveLoaderId),
+                        $activeSkill['name'],
+                    ]))->addTag('ai.agent.skill_as_tool');
+
+                    $container->setDefinition($skillToolServiceIdentifier, $skillToolDefinition);
+
+                    $memoryFactoryDefinition = $container->getDefinition('ai.toolbox.'.$name.'.memory_factory');
+                    $memoryFactoryDefinition->addMethodCall('addTool', [
+                        new Reference($skillToolServiceIdentifier),
+                        \sprintf('skill_%s', (new UnicodeString($activeSkill['name']))->replace('-', '_')),
+                        \sprintf('Consult the "%s" skill for specialized knowledge and instructions. Pass an optional reference file path for detailed documentation.', $activeSkill['name']),
+                    ]);
+                }
+            }
+        }
+
         $agentDefinition
             ->setArgument(2, []) // placeholder until ProcessorCompilerPass process.
             ->setArgument(3, []) // placeholder until ProcessorCompilerPass process.
@@ -1238,6 +1351,70 @@ final class AiBundle extends AbstractBundle
 
         $container->setDefinition($agentId, $agentDefinition);
         $container->registerAliasForArgument($agentId, AgentInterface::class, (new Target($name))->getParsedName());
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $agents
+     */
+    private function processSkillEvaluationConfig(array $agents, ContainerBuilder $container): void
+    {
+        $evalConfig = null;
+        foreach ($agents as $agentConfig) {
+            if (isset($agentConfig['skills']['evaluation'])) {
+                $evalConfig = $agentConfig['skills']['evaluation'];
+                break;
+            }
+        }
+
+        if (null === $evalConfig) {
+            return;
+        }
+
+        $container->setDefinition('ai.skills.eval_suite_loader', new Definition(EvalSuiteLoader::class, [
+            new Reference('filesystem'),
+        ]));
+
+        $container->setDefinition('ai.skills.workspace_manager', new Definition(WorkspaceManager::class, [
+            $evalConfig['workspace'],
+            new Reference('filesystem'),
+        ]));
+
+        $container->setDefinition('ai.skills.benchmark_aggregator', new Definition(BenchmarkAggregator::class));
+
+        $graderReference = null;
+        if (null !== $evalConfig['grading_model'] && null !== $evalConfig['grading_platform']) {
+            $container->setDefinition('ai.skills.grader', new Definition(LlmGrader::class, [
+                new Reference($evalConfig['grading_platform']),
+                $evalConfig['grading_model'],
+            ]));
+            $graderReference = new Reference('ai.skills.grader');
+        }
+
+        // Collect agent references for the ServiceLocator
+        $agentReferences = [];
+        foreach (array_keys($agents) as $agentName) {
+            $agentReferences[$agentName] = new Reference('ai.agent.'.$agentName);
+        }
+
+        $agentLocatorDefinition = (new Definition(ServiceLocator::class, [$agentReferences]))
+            ->addTag('container.service_locator')
+        ;
+
+        $container->setDefinition('ai.skills.eval_agent_locator', $agentLocatorDefinition);
+
+        $evalCommandDefinition = (new Definition(EvalSkillCommand::class))
+            ->setArguments([
+                new Reference('ai.skills.eval_suite_loader'),
+                new Reference('ai.skills.workspace_manager'),
+                new Reference('ai.skills.benchmark_aggregator'),
+                new Reference('clock'),
+                new Reference('ai.skills.eval_agent_locator'),
+                $graderReference,
+            ])
+            ->addTag('console.command')
+        ;
+
+        $container->setDefinition('ai.skills.eval_command', $evalCommandDefinition);
     }
 
     /**

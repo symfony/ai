@@ -31,10 +31,13 @@
         "symfony/ai-platform": "^0.6",
         "symfony/clock": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
+        "symfony/filesystem": "^7.3|^8.0",
+        "symfony/finder": "^7.3|^8.0",
         "symfony/polyfill-php85": "^1.33",
         "symfony/property-access": "^7.3|^8.0",
         "symfony/property-info": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0",
+        "symfony/string": "^7.3|^8.0",
         "symfony/type-info": "^7.3|^8.0"
     },
     "require-dev": {
@@ -44,6 +47,7 @@
         "phpunit/phpunit": "^11.5.53",
         "symfony/ai-store": "^0.6",
         "symfony/event-dispatcher": "^7.3|^8.0",
+        "symfony/process": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0",
         "symfony/translation-contracts": "^3.6"
     },
