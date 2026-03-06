@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `workflow` configuration for orchestrating multi-step AI agent workflows using the Symfony Workflow component
+ * Add `TraceableAgentWorkflow` for profiler integration with workflow execution
+ * Add workflow decoration in `DebugCompilerPass` for debug mode tracing
+
 0.6
 ---
 

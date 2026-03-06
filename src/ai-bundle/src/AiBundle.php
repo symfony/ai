@@ -31,6 +31,14 @@ use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
+use Symfony\AI\Agent\Workflow\AgentWorkflow;
+use Symfony\AI\Agent\Workflow\AgentWorkflowInterface;
+use Symfony\AI\Agent\Workflow\Bridge\Cache\WorkflowStateStore as CacheWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\Bridge\Filesystem\WorkflowStateStore as FilesystemWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\Bridge\Redis\WorkflowStateStore as RedisWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\Executor\AgentExecutor;
+use Symfony\AI\Agent\Workflow\InMemory\WorkflowStateStore as InMemoryWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\TransitionResolver\StateBasedTransitionResolver;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -135,6 +143,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
@@ -201,6 +210,21 @@ final class AiBundle extends AbstractBundle
 
             foreach ($config['multi_agent'] as $multiAgentName => $multiAgent) {
                 $this->processMultiAgentConfig($multiAgentName, $multiAgent, $builder);
+            }
+        }
+
+        if ([] !== ($config['workflow'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Workflow configuration requires "symfony/ai-agent" package. Try running "composer require symfony/ai-agent".');
+            }
+
+            foreach ($config['workflow'] as $workflowName => $workflow) {
+                $this->processWorkflowConfig($workflowName, $workflow, $builder);
+            }
+
+            $workflows = array_keys($builder->findTaggedServiceIds('ai.workflow'));
+            if (1 === \count($workflows)) {
+                $builder->setAlias(AgentWorkflowInterface::class, reset($workflows));
             }
         }
 
@@ -2468,5 +2492,85 @@ final class AiBundle extends AbstractBundle
 
         $definition = $builder->getDefinition($modelCatalogId);
         $definition->setArguments([$additionalModels]);
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function processWorkflowConfig(string $name, array $config, ContainerBuilder $container): void
+    {
+        // 1. Register executors
+        $executorReferences = [];
+        foreach ($config['executors'] as $place => $executorConfig) {
+            if ('agent' === $executorConfig['type']) {
+                $container->setDefinition('ai.workflow.'.$name.'.executor.'.$place, new Definition(AgentExecutor::class, [
+                    new Reference(self::normalizeAgentServiceId($executorConfig['agent'])),
+                    $executorConfig['input_key'],
+                    $executorConfig['output_key'],
+                ]));
+
+                $executorReferences[$place] = new Reference('ai.workflow.'.$name.'.executor.'.$place);
+            } elseif ('service' === $executorConfig['type']) {
+                $executorReferences[$place] = new Reference($executorConfig['service']);
+            }
+        }
+
+        // 2. Register state store
+        $storeConfig = $config['store'];
+
+        $storeDefinition = match ($storeConfig['type']) {
+            'memory' => new Definition(InMemoryWorkflowStateStore::class),
+            'cache' => new Definition(CacheWorkflowStateStore::class, [
+                new Reference($storeConfig['cache_service']),
+                $storeConfig['prefix'],
+                $storeConfig['ttl'],
+            ]),
+            'filesystem' => new Definition(FilesystemWorkflowStateStore::class, [
+                new Definition(Filesystem::class),
+                $storeConfig['directory'],
+            ]),
+            'redis' => new Definition(RedisWorkflowStateStore::class, [
+                new Reference($storeConfig['redis_client']),
+                $storeConfig['prefix'],
+            ]),
+            'service' => $storeConfig['service'],
+            default => throw new InvalidArgumentException(),
+        };
+
+        $container->setDefinition('ai.workflow.'.$name.'.store', $storeDefinition);
+
+        // 3. Register guards
+        $guardReferences = [];
+        foreach ($config['guards'] ?? [] as $place => $guardServices) {
+            $guardReferences[$place] = array_map(
+                static fn (string $guardService): Reference => new Reference($guardService),
+                $guardServices
+            );
+        }
+
+        // 4. Register transition resolver
+        if (null !== $config['transition_resolver']) {
+            $transitionResolverRef = new Reference($config['transition_resolver']);
+        } else {
+            $transitionResolverId = 'ai.workflow.'.$name.'.transition_resolver';
+            $container->setDefinition($transitionResolverId, new Definition(StateBasedTransitionResolver::class));
+            $transitionResolverRef = new Reference($transitionResolverId);
+        }
+
+        // 5. Register the AgentWorkflow service, referencing the existing Symfony Workflow
+        $agentWorkflowDef = (new Definition(AgentWorkflow::class))
+            ->setLazy(true)
+            ->setArguments([
+                new Reference('workflow.'.$config['workflow']),
+                $executorReferences,
+                new Reference('ai.workflow.'.$name.'.store'),
+                $transitionResolverRef,
+                $guardReferences,
+            ])
+            ->addTag('proxy', ['interface' => AgentWorkflowInterface::class])
+            ->addTag('ai.workflow', ['name' => $name]);
+
+        $container->setDefinition('ai.workflow.'.$name, $agentWorkflowDef);
+        $container->registerAliasForArgument('ai.workflow.'.$name, AgentWorkflowInterface::class, (new Target($name))->getParsedName());
     }
 }

@@ -26,6 +26,14 @@ use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
+use Symfony\AI\Agent\Workflow\AgentWorkflow;
+use Symfony\AI\Agent\Workflow\AgentWorkflowInterface;
+use Symfony\AI\Agent\Workflow\Bridge\Cache\WorkflowStateStore as CacheWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\Bridge\Filesystem\WorkflowStateStore as FilesystemWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\Bridge\Redis\WorkflowStateStore as RedisWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\Executor\AgentExecutor;
+use Symfony\AI\Agent\Workflow\InMemory\WorkflowStateStore as InMemoryWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\TransitionResolver\StateBasedTransitionResolver;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -7765,6 +7773,281 @@ class AiBundleTest extends TestCase
         $this->assertNull($definition->getArgument(3));
     }
 
+    public function testWorkflowBasicRegistration()
+    {
+        $container = $this->buildContainer(['ai' => [
+            'platform' => ['openai' => ['api_key' => 'sk-test']],
+            'agent' => [
+                'writer' => ['model' => 'gpt-4'],
+                'summarizer' => ['model' => 'gpt-4'],
+            ],
+            'workflow' => [
+                'content_pipeline' => [
+                    'workflow' => 'content_pipeline',
+                    'executors' => [
+                        'generate' => ['type' => 'agent', 'agent' => 'writer', 'input_key' => 'topic', 'output_key' => 'draft'],
+                        'summarize' => ['type' => 'agent', 'agent' => 'summarizer', 'input_key' => 'draft', 'output_key' => 'summary'],
+                        'done' => ['type' => 'service', 'service' => 'App\\DoneExecutor'],
+                    ],
+                ],
+            ],
+        ]]);
+
+        $this->assertTrue($container->hasDefinition('ai.workflow.content_pipeline'));
+        $def = $container->getDefinition('ai.workflow.content_pipeline');
+        $this->assertSame(AgentWorkflow::class, $def->getClass());
+        $this->assertCount(5, $def->getArguments());
+
+        // References the existing Symfony Workflow service
+        $this->assertInstanceOf(Reference::class, $def->getArgument(0));
+        $this->assertSame('workflow.content_pipeline', (string) $def->getArgument(0));
+
+        $tags = $def->getTag('ai.workflow');
+        $this->assertCount(1, $tags);
+        $this->assertSame('content_pipeline', $tags[0]['name']);
+
+        // Executor sub-services
+        $this->assertTrue($container->hasDefinition('ai.workflow.content_pipeline.executor.generate'));
+        $generateDef = $container->getDefinition('ai.workflow.content_pipeline.executor.generate');
+        $this->assertSame(AgentExecutor::class, $generateDef->getClass());
+        $this->assertSame('topic', $generateDef->getArgument(1));
+        $this->assertSame('draft', $generateDef->getArgument(2));
+
+        $this->assertTrue($container->hasDefinition('ai.workflow.content_pipeline.executor.summarize'));
+
+        // Store
+        $this->assertTrue($container->hasDefinition('ai.workflow.content_pipeline.store'));
+        $storeDef = $container->getDefinition('ai.workflow.content_pipeline.store');
+        $this->assertSame(InMemoryWorkflowStateStore::class, $storeDef->getClass());
+
+        // Transition resolver
+        $this->assertTrue($container->hasDefinition('ai.workflow.content_pipeline.transition_resolver'));
+        $resolverDef = $container->getDefinition('ai.workflow.content_pipeline.transition_resolver');
+        $this->assertSame(StateBasedTransitionResolver::class, $resolverDef->getClass());
+
+        // Alias
+        $this->assertTrue($container->hasAlias(AgentWorkflowInterface::class));
+    }
+
+    public function testWorkflowWithCacheStore()
+    {
+        $container = $this->buildContainer(['ai' => [
+            'platform' => ['openai' => ['api_key' => 'sk-test']],
+            'agent' => ['writer' => ['model' => 'gpt-4']],
+            'workflow' => [
+                'pipeline' => [
+                    'workflow' => 'pipeline',
+                    'executors' => [
+                        'start' => ['type' => 'agent', 'agent' => 'writer'],
+                        'end' => ['type' => 'agent', 'agent' => 'writer'],
+                    ],
+                    'store' => ['type' => 'cache', 'cache_service' => 'cache.app', 'prefix' => '_test_', 'ttl' => 3600],
+                ],
+            ],
+        ]]);
+
+        $storeDef = $container->getDefinition('ai.workflow.pipeline.store');
+        $this->assertSame(CacheWorkflowStateStore::class, $storeDef->getClass());
+        $this->assertSame('cache.app', (string) $storeDef->getArgument(0));
+        $this->assertSame('_test_', $storeDef->getArgument(1));
+        $this->assertSame(3600, $storeDef->getArgument(2));
+    }
+
+    public function testWorkflowWithFilesystemStore()
+    {
+        $container = $this->buildContainer(['ai' => [
+            'platform' => ['openai' => ['api_key' => 'sk-test']],
+            'agent' => ['writer' => ['model' => 'gpt-4']],
+            'workflow' => [
+                'pipeline' => [
+                    'workflow' => 'pipeline',
+                    'executors' => [
+                        'start' => ['type' => 'agent', 'agent' => 'writer'],
+                        'end' => ['type' => 'agent', 'agent' => 'writer'],
+                    ],
+                    'store' => ['type' => 'filesystem', 'directory' => '/tmp/workflows'],
+                ],
+            ],
+        ]]);
+
+        $storeDef = $container->getDefinition('ai.workflow.pipeline.store');
+        $this->assertSame(FilesystemWorkflowStateStore::class, $storeDef->getClass());
+        $this->assertSame('/tmp/workflows', $storeDef->getArgument(1));
+    }
+
+    public function testWorkflowWithRedisStore()
+    {
+        $container = $this->buildContainer(['ai' => [
+            'platform' => ['openai' => ['api_key' => 'sk-test']],
+            'agent' => ['writer' => ['model' => 'gpt-4']],
+            'workflow' => [
+                'pipeline' => [
+                    'workflow' => 'pipeline',
+                    'executors' => [
+                        'start' => ['type' => 'agent', 'agent' => 'writer'],
+                        'end' => ['type' => 'agent', 'agent' => 'writer'],
+                    ],
+                    'store' => ['type' => 'redis', 'redis_client' => 'my_redis', 'prefix' => 'wf:'],
+                ],
+            ],
+        ]]);
+
+        $storeDef = $container->getDefinition('ai.workflow.pipeline.store');
+        $this->assertSame(RedisWorkflowStateStore::class, $storeDef->getClass());
+        $this->assertSame('my_redis', (string) $storeDef->getArgument(0));
+        $this->assertSame('wf:', $storeDef->getArgument(1));
+    }
+
+    public function testWorkflowWithCustomServiceStore()
+    {
+        $container = $this->buildContainer(['ai' => [
+            'platform' => ['openai' => ['api_key' => 'sk-test']],
+            'agent' => ['writer' => ['model' => 'gpt-4']],
+            'workflow' => [
+                'pipeline' => [
+                    'workflow' => 'pipeline',
+                    'executors' => [
+                        'start' => ['type' => 'agent', 'agent' => 'writer'],
+                        'end' => ['type' => 'agent', 'agent' => 'writer'],
+                    ],
+                    'store' => ['type' => 'service', 'service' => 'App\\MyStore'],
+                ],
+            ],
+        ]]);
+
+        $this->assertTrue($container->hasAlias('ai.workflow.pipeline.store'));
+        $this->assertSame('App\\MyStore', (string) $container->getAlias('ai.workflow.pipeline.store'));
+    }
+
+    public function testWorkflowWithGuards()
+    {
+        $container = $this->buildContainer(['ai' => [
+            'platform' => ['openai' => ['api_key' => 'sk-test']],
+            'agent' => ['writer' => ['model' => 'gpt-4']],
+            'workflow' => [
+                'pipeline' => [
+                    'workflow' => 'pipeline',
+                    'executors' => [
+                        'start' => ['type' => 'agent', 'agent' => 'writer'],
+                        'end' => ['type' => 'agent', 'agent' => 'writer'],
+                    ],
+                    'guards' => [
+                        'end' => ['App\\Guard\\ReviewGuard', 'App\\Guard\\QualityGuard'],
+                    ],
+                ],
+            ],
+        ]]);
+
+        $def = $container->getDefinition('ai.workflow.pipeline');
+        $guards = $def->getArgument(4);
+
+        $this->assertArrayHasKey('end', $guards);
+        $this->assertCount(2, $guards['end']);
+        $this->assertInstanceOf(Reference::class, $guards['end'][0]);
+        $this->assertSame('App\\Guard\\ReviewGuard', (string) $guards['end'][0]);
+        $this->assertSame('App\\Guard\\QualityGuard', (string) $guards['end'][1]);
+    }
+
+    public function testWorkflowWithCustomTransitionResolver()
+    {
+        $container = $this->buildContainer(['ai' => [
+            'platform' => ['openai' => ['api_key' => 'sk-test']],
+            'agent' => ['writer' => ['model' => 'gpt-4']],
+            'workflow' => [
+                'pipeline' => [
+                    'workflow' => 'pipeline',
+                    'executors' => [
+                        'start' => ['type' => 'agent', 'agent' => 'writer'],
+                        'end' => ['type' => 'agent', 'agent' => 'writer'],
+                    ],
+                    'transition_resolver' => 'App\\MyResolver',
+                ],
+            ],
+        ]]);
+
+        $def = $container->getDefinition('ai.workflow.pipeline');
+        $resolver = $def->getArgument(3);
+
+        $this->assertInstanceOf(Reference::class, $resolver);
+        $this->assertSame('App\\MyResolver', (string) $resolver);
+    }
+
+    public function testWorkflowMultipleNoAutoAlias()
+    {
+        $container = $this->buildContainer(['ai' => [
+            'platform' => ['openai' => ['api_key' => 'sk-test']],
+            'agent' => ['writer' => ['model' => 'gpt-4']],
+            'workflow' => [
+                'pipeline_a' => [
+                    'workflow' => 'pipeline_a',
+                    'executors' => [
+                        'start' => ['type' => 'agent', 'agent' => 'writer'],
+                        'end' => ['type' => 'agent', 'agent' => 'writer'],
+                    ],
+                ],
+                'pipeline_b' => [
+                    'workflow' => 'pipeline_b',
+                    'executors' => [
+                        'start' => ['type' => 'agent', 'agent' => 'writer'],
+                        'end' => ['type' => 'agent', 'agent' => 'writer'],
+                    ],
+                ],
+            ],
+        ]]);
+
+        $this->assertTrue($container->hasDefinition('ai.workflow.pipeline_a'));
+        $this->assertTrue($container->hasDefinition('ai.workflow.pipeline_b'));
+        $this->assertFalse($container->hasAlias(AgentWorkflowInterface::class));
+    }
+
+    public function testWorkflowWithServiceExecutor()
+    {
+        $container = $this->buildContainer(['ai' => [
+            'platform' => ['openai' => ['api_key' => 'sk-test']],
+            'agent' => ['writer' => ['model' => 'gpt-4']],
+            'workflow' => [
+                'pipeline' => [
+                    'workflow' => 'pipeline',
+                    'executors' => [
+                        'start' => ['type' => 'agent', 'agent' => 'writer'],
+                        'end' => ['type' => 'service', 'service' => 'App\\CustomExecutor'],
+                    ],
+                ],
+            ],
+        ]]);
+
+        $def = $container->getDefinition('ai.workflow.pipeline');
+        $executors = $def->getArgument(1);
+
+        $this->assertArrayHasKey('end', $executors);
+        $this->assertInstanceOf(Reference::class, $executors['end']);
+        $this->assertSame('App\\CustomExecutor', (string) $executors['end']);
+
+        // Agent executor should be a registered service definition
+        $this->assertTrue($container->hasDefinition('ai.workflow.pipeline.executor.start'));
+    }
+
+    public function testWorkflowDebugDecoration()
+    {
+        $container = $this->buildContainer(['ai' => [
+            'platform' => ['openai' => ['api_key' => 'sk-test']],
+            'agent' => ['writer' => ['model' => 'gpt-4']],
+            'workflow' => [
+                'pipeline' => [
+                    'workflow' => 'pipeline',
+                    'executors' => [
+                        'start' => ['type' => 'agent', 'agent' => 'writer'],
+                        'end' => ['type' => 'agent', 'agent' => 'writer'],
+                    ],
+                ],
+            ],
+        ]]);
+
+        $this->assertTrue($container->hasDefinition('ai.traceable_workflow.pipeline'));
+        $traceableDef = $container->getDefinition('ai.traceable_workflow.pipeline');
+        $this->assertSame('ai.workflow.pipeline', $traceableDef->getDecoratedService()[0]);
+    }
+
     /**
      * @param array<string, mixed> $configuration
      */
@@ -7934,6 +8217,16 @@ class AiBundleTest extends TestCase
                     'another_agent' => [
                         'model' => 'claude-3-opus-20240229',
                         'prompt' => 'Be concise.',
+                    ],
+                ],
+                'workflow' => [
+                    'content_pipeline' => [
+                        'workflow' => 'content_pipeline',
+                        'executors' => [
+                            'generate' => ['type' => 'agent', 'agent' => 'my_chat_agent', 'input_key' => 'topic', 'output_key' => 'draft'],
+                            'summarize' => ['type' => 'agent', 'agent' => 'another_agent', 'input_key' => 'draft', 'output_key' => 'summary'],
+                            'done' => ['type' => 'service', 'service' => 'App\\DoneExecutor'],
+                        ],
                     ],
                 ],
                 'store' => [
