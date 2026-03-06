@@ -17,7 +17,7 @@ use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Bridge\Weaviate\Store;
+use Symfony\AI\Store\Bridge\Weaviate\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -28,12 +28,7 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = new Store(
-    httpClient: http_client(),
-    endpointUrl: env('WEAVIATE_HOST'),
-    apiKey: env('WEAVIATE_API_KEY'),
-    collection: 'Movies',
-);
+$store = StoreFactory::create('Movies', env('WEAVIATE_HOST'), env('WEAVIATE_API_KEY'));
 
 // initialize the index
 $store->setup();
