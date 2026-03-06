@@ -26,7 +26,7 @@ final class ModelClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The base URL must not be empty.');
 
-        new ModelClient(new MockHttpClient(), '', 'api-key');
+        new ModelClient(new MockHttpClient(), '', 'my-deployment', 'api-key');
     }
 
     #[TestWith(['http://test.openai.azure.com', 'The base URL must not contain the protocol.'])]
@@ -38,7 +38,7 @@ final class ModelClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedMessage);
 
-        new ModelClient(new MockHttpClient(), $invalidUrl, 'api-key');
+        new ModelClient(new MockHttpClient(), $invalidUrl, 'my-deployment', 'api-key');
     }
 
     public function testItThrowsExceptionWhenApiKeyIsEmpty()
@@ -46,19 +46,19 @@ final class ModelClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The API key must not be empty.');
 
-        new ModelClient(new MockHttpClient(), 'test.openai.azure.com', '');
+        new ModelClient(new MockHttpClient(), 'test.openai.azure.com', 'my-deployment', '');
     }
 
     public function testItAcceptsValidParameters()
     {
-        $client = new ModelClient(new MockHttpClient(), 'test.openai.azure.com', 'valid-api-key');
+        $client = new ModelClient(new MockHttpClient(), 'test.openai.azure.com', 'my-deployment', 'valid-api-key');
 
         $this->assertInstanceOf(ModelClient::class, $client);
     }
 
     public function testItIsSupportingTheCorrectModel()
     {
-        $client = new ModelClient(new MockHttpClient(), 'test.openai.azure.com', 'api-key');
+        $client = new ModelClient(new MockHttpClient(), 'test.openai.azure.com', 'my-deployment', 'api-key');
 
         $this->assertTrue($client->supports(new ResponsesModel('gpt-4o')));
     }
@@ -75,7 +75,33 @@ final class ModelClientTest extends TestCase
         };
 
         $httpClient = new MockHttpClient([$resultCallback]);
-        $client = new ModelClient($httpClient, 'test.openai.azure.com', 'test-api-key');
+        $client = new ModelClient($httpClient, 'test.openai.azure.com', 'gpt-4o', 'test-api-key');
+        $client->request(new ResponsesModel('gpt-4o'), ['input' => [['role' => 'user', 'content' => 'Hello']]]);
+    }
+
+    public function testItUsesDeploymentNameInsteadOfModelName()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame('{"model":"my-custom-deployment","input":[{"role":"user","content":"Hello"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new ModelClient($httpClient, 'test.openai.azure.com', 'my-custom-deployment', 'test-api-key');
+        $client->request(new ResponsesModel('gpt-4o'), ['input' => [['role' => 'user', 'content' => 'Hello']]]);
+    }
+
+    public function testItFallsBackToModelNameWhenDeploymentIsNull()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame('{"model":"gpt-4o","input":[{"role":"user","content":"Hello"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new ModelClient($httpClient, 'test.openai.azure.com', null, 'test-api-key');
         $client->request(new ResponsesModel('gpt-4o'), ['input' => [['role' => 'user', 'content' => 'Hello']]]);
     }
 }

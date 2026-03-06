@@ -42,7 +42,7 @@ final class PlatformFactory
 
         return new Platform(
             [
-                new ResponsesModelClient($httpClient, $baseUrl, $apiKey),
+                new ResponsesModelClient($httpClient, $baseUrl, $deployment, $apiKey),
                 new EmbeddingsModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey),
                 new WhisperModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey),
             ],
