@@ -13,6 +13,10 @@ return static function (ContainerConfigurator $container): void {
     ;
 
     $container->services()
+        ->defaults()
+            ->autowire()
+            ->autoconfigure()
+
         // Register your custom services here
     ;
 };

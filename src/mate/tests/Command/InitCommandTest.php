@@ -12,6 +12,9 @@
 namespace Symfony\AI\Mate\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use Symfony\AI\Mate\Agent\AgentInstructionsAggregator;
+use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
 use Symfony\AI\Mate\Command\InitCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -37,7 +40,7 @@ final class InitCommandTest extends TestCase
 
     public function testCreatesDirectoryAndConfigFile()
     {
-        $command = new InitCommand($this->tempDir);
+        $command = $this->createCommand();
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -47,9 +50,14 @@ final class InitCommandTest extends TestCase
         $this->assertFileExists($this->tempDir.'/mate/extensions.php');
         $this->assertFileExists($this->tempDir.'/mate/config.php');
         $this->assertFileExists($this->tempDir.'/mate/.env');
+        $this->assertFileExists($this->tempDir.'/mate/AGENT_INSTRUCTIONS.md');
         $this->assertFileExists($this->tempDir.'/mcp.json');
+        $this->assertFileExists($this->tempDir.'/bin/codex');
+        $this->assertFileExists($this->tempDir.'/bin/codex.bat');
+        $this->assertTrue(is_executable($this->tempDir.'/bin/codex'));
         $this->assertTrue(is_link($this->tempDir.'/.mcp.json'));
         $this->assertSame('mcp.json', readlink($this->tempDir.'/.mcp.json'));
+        $this->assertFileExists($this->tempDir.'/AGENTS.md');
 
         $content = file_get_contents($this->tempDir.'/mate/extensions.php');
         $this->assertIsString($content);
@@ -59,7 +67,7 @@ final class InitCommandTest extends TestCase
 
     public function testDisplaysSuccessMessage()
     {
-        $command = new InitCommand($this->tempDir);
+        $command = $this->createCommand();
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -69,13 +77,14 @@ final class InitCommandTest extends TestCase
         $this->assertStringContainsString('extensions.php', $output);
         $this->assertStringContainsString('config.php', $output);
         $this->assertStringContainsString('vendor/bin/mate discover', $output);
+        $this->assertStringContainsString('./bin/codex', $output);
         $this->assertStringContainsString('Summary', $output);
         $this->assertStringContainsString('Created', $output);
     }
 
     public function testDoesNotOverwriteExistingFileWithoutConfirmation()
     {
-        $command = new InitCommand($this->tempDir);
+        $command = $this->createCommand();
         $tester = new CommandTester($command);
 
         // Create existing file
@@ -95,7 +104,7 @@ final class InitCommandTest extends TestCase
 
     public function testOverwritesExistingFileWithConfirmation()
     {
-        $command = new InitCommand($this->tempDir);
+        $command = $this->createCommand();
         $tester = new CommandTester($command);
 
         // Create existing file
@@ -116,7 +125,7 @@ final class InitCommandTest extends TestCase
 
     public function testCreatesDirectoryIfNotExists()
     {
-        $command = new InitCommand($this->tempDir);
+        $command = $this->createCommand();
         $tester = new CommandTester($command);
 
         // Ensure mate directory doesn't exist
@@ -135,7 +144,7 @@ final class InitCommandTest extends TestCase
         // Create composer.json without ai-mate config
         file_put_contents($this->tempDir.'/composer.json', json_encode(['name' => 'test/package']));
 
-        $command = new InitCommand($this->tempDir);
+        $command = $this->createCommand();
         $tester = new CommandTester($command);
 
         $tester->execute([]);
@@ -156,6 +165,15 @@ final class InitCommandTest extends TestCase
         $output = $tester->getDisplay();
         $this->assertStringContainsString('extension: false', $output);
         $this->assertStringContainsString('By default', $output);
+    }
+
+    private function createCommand(): InitCommand
+    {
+        $logger = new NullLogger();
+        $aggregator = new AgentInstructionsAggregator($this->tempDir, [], $logger);
+        $materializer = new AgentInstructionsMaterializer($this->tempDir, $aggregator, $logger);
+
+        return new InitCommand($this->tempDir, $materializer);
     }
 
     private function removeDirectory(string $dir): void

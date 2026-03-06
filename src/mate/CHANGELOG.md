@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.6
+---
+
+ * Add Codex wrapper generation (`bin/codex`, `bin/codex.bat`) to `mate init`
+ * Add AGENT instruction artifact materialization to `mate discover` (`mate/AGENT_INSTRUCTIONS.md` and managed `AGENTS.md` block)
+
 0.3
 ---
 
