@@ -2503,13 +2503,12 @@ final class AiBundle extends AbstractBundle
         $executorReferences = [];
         foreach ($config['executors'] as $place => $executorConfig) {
             if ('agent' === $executorConfig['type']) {
-                $agentServiceId = self::normalizeAgentServiceId($executorConfig['agent']);
-                $executorDef = new Definition(AgentExecutor::class, [
-                    new Reference($agentServiceId),
+                $container->setDefinition('ai.workflow.'.$name.'.executor.'.$place, new Definition(AgentExecutor::class, [
+                    new Reference(self::normalizeAgentServiceId($executorConfig['agent'])),
                     $executorConfig['input_key'],
                     $executorConfig['output_key'],
-                ]);
-                $container->setDefinition('ai.workflow.'.$name.'.executor.'.$place, $executorDef);
+                ]));
+
                 $executorReferences[$place] = new Reference('ai.workflow.'.$name.'.executor.'.$place);
             } elseif ('service' === $executorConfig['type']) {
                 $executorReferences[$place] = new Reference($executorConfig['service']);
@@ -2519,37 +2518,34 @@ final class AiBundle extends AbstractBundle
         // 2. Register state store
         $storeConfig = $config['store'];
 
-        if ('memory' === $storeConfig['type']) {
-            $container->setDefinition('ai.workflow.'.$name.'.store', new Definition(InMemoryWorkflowStateStore::class));
-        } elseif ('cache' === $storeConfig['type']) {
-            $container->setDefinition('ai.workflow.'.$name.'.store', new Definition(CacheWorkflowStateStore::class, [
+        $storeDefinition = match ($storeConfig['type']) {
+            'memory' => new Definition(InMemoryWorkflowStateStore::class),
+            'cache' => new Definition(CacheWorkflowStateStore::class, [
                 new Reference($storeConfig['cache_service']),
                 $storeConfig['prefix'],
                 $storeConfig['ttl'],
-            ]));
-        } elseif ('filesystem' === $storeConfig['type']) {
-            $container->setDefinition('ai.workflow.'.$name.'.store', new Definition(FilesystemWorkflowStateStore::class, [
+            ]),
+            'filesystem' => new Definition(FilesystemWorkflowStateStore::class, [
                 new Definition(Filesystem::class),
                 $storeConfig['directory'],
-            ]));
-        } elseif ('redis' === $storeConfig['type']) {
-            $container->setDefinition('ai.workflow.'.$name.'.store', new Definition(RedisWorkflowStateStore::class, [
+            ]),
+            'redis' => new Definition(RedisWorkflowStateStore::class, [
                 new Reference($storeConfig['redis_client']),
                 $storeConfig['prefix'],
-            ]));
-        } elseif ('service' === $storeConfig['type']) {
-            $container->setAlias('ai.workflow.'.$name.'.store', $storeConfig['service']);
-        }
+            ]),
+            'service' => $storeConfig['service'],
+            default => throw new InvalidArgumentException(),
+        };
+
+        $container->setDefinition('ai.workflow.'.$name.'.store', $storeDefinition);
 
         // 3. Register guards
         $guardReferences = [];
         foreach ($config['guards'] ?? [] as $place => $guardServices) {
-            $placeGuards = [];
-            foreach ($guardServices as $guardService) {
-                $placeGuards[] = new Reference($guardService);
-            }
-
-            $guardReferences[$place] = $placeGuards;
+            $guardReferences[$place] = array_map(
+                static fn (string $guardService): Reference => new Reference($guardService),
+                $guardServices
+            );
         }
 
         // 4. Register transition resolver
