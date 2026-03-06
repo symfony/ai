@@ -42,8 +42,6 @@ class McpBundleTest extends TestCase
         $this->assertNull($container->getParameter('mcp.website_url'));
         $this->assertSame(50, $container->getParameter('mcp.pagination_limit'));
         $this->assertNull($container->getParameter('mcp.instructions'));
-        $this->assertSame(['src'], $container->getParameter('mcp.discovery.scan_dirs'));
-        $this->assertSame([], $container->getParameter('mcp.discovery.exclude_dirs'));
     }
 
     public function testDataCollectorTagIncludesId()
@@ -432,57 +430,6 @@ class McpBundleTest extends TestCase
 
         // No default cache pool definition should be created for custom cache pool
         $this->assertFalse($container->hasDefinition('cache.mcp.sessions'));
-    }
-
-    public function testDiscoveryDefaultConfiguration()
-    {
-        $container = $this->buildContainer([]);
-
-        $this->assertSame(['src'], $container->getParameter('mcp.discovery.scan_dirs'));
-        $this->assertSame([], $container->getParameter('mcp.discovery.exclude_dirs'));
-
-        // Verify the builder service uses the correct parameters
-        $builderDefinition = $container->getDefinition('mcp.server.builder');
-        $methodCalls = $builderDefinition->getMethodCalls();
-
-        $setDiscoveryCall = null;
-        foreach ($methodCalls as $call) {
-            if ('setDiscovery' === $call[0]) {
-                $setDiscoveryCall = $call;
-                break;
-            }
-        }
-
-        $this->assertNotNull($setDiscoveryCall, 'ServerBuilder should have setDiscovery method call');
-    }
-
-    public function testDiscoveryCustomConfiguration()
-    {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'discovery' => [
-                    'scan_dirs' => ['src', 'lib', 'modules'],
-                    'exclude_dirs' => ['src/DataFixtures', 'tests'],
-                ],
-            ],
-        ]);
-
-        $this->assertSame(['src', 'lib', 'modules'], $container->getParameter('mcp.discovery.scan_dirs'));
-        $this->assertSame(['src/DataFixtures', 'tests'], $container->getParameter('mcp.discovery.exclude_dirs'));
-    }
-
-    public function testDiscoveryWithExcludeDirsOnly()
-    {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'discovery' => [
-                    'exclude_dirs' => ['src/DataFixtures'],
-                ],
-            ],
-        ]);
-
-        $this->assertSame(['src'], $container->getParameter('mcp.discovery.scan_dirs'));
-        $this->assertSame(['src/DataFixtures'], $container->getParameter('mcp.discovery.exclude_dirs'));
     }
 
     public function testLoaderInterfaceAutoconfiguration()
