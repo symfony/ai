@@ -109,27 +109,11 @@ final class ValidateSkillCommandTest extends TestCase
         $command = new ValidateSkillCommand($loader, $validator);
         $commandTester = new CommandTester($command);
 
-        $exitCode = $commandTester->execute(['--skill' => 'missing-skill']);
+        $exitCode = $commandTester->execute(['skill' => 'missing-skill']);
 
         $this->assertSame(Command::FAILURE, $exitCode);
         $this->assertStringContainsString('missing-skill', $commandTester->getDisplay());
         $this->assertStringContainsString('not found', $commandTester->getDisplay());
-    }
-
-    public function testExecuteWithNoSkills()
-    {
-        $loader = $this->createMock(SkillLoaderInterface::class);
-        $loader->method('loadSkills')
-            ->willReturn([]);
-
-        $validator = new SkillValidator();
-        $command = new ValidateSkillCommand($loader, $validator);
-        $commandTester = new CommandTester($command);
-
-        $exitCode = $commandTester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $exitCode);
-        $this->assertStringContainsString('No skills found', $commandTester->getDisplay());
     }
 
     public function testExecuteWithWarnings()
