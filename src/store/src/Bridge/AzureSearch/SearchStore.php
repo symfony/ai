@@ -31,10 +31,7 @@ final class SearchStore implements StoreInterface
      */
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $endpointUrl,
-        #[\SensitiveParameter] private readonly string $apiKey,
         private readonly string $indexName,
-        private readonly string $apiVersion,
         private readonly string $vectorFieldName = 'vector',
     ) {
     }
@@ -46,7 +43,10 @@ final class SearchStore implements StoreInterface
         }
 
         $this->request('index', [
-            'value' => array_map([$this, 'convertToIndexableArray'], $documents),
+            'value' => array_map(fn (VectorDocument $document): array => array_merge([
+                'id' => $document->getId(),
+                $this->vectorFieldName => $document->getVector()->getData(),
+            ], $document->getMetadata()->getArrayCopy()), $documents),
         ]);
     }
 
@@ -83,7 +83,16 @@ final class SearchStore implements StoreInterface
 
         $vector = $query->getVector();
         $result = $this->request('search', [
-            'vectorQueries' => [$this->buildVectorQuery($vector)],
+            'vectorQueries' => [
+                [
+                    'kind' => 'vector',
+                    'vector' => $vector->getData(),
+                    'exhaustive' => true,
+                    'fields' => $this->vectorFieldName,
+                    'weight' => 0.5,
+                    'k' => 5,
+                ],
+            ],
         ]);
 
         foreach ($result['value'] as $item) {
@@ -98,27 +107,11 @@ final class SearchStore implements StoreInterface
      */
     private function request(string $endpoint, array $payload): array
     {
-        $url = \sprintf('%s/indexes/%s/docs/%s', $this->endpointUrl, $this->indexName, $endpoint);
-        $result = $this->httpClient->request('POST', $url, [
-            'headers' => [
-                'api-key' => $this->apiKey,
-            ],
-            'query' => ['api-version' => $this->apiVersion],
+        $result = $this->httpClient->request('POST', \sprintf('indexes/%s/docs/%s', $this->indexName, $endpoint), [
             'json' => $payload,
         ]);
 
         return $result->toArray();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function convertToIndexableArray(VectorDocument $document): array
-    {
-        return array_merge([
-            'id' => $document->getId(),
-            $this->vectorFieldName => $document->getVector()->getData(),
-        ], $document->getMetadata()->getArrayCopy());
     }
 
     /**
@@ -133,27 +126,5 @@ final class SearchStore implements StoreInterface
                 : new Vector($data[$this->vectorFieldName]),
             metadata: new Metadata($data),
         );
-    }
-
-    /**
-     * @return array{
-     *     kind: 'vector',
-     *     vector: float[],
-     *     exhaustive: true,
-     *     fields: non-empty-string,
-     *     weight: float,
-     *     k: int,
-     * }
-     */
-    private function buildVectorQuery(Vector $vector): array
-    {
-        return [
-            'kind' => 'vector',
-            'vector' => $vector->getData(),
-            'exhaustive' => true,
-            'fields' => $this->vectorFieldName,
-            'weight' => 0.5,
-            'k' => 5,
-        ];
     }
 }
