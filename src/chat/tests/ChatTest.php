@@ -12,6 +12,7 @@
 namespace Symfony\AI\Chat\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\MockResponse;
 use Symfony\AI\Chat\Chat;
@@ -19,6 +20,8 @@ use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 
 final class ChatTest extends TestCase
 {
@@ -107,5 +110,72 @@ final class ChatTest extends TestCase
 
         $this->agent->assertCallCount(1);
         $this->agent->assertCalledWith($userPrompt);
+    }
+
+    public function testItStreamsResponseChunks()
+    {
+        $agent = new class implements AgentInterface {
+            public function call(MessageBag $messages, array $options = []): ResultInterface
+            {
+                return new StreamResult((static function () {
+                    yield 'I am ';
+                    yield 'doing well!';
+                })());
+            }
+
+            public function getName(): string
+            {
+                return 'mock-stream';
+            }
+        };
+
+        $chat = new Chat($agent, $this->store);
+
+        $chunks = iterator_to_array($chat->stream(Message::ofUser('Hello')));
+
+        $this->assertSame(['I am ', 'doing well!'], $chunks);
+
+        $stored = $this->store->load();
+        $this->assertCount(2, $stored);
+
+        $assistantMessage = $stored->getMessages()[1];
+        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
+        $this->assertSame('I am doing well!', $assistantMessage->getContent());
+    }
+
+    public function testItStreamsAndPreservesExistingConversation()
+    {
+        $existingMessages = new MessageBag();
+        $existingMessages->add(Message::ofUser('What is the weather?'));
+        $existingMessages->add(Message::ofAssistant('I cannot provide weather information.'));
+        $this->store->save($existingMessages);
+
+        $agent = new class implements AgentInterface {
+            public function call(MessageBag $messages, array $options = []): ResultInterface
+            {
+                return new StreamResult((static function () {
+                    yield 'Yes, ';
+                    yield 'I can!';
+                })());
+            }
+
+            public function getName(): string
+            {
+                return 'mock-stream';
+            }
+        };
+
+        $chat = new Chat($agent, $this->store);
+
+        $chunks = iterator_to_array($chat->stream(Message::ofUser('Can you help?')));
+
+        $this->assertSame(['Yes, ', 'I can!'], $chunks);
+
+        $stored = $this->store->load();
+        $this->assertCount(4, $stored);
+
+        $assistantMessage = $stored->getMessages()[3];
+        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
+        $this->assertSame('Yes, I can!', $assistantMessage->getContent());
     }
 }

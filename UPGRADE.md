@@ -1,3 +1,12 @@
+UPGRADE FROM 0.6 to 0.7
+=======================
+
+Chat
+----
+
+ * The `ChatInterface` now has a `stream()` method. If you implement this interface,
+   you need to add this method to your implementation.
+
 UPGRADE FROM 0.5 to 0.6
 =======================
 
