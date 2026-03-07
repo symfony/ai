@@ -56,9 +56,9 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         $this->createIndex($this->indexName);
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
-        $this->request('DELETE', \sprintf('indexes/%s/documents', $this->indexName));
+        $this->request('DELETE', \sprintf('indexes/%s/documents', $identifier ?? $this->indexName));
     }
 
     public function save(MessageBag $messages, ?string $identifier = null): void
@@ -77,7 +77,6 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         }
 
         $messages = $this->request('POST', \sprintf('indexes/%s/documents/fetch', $identifier ?? $this->indexName), [
-            'filter' => \sprintf('chat = %s', $identifier ?? $this->indexName),
             'sort' => ['addedAt:asc'],
         ]);
 
@@ -141,9 +140,6 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         ]);
 
         $this->request('PATCH', \sprintf('indexes/%s/settings', $indexName), [
-            'filterableAttributes' => [
-                'chat',
-            ],
             'sortableAttributes' => [
                 'addedAt',
             ],

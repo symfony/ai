@@ -16,13 +16,13 @@ use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Contracts\Service\ResetInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -61,9 +61,9 @@ final class Store implements ManagedStoreInterface, MessageStoreInterface, Reset
         return $this->serializer->denormalize($bag, MessageBag::class);
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
-        $this->messages = [];
+        unset($this->messages[$identifier ?? $this->identifier]);
     }
 
     public function reset(): void

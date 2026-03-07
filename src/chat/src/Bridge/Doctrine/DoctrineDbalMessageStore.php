@@ -25,10 +25,11 @@ use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -40,7 +41,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
     public function __construct(
         private readonly string $tableName,
         private readonly DBALConnection $dbalConnection,
-        private readonly SerializerInterface $serializer = new Serializer([
+        private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
             new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
@@ -64,7 +65,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         $this->addTableToSchema($schema);
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
         $schema = $this->dbalConnection->createSchemaManager()->introspectSchema();
 
@@ -75,20 +76,29 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         $queryBuilder = $this->dbalConnection->createQueryBuilder()
             ->delete($this->tableName);
 
+        if (null !== $identifier) {
+            $queryBuilder->where('chat_identifier = ?');
+            $this->dbalConnection->executeStatement($queryBuilder->getSQL(), [$identifier]);
+
+            return;
+        }
+
         $this->dbalConnection->executeStatement($queryBuilder->getSQL());
     }
 
     public function save(MessageBag $messages, ?string $identifier = null): void
     {
         $queryBuilder = $this->dbalConnection->createQueryBuilder()
-            ->insert($identifier ?? $this->tableName)
+            ->insert($this->tableName)
             ->values([
+                'chat_identifier' => '?',
                 'messages' => '?',
                 'added_at' => '?',
             ]);
 
         $this->dbalConnection->executeStatement($queryBuilder->getSQL(), [
-            $this->serializer->serialize($messages->getMessages(), 'json'),
+            $identifier,
+            $this->serializer->serialize($this->serializer->normalize($messages), 'json'),
             $this->clock->now()->getTimestamp(),
         ]);
     }
@@ -97,18 +107,28 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
     {
         $queryBuilder = $this->dbalConnection->createQueryBuilder()
             ->select('messages')
-            ->from($identifier ?? $this->tableName)
-            ->orderBy('added_at', 'ASC')
-        ;
+            ->from($this->tableName)
+            ->orderBy('added_at', 'DESC')
+            ->setMaxResults(1);
 
-        $result = $this->dbalConnection->executeQuery($queryBuilder->getSQL());
+        if (null !== $identifier) {
+            $queryBuilder->where('chat_identifier = ?');
+        }
 
-        $messages = array_map(
-            fn (array $payload): array => $this->serializer->deserialize($payload['messages'], MessageInterface::class.'[]', 'json'),
-            $result->fetchAllAssociative(),
+        $result = $this->dbalConnection->executeQuery(
+            $queryBuilder->getSQL(),
+            null !== $identifier ? [$identifier] : [],
         );
 
-        return new MessageBag(...array_merge(...$messages));
+        $row = $result->fetchAssociative();
+
+        if (false === $row) {
+            return new MessageBag();
+        }
+
+        $payload = json_decode($row['messages'], true);
+
+        return $this->serializer->denormalize($payload, MessageBag::class);
     }
 
     private function addTableToSchema(Schema $schema): void
@@ -118,6 +138,8 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         $idColumn = $table->addColumn('id', Types::BIGINT)
             ->setAutoincrement(true)
             ->setNotnull(true);
+        $table->addColumn('chat_identifier', Types::STRING)
+            ->setNotnull(false);
         $table->addColumn('messages', Types::TEXT)
             ->setNotnull(true);
         $table->addColumn('added_at', Types::INTEGER)

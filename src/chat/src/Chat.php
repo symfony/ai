@@ -32,9 +32,7 @@ final class Chat implements ChatInterface
 
     public function initiate(MessageBag $messages): void
     {
-        $messages->setChat($this->name);
-
-        $this->store->drop();
+        $this->store->drop($this->name);
         $this->store->save($messages, $this->name);
     }
 
@@ -57,15 +55,14 @@ final class Chat implements ChatInterface
         return $assistantMessage;
     }
 
-    public function branch(string $name): self
+    public function branch(string $name, ?AgentInterface $agent = null): self
     {
         $currentMessages = $this->store->load($this->name);
 
         $messages = new MessageBag(...$currentMessages->getMessages());
-        $messages->setChat($name);
 
         $this->store->save($messages, $name);
 
-        return new self($this->agent, $this->store, $name);
+        return new self($agent ?? $this->agent, $this->store, $name);
     }
 }

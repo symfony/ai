@@ -40,26 +40,19 @@ final class MessageBagNormalizer implements NormalizerInterface, DenormalizerInt
     /**
      * @return array{
      *     id: string,
-     *     forkedFrom: ?string,
-     *     messages: array<string, mixed>
+     *     messages: list<array<string, mixed>>,
+     *     addedAt: int,
      * }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         return [
             $context['identifier'] ?? 'id' => $data->getId()->toRfc4122(),
-            'chat' => $data->getChat(),
             'messages' => array_map(
-                fn (MessageInterface $message): array => [
-                    ...$this->messageNormalizer->normalize($message, $format, $context),
-                    'bag' => $data->getId()->toRfc4122(),
-                ],
+                fn (MessageInterface $message): array => $this->messageNormalizer->normalize($message, $format, $context),
                 $data->getMessages(),
             ),
             'addedAt' => $this->clock->now()->getTimestamp(),
-            'metadata' => [
-                'id' => $data->getId()->toRfc4122(),
-            ],
         ];
     }
 
@@ -80,12 +73,17 @@ final class MessageBagNormalizer implements NormalizerInterface, DenormalizerInt
         );
 
         $messageBag = new MessageBag(...$messages);
-        $messageBag->setChat($data['chat']);
 
-        /** @var AbstractUid&TimeBasedUidInterface&Uuid $existingUuid */
-        $existingUuid = Uuid::fromRfc4122($data['metadata']['id']);
+        $idKey = $context['identifier'] ?? 'id';
 
-        return $messageBag->withId($existingUuid);
+        if (isset($data[$idKey])) {
+            /** @var AbstractUid&TimeBasedUidInterface&Uuid $existingUuid */
+            $existingUuid = Uuid::fromRfc4122($data[$idKey]);
+
+            return $messageBag->withId($existingUuid);
+        }
+
+        return $messageBag;
     }
 
     public function getSupportedTypes(?string $format): array

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Chat;
 
+use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -28,5 +29,5 @@ interface ChatInterface
      */
     public function submit(UserMessage $message): AssistantMessage;
 
-    public function branch(string $name): self;
+    public function branch(string $name, ?AgentInterface $agent = null): self;
 }

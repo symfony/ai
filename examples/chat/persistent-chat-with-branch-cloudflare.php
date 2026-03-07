@@ -10,27 +10,22 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Chat\Bridge\Session\MessageStore;
+use Symfony\AI\Chat\Bridge\Cloudflare\MessageStore;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\Session;
-use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
-$request = Request::create('/');
-$request->setSession(new Session(new MockArraySessionStorage()));
-
-$requestStack = new RequestStack();
-$requestStack->push($request);
-
-$store = new MessageStore($requestStack, 'chat');
+$store = new MessageStore(
+    http_client(),
+    namespace: 'symfony',
+    accountId: env('CLOUDFLARE_ACCOUNT_ID'),
+    apiKey: env('CLOUDFLARE_API_KEY'),
+);
 $store->setup();
 
 $agent = new Agent($platform, 'gpt-4o-mini');
@@ -41,11 +36,11 @@ $chat->initiate(new MessageBag(
 ));
 $chat->submit(Message::ofUser('My name is Christopher.'));
 
-$forkedChat = $chat->branch('_forked_for_oskar');
-$forkedChat->submit(Message::ofUser('Made a mistake about my name, my name is Oskar'));
+$branchedChat = $chat->branch('_branched_for_oskar');
+$branchedChat->submit(Message::ofUser('Made a mistake about my name, my name is Oskar'));
 
 $firstMessage = $chat->submit(Message::ofUser('What is my name?'));
-$forkedMessage = $forkedChat->submit(Message::ofUser('What is my name?'));
+$branchedMessage = $branchedChat->submit(Message::ofUser('What is my name?'));
 
 echo sprintf('First chat: "%s"', $firstMessage->getContent()).\PHP_EOL;
-echo sprintf('Forked chat: "%s"', $forkedMessage->getContent()).\PHP_EOL;
+echo sprintf('Forked chat: "%s"', $branchedMessage->getContent()).\PHP_EOL;

@@ -46,9 +46,9 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         $this->redis->set($this->indexName, $this->serializer->serialize([], 'json'));
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
-        $this->redis->set($this->indexName, $this->serializer->serialize([], 'json'));
+        $this->redis->del($identifier ?? $this->indexName);
     }
 
     public function save(MessageBag $messages, ?string $identifier = null): void

@@ -46,9 +46,9 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         $this->createCollection($this->collectionName, $options);
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
-        $this->client->getCollection($this->databaseName, $this->collectionName)->deleteMany([
+        $this->client->getCollection($this->databaseName, $identifier ?? $this->collectionName)->deleteMany([
             'q' => [],
         ]);
     }

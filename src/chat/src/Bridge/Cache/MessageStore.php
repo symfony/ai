@@ -70,8 +70,8 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         return $this->serializer->denormalize($payload, MessageBag::class);
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
-        $this->cache->deleteItem($this->cacheKey);
+        $this->cache->deleteItem($identifier ?? $this->cacheKey);
     }
 }

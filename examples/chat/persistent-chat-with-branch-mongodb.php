@@ -9,8 +9,9 @@
  * file that was distributed with this source code.
  */
 
+use MongoDB\Client as MongoDbClient;
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore;
+use Symfony\AI\Chat\Bridge\MongoDb\MessageStore;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
@@ -20,7 +21,11 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
-$store = new MessageStore(http_client(), env('MEILISEARCH_HOST'), env('MEILISEARCH_API_KEY'));
+$store = new MessageStore(
+    new MongoDbClient(env('MONGODB_URI')),
+    'chat',
+    'symfony',
+);
 $store->setup();
 
 $agent = new Agent($platform, 'gpt-4o-mini');
@@ -31,11 +36,11 @@ $chat->initiate(new MessageBag(
 ));
 $chat->submit(Message::ofUser('My name is Christopher.'));
 
-$forkedChat = $chat->branch('_forked_for_oskar');
-$forkedChat->submit(Message::ofUser('Made a mistake about my name, my name is Oskar'));
+$branchedChat = $chat->branch('_branched_for_oskar');
+$branchedChat->submit(Message::ofUser('Made a mistake about my name, my name is Oskar'));
 
 $firstMessage = $chat->submit(Message::ofUser('What is my name?'));
-$forkedMessage = $forkedChat->submit(Message::ofUser('What is my name?'));
+$branchedMessage = $branchedChat->submit(Message::ofUser('What is my name?'));
 
 echo sprintf('First chat: "%s"', $firstMessage->getContent()).\PHP_EOL;
-echo sprintf('Forked chat: "%s"', $forkedMessage->getContent()).\PHP_EOL;
+echo sprintf('Forked chat: "%s"', $branchedMessage->getContent()).\PHP_EOL;

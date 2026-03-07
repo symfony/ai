@@ -57,9 +57,9 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         }
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
-        $this->request('DELETE', \sprintf('key/%s', $this->table));
+        $this->request('DELETE', \sprintf('key/%s', $identifier ?? $this->table));
     }
 
     public function save(MessageBag $messages, ?string $identifier = null): void

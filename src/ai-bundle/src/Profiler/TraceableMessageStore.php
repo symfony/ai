@@ -64,13 +64,13 @@ final class TraceableMessageStore implements ManagedStoreInterface, MessageStore
         return $this->messageStore->load($identifier);
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
         if (!$this->messageStore instanceof ManagedStoreInterface) {
             return;
         }
 
-        $this->messageStore->drop();
+        $this->messageStore->drop($identifier);
     }
 
     public function reset(): void

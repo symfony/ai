@@ -52,9 +52,9 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         $this->request('PUT', $this->key);
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
-        $this->request('DELETE', $this->key);
+        $this->request('DELETE', $identifier ?? $this->key);
     }
 
     public function save(MessageBag $messages, ?string $identifier = null): void

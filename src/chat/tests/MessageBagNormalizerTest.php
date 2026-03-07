@@ -48,6 +48,8 @@ final class MessageBagNormalizerTest extends TestCase
         $this->assertArrayHasKey('messages', $data);
         $this->assertCount(1, $data['messages']);
         $this->assertArrayHasKey('addedAt', $data);
+        $this->assertArrayNotHasKey('chat', $data);
+        $this->assertArrayNotHasKey('metadata', $data);
     }
 
     public function testNormalizerCanDenormalize()
@@ -67,6 +69,73 @@ final class MessageBagNormalizerTest extends TestCase
         $bag = $normalizer->denormalize($data, MessageBag::class);
 
         $this->assertCount(1, $bag);
-        $this->assertSame($data['id'], $bag->getUserMessage()->getMetadata()->get('bag'));
+        $this->assertSame($data['id'], $bag->getId()->toRfc4122());
+    }
+
+    public function testDenormalizeEmptyDataReturnsEmptyBag()
+    {
+        $normalizer = new MessageBagNormalizer(new MessageNormalizer());
+
+        $bag = $normalizer->denormalize([], MessageBag::class);
+
+        $this->assertCount(0, $bag);
+    }
+
+    public function testDenormalizeWithoutIdGeneratesNewUuid()
+    {
+        $normalizer = new MessageBagNormalizer(new MessageNormalizer());
+
+        $data = [
+            'messages' => [],
+        ];
+
+        $bag = $normalizer->denormalize($data, MessageBag::class);
+
+        $this->assertCount(0, $bag);
+        $this->assertNotNull($bag->getId());
+    }
+
+    public function testNormalizeWithCustomIdentifierContext()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('Hello world'),
+        );
+
+        $normalizer = new MessageBagNormalizer(new MessageNormalizer());
+
+        $data = $normalizer->normalize($messageBag, context: ['identifier' => '_id']);
+
+        $this->assertArrayHasKey('_id', $data);
+        $this->assertArrayNotHasKey('id', $data);
+    }
+
+    public function testDenormalizeWithCustomIdentifierContext()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('Hello world'),
+        );
+
+        $normalizer = new MessageBagNormalizer(new MessageNormalizer());
+
+        $data = $normalizer->normalize($messageBag, context: ['identifier' => '_id']);
+        $bag = $normalizer->denormalize($data, MessageBag::class, context: ['identifier' => '_id']);
+
+        $this->assertSame($data['_id'], $bag->getId()->toRfc4122());
+    }
+
+    public function testRoundTripPreservesUuid()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('Hello world'),
+            Message::ofAssistant('Hi there'),
+        );
+
+        $normalizer = new MessageBagNormalizer(new MessageNormalizer());
+
+        $data = $normalizer->normalize($messageBag);
+        $restored = $normalizer->denormalize($data, MessageBag::class);
+
+        $this->assertSame($messageBag->getId()->toRfc4122(), $restored->getId()->toRfc4122());
+        $this->assertCount(2, $restored);
     }
 }

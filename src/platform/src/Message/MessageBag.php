@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Message;
 
-use Symfony\AI\Platform\Metadata\ChatAwareTrait;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\Component\Uid\Uuid;
 
@@ -22,7 +21,6 @@ use Symfony\Component\Uid\Uuid;
  */
 class MessageBag implements \Countable, \IteratorAggregate
 {
-    use ChatAwareTrait;
     use IdentifierAwareTrait;
     use MetadataAwareTrait;
 

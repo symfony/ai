@@ -55,9 +55,9 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         $this->createNamespace();
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
-        $currentNamespace = $this->retrieveCurrentNamespace();
+        $currentNamespace = $this->retrieveCurrentNamespace($identifier);
 
         if ([] === $currentNamespace) {
             return;
@@ -158,7 +158,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
 
         $filteredNamespaces = array_filter(
             $namespaces['result'],
-            fn (array $payload): bool => $payload['title'] === $finalIdentifier,
+            static fn (array $payload): bool => $payload['title'] === $finalIdentifier,
         );
 
         if (0 === \count($filteredNamespaces) && $page !== $namespaces['result_info']['total_pages']) {

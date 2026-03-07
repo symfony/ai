@@ -12,6 +12,7 @@
 namespace Symfony\AI\Chat\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Chat\Exception\LogicException;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
@@ -90,5 +91,95 @@ final class MessageNormalizerTest extends TestCase
         $denormalized = $normalizer->denormalize($payload, MessageInterface::class, context: ['identifier' => '_id']);
 
         $this->assertSame($message->getId()->toRfc4122(), $denormalized->getId()->toRfc4122());
+    }
+
+    public function testDenormalizeRejectsArbitraryContentType()
+    {
+        $normalizer = new MessageNormalizer();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Unknown content type "SomeArbitraryClass".');
+
+        $normalizer->denormalize([
+            'id' => Uuid::v7()->toRfc4122(),
+            'type' => UserMessage::class,
+            'content' => '',
+            'contentAsBase64' => [
+                [
+                    'type' => 'SomeArbitraryClass',
+                    'content' => 'malicious payload',
+                ],
+            ],
+            'toolsCalls' => [],
+            'metadata' => [],
+            'addedAt' => (new \DateTimeImmutable())->getTimestamp(),
+        ], MessageInterface::class);
+    }
+
+    public function testDenormalizeRejectsUnknownMessageType()
+    {
+        $normalizer = new MessageNormalizer();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Unknown message type');
+
+        $normalizer->denormalize([
+            'id' => Uuid::v7()->toRfc4122(),
+            'type' => 'NonExistentMessageClass',
+            'content' => '',
+            'contentAsBase64' => [],
+            'toolsCalls' => [],
+            'metadata' => [],
+            'addedAt' => (new \DateTimeImmutable())->getTimestamp(),
+        ], MessageInterface::class);
+    }
+
+    public function testNormalizeAndDenormalizeTextContentRoundTrip()
+    {
+        $normalizer = new MessageNormalizer();
+        $message = Message::ofUser('Hello World');
+
+        $payload = $normalizer->normalize($message);
+        $restored = $normalizer->denormalize($payload, MessageInterface::class);
+
+        $this->assertSame($message->getId()->toRfc4122(), $restored->getId()->toRfc4122());
+        $this->assertSame(Role::User, $restored->getRole());
+    }
+
+    public function testNormalizeAndDenormalizeSystemMessageRoundTrip()
+    {
+        $normalizer = new MessageNormalizer();
+        $message = Message::forSystem('You are a helpful assistant');
+
+        $payload = $normalizer->normalize($message);
+        $restored = $normalizer->denormalize($payload, MessageInterface::class);
+
+        $this->assertSame($message->getId()->toRfc4122(), $restored->getId()->toRfc4122());
+        $this->assertSame(Role::System, $restored->getRole());
+        $this->assertSame('You are a helpful assistant', $restored->getContent());
+    }
+
+    public function testNormalizeAndDenormalizeAssistantMessageRoundTrip()
+    {
+        $normalizer = new MessageNormalizer();
+        $message = Message::ofAssistant('I can help with that');
+
+        $payload = $normalizer->normalize($message);
+        $restored = $normalizer->denormalize($payload, MessageInterface::class);
+
+        $this->assertSame($message->getId()->toRfc4122(), $restored->getId()->toRfc4122());
+        $this->assertSame(Role::Assistant, $restored->getRole());
+        $this->assertSame('I can help with that', $restored->getContent());
+    }
+
+    public function testDenormalizedMessageDoesNotContainBagMetadata()
+    {
+        $normalizer = new MessageNormalizer();
+        $message = Message::ofUser('Hello');
+
+        $payload = $normalizer->normalize($message);
+        $restored = $normalizer->denormalize($payload, MessageInterface::class);
+
+        $this->assertNull($restored->getMetadata()->get('bag'));
     }
 }
