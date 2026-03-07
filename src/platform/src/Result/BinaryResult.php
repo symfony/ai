@@ -12,12 +12,16 @@
 namespace Symfony\AI\Platform\Result;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Speech\SpeechAwareInterface;
+use Symfony\AI\Platform\Speech\SpeechAwareTrait;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class BinaryResult extends BaseResult
+final class BinaryResult extends BaseResult implements SpeechAwareInterface
 {
+    use SpeechAwareTrait;
+
     public function __construct(
         private string $data,
         private ?string $mimeType = null,
