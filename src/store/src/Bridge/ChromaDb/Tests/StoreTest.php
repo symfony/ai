@@ -170,7 +170,9 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = iterator_to_array($store->query(new VectorQuery($queryVector)));
+        $documents = iterator_to_array($store->query(new VectorQuery($queryVector), [
+            'include_vectors' => true,
+        ]));
 
         $this->assertCount(2, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
@@ -214,7 +216,9 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = iterator_to_array($store->query(new VectorQuery($queryVector), ['where' => $whereFilter]));
+        $documents = iterator_to_array($store->query(new VectorQuery($queryVector), [
+            'where' => $whereFilter,
+        ]));
 
         $this->assertCount(1, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
@@ -492,7 +496,9 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = iterator_to_array($store->query(new VectorQuery($queryVector)));
+        $documents = iterator_to_array($store->query(new VectorQuery($queryVector), [
+            'include_vectors' => true,
+        ]));
 
         $this->assertCount(1, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
@@ -526,7 +532,10 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = iterator_to_array($store->query(new VectorQuery($queryVector), ['include' => ['documents']]));
+        $documents = iterator_to_array($store->query(new VectorQuery($queryVector), [
+            'include' => ['documents'],
+            'include_vectors' => true,
+        ]));
 
         $this->assertCount(1, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
@@ -560,7 +569,10 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = iterator_to_array($store->query(new VectorQuery($queryVector), ['include' => ['embeddings', 'metadatas', 'distances', 'documents']]));
+        $documents = iterator_to_array($store->query(new VectorQuery($queryVector), [
+            'include' => ['embeddings', 'metadatas', 'distances', 'documents'],
+            'include_vectors' => true,
+        ]));
 
         $this->assertCount(1, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
@@ -723,7 +735,9 @@ final class StoreTest extends TestCase
             ->willReturn($queryResponse);
 
         $store = new Store($client, 'test-collection');
-        $documents = iterator_to_array($store->query(new TextQuery('search for this text')));
+        $documents = iterator_to_array($store->query(new TextQuery('search for this text'), [
+            'include_vectors' => true,
+        ]));
 
         $this->assertCount(1, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
