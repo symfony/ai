@@ -35,11 +35,44 @@ final class OllamaApiCatalogTest extends TestCase
         $this->assertSame('foo', $model->getName());
         $this->assertSame([
             Capability::INPUT_MESSAGES,
+            Capability::OUTPUT_STRUCTURED,
         ], $model->getCapabilities());
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testModelCatalogCanReturnModelsFromApi()
+    public function testModelCatalogCanReturnEmbeddingModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'models' => [
+                    [
+                        'name' => 'bge-m3',
+                        'details' => [],
+                    ],
+                ],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['embedding'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $modelCatalog = new OllamaApiCatalog($httpClient);
+
+        $models = $modelCatalog->getModels();
+
+        $this->assertCount(1, $models);
+        $this->assertArrayHasKey('bge-m3', $models);
+
+        $model = $models['bge-m3'];
+        $this->assertSame(Ollama::class, $model['class']);
+        $this->assertCount(1, $model['capabilities']);
+        $this->assertSame([
+            Capability::EMBEDDINGS,
+        ], $model['capabilities']);
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
+
+    public function testModelCatalogCanReturnTextModelsFromApi()
     {
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
@@ -64,9 +97,10 @@ final class OllamaApiCatalogTest extends TestCase
 
         $model = $models['gemma3'];
         $this->assertSame(Ollama::class, $model['class']);
-        $this->assertCount(1, $model['capabilities']);
+        $this->assertCount(2, $model['capabilities']);
         $this->assertSame([
             Capability::INPUT_MESSAGES,
+            Capability::OUTPUT_STRUCTURED,
         ], $model['capabilities']);
         $this->assertSame(2, $httpClient->getRequestsCount());
     }

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add support for `structured_output` capability in `OllamaApiCatalog`
+
 0.4
 ---
 
