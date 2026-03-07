@@ -1,3 +1,39 @@
+UPGRADE FROM 0.6 to 0.7
+=======================
+
+Chat
+----
+
+ * `ManagedStoreInterface::drop()` now accepts an optional `?string $identifier` parameter.
+   If you implement this interface, update your `drop()` method signature:
+
+   ```diff
+   -public function drop(): void
+   +public function drop(?string $identifier = null): void
+   ```
+
+ * `ChatInterface::branch()` now accepts an optional `?AgentInterface $agent` parameter.
+   If you implement this interface, update your `branch()` method signature:
+
+   ```diff
+   -public function branch(string $name): self
+   +public function branch(string $name, ?AgentInterface $agent = null): self
+   ```
+
+ * The Doctrine DBAL bridge schema has changed: a `chat_identifier` column has been added.
+   If you have an existing table, add the column manually or re-run `ai:message-store:setup`
+   after dropping the existing table.
+
+ * The `ChatAwareTrait` has been removed from the Platform component. If you relied on
+   `MessageBag::setChat()` or `MessageBag::getChat()`, these methods are no longer available.
+   Use the `$identifier` parameter of `save()` and `load()` instead.
+
+Platform
+--------
+
+ * `ChatAwareTrait` has been removed. The chat identifier is now managed exclusively by the
+   Chat component via the `$identifier` parameter on `MessageStoreInterface::save()` and `load()`.
+
 UPGRADE FROM 0.5 to 0.6
 =======================
 

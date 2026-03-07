@@ -73,4 +73,39 @@ final class TraceableChatTest extends TestCase
         $traceableChat->reset();
         $this->assertCount(0, $traceableChat->calls);
     }
+
+    public function testBranchReturnsTraceableWrapper()
+    {
+        $agent = $this->createMock(AgentInterface::class);
+        $agent->method('call')->willReturn(new TextResult('reply'));
+
+        $chat = new Chat($agent, new InMemoryStore());
+        $traceableChat = new TraceableChat($chat, new MonotonicClock());
+
+        $traceableChat->submit(Message::ofUser('hello'));
+
+        $branched = $traceableChat->branch('fork');
+
+        $this->assertInstanceOf(TraceableChat::class, $branched);
+    }
+
+    public function testBranchCallIsTrackedWithStandardKeys()
+    {
+        $agent = $this->createStub(AgentInterface::class);
+        $agent->method('call')->willReturn(new TextResult('reply'));
+
+        $chat = new Chat($agent, new InMemoryStore());
+        $traceableChat = new TraceableChat($chat, new MonotonicClock());
+
+        $traceableChat->submit(Message::ofUser('hello'));
+        $traceableChat->branch('fork');
+
+        $this->assertCount(2, $traceableChat->calls);
+
+        $branchCall = $traceableChat->calls[1];
+        $this->assertSame('branch', $branchCall['action']);
+        $this->assertSame('fork', $branchCall['name']);
+        $this->assertArrayHasKey('saved_at', $branchCall);
+        $this->assertInstanceOf(\DateTimeImmutable::class, $branchCall['saved_at']);
+    }
 }

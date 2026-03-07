@@ -44,7 +44,7 @@ final class StoreTest extends TestCase
 
         $loadedMessages = $store->load();
 
-        $this->assertSame($messageBag, $loadedMessages);
+        $this->assertSame($messageBag->getId()->toRfc4122(), $loadedMessages->getId()->toRfc4122());
         $this->assertCount(2, $loadedMessages);
     }
 
@@ -116,5 +116,52 @@ final class StoreTest extends TestCase
         $store->reset();
 
         $this->assertCount(0, $store->load());
+    }
+
+    public function testDropWithIdentifierOnlyClearsThatIdentifier()
+    {
+        $store = new Store();
+
+        $bag1 = new MessageBag(Message::ofUser('Main message'));
+        $bag2 = new MessageBag(Message::ofUser('Branch message'));
+
+        $store->save($bag1, 'main');
+        $store->save($bag2, 'branch');
+
+        $store->drop('main');
+
+        $this->assertCount(0, $store->load('main'));
+        $this->assertCount(1, $store->load('branch'));
+    }
+
+    public function testDropWithoutIdentifierClearsDefault()
+    {
+        $store = new Store();
+
+        $bag1 = new MessageBag(Message::ofUser('Default message'));
+        $bag2 = new MessageBag(Message::ofUser('Named message'));
+
+        $store->save($bag1);
+        $store->save($bag2, 'named');
+
+        $store->drop();
+
+        $this->assertCount(0, $store->load());
+        $this->assertCount(1, $store->load('named'));
+    }
+
+    public function testMultipleIdentifiersSurviveIndependentDrops()
+    {
+        $store = new Store();
+
+        $store->save(new MessageBag(Message::ofUser('A')), 'a');
+        $store->save(new MessageBag(Message::ofUser('B')), 'b');
+        $store->save(new MessageBag(Message::ofUser('C')), 'c');
+
+        $store->drop('b');
+
+        $this->assertCount(1, $store->load('a'));
+        $this->assertCount(0, $store->load('b'));
+        $this->assertCount(1, $store->load('c'));
     }
 }

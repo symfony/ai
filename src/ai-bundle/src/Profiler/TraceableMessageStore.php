@@ -23,6 +23,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * @phpstan-type MessageStoreData array{
  *      bag: MessageBag,
  *      saved_at: \DateTimeImmutable,
+ *      identifier?: ?string,
  *  }
  */
 final class TraceableMessageStore implements ManagedStoreInterface, MessageStoreInterface, ResetInterface
@@ -47,28 +48,29 @@ final class TraceableMessageStore implements ManagedStoreInterface, MessageStore
         $this->messageStore->setup($options);
     }
 
-    public function save(MessageBag $messages): void
+    public function save(MessageBag $messages, ?string $identifier = null): void
     {
         $this->calls[] = [
             'bag' => $messages,
             'saved_at' => $this->clock->now(),
+            'identifier' => $identifier,
         ];
 
-        $this->messageStore->save($messages);
+        $this->messageStore->save($messages, $identifier);
     }
 
-    public function load(): MessageBag
+    public function load(?string $identifier = null): MessageBag
     {
-        return $this->messageStore->load();
+        return $this->messageStore->load($identifier);
     }
 
-    public function drop(): void
+    public function drop(?string $identifier = null): void
     {
         if (!$this->messageStore instanceof ManagedStoreInterface) {
             return;
         }
 
-        $this->messageStore->drop();
+        $this->messageStore->drop($identifier);
     }
 
     public function reset(): void

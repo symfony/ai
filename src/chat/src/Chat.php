@@ -26,20 +26,22 @@ final class Chat implements ChatInterface
     public function __construct(
         private readonly AgentInterface $agent,
         private readonly MessageStoreInterface&ManagedStoreInterface $store,
+        private readonly string $name = '_chat',
     ) {
     }
 
     public function initiate(MessageBag $messages): void
     {
-        $this->store->drop();
-        $this->store->save($messages);
+        $this->store->drop($this->name);
+        $this->store->save($messages, $this->name);
     }
 
     public function submit(UserMessage $message): AssistantMessage
     {
-        $messages = $this->store->load();
+        $messages = $this->store->load($this->name);
 
         $messages->add($message);
+
         $result = $this->agent->call($messages);
 
         \assert($result instanceof TextResult);
@@ -48,8 +50,19 @@ final class Chat implements ChatInterface
         $assistantMessage->getMetadata()->merge($result->getMetadata());
         $messages->add($assistantMessage);
 
-        $this->store->save($messages);
+        $this->store->save($messages, $this->name);
 
         return $assistantMessage;
+    }
+
+    public function branch(string $name, ?AgentInterface $agent = null): self
+    {
+        $currentMessages = $this->store->load($this->name);
+
+        $messages = new MessageBag(...$currentMessages->getMessages());
+
+        $this->store->save($messages, $name);
+
+        return new self($agent ?? $this->agent, $this->store, $name);
     }
 }

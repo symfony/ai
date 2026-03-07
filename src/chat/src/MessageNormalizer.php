@@ -21,11 +21,14 @@ use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\Video;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -38,6 +41,25 @@ use Symfony\Component\Uid\Uuid;
  */
 final class MessageNormalizer implements NormalizerInterface, DenormalizerInterface
 {
+    private const CONTENT_TYPES_FROM_DATA_URL = [
+        File::class,
+        Image::class,
+        Audio::class,
+        Document::class,
+        Video::class,
+    ];
+
+    private const CONTENT_TYPES_FROM_CONSTRUCTOR = [
+        Text::class,
+        ImageUrl::class,
+        DocumentUrl::class,
+    ];
+
+    public function __construct(
+        private readonly ClockInterface $clock = new MonotonicClock(),
+    ) {
+    }
+
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
         if ([] === $data) {
@@ -59,9 +81,17 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                 $data['toolsCalls'],
             )),
             UserMessage::class => new UserMessage(...array_map(
-                static fn (array $contentAsBase64): ContentInterface => \in_array($contentAsBase64['type'], [File::class, Image::class, Audio::class], true)
-                    ? $contentAsBase64['type']::fromDataUrl($contentAsBase64['content'])
-                    : new $contentAsBase64['type']($contentAsBase64['content']),
+                static function (array $contentAsBase64): ContentInterface {
+                    if (\in_array($contentAsBase64['type'], self::CONTENT_TYPES_FROM_DATA_URL, true)) {
+                        return $contentAsBase64['type']::fromDataUrl($contentAsBase64['content']);
+                    }
+
+                    if (\in_array($contentAsBase64['type'], self::CONTENT_TYPES_FROM_CONSTRUCTOR, true)) {
+                        return new ($contentAsBase64['type'])($contentAsBase64['content']);
+                    }
+
+                    throw new LogicException(\sprintf('Unknown content type "%s".', $contentAsBase64['type']));
+                },
                 $contentAsBase64,
             )),
             ToolCallMessage::class => new ToolCallMessage(
@@ -75,9 +105,8 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             default => throw new LogicException(\sprintf('Unknown message type "%s".', $type)),
         };
 
-        $identifier = $context['identifier'] ?? 'id';
         /** @var AbstractUid&TimeBasedUidInterface&Uuid $existingUuid */
-        $existingUuid = Uuid::fromString($data[$identifier]);
+        $existingUuid = Uuid::fromString($data[$context['identifier'] ?? 'id']);
 
         $messageWithExistingUuid = $message->withId($existingUuid);
 
@@ -128,7 +157,8 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                         File::class,
                         Document::class,
                         Image::class,
-                        Audio::class => $content->asBase64(),
+                        Audio::class,
+                        Video::class => $content->asBase64(),
                         ImageUrl::class,
                         DocumentUrl::class => $content->getUrl(),
                         default => throw new LogicException(\sprintf('Unknown content type "%s".', $content::class)),
@@ -138,7 +168,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             ) : [],
             'toolsCalls' => $toolsCalls,
             'metadata' => $data->getMetadata()->all(),
-            'addedAt' => (new \DateTimeImmutable())->getTimestamp(),
+            'addedAt' => $this->clock->now()->getTimestamp(),
         ];
     }
 

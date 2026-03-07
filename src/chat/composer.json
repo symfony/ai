@@ -27,7 +27,8 @@
         "php": ">=8.2",
         "symfony/ai-agent": "^0.6",
         "symfony/ai-platform": "^0.6",
-        "symfony/service-contracts": "^2.5|^3"
+        "symfony/service-contracts": "^2.5|^3",
+        "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
