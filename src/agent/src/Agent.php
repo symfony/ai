@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Capability\InputCapabilityInterface;
+use Symfony\AI\Agent\Capability\OutputCapabilityInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
@@ -47,16 +49,19 @@ final class Agent implements AgentInterface
         return $this->name;
     }
 
-    /**
-     * @param array<string, mixed> $options
+    /**:
+     * @param array<string, mixed>                                   $options
+     * @param InputCapabilityInterface[]|OutputCapabilityInterface[] $capabilities
      *
      * @throws InvalidArgumentException When the platform returns a client error (4xx) indicating invalid request parameters
      * @throws RuntimeException         When the platform returns a server error (5xx) or network failure occurs
      * @throws ExceptionInterface       When the platform converter throws an exception
      */
-    public function call(MessageBag $messages, array $options = []): ResultInterface
+    public function call(MessageBag $messages, array $options = [], array $capabilities = []): ResultInterface
     {
-        $input = new Input($this->getModel(), $messages, $options);
+        $inputCapabilities = array_filter($capabilities, static fn (object $capability): bool => $capability instanceof InputCapabilityInterface);
+        $input = new Input($this->getModel(), $messages, $options, $inputCapabilities);
+
         foreach ($this->inputProcessors as $inputProcessor) {
             if (!$inputProcessor instanceof InputProcessorInterface) {
                 throw new InvalidArgumentException(\sprintf('Input processor "%s" must implement "%s".', $inputProcessor::class, InputProcessorInterface::class));
@@ -75,7 +80,9 @@ final class Agent implements AgentInterface
 
         $result = $this->platform->invoke($model, $messages, $options)->getResult();
 
-        $output = new Output($model, $result, $messages, $options);
+        $outputCapabilities = array_filter($capabilities, static fn (object $capability): bool => $capability instanceof OutputCapabilityInterface);
+        $output = new Output($model, $result, $messages, $options, $outputCapabilities);
+
         foreach ($this->outputProcessors as $outputProcessor) {
             if (!$outputProcessor instanceof OutputProcessorInterface) {
                 throw new InvalidArgumentException(\sprintf('Output processor "%s" must implement "%s".', $outputProcessor::class, OutputProcessorInterface::class));

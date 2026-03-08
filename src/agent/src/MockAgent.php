@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Capability\InputCapabilityInterface;
+use Symfony\AI\Agent\Capability\OutputCapabilityInterface;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\OutOfBoundsException;
 use Symfony\AI\Agent\Exception\RuntimeException;
@@ -54,9 +56,10 @@ final class MockAgent implements AgentInterface
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>                                   $options
+     * @param InputCapabilityInterface[]|OutputCapabilityInterface[] $capabilities
      */
-    public function call(MessageBag $messages, array $options = []): ResultInterface
+    public function call(MessageBag $messages, array $options = [], array $capabilities = []): ResultInterface
     {
         $lastMessage = $messages->getMessages()[\count($messages->getMessages()) - 1];
         $content = '';
@@ -77,7 +80,7 @@ final class MockAgent implements AgentInterface
 
         // Handle callable responses (similar to MockHttpClient)
         if (\is_callable($response)) {
-            $response = $response($messages, $options, $content);
+            $response = $response($messages, $options, $content, $capabilities);
         }
 
         // Convert response to ResultInterface
@@ -96,6 +99,7 @@ final class MockAgent implements AgentInterface
             'options' => $options,
             'input' => $content,
             'response' => $responseText,
+            'capabilities' => $capabilities,
         ];
 
         return $result;

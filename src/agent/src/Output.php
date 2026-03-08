@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Capability\OutputCapabilityInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
 
@@ -20,13 +21,15 @@ use Symfony\AI\Platform\Result\ResultInterface;
 final class Output
 {
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>        $options
+     * @param OutputCapabilityInterface[] $capabilities
      */
     public function __construct(
         private readonly string $model,
         private ResultInterface $result,
         private readonly MessageBag $messageBag,
         private readonly array $options = [],
+        private readonly array $capabilities = [],
     ) {
     }
 
@@ -56,5 +59,13 @@ final class Output
     public function getOptions(): array
     {
         return $this->options;
+    }
+
+    /**
+     * @return OutputCapabilityInterface[]
+     */
+    public function getCapabilities(): array
+    {
+        return $this->capabilities;
     }
 }
