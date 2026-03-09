@@ -259,7 +259,7 @@ final class StoreTest extends TestCase
                 null, // namespace
                 [], // filter
                 3, // topK
-                true, // includeValues
+                true, // includeMetadata
             )
             ->willReturn($response);
 
@@ -302,7 +302,7 @@ final class StoreTest extends TestCase
                 'test-namespace', // namespace
                 ['category' => 'test'], // filter
                 5, // topK
-                true, // includeValues
+                true, // includeMetadata
             )
             ->willReturn($response);
 
