@@ -11,9 +11,14 @@
 
 namespace Symfony\AI\McpBundle\DependencyInjection;
 
+use Mcp\Capability\Attribute\CompletionProvider;
+use Mcp\Capability\Attribute\McpPrompt;
+use Mcp\Capability\Attribute\McpResource;
+use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Discovery\DocBlockParser;
 use Mcp\Capability\Discovery\SchemaGenerator;
+use Mcp\Exception\RuntimeException;
 use Psr\Log\NullLogger;
 use Symfony\AI\McpBundle\Loader\ContainerLoader;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -37,11 +42,16 @@ final class McpPass implements CompilerPassInterface
         $schemaGenerator = new SchemaGenerator($docBlockParser);
 
         $tools = [];
-
+        $resources = [];
+        $prompts = [];
+        $resourceTemplates = [];
         $serviceReferences = [];
 
         $mcpTags = [
             'mcp.tool' => &$tools,
+            'mcp.resource' => &$resources,
+            'mcp.prompt' => &$prompts,
+            'mcp.resource_template' => &$resourceTemplates,
         ];
 
         foreach ($mcpTags as $tag => &$collection) {
@@ -61,14 +71,16 @@ final class McpPass implements CompilerPassInterface
 
                         $entry = match ($tag) {
                             'mcp.tool' => $this->buildToolEntry($reflection, $schemaGenerator, $docBlockParser, $class, $methodName),
-                            default => null,
+                            'mcp.resource' => $this->buildResourceEntry($reflection, $docBlockParser, $class, $methodName),
+                            'mcp.prompt' => $this->buildPromptEntry($reflection, $docBlockParser, $class, $methodName),
+                            'mcp.resource_template' => $this->buildResourceTemplateEntry($reflection, $docBlockParser, $class, $methodName),
                         };
 
                         if (null !== $entry) {
                             $collection[] = $entry;
                         }
                     } catch (\Throwable $e) {
-                        throw new \RuntimeException(\sprintf('Error processing service "%s" with tag "%s": %s', $serviceId, $tag, $e->getMessage()), 0, $e);
+                        throw new RuntimeException(\sprintf('Error processing service "%s" with tag "%s": %s', $serviceId, $tag, $e->getMessage()), 0, $e);
                     }
                 }
             }
@@ -95,6 +107,8 @@ final class McpPass implements CompilerPassInterface
 
     /**
      * @param class-string $class
+     *
+     * @return array<string, mixed>|null
      */
     private function buildToolEntry(
         \ReflectionMethod $reflectionMethod,
@@ -128,5 +142,162 @@ final class McpPass implements CompilerPassInterface
             'icons' => null !== $attr->icons ? array_map(static fn ($i) => $i->jsonSerialize(), $attr->icons) : null,
             'meta' => $attr->meta,
         ];
+    }
+
+    /**
+     * @param class-string $class
+     *
+     * @return array<string, mixed>|null
+     */
+    private function buildResourceEntry(
+        \ReflectionMethod $reflection,
+        DocBlockParser $docBlockParser,
+        string $class,
+        string $methodName,
+    ): ?array {
+        $attrs = $reflection->getAttributes(McpResource::class, \ReflectionAttribute::IS_INSTANCEOF);
+        if ([] === $attrs && '__invoke' === $methodName) {
+            $attrs = $reflection->getDeclaringClass()->getAttributes(McpResource::class, \ReflectionAttribute::IS_INSTANCEOF);
+        }
+        if ([] === $attrs) {
+            return null;
+        }
+
+        /** @var McpResource $attr */
+        $attr = $attrs[0]->newInstance();
+        $docBlock = $docBlockParser->parseDocBlock($reflection->getDocComment() ?: null);
+        $shortName = $reflection->getDeclaringClass()->getShortName();
+
+        return [
+            'class' => $class,
+            'method' => $methodName,
+            'uri' => $attr->uri,
+            'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
+            'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
+            'mimeType' => $attr->mimeType,
+            'size' => $attr->size,
+            'annotations' => $attr->annotations?->jsonSerialize(),
+            'icons' => null !== $attr->icons ? array_map(static fn ($i) => $i->jsonSerialize(), $attr->icons) : null,
+            'meta' => $attr->meta,
+        ];
+    }
+
+    /**
+     * @param class-string $class
+     *
+     * @return array<string, mixed>|null
+     */
+    private function buildPromptEntry(
+        \ReflectionMethod $reflection,
+        DocBlockParser $docBlockParser,
+        string $class,
+        string $methodName,
+    ): ?array {
+        $attrs = $reflection->getAttributes(McpPrompt::class, \ReflectionAttribute::IS_INSTANCEOF);
+        if ([] === $attrs && '__invoke' === $methodName) {
+            $attrs = $reflection->getDeclaringClass()->getAttributes(McpPrompt::class, \ReflectionAttribute::IS_INSTANCEOF);
+        }
+        if ([] === $attrs) {
+            return null;
+        }
+
+        /** @var McpPrompt $attr */
+        $attr = $attrs[0]->newInstance();
+        $docBlock = $docBlockParser->parseDocBlock($reflection->getDocComment() ?: null);
+        $paramTags = $docBlockParser->getParamTags($docBlock);
+        $shortName = $reflection->getDeclaringClass()->getShortName();
+
+        $arguments = [];
+        foreach ($reflection->getParameters() as $param) {
+            $type = $param->getType();
+            if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+                continue;
+            }
+            $paramTag = $paramTags['$'.$param->getName()] ?? null;
+            $arguments[] = [
+                'name' => $param->getName(),
+                'description' => $paramTag ? trim((string) $paramTag->getDescription()) : null,
+                'required' => !$param->isOptional() && !$param->isDefaultValueAvailable(),
+            ];
+        }
+
+        return [
+            'class' => $class,
+            'method' => $methodName,
+            'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
+            'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
+            'arguments' => $arguments,
+            'icons' => null !== $attr->icons ? array_map(static fn ($i) => $i->jsonSerialize(), $attr->icons) : null,
+            'meta' => $attr->meta,
+            'completionProviders' => $this->extractCompletionProviders($reflection),
+        ];
+    }
+
+    /**
+     * @param class-string $class
+     *
+     * @return array<string, mixed>|null
+     */
+    private function buildResourceTemplateEntry(
+        \ReflectionMethod $reflection,
+        DocBlockParser $docBlockParser,
+        string $class,
+        string $methodName,
+    ): ?array {
+        $attrs = $reflection->getAttributes(McpResourceTemplate::class, \ReflectionAttribute::IS_INSTANCEOF);
+        if ([] === $attrs && '__invoke' === $methodName) {
+            $attrs = $reflection->getDeclaringClass()->getAttributes(McpResourceTemplate::class, \ReflectionAttribute::IS_INSTANCEOF);
+        }
+        if ([] === $attrs) {
+            return null;
+        }
+
+        /** @var McpResourceTemplate $attr */
+        $attr = $attrs[0]->newInstance();
+        $docBlock = $docBlockParser->parseDocBlock($reflection->getDocComment() ?: null);
+        $shortName = $reflection->getDeclaringClass()->getShortName();
+
+        return [
+            'class' => $class,
+            'method' => $methodName,
+            'uriTemplate' => $attr->uriTemplate,
+            'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
+            'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
+            'mimeType' => $attr->mimeType,
+            'annotations' => $attr->annotations?->jsonSerialize(),
+            'meta' => $attr->meta,
+            'completionProviders' => $this->extractCompletionProviders($reflection),
+        ];
+    }
+
+    /**
+     * Serializes CompletionProvider parameter attributes into scalar arrays.
+     *
+     * @return array<string, array{type: string, values?: list<int|float|string>, class?: class-string}>
+     */
+    private function extractCompletionProviders(\ReflectionMethod $reflection): array
+    {
+        $providers = [];
+        foreach ($reflection->getParameters() as $param) {
+            $type = $param->getType();
+            if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+                continue;
+            }
+            $attrs = $param->getAttributes(CompletionProvider::class, \ReflectionAttribute::IS_INSTANCEOF);
+            if ([] === $attrs) {
+                continue;
+            }
+            /** @var CompletionProvider $cp */
+            $cp = $attrs[0]->newInstance();
+            if (null !== $cp->values) {
+                $providers[$param->getName()] = ['type' => 'list', 'values' => $cp->values];
+            } elseif (null !== $cp->enum) {
+                $providers[$param->getName()] = ['type' => 'enum', 'class' => $cp->enum];
+            } elseif (null !== $cp->providerClass) {
+                $providers[$param->getName()] = ['type' => 'class', 'class' => $cp->providerClass];
+            }
+        }
+
+        return $providers;
     }
 }
