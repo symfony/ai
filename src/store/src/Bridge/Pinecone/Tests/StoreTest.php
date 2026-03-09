@@ -373,7 +373,7 @@ final class StoreTest extends TestCase
                     'id' => 'vector-id',
                     'values' => [0.1, 0.2, 0.3],
                     'score' => 0.95,
-                ]
+                ],
             ],
         ]);
 
