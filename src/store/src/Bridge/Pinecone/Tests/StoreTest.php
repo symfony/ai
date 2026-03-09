@@ -337,6 +337,7 @@ final class StoreTest extends TestCase
                 'custom-namespace', // namespace
                 ['type' => 'document'], // filter
                 10, // topK
+                true, // includeMetadata
                 true, // includeValues
             )
             ->willReturn($response);
@@ -345,9 +346,57 @@ final class StoreTest extends TestCase
             'namespace' => 'custom-namespace',
             'filter' => ['type' => 'document'],
             'topK' => 10,
+            'includeValues' => true,
         ]));
 
         $this->assertCount(0, $results);
+    }
+
+    public function testQueryWithOptionIncludeMetadataFalse()
+    {
+        $vectorResource = $this->createMock(VectorResource::class);
+        $dataResource = $this->createMock(DataResource::class);
+        $client = $this->createMock(Client::class);
+
+        $dataResource->expects($this->once())
+            ->method('vectors')
+            ->willReturn($vectorResource);
+
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($dataResource);
+
+        $response = $this->createMock(Response::class);
+        $response->method('json')->willReturn([
+            'matches' => [
+                [
+                    'id' => 'vector-id',
+                    'values' => [0.1, 0.2, 0.3],
+                    'score' => 0.95,
+                ]
+            ],
+        ]);
+
+        $vectorResource->expects($this->once())
+            ->method('query')
+            ->with(
+                [0.1, 0.2, 0.3], // vector
+                'custom-namespace', // namespace
+                ['type' => 'document'], // filter
+                10, // topK
+                false, // includeMetadata
+            )
+            ->willReturn($response);
+
+        $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
+            'namespace' => 'custom-namespace',
+            'filter' => ['type' => 'document'],
+            'topK' => 10,
+            'includeMetadata' => false,
+        ]));
+
+        $this->assertCount(1, $results);
+        $this->assertEmpty($results[0]->getMetadata());
     }
 
     public function testQueryWithEmptyResults()
