@@ -42,6 +42,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Symfony\\AI\\McpBundle\\Tests\\": "tests/",
             "Symfony\\AI\\PHPStan\\": "../../.phpstan"
         }
     },

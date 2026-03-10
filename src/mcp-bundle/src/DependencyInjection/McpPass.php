@@ -97,8 +97,8 @@ final class McpPass implements CompilerPassInterface
             ->setArguments([
                 $tools,
                 $resources,
-                $prompts,
                 $resourceTemplates,
+                $prompts,
             ])
             ->addTag('mcp.loader');
 
