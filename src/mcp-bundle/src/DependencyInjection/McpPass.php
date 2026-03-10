@@ -18,9 +18,9 @@ use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Discovery\DocBlockParser;
 use Mcp\Capability\Discovery\SchemaGenerator;
+use Mcp\Capability\Registry\Loader\ArrayLoader;
 use Mcp\Exception\RuntimeException;
 use Psr\Log\NullLogger;
-use Symfony\AI\McpBundle\Loader\ContainerLoader;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait;
 use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
@@ -93,12 +93,12 @@ final class McpPass implements CompilerPassInterface
         $serviceLocatorRef = ServiceLocatorTagPass::register($container, $serviceReferences);
         $container->getDefinition('mcp.server.builder')->addMethodCall('setContainer', [$serviceLocatorRef]);
 
-        $loaderDefinition = (new Definition(ContainerLoader::class))
+        $loaderDefinition = (new Definition(ArrayLoader::class))
             ->setArguments([
                 $tools,
-                [],
-                [],
-                [],
+                $resources,
+                $prompts,
+                $resourceTemplates,
             ])
             ->addTag('mcp.loader');
 
@@ -132,8 +132,7 @@ final class McpPass implements CompilerPassInterface
         $shortName = $reflectionMethod->getDeclaringClass()->getShortName();
 
         return [
-            'class' => $class,
-            'method' => $methodName,
+            'handler' => [$class, $methodName],
             'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
             'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
             'inputSchema' => $schemaGenerator->generate($reflectionMethod),
@@ -169,8 +168,7 @@ final class McpPass implements CompilerPassInterface
         $shortName = $reflection->getDeclaringClass()->getShortName();
 
         return [
-            'class' => $class,
-            'method' => $methodName,
+            'handler' => [$class, $methodName],
             'uri' => $attr->uri,
             'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
             'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
@@ -222,8 +220,7 @@ final class McpPass implements CompilerPassInterface
         }
 
         return [
-            'class' => $class,
-            'method' => $methodName,
+            'handler' => [$class, $methodName],
             'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
             'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
             'arguments' => $arguments,
@@ -258,8 +255,7 @@ final class McpPass implements CompilerPassInterface
         $shortName = $reflection->getDeclaringClass()->getShortName();
 
         return [
-            'class' => $class,
-            'method' => $methodName,
+            'handler' => [$class, $methodName],
             'uriTemplate' => $attr->uriTemplate,
             'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
             'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
