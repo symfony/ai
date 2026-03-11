@@ -44,4 +44,6 @@ interface StoreInterface extends \Countable
      * @param class-string<QueryInterface> $queryClass The query class to check
      */
     public function supports(string $queryClass): bool;
+
+    public function count(): int;
 }
