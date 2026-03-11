@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -29,7 +28,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly bool $euRouting = false,
-        #[\SensitiveParameter]  private readonly ?string $apiKey = null,
+        #[\SensitiveParameter] private readonly ?string $apiKey = null,
     ) {
         parent::__construct();
     }
@@ -65,7 +64,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
      */
     protected function fetchAllRemoteModels(): iterable
     {
-        $responseModels = $this->httpClient->request('GET',  $this->getApiBaseUrl() . 'v1/models');
+        $responseModels = $this->httpClient->request('GET', $this->getApiBaseUrl().'v1/models');
         foreach ($responseModels->toArray()['data'] as $model) {
             yield $model['id'] => [
                 'class' => CompletionsModel::class,
@@ -79,7 +78,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
      */
     protected function fetchUserRemoteModels(): iterable
     {
-        $responseModels = $this->httpClient->request('GET',  $this->getApiBaseUrl() . 'v1/models/user', [
+        $responseModels = $this->httpClient->request('GET', $this->getApiBaseUrl().'v1/models/user', [
             'auth_bearer' => $this->apiKey,
         ]);
         foreach ($responseModels->toArray()['data'] as $model) {
@@ -95,7 +94,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
      */
     protected function fetchRemoteEmbeddings(): iterable
     {
-        $responseEmbeddings = $this->httpClient->request('GET', $this->getApiBaseUrl() . 'v1/embeddings/models');
+        $responseEmbeddings = $this->httpClient->request('GET', $this->getApiBaseUrl().'v1/embeddings/models');
         foreach ($responseEmbeddings->toArray()['data'] as $embedding) {
             yield $embedding['id'] => [
                 'class' => EmbeddingsModel::class,
@@ -104,10 +103,22 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
         }
     }
 
-    protected function getModelCapabilities(array $model): array {
+    /**
+     * @param array{
+     *     supported_parameters: array<string, mixed>,
+     *     architecture: array{
+     *         output_modalities: array<int, string>,
+     *         input_modalities: array<int, string>
+     *     }
+     * } $model
+     *
+     * @return Capability[]
+     */
+    protected function getModelCapabilities(array $model): array
+    {
         $capabilities = [];
 
-        foreach ($model['architecture']['input_modalities'] as $inputModality) {
+        foreach ($model['architecture']['input_modalities'] ?? [] as $inputModality) {
             switch ($inputModality) {
                 case 'text':
                     $capabilities[] = Capability::INPUT_TEXT;
@@ -129,7 +140,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
             }
         }
 
-        foreach ($model['architecture']['output_modalities'] as $outputModality) {
+        foreach ($model['architecture']['output_modalities'] ?? [] as $outputModality) {
             switch ($outputModality) {
                 case 'text':
                     $capabilities[] = Capability::OUTPUT_TEXT;
@@ -152,10 +163,12 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
         if (\in_array('structured_outputs', $model['supported_parameters'] ?? [])) {
             $capabilities[] = Capability::OUTPUT_STRUCTURED;
         }
+
         return $capabilities;
     }
 
-    protected function getApiBaseUrl(): string {
+    protected function getApiBaseUrl(): string
+    {
         return $this->euRouting ? 'https://eu.openrouter.ai/api/' : 'https://openrouter.ai/api/';
     }
 }

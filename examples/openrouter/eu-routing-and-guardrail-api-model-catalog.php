@@ -13,8 +13,6 @@ use Symfony\AI\Platform\Bridge\OpenRouter\ModelApiCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\Cache\Adapter\FilesystemTagAwareAdapter;
-use Symfony\Component\HttpClient\CachingHttpClient;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
