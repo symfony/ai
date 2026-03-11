@@ -6,6 +6,11 @@ CHANGELOG
 
  * Introduce a `StoreFactory`
 
+0.7
+---
+
+ * Add `count` method
+
 0.4
 ---
 

@@ -4,6 +4,7 @@ CHANGELOG
 0.7
 ---
 
+ * Add `count` method
  * [BC BREAK] Add support for `ScopingHttpClient` in `SearchStore`
  * [BC BREAK] The `endpointUrl` parameter for `SearchStore` has been removed
  * [BC BREAK] The `apiKey` parameter for `SearchStore` has been removed

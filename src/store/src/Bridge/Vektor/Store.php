@@ -121,6 +121,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return VectorQuery::class === $queryClass;
     }
 
+    public function count(): int
+    {
+        $searcher = new Searcher();
+
+        return $searcher->count();
+    }
+
     /**
      * @param array{
      *     id: string,
