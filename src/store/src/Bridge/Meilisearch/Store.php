@@ -135,6 +135,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('DELETE', \sprintf('indexes/%s', $this->indexName), []);
     }
 
+    public function count(): int
+    {
+        $result = $this->request('GET', \sprintf('indexes/%s/stats', $this->indexName), []);
+
+        return $result['numberOfDocuments'] ?? 0;
+    }
+
     /**
      * @param array<string, mixed> $payload
      *

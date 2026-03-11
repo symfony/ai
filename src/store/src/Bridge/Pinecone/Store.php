@@ -158,6 +158,19 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ->delete();
     }
 
+    public function count(): int
+    {
+        $stats = $this->pinecone->data()->describeIndexStats();
+
+        if (null !== $this->namespace) {
+            $namespaces = $stats->json()['namespaces'] ?? [];
+
+            return $namespaces[$this->namespace]['vectorCount'] ?? 0;
+        }
+
+        return $stats->json()['totalVectorCount'] ?? 0;
+    }
+
     private function getVectors(): VectorResource
     {
         return $this->pinecone->data()->vectors();

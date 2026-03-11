@@ -4,6 +4,7 @@ CHANGELOG
 0.7
 ---
 
+ * Add `count` method to `StoreInterface`
  * Add `TraceableStore` profiler decorator moved from AI Bundle
  * Add `RstLoader` and `RstToctreeLoader` for loading RST files and following toctree directives
  * Add pre-query event dispatching for query enhancement before vectorization
