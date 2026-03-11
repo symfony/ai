@@ -166,4 +166,27 @@ final class Store implements StoreInterface
             );
         }
     }
+
+    public function count(): int
+    {
+        $response = $this->httpClient->request(
+            'GET',
+            \sprintf('%s/rest/v1/%s?select=count', $this->url, $this->table),
+            [
+                'headers' => [
+                    'apikey' => $this->apiKey,
+                    'Authorization' => 'Bearer '.$this->apiKey,
+                    'Prefer' => 'count=exact',
+                ],
+            ]
+        );
+
+        $countHeader = $response->getHeaders()['content-range'][0] ?? '';
+
+        if (preg_match('/\/(\d+)$/', $countHeader, $matches)) {
+            return (int) $matches[1];
+        }
+
+        return 0;
+    }
 }

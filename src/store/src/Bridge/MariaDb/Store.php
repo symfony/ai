@@ -84,6 +84,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
     }
 
+    public function count(): int
+    {
+        $statement = $this->connection->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
+
+        return (int) $statement->fetchColumn();
+    }
+
     public static function fromPdo(\PDO $connection, string $tableName, string $indexName = 'embedding', string $vectorFieldName = 'embedding'): self
     {
         return new self($connection, $tableName, $indexName, $vectorFieldName);

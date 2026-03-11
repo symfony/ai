@@ -55,4 +55,9 @@ final class TestStore implements StoreInterface
 
         return $this->documents;
     }
+
+    public function count(): int
+    {
+        return \count($this->documents);
+    }
 }

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `count` method to `StoreInterface`
+
 0.6
 ---
 

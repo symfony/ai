@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `count` method to `TraceableStore`
+
 0.6
 ---
 
