@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Tests\Gemini;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini\ResultConverter;
+use Symfony\AI\Platform\Bridge\Gemini\ResultConverter;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\MockHttpClient;

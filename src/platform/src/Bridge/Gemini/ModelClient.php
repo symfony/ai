@@ -9,30 +9,26 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
+namespace Symfony\AI\Platform\Bridge\Gemini;
 
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
-use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Roy Garrido
+ * @author Valtteri R <valtzu@gmail.com>
  */
 final class ModelClient implements ModelClientInterface
 {
-    private readonly EventSourceHttpClient $httpClient;
-
     public function __construct(
-        HttpClientInterface $httpClient,
-        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly HttpClientInterface $httpClient,
     ) {
-        $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
 
     public function supports(Model $model): bool
@@ -41,19 +37,31 @@ final class ModelClient implements ModelClientInterface
     }
 
     /**
+     * @param array<string, mixed>|string $payload
+     * @param array<string, mixed>        $options
+     *
      * @throws TransportExceptionInterface When the HTTP request fails due to network issues
      */
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        if ($model->supports(Capability::EMBEDDINGS)) {
+            return $this->handleEmbeddingsGeneration($model, $payload, $options);
+        }
+
+        return $this->handleContextGeneration($model, $payload, $options);
+    }
+
+    /**
+     * @param array<string, mixed>|string $payload
+     * @param array<string, mixed>        $options
+     *
+     * @throws TransportExceptionInterface When the HTTP request fails due to network issues
+     */
+    private function handleContextGeneration(Model $model, array|string $payload, array $options = []): RawHttpResult
+    {
         if (\is_string($payload)) {
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
-
-        $url = \sprintf(
-            'https://generativelanguage.googleapis.com/v1beta/models/%s:%s',
-            $model->getName(),
-            $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent',
-        );
 
         if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
             $options['responseMimeType'] = 'application/json';
@@ -89,11 +97,41 @@ final class ModelClient implements ModelClientInterface
             $config['tools'][] = [$tool => true === $params ? new \ArrayObject() : $params];
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', $url, [
-            'headers' => [
-                'x-goog-api-key' => $this->apiKey,
-            ],
+        $action = ($options['stream'] ?? false) ? 'streamGenerateContent' : 'generateContent';
+
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('models/%s:%s', $model->getName(), $action), [
             'json' => array_merge($config, $payload),
+        ]));
+    }
+
+    /**
+     * @param array<string, mixed>|string $payload
+     * @param array<string, mixed>        $options
+     *
+     * @throws TransportExceptionInterface When the HTTP request fails due to network issues
+     */
+    private function handleEmbeddingsGeneration(Model $model, array|string $payload, array $options = []): RawHttpResult
+    {
+        $modelOptions = $model->getOptions();
+        $action = ($options['async'] ?? false) ? 'asyncBatchEmbedContent' : 'batchEmbedContents';
+
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('models/%s:%s', $model->getName(), $action), [
+            'json' => [
+                'requests' => array_map(
+                    static fn (string $text): array => array_filter([
+                        'model' => \sprintf('models/%s', $model->getName()),
+                        'content' => [
+                            'parts' => [
+                                ['text' => $text],
+                            ],
+                        ],
+                        'outputDimensionality' => $modelOptions['dimensions'] ?? null,
+                        'taskType' => $modelOptions['task_type'] ?? null,
+                        'title' => $options['title'] ?? null,
+                    ]),
+                    \is_array($payload) ? $payload : [$payload],
+                ),
+            ],
         ]));
     }
 }
