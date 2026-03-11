@@ -74,7 +74,7 @@ Advanced Example with Multiple Agents
             # vertexai:
             #     api_key: '%env(GOOGLE_CLOUD_VERTEX_API_KEY)%'
             ollama:
-                host_url: '%env(OLLAMA_HOST_URL)%'
+                endpoint: '%env(OLLAMA_HOST_URL)%'
             transformersphp: ~
         agent:
             rag:
