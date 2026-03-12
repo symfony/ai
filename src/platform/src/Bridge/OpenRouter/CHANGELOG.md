@@ -7,7 +7,7 @@ CHANGELOG
  * Add support for region routing via `$region` enum in `PlatformFactory` and `ModelApiCatalog`
  * Add support for user specific models, by adding the OpenRouter API Key to the `ModelApiCatalog`
  * Add support for `openrouter/free`
- * Add support for EU routing via `$euRouting` flag in `PlatformFactory` and `ModelApiCatalog`
+ * Add support for region routing via `$region` enum in `PlatformFactory` and `ModelApiCatalog`
  * Add support for user specific models, by adding the OpenRouter API Key to the `ModelApiCatalog`
 
 0.3
