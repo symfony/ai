@@ -131,14 +131,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
             namespace: $options['namespace'] ?? $this->namespace,
             filter: $options['filter'] ?? $this->filter,
             topK: $options['topK'] ?? $this->topK,
-            includeValues: true,
+            includeMetadata: $options['includeMetadata'] ?? true,
+            includeValues: $options['includeValues'] ?? false,
         );
 
         foreach ($result->json()['matches'] as $match) {
             yield new VectorDocument(
                 id: $match['id'],
                 vector: new Vector($match['values']),
-                metadata: new Metadata($match['metadata']),
+                metadata: new Metadata($match['metadata'] ?? []),
                 score: $match['score'],
             );
         }

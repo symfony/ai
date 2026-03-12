@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `count` method
+ * Add support for `includeMetadata` and `includeValues` options
 
 0.1
 ---
