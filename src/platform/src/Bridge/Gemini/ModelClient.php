@@ -9,15 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
+namespace Symfony\AI\Platform\Bridge\Gemini;
 
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
-use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -26,13 +25,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
-    private readonly EventSourceHttpClient $httpClient;
-
     public function __construct(
-        HttpClientInterface $httpClient,
-        #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly HttpClientInterface $httpClient,
     ) {
-        $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
 
     public function supports(Model $model): bool
@@ -40,20 +35,23 @@ final class ModelClient implements ModelClientInterface
         return $model instanceof Gemini;
     }
 
+    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    {
+        return match (true) {
+            !$model->supports(Capability::EMBEDDINGS) => $this->handleContextGeneration($model, $payload, $options),
+            $model->supports(Capability::EMBEDDINGS) => $this->handleEmbeddingsGeneration($model, $payload, $options),
+            default => throw new InvalidArgumentException(\sprintf('Model "%s" is not supported.', $model->getName())),
+        };
+    }
+
     /**
      * @throws TransportExceptionInterface When the HTTP request fails due to network issues
      */
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    private function handleContextGeneration(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
         if (\is_string($payload)) {
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
-
-        $url = \sprintf(
-            'https://generativelanguage.googleapis.com/v1beta/models/%s:%s',
-            $model->getName(),
-            $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent',
-        );
 
         if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
             $options['responseMimeType'] = 'application/json';
@@ -83,11 +81,35 @@ final class ModelClient implements ModelClientInterface
             $generationConfig['tools'][] = [$tool => true === $params ? new \ArrayObject() : $params];
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', $url, [
-            'headers' => [
-                'x-goog-api-key' => $this->apiKey,
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('models/%s:%s', $model->getName(), $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent'), [
+            'json' => [
+                ...$generationConfig,
+                ...$payload,
             ],
-            'json' => array_merge($generationConfig, $payload),
+        ]));
+    }
+
+    private function handleEmbeddingsGeneration(Model $model, array|string $payload, array $options = []): RawHttpResult
+    {
+        $modelOptions = $model->getOptions();
+
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('models/%s:%s', $model->getName(), $options['async'] ?? false ? 'asyncBatchEmbedContent' : 'batchEmbedContents'), [
+            'json' => [
+                'requests' => array_map(
+                    static fn (string $text): array => [
+                        'model' => \sprintf('models/%s', $model->getName()),
+                        'content' => [
+                            'parts' => [
+                                ['text' => $text],
+                            ],
+                        ],
+                        'outputDimensionality' => $modelOptions['dimensions'] ?? null,
+                        'taskType' => $modelOptions['task_type'] ?? null,
+                        'title' => $options['title'] ?? null,
+                    ],
+                    \is_array($payload) ? $payload : [$payload],
+                ),
+            ],
         ]));
     }
 }

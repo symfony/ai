@@ -619,21 +619,21 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Gemini platform configuration requires "symfony/ai-gemini-platform" package. Try running "composer require symfony/ai-gemini-platform".');
             }
 
-            $platformId = 'ai.platform.gemini';
             $definition = (new Definition(Platform::class))
                 ->setFactory(GeminiPlatformFactory::class.'::create')
                 ->setLazy(true)
-                ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
-                    $platform['api_key'],
+                    $platform['endpoint'],
+                    $platform['version'],
+                    $platform['api_key'] ?? null,
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.gemini'),
                     new Reference('ai.platform.contract.gemini'),
                     new Reference('event_dispatcher'),
                 ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform', ['name' => 'gemini']);
 
-            $container->setDefinition($platformId, $definition);
+            $container->setDefinition('ai.platform.gemini', $definition);
 
             return;
         }

@@ -39,7 +39,6 @@ use Symfony\AI\Platform\Bridge\DockerModelRunner\ModelCatalog as DockerModelRunn
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
-use Symfony\AI\Platform\Bridge\Gemini\ModelCatalog as GeminiModelCatalog;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\HuggingFaceContract;
 use Symfony\AI\Platform\Bridge\HuggingFace\ModelCatalog as HuggingFaceModelCatalog;
 use Symfony\AI\Platform\Bridge\LmStudio\ModelCatalog as LmStudioModelCatalog;
@@ -117,7 +116,6 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.elevenlabs', ElevenLabsModelCatalog::class)
             ->lazy()
             ->tag('proxy', ['interface' => ModelCatalogInterface::class])
-        ->set('ai.platform.model_catalog.gemini', GeminiModelCatalog::class)
         ->set('ai.platform.model_catalog.huggingface', HuggingFaceModelCatalog::class)
         ->set('ai.platform.model_catalog.lmstudio', LmStudioModelCatalog::class)
         ->set('ai.platform.model_catalog.meta', MetaModelCatalog::class)

@@ -9,9 +9,8 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
+namespace Symfony\AI\Platform\Bridge\Gemini;
 
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -24,7 +23,10 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Platform\Vector\VectorInterface;
 
 /**
  * @author Roy Garrido
@@ -42,6 +44,15 @@ final class ResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
+        $data = $result->getData();
+
+        if (isset($data['embeddings'])) {
+            return new VectorResult(...array_map(
+                static fn (array $item): VectorInterface => new Vector($item['values']),
+                $data['embeddings'],
+            ));
+        }
+
         $response = $result->getObject();
 
         if (429 === $response->getStatusCode()) {

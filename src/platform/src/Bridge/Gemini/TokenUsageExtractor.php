@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
+namespace Symfony\AI\Platform\Bridge\Gemini;
 
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
@@ -20,6 +20,12 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
 {
     public function extract(RawResultInterface $rawResult, array $options = []): ?TokenUsageInterface
     {
+        $data = $rawResult->getData();
+
+        if (\array_key_exists('embeddings', $data)) {
+            return null;
+        }
+
         if ($options['stream'] ?? false) {
             // Streams have to be handled manually as the tokens are part of the streamed chunks
             return null;
