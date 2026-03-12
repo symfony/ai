@@ -304,4 +304,27 @@ final class StoreTest extends TestCase
         $store = new Store(new MockHttpClient(), 'default', 'test_table');
         $this->assertFalse($store->supports(HybridQuery::class));
     }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'data' => [
+                    ['cnt' => '42'],
+                ],
+                'rows' => 1,
+                'statistics' => [
+                    'elapsed' => 0.001,
+                    'rows_read' => 1,
+                    'bytes_read' => 8,
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient);
+
+        $this->assertSame(42, $store->count());
+    }
 }

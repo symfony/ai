@@ -152,6 +152,29 @@ final class SearchStoreTest extends TestCase
         $this->assertSame('Second Document', $results[1]->getMetadata()['title']);
     }
 
+    public function testCountReturnsDocumentCount()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                '@odata.count' => 42,
+                'value' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new SearchStore(
+            $httpClient,
+            'https://test.search.windows.net',
+            'test-api-key',
+            'test-index',
+            '2023-11-01',
+        );
+
+        $this->assertSame(42, $store->count());
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testQueryWithCustomVectorFieldName()
     {
         $httpClient = new MockHttpClient([

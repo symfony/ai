@@ -468,6 +468,25 @@ final class StoreTest extends TestCase
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 
+    public function testCountReturnsDocumentCount()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding');
+
+        $pdo->expects($this->once())
+            ->method('query')
+            ->with('SELECT COUNT(*) FROM embeddings_table')
+            ->willReturn($statement);
+
+        $statement->expects($this->once())
+            ->method('fetchColumn')
+            ->willReturn('42');
+
+        $this->assertSame(42, $store->count());
+    }
+
     private function normalizeQuery(string $query): string
     {
         return trim(preg_replace('/\s+/', ' ', $query));
