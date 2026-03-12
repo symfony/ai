@@ -19,6 +19,7 @@ use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 
 final class ChatTest extends TestCase
@@ -116,16 +117,16 @@ final class ChatTest extends TestCase
 
         $agent = new MockAgent([
             'Hello' => new StreamResult((static function (): \Generator {
-                yield 'I am ';
-                yield 'doing well!';
+                yield new TextDelta('I am ');
+                yield new TextDelta('doing well!');
             })()),
         ], 'mock-stream');
 
         $chat = new Chat($agent, $store);
 
-        $chunks = iterator_to_array($chat->stream(Message::ofUser('Hello')));
+        $deltas = iterator_to_array($chat->stream(Message::ofUser('Hello')));
 
-        $this->assertSame(['I am ', 'doing well!'], $chunks);
+        $this->assertSame(['I am ', 'doing well!'], array_map(strval(...), $deltas)); /* @phpstan-ignore argument.type */
 
         $agent->assertCallCount(1);
         $agent->assertCalledWith('Hello');
@@ -149,16 +150,16 @@ final class ChatTest extends TestCase
 
         $agent = new MockAgent([
             'Can you help?' => new StreamResult((static function (): \Generator {
-                yield 'Yes, ';
-                yield 'I can!';
+                yield new TextDelta('Yes, ');
+                yield new TextDelta('I can!');
             })()),
         ], 'mock-stream');
 
         $chat = new Chat($agent, $store);
 
-        $chunks = iterator_to_array($chat->stream(Message::ofUser('Can you help?')));
+        $deltas = iterator_to_array($chat->stream(Message::ofUser('Can you help?')));
 
-        $this->assertSame(['Yes, ', 'I can!'], $chunks);
+        $this->assertSame(['Yes, ', 'I can!'], array_map(strval(...), $deltas)); /* @phpstan-ignore argument.type */
 
         $agent->assertCallCount(1);
         $agent->assertCalledWith('Can you help?');

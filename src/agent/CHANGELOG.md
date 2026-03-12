@@ -9,6 +9,8 @@ CHANGELOG
  * [BC BREAK] Remove `AbstractToolFactory` in favor of standalone `ReflectionToolFactory` and `MemoryToolFactory`
  * [BC BREAK] Change `ToolFactoryInterface::getTool()` signature from `string $reference` to `object|string $reference`
  * Add `ToolCallRequested` event dispatched before tool execution
+ * Update `StreamListener` to use `DeltaEvent` and `TextDelta` instead of `ChunkEvent` and raw strings
+ * Update `StreamListener` to react to `ToolCallComplete` instead of `ToolCallResult`
 
 0.4
 ---

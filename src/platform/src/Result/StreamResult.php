@@ -11,8 +11,9 @@
 
 namespace Symfony\AI\Platform\Result;
 
-use Symfony\AI\Platform\Result\Stream\ChunkEvent;
 use Symfony\AI\Platform\Result\Stream\CompleteEvent;
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\Stream\ListenerInterface;
 use Symfony\AI\Platform\Result\Stream\StartEvent;
 
@@ -22,7 +23,8 @@ use Symfony\AI\Platform\Result\Stream\StartEvent;
 final class StreamResult extends BaseResult
 {
     /**
-     * @param ListenerInterface[] $listeners
+     * @param \Generator<DeltaInterface> $generator
+     * @param ListenerInterface[]        $listeners
      */
     public function __construct(
         private readonly \Generator $generator,
@@ -35,6 +37,9 @@ final class StreamResult extends BaseResult
         $this->listeners[] = $listener;
     }
 
+    /**
+     * @return \Generator<DeltaInterface>
+     */
     public function getContent(): \Generator
     {
         $event = new StartEvent($this);
@@ -43,23 +48,23 @@ final class StreamResult extends BaseResult
         }
         $this->getMetadata()->merge($event->getMetadata());
 
-        foreach ($this->generator as $chunk) {
-            $event = new ChunkEvent($this, $chunk);
+        foreach ($this->generator as $delta) {
+            $event = new DeltaEvent($this, $delta);
             foreach ($this->listeners as $listener) {
-                $listener->onChunk($event);
+                $listener->onDelta($event);
             }
             $this->getMetadata()->merge($event->getMetadata());
 
-            if ($event->isChunkSkipped()) {
+            if ($event->isDeltaSkipped()) {
                 continue;
             }
 
-            $chunk = $event->getChunk();
+            $delta = $event->getDelta();
 
-            if (null === $chunk || !is_iterable($chunk)) {
-                yield $chunk;
+            if ($delta instanceof DeltaInterface) {
+                yield $delta;
             } else {
-                yield from $chunk;
+                yield from $delta;
             }
         }
 

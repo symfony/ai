@@ -73,4 +73,21 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertNull($tokenUsage->getCachedTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
     }
+
+    public function testItExtractsTokenUsageFromUsageArray()
+    {
+        $extractor = new TokenUsageExtractor();
+
+        $tokenUsage = $extractor->extractFromArray([
+            'prompt_tokens' => 10,
+            'completion_tokens' => 20,
+            'prompt_cache_hit_tokens' => 5,
+            'total_tokens' => 30,
+        ]);
+
+        $this->assertSame(10, $tokenUsage->getPromptTokens());
+        $this->assertSame(20, $tokenUsage->getCompletionTokens());
+        $this->assertSame(5, $tokenUsage->getCachedTokens());
+        $this->assertSame(30, $tokenUsage->getTotalTokens());
+    }
 }

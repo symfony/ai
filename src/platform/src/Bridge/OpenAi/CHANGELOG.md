@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `gpt-5.4-mini` and `gpt-5.4-nano` to `ModelCatalog`
+ * [BC BREAK] GPT streaming responses now yield `TextDelta`, `ToolCallComplete`, and streamed `TokenUsage` deltas instead of raw strings and `ToolCallResult`
 
 0.3
 ---

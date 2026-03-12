@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -56,8 +57,10 @@ final class Chat
         \assert(is_iterable($stream));
 
         $response = '';
-        foreach ($stream as $chunk) {
-            yield $response .= $chunk;
+        foreach ($stream as $delta) {
+            if ($delta instanceof TextDelta) {
+                yield $response .= (string) $delta;
+            }
         }
 
         $assistantMessage = Message::ofAssistant($response);

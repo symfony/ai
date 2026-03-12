@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * [BC BREAK] Gemini streaming responses now yield `TextDelta`, `BinaryDelta`, `ToolCallComplete`, and `ChoiceDelta` instead of result objects and raw strings
+
 0.6
 ---
 

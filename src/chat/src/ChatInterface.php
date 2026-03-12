@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -29,7 +30,7 @@ interface ChatInterface
     public function submit(UserMessage $message): AssistantMessage;
 
     /**
-     * @return \Generator<string>
+     * @return \Generator<DeltaInterface>
      *
      * @throws ExceptionInterface When the chat submission fails due to agent errors
      */

@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -22,7 +23,9 @@ $result = $platform->invoke('google/gemini-2.5-flash-lite', $messages, [
     'stream' => true,
 ]);
 
-foreach ($result->asStream() as $word) {
-    echo $word;
+foreach ($result->asStream() as $delta) {
+    if ($delta instanceof TextDelta) {
+        echo $delta;
+    }
 }
 echo \PHP_EOL;

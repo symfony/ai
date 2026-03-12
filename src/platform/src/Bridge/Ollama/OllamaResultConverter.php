@@ -15,12 +15,16 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\AI\Platform\Vector\Vector;
 
@@ -103,17 +107,24 @@ final class OllamaResultConverter implements ResultConverterInterface
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
 
-            if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
-                yield new ToolCallResult(...$toolCalls);
+            if ($this->hasThinkingDelta($data)) {
+                yield new ThinkingDelta($data['message']['thinking']);
             }
 
-            yield new OllamaMessageChunk(
-                $data['model'],
-                new \DateTimeImmutable($data['created_at']),
-                $data['message'],
-                $data['done'],
-                $data,
-            );
+            if ($this->hasTextDelta($data)) {
+                yield new TextDelta($data['message']['content']);
+            }
+
+            if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
+                yield new ToolCallComplete(...$toolCalls);
+            }
+
+            if ($this->hasStreamTokenUsage($data)) {
+                yield new TokenUsage(
+                    promptTokens: $data['prompt_eval_count'],
+                    completionTokens: $data['eval_count'],
+                );
+            }
         }
     }
 
@@ -150,5 +161,29 @@ final class OllamaResultConverter implements ResultConverterInterface
     private function isToolCallsStreamFinished(array $data): bool
     {
         return isset($data['done']) && true === $data['done'];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function hasStreamTokenUsage(array $data): bool
+    {
+        return isset($data['prompt_eval_count'], $data['eval_count']);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function hasTextDelta(array $data): bool
+    {
+        return isset($data['message']['content']) && '' !== $data['message']['content'];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function hasThinkingDelta(array $data): bool
+    {
+        return isset($data['message']['thinking']) && '' !== $data['message']['thinking'];
     }
 }

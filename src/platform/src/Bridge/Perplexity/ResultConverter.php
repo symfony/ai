@@ -16,6 +16,8 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -33,7 +35,7 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result), [new StreamListener()]);
+            return new StreamResult($this->convertStream($result));
         }
 
         $data = $result->getData();
@@ -68,16 +70,16 @@ final class ResultConverter implements ResultConverterInterface
     {
         foreach ($result->getDataStream() as $data) {
             if (isset($data['choices'][0]['delta']['content'])) {
-                yield $data['choices'][0]['delta']['content'];
+                yield new TextDelta($data['choices'][0]['delta']['content']);
             }
         }
 
         if (isset($data['search_results'])) {
-            yield ['search_results' => $data['search_results']];
+            yield new MetadataDelta('search_results', $data['search_results']);
         }
 
         if (isset($data['citations'])) {
-            yield ['citations' => $data['citations']];
+            yield new MetadataDelta('citations', $data['citations']);
         }
     }
 

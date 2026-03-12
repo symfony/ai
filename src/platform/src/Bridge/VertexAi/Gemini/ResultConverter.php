@@ -19,6 +19,11 @@ use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ChoiceDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -85,12 +90,21 @@ final class ResultConverter implements ResultConverterInterface
             }
 
             if (1 !== \count($choices)) {
-                yield new ChoiceResult($choices);
+                yield new ChoiceDelta(array_map($this->resultToDelta(...), $choices));
                 continue;
             }
 
-            yield $choices[0]->getContent();
+            yield $this->resultToDelta($choices[0]);
         }
+    }
+
+    private function resultToDelta(ToolCallResult|TextResult|BinaryResult $result): DeltaInterface
+    {
+        return match (true) {
+            $result instanceof TextResult => new TextDelta($result->getContent()),
+            $result instanceof BinaryResult => new BinaryDelta($result->getContent(), $result->getMimeType()),
+            $result instanceof ToolCallResult => new ToolCallComplete(...$result->getContent()),
+        };
     }
 
     /**
