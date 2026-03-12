@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `SummaryGeneratorTransformer` for generating LLM-based summaries of documents
+ * Add support for `includeMetadata` and `includeValues` options in Pinecone bridge
 
 0.4
 ---
