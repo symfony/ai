@@ -55,13 +55,18 @@ final class GeminiApiCatalog implements ModelCatalogInterface
         }
 
         $capabilities = static fn (array $model): array => match (true) {
-            (new UnicodeString($model['name']))->containsAny('tts') => [
+            (new UnicodeString($model['name']))->containsAny(['TTS', 'tts']) => [
                 Capability::INPUT_TEXT,
+                Capability::INPUT_MESSAGES,
+                Capability::INPUT_AUDIO,
                 Capability::TEXT_TO_SPEECH,
                 Capability::OUTPUT_AUDIO,
             ],
-            \array_key_exists('description', $model) && (new UnicodeString($model['description']))->containsAny('Image') => [
+            (new UnicodeString($model['description'] ?? ''))->containsAny(['Image', 'image']) => [
                 Capability::INPUT_TEXT,
+                Capability::INPUT_IMAGE,
+                Capability::TEXT_TO_IMAGE,
+                Capability::IMAGE_TO_IMAGE,
                 Capability::OUTPUT_IMAGE,
             ],
             \in_array('predictLongRunning', $model['supportedGenerationMethods'], true),
@@ -69,7 +74,16 @@ final class GeminiApiCatalog implements ModelCatalogInterface
             \in_array('batchGenerateContent', $model['supportedGenerationMethods'], true),
             \in_array('generateContent', $model['supportedGenerationMethods'], true) => [
                 Capability::INPUT_TEXT,
+                Capability::INPUT_MESSAGES,
+                Capability::INPUT_IMAGE,
+                Capability::INPUT_AUDIO,
+                Capability::INPUT_VIDEO,
+                Capability::INPUT_PDF,
                 Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_AUDIO,
+                Capability::OUTPUT_IMAGE,
+                Capability::OUTPUT_STREAMING,
+                Capability::OUTPUT_STRUCTURED,
                 Capability::TOOL_CALLING,
             ],
             \in_array('embedContent', $model['supportedGenerationMethods'], true),
@@ -78,10 +92,10 @@ final class GeminiApiCatalog implements ModelCatalogInterface
                 Capability::EMBEDDINGS,
                 Capability::OUTPUT_EMBEDDINGS,
             ],
-            \in_array('predict', $model['supportedGenerationMethods'], true) => [
-                Capability::OUTPUT_IMAGE,
+            \in_array('createCachedContent', $model['supportedGenerationMethods'], true) => [
+                Capability::CACHE,
             ],
-            \array_key_exists('thinking', $model) && $model['thinking'] => [
+            $model['thinking'] ?? false => [
                 Capability::THINKING,
             ],
             default => throw new InvalidArgumentException(\sprintf('The model "%s" is not supported.', $model['name'])),

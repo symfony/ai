@@ -59,4 +59,7 @@ enum Capability: string
 
     // THINKING
     case THINKING = 'thinking';
+
+    // CACHE
+    case CACHE = 'cache';
 }
