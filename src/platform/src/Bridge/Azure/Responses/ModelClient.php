@@ -31,6 +31,7 @@ final class ModelClient implements ModelClientInterface
         HttpClientInterface $httpClient,
         string $baseUrl,
         #[\SensitiveParameter] private readonly string $apiKey,
+        private readonly ?string $deployment = null,
     ) {
         if ('' === $baseUrl) {
             throw new InvalidArgumentException('The base URL must not be empty.');
@@ -57,7 +58,7 @@ final class ModelClient implements ModelClientInterface
             'headers' => [
                 'api-key' => $this->apiKey,
             ],
-            'json' => array_merge($options, ['model' => $model->getName()], $payload),
+            'json' => array_merge($options, ['model' => $this->deployment ?? $model->getName()], $payload),
         ]));
     }
 }

@@ -75,6 +75,32 @@ final class ModelClientTest extends TestCase
         };
 
         $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new ModelClient($httpClient, 'test.openai.azure.com', 'test-api-key', 'gpt-4o');
+        $client->request(new ResponsesModel('gpt-4o'), ['input' => [['role' => 'user', 'content' => 'Hello']]]);
+    }
+
+    public function testItUsesDeploymentNameInsteadOfModelName()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame('{"model":"my-custom-deployment","input":[{"role":"user","content":"Hello"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new ModelClient($httpClient, 'test.openai.azure.com', 'test-api-key', 'my-custom-deployment');
+        $client->request(new ResponsesModel('gpt-4o'), ['input' => [['role' => 'user', 'content' => 'Hello']]]);
+    }
+
+    public function testItFallsBackToModelNameWhenDeploymentIsNull()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame('{"model":"gpt-4o","input":[{"role":"user","content":"Hello"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient([$resultCallback]);
         $client = new ModelClient($httpClient, 'test.openai.azure.com', 'test-api-key');
         $client->request(new ResponsesModel('gpt-4o'), ['input' => [['role' => 'user', 'content' => 'Hello']]]);
     }
