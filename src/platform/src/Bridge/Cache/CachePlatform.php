@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Cache;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
@@ -62,10 +64,17 @@ final class CachePlatform implements PlatformInterface
             return $this->platform->invoke($model, $input, $options);
         }
 
+        $normalizedInput = match (true) {
+            \is_string($input) => md5($input),
+            \is_array($input) => json_encode($input),
+            $input instanceof MessageBag => $input->getId()->toString(),
+            default => throw new InvalidArgumentException(\sprintf('Unsupported input type: %s', get_debug_type($input))),
+        };
+
         $cacheKey = (new UnicodeString())->join([
             $options['prompt_cache_key'] ?? $this->cacheKey,
             (new UnicodeString($model))->camel(),
-            \is_string($input) ? md5($input) : md5(json_encode($input)),
+            $normalizedInput,
         ]);
 
         $ttl = $options['prompt_cache_ttl'] ?? $this->cacheTtl;
