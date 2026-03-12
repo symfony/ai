@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
@@ -136,6 +137,22 @@ class MessageBag implements \Countable, \IteratorAggregate
         }
 
         return false;
+    }
+
+    public function latestAs(Role $role): MessageInterface
+    {
+        $messages = array_filter(
+            $this->messages,
+            static fn (MessageInterface $message): bool => $message->getRole() === $role,
+        );
+
+        $message = array_pop($messages);
+
+        if (!$message instanceof MessageInterface) {
+            throw new InvalidArgumentException(\sprintf('No message found for role "%s".', $role->name));
+        }
+
+        return $message;
     }
 
     public function count(): int
