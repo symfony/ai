@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by pkothmair at 2026-03-05T14:17:12Z
+
+@chr-hertel the pr from yesterday works, but only if the deployment name is the same as the model name.
+
+This should fix cases, where the deployment name is not the model name.
+
+in theory we could also now allow the `deployment` option in the `ai_azure_platform.yaml` to be optional, when a responses model is used and deployments are named after models. That way every responses model could be handled by the same platform in the config.
+
+Let me know what you think 👍
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-09T20:01:32Z
+
+> so any project where the Azure deployment is not named identically to the OpenAI model
+
+so guess my setup :see_no_evil: :laughing:
+
+---------------------------------------------------------------------------
+
+by pkothmair at 2026-03-10T16:00:46Z
+
+> so guess my setup 🙈 😆
+
+@chr-hertel yes, mine too. only caught that because of some misconfiguration
