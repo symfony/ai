@@ -27,7 +27,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly bool $euRouting = false,
+        private readonly RegionEnum $region = RegionEnum::WORLD,
         #[\SensitiveParameter] private readonly ?string $apiKey = null,
     ) {
         parent::__construct();
@@ -169,6 +169,9 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
 
     protected function getApiBaseUrl(): string
     {
-        return $this->euRouting ? 'https://eu.openrouter.ai/api/' : 'https://openrouter.ai/api/';
+        return match ($this->region) {
+            RegionEnum::EU => 'https://eu.openrouter.ai/api/',
+            default => 'https://openrouter.ai/api/',
+        };
     }
 }

@@ -30,12 +30,15 @@ final class PlatformFactory
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
-        bool $euRouting = false,
+        RegionEnum $region = RegionEnum::WORLD,
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return GenericPlatformFactory::create(
-            baseUrl: $euRouting ? 'https://eu.openrouter.ai/api' : 'https://openrouter.ai/api',
+            baseUrl: match ($region) {
+                RegionEnum::EU => 'https://eu.openrouter.ai/api',
+                default => 'https://openrouter.ai/api',
+            },
             apiKey: $apiKey,
             httpClient: $httpClient,
             modelCatalog: $modelCatalog,
