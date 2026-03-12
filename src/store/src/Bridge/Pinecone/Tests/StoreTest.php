@@ -457,6 +457,52 @@ final class StoreTest extends TestCase
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 
+    public function testCountReturnsDocumentCount()
+    {
+        $dataResource = $this->createMock(DataResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($dataResource);
+
+        $response = $this->createMock(Response::class);
+        $response->method('json')->willReturn([
+            'totalVectorCount' => 42,
+            'namespaces' => [],
+        ]);
+
+        $dataResource->expects($this->once())
+            ->method('describeIndexStats')
+            ->willReturn($response);
+
+        $this->assertSame(42, self::createStore($client)->count());
+    }
+
+    public function testCountReturnsNamespaceDocumentCount()
+    {
+        $dataResource = $this->createMock(DataResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($dataResource);
+
+        $response = $this->createMock(Response::class);
+        $response->method('json')->willReturn([
+            'totalVectorCount' => 100,
+            'namespaces' => [
+                'my-namespace' => ['vectorCount' => 42],
+            ],
+        ]);
+
+        $dataResource->expects($this->once())
+            ->method('describeIndexStats')
+            ->willReturn($response);
+
+        $this->assertSame(42, self::createStore($client, namespace: 'my-namespace')->count());
+    }
+
     /**
      * @param array<string, mixed> $filter
      */
