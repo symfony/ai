@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
@@ -265,8 +266,10 @@ class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        $this->assertSame('Hello', $chunks[0]);
-        $this->assertSame(' world', $chunks[1]);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello', $chunks[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $chunks[1]);
+        $this->assertSame(' world', $chunks[1]->getText());
 
         $this->assertInstanceOf(TokenUsage::class, $chunks[2]);
         $this->assertSame(11, $chunks[2]->getPromptTokens());

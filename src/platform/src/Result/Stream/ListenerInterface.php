@@ -18,7 +18,7 @@ interface ListenerInterface
 {
     public function onStart(StartEvent $event): void;
 
-    public function onChunk(ChunkEvent $event): void;
+    public function onDelta(DeltaEvent $event): void;
 
     public function onComplete(CompleteEvent $event): void;
 }

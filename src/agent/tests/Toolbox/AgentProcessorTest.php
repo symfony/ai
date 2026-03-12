@@ -29,6 +29,7 @@ use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -250,8 +251,8 @@ class AgentProcessorTest extends TestCase
             ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', new SourceCollection([$source1, $source2])));
 
         $result = new StreamResult((static function () use ($toolCall) {
-            yield 'chunk1';
-            yield 'chunk2';
+            yield new TextDelta('chunk1');
+            yield new TextDelta('chunk2');
             yield new ToolCallResult($toolCall);
         })());
 
@@ -285,8 +286,8 @@ class AgentProcessorTest extends TestCase
             ->willReturn(new ToolResult($toolCall, 'Tool responded'));
 
         $result = new StreamResult((static function () use ($toolCall) {
-            yield 'partial-1';
-            yield 'partial-2';
+            yield new TextDelta('partial-1');
+            yield new TextDelta('partial-2');
             yield new ToolCallResult($toolCall);
         })());
 
@@ -323,8 +324,8 @@ class AgentProcessorTest extends TestCase
             ->willReturn(new ToolResult($toolCall, 'Tool responded'));
 
         $result = new StreamResult((static function () use ($toolCall) {
-            yield 'partial-1';
-            yield 'partial-2';
+            yield new TextDelta('partial-1');
+            yield new TextDelta('partial-2');
             yield new ToolCallResult($toolCall);
         })());
         $result->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));

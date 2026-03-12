@@ -13,7 +13,8 @@ namespace Symfony\AI\Platform\Tests\Result;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
-use Symfony\AI\Platform\Result\Stream\ChunkEvent;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\StreamResult;
 
 final class StreamResultTest extends TestCase
@@ -21,8 +22,8 @@ final class StreamResultTest extends TestCase
     public function testGetContent()
     {
         $generator = (static function () {
-            yield 'data1';
-            yield 'data2';
+            yield new TextDelta('data1');
+            yield new TextDelta('data2');
         })();
 
         $result = new StreamResult($generator);
@@ -31,47 +32,53 @@ final class StreamResultTest extends TestCase
         $content = iterator_to_array($result->getContent());
 
         $this->assertCount(2, $content);
-        $this->assertSame('data1', $content[0]);
-        $this->assertSame('data2', $content[1]);
+        $this->assertInstanceOf(TextDelta::class, $content[0]);
+        $this->assertSame('data1', $content[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $content[1]);
+        $this->assertSame('data2', $content[1]->getText());
     }
 
-    public function testGetChunk()
+    public function testGetDelta()
     {
         $result = new StreamResult((static function () {
-            yield 'chunk1';
-            yield 'chunk2';
+            yield new TextDelta('chunk1');
+            yield new TextDelta('chunk2');
         })());
 
-        $capturedChunks = [];
-        $result->addListener(new class($capturedChunks) extends AbstractStreamListener {
-            /** @param array<string> $capturedChunks */
-            public function __construct(private array &$capturedChunks) /* @phpstan-ignore property.onlyWritten */
+        $capturedDeltas = [];
+        $result->addListener(new class($capturedDeltas) extends AbstractStreamListener {
+            /** @param array<TextDelta> $capturedDeltas */
+            public function __construct(private array &$capturedDeltas) /* @phpstan-ignore property.onlyWritten */
             {
             }
 
-            public function onChunk(ChunkEvent $event): void
+            public function onDelta(DeltaEvent $event): void
             {
-                $this->capturedChunks[] = $event->getChunk();
+                $this->capturedDeltas[] = $event->getDelta();
             }
         });
 
         iterator_to_array($result->getContent());
 
-        $this->assertSame(['chunk1', 'chunk2'], $capturedChunks);
+        $this->assertCount(2, $capturedDeltas);
+        $this->assertInstanceOf(TextDelta::class, $capturedDeltas[0]);
+        $this->assertSame('chunk1', $capturedDeltas[0]->getText());
+        $this->assertSame('chunk2', $capturedDeltas[1]->getText());
     }
 
     public function testListenerCanAddMetadataDuringStreaming()
     {
         $result = new StreamResult((static function () {
-            yield 'chunk1';
-            yield 'chunk2';
+            yield new TextDelta('chunk1');
+            yield new TextDelta('chunk2');
         })());
 
-        // Listener that adds metadata when it sees a specific chunk
+        // Listener that adds metadata when it sees a specific delta
         $result->addListener(new class extends AbstractStreamListener {
-            public function onChunk(ChunkEvent $event): void
+            public function onDelta(DeltaEvent $event): void
             {
-                if ('chunk2' === $event->getChunk()) {
+                $delta = $event->getDelta();
+                if ($delta instanceof TextDelta && 'chunk2' === $delta->getText()) {
                     $event->getResult()->getMetadata()->add('seen_chunk2', true);
                 }
             }

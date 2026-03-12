@@ -16,6 +16,11 @@ use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingContent;
@@ -135,10 +140,17 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        $this->assertCount(1, $chunks);
-        $this->assertInstanceOf(ToolCallResult::class, $chunks[0]);
+        // Expect: ToolCallStart, 3x ToolInputDelta, ToolCallResult
+        $this->assertInstanceOf(ToolCallStart::class, $chunks[0]);
+        $this->assertSame('toolu_01ABC123', $chunks[0]->getId());
+        $this->assertSame('get_weather', $chunks[0]->getName());
+        $this->assertInstanceOf(ToolInputDelta::class, $chunks[1]);
+        $this->assertInstanceOf(ToolInputDelta::class, $chunks[2]);
+        $this->assertInstanceOf(ToolInputDelta::class, $chunks[3]);
 
-        $toolCalls = $chunks[0]->getContent();
+        $toolCallResult = $chunks[\count($chunks) - 1];
+        $this->assertInstanceOf(ToolCallResult::class, $toolCallResult);
+        $toolCalls = $toolCallResult->getContent();
         $this->assertCount(1, $toolCalls);
         $this->assertSame('toolu_01ABC123', $toolCalls[0]->getId());
         $this->assertSame('get_weather', $toolCalls[0]->getName());
@@ -202,11 +214,15 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        $this->assertSame('Let me check ', $chunks[0]);
-        $this->assertSame('the weather.', $chunks[1]);
-        $this->assertInstanceOf(ToolCallResult::class, $chunks[2]);
+        // Filter to get just text deltas and the final ToolCallResult
+        $textDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof TextDelta));
+        $this->assertSame('Let me check ', $textDeltas[0]->getText());
+        $this->assertSame('the weather.', $textDeltas[1]->getText());
 
-        $toolCalls = $chunks[2]->getContent();
+        $toolCallResult = $chunks[\count($chunks) - 1];
+        $this->assertInstanceOf(ToolCallResult::class, $toolCallResult);
+
+        $toolCalls = $toolCallResult->getContent();
         $this->assertCount(1, $toolCalls);
         $this->assertSame('toolu_01XYZ789', $toolCalls[0]->getId());
         $this->assertSame('get_weather', $toolCalls[0]->getName());
@@ -241,13 +257,25 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        $this->assertCount(2, $chunks);
+        // Expect: ThinkingDelta("Let me "), ThinkingDelta("reason about this."),
+        //         ThinkingSignature("sig_abc"), ThinkingSignature("123"),
+        //         ThinkingContent (accumulated), TextDelta("The answer is 42.")
+        $thinkingDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingDelta));
+        $this->assertCount(2, $thinkingDeltas);
+        $this->assertSame('Let me ', $thinkingDeltas[0]->getThinking());
+        $this->assertSame('reason about this.', $thinkingDeltas[1]->getThinking());
 
-        $this->assertInstanceOf(ThinkingContent::class, $chunks[0]);
-        $this->assertSame('Let me reason about this.', $chunks[0]->thinking);
-        $this->assertSame('sig_abc123', $chunks[0]->signature);
+        $signatures = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingSignature));
+        $this->assertCount(2, $signatures);
 
-        $this->assertSame('The answer is 42.', $chunks[1]);
+        $thinkingContents = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingContent));
+        $this->assertCount(1, $thinkingContents);
+        $this->assertSame('Let me reason about this.', $thinkingContents[0]->thinking);
+        $this->assertSame('sig_abc123', $thinkingContents[0]->signature);
+
+        $textDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof TextDelta));
+        $this->assertCount(1, $textDeltas);
+        $this->assertSame('The answer is 42.', $textDeltas[0]->getText());
     }
 
     public function testStreamingThinkingWithToolCallsYieldsBoth()
@@ -278,17 +306,19 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        $this->assertCount(3, $chunks);
+        $thinkingContents = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingContent));
+        $this->assertCount(1, $thinkingContents);
+        $this->assertSame('I need to look this up.', $thinkingContents[0]->thinking);
+        $this->assertSame('sig_xyz', $thinkingContents[0]->signature);
 
-        $this->assertInstanceOf(ThinkingContent::class, $chunks[0]);
-        $this->assertSame('I need to look this up.', $chunks[0]->thinking);
-        $this->assertSame('sig_xyz', $chunks[0]->signature);
+        $textDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof TextDelta));
+        $this->assertCount(1, $textDeltas);
+        $this->assertSame('Let me search.', $textDeltas[0]->getText());
 
-        $this->assertSame('Let me search.', $chunks[1]);
-
-        $this->assertInstanceOf(ToolCallResult::class, $chunks[2]);
-        $this->assertSame('toolu_01', $chunks[2]->getContent()[0]->getId());
-        $this->assertSame('search', $chunks[2]->getContent()[0]->getName());
+        $toolCallResult = $chunks[\count($chunks) - 1];
+        $this->assertInstanceOf(ToolCallResult::class, $toolCallResult);
+        $this->assertSame('toolu_01', $toolCallResult->getContent()[0]->getId());
+        $this->assertSame('search', $toolCallResult->getContent()[0]->getName());
     }
 
     public function testStreamingThinkingWithoutSignature()
@@ -314,10 +344,10 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        $this->assertCount(2, $chunks);
-        $this->assertInstanceOf(ThinkingContent::class, $chunks[0]);
-        $this->assertSame('Quick thought.', $chunks[0]->thinking);
-        $this->assertNull($chunks[0]->signature);
+        $thinkingContents = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingContent));
+        $this->assertCount(1, $thinkingContents);
+        $this->assertSame('Quick thought.', $thinkingContents[0]->thinking);
+        $this->assertNull($thinkingContents[0]->signature);
     }
 
     public function testNonStreamingResponseWithThinkingAndTextContent()

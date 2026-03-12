@@ -19,6 +19,8 @@ use Symfony\AI\Platform\Exception\InvalidRequestException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingContent;
@@ -166,14 +168,20 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        $this->assertCount(3, $chunks);
+        $thinkingDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingDelta));
+        $this->assertCount(2, $thinkingDeltas);
+        $this->assertSame('Let me ', $thinkingDeltas[0]->getThinking());
+        $this->assertSame('think about this.', $thinkingDeltas[1]->getThinking());
 
-        $this->assertInstanceOf(ThinkingContent::class, $chunks[0]);
-        $this->assertSame('Let me think about this.', $chunks[0]->thinking);
-        $this->assertNull($chunks[0]->signature);
+        $thinkingContents = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingContent));
+        $this->assertCount(1, $thinkingContents);
+        $this->assertSame('Let me think about this.', $thinkingContents[0]->thinking);
+        $this->assertNull($thinkingContents[0]->signature);
 
-        $this->assertSame('The answer ', $chunks[1]);
-        $this->assertSame('is 42.', $chunks[2]);
+        $textDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof TextDelta));
+        $this->assertCount(2, $textDeltas);
+        $this->assertSame('The answer ', $textDeltas[0]->getText());
+        $this->assertSame('is 42.', $textDeltas[1]->getText());
     }
 
     public function testStreamingReasoningOnlyYieldsThinkingContent()
@@ -193,9 +201,13 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        $this->assertCount(1, $chunks);
-        $this->assertInstanceOf(ThinkingContent::class, $chunks[0]);
-        $this->assertSame('Deep reasoning here.', $chunks[0]->thinking);
+        $thinkingDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingDelta));
+        $this->assertCount(1, $thinkingDeltas);
+        $this->assertSame('Deep reasoning here.', $thinkingDeltas[0]->getThinking());
+
+        $thinkingContents = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingContent));
+        $this->assertCount(1, $thinkingContents);
+        $this->assertSame('Deep reasoning here.', $thinkingContents[0]->thinking);
     }
 
     public function testStreamingTextWithoutReasoningUnchanged()
@@ -217,7 +229,9 @@ final class ResultConverterTest extends TestCase
         }
 
         $this->assertCount(2, $chunks);
-        $this->assertSame('Hello, ', $chunks[0]);
-        $this->assertSame('world!', $chunks[1]);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello, ', $chunks[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $chunks[1]);
+        $this->assertSame('world!', $chunks[1]->getText());
     }
 }

@@ -18,6 +18,11 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\Usage;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingContent;
@@ -71,7 +76,13 @@ final class ResultConverter implements ResultConverterInterface
         $reasoning = '';
 
         foreach ($result->getDataStream() as $data) {
+            // Handle usage
+            if (isset($data['usage'])) {
+                yield new Usage($data['usage']);
+            }
+
             if ($this->streamIsToolCall($data)) {
+                yield from $this->yieldToolCallDeltas($toolCalls, $data);
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
 
@@ -83,6 +94,7 @@ final class ResultConverter implements ResultConverterInterface
             $reasoningContent = $data['choices'][0]['delta']['reasoning_content'] ?? null;
             if (null !== $reasoningContent && '' !== $reasoningContent) {
                 $reasoning .= $reasoningContent;
+                yield new ThinkingDelta($reasoningContent);
                 continue;
             }
 
@@ -96,7 +108,7 @@ final class ResultConverter implements ResultConverterInterface
                 continue;
             }
 
-            yield $data['choices'][0]['delta']['content'];
+            yield new TextDelta($data['choices'][0]['delta']['content']);
         }
 
         // Yield any remaining reasoning if the stream ends without content
@@ -132,6 +144,23 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         return $toolCalls;
+    }
+
+    /**
+     * @param array<string, mixed> $toolCalls Already-accumulated tool calls (before this chunk)
+     * @param array<string, mixed> $data
+     *
+     * @return \Generator<ToolCallStart|ToolInputDelta>
+     */
+    private function yieldToolCallDeltas(array $toolCalls, array $data): \Generator
+    {
+        foreach ($data['choices'][0]['delta']['tool_calls'] ?? [] as $i => $toolCall) {
+            if (isset($toolCall['id'])) {
+                yield new ToolCallStart($toolCall['id'], $toolCall['function']['name']);
+            } elseif (isset($toolCall['function']['arguments'])) {
+                yield new ToolInputDelta($toolCalls[$i]['id'] ?? '', $toolCalls[$i]['function']['name'] ?? '', $toolCall['function']['arguments']);
+            }
+        }
     }
 
     /**

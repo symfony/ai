@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Result;
 
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+
 /**
  * Represents a thinking/reasoning block from a model's response.
  *
@@ -20,7 +22,7 @@ namespace Symfony\AI\Platform\Result;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-final class ThinkingContent
+final class ThinkingContent implements DeltaInterface
 {
     public function __construct(
         public readonly string $thinking,
