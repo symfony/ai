@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenRouter;
 
-enum RegionEnum: string
+enum Region: string
 {
     case EU = 'eu';
     case WORLD = 'world';
