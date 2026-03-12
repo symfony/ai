@@ -539,4 +539,52 @@ final class StoreTest extends TestCase
         $store = new Store($redis, 'test:vectors');
         $this->assertFalse($store->supports(HybridQuery::class));
     }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $redis = $this->createMock(\Redis::class);
+
+        $store = new Store($redis, 'test_index');
+
+        $redis->expects($this->once())
+            ->method('rawCommand')
+            ->with('FT.INFO', 'test_index')
+            ->willReturn([
+                'index_name', 'test_index',
+                'num_docs', '42',
+                'num_terms', '100',
+            ]);
+
+        $this->assertSame(42, $store->count());
+    }
+
+    public function testCountReturnsZeroWhenResultIsNotArray()
+    {
+        $redis = $this->createMock(\Redis::class);
+
+        $store = new Store($redis, 'test_index');
+
+        $redis->expects($this->once())
+            ->method('rawCommand')
+            ->with('FT.INFO', 'test_index')
+            ->willReturn(false);
+
+        $this->assertSame(0, $store->count());
+    }
+
+    public function testCountThrowsRuntimeExceptionOnRedisError()
+    {
+        $redis = $this->createMock(\Redis::class);
+
+        $store = new Store($redis, 'test_index');
+
+        $redis->expects($this->once())
+            ->method('rawCommand')
+            ->with('FT.INFO', 'test_index')
+            ->willThrowException(new \RedisException('Connection refused'));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to get Redis index info: "Connection refused".');
+        $store->count();
+    }
 }
