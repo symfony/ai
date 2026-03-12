@@ -11,10 +11,12 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+
 /**
  * @author Shaun Johnston <shaun@snj.au>
  */
-final class OllamaMessageChunk implements \Stringable
+final class OllamaMessageChunk implements \Stringable, DeltaInterface
 {
     /**
      * @param array<string, mixed> $message

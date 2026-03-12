@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
@@ -183,6 +184,7 @@ final class ResultConverterTest extends TestCase
 
         $items = iterator_to_array($result->getContent());
         $this->assertCount(1, $items);
-        $this->assertSame('Hello', $items[0]);
+        $this->assertInstanceOf(TextDelta::class, $items[0]);
+        $this->assertSame('Hello', $items[0]->getText());
     }
 }

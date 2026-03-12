@@ -14,8 +14,9 @@ namespace Symfony\AI\Agent\Toolbox;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
-use Symfony\AI\Platform\Result\Stream\ChunkEvent;
 use Symfony\AI\Platform\Result\Stream\CompleteEvent;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\Stream\StartEvent;
 use Symfony\AI\Platform\Result\ToolCallResult;
 
@@ -40,28 +41,28 @@ final class StreamListener extends AbstractStreamListener
         $this->toolHandled = false;
     }
 
-    public function onChunk(ChunkEvent $event): void
+    public function onDelta(DeltaEvent $event): void
     {
         // Skip further processing if a tool call has already been handled
         if ($this->toolHandled) {
-            $event->skipChunk();
+            $event->skipDelta();
 
             return;
         }
 
-        $chunk = $event->getChunk();
+        $delta = $event->getDelta();
 
         // Build up assistant message for tool call response.
-        if (\is_string($chunk)) {
-            $this->buffer .= $chunk;
+        if ($delta instanceof TextDelta) {
+            $this->buffer .= $delta->getText();
         }
 
-        if (!$chunk instanceof ToolCallResult) {
+        if (!$delta instanceof ToolCallResult) {
             return;
         }
 
-        $this->result = ($this->handleToolCallsCallback)($chunk, Message::ofAssistant($this->buffer));
-        $event->setChunk($this->result->getContent());
+        $this->result = ($this->handleToolCallsCallback)($delta, Message::ofAssistant($this->buffer));
+        $event->setDelta($this->result->getContent());
 
         $this->toolHandled = true;
     }

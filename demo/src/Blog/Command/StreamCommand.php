@@ -46,7 +46,7 @@ final readonly class StreamCommand
         \assert($result instanceof StreamResult);
 
         foreach ($result->getContent() as $word) {
-            $io->write($word);
+            $io->write((string) $word);
         }
 
         $io->newLine(2);

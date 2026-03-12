@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -89,7 +90,12 @@ final class ResultConverter implements ResultConverterInterface
                 continue;
             }
 
-            yield $choices[0]->getContent();
+            $choice = $choices[0];
+            if ($choice instanceof TextResult) {
+                yield new TextDelta($choice->getContent());
+            } else {
+                yield $choice;
+            }
         }
     }
 

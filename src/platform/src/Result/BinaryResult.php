@@ -12,11 +12,12 @@
 namespace Symfony\AI\Platform\Result;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class BinaryResult extends BaseResult
+final class BinaryResult extends BaseResult implements DeltaInterface
 {
     public function __construct(
         private string $data,

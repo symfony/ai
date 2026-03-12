@@ -1,6 +1,30 @@
 UPGRADE FROM 0.6 to 0.7
 =======================
 
+Platform
+--------
+
+ * `ChunkEvent` has been replaced by `DeltaEvent`. The `onChunk(ChunkEvent)` method
+   on `ListenerInterface` is now `onDelta(DeltaEvent)`. Update all implementations:
+   - `onChunk(ChunkEvent $event)` → `onDelta(DeltaEvent $event)`
+   - `$event->getChunk()` → `$event->getDelta()`
+   - `$event->setChunk(...)` → `$event->setDelta(...)`
+   - `$event->skipChunk()` → `$event->skipDelta()`
+   - `$event->isChunkSkipped()` → `$event->isDeltaSkipped()`
+ * Stream generators in bridge `ResultConverter` classes now yield typed
+   `DeltaInterface` objects instead of raw strings. Consumers iterating
+   `StreamResult::getContent()` that expect `string` chunks must check for
+   `TextDelta` instead:
+   - `is_string($chunk)` → `$chunk instanceof TextDelta`, then use `$chunk->getText()`
+ * New streaming delta types in `Symfony\AI\Platform\Result\Stream\Delta\`:
+   `TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ToolCallStart`,
+   `ToolInputDelta`, `Usage`. These are yielded incrementally by bridge
+   converters alongside the existing batch types (`ToolCallResult`,
+   `ThinkingContent`).
+ * `ToolCallResult`, `ThinkingContent`, `TokenUsage`,
+   `OllamaMessageChunk`, `ChoiceResult`, and `BinaryResult` now
+   implement `DeltaInterface`.
+
 Store
 -----
 
@@ -12,6 +36,13 @@ Store
    -$retriever = new Retriever($store, $vectorizer, $logger);
    +$retriever = new Retriever($store, $vectorizer, logger: $logger);
    ```
+
+Agent
+-----
+
+ * `Toolbox\StreamListener::onChunk()` has been renamed to `onDelta()`.
+   The listener now checks `$delta instanceof TextDelta` instead of
+   `is_string($chunk)` to accumulate the assistant text buffer.
 
 UPGRADE FROM 0.5 to 0.6
 =======================

@@ -13,6 +13,9 @@ namespace Symfony\AI\Platform\Bridge\Generic\Completions;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
@@ -32,6 +35,7 @@ trait CompletionsConversionTrait
         $toolCalls = [];
         foreach ($result->getDataStream() as $data) {
             if ($this->streamIsToolCall($data)) {
+                yield from $this->yieldToolCallDeltas($toolCalls, $data);
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
 
@@ -43,7 +47,7 @@ trait CompletionsConversionTrait
                 continue;
             }
 
-            yield $data['choices'][0]['delta']['content'];
+            yield new TextDelta($data['choices'][0]['delta']['content']);
         }
     }
 
@@ -74,6 +78,23 @@ trait CompletionsConversionTrait
         }
 
         return $toolCalls;
+    }
+
+    /**
+     * @param array<string, mixed> $toolCalls Already-accumulated tool calls (before this chunk)
+     * @param array<string, mixed> $data
+     *
+     * @return \Generator<ToolCallStart|ToolInputDelta>
+     */
+    protected function yieldToolCallDeltas(array $toolCalls, array $data): \Generator
+    {
+        foreach ($data['choices'][0]['delta']['tool_calls'] ?? [] as $i => $toolCall) {
+            if (isset($toolCall['id'])) {
+                yield new ToolCallStart($toolCall['id'], $toolCall['function']['name']);
+            } elseif (isset($toolCall['function']['arguments'])) {
+                yield new ToolInputDelta($toolCalls[$i]['id'] ?? '', $toolCalls[$i]['function']['name'] ?? '', $toolCall['function']['arguments']);
+            }
+        }
     }
 
     /**

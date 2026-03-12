@@ -12,29 +12,25 @@
 namespace Symfony\AI\Platform\Bridge\Perplexity;
 
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
-use Symfony\AI\Platform\Result\Stream\ChunkEvent;
+use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class StreamListener extends AbstractStreamListener
 {
-    public function onChunk(ChunkEvent $event): void
+    public function onDelta(DeltaEvent $event): void
     {
-        $chunk = $event->getChunk();
+        $delta = $event->getDelta();
 
-        if (!\is_array($chunk)) {
-            return;
+        if ($delta instanceof PerplexitySearchResults) {
+            $event->getMetadata()->add('search_results', $delta->getSearchResults());
+            $event->skipDelta();
         }
 
-        if (isset($chunk['search_results'])) {
-            $event->getMetadata()->add('search_results', $chunk['search_results']);
-            $event->skipChunk();
-        }
-
-        if (isset($chunk['citations'])) {
-            $event->getMetadata()->add('citations', $chunk['citations']);
-            $event->skipChunk();
+        if ($delta instanceof PerplexityCitations) {
+            $event->getMetadata()->add('citations', $delta->getCitations());
+            $event->skipDelta();
         }
     }
 }

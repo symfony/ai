@@ -202,10 +202,12 @@ final class OllamaResultConverterTest extends TestCase
         $this->assertSame('deepseek-r1:latest', $chunks->current()->raw['model']);
         $this->assertArrayNotHasKey('total_duration', $chunks->current()->raw);
         $chunks->next();
+        $this->assertInstanceOf(OllamaMessageChunk::class, $chunks->current());
         $this->assertSame('', $chunks->current()->getContent());
         $this->assertSame(' hard', $chunks->current()->getThinking());
         $this->assertFalse($chunks->current()->isDone());
         $chunks->next();
+        $this->assertInstanceOf(OllamaMessageChunk::class, $chunks->current());
         $this->assertSame('Hello', $chunks->current()->getContent());
         $this->assertNull($chunks->current()->getThinking());
         $this->assertFalse($chunks->current()->isDone());
