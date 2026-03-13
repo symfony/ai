@@ -150,7 +150,7 @@ final class OllamaClientTest extends TestCase
             ]),
         ]);
 
-        $mockResponse = $mockHttpClient->request('GET', 'http://test.example');
+        $mockResponse = $mockHttpClient->request('GET', 'http://test.example/api/chat');
         $rawResult = new RawHttpResult($mockResponse);
         $converter = new OllamaResultConverter();
 
@@ -162,12 +162,15 @@ final class OllamaClientTest extends TestCase
         $regularMockHttpClient = new MockHttpClient([
             new JsonMockResponse([
                 'model' => 'llama3.2',
-                'message' => ['role' => 'assistant', 'content' => 'Hello world'],
+                'message' => [
+                    'role' => 'assistant',
+                    'content' => 'Hello world',
+                ],
                 'done' => true,
             ]),
         ]);
 
-        $regularMockResponse = $regularMockHttpClient->request('GET', 'http://test.example');
+        $regularMockResponse = $regularMockHttpClient->request('GET', 'http://test.example/api/chat');
         $regularRawResult = new RawHttpResult($regularMockResponse);
         $regularResult = $converter->convert($regularRawResult, ['stream' => false]);
 
@@ -338,6 +341,31 @@ final class OllamaClientTest extends TestCase
         );
 
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testTextGenerationIsSupported()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'model' => 'foo',
+                'response' => 'General Kenobi',
+                'done' => true,
+                'done_reason' => 'stop',
+            ]),
+        ], 'http://127.0.0.1:1234');
+
+        $client = new OllamaClient($httpClient);
+        $response = $client->request(new Ollama('llama3.2', [
+            Capability::INPUT_TEXT,
+        ]), 'Hello there');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+        $this->assertSame([
+            'model' => 'foo',
+            'response' => 'General Kenobi',
+            'done' => true,
+            'done_reason' => 'stop',
+        ], $response->getData());
     }
 
     /**

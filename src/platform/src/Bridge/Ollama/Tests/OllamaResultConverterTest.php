@@ -34,6 +34,25 @@ final class OllamaResultConverterTest extends TestCase
         $this->assertFalse($converter->supports(new Model('any-model')));
     }
 
+    public function testConvertTextGeneration()
+    {
+        $converter = new OllamaResultConverter();
+        $rawResult = new InMemoryRawResult([
+            'model' => 'foo',
+            'response' => 'Hello world',
+        ], object: new class {
+            public function getInfo(): string
+            {
+                return '/api/generate';
+            }
+        });
+
+        $result = $converter->convert($rawResult);
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('Hello world', $result->getContent());
+    }
+
     public function testConvertTextResponse()
     {
         $converter = new OllamaResultConverter();
@@ -41,7 +60,12 @@ final class OllamaResultConverterTest extends TestCase
             'message' => [
                 'content' => 'Hello world',
             ],
-        ]);
+        ], object: new class {
+            public function getInfo(): string
+            {
+                return '/api/chat';
+            }
+        });
 
         $result = $converter->convert($rawResult);
 
@@ -64,7 +88,12 @@ final class OllamaResultConverterTest extends TestCase
                     ],
                 ],
             ],
-        ]);
+        ], object: new class {
+            public function getInfo(): string
+            {
+                return '/api/chat';
+            }
+        });
 
         $result = $converter->convert($rawResult);
 
@@ -97,7 +126,12 @@ final class OllamaResultConverterTest extends TestCase
                     ],
                 ],
             ],
-        ]);
+        ], object: new class {
+            public function getInfo(): string
+            {
+                return '/api/chat';
+            }
+        });
 
         $result = $converter->convert($rawResult);
 
@@ -117,7 +151,12 @@ final class OllamaResultConverterTest extends TestCase
     public function testThrowsExceptionWhenNoMessage()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult([]);
+        $rawResult = new InMemoryRawResult([], object: new class {
+            public function getInfo(): string
+            {
+                return '/api/chat';
+            }
+        });
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Response does not contain message');
@@ -130,7 +169,12 @@ final class OllamaResultConverterTest extends TestCase
         $converter = new OllamaResultConverter();
         $rawResult = new InMemoryRawResult([
             'message' => [],
-        ]);
+        ], object: new class {
+            public function getInfo(): string
+            {
+                return '/api/chat';
+            }
+        });
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Message does not contain content');
@@ -140,7 +184,8 @@ final class OllamaResultConverterTest extends TestCase
 
     public function testItConvertsAResponseToAVectorResult()
     {
-        $result = $this->createStub(ResponseInterface::class);
+        $result = $this->createMock(ResponseInterface::class);
+        $result->expects($this->once())->method('getInfo')->willReturn('/api/embeddings');
         $result
             ->method('toArray')
             ->willReturn([
@@ -166,7 +211,12 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertStreamingResponse()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertStreamingStream());
+        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertStreamingStream(), object: new class {
+            public function getInfo(): string
+            {
+                return '/api/chat';
+            }
+        });
 
         $result = $converter->convert($rawResult, options: ['stream' => true]);
 
@@ -188,7 +238,12 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertThinkingStreamingResponse()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertThinkingStreamingStream());
+        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertThinkingStreamingStream(), object: new class {
+            public function getInfo(): string
+            {
+                return '/api/chat';
+            }
+        });
 
         $result = $converter->convert($rawResult, options: ['stream' => true]);
 
