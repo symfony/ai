@@ -12,7 +12,10 @@
 namespace Symfony\AI\Platform\Bridge\Perplexity\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Perplexity\PerplexityCitations;
+use Symfony\AI\Platform\Bridge\Perplexity\PerplexitySearchResults;
 use Symfony\AI\Platform\Bridge\Perplexity\StreamListener;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 
 final class StreamListenerTest extends TestCase
@@ -21,15 +24,17 @@ final class StreamListenerTest extends TestCase
     {
         $searchResults = [['url' => 'https://example.com', 'title' => 'Example']];
         $streamResult = new StreamResult((static function () use ($searchResults): \Generator {
-            yield ['search_results' => $searchResults];
-            yield 'Hello World';
+            yield new PerplexitySearchResults($searchResults);
+            yield new TextDelta('Hello World');
         })());
 
         $streamResult->addListener(new StreamListener());
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertSame(['Hello World'], $chunks);
+        $this->assertCount(1, $chunks);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello World', $chunks[0]->getText());
         $this->assertTrue($streamResult->getMetadata()->has('search_results'));
         $this->assertSame($searchResults, $streamResult->getMetadata()->get('search_results'));
     }
@@ -38,31 +43,37 @@ final class StreamListenerTest extends TestCase
     {
         $citations = ['https://example.com/1', 'https://example.com/2'];
         $streamResult = new StreamResult((static function () use ($citations): \Generator {
-            yield ['citations' => $citations];
-            yield 'Hello World';
+            yield new PerplexityCitations($citations);
+            yield new TextDelta('Hello World');
         })());
 
         $streamResult->addListener(new StreamListener());
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertSame(['Hello World'], $chunks);
+        $this->assertCount(1, $chunks);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello World', $chunks[0]->getText());
         $this->assertTrue($streamResult->getMetadata()->has('citations'));
         $this->assertSame($citations, $streamResult->getMetadata()->get('citations'));
     }
 
-    public function testNonArrayChunksAreNotProcessed()
+    public function testNonSpecialDeltasAreNotProcessed()
     {
         $streamResult = new StreamResult((static function (): \Generator {
-            yield 'Hello ';
-            yield 'World';
+            yield new TextDelta('Hello ');
+            yield new TextDelta('World');
         })());
 
         $streamResult->addListener(new StreamListener());
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertSame(['Hello ', 'World'], $chunks);
+        $this->assertCount(2, $chunks);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello ', $chunks[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $chunks[1]);
+        $this->assertSame('World', $chunks[1]->getText());
         $this->assertFalse($streamResult->getMetadata()->has('search_results'));
         $this->assertFalse($streamResult->getMetadata()->has('citations'));
     }
@@ -72,16 +83,18 @@ final class StreamListenerTest extends TestCase
         $searchResults = [['url' => 'https://example.com']];
         $citations = ['https://example.com/1'];
         $streamResult = new StreamResult((static function () use ($searchResults, $citations): \Generator {
-            yield ['search_results' => $searchResults];
-            yield 'Content';
-            yield ['citations' => $citations];
+            yield new PerplexitySearchResults($searchResults);
+            yield new TextDelta('Content');
+            yield new PerplexityCitations($citations);
         })());
 
         $streamResult->addListener(new StreamListener());
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertSame(['Content'], $chunks);
+        $this->assertCount(1, $chunks);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Content', $chunks[0]->getText());
         $this->assertSame($searchResults, $streamResult->getMetadata()->get('search_results'));
         $this->assertSame($citations, $streamResult->getMetadata()->get('citations'));
     }

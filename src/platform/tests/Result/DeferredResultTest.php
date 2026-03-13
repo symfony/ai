@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -154,8 +155,8 @@ final class DeferredResultTest extends TestCase
     public function testTokenUsageGetsPromotedFromStream()
     {
         $result = new StreamResult((static function () {
-            yield 'part 1';
-            yield 'part 2';
+            yield new TextDelta('part 1');
+            yield new TextDelta('part 2');
             yield new TokenUsage(123456);
         })());
 

@@ -12,22 +12,22 @@
 namespace Symfony\AI\Platform\TokenUsage;
 
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
-use Symfony\AI\Platform\Result\Stream\ChunkEvent;
+use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class StreamListener extends AbstractStreamListener
 {
-    public function onChunk(ChunkEvent $event): void
+    public function onDelta(DeltaEvent $event): void
     {
-        $chunk = $event->getChunk();
+        $delta = $event->getDelta();
 
-        if (!$chunk instanceof TokenUsageInterface) {
+        if (!$delta instanceof TokenUsageInterface) {
             return;
         }
 
-        $event->getMetadata()->add('token_usage', $chunk);
-        $event->skipChunk();
+        $event->getMetadata()->add('token_usage', $delta);
+        $event->skipDelta();
     }
 }

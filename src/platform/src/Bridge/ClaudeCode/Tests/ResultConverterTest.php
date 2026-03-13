@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\ClaudeCode\ResultConverter;
 use Symfony\AI\Platform\Bridge\ClaudeCode\TokenUsageExtractor;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 
@@ -113,7 +114,9 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $chunk;
         }
 
-        $this->assertSame(['Hello'], $chunks);
+        $this->assertCount(1, $chunks);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello', $chunks[0]->getText());
     }
 
     public function testConvertStreamingYieldsTextDeltas()
@@ -135,7 +138,11 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $chunk;
         }
 
-        $this->assertSame(['Hello, ', 'World!'], $chunks);
+        $this->assertCount(2, $chunks);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello, ', $chunks[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $chunks[1]);
+        $this->assertSame('World!', $chunks[1]->getText());
     }
 
     public function testConvertStreamingIgnoresNonTextEvents()
@@ -162,7 +169,9 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $chunk;
         }
 
-        $this->assertSame(['Hello'], $chunks);
+        $this->assertCount(1, $chunks);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello', $chunks[0]->getText());
     }
 
     public function testGetTokenUsageExtractor()

@@ -21,6 +21,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -155,7 +156,7 @@ final class StreamingAgentToolCallTest extends TestCase
     private function createStreamResultWithToolCall(string $text, ToolCall $toolCall, TokenUsage $tokenUsage): StreamResult
     {
         $result = new StreamResult((static function () use ($text, $toolCall) {
-            yield $text;
+            yield new TextDelta($text);
             yield new ToolCallResult($toolCall);
         })());
         $result->getMetadata()->add('token_usage', $tokenUsage);
