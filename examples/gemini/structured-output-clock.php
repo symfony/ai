@@ -25,7 +25,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
 
-$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client(), eventDispatcher: $dispatcher);
+$platform = PlatformFactory::create(apiKey: env('GEMINI_API_KEY'), httpClient: http_client(), eventDispatcher: $dispatcher);
 
 $clock = new Clock(new SymfonyClock());
 $toolbox = new Toolbox([$clock], logger: logger());

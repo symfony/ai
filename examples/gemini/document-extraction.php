@@ -34,7 +34,7 @@ if (!shell_exec('command -v gs')) {
 
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
-$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client(), eventDispatcher: $dispatcher);
+$platform = PlatformFactory::create(apiKey: env('GEMINI_API_KEY'), httpClient: http_client(), eventDispatcher: $dispatcher);
 
 $documentPath = dirname(__DIR__, 2).'/fixtures/symfony_site_document.pdf';
 $messages = new MessageBag(

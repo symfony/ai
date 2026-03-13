@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
+$platform = PlatformFactory::create(apiKey: env('GEMINI_API_KEY'), httpClient: http_client());
 
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),

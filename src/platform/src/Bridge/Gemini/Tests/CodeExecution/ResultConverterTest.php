@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Tests\CodeExecution;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini\ResultConverter;
+use Symfony\AI\Platform\Bridge\Gemini\ResultConverter;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;

@@ -21,7 +21,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
 
-$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client(), eventDispatcher: $dispatcher);
+$platform = PlatformFactory::create(apiKey: env('GEMINI_API_KEY'), httpClient: http_client(), eventDispatcher: $dispatcher);
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),
