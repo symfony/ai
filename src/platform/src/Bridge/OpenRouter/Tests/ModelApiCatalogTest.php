@@ -88,6 +88,7 @@ final class ModelApiCatalogTest extends TestCase
 
         // Should include base models (openrouter/auto, @preset) + API models + embeddings
         $this->assertArrayHasKey('openrouter/auto', $models);
+        $this->assertArrayHasKey('openrouter/free', $models);
         $this->assertArrayHasKey('@preset', $models);
         $this->assertArrayHasKey('openai/gpt-4', $models);
         $this->assertArrayHasKey('google/gemini-pro-vision', $models);

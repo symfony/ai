@@ -21,6 +21,7 @@ use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
  * Routers:
  * - "openrouter/auto" -> https://openrouter.ai/docs/guides/routing/routers/auto-router
  * - "openrouter/bodybuilder" -> https://openrouter.ai/docs/guides/routing/routers/body-builder
+ * - "openrouter/free" -> https://openrouter.ai/openrouter/free & https://openrouter.ai/announcements/february-release-spotlight
  * - "@preset/" -> https://openrouter.ai/docs/guides/features/presets
  *
  * Provider selection modification
@@ -46,6 +47,10 @@ abstract class AbstractOpenRouterModelCatalog extends AbstractModelCatalog
                 'capabilities' => Capability::cases(),
             ],
             'openrouter/bodybuilder' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => Capability::cases(),
+            ],
+            'openrouter/free' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => Capability::cases(),
             ],

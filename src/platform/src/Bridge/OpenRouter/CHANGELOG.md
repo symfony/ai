@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add support for `openrouter/free`
+
 0.3
 ---
 
