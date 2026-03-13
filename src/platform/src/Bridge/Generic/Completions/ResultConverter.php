@@ -27,6 +27,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
@@ -92,6 +93,15 @@ class ResultConverter implements ResultConverterInterface
     {
         $toolCalls = [];
         foreach ($result->getDataStream() as $data) {
+            if (isset($data['usage']) && \is_array($data['usage'])) {
+                yield new TokenUsage(
+                    promptTokens: $data['usage']['prompt_tokens'] ?? null,
+                    completionTokens: $data['usage']['completion_tokens'] ?? null,
+                    cachedTokens: $data['usage']['num_cached_tokens'] ?? null,
+                    totalTokens: $data['usage']['total_tokens'] ?? null,
+                );
+            }
+
             if ($this->streamIsToolCall($data)) {
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
