@@ -442,14 +442,17 @@ deptrac:
       - PlatformComponent
     CerebrasPlatform:
       - PlatformComponent
+      - GenericPlatform
     ClaudeCodePlatform:
       - PlatformComponent
     DecartPlatform:
       - PlatformComponent
     DeepSeekPlatform:
       - PlatformComponent
+      - GenericPlatform
     DockerModelRunnerPlatform:
       - PlatformComponent
+      - GenericPlatform
     ElevenLabsPlatform:
       - PlatformComponent
     FailoverPlatform:
@@ -467,6 +470,7 @@ deptrac:
       - PlatformComponent
     MistralPlatform:
       - PlatformComponent
+      - GenericPlatform
     ModelsDevPlatform:
       - PlatformComponent
       - GenericPlatform
@@ -494,6 +498,7 @@ deptrac:
       - MetaPlatform
     ScalewayPlatform:
       - PlatformComponent
+      - GenericPlatform
     TransformersPhpPlatform:
       - PlatformComponent
     VertexAiPlatform:
