@@ -1,0 +1,52 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-02T19:05:01Z
+
+@chr-hertel fixed :)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-04T19:26:48Z
+
+Not sure that easily possible here, but in general what do you think about splitting into a basic `RstLoader` that takes care on file level and a `RstToctreeLoader` that processes the toctree and basically uses the `RstLoader` for the separate pages?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-05T17:56:26Z
+
+> Not sure that easily possible here, but in general what do you think about splitting into a basic `RstLoader` that takes care on file level and a `RstToctreeLoader` that processes the toctree and basically uses the `RstLoader` for the separate pages?
+
+have splitted it as ist make absolutly sense
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-05T17:57:16Z
+
+@chr-hertel fixed
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-09T20:55:23Z
+
+@chr-hertel fixed
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-10T21:22:14Z
+
+@chr-hertel fabien does not like the Vektor 😂
+<img width="954" height="572" alt="image" src="https://github.com/user-attachments/assets/8583ed72-b1a3-46bb-a539-be163952b2ed" />
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-10T21:49:23Z
+
+> @chr-hertel fabien does not like the Vektor 😂 <img alt="image" width="954" height="572" src="https://private-user-images.githubusercontent.com/1464615/561219829-8583ed72-b1a3-46bb-a539-be163952b2ed.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzMxNzk2MTAsIm5iZiI6MTc3MzE3OTMxMCwicGF0aCI6Ii8xNDY0NjE1LzU2MTIxOTgyOS04NTgzZWQ3Mi1iMWEzLTQ2YmItYTUzOS1iZTE2Mzk1MmIyZWQucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI2MDMxMCUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNjAzMTBUMjE0ODMwWiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9ZTZhZjdlZTM4NDE5MGYzNDNiOTAxODVjMjZiODk0OGVkN2ViZGEwOTNiZDMwNDdkM2RkMmZhMDAyOWYzMDkxZSZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.BjhXbjYNzQN6icn2s4aSPaLB_tYaTk0_G6EAfp2NV-g">
+
+that's alright - we can ignore that
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-11T08:44:20Z
+
+@chr-hertel so ervything is fixed?
