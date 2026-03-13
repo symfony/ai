@@ -661,6 +661,120 @@ Example: Customer Service Bot
                     product_info: ['features', 'how to', 'tutorial', 'guide', 'documentation']
                 fallback: 'general_support'  # Fallback for general inquiries
 
+Sleep-Time Agent
+----------------
+
+Sleep-time agents perform background analysis of conversations to enrich shared
+memory blocks. Based on the `Sleep-time Compute paper <https://arxiv.org/html/2504.13171v1>`_,
+a dedicated "sleeping" agent processes conversation history after every N
+interactions and updates shared memory. The primary agent benefits from this
+enriched memory on subsequent calls.
+
+This architecture is useful when:
+
+- You want agents to build up context and knowledge over long conversations
+- You need to extract and retain key facts, preferences, or patterns
+- You want to decouple memory enrichment from the main conversation flow
+
+Configuration
+^^^^^^^^^^^^^
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        agent:
+            # Primary agent that handles user queries
+            assistant:
+                model: 'gpt-4o'
+                prompt: 'You are a helpful assistant.'
+
+            # Sleeping agent that analyzes conversations
+            analyzer:
+                model: 'gpt-4o-mini'
+                tools: true  # Required: the rethink_memory tool is injected automatically
+
+        sleep_time_agent:
+            my_agent:
+                # The agent that handles user queries
+                primary: 'assistant'
+
+                # The agent that processes memory during sleep phases
+                sleeping: 'analyzer'
+
+                # Memory blocks shared between both agents (label => initial content)
+                memory_blocks:
+                    summary: ''
+                    preferences: ''
+
+                # Number of primary agent calls between sleep invocations (default: 5)
+                frequency: 5
+
+Each sleep-time agent configuration registers a service with the ID pattern
+``ai.sleep_time_agent.{name}``. For the example above, the service
+``ai.sleep_time_agent.my_agent`` can be injected::
+
+    use Symfony\AI\Agent\AgentInterface;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
+    final class ChatController
+    {
+        public function __construct(
+            #[Autowire(service: 'ai.sleep_time_agent.my_agent')]
+            private AgentInterface $agent,
+        ) {
+        }
+
+        public function chat(string $question): string
+        {
+            $messages = new MessageBag(Message::ofUser($question));
+            $response = $this->agent->call($messages);
+
+            return $response->getContent();
+        }
+    }
+
+Memory Blocks
+^^^^^^^^^^^^^
+
+Memory blocks are labeled, mutable containers shared between the primary and
+sleeping agents. The sleeping agent updates them via the ``rethink_memory`` tool,
+and the primary agent reads them through a ``MemoryBlockProvider`` that is
+automatically registered as an input processor.
+
+Each block is identified by its label (e.g., ``summary``, ``preferences``).
+You can provide initial content or leave blocks empty for the sleeping agent to
+populate over time.
+
+How It Works
+^^^^^^^^^^^^
+
+1. The user sends a message to the ``SleepTimeAgent``
+2. The primary agent processes the message and returns a response
+3. An internal call counter is incremented
+4. Every N calls (determined by ``frequency``), the sleeping agent is invoked:
+
+   a. It receives the full conversation history and current memory block state
+   b. It analyzes the conversation and calls ``rethink_memory`` to update blocks
+   c. Updated blocks are available for the next primary agent call
+
+5. The primary agent's response is returned immediately (the sleep phase runs
+   after the response is generated)
+
+If the sleep phase fails (e.g., API error), it is silently logged and the
+primary agent's response is still returned.
+
+Frequency Tuning
+^^^^^^^^^^^^^^^^
+
+The ``frequency`` parameter controls how often the sleeping agent runs:
+
+- **Lower values** (e.g., ``1``): More frequent memory updates, higher API costs
+- **Higher values** (e.g., ``10``): Less frequent updates, lower costs but potentially stale memory
+- **Default** (``5``): A balanced starting point for most use cases
+
 Commands
 --------
 

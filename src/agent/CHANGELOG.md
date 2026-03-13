@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+* Add sleep-time agent support (`SleepTimeAgent`, `MemoryBlock`, `MemoryBlockProvider`, `RethinkMemory` tool)
+
 0.4
 ---
 

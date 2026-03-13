@@ -138,6 +138,43 @@ class MessageBag implements \Countable, \IteratorAggregate
         return false;
     }
 
+    public function latest(int $latest): self
+    {
+        return new self(...array_slice($this->messages, -$latest));
+    }
+
+    public function latestAs(int $latest, string $type): self
+    {
+        $messages = array_filter(
+            $this->messages,
+            static fn (MessageInterface $message): bool => $message instanceof $type,
+        );
+
+        return new self(...array_slice($messages, -$latest));
+    }
+
+    public function retrieveAs(string $type): self
+    {
+        $messages = array_filter(
+            $this->messages,
+            static fn (MessageInterface $message): bool => $message instanceof $type,
+        );
+
+        return new self(...$messages);
+    }
+
+    public function retrieveWindow(int $offset, int $limit): self
+    {
+        return new self(...array_slice($this->messages, $offset, $limit));
+    }
+
+    public function retrieveWindowAs(int $offset, int $limit, string $type): self
+    {
+        $filteredBag = $this->retrieveAs($type);
+
+        return $filteredBag->retrieveWindow($offset, $limit);
+    }
+
     public function count(): int
     {
         return \count($this->messages);
