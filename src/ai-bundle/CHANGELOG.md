@@ -10,6 +10,7 @@ CHANGELOG
  * Add `setup_options` configuration for PostgreSQL store to pass extra fields to `ai:store:setup`
  * Add support for VertexAI global endpoint with API key authentication (no `location`/`project_id` required)
  * The `api_key` option for `ElevenLabs` is not required anymore if a `ScopedHttpClient` is used in `http_client` option
+ * Add support for custom HttpClient for `Qdrant` and `Weaviate` stores
 
 0.5
 ---
