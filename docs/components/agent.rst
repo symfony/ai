@@ -405,6 +405,16 @@ If you need to react more granularly to the lifecycle of individual tool calls, 
         // Let the client know, that the tool $event->toolCall->name failed with the exception: $event->exception
     });
 
+The component includes some built-in event handlers too, though these still need to be manually registered unless you're using the AI bundle.
+For example, to validate tool call arguments before invoking the actual tool::
+
+    use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
+
+    $eventDispatcher->addListener(ToolCallArgumentsResolved::class, new ValidateToolCallArgumentsListener());
+
+This throws :class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\InvalidToolCallArgumentsException` if the arguments did not pass validation. For this to work,
+you must have `symfony/validator` installed.
+
 Excluding Tool Messages from MessageBag
 ---------------------------------------
 
