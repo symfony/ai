@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+* Introduce support for speech
+
+
 0.6
 ---
 

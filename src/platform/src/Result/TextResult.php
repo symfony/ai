@@ -11,11 +11,16 @@
 
 namespace Symfony\AI\Platform\Result;
 
+use Symfony\AI\Platform\Speech\SpeechAwareInterface;
+use Symfony\AI\Platform\Speech\SpeechAwareTrait;
+
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class TextResult extends BaseResult
+final class TextResult extends BaseResult implements SpeechAwareInterface
 {
+    use SpeechAwareTrait;
+
     public function __construct(
         private readonly string $content,
     ) {
