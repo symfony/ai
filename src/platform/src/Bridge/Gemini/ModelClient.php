@@ -35,10 +35,14 @@ final class ModelClient implements ModelClientInterface
         return $model instanceof Gemini;
     }
 
+    /**
+     * @throws TransportExceptionInterface {@see self::handleContextGeneration()}
+     */
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
         return match (true) {
             !$model->supports(Capability::EMBEDDINGS) => $this->handleContextGeneration($model, $payload, $options),
+            $model->supports(Capability::CACHE) && $options['cache'] ?? false => $this->handleContextCachingGeneration($model, $payload, $options),
             $model->supports(Capability::EMBEDDINGS) => $this->handleEmbeddingsGeneration($model, $payload, $options),
             default => throw new InvalidArgumentException(\sprintf('Model "%s" is not supported.', $model->getName())),
         };
@@ -87,6 +91,10 @@ final class ModelClient implements ModelClientInterface
                 ...$payload,
             ],
         ]));
+    }
+
+    private function handleContextCachingGeneration(Model $model, array|string $payload, array $options): RawHttpResult
+    {
     }
 
     private function handleEmbeddingsGeneration(Model $model, array|string $payload, array $options = []): RawHttpResult

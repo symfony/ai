@@ -54,51 +54,61 @@ final class GeminiApiCatalog implements ModelCatalogInterface
             return [];
         }
 
-        $capabilities = static fn (array $model): array => match (true) {
-            (new UnicodeString($model['name']))->containsAny(['TTS', 'tts']) => [
-                Capability::INPUT_TEXT,
-                Capability::INPUT_MESSAGES,
-                Capability::INPUT_AUDIO,
-                Capability::TEXT_TO_SPEECH,
-                Capability::OUTPUT_AUDIO,
-            ],
-            (new UnicodeString($model['description'] ?? ''))->containsAny(['Image', 'image']) => [
-                Capability::INPUT_TEXT,
-                Capability::INPUT_IMAGE,
-                Capability::TEXT_TO_IMAGE,
-                Capability::IMAGE_TO_IMAGE,
-                Capability::OUTPUT_IMAGE,
-            ],
-            \in_array('predictLongRunning', $model['supportedGenerationMethods'], true),
-            \in_array('generateAnswer', $model['supportedGenerationMethods'], true),
-            \in_array('batchGenerateContent', $model['supportedGenerationMethods'], true),
-            \in_array('generateContent', $model['supportedGenerationMethods'], true) => [
-                Capability::INPUT_TEXT,
-                Capability::INPUT_MESSAGES,
-                Capability::INPUT_IMAGE,
-                Capability::INPUT_AUDIO,
-                Capability::INPUT_VIDEO,
-                Capability::INPUT_PDF,
-                Capability::OUTPUT_TEXT,
-                Capability::OUTPUT_AUDIO,
-                Capability::OUTPUT_IMAGE,
-                Capability::OUTPUT_STREAMING,
-                Capability::OUTPUT_STRUCTURED,
-                Capability::TOOL_CALLING,
-            ],
-            \in_array('embedContent', $model['supportedGenerationMethods'], true),
-            \in_array('asyncBatchEmbedContent', $model['supportedGenerationMethods'], true) => [
-                Capability::INPUT_TEXT,
-                Capability::EMBEDDINGS,
-                Capability::OUTPUT_EMBEDDINGS,
-            ],
-            \in_array('createCachedContent', $model['supportedGenerationMethods'], true) => [
-                Capability::CACHE,
-            ],
-            $model['thinking'] ?? false => [
-                Capability::THINKING,
-            ],
-            default => throw new InvalidArgumentException(\sprintf('The model "%s" is not supported.', $model['name'])),
+        $capabilities = static function (array $model): array {
+            $name = new UnicodeString($model['name']);
+            $methods = $model['supportedGenerationMethods'] ?? [];
+
+            if ($name->containsAny(['TTS', 'tts', 'native-audio'])) {
+                return [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
+                ];
+            }
+
+            if (\in_array('embedContent', $methods, true) || \in_array('asyncBatchEmbedContent', $methods, true)) {
+                return [
+                    Capability::INPUT_TEXT,
+                    Capability::EMBEDDINGS,
+                ];
+            }
+
+            if ($name->containsAny(['image'])) {
+                return [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STRUCTURED,
+                ];
+            }
+
+            $capabilities = [];
+
+            if (\in_array('generateContent', $methods, true) || \in_array('batchGenerateContent', $methods, true) || \in_array('generateAnswer', $methods, true) || \in_array('predictLongRunning', $methods, true)) {
+                $capabilities = [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_AUDIO,
+                    Capability::INPUT_PDF,
+                    Capability::INPUT_VIDEO,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ];
+            }
+
+            if ($model['thinking'] ?? false) {
+                $capabilities[] = Capability::THINKING;
+            }
+
+            if (\in_array('createCachedContent', $methods, true)) {
+                $capabilities[] = Capability::CACHE;
+            }
+
+            return $capabilities;
         };
 
         return array_merge(...array_map(static fn (array $model): array => [
