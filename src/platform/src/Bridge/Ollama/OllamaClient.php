@@ -53,54 +53,87 @@ final class OllamaClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        $payload = new OllamaPayload($payload);
+
         return match (true) {
-            $model->supports(Capability::INPUT_MESSAGES) => $this->doCompletionRequest($payload, $options),
+            $model->supports(Capability::INPUT_TEXT) && $payload->supportGeneration() => $this->doGenerationRequest($model, $payload, $options),
+            $model->supports(Capability::INPUT_MESSAGES) && $payload->supportCompletion() => $this->doCompletionRequest($payload, $options),
             $model->supports(Capability::EMBEDDINGS) => $this->doEmbeddingsRequest($model, $payload, $options),
             default => throw new InvalidArgumentException(\sprintf('Unsupported model "%s": "%s".', $model::class, $model->getName())),
         };
     }
 
     /**
-     * @param array<string|int, mixed> $payload
-     * @param array<string, mixed>     $options
+     * @param array<string, mixed> $options
      */
-    private function doCompletionRequest(array|string $payload, array $options = []): RawHttpResult
+    private function doGenerationRequest(Model $model, OllamaPayload $payload, array $options): RawHttpResult
     {
-        if (\is_string($payload)) {
-            throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
-        }
-
         // Revert Ollama's default streaming behavior
         $options['stream'] ??= false;
 
-        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
-            $options['format'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'];
+        $responseFormat = $options[PlatformSubscriber::RESPONSE_FORMAT] ?? null;
+        if (\is_array($responseFormat) && \is_array($responseFormat['json_schema'] ?? null) && isset($responseFormat['json_schema']['schema'])) {
+            $options['format'] = $responseFormat['json_schema']['schema'];
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
         }
 
         $options = $this->normalizeOllamaOptions($options, self::CHAT_TOP_LEVEL_KEYS);
 
-        $response = $this->httpClient->request('POST', '/api/chat', [
+        $response = $this->httpClient->request('POST', 'api/generate', [
             'headers' => ['Content-Type' => 'application/json'],
-            'json' => array_merge($options, $payload),
+            'json' => [
+                ...$options,
+                'model' => $model->getName(),
+                'prompt' => $payload->asGenerationPayload(),
+            ],
         ]);
 
         return new RawHttpResult($response, new NdjsonStream());
     }
 
     /**
-     * @param array<string|int, mixed> $payload
-     * @param array<string, mixed>     $options
+     * @param array<string, mixed> $options
      */
-    private function doEmbeddingsRequest(Model $model, array|string $payload, array $options = []): RawHttpResult
+    private function doCompletionRequest(OllamaPayload $payload, array $options = []): RawHttpResult
+    {
+        // Revert Ollama's default streaming behavior
+        $options['stream'] ??= false;
+
+        $responseFormat = $options[PlatformSubscriber::RESPONSE_FORMAT] ?? null;
+        if (\is_array($responseFormat) && \is_array($responseFormat['json_schema'] ?? null) && isset($responseFormat['json_schema']['schema'])) {
+            $options['format'] = $responseFormat['json_schema']['schema'];
+            unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
+        }
+
+        $options = $this->normalizeOllamaOptions($options, self::CHAT_TOP_LEVEL_KEYS);
+
+        return new RawHttpResult($this->httpClient->request('POST', 'api/chat', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                ...$options,
+                'messages' => $payload->asCompletionPayload(),
+            ],
+        ]));
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function doEmbeddingsRequest(Model $model, OllamaPayload $payload, array $options = []): RawHttpResult
     {
         $options = self::normalizeOllamaOptions($options, self::EMBED_TOP_LEVEL_KEYS);
 
-        return new RawHttpResult($this->httpClient->request('POST', '/api/embed', [
-            'json' => array_merge($options, [
+        return new RawHttpResult($this->httpClient->request('POST', 'api/embed', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                ...$options,
                 'model' => $model->getName(),
-                'input' => $payload,
-            ]),
+                'input' => $payload->asInitialPayload(),
+            ],
         ]));
     }
 

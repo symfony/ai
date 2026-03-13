@@ -146,7 +146,7 @@ final class OllamaClientTest extends TestCase
 
         $mockHttpClient = new MockHttpClient(new MockResponse($streamingData));
 
-        $mockResponse = $mockHttpClient->request('GET', 'http://test.example');
+        $mockResponse = $mockHttpClient->request('GET', 'http://test.example/api/chat');
         $rawResult = new RawHttpResult($mockResponse, new NdjsonStream());
         $converter = new OllamaResultConverter();
 
@@ -158,12 +158,15 @@ final class OllamaClientTest extends TestCase
         $regularMockHttpClient = new MockHttpClient(
             new JsonMockResponse([
                 'model' => 'llama3.2',
-                'message' => ['role' => 'assistant', 'content' => 'Hello world'],
+                'message' => [
+                    'role' => 'assistant',
+                    'content' => 'Hello world',
+                ],
                 'done' => true,
             ]),
         );
 
-        $regularMockResponse = $regularMockHttpClient->request('GET', 'http://test.example');
+        $regularMockResponse = $regularMockHttpClient->request('GET', 'http://test.example/api/chat');
         $regularRawResult = new RawHttpResult($regularMockResponse, new NdjsonStream());
         $regularResult = $converter->convert($regularRawResult, ['stream' => false]);
 
@@ -172,7 +175,7 @@ final class OllamaClientTest extends TestCase
 
     public function testChatRequestMovesNonTopLevelOptionsIntoNestedOptions()
     {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
             $this->assertSame('POST', $method);
             $this->assertSame('http://127.0.0.1:1234/api/chat', $url);
 
@@ -183,8 +186,9 @@ final class OllamaClientTest extends TestCase
 
             $this->assertArrayHasKey('options', $json);
             $this->assertIsArray($json['options']);
-            $this->assertSame(0.2, $json['options']['temperature']);
-            $this->assertSame(64, $json['options']['num_predict']);
+            $nestedOptions = $json['options'];
+            $this->assertSame(0.2, $nestedOptions['temperature']);
+            $this->assertSame(64, $nestedOptions['num_predict']);
 
             $this->assertArrayNotHasKey('temperature', $json);
             $this->assertArrayNotHasKey('num_predict', $json);
@@ -219,13 +223,15 @@ final class OllamaClientTest extends TestCase
 
     public function testChatRequestMergesExplicitNestedOptionsWithFlatOptions()
     {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
             $json = $this->decodeRequestJson($options);
 
             $this->assertArrayHasKey('options', $json);
-            $this->assertSame(0.2, $json['options']['temperature']);
-            $this->assertSame(64, $json['options']['num_predict']);
-            $this->assertSame(1024, $json['options']['num_ctx']);
+            $this->assertIsArray($json['options']);
+            $nestedOptions = $json['options'];
+            $this->assertSame(0.2, $nestedOptions['temperature']);
+            $this->assertSame(64, $nestedOptions['num_predict']);
+            $this->assertSame(1024, $nestedOptions['num_ctx']);
 
             return new JsonMockResponse([
                 'model' => 'llama3.2',
@@ -258,11 +264,13 @@ final class OllamaClientTest extends TestCase
 
     public function testChatRequestKeepsStructuredOutputFormatOnTopLevel()
     {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
             $json = $this->decodeRequestJson($options);
 
             $this->assertArrayHasKey('format', $json);
-            $this->assertArrayNotHasKey('format', $json['options'] ?? []);
+            $nestedOptions = $json['options'] ?? [];
+            $this->assertIsArray($nestedOptions);
+            $this->assertArrayNotHasKey('format', $nestedOptions);
 
             return new JsonMockResponse([
                 'model' => 'llama3.2',
@@ -298,7 +306,7 @@ final class OllamaClientTest extends TestCase
 
     public function testEmbedRequestMovesNonTopLevelOptionsIntoNestedOptions()
     {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
             $this->assertSame('POST', $method);
             $this->assertSame('http://127.0.0.1:1234/api/embed', $url);
 
@@ -311,6 +319,7 @@ final class OllamaClientTest extends TestCase
             $this->assertSame(512, $json['dimensions']);
 
             $this->assertArrayHasKey('options', $json);
+            $this->assertIsArray($json['options']);
             $this->assertSame(0.1, $json['options']['temperature']);
 
             $this->assertArrayNotHasKey('temperature', $json);
@@ -336,8 +345,33 @@ final class OllamaClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testTextGenerationIsSupported()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'model' => 'foo',
+                'response' => 'General Kenobi',
+                'done' => true,
+                'done_reason' => 'stop',
+            ]),
+        ], 'http://127.0.0.1:1234');
+
+        $client = new OllamaClient($httpClient);
+        $response = $client->request(new Ollama('llama3.2', [
+            Capability::INPUT_TEXT,
+        ]), 'Hello there');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+        $this->assertSame([
+            'model' => 'foo',
+            'response' => 'General Kenobi',
+            'done' => true,
+            'done_reason' => 'stop',
+        ], $response->getData());
+    }
+
     /**
-     * @param array<string, mixed> $options
+     * @param array<mixed> $options
      *
      * @return array<string, mixed>
      */
@@ -346,9 +380,14 @@ final class OllamaClientTest extends TestCase
         $this->assertArrayHasKey('body', $options, 'Expected "body" in MockHttpClient options.');
         $this->assertIsString($options['body']);
 
-        $data = json_decode($options['body'], true, 512, \JSON_THROW_ON_ERROR);
+        $decoded = json_decode($options['body'], true, 512, \JSON_THROW_ON_ERROR);
 
-        $this->assertIsArray($data);
+        $this->assertIsArray($decoded);
+
+        $data = [];
+        foreach ($decoded as $key => $value) {
+            $data[(string) $key] = $value;
+        }
 
         return $data;
     }
