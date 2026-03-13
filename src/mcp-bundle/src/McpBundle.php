@@ -60,8 +60,6 @@ final class McpBundle extends AbstractBundle
         $builder->setParameter('mcp.icons', $config['icons']);
         $builder->setParameter('mcp.pagination_limit', $config['pagination_limit']);
         $builder->setParameter('mcp.instructions', $config['instructions']);
-        $builder->setParameter('mcp.discovery.scan_dirs', $config['discovery']['scan_dirs']);
-        $builder->setParameter('mcp.discovery.exclude_dirs', $config['discovery']['exclude_dirs']);
 
         $this->registerMcpAttributes($builder);
 
@@ -111,7 +109,8 @@ final class McpBundle extends AbstractBundle
             $builder->registerAttributeForAutoconfiguration(
                 $attributeClass,
                 static function (ChildDefinition $definition, object $attribute, \Reflector $reflector) use ($tag): void {
-                    $definition->addTag($tag);
+                    $methodName = $reflector instanceof \ReflectionMethod ? $reflector->getName() : '__invoke';
+                    $definition->addTag($tag, ['method' => $methodName]);
                 }
             );
         }
