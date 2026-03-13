@@ -40,6 +40,8 @@ final class MetadataTest extends TestCase
         $this->assertSame('_text', Metadata::KEY_TEXT);
         $this->assertSame('_source', Metadata::KEY_SOURCE);
         $this->assertSame('_summary', Metadata::KEY_SUMMARY);
+        $this->assertSame('_title', Metadata::KEY_TITLE);
+        $this->assertSame('_depth', Metadata::KEY_DEPTH);
     }
 
     #[DataProvider('parentIdProvider')]
@@ -154,6 +156,62 @@ final class MetadataTest extends TestCase
         ];
     }
 
+    #[DataProvider('titleProvider')]
+    public function testTitleMethods(?string $title)
+    {
+        $metadata = new Metadata();
+
+        $this->assertFalse($metadata->hasTitle());
+        $this->assertNull($metadata->getTitle());
+
+        $metadata->setTitle($title);
+
+        $this->assertTrue($metadata->hasTitle());
+        $this->assertSame($title, $metadata->getTitle());
+    }
+
+    /**
+     * @return \Iterator<string, array{title: string|null}>
+     */
+    public static function titleProvider(): \Iterator
+    {
+        yield 'string title' => [
+            'title' => 'My Document Title',
+        ];
+
+        yield 'empty string title' => [
+            'title' => '',
+        ];
+    }
+
+    #[DataProvider('depthProvider')]
+    public function testDepthMethods(?int $depth)
+    {
+        $metadata = new Metadata();
+
+        $this->assertFalse($metadata->hasDepth());
+        $this->assertNull($metadata->getDepth());
+
+        $metadata->setDepth($depth);
+
+        $this->assertTrue($metadata->hasDepth());
+        $this->assertSame($depth, $metadata->getDepth());
+    }
+
+    /**
+     * @return \Iterator<string, array{depth: int|null}>
+     */
+    public static function depthProvider(): \Iterator
+    {
+        yield 'zero depth' => [
+            'depth' => 0,
+        ];
+
+        yield 'positive depth' => [
+            'depth' => 3,
+        ];
+    }
+
     public function testMetadataInitializedWithSpecialKeys()
     {
         $data = [
@@ -221,6 +279,8 @@ final class MetadataTest extends TestCase
         $this->assertNull($metadata->getText());
         $this->assertNull($metadata->getSource());
         $this->assertNull($metadata->getSummary());
+        $this->assertNull($metadata->getTitle());
+        $this->assertNull($metadata->getDepth());
     }
 
     public function testHasMethodsReturnFalseForMissingKeys()
@@ -231,6 +291,8 @@ final class MetadataTest extends TestCase
         $this->assertFalse($metadata->hasText());
         $this->assertFalse($metadata->hasSource());
         $this->assertFalse($metadata->hasSummary());
+        $this->assertFalse($metadata->hasTitle());
+        $this->assertFalse($metadata->hasDepth());
     }
 
     public function testOverwritingSpecialKeys()

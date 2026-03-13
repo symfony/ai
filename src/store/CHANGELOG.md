@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `RstLoader` and `RstToctreeLoader` for loading RST files and following toctree directives
+
 0.6
 ---
 
