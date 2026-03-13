@@ -23,3 +23,4 @@ $result = $platform->invoke('mistral-embed', <<<TEXT
     TEXT);
 
 print_vectors($result);
+print_token_usage($result->getTokenUsage());

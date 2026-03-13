@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\StreamListener;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
@@ -146,6 +147,17 @@ final class DeferredResult
     public function asToolCalls(): array
     {
         return $this->as(ToolCallResult::class)->getContent();
+    }
+
+    public function getTokenUsage(): ?TokenUsageInterface
+    {
+        $tokenUsage = $this->getMetadata()->get('token_usage');
+
+        if ($tokenUsage instanceof TokenUsageInterface) {
+            return $tokenUsage;
+        }
+
+        return null;
     }
 
     /**
