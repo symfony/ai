@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add support for `/api/generate` endpoint
+
 0.6
 ---
 

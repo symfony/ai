@@ -23,7 +23,7 @@ final class OllamaMessageChunk implements \Stringable
     public function __construct(
         public readonly string $model,
         public readonly \DateTimeImmutable $created_at,
-        public readonly array $message,
+        public readonly array|string $message,
         public readonly bool $done,
         public readonly array $raw,
     ) {
@@ -31,23 +31,22 @@ final class OllamaMessageChunk implements \Stringable
 
     public function __toString(): string
     {
-        // Return the assistant's message content if available
-        return $this->message['content'] ?? '';
+        return \is_string($this->message) ? $this->message : $this->message['content'] ?? '';
     }
 
     public function getContent(): ?string
     {
-        return $this->message['content'] ?? null;
+        return \is_string($this->message) ? $this->message : $this->message['content'] ?? null;
     }
 
     public function getThinking(): ?string
     {
-        return $this->message['thinking'] ?? null;
+        return \is_string($this->message) ? $this->raw['thinking'] ?? null : $this->message['thinking'] ?? null;
     }
 
     public function getRole(): ?string
     {
-        return $this->message['role'] ?? null;
+        return \is_string($this->message) ? null : $this->message['role'] ?? null;
     }
 
     public function isDone(): bool
