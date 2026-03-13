@@ -25,6 +25,7 @@ use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListOfPo
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\WithAttributeValuesDto;
 
 final class FactoryTest extends TestCase
 {
@@ -339,7 +340,9 @@ final class FactoryTest extends TestCase
         $expected = [
             'type' => 'object',
             'properties' => [
-                'name' => ['type' => 'string'],
+                'name' => [
+                    'type' => 'string',
+                ],
                 'taxRate' => [
                     'type' => 'integer',
                     'enum' => [7, 19],
@@ -348,12 +351,37 @@ final class FactoryTest extends TestCase
                     'type' => ['string', 'null'],
                     'enum' => ['Foo', 'Bar', null],
                 ],
+                'quantity' => [
+                    'type' => ['string', 'null'],
+                    'description' => 'The quantity of the ingredient',
+                    'example' => '2 cups',
+                ],
             ],
-            'required' => ['name', 'taxRate', 'category'],
+            'required' => ['name', 'taxRate', 'category', 'quantity'],
             'additionalProperties' => false,
         ];
 
         $actual = $this->factory->buildProperties(ExampleDto::class);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesAttributeValuesWin()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'This is the attribute description.',
+                    'example' => 'Attribute example',
+                ],
+            ],
+            'required' => ['name'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(WithAttributeValuesDto::class);
 
         $this->assertSame($expected, $actual);
     }

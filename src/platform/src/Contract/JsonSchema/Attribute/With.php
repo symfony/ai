@@ -25,6 +25,8 @@ final class With
      */
     public function __construct(
         // can be used by many types
+        public readonly ?string $description = null,
+        public readonly mixed $example = null,
         public readonly ?array $enum = null,
         public readonly string|int|array|null $const = null,
 
@@ -56,6 +58,12 @@ final class With
             /* @phpstan-ignore-next-line function.alreadyNarrowedType */
             if (array_filter($enum, static fn (mixed $item) => null === $item || \is_int($item) || \is_float($item) || \is_string($item)) !== $enum) {
                 throw new InvalidArgumentException('All enum values must be float, integer, strings, or null.');
+            }
+        }
+
+        if (\is_string($description)) {
+            if ('' === trim($description)) {
+                throw new InvalidArgumentException('Description string must not be empty.');
             }
         }
 

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `description` and `example` properties to `#[With]` attribute
+
 0.6
 ---
 
