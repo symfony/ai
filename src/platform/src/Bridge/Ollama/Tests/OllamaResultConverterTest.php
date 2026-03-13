@@ -25,6 +25,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -38,6 +39,20 @@ final class OllamaResultConverterTest extends TestCase
         $this->assertFalse($converter->supports(new Model('any-model')));
     }
 
+    public function testConvertTextGeneration()
+    {
+        $converter = new OllamaResultConverter();
+        $rawResult = new InMemoryRawResult([
+            'model' => 'foo',
+            'response' => 'Hello world',
+        ], object: $this->createResponseMock('/api/generate'));
+
+        $result = $converter->convert($rawResult);
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('Hello world', $result->getContent());
+    }
+
     public function testConvertTextResponse()
     {
         $converter = new OllamaResultConverter();
@@ -45,7 +60,7 @@ final class OllamaResultConverterTest extends TestCase
             'message' => [
                 'content' => 'Hello world',
             ],
-        ]);
+        ], object: $this->createResponseMock('/api/chat'));
 
         $result = $converter->convert($rawResult);
 
@@ -68,7 +83,7 @@ final class OllamaResultConverterTest extends TestCase
                     ],
                 ],
             ],
-        ]);
+        ], object: $this->createResponseMock('/api/chat'));
 
         $result = $converter->convert($rawResult);
 
@@ -101,7 +116,7 @@ final class OllamaResultConverterTest extends TestCase
                     ],
                 ],
             ],
-        ]);
+        ], object: $this->createResponseMock('/api/chat'));
 
         $result = $converter->convert($rawResult);
 
@@ -121,7 +136,7 @@ final class OllamaResultConverterTest extends TestCase
     public function testThrowsExceptionWhenNoMessage()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult([]);
+        $rawResult = new InMemoryRawResult([], object: $this->createResponseMock('/api/chat'));
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Response does not contain message');
@@ -134,7 +149,7 @@ final class OllamaResultConverterTest extends TestCase
         $converter = new OllamaResultConverter();
         $rawResult = new InMemoryRawResult([
             'message' => [],
-        ]);
+        ], object: $this->createResponseMock('/api/chat'));
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Message does not contain content');
@@ -144,7 +159,8 @@ final class OllamaResultConverterTest extends TestCase
 
     public function testItConvertsAResponseToAVectorResult()
     {
-        $result = $this->createStub(ResponseInterface::class);
+        $result = $this->createMock(ResponseInterface::class);
+        $result->expects($this->once())->method('getInfo')->willReturn('/api/embeddings');
         $result
             ->method('toArray')
             ->willReturn([
@@ -159,6 +175,9 @@ final class OllamaResultConverterTest extends TestCase
             ]);
 
         $vectorResult = (new OllamaResultConverter())->convert(new RawHttpResult($result));
+
+        $this->assertInstanceOf(VectorResult::class, $vectorResult);
+
         $convertedContent = $vectorResult->getContent();
 
         $this->assertCount(2, $convertedContent);
@@ -170,7 +189,28 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertStreamingResponse()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertStreamingStream());
+        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertStreamingStream(), object: $this->createResponseMock('/api/chat'));
+
+        $result = $converter->convert($rawResult, options: ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+
+        $chunks = iterator_to_array($result->getContent());
+
+        $this->assertCount(3, $chunks);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello', $chunks[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $chunks[1]);
+        $this->assertSame(' world!', $chunks[1]->getText());
+        $this->assertInstanceOf(TokenUsageInterface::class, $chunks[2]);
+        $this->assertSame(42, $chunks[2]->getPromptTokens());
+        $this->assertSame(17, $chunks[2]->getCompletionTokens());
+    }
+
+    public function testConvertStreamingGenerationResponse()
+    {
+        $converter = new OllamaResultConverter();
+        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertStreamingGenerationStream(), object: $this->createResponseMock('/api/generate'));
 
         $result = $converter->convert($rawResult, options: ['stream' => true]);
 
@@ -191,7 +231,7 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertThinkingStreamingResponse()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertThinkingStreamingStream());
+        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertThinkingStreamingStream(), object: $this->createResponseMock('/api/chat'));
 
         $result = $converter->convert($rawResult, options: ['stream' => true]);
 
@@ -217,7 +257,7 @@ final class OllamaResultConverterTest extends TestCase
     {
         $deferredResult = new DeferredResult(
             new OllamaResultConverter(),
-            new InMemoryRawResult(dataStream: $this->generateConvertStreamingStream()),
+            new InMemoryRawResult(dataStream: $this->generateConvertStreamingStream(), object: $this->createResponseMock('/api/chat')),
             ['stream' => true],
         );
 
@@ -232,7 +272,7 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertStreamingToolCallResponse()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertToolCallStreamingStream());
+        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertToolCallStreamingStream(), object: $this->createResponseMock('/api/chat'));
 
         $result = $converter->convert($rawResult, options: ['stream' => true]);
 
@@ -242,7 +282,10 @@ final class OllamaResultConverterTest extends TestCase
 
         $this->assertCount(2, $chunks);
         $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
-        $toolCalls = $chunks[0]->getToolCalls();
+
+        /** @var ToolCallComplete $toolCallComplete */
+        $toolCallComplete = $chunks[0];
+        $toolCalls = $toolCallComplete->getToolCalls();
         $this->assertCount(1, $toolCalls);
         $this->assertSame('clock', $toolCalls[0]->getName());
         $this->assertSame(['timezone' => 'UTC'], $toolCalls[0]->getArguments());
@@ -276,10 +319,28 @@ final class OllamaResultConverterTest extends TestCase
     /**
      * @return iterable<array<string, mixed>>
      */
+    private function generateConvertStreamingGenerationStream(): iterable
+    {
+        yield ['model' => 'llama3.2', 'created_at' => '2025-10-29T17:15:49.631700779Z', 'response' => 'Hello', 'done' => false];
+        yield ['model' => 'llama3.2', 'created_at' => '2025-10-29T17:15:49.905924913Z', 'response' => ' world!', 'done' => true,
+            'done_reason' => 'stop', 'total_duration' => 100, 'load_duration' => 10, 'prompt_eval_count' => 42, 'prompt_eval_duration' => 30, 'eval_count' => 17, 'eval_duration' => 60];
+    }
+
+    /**
+     * @return iterable<array<string, mixed>>
+     */
     private function generateConvertToolCallStreamingStream(): iterable
     {
         yield ['model' => 'llama3.2', 'created_at' => '2026-03-16T10:57:17.936041Z', 'message' => ['role' => 'assistant', 'content' => '', 'tool_calls' => [['function' => ['name' => 'clock', 'arguments' => ['timezone' => 'UTC']]]]], 'done' => false];
         yield ['model' => 'llama3.2', 'created_at' => '2026-03-16T10:57:18.330845Z', 'message' => ['role' => 'assistant', 'content' => ''], 'done' => true,
             'done_reason' => 'stop', 'total_duration' => 100, 'load_duration' => 10, 'prompt_eval_count' => 11, 'prompt_eval_duration' => 30, 'eval_count' => 4, 'eval_duration' => 60];
+    }
+
+    private function createResponseMock(string $url): ResponseInterface
+    {
+        $mock = $this->createMock(ResponseInterface::class);
+        $mock->method('getInfo')->willReturn($url);
+
+        return $mock;
     }
 }

@@ -57,29 +57,75 @@ final class ModelCatalog implements ModelCatalogInterface
 
         $payload = $response->toArray();
 
-        if ([] === $payload['capabilities']) {
-            throw new InvalidArgumentException('The model information could not be retrieved from the Ollama API. Your Ollama server might be too old. Try upgrade it.');
+        if (!isset($payload['capabilities']) || !\is_array($payload['capabilities']) || [] === $payload['capabilities']) {
+            throw new InvalidArgumentException('The model information could not be retrieved from the Ollama API. Your Ollama server might be too old. Try upgrading it.');
         }
 
-        $capabilities = array_map(
-            static fn (string $capability): Capability => match ($capability) {
-                'embedding' => Capability::EMBEDDINGS,
-                'completion' => Capability::INPUT_MESSAGES,
-                'tools' => Capability::TOOL_CALLING,
-                'thinking' => Capability::THINKING,
-                'vision' => Capability::INPUT_IMAGE,
-                'audio' => Capability::INPUT_AUDIO,
-                'insert' => Capability::FILL_IN_THE_MIDDLE,
-                default => throw new InvalidArgumentException(\sprintf('The "%s" capability is not supported', $capability)),
-            },
-            $payload['capabilities'],
-        );
+        $capabilities = [];
 
-        if (!\in_array(Capability::EMBEDDINGS, $capabilities, true)) {
-            $capabilities[] = Capability::OUTPUT_STRUCTURED;
+        foreach ($payload['capabilities'] as $capability) {
+            if (!\is_string($capability) || '' === $capability) {
+                continue;
+            }
+
+            if ('audio' === $capability) {
+                $capabilities[] = [
+                    Capability::INPUT_AUDIO,
+                    Capability::OUTPUT_TEXT,
+                ];
+            }
+
+            if ('embedding' === $capability) {
+                $capabilities[] = [
+                    Capability::EMBEDDINGS,
+                    Capability::OUTPUT_EMBEDDINGS,
+                ];
+            }
+
+            if ('completion' === $capability) {
+                $capabilities[] = [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::OUTPUT_IMAGE, // See https://ollama.com/blog/image-generation
+                ];
+            }
+
+            if ('insert' === $capability) {
+                $capabilities[] = [
+                    Capability::FILL_IN_THE_MIDDLE,
+                    Capability::OUTPUT_STRUCTURED,
+                ];
+            }
+
+            if ('tools' === $capability) {
+                $capabilities[] = [
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_TEXT,
+                ];
+            }
+
+            if ('thinking' === $capability) {
+                $capabilities[] = [
+                    Capability::THINKING,
+                    Capability::OUTPUT_TEXT,
+                ];
+            }
+
+            if ('vision' === $capability) {
+                $capabilities[] = [
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                ];
+            }
         }
 
-        return new Ollama($modelName, $capabilities);
+        if ([] === $capabilities) {
+            throw new InvalidArgumentException(\sprintf('No supported capability found for model "%s".', $modelName));
+        }
+
+        return new Ollama($modelName, array_unique(array_merge(...$capabilities), \SORT_REGULAR));
     }
 
     public function getModels(): array
@@ -100,18 +146,22 @@ final class ModelCatalog implements ModelCatalogInterface
 
         $models = $response->toArray();
 
-        if ([] === $models['models']) {
+        if (!isset($models['models']) || !\is_array($models['models']) || [] === $models['models']) {
             return [];
         }
 
         return array_merge(...array_map(
-            function (array $model): array {
+            function (mixed $model): array {
+                if (!\is_array($model) || !isset($model['name']) || !\is_string($model['name']) || '' === $model['name']) {
+                    throw new InvalidArgumentException('Model name is missing or empty.');
+                }
+
                 $retrievedModel = $this->getModel($model['name']);
 
                 return [
                     $retrievedModel->getName() => [
                         'class' => Ollama::class,
-                        'capabilities' => $retrievedModel->getCapabilities(),
+                        'capabilities' => array_values($retrievedModel->getCapabilities()),
                     ],
                 ];
             },
@@ -134,7 +184,7 @@ final class ModelCatalog implements ModelCatalogInterface
         try {
             $decoded = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
 
-            if (\is_array($decoded) && isset($decoded['error'])) {
+            if (\is_array($decoded) && isset($decoded['error']) && \is_string($decoded['error'])) {
                 return $decoded['error'];
             }
         } catch (\JsonException) {
