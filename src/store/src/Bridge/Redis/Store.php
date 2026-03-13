@@ -80,6 +80,27 @@ class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function count(): int
+    {
+        try {
+            $result = $this->redis->rawCommand('FT.INFO', $this->indexName);
+        } catch (\RedisException $e) {
+            throw new RuntimeException(\sprintf('Failed to get Redis index info: "%s".', $e->getMessage()), previous: $e);
+        }
+
+        if (!\is_array($result)) {
+            return 0;
+        }
+
+        for ($i = 0, $count = \count($result); $i < $count; $i += 2) {
+            if ('num_docs' === $result[$i]) {
+                return (int) $result[$i + 1];
+            }
+        }
+
+        return 0;
+    }
+
     public function add(VectorDocument|array $documents): void
     {
         if ($documents instanceof VectorDocument) {

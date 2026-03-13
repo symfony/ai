@@ -227,4 +227,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'vectorBucketName' => $this->vectorBucketName,
         ]);
     }
+
+    public function count(): int
+    {
+        $result = $this->client->getIndex([
+            'vectorBucketName' => $this->vectorBucketName,
+            'indexName' => $this->indexName,
+        ]);
+
+        return $result->getVectorCount() ?? 0;
+    }
 }

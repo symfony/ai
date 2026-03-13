@@ -83,6 +83,11 @@ final class TraceableStore implements StoreInterface, ResetInterface
         return $this->store->supports($queryClass);
     }
 
+    public function count(): int
+    {
+        return $this->store->count();
+    }
+
     public function reset(): void
     {
         $this->calls = [];

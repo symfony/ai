@@ -130,6 +130,23 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('DELETE', \sprintf('v1/schema/%s', $this->collection), []);
     }
 
+    public function count(): int
+    {
+        $result = $this->request('POST', 'v1/graphql', [
+            'query' => \sprintf('{
+                Aggregate {
+                    %s {
+                        meta {
+                            count
+                        }
+                    }
+                }
+            }', $this->collection),
+        ]);
+
+        return $result['data']['Aggregate'][$this->collection][0]['meta']['count'] ?? 0;
+    }
+
     /**
      * @param array<string, mixed> $payload
      *
