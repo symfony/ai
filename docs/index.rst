@@ -96,6 +96,10 @@ Key Features
 **Memory Management**
     Add contextual memory to agents for personalized conversations.
 
+**Guardrails**
+    Validate agent input and output to block prompt injections, restricted content,
+    and sensitive data leakage with built-in and custom scanners.
+
 **Testing Tools**
     Mock agents and platforms for reliable testing without external API calls.
 
