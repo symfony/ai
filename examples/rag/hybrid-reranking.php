@@ -14,8 +14,10 @@ use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
 use Symfony\AI\Store\CombinedStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
+use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Event\PostQueryEvent;
+use Symfony\AI\Store\Event\PreQueryEvent;
 use Symfony\AI\Store\EventListener\RerankerListener;
 use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
@@ -121,8 +123,90 @@ foreach ($rerankedResults as $i => $document) {
 }
 echo "\n";
 
+// 5. Full pipeline: PreQueryEvent (query expansion) + PostQueryEvent (reranking)
+echo "--- Full Pipeline: Query Enhancement + Reranking ---\n";
+$vagueQuery = 'gangster';
+echo "Original query: \"$vagueQuery\"\n";
+
+$fullDispatcher = new EventDispatcher();
+
+// Pre-retrieval: expand the query with related terms
+$fullDispatcher->addListener(PreQueryEvent::class, static function (PreQueryEvent $event) {
+    $expanded = $event->getQuery().' crime family mafia organized crime';
+    echo "Enhanced query: \"$expanded\"\n";
+    $event->setQuery($expanded);
+});
+
+// Post-retrieval: rerank with cross-encoder
+$fullDispatcher->addListener(PostQueryEvent::class, new RerankerListener($reranker, topK: 5));
+
+$fullPipelineRetriever = new Retriever($combinedStore, $vectorizer, $fullDispatcher, logger: logger());
+$results = iterator_to_array($fullPipelineRetriever->retrieve($vagueQuery));
+
+foreach ($results as $i => $document) {
+    echo sprintf(
+        "  %d. %s (Relevance: %.4f)\n",
+        $i + 1,
+        $document->getMetadata()['title'] ?? 'Unknown',
+        $document->getScore() ?? 0.0,
+    );
+}
+echo "\n";
+
+// 6. Caching via PreQueryEvent short-circuiting
+echo "--- Caching: Short-Circuit Store Query via PreQueryEvent ---\n";
+
+/** @var array<string, list<VectorDocument>> $cache */
+$cache = [];
+$cacheDispatcher = new EventDispatcher();
+
+// Pre-retrieval: return cached results if available, skipping store query + vectorization
+$cacheDispatcher->addListener(PreQueryEvent::class, static function (PreQueryEvent $event) use (&$cache) {
+    $cacheKey = $event->getQuery();
+    if (isset($cache[$cacheKey])) {
+        echo "  Cache HIT for \"$cacheKey\" — skipping store query\n";
+        $event->setDocuments($cache[$cacheKey]);
+
+        return;
+    }
+    echo "  Cache MISS for \"$cacheKey\"\n";
+});
+
+// Post-retrieval: store results in cache
+$cacheDispatcher->addListener(PostQueryEvent::class, static function (PostQueryEvent $event) use (&$cache) {
+    $cacheKey = $event->getQuery();
+    $cache[$cacheKey] = iterator_to_array($event->getDocuments());
+    $event->setDocuments($cache[$cacheKey]);
+    echo '  Cached '.count($cache[$cacheKey])." results for \"$cacheKey\"\n";
+});
+
+$cachedRetriever = new Retriever($combinedStore, $vectorizer, $cacheDispatcher, logger: logger());
+
+echo "First call (populates cache):\n";
+$results = iterator_to_array($cachedRetriever->retrieve($queryText));
+foreach (array_slice($results, 0, 3) as $i => $document) {
+    echo sprintf(
+        "  %d. %s\n",
+        $i + 1,
+        $document->getMetadata()['title'] ?? 'Unknown',
+    );
+}
+
+echo "Second call (served from cache, no store query or vectorization):\n";
+$results = iterator_to_array($cachedRetriever->retrieve($queryText));
+foreach (array_slice($results, 0, 3) as $i => $document) {
+    echo sprintf(
+        "  %d. %s\n",
+        $i + 1,
+        $document->getMetadata()['title'] ?? 'Unknown',
+    );
+}
+echo "\n";
+
 echo "=== Summary ===\n";
 echo "- Vector retrieval finds semantically similar documents via embeddings\n";
 echo "- Text retrieval matches documents by keyword overlap\n";
 echo "- CombinedStore merges both result lists using rank-based RRF scoring\n";
 echo "- Adding a RerankerListener via EventDispatcher further refines results using a cross-encoder\n";
+echo "- PreQueryEvent allows query enhancement (expansion, spelling correction) before vectorization\n";
+echo "- PreQueryEvent::setDocuments() short-circuits the store query for caching or pre-computed results\n";
