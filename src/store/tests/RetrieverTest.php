@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Event\PostQueryEvent;
+use Symfony\AI\Store\Event\PreQueryEvent;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -297,20 +298,24 @@ final class RetrieverTest extends TestCase
             'text-embedding-3-small'
         );
 
+        $postRetrievalEvent = null;
         $dispatcher = $this->createMock(EventDispatcherInterface::class);
-        $dispatcher->expects($this->once())
+        $dispatcher->expects($this->exactly(2))
             ->method('dispatch')
-            ->with($this->callback(static function ($event) {
-                return $event instanceof PostQueryEvent
-                    && 'test query' === $event->getQuery()
-                    && 1 === \count(iterator_to_array($event->getDocuments()));
-            }))
-            ->willReturnArgument(0);
+            ->willReturnCallback(static function ($event) use (&$postRetrievalEvent) {
+                if ($event instanceof PostQueryEvent) {
+                    $postRetrievalEvent = $event;
+                }
+
+                return $event;
+            });
 
         $retriever = new Retriever($store, $vectorizer, $dispatcher);
         $results = iterator_to_array($retriever->retrieve('test query'));
 
         $this->assertCount(1, $results);
+        $this->assertInstanceOf(PostQueryEvent::class, $postRetrievalEvent);
+        $this->assertSame('test query', $postRetrievalEvent->getQuery());
     }
 
     public function testRetrieveWithEventDispatcherReturnsModifiedDocuments()
@@ -336,9 +341,12 @@ final class RetrieverTest extends TestCase
         );
 
         $dispatcher = $this->createMock(EventDispatcherInterface::class);
-        $dispatcher->method('dispatch')
-            ->willReturnCallback(static function (PostQueryEvent $event) use ($rerankedDocument) {
-                $event->setDocuments([$rerankedDocument]);
+        $dispatcher->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function ($event) use ($rerankedDocument) {
+                if ($event instanceof PostQueryEvent) {
+                    $event->setDocuments([$rerankedDocument]);
+                }
 
                 return $event;
             });
@@ -373,5 +381,171 @@ final class RetrieverTest extends TestCase
         // Without dispatcher, should be a Generator (yield behavior)
         $this->assertInstanceOf(\Generator::class, $results);
         $this->assertCount(1, iterator_to_array($results));
+    }
+
+    public function testRetrieveWithPreQueryEventModifiesQuery()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, true],
+                [HybridQuery::class, true],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->with(
+                $this->callback(static function ($query) {
+                    return $query instanceof HybridQuery && 'expanded query terms' === $query->getText();
+                }),
+                $this->anything()
+            )
+            ->willReturn([$document]);
+
+        $queryVector = new Vector([0.2, 0.3, 0.4]);
+        $vectorizer = new Vectorizer(
+            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            'text-embedding-3-small'
+        );
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function ($event) {
+                if ($event instanceof PreQueryEvent) {
+                    $event->setQuery('expanded query terms');
+                }
+
+                return $event;
+            });
+
+        $retriever = new Retriever($store, $vectorizer, $dispatcher);
+        $results = iterator_to_array($retriever->retrieve('original query'));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrieveWithPreQueryEventShortCircuitsStoreQuery()
+    {
+        $cachedDocument = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.7, 0.8, 0.9]),
+            new Metadata(['title' => 'Cached Document']),
+        );
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->expects($this->never())
+            ->method('query');
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function ($event) use ($cachedDocument) {
+                if ($event instanceof PreQueryEvent) {
+                    $event->setDocuments([$cachedDocument]);
+                }
+
+                return $event;
+            });
+
+        $retriever = new Retriever($store, null, $dispatcher);
+        $results = iterator_to_array($retriever->retrieve('test query'));
+
+        $this->assertCount(1, $results);
+        $this->assertSame('Cached Document', $results[0]->getMetadata()['title']);
+    }
+
+    public function testRetrieveWithPreQueryEventShortCircuitStillDispatchesPostQueryEvent()
+    {
+        $cachedDocument = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.7, 0.8, 0.9]),
+            new Metadata(['title' => 'Cached']),
+        );
+        $rerankedDocument = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.4, 0.5, 0.6]),
+            new Metadata(['title' => 'Reranked Cached']),
+        );
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->expects($this->never())
+            ->method('query');
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function ($event) use ($cachedDocument, $rerankedDocument) {
+                if ($event instanceof PreQueryEvent) {
+                    $event->setDocuments([$cachedDocument]);
+                }
+                if ($event instanceof PostQueryEvent) {
+                    $event->setDocuments([$rerankedDocument]);
+                }
+
+                return $event;
+            });
+
+        $retriever = new Retriever($store, null, $dispatcher);
+        $results = iterator_to_array($retriever->retrieve('test query'));
+
+        $this->assertCount(1, $results);
+        $this->assertSame('Reranked Cached', $results[0]->getMetadata()['title']);
+    }
+
+    public function testRetrieveWithPreQueryEventModifiesOptions()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, true],
+                [HybridQuery::class, true],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->with(
+                $this->callback(static function ($query) {
+                    return $query instanceof HybridQuery && 0.9 === $query->getSemanticRatio();
+                }),
+                $this->anything()
+            )
+            ->willReturn([$document]);
+
+        $queryVector = new Vector([0.2, 0.3, 0.4]);
+        $vectorizer = new Vectorizer(
+            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            'text-embedding-3-small'
+        );
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function ($event) {
+                if ($event instanceof PreQueryEvent) {
+                    $event->setOptions(['semanticRatio' => 0.9]);
+                }
+
+                return $event;
+            });
+
+        $retriever = new Retriever($store, $vectorizer, $dispatcher);
+        $results = iterator_to_array($retriever->retrieve('test query', ['semanticRatio' => 0.5]));
+
+        $this->assertCount(1, $results);
     }
 }

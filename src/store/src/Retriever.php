@@ -17,6 +17,7 @@ use Psr\Log\NullLogger;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Event\PostQueryEvent;
+use Symfony\AI\Store\Event\PreQueryEvent;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\TextQuery;
@@ -44,11 +45,20 @@ final class Retriever implements RetrieverInterface
     {
         $this->logger->debug('Starting document retrieval', ['query' => $query, 'options' => $options]);
 
-        $queryObject = $this->createQuery($query, $options);
+        $documents = null;
+        if (null !== $this->eventDispatcher) {
+            [$query, $options, $documents] = $this->dispatchPreRetrieval($query, $options);
+        }
 
-        $this->logger->debug('Searching store', ['query_type' => $queryObject::class]);
+        if (null === $documents) {
+            $queryObject = $this->createQuery($query, $options);
 
-        $documents = $this->store->query($queryObject, $options);
+            $this->logger->debug('Searching store', ['query_type' => $queryObject::class]);
+
+            $documents = $this->store->query($queryObject, $options);
+        } else {
+            $this->logger->debug('Using documents from PreQueryEvent, skipping store query');
+        }
 
         if (null !== $this->eventDispatcher) {
             $documents = $this->dispatchPostRetrieval($query, $documents, $options);
@@ -71,6 +81,19 @@ final class Retriever implements RetrieverInterface
         }
 
         $this->logger->debug('Document retrieval completed', ['retrieved_count' => $count]);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return array{string, array<string, mixed>, iterable<VectorDocument>|null}
+     */
+    private function dispatchPreRetrieval(string $query, array $options): array
+    {
+        $event = new PreQueryEvent($query, $options);
+        $this->eventDispatcher?->dispatch($event);
+
+        return [$event->getQuery(), $event->getOptions(), $event->getDocuments()];
     }
 
     /**
