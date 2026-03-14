@@ -14,11 +14,18 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\MockAgent;
+use Symfony\AI\Agent\Skill\Skill;
+use Symfony\AI\Agent\Skill\SkillLoaderInterface;
+use Symfony\AI\Agent\Skill\SkillMetadata;
+use Symfony\AI\Agent\Skill\Validation\SkillValidationResult;
+use Symfony\AI\Agent\Skill\Validation\SkillValidatorInterface;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Profiler\TraceableAgent;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
+use Symfony\AI\AiBundle\Profiler\TraceableSkillLoader;
+use Symfony\AI\AiBundle\Profiler\TraceableSkillValidator;
 use Symfony\AI\AiBundle\Profiler\TraceableStore;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
@@ -39,7 +46,7 @@ use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Uid\Uuid;
 
-class DataCollectorTest extends TestCase
+final class DataCollectorTest extends TestCase
 {
     public function testCollectsDataForNonStreamingResponse()
     {
@@ -53,7 +60,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
         $this->assertSame('Assistant response', $result->asText());
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -77,7 +84,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
         $this->assertSame('Assistant response', implode('', iterator_to_array($result->asStream())));
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -101,7 +108,7 @@ class DataCollectorTest extends TestCase
         // Invoke but do NOT consume the stream
         $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -141,7 +148,7 @@ class DataCollectorTest extends TestCase
             Message::ofUser('Hello World'),
         ));
 
-        $dataCollector = new DataCollector([], [], [$traceableMessageStore], [], [], []);
+        $dataCollector = new DataCollector([], [], [$traceableMessageStore], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getMessages();
@@ -164,7 +171,7 @@ class DataCollectorTest extends TestCase
 
         $traceableChat->submit(Message::ofUser('Hello World'));
 
-        $dataCollector = new DataCollector([], [], [], [$traceableChat], [], []);
+        $dataCollector = new DataCollector([], [], [], [$traceableChat], [], [], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getChats();
@@ -177,7 +184,7 @@ class DataCollectorTest extends TestCase
 
     public function testGetNameReturnsShortName()
     {
-        $dataCollector = new DataCollector([], [], [], [], [], []);
+        $dataCollector = new DataCollector([], [], [], [], [], [], [], []);
 
         $name = $dataCollector->getName();
 
@@ -193,7 +200,7 @@ class DataCollectorTest extends TestCase
             yield from [];
         })();
 
-        $dataCollector = new DataCollector([], $generator, [], [], [], []);
+        $dataCollector = new DataCollector([], $generator, [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertSame([], $dataCollector->getTools());
@@ -214,7 +221,7 @@ class DataCollectorTest extends TestCase
 
         $traceableAgent->call($messageBag);
 
-        $dataCollector = new DataCollector([], [], [], [], [$traceableAgent], []);
+        $dataCollector = new DataCollector([], [], [], [], [$traceableAgent], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getAgents());
@@ -231,9 +238,48 @@ class DataCollectorTest extends TestCase
         $traceableStore = new TraceableStore(new Store());
         $traceableStore->add(new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.3])));
 
-        $dataCollector = new DataCollector([], [], [], [], [], [$traceableStore]);
+        $dataCollector = new DataCollector([], [], [], [], [], [$traceableStore], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getStores());
+    }
+
+    public function testCollectsDataForSkillLoader()
+    {
+        $skill = new Skill('Body.', new SkillMetadata('my-skill', 'A skill'));
+
+        $innerLoader = $this->createMock(SkillLoaderInterface::class);
+        $innerLoader->method('loadSkills')
+            ->willReturn(['my-skill' => $skill]);
+
+        $traceableLoader = new TraceableSkillLoader($innerLoader);
+        $traceableLoader->loadSkills();
+
+        $dataCollector = new DataCollector([], [], [], [], [], [], [$traceableLoader], []);
+        $dataCollector->lateCollect();
+
+        $this->assertCount(1, $dataCollector->getLoadedSkills());
+        $this->assertSame('loadSkills', $dataCollector->getLoadedSkills()[0]['method']);
+        $this->assertSame(['my-skill'], $dataCollector->getLoadedSkills()[0]['skills']);
+    }
+
+    public function testCollectsDataForSkillValidators()
+    {
+        $skill = new Skill('Body.', new SkillMetadata('my-skill', 'A skill'));
+        $validationResult = new SkillValidationResult($skill);
+
+        $innerValidator = $this->createMock(SkillValidatorInterface::class);
+        $innerValidator->method('validate')
+            ->willReturn($validationResult);
+
+        $traceableValidator = new TraceableSkillValidator($innerValidator);
+        $traceableValidator->validate($skill);
+
+        $dataCollector = new DataCollector([], [], [], [], [], [], [], [$traceableValidator]);
+        $dataCollector->lateCollect();
+
+        $this->assertCount(1, $dataCollector->getValidatedSkills());
+        $this->assertSame($skill, $dataCollector->getValidatedSkills()[0]['skill']);
+        $this->assertSame($validationResult, $dataCollector->getValidatedSkills()[0]['result']);
     }
 }

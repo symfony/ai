@@ -23,6 +23,7 @@ Framework for building AI agents with user interaction and task execution. Built
 - **Toolbox** (`src/Toolbox/`): Function calling capabilities
 - **Structured Output**: Typed response support
 - **Message Stores** (`src/Chat/MessageStore/`): Chat persistence
+- **Skills**:
 
 ## Essential Commands
 
