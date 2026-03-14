@@ -38,8 +38,6 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
-use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
-use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
@@ -3811,34 +3809,23 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
-        $this->assertTrue($container->hasDefinition('ai.platform.ollama.scoped_http_client'));
-        $this->assertTrue($container->hasDefinition('ai.platform.model_catalog.ollama'));
 
         $definition = $container->getDefinition('ai.platform.ollama');
         $this->assertSame([OllamaPlatformFactory::class, 'create'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertSame('http://127.0.0.1:11434', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
-        $this->assertSame('ai.platform.ollama.scoped_http_client', (string) $definition->getArgument(2));
+        $this->assertSame('http_client', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame('ai.platform.model_catalog.ollama', (string) $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
-
-        $catalogDefinition = $container->getDefinition('ai.platform.model_catalog.ollama');
-        $this->assertTrue($catalogDefinition->isLazy());
-        $this->assertSame(ModelCatalog::class, $catalogDefinition->getClass());
-
-        $this->assertTrue($catalogDefinition->hasTag('proxy'));
-        $this->assertSame([['interface' => ModelCatalogInterface::class]], $catalogDefinition->getTag('proxy'));
 
         // Ollama.com usage (with API key)
         $container = $this->buildContainer([
@@ -3853,34 +3840,23 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
-        $this->assertTrue($container->hasDefinition('ai.platform.ollama.scoped_http_client'));
-        $this->assertTrue($container->hasDefinition('ai.platform.model_catalog.ollama'));
 
         $definition = $container->getDefinition('ai.platform.ollama');
         $this->assertSame([OllamaPlatformFactory::class, 'create'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertSame('https://ollama.com', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
-        $this->assertSame('ai.platform.ollama.scoped_http_client', (string) $definition->getArgument(2));
+        $this->assertSame('http_client', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame('ai.platform.model_catalog.ollama', (string) $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
-
-        $catalogDefinition = $container->getDefinition('ai.platform.model_catalog.ollama');
-        $this->assertTrue($catalogDefinition->isLazy());
-        $this->assertSame(ModelCatalog::class, $catalogDefinition->getClass());
-
-        $this->assertTrue($catalogDefinition->hasTag('proxy'));
-        $this->assertSame([['interface' => ModelCatalogInterface::class]], $catalogDefinition->getTag('proxy'));
 
         // Custom HTTPClient
         $container = $this->buildContainer([
@@ -3894,82 +3870,23 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
-        $this->assertFalse($container->hasDefinition('ai.platform.ollama.scoped_http_client'));
-        $this->assertTrue($container->hasDefinition('ai.platform.model_catalog.ollama'));
 
         $definition = $container->getDefinition('ai.platform.ollama');
         $this->assertSame([OllamaPlatformFactory::class, 'create'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertNull($definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('foo', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame('ai.platform.model_catalog.ollama', (string) $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
-
-        $catalogDefinition = $container->getDefinition('ai.platform.model_catalog.ollama');
-        $this->assertTrue($catalogDefinition->isLazy());
-        $this->assertSame(ModelCatalog::class, $catalogDefinition->getClass());
-
-        $this->assertTrue($catalogDefinition->hasTag('proxy'));
-        $this->assertSame([['interface' => ModelCatalogInterface::class]], $catalogDefinition->getTag('proxy'));
-    }
-
-    public function testOllamaCanBeCreatedWithCatalogFromApi()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'platform' => [
-                    'ollama' => [
-                        'endpoint' => 'http://127.0.0.1:11434',
-                        'api_catalog' => true,
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
-        $this->assertTrue($container->hasDefinition('ai.platform.ollama.scoped_http_client'));
-        $this->assertTrue($container->hasDefinition('ai.platform.model_catalog.ollama'));
-
-        $definition = $container->getDefinition('ai.platform.ollama');
-        $this->assertSame([OllamaPlatformFactory::class, 'create'], $definition->getFactory());
-        $this->assertTrue($definition->isLazy());
-
-        $this->assertCount(6, $definition->getArguments());
-        $this->assertSame('http://127.0.0.1:11434', $definition->getArgument(0));
-        $this->assertNull($definition->getArgument(1));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
-        $this->assertSame('ai.platform.ollama.scoped_http_client', (string) $definition->getArgument(2));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame('ai.platform.model_catalog.ollama', (string) $definition->getArgument(3));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
-
-        $this->assertTrue($definition->hasTag('proxy'));
-        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
-
-        $catalogDefinition = $container->getDefinition('ai.platform.model_catalog.ollama');
-
-        $this->assertTrue($catalogDefinition->isLazy());
-        $this->assertSame(OllamaApiCatalog::class, $catalogDefinition->getClass());
-        $this->assertCount(1, $catalogDefinition->getArguments());
-        $this->assertInstanceOf(Reference::class, $catalogDefinition->getArgument(0));
-        $this->assertSame('ai.platform.ollama.scoped_http_client', (string) $catalogDefinition->getArgument(0));
-
-        $this->assertTrue($catalogDefinition->hasTag('proxy'));
-        $this->assertSame([['interface' => ModelCatalogInterface::class]], $catalogDefinition->getTag('proxy'));
     }
 
     /**

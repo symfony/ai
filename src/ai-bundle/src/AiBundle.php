@@ -68,7 +68,7 @@ use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory as HuggingFacePlatformFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory as LmStudioPlatformFactory;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory as MistralPlatformFactory;
-use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
+use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
@@ -81,7 +81,6 @@ use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\File;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
@@ -136,7 +135,6 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
@@ -848,47 +846,13 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Ollama platform configuration requires "symfony/ai-ollama-platform" package. Try running "composer require symfony/ai-ollama-platform".');
             }
 
-            $httpClientReference = new Reference($platform['http_client']);
-
-            if (null !== $platform['endpoint']) {
-                $defaultOptions = [];
-                if (null !== ($platform['api_key'] ?? null)) {
-                    $defaultOptions['auth_bearer'] = $platform['api_key'];
-                }
-
-                $scopedClientDefinition = (new Definition(ScopingHttpClient::class))
-                    ->setFactory([ScopingHttpClient::class, 'forBaseUri'])
-                    ->setArguments([
-                        $httpClientReference,
-                        $platform['endpoint'],
-                        $defaultOptions,
-                    ]);
-
-                $container->setDefinition('ai.platform.ollama.scoped_http_client', $scopedClientDefinition);
-
-                $httpClientReference = new Reference('ai.platform.ollama.scoped_http_client');
-            }
-
-            if (\array_key_exists('api_catalog', $platform)) {
-                $catalogDefinition = (new Definition(OllamaApiCatalog::class))
-                    ->setLazy(true)
-                    ->setArguments([
-                        $httpClientReference,
-                    ])
-                    ->addTag('proxy', ['interface' => ModelCatalogInterface::class])
-                ;
-
-                $container->setDefinition('ai.platform.model_catalog.ollama', $catalogDefinition);
-            }
-
             $definition = (new Definition(Platform::class))
                 ->setFactory(OllamaPlatformFactory::class.'::create')
                 ->setLazy(true)
                 ->setArguments([
-                    $platform['endpoint'],
+                    $platform['endpoint'] ?? null,
                     $platform['api_key'] ?? null,
-                    $httpClientReference,
-                    new Reference('ai.platform.model_catalog.ollama'),
+                    new Reference($platform['http_client']),
                     new Reference('ai.platform.contract.ollama'),
                     new Reference('event_dispatcher'),
                 ])

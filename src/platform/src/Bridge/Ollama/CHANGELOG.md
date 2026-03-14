@@ -5,6 +5,8 @@ CHANGELOG
 ---
 
  * Add support for `structured_output` capability in `OllamaApiCatalog`
+ * Replace `ModelCatalog` by `OllamaApiCatalog`
+ * Rename `OllamaApiCatalog` to `ModelCatalog`
 
 0.4
 ---
