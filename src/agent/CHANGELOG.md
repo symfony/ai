@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `ToolCallRequested` event dispatched before tool execution
+
 0.4
 ---
 

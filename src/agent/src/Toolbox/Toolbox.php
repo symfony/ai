@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallFailed;
+use Symfony\AI\Agent\Toolbox\Event\ToolCallRequested;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallSucceeded;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
@@ -69,6 +70,20 @@ final class Toolbox implements ToolboxInterface
     public function execute(ToolCall $toolCall): ToolResult
     {
         $metadata = $this->getMetadata($toolCall);
+
+        $event = new ToolCallRequested($toolCall, $metadata);
+        $this->eventDispatcher?->dispatch($event);
+
+        if ($event->isDenied()) {
+            $this->logger->debug(\sprintf('Tool "%s" denied: %s', $toolCall->getName(), $event->getDenialReason()));
+
+            return new ToolResult($toolCall, $event->getDenialReason() ?? 'Tool execution denied.');
+        }
+
+        if ($event->hasResult()) {
+            return $event->getResult();
+        }
+
         $tool = $this->getExecutable($metadata);
 
         try {

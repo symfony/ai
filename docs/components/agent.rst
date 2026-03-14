@@ -389,9 +389,14 @@ Tool Call Lifecycle Events
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you need to react more granularly to the lifecycle of individual tool calls, you can listen to the
+:class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallRequested`,
 :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallArgumentsResolved`,
 :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallSucceeded` and
 :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallFailed` events. These are dispatched at different stages::
+
+    $eventDispatcher->addListener(ToolCallRequested::class, function (ToolCallRequested $event): void {
+        // Intercept a tool call before execution, e.g. to deny it or set a custom result
+    });
 
     $eventDispatcher->addListener(ToolCallArgumentsResolved::class, function (ToolCallArgumentsResolved $event): void {
         // Let the client know, that the tool $event->toolCall->name was executed
@@ -404,6 +409,11 @@ If you need to react more granularly to the lifecycle of individual tool calls, 
     $eventDispatcher->addListener(ToolCallFailed::class, function (ToolCallFailed $event): void {
         // Let the client know, that the tool $event->toolCall->name failed with the exception: $event->exception
     });
+
+See the :doc:`/cookbook/human-in-the-loop` cookbook article for a complete guide on building a human-in-the-loop
+confirmation system using the ``ToolCallRequested`` event.
+
+* `Human-in-the-Loop Confirmation`_
 
 Excluding Tool Messages from MessageBag
 ---------------------------------------
@@ -755,3 +765,4 @@ Code Examples
 .. _`RAG with Pinecone`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
 .. _`Chat with static memory`: https://github.com/symfony/ai/blob/main/examples/memory/static.php
 .. _`Chat with embedding search memory`: https://github.com/symfony/ai/blob/main/examples/memory/mariadb.php
+.. _`Human-in-the-Loop Confirmation`: https://github.com/symfony/ai/blob/main/examples/toolbox/confirmation.php
