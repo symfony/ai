@@ -27,6 +27,8 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
+        private readonly Region $region = Region::WORLD,
+        #[\SensitiveParameter] private readonly ?string $apiKey = null,
     ) {
         parent::__construct();
     }
@@ -50,7 +52,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
         if (!$this->modelsAreLoaded) {
             $this->models = [
                 ...$this->models,
-                ...$this->fetchRemoteModels(),
+                ...($this->apiKey ? $this->fetchUserRemoteModels() : $this->fetchAllRemoteModels()),
                 ...$this->fetchRemoteEmbeddings(),
             ];
             $this->modelsAreLoaded = true;
@@ -60,61 +62,29 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
     /**
      * @return iterable<string, array{class: class-string<Model>, capabilities: list<Capability::*>}>
      */
-    protected function fetchRemoteModels(): iterable
+    protected function fetchAllRemoteModels(): iterable
     {
-        $responseModels = $this->httpClient->request('GET', 'https://openrouter.ai/api/v1/models');
+        $responseModels = $this->httpClient->request('GET', $this->getApiBaseUrl().'v1/models');
         foreach ($responseModels->toArray()['data'] as $model) {
-            $capabilities = [];
-
-            foreach ($model['architecture']['input_modalities'] as $inputModality) {
-                switch ($inputModality) {
-                    case 'text':
-                        $capabilities[] = Capability::INPUT_TEXT;
-                        break;
-                    case 'image':
-                        $capabilities[] = Capability::INPUT_IMAGE;
-                        break;
-                    case 'audio':
-                        $capabilities[] = Capability::INPUT_AUDIO;
-                        break;
-                    case 'file':
-                        $capabilities[] = Capability::INPUT_PDF;
-                        break;
-                    case 'video':
-                        $capabilities[] = Capability::INPUT_MULTIMODAL; // Video?
-                        break;
-                    default:
-                        throw new InvalidArgumentException('Unknown model '.$inputModality.' input modality.', 1763717587);
-                }
-            }
-
-            foreach ($model['architecture']['output_modalities'] as $outputModality) {
-                switch ($outputModality) {
-                    case 'text':
-                        $capabilities[] = Capability::OUTPUT_TEXT;
-                        break;
-                    case 'image':
-                        $capabilities[] = Capability::OUTPUT_IMAGE;
-                        break;
-                    case 'audio':
-                        $capabilities[] = Capability::OUTPUT_AUDIO;
-                        break;
-                    default:
-                        throw new InvalidArgumentException('Unknown model '.$outputModality.' output modality.', 1763717588);
-                }
-            }
-
-            // Streaming is allowed for any model: https://openrouter.ai/docs/api/reference/streaming
-            $capabilities[] = Capability::OUTPUT_STREAMING;
-
-            // Structured Output via PlatformSubscriber
-            if (\in_array('structured_outputs', $model['supported_parameters'] ?? [])) {
-                $capabilities[] = Capability::OUTPUT_STRUCTURED;
-            }
-
             yield $model['id'] => [
                 'class' => CompletionsModel::class,
-                'capabilities' => $capabilities,
+                'capabilities' => $this->getModelCapabilities($model),
+            ];
+        }
+    }
+
+    /**
+     * @return iterable<string, array{class: class-string<Model>, capabilities: list<Capability::*>}>
+     */
+    protected function fetchUserRemoteModels(): iterable
+    {
+        $responseModels = $this->httpClient->request('GET', $this->getApiBaseUrl().'v1/models/user', [
+            'auth_bearer' => $this->apiKey,
+        ]);
+        foreach ($responseModels->toArray()['data'] as $model) {
+            yield $model['id'] => [
+                'class' => CompletionsModel::class,
+                'capabilities' => $this->getModelCapabilities($model),
             ];
         }
     }
@@ -124,12 +94,84 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
      */
     protected function fetchRemoteEmbeddings(): iterable
     {
-        $responseEmbeddings = $this->httpClient->request('GET', 'https://openrouter.ai/api/v1/embeddings/models');
+        $responseEmbeddings = $this->httpClient->request('GET', $this->getApiBaseUrl().'v1/embeddings/models');
         foreach ($responseEmbeddings->toArray()['data'] as $embedding) {
             yield $embedding['id'] => [
                 'class' => EmbeddingsModel::class,
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ];
         }
+    }
+
+    /**
+     * @param array{
+     *     supported_parameters: array<string, mixed>,
+     *     architecture: array{
+     *         output_modalities: array<int, string>,
+     *         input_modalities: array<int, string>
+     *     }
+     * } $model
+     *
+     * @return Capability[]
+     */
+    protected function getModelCapabilities(array $model): array
+    {
+        $capabilities = [];
+
+        foreach ($model['architecture']['input_modalities'] ?? [] as $inputModality) {
+            switch ($inputModality) {
+                case 'text':
+                    $capabilities[] = Capability::INPUT_TEXT;
+                    break;
+                case 'image':
+                    $capabilities[] = Capability::INPUT_IMAGE;
+                    break;
+                case 'audio':
+                    $capabilities[] = Capability::INPUT_AUDIO;
+                    break;
+                case 'file':
+                    $capabilities[] = Capability::INPUT_PDF;
+                    break;
+                case 'video':
+                    $capabilities[] = Capability::INPUT_MULTIMODAL; // Video?
+                    break;
+                default:
+                    throw new InvalidArgumentException('Unknown model '.$inputModality.' input modality.', 1763717587);
+            }
+        }
+
+        foreach ($model['architecture']['output_modalities'] ?? [] as $outputModality) {
+            switch ($outputModality) {
+                case 'text':
+                    $capabilities[] = Capability::OUTPUT_TEXT;
+                    break;
+                case 'image':
+                    $capabilities[] = Capability::OUTPUT_IMAGE;
+                    break;
+                case 'audio':
+                    $capabilities[] = Capability::OUTPUT_AUDIO;
+                    break;
+                default:
+                    throw new InvalidArgumentException('Unknown model '.$outputModality.' output modality.', 1763717588);
+            }
+        }
+
+        // Streaming is allowed for any model: https://openrouter.ai/docs/api/reference/streaming
+        $capabilities[] = Capability::OUTPUT_STREAMING;
+
+        // Structured Output via PlatformSubscriber
+        if (\in_array('structured_outputs', $model['supported_parameters'] ?? [])) {
+            $capabilities[] = Capability::OUTPUT_STRUCTURED;
+        }
+
+        return $capabilities;
+    }
+
+    protected function getApiBaseUrl(): string
+    {
+        return match ($this->region) {
+            Region::EU => 'https://eu.openrouter.ai/api/',
+            default => 'https://openrouter.ai/api/',
+        };
     }
 }
