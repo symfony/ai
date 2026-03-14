@@ -17,6 +17,7 @@ use Psr\Log\NullLogger;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Event\PostQueryEvent;
+use Symfony\AI\Store\Event\PreQueryEvent;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\TextQuery;
@@ -44,6 +45,10 @@ final class Retriever implements RetrieverInterface
     {
         $this->logger->debug('Starting document retrieval', ['query' => $query, 'options' => $options]);
 
+        if (null !== $this->eventDispatcher) {
+            [$query, $options] = $this->dispatchPreQuery($query, $options);
+        }
+
         $queryObject = $this->createQuery($query, $options);
 
         $this->logger->debug('Searching store', ['query_type' => $queryObject::class]);
@@ -51,7 +56,7 @@ final class Retriever implements RetrieverInterface
         $documents = $this->store->query($queryObject, $options);
 
         if (null !== $this->eventDispatcher) {
-            $documents = $this->dispatchPostRetrieval($query, $documents, $options);
+            $documents = $this->dispatchPostQuery($query, $documents, $options);
         }
 
         return $this->yieldDocuments($documents);
@@ -74,12 +79,25 @@ final class Retriever implements RetrieverInterface
     }
 
     /**
+     * @param array<string, mixed> $options
+     *
+     * @return array{string, array<string, mixed>}
+     */
+    private function dispatchPreQuery(string $query, array $options): array
+    {
+        $event = new PreQueryEvent($query, $options);
+        $this->eventDispatcher?->dispatch($event);
+
+        return [$event->getQuery(), $event->getOptions()];
+    }
+
+    /**
      * @param iterable<VectorDocument> $documents
      * @param array<string, mixed>     $options
      *
      * @return iterable<VectorDocument>
      */
-    private function dispatchPostRetrieval(string $query, iterable $documents, array $options): iterable
+    private function dispatchPostQuery(string $query, iterable $documents, array $options): iterable
     {
         $event = new PostQueryEvent($query, $documents, $options);
         $this->eventDispatcher?->dispatch($event);
