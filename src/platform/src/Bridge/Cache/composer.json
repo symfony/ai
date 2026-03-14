@@ -9,6 +9,9 @@
         "bridge",
         "platform"
     ],
+    "repositories": [
+        {"type": "path", "url": "../" }
+    ],
     "authors": [
         {
             "name": "Christopher Hertel",
@@ -25,7 +28,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-platform": "^0.6",
+        "symfony/ai-platform": "dev-main",
         "symfony/cache": "^7.3|^8.0",
         "symfony/clock": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0"
