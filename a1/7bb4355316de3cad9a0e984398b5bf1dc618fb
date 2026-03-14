@@ -1,0 +1,35 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-03T18:25:39Z
+
+@chr-hertel i also fixed the examples for HF - a few are not possible to fix and i wanted to spend to much time about it :)
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-03T18:51:49Z
+
+@chr-hertel in my opinion this is ready :)
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-11T18:59:10Z
+
+@chr-hertel i just have implemented your review - if @OskarStark means that the old name is better i can revert that! but all of your feedback is implemented now
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-13T23:44:49Z
+
+Needs a rebase, good to go in afterwards.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-14T12:58:43Z
+
+@chr-hertel done :)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-14T15:06:18Z
+
+We'll need to clean up the event dispatcher dependencies over all packages as a follow up - but that's larger than this PR
