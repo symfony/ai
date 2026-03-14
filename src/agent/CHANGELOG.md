@@ -7,6 +7,7 @@ CHANGELOG
  * [BC BREAK] Rename `Symfony\AI\Agent\Toolbox\Tool\Agent` to `Symfony\AI\Agent\Toolbox\Tool\Subagent`
  * [BC BREAK] Change AgentProcessor `keepToolMessages` to `excludeToolMessages` and default behaviour to preserve tool messages
  * Add `MetaDataAwareTrait` to `MockResponse`, the metadata will also be set on the returned `TextResult` when calling the `toResult` function
+ * Pass metadata from `ToolCallResult` to `AssistantMessage` in `AgentProcessor` (enabling use of `thoughtSignature` with Gemini, for example)
  * Add `HasSourcesTrait` to `Symfony\AI\Agent\Toolbox\Tool\Subagent`
 
 0.3
