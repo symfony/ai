@@ -56,6 +56,9 @@ enum Capability: string
     // EMBEDDINGS
     case EMBEDDINGS = 'embeddings';
 
+    // RERANKING
+    case RERANKING = 'reranking';
+
     // Thinking
     case THINKING = 'thinking';
 }

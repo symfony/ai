@@ -109,7 +109,14 @@ final class Vectorizer implements VectorizerInterface
             throw new RuntimeException('No vector returned for vectorization.');
         }
 
-        return new VectorDocument($document->getId(), $vectors[0], $document->getMetadata());
+        // Preserve the original text in metadata so downstream consumers
+        // (e.g. text search, reranking) can access it via Metadata::getText().
+        $metadata = $document->getMetadata();
+        if (!$metadata->hasText()) {
+            $metadata->setText($document->getContent());
+        }
+
+        return new VectorDocument($document->getId(), $vectors[0], $metadata);
     }
 
     /**
@@ -186,7 +193,14 @@ final class Vectorizer implements VectorizerInterface
 
         $vectorDocuments = [];
         foreach ($documents as $i => $document) {
-            $vectorDocuments[] = new VectorDocument($document->getId(), $vectors[$i], $document->getMetadata());
+            // Preserve the original text in metadata so downstream consumers
+            // (e.g. text search, reranking) can access it via Metadata::getText().
+            $metadata = $document->getMetadata();
+            if (!$metadata->hasText()) {
+                $metadata->setText($document->getContent());
+            }
+
+            $vectorDocuments[] = new VectorDocument($document->getId(), $vectors[$i], $metadata);
         }
 
         $this->logger->info('Vectorization process completed', [

@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\RerankingResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -221,6 +222,56 @@ final class ResultConverterTest extends TestCase
         $convertedResult = (new ResultConverter())->convert($result, ['task' => $task]);
 
         $this->assertInstanceOf(ObjectResult::class, $convertedResult);
+    }
+
+    #[TestDox('Converts TEI text-ranking response to RerankingResult')]
+    public function testConvertTextRankingTeiFormat()
+    {
+        $responseData = [
+            ['index' => 0, 'score' => 0.95],
+            ['index' => 1, 'score' => 0.42],
+        ];
+        $response = new JsonMockResponse($responseData);
+        $httpClient = new MockHttpClient($response);
+        $httpResponse = $httpClient->request('GET', 'https://example.com');
+        $result = new RawHttpResult($httpResponse);
+
+        $convertedResult = (new ResultConverter())->convert($result, ['task' => Task::TEXT_RANKING]);
+
+        $this->assertInstanceOf(RerankingResult::class, $convertedResult);
+        $entries = $convertedResult->getContent();
+        $this->assertCount(2, $entries);
+        $this->assertSame(0, $entries[0]->getIndex());
+        $this->assertSame(0.95, $entries[0]->getScore());
+        $this->assertSame(1, $entries[1]->getIndex());
+        $this->assertSame(0.42, $entries[1]->getScore());
+    }
+
+    #[TestDox('Converts HF serverless text-ranking response to RerankingResult')]
+    public function testConvertTextRankingServerlessFormat()
+    {
+        // HF serverless returns one result per input pair, wrapped in an extra array.
+        // Score represents relevance directly for cross-encoder reranker models.
+        $responseData = [
+            [
+                ['label' => 'LABEL_0', 'score' => 0.024],
+                ['label' => 'LABEL_0', 'score' => 0.00003],
+            ],
+        ];
+        $response = new JsonMockResponse($responseData);
+        $httpClient = new MockHttpClient($response);
+        $httpResponse = $httpClient->request('GET', 'https://example.com');
+        $result = new RawHttpResult($httpResponse);
+
+        $convertedResult = (new ResultConverter())->convert($result, ['task' => Task::TEXT_RANKING]);
+
+        $this->assertInstanceOf(RerankingResult::class, $convertedResult);
+        $entries = $convertedResult->getContent();
+        $this->assertCount(2, $entries);
+        $this->assertSame(0, $entries[0]->getIndex());
+        $this->assertSame(0.024, $entries[0]->getScore());
+        $this->assertSame(1, $entries[1]->getIndex());
+        $this->assertSame(3.0E-5, $entries[1]->getScore());
     }
 
     #[TestDox('Converts text-to-image response to BinaryResult with correct MIME type')]
