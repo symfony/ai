@@ -68,6 +68,7 @@ use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
+use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
@@ -3098,6 +3099,106 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testSqliteStoreWithDsnCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'sqlite' => [
+                        'my_sqlite_store' => [
+                            'dsn' => 'sqlite:/tmp/test.db',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_store'));
+        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_sqlite_store'));
+        $this->assertTrue($container->hasDefinition('ai.store.sqlite.pdo.my_sqlite_store'));
+
+        $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_store');
+        $this->assertSame(SqliteStore::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_sqlite_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySqliteStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $sqlite_my_sqlite_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $sqliteMySqliteStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testSqliteStoreWithConnectionCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'sqlite' => [
+                        'my_sqlite_store' => [
+                            'connection' => 'default',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_store'));
+        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_sqlite_store'));
+
+        $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_store');
+        $this->assertSame(SqliteStore::class, $definition->getClass());
+        $this->assertSame([SqliteStore::class, 'fromDbal'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+        $this->assertTrue($definition->hasTag('ai.store'));
+    }
+
+    public function testSqliteStoreWithCustomStrategyCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'sqlite' => [
+                        'my_sqlite_store' => [
+                            'dsn' => 'sqlite:/tmp/test.db',
+                            'strategy' => 'euclidean',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_store'));
+        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_sqlite_store'));
+
+        $distanceCalculator = $container->getDefinition('ai.store.distance_calculator.my_sqlite_store');
+        $this->assertSame(DistanceCalculator::class, $distanceCalculator->getClass());
+        $this->assertEquals(DistanceStrategy::from('euclidean'), $distanceCalculator->getArgument(0));
+    }
+
+    public function testSqliteStoreWithCustomTableNameCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'sqlite' => [
+                        'my_sqlite_store' => [
+                            'dsn' => 'sqlite:/tmp/test.db',
+                            'table_name' => 'custom_vectors',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_store'));
+
+        $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_store');
+        $arguments = $definition->getArguments();
+
+        $this->assertSame('custom_vectors', $arguments[1]);
     }
 
     public function testSupabaseStoreCanBeConfigured()

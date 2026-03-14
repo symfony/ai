@@ -361,6 +361,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('store/qdrant'))
                     ->append($import('store/redis'))
                     ->append($import('store/s3vectors'))
+                    ->append($import('store/sqlite'))
                     ->append($import('store/supabase'))
                     ->append($import('store/surrealdb'))
                     ->append($import('store/typesense'))

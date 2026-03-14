@@ -107,6 +107,7 @@ use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
+use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
@@ -1847,6 +1848,54 @@ final class AiBundle extends AbstractBundle
                 $definition
                     ->setLazy(true)
                     ->setArguments($arguments)
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('sqlite' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-sqlite-store', SqliteStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('SQLite store configuration requires "symfony/ai-sqlite-store" package. Try running "composer require symfony/ai-sqlite-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
+                $distanceCalculatorDefinition->setLazy(true);
+
+                $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
+
+                if (\array_key_exists('strategy', $store) && null !== $store['strategy']) {
+                    $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
+                }
+
+                $definition = new Definition(SqliteStore::class);
+
+                if (\array_key_exists('connection', $store) && null !== $store['connection']) {
+                    $definition->setFactory([SqliteStore::class, 'fromDbal'])
+                        ->setArguments([
+                            new Reference(\sprintf('doctrine.dbal.%s_connection', $store['connection'])),
+                            $store['table_name'] ?? $name,
+                            new Reference('ai.store.distance_calculator.'.$name),
+                        ]);
+                } else {
+                    $pdoDefinition = new Definition(\PDO::class, [$store['dsn']]);
+                    $pdoDefinition->addMethodCall('setAttribute', [\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION]);
+                    $container->setDefinition('ai.store.sqlite.pdo.'.$name, $pdoDefinition);
+
+                    $definition->setArguments([
+                        new Reference('ai.store.sqlite.pdo.'.$name),
+                        $store['table_name'] ?? $name,
+                        new Reference('ai.store.distance_calculator.'.$name),
+                    ]);
+                }
+
+                $definition
+                    ->setLazy(true)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');

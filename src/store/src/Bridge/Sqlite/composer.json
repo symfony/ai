@@ -1,0 +1,62 @@
+{
+    "name": "symfony/ai-sqlite-store",
+    "description": "SQLite vector store bridge for Symfony AI",
+    "license": "MIT",
+    "type": "symfony-ai-store",
+    "keywords": [
+        "ai",
+        "bridge",
+        "sqlite",
+        "store",
+        "vector"
+    ],
+    "authors": [
+        {
+            "name": "Christopher Hertel",
+            "email": "mail@christopher-hertel.de"
+        },
+        {
+            "name": "Oskar Stark",
+            "email": "oskarstark@googlemail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-pdo": "*",
+        "ext-pdo_sqlite": "*",
+        "symfony/ai-platform": "^0.5|^0.6",
+        "symfony/ai-store": "^0.5|^0.6"
+    },
+    "require-dev": {
+        "doctrine/dbal": "^3.3|^4.0",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.53"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Store\\Bridge\\Sqlite\\": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/",
+            "Symfony\\AI\\Store\\Bridge\\Sqlite\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    }
+}
