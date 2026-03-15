@@ -74,7 +74,8 @@ final class StreamListenerTest extends TestCase
         $this->assertSame('Initial ', $result[0]->getText());
         $this->assertInstanceOf(TextDelta::class, $result[1]);
         $this->assertSame('content ', $result[1]->getText());
-        $this->assertSame('Tool response', $result[2]);
+        $this->assertInstanceOf(TextDelta::class, $result[2]);
+        $this->assertSame('Tool response', $result[2]->getText());
         $this->assertNotNull($capturedAssistantMessage);
         $this->assertSame('Initial content ', $capturedAssistantMessage->getContent());
         $this->assertNotNull($capturedToolCallResult);
@@ -97,7 +98,9 @@ final class StreamListenerTest extends TestCase
         $streamResult->addListener(new StreamListener($handleToolCallsCallback));
         $result = iterator_to_array($streamResult->getContent());
 
-        $this->assertSame(['Immediate tool response'], $result);
+        $this->assertCount(1, $result);
+        $this->assertInstanceOf(TextDelta::class, $result[0]);
+        $this->assertSame('Immediate tool response', $result[0]->getText());
         $this->assertNotNull($capturedAssistantMessage);
         $this->assertSame('', $capturedAssistantMessage->getContent());
     }
@@ -150,7 +153,8 @@ final class StreamListenerTest extends TestCase
 
         $this->assertInstanceOf(TextDelta::class, $result[0]);
         $this->assertSame('Before', $result[0]->getText());
-        $this->assertSame('Tool output', $result[1]);
+        $this->assertInstanceOf(TextDelta::class, $result[1]);
+        $this->assertSame('Tool output', $result[1]->getText());
     }
 
     public function testMetadataPropagationFromTextResult()
