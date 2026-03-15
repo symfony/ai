@@ -74,6 +74,7 @@ Similarity Search Examples
 * `Similarity Search with Pinecone (RAG)`_
 * `Similarity Search with Qdrant (RAG)`_
 * `Similarity Search with SurrealDB (RAG)`_
+* `Similarity Search with SQLite (RAG)`_
 * `Similarity Search with Symfony Cache (RAG)`_
 * `Similarity Search with Typesense (RAG)`_
 * `Similarity Search with Vektor (RAG)`_
@@ -107,6 +108,7 @@ Supported Stores
 * `Qdrant`_
 * `Redis`_
 * `S3 Vectors`_
+* `SQLite`_ (requires ``ext-pdo_sqlite``)
 * `Supabase`_ (requires manual database setup)
 * `SurrealDB`_
 * `Symfony Cache`_ (requires ``symfony/cache`` as additional dependency)
@@ -250,6 +252,7 @@ This leads to a store implementing two methods::
 .. _`Similarity Search with Neo4j (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/neo4j.php
 .. _`Similarity Search with OpenSearch (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/opensearch.php
 .. _`Similarity Search with Pinecone (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
+.. _`Similarity Search with SQLite (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/sqlite.php
 .. _`Similarity Search with Symfony Cache (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cache.php
 .. _`Similarity Search with Qdrant (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/qdrant.php
 .. _`Similarity Search with SurrealDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/surrealdb.php
@@ -280,4 +283,5 @@ This leads to a store implementing two methods::
 .. _`Symfony Cache`: https://symfony.com/doc/current/components/cache.html
 .. _`Vektor`: https://github.com/centamiv/vektor
 .. _`Weaviate`: https://weaviate.io/
+.. _`SQLite`: https://www.sqlite.org/
 .. _`Supabase`: https://supabase.com/

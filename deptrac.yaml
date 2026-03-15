@@ -317,6 +317,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Store\\Bridge\\Redis\\.*
+    - name: SqliteStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Sqlite\\.*
     - name: SupabaseStore
       collectors:
         - type: classLike
@@ -560,6 +564,9 @@ deptrac:
       - StoreComponent
       - PlatformComponent
     RedisStore:
+      - StoreComponent
+      - PlatformComponent
+    SqliteStore:
       - StoreComponent
       - PlatformComponent
     SupabaseStore:
