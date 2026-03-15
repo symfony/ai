@@ -1,0 +1,54 @@
+---------------------------------------------------------------------------
+
+by bigdevlarry at 2026-03-14T01:44:49Z
+
+@OskarStark I agree that PHPDoc already does some extraction, but for extra properties we'd like to read as described in issue #1737, like examples, that won't suffice. I've added a coverage for the scenario you've described now
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-14T15:30:03Z
+
+Thanks @bigdevlarry for jumping on that :+1: - looks good to me, needs a rebase tho.
+
+@tacman & @valtzu - is it what you had in mind and solves #1737 for you?
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-03-14T16:45:11Z
+
+I'm ok with this, I would prefer that `With` attribute would support all schema properties (that LLMs support)
+
+Isn't it called `examples` (plural) though?
+
+---------------------------------------------------------------------------
+
+by tacman at 2026-03-15T11:15:47Z
+
+Yes, thanks!
+
+description will fit naturally here to create a data definition document without needing to use the PhpDocBlock tools
+
+```php
+/**
+     * dcterms:accessRights — reuse permission granted by the holding institution.
+     * @var string|null
+     */
+    #[Map(source: 'reuse_allowed', facet: true)]
+    #[With(enum: ['no restrictions', 'creative commons', 'contact host', 'all rights reserved'])]
+    public readonly ?string $reuseAllowed = null;
+
+    /**
+     * dcterms:rights — human-readable rights statement from source record.
+     * @var string|null
+     */
+    #[Map(source: 'rights')]
+    public readonly ?string $rights = null;
+
+    /**
+     * dcterms:license — machine-readable license URI (e.g. CC BY 4.0 URI).
+     * @var string|null
+     */
+    #[Map(source: 'license')]
+    #[With(pattern: '^https?://')]
+    public readonly ?string $licenseUri = null;
+```
