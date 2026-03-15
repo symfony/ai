@@ -14,9 +14,12 @@ namespace Symfony\AI\Platform\Bridge\Generic\Completions;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\Usage;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingContent;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 
@@ -33,7 +36,13 @@ trait CompletionsConversionTrait
     protected function convertStream(RawResultInterface $result): \Generator
     {
         $toolCalls = [];
+        $reasoning = '';
+
         foreach ($result->getDataStream() as $data) {
+            if (isset($data['usage'])) {
+                yield new Usage($data['usage']);
+            }
+
             if ($this->streamIsToolCall($data)) {
                 yield from $this->yieldToolCallDeltas($toolCalls, $data);
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
@@ -43,11 +52,28 @@ trait CompletionsConversionTrait
                 yield new ToolCallResult(...array_map($this->convertToolCall(...), $toolCalls));
             }
 
+            $reasoningContent = $data['choices'][0]['delta']['reasoning_content']
+                ?? $data['choices'][0]['delta']['reasoning'] ?? null;
+            if (null !== $reasoningContent && '' !== $reasoningContent) {
+                $reasoning .= $reasoningContent;
+                yield new ThinkingDelta($reasoningContent);
+                continue;
+            }
+
+            if ('' !== $reasoning && isset($data['choices'][0]['delta']['content']) && '' !== $data['choices'][0]['delta']['content']) {
+                yield new ThinkingContent($reasoning);
+                $reasoning = '';
+            }
+
             if (!isset($data['choices'][0]['delta']['content'])) {
                 continue;
             }
 
             yield new TextDelta($data['choices'][0]['delta']['content']);
+        }
+
+        if ('' !== $reasoning) {
+            yield new ThinkingContent($reasoning);
         }
     }
 

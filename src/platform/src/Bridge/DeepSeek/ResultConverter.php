@@ -19,12 +19,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
-use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
-use Symfony\AI\Platform\Result\Stream\Delta\Usage;
 use Symfony\AI\Platform\Result\StreamResult;
-use Symfony\AI\Platform\Result\ThinkingContent;
-use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 
 /**
@@ -67,52 +62,5 @@ final class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): TokenUsageExtractor
     {
         return new TokenUsageExtractor();
-    }
-
-    protected function convertStream(RawResultInterface $result): \Generator
-    {
-        $toolCalls = [];
-        $reasoning = '';
-
-        foreach ($result->getDataStream() as $data) {
-            // Handle usage
-            if (isset($data['usage'])) {
-                yield new Usage($data['usage']);
-            }
-
-            if ($this->streamIsToolCall($data)) {
-                yield from $this->yieldToolCallDeltas($toolCalls, $data);
-                $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
-            }
-
-            if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
-                yield new ToolCallResult(...array_map($this->convertToolCall(...), $toolCalls));
-            }
-
-            // Handle reasoning_content from DeepSeek R1
-            $reasoningContent = $data['choices'][0]['delta']['reasoning_content'] ?? null;
-            if (null !== $reasoningContent && '' !== $reasoningContent) {
-                $reasoning .= $reasoningContent;
-                yield new ThinkingDelta($reasoningContent);
-                continue;
-            }
-
-            // When we transition from reasoning to content, yield the accumulated thinking
-            if ('' !== $reasoning && isset($data['choices'][0]['delta']['content']) && '' !== $data['choices'][0]['delta']['content']) {
-                yield new ThinkingContent($reasoning);
-                $reasoning = '';
-            }
-
-            if (!isset($data['choices'][0]['delta']['content'])) {
-                continue;
-            }
-
-            yield new TextDelta($data['choices'][0]['delta']['content']);
-        }
-
-        // Yield any remaining reasoning if the stream ends without content
-        if ('' !== $reasoning) {
-            yield new ThinkingContent($reasoning);
-        }
     }
 }
