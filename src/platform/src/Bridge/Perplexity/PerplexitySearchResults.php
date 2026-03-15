@@ -19,7 +19,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 final class PerplexitySearchResults implements DeltaInterface
 {
     /**
-     * @param array<string, mixed> $searchResults
+     * @param list<array<string, mixed>> $searchResults
      */
     public function __construct(
         private readonly array $searchResults,
@@ -27,7 +27,7 @@ final class PerplexitySearchResults implements DeltaInterface
     }
 
     /**
-     * @return array<string, mixed>
+     * @return list<array<string, mixed>>
      */
     public function getSearchResults(): array
     {

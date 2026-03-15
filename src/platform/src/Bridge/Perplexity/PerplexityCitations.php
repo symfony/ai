@@ -19,7 +19,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 final class PerplexityCitations implements DeltaInterface
 {
     /**
-     * @param array<string, mixed> $citations
+     * @param list<string> $citations
      */
     public function __construct(
         private readonly array $citations,
@@ -27,7 +27,7 @@ final class PerplexityCitations implements DeltaInterface
     }
 
     /**
-     * @return array<string, mixed>
+     * @return list<string>
      */
     public function getCitations(): array
     {
