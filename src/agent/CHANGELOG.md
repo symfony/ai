@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Update `StreamListener` to use `DeltaEvent` and `TextDelta` instead of `ChunkEvent` and raw strings
+
 0.4
 ---
 
