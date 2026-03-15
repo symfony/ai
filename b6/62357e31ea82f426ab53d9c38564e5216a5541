@@ -1,0 +1,20 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-15T18:12:16Z
+
+@OskarStark seems to work now with ^0.7
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-15T20:43:46Z
+
+Nice one, thanks, just wondering if it should be supporting one of the sqlite vector extensions, e.g. https://github.com/asg017/sqlite-vec - good follow up tho
+
+but the example needs some kind of DB setup for me to run:
+<img width="1652" height="165" alt="image" src="https://github.com/user-attachments/assets/c425fb4b-97f9-47b8-adc5-5c88a763ca28" />
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-15T20:51:32Z
+
+@chr-hertel yeah the extension would be a great extension! but i wanted to start with a minimal implementation :)
