@@ -12,10 +12,10 @@
 namespace Symfony\AI\Platform\Bridge\TransformersPhp;
 
 use Codewithkyrian\Transformers\Transformers;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>

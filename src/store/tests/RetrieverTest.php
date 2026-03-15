@@ -12,7 +12,6 @@
 namespace Symfony\AI\Store\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
@@ -28,6 +27,7 @@ use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Tests\Double\PlatformTestHandler;
 use Symfony\AI\Store\Tests\Double\TestStore;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
