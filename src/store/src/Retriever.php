@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Store;
 
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -22,6 +21,7 @@ use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>

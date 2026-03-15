@@ -11,13 +11,13 @@
 
 namespace Symfony\AI\Platform\Bridge\Replicate;
 
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\Replicate\Contract\LlamaMessageBagNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**

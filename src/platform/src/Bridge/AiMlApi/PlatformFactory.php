@@ -11,10 +11,10 @@
 
 namespace Symfony\AI\Platform\Bridge\AiMlApi;
 
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**

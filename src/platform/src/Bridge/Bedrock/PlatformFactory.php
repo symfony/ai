@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Bridge\Bedrock;
 
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract as AnthropicContract;
 use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeModelClient;
 use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeResultConverter;
@@ -26,6 +25,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @author Björn Altmann
