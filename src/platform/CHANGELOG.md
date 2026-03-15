@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
+ * Add `description` and `example` properties to `#[With]` attribute
 
 0.6
 ---

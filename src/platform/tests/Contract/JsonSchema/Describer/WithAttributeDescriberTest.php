@@ -26,6 +26,7 @@ final class WithAttributeDescriberTest extends TestCase
     #[TestWith([['enum' => [7, 19]], new PropertySubject('taxRate', new \ReflectionParameter([ExampleDto::class, '__construct'], 'taxRate'))], 'parameter')]
     #[TestWith([['const' => 42], new PropertySubject('value2', new \ReflectionParameter([ToolWithObjectAccessors::class, 'setValue2'], 0))], 'setter')]
     #[TestWith([['pattern' => '^foo$'], new PropertySubject('value3', new \ReflectionParameter([ToolWithObjectAccessors::class, '__construct'], 'value3'))], 'constructor')]
+    #[TestWith([['description' => 'The quantity of the ingredient', 'example' => '2 cups'], new PropertySubject('quantity', new \ReflectionParameter([ExampleDto::class, '__construct'], 'quantity'))], 'example')]
     public function testDescribeProperty(array $expectedSchema, PropertySubject $property)
     {
         $describer = new WithAttributeDescriber();
