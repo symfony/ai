@@ -4,6 +4,8 @@ CHANGELOG
 0.7
 ---
 
+ * Add typed streaming deltas (`TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ToolCallStart`, `ToolInputDelta`, `Usage`) implementing `DeltaInterface`
+ * Add `DeltaEvent` replacing `ChunkEvent` in `ListenerInterface`
  * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
  * Add `description` and `example` properties to `#[With]` attribute
 
