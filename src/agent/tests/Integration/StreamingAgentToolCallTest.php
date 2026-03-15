@@ -142,8 +142,8 @@ final class StreamingAgentToolCallTest extends TestCase
         // Consume the stream to trigger all tool calls
         $content = '';
         foreach ($result->getContent() as $chunk) {
-            if (\is_string($chunk)) {
-                $content .= $chunk;
+            if ($chunk instanceof TextDelta) {
+                $content .= $chunk->getText();
             }
         }
 
