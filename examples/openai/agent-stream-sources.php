@@ -17,6 +17,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\Clock\Clock as SymfonyClock;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -37,8 +38,10 @@ $prompt = <<<PROMPT
 
 $result = $agent->call(new MessageBag(Message::ofUser($prompt)), ['stream' => true]);
 
-foreach ($result->getContent() as $word) {
-    echo $word;
+foreach ($result->getContent() as $delta) {
+    if ($delta instanceof TextDelta) {
+        echo $delta;
+    }
 }
 echo \PHP_EOL.\PHP_EOL;
 
