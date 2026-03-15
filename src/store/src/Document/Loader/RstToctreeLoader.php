@@ -116,6 +116,8 @@ final class RstToctreeLoader implements LoaderInterface
 
                         if (str_ends_with($entryPath, '.rst')) {
                             $pattern = $dir.'/'.$entryPath;
+                        } elseif (str_ends_with($entryPath, '/')) {
+                            $pattern = $dir.'/'.$entryPath.'index.rst';
                         } else {
                             $pattern = $dir.'/'.$entryPath.'.rst';
                         }
