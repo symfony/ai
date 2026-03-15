@@ -1,0 +1,9 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-14T15:18:28Z
+
+Can we scope out `DeferredResult::getTokenUsage()`? at least that's rather debatable for me
+
+idea of metadata is to have it rather flexible and unstructured - putting a getter on it, feels counter-intuitive. but maybe token usage is central enough - should it still be part of the metadata then?
+
+(i know we do it already in store, but doesn't mean we just replicate here)
