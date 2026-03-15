@@ -61,10 +61,10 @@ final class StreamResult extends BaseResult
 
             $delta = $event->getDelta();
 
-            if (null !== $delta && is_iterable($delta)) {
-                yield from $delta;
-            } else {
+            if ($delta instanceof DeltaInterface) {
                 yield $delta;
+            } else {
+                yield from $delta;
             }
         }
 

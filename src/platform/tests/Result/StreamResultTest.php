@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Tests\Result;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -47,14 +48,18 @@ final class StreamResultTest extends TestCase
 
         $capturedDeltas = [];
         $result->addListener(new class($capturedDeltas) extends AbstractStreamListener {
-            /** @param array<TextDelta> $capturedDeltas */
+            /** @param array<DeltaInterface> $capturedDeltas */
             public function __construct(private array &$capturedDeltas) /* @phpstan-ignore property.onlyWritten */
             {
             }
 
             public function onDelta(DeltaEvent $event): void
             {
-                $this->capturedDeltas[] = $event->getDelta();
+                $delta = $event->getDelta();
+
+                if ($delta instanceof DeltaInterface) {
+                    $this->capturedDeltas[] = $delta;
+                }
             }
         });
 
@@ -63,6 +68,7 @@ final class StreamResultTest extends TestCase
         $this->assertCount(2, $capturedDeltas);
         $this->assertInstanceOf(TextDelta::class, $capturedDeltas[0]);
         $this->assertSame('chunk1', $capturedDeltas[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $capturedDeltas[1]);
         $this->assertSame('chunk2', $capturedDeltas[1]->getText());
     }
 

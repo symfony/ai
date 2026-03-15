@@ -20,7 +20,11 @@ use Symfony\AI\Platform\Result\StreamResult;
 final class DeltaEvent extends Event
 {
     private bool $skipDelta = false;
-    private mixed $delta;
+
+    /**
+     * @var DeltaInterface|\Generator<DeltaInterface>
+     */
+    private DeltaInterface|\Generator $delta;
 
     public function __construct(
         StreamResult $result,
@@ -30,12 +34,18 @@ final class DeltaEvent extends Event
         $this->delta = $delta;
     }
 
-    public function setDelta(mixed $delta): void
+    /**
+     * @param DeltaInterface|\Generator<DeltaInterface> $delta
+     */
+    public function setDelta(DeltaInterface|\Generator $delta): void
     {
         $this->delta = $delta;
     }
 
-    public function getDelta(): mixed
+    /**
+     * @return DeltaInterface|\Generator<DeltaInterface>
+     */
+    public function getDelta(): DeltaInterface|\Generator
     {
         return $this->delta;
     }
