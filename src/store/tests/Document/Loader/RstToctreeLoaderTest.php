@@ -221,6 +221,20 @@ final class RstToctreeLoaderTest extends TestCase
         $this->assertCount(1, $alphaDocs);
     }
 
+    public function testLoadToctreeWithTrailingSlashResolvesToIndex()
+    {
+        $loader = new RstToctreeLoader();
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_trailing_slash_toctree/index.rst'), false);
+
+        $titles = array_map(
+            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            $documents,
+        );
+
+        $this->assertContains('Main Index', $titles);
+        $this->assertContains('Components', $titles);
+    }
+
     public function testLoadToctreeThrowsForMissingEntry()
     {
         $tempDir = sys_get_temp_dir().'/rst_missing_test_'.uniqid();
