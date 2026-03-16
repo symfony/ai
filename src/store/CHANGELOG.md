@@ -10,6 +10,7 @@ CHANGELOG
  * Add `CombinedStore` combining vector and text stores with Reciprocal Rank Fusion (RRF)
  * [BC BREAK] Add `?EventDispatcherInterface $eventDispatcher` as 3rd constructor parameter of `Retriever` (before `$logger`)
  * Add automatic text content preservation in `Vectorizer` metadata
+ * Add batch processing in `DistanceCalculator` for local vector stores
 
 0.6
 ---

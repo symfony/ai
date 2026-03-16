@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Extend prompt caching support for tool definitions
+
 0.6
 ---
 
