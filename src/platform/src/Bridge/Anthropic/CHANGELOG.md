@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * [BC BREAK] Stream responses now yield `TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ThinkingComplete`, `ToolCallStart`, `ToolInputDelta`, `ToolCallComplete`, and streamed `TokenUsage` deltas
+
 0.6
 ---
 

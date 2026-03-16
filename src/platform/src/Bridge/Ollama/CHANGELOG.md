@@ -4,6 +4,7 @@ CHANGELOG
 0.7
 ---
 
+ * [BC BREAK] Streaming tool-call responses now yield `ToolCallComplete`; `OllamaMessageChunk` now implements `DeltaInterface`
  * Add support for `structured_output` capability in `OllamaApiCatalog`
 
 0.4
