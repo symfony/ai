@@ -35,6 +35,24 @@ Platform
    +    echo $chunk->getText();
    +}
    ```
+ * `Symfony\AI\Platform\Bridge\Perplexity\PerplexitySearchResults`,
+   `Symfony\AI\Platform\Bridge\Perplexity\PerplexityCitations`, and
+   `Symfony\AI\Platform\Bridge\Perplexity\StreamListener` have been
+   removed. Perplexity now emits generic `MetadataDelta` instances internally,
+   which are promoted to result metadata during stream consumption.
+
+   If you relied on those deltas directly, read metadata instead:
+
+   ```diff
+   -if ($delta instanceof PerplexitySearchResults) {
+   -    $results = $delta->getSearchResults();
+   -}
+   -if ($delta instanceof PerplexityCitations) {
+   -    $citations = $delta->getCitations();
+   -}
+   +$results = $result->getMetadata()->get('search_results');
+   +$citations = $result->getMetadata()->get('citations');
+   ```
  * `BinaryResult`, `ChoiceResult`, `ToolCallResult`, and `ThinkingContent` no
    longer implement `DeltaInterface`. Stream generators now yield proper delta
    types instead of result objects:

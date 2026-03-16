@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -34,7 +35,7 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result), [new StreamListener()]);
+            return new StreamResult($this->convertStream($result));
         }
 
         $data = $result->getData();
@@ -74,11 +75,11 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if (isset($data['search_results'])) {
-            yield new PerplexitySearchResults($data['search_results']);
+            yield new MetadataDelta('search_results', $data['search_results']);
         }
 
         if (isset($data['citations'])) {
-            yield new PerplexityCitations($data['citations']);
+            yield new MetadataDelta('citations', $data['citations']);
         }
     }
 

@@ -9,13 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Perplexity;
+namespace Symfony\AI\Platform\Metadata;
 
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 
 /**
- * @author Christopher Hertel <mail@christopher-hertel.de>
+ * @author Fabien Potencier <fabien@symfony.com>
  */
 final class StreamListener extends AbstractStreamListener
 {
@@ -23,14 +24,11 @@ final class StreamListener extends AbstractStreamListener
     {
         $delta = $event->getDelta();
 
-        if ($delta instanceof PerplexitySearchResults) {
-            $event->getMetadata()->add('search_results', $delta->getSearchResults());
-            $event->skipDelta();
+        if (!$delta instanceof MetadataDelta) {
+            return;
         }
 
-        if ($delta instanceof PerplexityCitations) {
-            $event->getMetadata()->add('citations', $delta->getCitations());
-            $event->skipDelta();
-        }
+        $event->getMetadata()->add($delta->getKey(), $delta->getValue());
+        $event->skipDelta();
     }
 }
