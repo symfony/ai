@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingContent;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -364,6 +365,97 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Response content does not contain any text nor tool calls.');
 
         $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testStreamingTokenUsageYieldsTokenUsage()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'role' => 'assistant', 'content' => [], 'usage' => ['input_tokens' => 25, 'output_tokens' => 1]]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'text', 'text' => '']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'text_delta', 'text' => 'Hello!']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'end_turn'], 'usage' => ['output_tokens' => 15]],
+            ['type' => 'message_stop'],
+        ];
+
+        $raw = $this->createRawResult($events);
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $this->assertCount(2, $chunks);
+        $this->assertSame('Hello!', $chunks[0]);
+        $this->assertInstanceOf(TokenUsage::class, $chunks[1]);
+        $this->assertSame(25, $chunks[1]->getPromptTokens());
+        $this->assertSame(15, $chunks[1]->getCompletionTokens());
+    }
+
+    public function testStreamingTokenUsageWithCacheFields()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_456', 'role' => 'assistant', 'content' => [], 'usage' => [
+                'input_tokens' => 10,
+                'output_tokens' => 1,
+                'cache_creation_input_tokens' => 5000,
+                'cache_read_input_tokens' => 20000,
+            ]]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'text', 'text' => '']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'text_delta', 'text' => 'Cached response.']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'end_turn'], 'usage' => ['output_tokens' => 42]],
+            ['type' => 'message_stop'],
+        ];
+
+        $raw = $this->createRawResult($events);
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $this->assertCount(2, $chunks);
+        $this->assertInstanceOf(TokenUsage::class, $chunks[1]);
+        $this->assertSame(10, $chunks[1]->getPromptTokens());
+        $this->assertSame(42, $chunks[1]->getCompletionTokens());
+        $this->assertSame(5000, $chunks[1]->getCacheCreationTokens());
+        $this->assertSame(20000, $chunks[1]->getCacheReadTokens());
+        $this->assertSame(25000, $chunks[1]->getCachedTokens());
+    }
+
+    public function testStreamingToolCallsWithTokenUsage()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_789', 'role' => 'assistant', 'content' => [], 'usage' => ['input_tokens' => 100, 'output_tokens' => 1]]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01', 'name' => 'search']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"q":"test"}']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'tool_use'], 'usage' => ['output_tokens' => 50]],
+            ['type' => 'message_stop'],
+        ];
+
+        $raw = $this->createRawResult($events);
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $this->assertCount(2, $chunks);
+        $this->assertInstanceOf(ToolCallResult::class, $chunks[0]);
+        $this->assertInstanceOf(TokenUsage::class, $chunks[1]);
+        $this->assertSame(100, $chunks[1]->getPromptTokens());
+        $this->assertSame(50, $chunks[1]->getCompletionTokens());
     }
 
     /**
