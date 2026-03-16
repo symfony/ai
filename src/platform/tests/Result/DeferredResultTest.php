@@ -168,6 +168,21 @@ final class DeferredResultTest extends TestCase
         $this->assertSame(123456, $tokenUsage->getPromptTokens());
     }
 
+    public function testTokenUsageGetsPromotedToDeferredResultFromStream()
+    {
+        $result = new StreamResult((static function () {
+            yield new TextDelta('part 1');
+            yield new TextDelta('part 2');
+            yield new TokenUsage(123456);
+        })());
+
+        $deferredResult = new DeferredResult(new PlainConverter($result), new InMemoryRawResult());
+        iterator_to_array($deferredResult->asStream());
+
+        $this->assertInstanceOf(TokenUsageInterface::class, $tokenUsage = $deferredResult->getMetadata()->get('token_usage'));
+        $this->assertSame(123456, $tokenUsage->getPromptTokens());
+    }
+
     /**
      * Workaround for low deps because mocking the ResponseInterface leads to an exception with
      * mock creation "Type Traversable|object|array|string|null contains both object and a class type"

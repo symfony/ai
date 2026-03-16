@@ -20,6 +20,21 @@ Platform
    `TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ToolCallStart`,
    `ToolInputDelta`, `BinaryDelta`, `ChoiceDelta`, `ToolCallComplete`,
    `ThinkingComplete`. These are yielded by bridge converters during streaming.
+ * `Symfony\AI\Platform\Bridge\Ollama\OllamaMessageChunk` has been removed.
+   Ollama streams now yield semantic deltas like the other bridges:
+   - text content → `TextDelta`
+   - thinking content → `ThinkingDelta`
+   - completed tool calls → `ToolCallComplete`
+   - final usage → `TokenUsage`
+
+   ```diff
+   -if ($chunk instanceof OllamaMessageChunk) {
+   -    echo $chunk->getContent();
+   -}
+   +if ($chunk instanceof TextDelta) {
+   +    echo $chunk->getText();
+   +}
+   ```
  * `BinaryResult`, `ChoiceResult`, `ToolCallResult`, and `ThinkingContent` no
    longer implement `DeltaInterface`. Stream generators now yield proper delta
    types instead of result objects:
