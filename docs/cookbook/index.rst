@@ -11,6 +11,7 @@ Getting Started Guides
     :maxdepth: 1
 
     chatbot-with-memory
+    context-compression
     dynamic-tools
     rag-implementation
     structured-output-object-instances
@@ -19,6 +20,7 @@ Memory & Context Management
 ---------------------------
 
 * :doc:`chatbot-with-memory` - Build chatbots that remember user preferences and conversation history
+* :doc:`context-compression` - Manage long conversations with automatic context compression
 
 Tools
 -----
