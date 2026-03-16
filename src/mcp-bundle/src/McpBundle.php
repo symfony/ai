@@ -113,11 +113,7 @@ final class McpBundle extends AbstractBundle
                         $methodName = $reflector->getName();
                     } elseif ($reflector instanceof \ReflectionClass) {
                         if (!$reflector->hasMethod('__invoke')) {
-                            throw new \LogicException(sprintf(
-                                'Service "%s" is configured with "%s" as a class-level attribute, but it is not invokable. Either add an __invoke() method or move the attribute to a method.',
-                                $reflector->getName(),
-                                $attribute::class
-                            ));
+                            throw new \LogicException(\sprintf('Service "%s" is configured with "%s" as a class-level attribute, but it is not invokable. Either add an __invoke() method or move the attribute to a method.', $reflector->getName(), $attribute::class));
                         }
                         $methodName = '__invoke';
                     } else {

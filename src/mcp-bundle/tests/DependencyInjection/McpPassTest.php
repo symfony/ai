@@ -52,22 +52,22 @@ final class McpPassTest extends TestCase
         $serviceLocatorDef = $container->getDefinition($serviceLocatorId);
         $services = $serviceLocatorDef->getArgument(0);
 
-        $this->assertArrayHasKey(TestToolService::class, $services);
-        $this->assertArrayHasKey(TestPromptService::class, $services);
-        $this->assertArrayHasKey(TestResourceService::class, $services);
-        $this->assertArrayHasKey(TestResourceTemplateService::class, $services);
+        $this->assertArrayHasKey('tool_service', $services);
+        $this->assertArrayHasKey('prompt_service', $services);
+        $this->assertArrayHasKey('resource_service', $services);
+        $this->assertArrayHasKey('template_service', $services);
 
         // Verify services are ServiceClosureArguments wrapping References
-        $this->assertInstanceOf(ServiceClosureArgument::class, $services[TestToolService::class]);
-        $this->assertInstanceOf(ServiceClosureArgument::class, $services[TestPromptService::class]);
-        $this->assertInstanceOf(ServiceClosureArgument::class, $services[TestResourceService::class]);
-        $this->assertInstanceOf(ServiceClosureArgument::class, $services[TestResourceTemplateService::class]);
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['tool_service']);
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['prompt_service']);
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['resource_service']);
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['template_service']);
 
         // Verify the underlying values are References
-        $this->assertInstanceOf(Reference::class, $services[TestToolService::class]->getValues()[0]);
-        $this->assertInstanceOf(Reference::class, $services[TestPromptService::class]->getValues()[0]);
-        $this->assertInstanceOf(Reference::class, $services[TestResourceService::class]->getValues()[0]);
-        $this->assertInstanceOf(Reference::class, $services[TestResourceTemplateService::class]->getValues()[0]);
+        $this->assertInstanceOf(Reference::class, $services['tool_service']->getValues()[0]);
+        $this->assertInstanceOf(Reference::class, $services['prompt_service']->getValues()[0]);
+        $this->assertInstanceOf(Reference::class, $services['resource_service']->getValues()[0]);
+        $this->assertInstanceOf(Reference::class, $services['template_service']->getValues()[0]);
     }
 
     public function testDoesNothingWhenNoMcpServicesTagged()
@@ -125,18 +125,18 @@ final class McpPassTest extends TestCase
         $serviceLocatorDef = $container->getDefinition($serviceLocatorId);
         $services = $serviceLocatorDef->getArgument(0);
 
-        $this->assertArrayHasKey(TestToolService::class, $services);
-        $this->assertArrayHasKey(TestPromptService::class, $services);
-        $this->assertArrayNotHasKey(TestResourceService::class, $services);
-        $this->assertArrayNotHasKey(TestResourceTemplateService::class, $services);
+        $this->assertArrayHasKey('tool_service', $services);
+        $this->assertArrayHasKey('prompt_service', $services);
+        $this->assertArrayNotHasKey('resource_service', $services);
+        $this->assertArrayNotHasKey('template_service', $services);
 
         // Verify services are ServiceClosureArguments wrapping References
-        $this->assertInstanceOf(ServiceClosureArgument::class, $services[TestToolService::class]);
-        $this->assertInstanceOf(ServiceClosureArgument::class, $services[TestPromptService::class]);
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['tool_service']);
+        $this->assertInstanceOf(ServiceClosureArgument::class, $services['prompt_service']);
 
         // Verify the underlying values are References
-        $this->assertInstanceOf(Reference::class, $services[TestToolService::class]->getValues()[0]);
-        $this->assertInstanceOf(Reference::class, $services[TestPromptService::class]->getValues()[0]);
+        $this->assertInstanceOf(Reference::class, $services['tool_service']->getValues()[0]);
+        $this->assertInstanceOf(Reference::class, $services['prompt_service']->getValues()[0]);
     }
 
     public function testCreatesArrayLoaderDefinitionWithAllTypes()
@@ -167,28 +167,28 @@ final class McpPassTest extends TestCase
         $this->assertCount(1, $tools);
         $this->assertSame('test_tool', $tools[0]['name']);
         $this->assertSame('A test tool', $tools[0]['description']);
-        $this->assertSame([TestToolService::class, '__invoke'], $tools[0]['handler']);
+        $this->assertSame(['tool_service', '__invoke'], $tools[0]['handler']);
 
         // Argument 1: resources
         $resources = $arguments[1];
         $this->assertCount(1, $resources);
         $this->assertSame('test_resource', $resources[0]['name']);
         $this->assertSame('test://resource', $resources[0]['uri']);
-        $this->assertSame([TestResourceService::class, '__invoke'], $resources[0]['handler']);
+        $this->assertSame(['resource_service', '__invoke'], $resources[0]['handler']);
 
         // Argument 2: resource templates
         $resourceTemplates = $arguments[2];
         $this->assertCount(1, $resourceTemplates);
         $this->assertSame('test_template', $resourceTemplates[0]['name']);
         $this->assertSame('test://resource/{id}', $resourceTemplates[0]['uriTemplate']);
-        $this->assertSame([TestResourceTemplateService::class, '__invoke'], $resourceTemplates[0]['handler']);
+        $this->assertSame(['template_service', '__invoke'], $resourceTemplates[0]['handler']);
 
         // Argument 3: prompts
         $prompts = $arguments[3];
         $this->assertCount(1, $prompts);
         $this->assertSame('test_prompt', $prompts[0]['name']);
         $this->assertSame('A test prompt', $prompts[0]['description']);
-        $this->assertSame([TestPromptService::class, '__invoke'], $prompts[0]['handler']);
+        $this->assertSame(['prompt_service', '__invoke'], $prompts[0]['handler']);
     }
 
     public function testArrayLoaderDefinitionWithPartialTypes()

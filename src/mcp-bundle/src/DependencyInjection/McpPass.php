@@ -59,9 +59,8 @@ final class McpPass implements CompilerPassInterface
                 $definition = $container->getDefinition($serviceId);
                 $class = $definition->getClass() ?? $serviceId;
 
-                if (!isset($serviceReferences[$serviceId])) {
-                    $serviceReferences[$serviceId] = new Reference($serviceId);
-                }
+                /** @var string $serviceId */
+                $serviceReferences[$serviceId] = new Reference($serviceId);
 
                 $attribute = $tagAttributes[0] ?? [];
                 $methodName = $attribute['method'] ?? '__invoke';
@@ -70,17 +69,17 @@ final class McpPass implements CompilerPassInterface
                     $reflection = new \ReflectionMethod($class, $methodName);
 
                     $entry = match ($tag) {
-                        'mcp.tool' => $this->buildToolEntry($reflection, $schemaGenerator, $docBlockParser, $class, $methodName),
-                        'mcp.resource' => $this->buildResourceEntry($reflection, $docBlockParser, $class, $methodName),
-                        'mcp.prompt' => $this->buildPromptEntry($reflection, $docBlockParser, $class, $methodName),
-                        'mcp.resource_template' => $this->buildResourceTemplateEntry($reflection, $docBlockParser, $class, $methodName),
+                        'mcp.tool' => $this->buildToolEntry($reflection, $schemaGenerator, $docBlockParser, $serviceId, $methodName),
+                        'mcp.resource' => $this->buildResourceEntry($reflection, $docBlockParser, $serviceId, $methodName),
+                        'mcp.prompt' => $this->buildPromptEntry($reflection, $docBlockParser, $serviceId, $methodName),
+                        'mcp.resource_template' => $this->buildResourceTemplateEntry($reflection, $docBlockParser, $serviceId, $methodName),
                     };
 
                     if (null !== $entry) {
                         $collection[] = $entry;
                     }
                 } catch (\Throwable $e) {
-                    throw new RuntimeException(\sprintf('Error processing service "%s" with tag "%s": %s', $serviceId, $tag, $e->getMessage()), 0, $e);
+                    throw new RuntimeException(\sprintf('Error processing service "%s" with tag "%s": "%s".', $serviceId, $tag, $e->getMessage()), 0, $e);
                 }
             }
         }
@@ -105,15 +104,13 @@ final class McpPass implements CompilerPassInterface
     }
 
     /**
-     * @param class-string $class
-     *
      * @return array<string, mixed>|null
      */
     private function buildToolEntry(
         \ReflectionMethod $reflectionMethod,
         SchemaGenerator $schemaGenerator,
         DocBlockParser $docBlockParser,
-        string $class,
+        string $serviceId,
         string $methodName,
     ): ?array {
         $attrs = $reflectionMethod->getAttributes(McpTool::class, \ReflectionAttribute::IS_INSTANCEOF);
@@ -131,7 +128,7 @@ final class McpPass implements CompilerPassInterface
         $shortName = $reflectionMethod->getDeclaringClass()->getShortName();
 
         return [
-            'handler' => [$class, $methodName],
+            'handler' => [$serviceId, $methodName],
             'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
             'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
             'inputSchema' => $schemaGenerator->generate($reflectionMethod),
@@ -143,14 +140,12 @@ final class McpPass implements CompilerPassInterface
     }
 
     /**
-     * @param class-string $class
-     *
      * @return array<string, mixed>|null
      */
     private function buildResourceEntry(
         \ReflectionMethod $reflection,
         DocBlockParser $docBlockParser,
-        string $class,
+        string $serviceId,
         string $methodName,
     ): ?array {
         $attrs = $reflection->getAttributes(McpResource::class, \ReflectionAttribute::IS_INSTANCEOF);
@@ -167,7 +162,7 @@ final class McpPass implements CompilerPassInterface
         $shortName = $reflection->getDeclaringClass()->getShortName();
 
         return [
-            'handler' => [$class, $methodName],
+            'handler' => [$serviceId, $methodName],
             'uri' => $attr->uri,
             'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
             'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
@@ -180,14 +175,12 @@ final class McpPass implements CompilerPassInterface
     }
 
     /**
-     * @param class-string $class
-     *
      * @return array<string, mixed>|null
      */
     private function buildPromptEntry(
         \ReflectionMethod $reflection,
         DocBlockParser $docBlockParser,
-        string $class,
+        string $serviceId,
         string $methodName,
     ): ?array {
         $attrs = $reflection->getAttributes(McpPrompt::class, \ReflectionAttribute::IS_INSTANCEOF);
@@ -219,7 +212,7 @@ final class McpPass implements CompilerPassInterface
         }
 
         return [
-            'handler' => [$class, $methodName],
+            'handler' => [$serviceId, $methodName],
             'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
             'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
             'arguments' => $arguments,
@@ -230,14 +223,12 @@ final class McpPass implements CompilerPassInterface
     }
 
     /**
-     * @param class-string $class
-     *
      * @return array<string, mixed>|null
      */
     private function buildResourceTemplateEntry(
         \ReflectionMethod $reflection,
         DocBlockParser $docBlockParser,
-        string $class,
+        string $serviceId,
         string $methodName,
     ): ?array {
         $attrs = $reflection->getAttributes(McpResourceTemplate::class, \ReflectionAttribute::IS_INSTANCEOF);
@@ -254,7 +245,7 @@ final class McpPass implements CompilerPassInterface
         $shortName = $reflection->getDeclaringClass()->getShortName();
 
         return [
-            'handler' => [$class, $methodName],
+            'handler' => [$serviceId, $methodName],
             'uriTemplate' => $attr->uriTemplate,
             'name' => $attr->name ?? ('__invoke' === $methodName ? $shortName : $methodName),
             'description' => $attr->description ?? $docBlockParser->getDescription($docBlock),
