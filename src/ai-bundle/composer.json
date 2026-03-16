@@ -17,6 +17,16 @@
             "homepage": "https://symfony.com/contributors"
         }
     ],
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../store/src/Bridge/MariaDb"
+        },
+        {
+            "type": "path",
+            "url": "../store/src/Bridge/Sqlite"
+        }
+    ],
     "require": {
         "php": ">=8.2",
         "symfony/ai-platform": "^0.6",
@@ -63,7 +73,7 @@
         "symfony/ai-hugging-face-platform": "^0.6",
         "symfony/ai-lm-studio-platform": "^0.6",
         "symfony/ai-manticore-search-store": "^0.6",
-        "symfony/ai-maria-db-store": "^0.6",
+        "symfony/ai-maria-db-store": "^0.7 || dev-main@dev",
         "symfony/ai-meilisearch-message-store": "^0.6",
         "symfony/ai-meilisearch-store": "^0.6",
         "symfony/ai-meta-platform": "^0.6",
@@ -86,9 +96,9 @@
         "symfony/ai-redis-store": "^0.6",
         "symfony/ai-replicate-platform": "^0.6",
         "symfony/ai-s3vectors-store": "^0.6",
-        "symfony/ai-sqlite-store": "^0.7",
         "symfony/ai-scaleway-platform": "^0.6",
         "symfony/ai-session-message-store": "^0.6",
+        "symfony/ai-sqlite-store":  "^0.7 || dev-main@dev",
         "symfony/ai-store": "^0.6",
         "symfony/ai-supabase-store": "^0.6",
         "symfony/ai-surreal-db-message-store": "^0.6",
@@ -102,6 +112,10 @@
         "symfony/expression-language": "^7.3|^8.0",
         "symfony/security-core": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0"
+    },
+    "conflict": {
+        "symfony/ai-maria-db-store": "<0.7",
+        "symfony/ai-sqlite-store": "<0.7"
     },
     "minimum-stability": "dev",
     "autoload": {

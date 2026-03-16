@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Bridge\MariaDb\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Bridge\MariaDb\Distance;
 use Symfony\AI\Store\Bridge\MariaDb\Store;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Query\HybridQuery;
@@ -69,6 +70,78 @@ final class StoreTest extends TestCase
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
         $this->assertSame(0.85, $results[0]->getScore());
         $this->assertSame(['title' => 'Test Document'], $results[0]->getMetadata()->getArrayCopy());
+    }
+
+    public function testQueryWithMaxScoreZero()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding');
+
+        // Expected SQL query with max score
+        $expectedQuery = <<<'SQL'
+            SELECT id, VEC_ToText(`embedding`) embedding, metadata, VEC_DISTANCE_EUCLIDEAN(`embedding`, VEC_FromText(:embedding)) AS score
+            FROM embeddings_table
+            WHERE VEC_DISTANCE_EUCLIDEAN(`embedding`, VEC_FromText(:embedding)) <= :maxScore
+            ORDER BY score ASC
+            LIMIT 5
+            SQL;
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($expectedQuery)
+            ->willReturn($statement);
+
+        $uuid = Uuid::v4();
+        $vectorData = [0.1, 0.2, 0.3];
+        $maxScore = 0.0;
+
+        $statement->expects($this->once())
+            ->method('execute')
+            ->with($this->isNull());
+
+        $statement->expects($this->once())
+            ->method('fetchAll')
+            ->with(\PDO::FETCH_ASSOC)
+            ->willReturn([
+                [
+                    'id' => $uuid->toRfc4122(),
+                    'embedding' => json_encode($vectorData),
+                    'metadata' => json_encode(['title' => 'Test Document']),
+                    'score' => 0.85,
+                ],
+            ]);
+
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector($vectorData)), ['maxScore' => $maxScore]));
+
+        $this->assertCount(1, $results);
+        $this->assertInstanceOf(VectorDocument::class, $results[0]);
+        $this->assertSame(0.85, $results[0]->getScore());
+        $this->assertSame(['title' => 'Test Document'], $results[0]->getMetadata()->getArrayCopy());
+    }
+
+    public function testQueryWithCosineDistance()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Distance::Cosine);
+
+        $expectedQuery = <<<'SQL'
+            SELECT id, VEC_ToText(`embedding`) embedding, metadata, VEC_DISTANCE_COSINE(`embedding`, VEC_FromText(:embedding)) AS score
+            FROM embeddings_table
+
+            ORDER BY score ASC
+            LIMIT 5
+            SQL;
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($expectedQuery)
+            ->willReturn($statement);
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
 
     public function testQueryWithoutMaxScore()
