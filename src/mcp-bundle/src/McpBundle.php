@@ -109,7 +109,20 @@ final class McpBundle extends AbstractBundle
             $builder->registerAttributeForAutoconfiguration(
                 $attributeClass,
                 static function (ChildDefinition $definition, object $attribute, \Reflector $reflector) use ($tag): void {
-                    $methodName = $reflector instanceof \ReflectionMethod ? $reflector->getName() : '__invoke';
+                    if ($reflector instanceof \ReflectionMethod) {
+                        $methodName = $reflector->getName();
+                    } elseif ($reflector instanceof \ReflectionClass) {
+                        if (!$reflector->hasMethod('__invoke')) {
+                            throw new \LogicException(sprintf(
+                                'Service "%s" is configured with "%s" as a class-level attribute, but it is not invokable. Either add an __invoke() method or move the attribute to a method.',
+                                $reflector->getName(),
+                                $attribute::class
+                            ));
+                        }
+                        $methodName = '__invoke';
+                    } else {
+                        $methodName = '__invoke';
+                    }
                     $definition->addTag($tag, ['method' => $methodName]);
                 }
             );

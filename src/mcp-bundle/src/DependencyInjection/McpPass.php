@@ -59,8 +59,8 @@ final class McpPass implements CompilerPassInterface
                 $definition = $container->getDefinition($serviceId);
                 $class = $definition->getClass() ?? $serviceId;
 
-                if (!isset($serviceReferences[$class])) {
-                    $serviceReferences[$class] = new Reference($serviceId);
+                if (!isset($serviceReferences[$serviceId])) {
+                    $serviceReferences[$serviceId] = new Reference($serviceId);
                 }
 
                 $attribute = $tagAttributes[0] ?? [];
