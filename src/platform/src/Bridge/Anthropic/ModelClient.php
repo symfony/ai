@@ -63,6 +63,7 @@ final class ModelClient implements ModelClientInterface
 
         if (isset($options['tools'])) {
             $options['tool_choice'] = ['type' => 'auto'];
+            $options['tools'] = $this->injectToolsCacheControl($options['tools']);
         }
 
         if (isset($options['thinking'])) {
@@ -88,6 +89,33 @@ final class ModelClient implements ModelClientInterface
             'headers' => $headers,
             'json' => array_merge($options, $payload),
         ]));
+    }
+
+    /**
+     * Injects a prompt-caching marker on the last tool definition.
+     *
+     * This creates an additional cache breakpoint after all tool definitions,
+     * so the prefix "system → tools" can be cached independently of the
+     * messages that follow.  Tool definitions are typically identical across
+     * requests, making this a very effective caching target.
+     *
+     * @param list<array<string, mixed>> $tools Normalised tool definitions
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function injectToolsCacheControl(array $tools): array
+    {
+        if ('none' === $this->cacheRetention || [] === $tools) {
+            return $tools;
+        }
+
+        $cacheControl = 'long' === $this->cacheRetention
+            ? ['type' => 'ephemeral', 'ttl' => '1h']
+            : ['type' => 'ephemeral'];
+
+        $tools[\count($tools) - 1]['cache_control'] = $cacheControl;
+
+        return $tools;
     }
 
     /**
