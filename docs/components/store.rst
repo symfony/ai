@@ -76,7 +76,6 @@ Similarity Search Examples
 * `Similarity Search with SurrealDB (RAG)`_
 * `Similarity Search with Symfony Cache (RAG)`_
 * `Similarity Search with Typesense (RAG)`_
-* `Similarity Search with Vektor (RAG)`_
 * `Similarity Search with Weaviate (RAG)`_
 * `Similarity Search with Supabase (RAG)`_
 
@@ -111,7 +110,6 @@ Supported Stores
 * `SurrealDB`_
 * `Symfony Cache`_ (requires ``symfony/cache`` as additional dependency)
 * `Typesense`_
-* `Vektor`_
 * `Weaviate`_
 
 Document Loader
@@ -251,7 +249,6 @@ This leads to a store implementing two methods::
 .. _`Similarity Search with SurrealDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/surrealdb.php
 .. _`Similarity Search with Typesense (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/typesense.php
 .. _`Similarity Search with Supabase (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/supabase.php
-.. _`Similarity Search with Vektor (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/vektor.php
 .. _`Similarity Search with Weaviate (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/weaviate.php
 .. _`Azure AI Search`: https://azure.microsoft.com/products/ai-services/ai-search
 .. _`Chroma`: https://www.trychroma.com/
@@ -274,6 +271,5 @@ This leads to a store implementing two methods::
 .. _`OpenSearch`: https://opensearch.org/
 .. _`Typesense`: https://typesense.org/
 .. _`Symfony Cache`: https://symfony.com/doc/current/components/cache.html
-.. _`Vektor`: https://github.com/centamiv/vektor
 .. _`Weaviate`: https://weaviate.io/
 .. _`Supabase`: https://supabase.com/

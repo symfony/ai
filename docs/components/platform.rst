@@ -109,37 +109,37 @@ Supported Models & Platforms
 ----------------------------
 
 * **Language Models**
-  * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
-  * `Anthropic's Claude`_ with `Anthropic`_ and `AWS Bedrock`_ as Platform
-  * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_, `AWS Bedrock`_ and `OpenRouter`_ as Platform
-  * `Gemini`_ with `Google`_, `Vertex AI`_ and `OpenRouter`_ as Platform
-  * `Vertex AI Gen AI`_ with `Vertex AI`_ as Platform
-  * `DeepSeek's R1`_ with `OpenRouter`_ as Platform
-  * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
-  * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
-  * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
-  * `LiteLLM`_ as unified Platform
+    * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
+    * `Anthropic's Claude`_ with `Anthropic`_ and `AWS Bedrock`_ as Platform
+    * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_, `AWS Bedrock`_ and `OpenRouter`_ as Platform
+    * `Gemini`_ with `Google`_, `Vertex AI`_ and `OpenRouter`_ as Platform
+    * `Vertex AI Gen AI`_ with `Vertex AI`_ as Platform
+    * `DeepSeek's R1`_ with `OpenRouter`_ as Platform
+    * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
+    * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
+    * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
+    * `LiteLLM`_ as unified Platform
 * **Embeddings Models**
-  * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
-  * `Vertex AI Text Embeddings`_ with `Vertex AI`_
-  * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
-  * `Voyage's Embeddings`_ with `Voyage`_ as Platform
-  * `Mistral Embed`_ with `Mistral`_ and `OpenRouter`_ as Platform
-  * `Qwen`_ with `OpenRouter`_ as Platform
+    * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
+    * `Vertex AI Text Embeddings`_ with `Vertex AI`_
+    * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
+    * `Voyage's Embeddings`_ with `Voyage`_ as Platform
+    * `Mistral Embed`_ with `Mistral`_ and `OpenRouter`_ as Platform
+    * `Qwen`_ with `OpenRouter`_ as Platform
 * **Other Models**
-  * `OpenAI's Dall·E`_ with `OpenAI`_ as Platform
-  * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
-  * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
-  * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
-    and also filtered, e.g. ``php examples/huggingface/_model-listing.php --provider=hf-inference --task=object-detection``
+    * `OpenAI's Dall·E`_ with `OpenAI`_ as Platform
+    * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
+    * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
+    * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
+      and also filtered, e.g. ``php examples/huggingface/_model-listing.php --provider=hf-inference --task=object-detection``
 * **Voice Models**
-  * `ElevenLabs TTS`_ with `ElevenLabs`_ as Platform
-  * `ElevenLabs STT`_ with `ElevenLabs`_ as Platform
-  * `Cartesia TTS`_ with `Cartesia`_ as Platform
-  * `Cartesia STT`_ with `Cartesia`_ as Platform
+    * `ElevenLabs TTS`_ with `ElevenLabs`_ as Platform
+    * `ElevenLabs STT`_ with `ElevenLabs`_ as Platform
+    * `Cartesia TTS`_ with `Cartesia`_ as Platform
+    * `Cartesia STT`_ with `Cartesia`_ as Platform
 * **Image/Video Models**
-  * `Decart T2I`_ with `Decart`_  as Platform
-  * `Decart T2V`_ with `Decart`_  as Platform
+    * `Decart T2I`_ with `Decart`_  as Platform
+    * `Decart T2V`_ with `Decart`_  as Platform
 
 Generic Platforms
 ~~~~~~~~~~~~~~~~~
