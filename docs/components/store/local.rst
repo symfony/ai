@@ -52,6 +52,34 @@ Available strategies:
 * ``ANGULAR_DISTANCE``
 * ``CHEBYSHEV_DISTANCE``
 
+Batch Processing
+----------------
+
+For large datasets, the distance calculator can process documents in batches
+instead of scoring the entire dataset at once. After each batch, only the best
+candidates are kept, reducing peak memory from O(N) to O(maxItems + batchSize)::
+
+    use Symfony\AI\Store\Distance\DistanceCalculator;
+    use Symfony\AI\Store\Distance\DistanceStrategy;
+    use Symfony\AI\Store\InMemory\Store;
+
+    $calculator = new DistanceCalculator(
+        strategy: DistanceStrategy::COSINE_DISTANCE,
+        batchSize: 500, # Default to 100
+    );
+    $store = new Store($calculator);
+
+    // Batch processing is activated when both batchSize and maxItems are set
+    $results = $store->query($vector, [
+        'maxItems' => 10,
+    ]);
+
+.. note::
+
+    Batch processing requires ``maxItems`` to be set in the query options.
+    Without it, the calculator falls back to the standard full-sort behavior
+    since all results are needed and no pruning can occur.
+
 Metadata Filtering
 ------------------
 

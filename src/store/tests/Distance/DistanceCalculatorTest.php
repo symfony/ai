@@ -24,9 +24,9 @@ use Symfony\Component\Uid\Uuid;
 final class DistanceCalculatorTest extends TestCase
 {
     /**
-     * @param array<list<float>> $documentVectors
-     * @param list<float>        $queryVector
-     * @param list<int>          $expectedOrder
+     * @param array<float[]> $documentVectors
+     * @param float[]        $queryVector
+     * @param int[]          $expectedOrder
      */
     #[TestDox('Calculates distances correctly using $strategy strategy')]
     #[DataProvider('provideDistanceStrategyTestCases')]
@@ -59,7 +59,7 @@ final class DistanceCalculatorTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{DistanceStrategy, array<list<float>>, list<float>, list<int>}>
+     * @return \Generator<string, array{DistanceStrategy, array<float[]>, float[], int[]}>
      */
     public static function provideDistanceStrategyTestCases(): \Generator
     {
@@ -218,15 +218,13 @@ final class DistanceCalculatorTest extends TestCase
     {
         $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE);
 
-        // Create high-dimensional vectors (100 dimensions)
-        $dimensions = 100;
-        $vector1 = array_fill(0, $dimensions, 0.1);
-        $vector2 = array_fill(0, $dimensions, 0.2);
+        $vector1 = array_fill(0, 100, 0.1);
+        $vector2 = array_fill(0, 100, 0.2);
 
         $doc1 = new VectorDocument(Uuid::v4(), new Vector($vector1));
         $doc2 = new VectorDocument(Uuid::v4(), new Vector($vector2));
 
-        $queryVector = new Vector(array_fill(0, $dimensions, 0.15));
+        $queryVector = new Vector(array_fill(0, 100, 0.15));
 
         $result = $calculator->calculate([$doc1, $doc2], $queryVector);
 
@@ -290,10 +288,8 @@ final class DistanceCalculatorTest extends TestCase
     #[TestDox('Uses cosine distance as default strategy')]
     public function testDefaultStrategyIsCosineDistance()
     {
-        // Test that default constructor uses cosine distance
         $calculator = new DistanceCalculator();
 
-        // Create vectors where cosine distance ordering differs from Euclidean
         $doc1 = new VectorDocument(Uuid::v4(), new Vector([1.0, 0.0, 0.0]));
         $doc2 = new VectorDocument(Uuid::v4(), new Vector([100.0, 0.0, 0.0])); // Same direction but different magnitude
 
@@ -304,5 +300,156 @@ final class DistanceCalculatorTest extends TestCase
         // With cosine distance, both should have same distance (parallel vectors)
         // The order might vary but both are equally similar in terms of direction
         $this->assertCount(2, $result);
+    }
+
+    #[TestDox('Batched calculation returns same top results as full calculation')]
+    public function testBatchedCalculationReturnsSameResultsAsFull()
+    {
+        $documents = [
+            new VectorDocument(Uuid::v4(), new Vector([0.0, 0.0]), new Metadata(['id' => 'a'])),
+            new VectorDocument(Uuid::v4(), new Vector([1.0, 0.0]), new Metadata(['id' => 'b'])),
+            new VectorDocument(Uuid::v4(), new Vector([0.0, 1.0]), new Metadata(['id' => 'c'])),
+            new VectorDocument(Uuid::v4(), new Vector([1.0, 1.0]), new Metadata(['id' => 'd'])),
+            new VectorDocument(Uuid::v4(), new Vector([0.5, 0.5]), new Metadata(['id' => 'e'])),
+        ];
+
+        $queryVector = new Vector([0.0, 0.0]);
+
+        $fullCalculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE);
+        $batchedCalculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 2);
+
+        $fullResult = $fullCalculator->calculate($documents, $queryVector, 3);
+        $batchedResult = $batchedCalculator->calculate($documents, $queryVector, 3);
+
+        $fullIds = array_map(static fn (VectorDocument $doc): string => $doc->getMetadata()['id'], $fullResult);
+        $batchedIds = array_map(static fn (VectorDocument $doc): string => $doc->getMetadata()['id'], $batchedResult);
+
+        $this->assertSame($fullIds, $batchedIds);
+        $this->assertCount(3, $batchedResult);
+    }
+
+    #[TestDox('Batched calculation prunes candidates after each batch')]
+    public function testBatchedCalculationPrunesCandidates()
+    {
+        // 10 documents, batch size 3, maxItems 2
+        // After each batch of 3, only the top 2 candidates are kept
+        $documents = [];
+        for ($i = 0; $i < 10; ++$i) {
+            $documents[] = new VectorDocument(
+                Uuid::v4(),
+                new Vector([(float) $i, 0.0]),
+                new Metadata(['id' => (string) $i]),
+            );
+        }
+
+        $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 3);
+        $result = $calculator->calculate($documents, new Vector([0.0, 0.0]), 2);
+
+        $this->assertCount(2, $result);
+
+        $ids = array_map(static fn (VectorDocument $doc): string => $doc->getMetadata()['id'], $result);
+        $this->assertSame(['0', '1'], $ids);
+    }
+
+    #[TestDox('Batched calculation falls back to full when maxItems is null')]
+    public function testBatchedCalculationFallsBackWithoutMaxItems()
+    {
+        $doc1 = new VectorDocument(Uuid::v4(), new Vector([1.0, 0.0]), new Metadata(['id' => 'a']));
+        $doc2 = new VectorDocument(Uuid::v4(), new Vector([0.0, 1.0]), new Metadata(['id' => 'b']));
+
+        $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 1);
+        $result = $calculator->calculate([$doc1, $doc2], new Vector([1.0, 0.0]));
+
+        // Without maxItems, all documents are returned (full calculation path)
+        $this->assertCount(2, $result);
+        $this->assertSame('a', $result[0]->getMetadata()['id']);
+        $this->assertSame('b', $result[1]->getMetadata()['id']);
+    }
+
+    #[TestDox('Batched calculation works with batch size larger than document count')]
+    public function testBatchedCalculationWithLargeBatchSize()
+    {
+        $documents = [
+            new VectorDocument(Uuid::v4(), new Vector([0.0, 0.0]), new Metadata(['id' => 'a'])),
+            new VectorDocument(Uuid::v4(), new Vector([1.0, 0.0]), new Metadata(['id' => 'b'])),
+        ];
+
+        $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 1000);
+        $result = $calculator->calculate($documents, new Vector([0.0, 0.0]), 1);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('a', $result[0]->getMetadata()['id']);
+    }
+
+    #[TestDox('Batched calculation returns empty array for empty documents')]
+    public function testBatchedCalculationWithEmptyDocuments()
+    {
+        $calculator = new DistanceCalculator(batchSize: 100);
+
+        $result = $calculator->calculate([], new Vector([1.0, 2.0]), 5);
+
+        $this->assertSame([], $result);
+    }
+
+    #[TestDox('Batched calculation preserves scores')]
+    public function testBatchedCalculationPreservesScores()
+    {
+        $doc = new VectorDocument(Uuid::v4(), new Vector([3.0, 4.0]));
+
+        $fullCalculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE);
+        $batchedCalculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 1);
+
+        $fullResult = $fullCalculator->calculate([$doc], new Vector([0.0, 0.0]), 1);
+        $batchedResult = $batchedCalculator->calculate([$doc], new Vector([0.0, 0.0]), 1);
+
+        $this->assertSame($fullResult[0]->getScore(), $batchedResult[0]->getScore());
+        $this->assertEqualsWithDelta(5.0, $batchedResult[0]->getScore(), 0.0001);
+    }
+
+    /**
+     * @param int[] $expectedOrder
+     */
+    #[TestDox('Batched calculation works with $strategy strategy')]
+    #[DataProvider('provideBatchedStrategyTestCases')]
+    public function testBatchedCalculationWithDifferentStrategies(DistanceStrategy $strategy, array $expectedOrder)
+    {
+        $documents = [
+            new VectorDocument(Uuid::v4(), new Vector([1.0, 0.0, 0.0]), new Metadata(['index' => 0])),
+            new VectorDocument(Uuid::v4(), new Vector([0.0, 1.0, 0.0]), new Metadata(['index' => 1])),
+            new VectorDocument(Uuid::v4(), new Vector([0.0, 0.0, 1.0]), new Metadata(['index' => 2])),
+            new VectorDocument(Uuid::v4(), new Vector([0.5, 0.5, 0.707]), new Metadata(['index' => 3])),
+        ];
+
+        $queryVector = new Vector([1.0, 0.0, 0.0]);
+
+        $calculator = new DistanceCalculator($strategy, batchSize: 2);
+        $result = $calculator->calculate($documents, $queryVector, 2);
+
+        $this->assertCount(2, $result);
+
+        foreach ($expectedOrder as $position => $expectedIndex) {
+            $this->assertSame($expectedIndex, $result[$position]->getMetadata()['index']);
+        }
+    }
+
+    /**
+     * @return \Generator<string, array{DistanceStrategy, int[]}>
+     */
+    public static function provideBatchedStrategyTestCases(): \Generator
+    {
+        yield 'cosine distance batched' => [
+            DistanceStrategy::COSINE_DISTANCE,
+            [0, 3],
+        ];
+
+        yield 'euclidean distance batched' => [
+            DistanceStrategy::EUCLIDEAN_DISTANCE,
+            [0, 3],
+        ];
+
+        yield 'manhattan distance batched' => [
+            DistanceStrategy::MANHATTAN_DISTANCE,
+            [0, 3],
+        ];
     }
 }
