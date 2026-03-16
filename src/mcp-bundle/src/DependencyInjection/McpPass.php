@@ -63,25 +63,24 @@ final class McpPass implements CompilerPassInterface
                     $serviceReferences[$class] = new Reference($serviceId);
                 }
 
-                foreach ($tagAttributes as $attribute) {
-                    $methodName = $attribute['method'] ?? '__invoke';
+                $attribute = $tagAttributes[0] ?? [];
+                $methodName = $attribute['method'] ?? '__invoke';
 
-                    try {
-                        $reflection = new \ReflectionMethod($class, $methodName);
+                try {
+                    $reflection = new \ReflectionMethod($class, $methodName);
 
-                        $entry = match ($tag) {
-                            'mcp.tool' => $this->buildToolEntry($reflection, $schemaGenerator, $docBlockParser, $class, $methodName),
-                            'mcp.resource' => $this->buildResourceEntry($reflection, $docBlockParser, $class, $methodName),
-                            'mcp.prompt' => $this->buildPromptEntry($reflection, $docBlockParser, $class, $methodName),
-                            'mcp.resource_template' => $this->buildResourceTemplateEntry($reflection, $docBlockParser, $class, $methodName),
-                        };
+                    $entry = match ($tag) {
+                        'mcp.tool' => $this->buildToolEntry($reflection, $schemaGenerator, $docBlockParser, $class, $methodName),
+                        'mcp.resource' => $this->buildResourceEntry($reflection, $docBlockParser, $class, $methodName),
+                        'mcp.prompt' => $this->buildPromptEntry($reflection, $docBlockParser, $class, $methodName),
+                        'mcp.resource_template' => $this->buildResourceTemplateEntry($reflection, $docBlockParser, $class, $methodName),
+                    };
 
-                        if (null !== $entry) {
-                            $collection[] = $entry;
-                        }
-                    } catch (\Throwable $e) {
-                        throw new RuntimeException(\sprintf('Error processing service "%s" with tag "%s": %s', $serviceId, $tag, $e->getMessage()), 0, $e);
+                    if (null !== $entry) {
+                        $collection[] = $entry;
                     }
+                } catch (\Throwable $e) {
+                    throw new RuntimeException(\sprintf('Error processing service "%s" with tag "%s": %s', $serviceId, $tag, $e->getMessage()), 0, $e);
                 }
             }
         }
