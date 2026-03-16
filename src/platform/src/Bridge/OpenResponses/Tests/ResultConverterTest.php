@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
@@ -378,8 +379,8 @@ final class ResultConverterTest extends TestCase
         }
 
         $this->assertCount(1, $chunks);
-        $this->assertInstanceOf(ToolCallResult::class, $chunks[0]);
-        $toolCalls = $chunks[0]->getContent();
+        $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
+        $toolCalls = $chunks[0]->getToolCalls();
         $this->assertCount(1, $toolCalls);
         $this->assertSame('call_456', $toolCalls[0]->getId());
         $this->assertSame('get_weather', $toolCalls[0]->getName());

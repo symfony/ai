@@ -65,6 +65,9 @@ final class ResultConverter implements ResultConverterInterface
         return new TokenUsageExtractor();
     }
 
+    /**
+     * @param array<string, mixed> $usage
+     */
     protected function convertStreamUsage(array $usage): TokenUsage
     {
         return $this->getTokenUsageExtractor()->extractFromArray($usage);

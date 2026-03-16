@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
@@ -277,6 +278,41 @@ class ResultConverterTest extends TestCase
         $this->assertSame(2, $chunks[2]->getThinkingTokens());
         $this->assertSame(3, $chunks[2]->getCachedTokens());
         $this->assertSame(18, $chunks[2]->getTotalTokens());
+    }
+
+    public function testStreamYieldsToolCallComplete()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            [
+                'type' => 'response.completed',
+                'response' => [
+                    'output' => [
+                        [
+                            'type' => 'function_call',
+                            'id' => 'call_123',
+                            'name' => 'get_weather',
+                            'arguments' => '{"city":"Berlin"}',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $raw = new InMemoryRawResult([], $events, $httpResponse);
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+        $chunks = iterator_to_array($streamResult->getContent());
+
+        $this->assertCount(1, $chunks);
+        $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
+        $this->assertSame('call_123', $chunks[0]->getToolCalls()[0]->getId());
+        $this->assertSame('get_weather', $chunks[0]->getToolCalls()[0]->getName());
+        $this->assertSame(['city' => 'Berlin'], $chunks[0]->getToolCalls()[0]->getArguments());
     }
 
     public function testStreamThrowsExceptionOnErrorEvent()
