@@ -4,7 +4,9 @@ CHANGELOG
 0.7
 ---
 
- * Add typed streaming deltas (`TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ToolCallStart`, `ToolInputDelta`, `Usage`) implementing `DeltaInterface`
+ * Add typed streaming deltas (`TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ToolCallStart`, `ToolInputDelta`, `BinaryDelta`, `ChoiceDelta`, `ToolCallComplete`, `ThinkingComplete`) implementing `DeltaInterface`
+ * Remove `DeltaInterface` from `BinaryResult`, `ChoiceResult`, and `ToolCallResult`
+ * Remove `Usage` and `ThinkingContent` classes in favor of `TokenUsage` and `ThinkingComplete`
  * Add `DeltaEvent` replacing `ChunkEvent` in `ListenerInterface`
  * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
  * Add `description` and `example` properties to `#[With]` attribute

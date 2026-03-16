@@ -9,14 +9,16 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Result;
+namespace Symfony\AI\Platform\Result\Stream\Delta;
 
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Result\ToolCall;
 
 /**
- * @author Christopher Hertel <mail@christopher-hertel.de>
+ * Signals that all tool calls in the stream are complete and ready for execution.
+ *
+ * @author Fabien Potencier <fabien@symfony.com>
  */
-final class ToolCallResult extends BaseResult
+final class ToolCallComplete implements DeltaInterface
 {
     /**
      * @var ToolCall[]
@@ -25,17 +27,13 @@ final class ToolCallResult extends BaseResult
 
     public function __construct(ToolCall ...$toolCalls)
     {
-        if ([] === $toolCalls) {
-            throw new InvalidArgumentException('Response must have at least one tool call.');
-        }
-
         $this->toolCalls = $toolCalls;
     }
 
     /**
      * @return ToolCall[]
      */
-    public function getContent(): array
+    public function getToolCalls(): array
     {
         return $this->toolCalls;
     }

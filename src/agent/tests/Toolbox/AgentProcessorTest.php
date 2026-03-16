@@ -30,6 +30,7 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -253,7 +254,7 @@ class AgentProcessorTest extends TestCase
         $result = new StreamResult((static function () use ($toolCall) {
             yield new TextDelta('chunk1');
             yield new TextDelta('chunk2');
-            yield new ToolCallResult($toolCall);
+            yield new ToolCallComplete($toolCall);
         })());
 
         $agent = $this->createMock(AgentInterface::class);
@@ -288,7 +289,7 @@ class AgentProcessorTest extends TestCase
         $result = new StreamResult((static function () use ($toolCall) {
             yield new TextDelta('partial-1');
             yield new TextDelta('partial-2');
-            yield new ToolCallResult($toolCall);
+            yield new ToolCallComplete($toolCall);
         })());
 
         $agent = $this->createMock(AgentInterface::class);
@@ -326,7 +327,7 @@ class AgentProcessorTest extends TestCase
         $result = new StreamResult((static function () use ($toolCall) {
             yield new TextDelta('partial-1');
             yield new TextDelta('partial-2');
-            yield new ToolCallResult($toolCall);
+            yield new ToolCallComplete($toolCall);
         })());
         $result->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
 

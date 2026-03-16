@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -62,5 +63,10 @@ final class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): TokenUsageExtractor
     {
         return new TokenUsageExtractor();
+    }
+
+    protected function convertStreamUsage(array $usage): TokenUsage
+    {
+        return $this->getTokenUsageExtractor()->extractFromArray($usage);
     }
 }

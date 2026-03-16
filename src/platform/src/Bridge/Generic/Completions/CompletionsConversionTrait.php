@@ -14,14 +14,15 @@ namespace Symfony\AI\Platform\Bridge\Generic\Completions;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
-use Symfony\AI\Platform\Result\Stream\Delta\Usage;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\Result\ThinkingContent;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 /**
  * Shared streaming and tool-call conversion logic for OpenAI-compatible completions APIs.
@@ -40,7 +41,7 @@ trait CompletionsConversionTrait
 
         foreach ($result->getDataStream() as $data) {
             if (isset($data['usage'])) {
-                yield new Usage($data['usage']);
+                yield $this->convertStreamUsage($data['usage']);
             }
 
             if ($this->streamIsToolCall($data)) {
@@ -49,7 +50,7 @@ trait CompletionsConversionTrait
             }
 
             if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
-                yield new ToolCallResult(...array_map($this->convertToolCall(...), $toolCalls));
+                yield new ToolCallComplete(...array_map($this->convertToolCall(...), $toolCalls));
             }
 
             $reasoningContent = $data['choices'][0]['delta']['reasoning_content']
@@ -61,7 +62,7 @@ trait CompletionsConversionTrait
             }
 
             if ('' !== $reasoning && isset($data['choices'][0]['delta']['content']) && '' !== $data['choices'][0]['delta']['content']) {
-                yield new ThinkingContent($reasoning);
+                yield new ThinkingComplete($reasoning);
                 $reasoning = '';
             }
 
@@ -73,8 +74,16 @@ trait CompletionsConversionTrait
         }
 
         if ('' !== $reasoning) {
-            yield new ThinkingContent($reasoning);
+            yield new ThinkingComplete($reasoning);
         }
+    }
+
+    /**
+     * @param array<string, mixed> $usage
+     */
+    protected function convertStreamUsage(array $usage): TokenUsage
+    {
+        return (new TokenUsageExtractor())->extractFromArray($usage);
     }
 
     /**

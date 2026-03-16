@@ -22,10 +22,10 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\InMemoryPlatform;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
@@ -157,7 +157,7 @@ final class StreamingAgentToolCallTest extends TestCase
     {
         $result = new StreamResult((static function () use ($text, $toolCall) {
             yield new TextDelta($text);
-            yield new ToolCallResult($toolCall);
+            yield new ToolCallComplete($toolCall);
         })());
         $result->getMetadata()->add('token_usage', $tokenUsage);
 

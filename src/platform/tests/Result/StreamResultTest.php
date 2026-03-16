@@ -55,11 +55,7 @@ final class StreamResultTest extends TestCase
 
             public function onDelta(DeltaEvent $event): void
             {
-                $delta = $event->getDelta();
-
-                if ($delta instanceof DeltaInterface) {
-                    $this->capturedDeltas[] = $delta;
-                }
+                $this->capturedDeltas[] = $event->getDelta();
             }
         });
 

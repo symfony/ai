@@ -18,14 +18,14 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
-use Symfony\AI\Platform\Result\Stream\Delta\Usage;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\Result\ThinkingContent;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -105,11 +105,11 @@ class ResultConverter implements ResultConverterInterface
 
             // Handle usage from message_start and message_delta
             if ('message_start' === $type && isset($data['message']['usage'])) {
-                yield new Usage($data['message']['usage']);
+                yield $this->getTokenUsageExtractor()->extractFromArray($data['message']['usage']);
             }
 
             if ('message_delta' === $type && isset($data['usage'])) {
-                yield new Usage($data['usage']);
+                yield $this->getTokenUsageExtractor()->extractFromArray($data['usage']);
             }
 
             // Handle text content deltas
@@ -180,7 +180,7 @@ class ResultConverter implements ResultConverterInterface
             // Handle content block stop - finalize current thinking or tool call
             if ('content_block_stop' === $type) {
                 if (null !== $currentThinking) {
-                    yield new ThinkingContent($currentThinking, $currentThinkingSignature);
+                    yield new ThinkingComplete($currentThinking, $currentThinkingSignature);
                     $currentThinking = null;
                     $currentThinkingSignature = null;
                     continue;
@@ -203,7 +203,7 @@ class ResultConverter implements ResultConverterInterface
 
             // Handle message stop - yield tool calls if any were collected
             if ('message_stop' === $type && [] !== $toolCalls) {
-                yield new ToolCallResult(...$toolCalls);
+                yield new ToolCallComplete(...$toolCalls);
             }
         }
     }

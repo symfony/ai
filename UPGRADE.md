@@ -18,12 +18,32 @@ Platform
    - `is_string($chunk)` → `$chunk instanceof TextDelta`, then use `$chunk->getText()`
  * New streaming delta types in `Symfony\AI\Platform\Result\Stream\Delta\`:
    `TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ToolCallStart`,
-   `ToolInputDelta`, `Usage`. These are yielded incrementally by bridge
-   converters alongside the existing batch types (`ToolCallResult`,
-   `ThinkingContent`).
- * `ToolCallResult`, `ThinkingContent`, `TokenUsage`,
-   `OllamaMessageChunk`, `ChoiceResult`, and `BinaryResult` now
-   implement `DeltaInterface`.
+   `ToolInputDelta`, `BinaryDelta`, `ChoiceDelta`, `ToolCallComplete`,
+   `ThinkingComplete`. These are yielded by bridge converters during streaming.
+ * `BinaryResult`, `ChoiceResult`, `ToolCallResult`, and `ThinkingContent` no
+   longer implement `DeltaInterface`. Stream generators now yield proper delta
+   types instead of result objects:
+   - `ToolCallResult` → `ToolCallComplete`: use `$delta instanceof ToolCallComplete`
+     and `$delta->getToolCalls()`.
+   - `ThinkingContent` → `ThinkingComplete`: use `$delta instanceof ThinkingComplete`
+     and `$delta->getThinking()` / `$delta->getSignature()`.
+   - `BinaryResult` → `BinaryDelta`: use `$delta instanceof BinaryDelta`
+     and `$delta->getData()` / `$delta->getMimeType()`.
+   - `ChoiceResult` → `ChoiceDelta`: use `$delta instanceof ChoiceDelta`
+     and `$delta->getDeltas()`.
+ * `ThinkingContent` has been removed in favor of `ThinkingComplete`.
+ * The `Usage` delta class has been removed. Bridges now yield `TokenUsage`
+   objects directly in streams instead.
+
+Agent
+-----
+
+ * `Toolbox\StreamListener::onChunk()` has been renamed to `onDelta()`.
+   The listener now checks `$delta instanceof TextDelta` instead of
+   `is_string($chunk)` to accumulate the assistant text buffer.
+ * The `StreamListener` now reacts to `ToolCallComplete` instead of
+   `ToolCallResult`. If you have a custom `StreamListener` or check for
+   `ToolCallResult` in stream consumers, update to `ToolCallComplete`.
 
 Store
 -----
@@ -36,13 +56,6 @@ Store
    -$retriever = new Retriever($store, $vectorizer, $logger);
    +$retriever = new Retriever($store, $vectorizer, logger: $logger);
    ```
-
-Agent
------
-
- * `Toolbox\StreamListener::onChunk()` has been renamed to `onDelta()`.
-   The listener now checks `$delta instanceof TextDelta` instead of
-   `is_string($chunk)` to accumulate the assistant text buffer.
 
 UPGRADE FROM 0.5 to 0.6
 =======================

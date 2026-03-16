@@ -16,6 +16,7 @@ use Symfony\AI\Agent\Toolbox\StreamListener;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -49,13 +50,13 @@ final class StreamListenerTest extends TestCase
         $this->assertFalse($callbackCalled);
     }
 
-    public function testGetContentWithToolCallResultAfterStringValues()
+    public function testGetContentWithToolCallCompleteAfterStringValues()
     {
-        $toolCallResult = new ToolCallResult(new ToolCall('test-id', 'test_tool'));
-        $streamResult = new StreamResult((static function () use ($toolCallResult): \Generator {
+        $toolCallComplete = new ToolCallComplete(new ToolCall('test-id', 'test_tool'));
+        $streamResult = new StreamResult((static function () use ($toolCallComplete): \Generator {
             yield new TextDelta('Initial ');
             yield new TextDelta('content ');
-            yield $toolCallResult;
+            yield $toolCallComplete;
         })());
 
         $capturedAssistantMessage = null;
@@ -79,13 +80,14 @@ final class StreamListenerTest extends TestCase
         $this->assertNotNull($capturedAssistantMessage);
         $this->assertSame('Initial content ', $capturedAssistantMessage->getContent());
         $this->assertNotNull($capturedToolCallResult);
-        $this->assertSame($toolCallResult, $capturedToolCallResult);
+        $this->assertInstanceOf(ToolCallResult::class, $capturedToolCallResult);
+        $this->assertSame('test-id', $capturedToolCallResult->getContent()[0]->getId());
     }
 
-    public function testGetContentWithToolCallResultAsFirstValue()
+    public function testGetContentWithToolCallCompleteAsFirstValue()
     {
         $streamResult = new StreamResult((static function (): \Generator {
-            yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
+            yield new ToolCallComplete(new ToolCall('test-id', 'test_tool'));
         })());
 
         $capturedAssistantMessage = null;
@@ -105,11 +107,11 @@ final class StreamListenerTest extends TestCase
         $this->assertSame('', $capturedAssistantMessage->getContent());
     }
 
-    public function testGetContentWithToolCallResultReturningGenerator()
+    public function testGetContentWithToolCallCompleteReturningGenerator()
     {
         $streamResult = new StreamResult((static function (): \Generator {
             yield new TextDelta('Start');
-            yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
+            yield new ToolCallComplete(new ToolCall('test-id', 'test_tool'));
         })());
 
         $capturedAssistantMessage = null;
@@ -137,11 +139,11 @@ final class StreamListenerTest extends TestCase
         $this->assertSame('Start', $capturedAssistantMessage->getContent());
     }
 
-    public function testGetContentStopsAfterToolCallResult()
+    public function testGetContentStopsAfterToolCallComplete()
     {
         $streamResult = new StreamResult((static function (): \Generator {
             yield new TextDelta('Before');
-            yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
+            yield new ToolCallComplete(new ToolCall('test-id', 'test_tool'));
             yield new TextDelta('After'); // This should not be yielded
         })());
 
@@ -161,7 +163,7 @@ final class StreamListenerTest extends TestCase
     {
         $streamResult = new StreamResult((static function (): \Generator {
             yield new TextDelta('Before tool');
-            yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
+            yield new ToolCallComplete(new ToolCall('test-id', 'test_tool'));
         })());
         $streamResult->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 100, completionTokens: 10, totalTokens: 110));
 
@@ -182,7 +184,7 @@ final class StreamListenerTest extends TestCase
 
         $streamResult = new StreamResult((static function (): \Generator {
             yield new TextDelta('Before tool');
-            yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
+            yield new ToolCallComplete(new ToolCall('test-id', 'test_tool'));
         })());
         $streamResult->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 100, completionTokens: 10, totalTokens: 110));
 
@@ -204,7 +206,7 @@ final class StreamListenerTest extends TestCase
     {
         $streamResult = new StreamResult((static function (): \Generator {
             yield new TextDelta('Before tool');
-            yield new ToolCallResult(new ToolCall('test-id', 'test_tool'));
+            yield new ToolCallComplete(new ToolCall('test-id', 'test_tool'));
         })());
         $streamResult->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 100, completionTokens: 10, totalTokens: 110));
 

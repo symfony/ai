@@ -12,12 +12,11 @@
 namespace Symfony\AI\Platform\Result;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class ChoiceResult extends BaseResult implements DeltaInterface
+final class ChoiceResult extends BaseResult
 {
     /**
      * @param ResultInterface[] $results
