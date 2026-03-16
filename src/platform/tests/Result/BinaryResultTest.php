@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Tests\Result;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Exception\IOException;
 use Symfony\AI\Platform\Result\BinaryResult;
 
 final class BinaryResultTest extends TestCase
@@ -66,5 +67,33 @@ final class BinaryResultTest extends TestCase
         $expected = 'data:image/jpeg;base64,'.base64_encode('binary data');
 
         $this->assertSame($expected, $actual);
+    }
+
+    public function testAsFile()
+    {
+        $data = 'binary file content';
+        $result = new BinaryResult($data, 'image/png');
+        $path = sys_get_temp_dir().'/symfony_ai_test_'.uniqid().'.png';
+
+        try {
+            $result->asFile($path);
+
+            $this->assertFileExists($path);
+            $this->assertSame($data, file_get_contents($path));
+        } finally {
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        }
+    }
+
+    public function testAsFileThrowsExceptionWhenDirectoryDoesNotExist()
+    {
+        $result = new BinaryResult('binary data');
+
+        $this->expectException(IOException::class);
+        $this->expectExceptionMessage('The directory "/non/existent/directory" does not exist.');
+
+        $result->asFile('/non/existent/directory/file.png');
     }
 }

@@ -112,6 +112,18 @@ final class DeferredResult
     /**
      * @throws ExceptionInterface
      */
+    public function asFile(string $path): void
+    {
+        $result = $this->as(BinaryResult::class);
+
+        \assert($result instanceof BinaryResult);
+
+        $result->asFile($path);
+    }
+
+    /**
+     * @throws ExceptionInterface
+     */
     public function asDataUri(?string $mimeType = null): string
     {
         $result = $this->as(BinaryResult::class);
