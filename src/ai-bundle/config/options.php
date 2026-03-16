@@ -340,6 +340,34 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->end()
                 ->end()
             ->end()
+            ->arrayNode('sleep_time_agent')
+                ->info('Sleep-time agent configuration for background memory enrichment')
+                ->useAttributeAsKey('name')
+                ->arrayPrototype()
+                    ->children()
+                        ->stringNode('primary')
+                            ->info('Service ID of the primary agent that handles user queries')
+                            ->isRequired()
+                        ->end()
+                        ->stringNode('sleeping')
+                            ->info('Service ID of the sleeping agent that processes memory in the background')
+                            ->isRequired()
+                        ->end()
+                        ->arrayNode('memory_blocks')
+                            ->info('Memory block definitions (label => initial content)')
+                            ->isRequired()
+                            ->requiresAtLeastOneElement()
+                            ->useAttributeAsKey('label')
+                            ->scalarPrototype()->defaultValue('')->end()
+                        ->end()
+                        ->integerNode('frequency')
+                            ->info('Number of primary agent calls between sleep invocations')
+                            ->defaultValue(5)
+                            ->min(1)
+                        ->end()
+                    ->end()
+                ->end()
+            ->end()
             ->arrayNode('store')
                 ->children()
                     ->append($import('store/azuresearch'))
@@ -585,6 +613,80 @@ return static function (DefinitionConfigurator $configurator): void {
                         if (!\in_array($handoffAgent, $agentNames, true)) {
                             throw new \InvalidArgumentException(\sprintf('The agent "%s" referenced in multi-agent "%s" as handoff target does not exist', $handoffAgent, $multiAgentName));
                         }
+                    }
+                }
+            })
+        ->end()
+        ->validate()
+            ->ifTrue(static function ($v) {
+                if (!isset($v['agent']) || !isset($v['sleep_time_agent'])) {
+                    return false;
+                }
+
+                $agentNames = array_keys($v['agent']);
+                $sleepTimeAgentNames = array_keys($v['sleep_time_agent']);
+                $duplicates = array_intersect($agentNames, $sleepTimeAgentNames);
+
+                return !empty($duplicates);
+            })
+            ->then(static function ($v) {
+                $agentNames = array_keys($v['agent'] ?? []);
+                $sleepTimeAgentNames = array_keys($v['sleep_time_agent'] ?? []);
+                $duplicates = array_intersect($agentNames, $sleepTimeAgentNames);
+
+                throw new \InvalidArgumentException(\sprintf('Agent names and sleep-time agent names must be unique. Duplicate name(s) found: "%s"', implode(', ', $duplicates)));
+            })
+        ->end()
+        ->validate()
+            ->ifTrue(static function ($v) {
+                if (!isset($v['multi_agent']) || !isset($v['sleep_time_agent'])) {
+                    return false;
+                }
+
+                $multiAgentNames = array_keys($v['multi_agent']);
+                $sleepTimeAgentNames = array_keys($v['sleep_time_agent']);
+                $duplicates = array_intersect($multiAgentNames, $sleepTimeAgentNames);
+
+                return !empty($duplicates);
+            })
+            ->then(static function ($v) {
+                $multiAgentNames = array_keys($v['multi_agent'] ?? []);
+                $sleepTimeAgentNames = array_keys($v['sleep_time_agent'] ?? []);
+                $duplicates = array_intersect($multiAgentNames, $sleepTimeAgentNames);
+
+                throw new \InvalidArgumentException(\sprintf('Multi-agent names and sleep-time agent names must be unique. Duplicate name(s) found: "%s"', implode(', ', $duplicates)));
+            })
+        ->end()
+        ->validate()
+            ->ifTrue(static function ($v) {
+                if (!isset($v['sleep_time_agent']) || !isset($v['agent'])) {
+                    return false;
+                }
+
+                $agentNames = array_keys($v['agent']);
+
+                foreach ($v['sleep_time_agent'] as $sleepTimeAgent) {
+                    if (!\in_array($sleepTimeAgent['primary'], $agentNames, true)) {
+                        return true;
+                    }
+
+                    if (!\in_array($sleepTimeAgent['sleeping'], $agentNames, true)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })
+            ->then(static function ($v) {
+                $agentNames = array_keys($v['agent']);
+
+                foreach ($v['sleep_time_agent'] as $sleepTimeAgentName => $sleepTimeAgent) {
+                    if (!\in_array($sleepTimeAgent['primary'], $agentNames, true)) {
+                        throw new \InvalidArgumentException(\sprintf('The agent "%s" referenced in sleep-time agent "%s" as primary does not exist', $sleepTimeAgent['primary'], $sleepTimeAgentName));
+                    }
+
+                    if (!\in_array($sleepTimeAgent['sleeping'], $agentNames, true)) {
+                        throw new \InvalidArgumentException(\sprintf('The agent "%s" referenced in sleep-time agent "%s" as sleeping does not exist', $sleepTimeAgent['sleeping'], $sleepTimeAgentName));
                     }
                 }
             })

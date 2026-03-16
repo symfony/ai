@@ -26,6 +26,10 @@ use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Agent\SleepTime\MemoryBlock;
+use Symfony\AI\Agent\SleepTime\MemoryBlockProvider;
+use Symfony\AI\Agent\SleepTime\SleepTimeAgent;
+use Symfony\AI\Agent\SleepTime\Tool\RethinkMemory;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
@@ -202,6 +206,16 @@ final class AiBundle extends AbstractBundle
 
             foreach ($config['multi_agent'] as $multiAgentName => $multiAgent) {
                 $this->processMultiAgentConfig($multiAgentName, $multiAgent, $builder);
+            }
+        }
+
+        if ([] !== ($config['sleep_time_agent'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Sleep-time agent configuration requires "symfony/ai-agent" package. Try running "composer require symfony/ai-agent".');
+            }
+
+            foreach ($config['sleep_time_agent'] as $sleepTimeAgentName => $sleepTimeAgent) {
+                $this->processSleepTimeAgentConfig($sleepTimeAgentName, $sleepTimeAgent, $builder);
             }
         }
 
@@ -2439,6 +2453,66 @@ final class AiBundle extends AbstractBundle
         $serviceId = 'ai.retriever.'.$name;
         $container->setDefinition($serviceId, $definition);
         $container->registerAliasForArgument($serviceId, RetrieverInterface::class, (new Target((string) $name))->getParsedName());
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function processSleepTimeAgentConfig(string $name, array $config, ContainerBuilder $container): void
+    {
+        $primaryServiceId = self::normalizeAgentServiceId($config['primary']);
+        $sleepingServiceId = self::normalizeAgentServiceId($config['sleeping']);
+
+        // Create shared MemoryBlock services
+        $memoryBlockReferences = [];
+        foreach ($config['memory_blocks'] as $label => $content) {
+            $blockId = \sprintf('ai.sleep_time_agent.%s.memory_block.%s', $name, $label);
+            $container->setDefinition($blockId, new Definition(MemoryBlock::class, [(string) $label, (string) $content]));
+            $memoryBlockReferences[] = new Reference($blockId);
+        }
+
+        // Create RethinkMemory tool for the sleeping agent
+        $rethinkMemoryId = \sprintf('ai.sleep_time_agent.%s.rethink_memory', $name);
+        $container->setDefinition($rethinkMemoryId, new Definition(RethinkMemory::class, [$memoryBlockReferences]));
+
+        // Add RethinkMemory to sleeping agent's toolbox via MemoryToolFactory
+        $sleepingAgentName = $config['sleeping'];
+        $memoryFactoryId = 'ai.toolbox.'.$sleepingAgentName.'.memory_factory';
+        if ($container->hasDefinition($memoryFactoryId)) {
+            $container->getDefinition($memoryFactoryId)->addMethodCall('addTool', [
+                new Reference($rethinkMemoryId),
+                'rethink_memory',
+                'Update a memory block with new insights derived from analyzing the conversation.',
+                '__invoke',
+            ]);
+        }
+
+        // Create MemoryBlockProvider and wire it as MemoryInputProcessor for the primary agent
+        $providerId = \sprintf('ai.sleep_time_agent.%s.memory_block_provider', $name);
+        $container->setDefinition($providerId, new Definition(MemoryBlockProvider::class, [$memoryBlockReferences]));
+
+        $memoryProcessorId = \sprintf('ai.sleep_time_agent.%s.memory_input_processor', $name);
+        $container->setDefinition($memoryProcessorId, (new Definition(MemoryInputProcessor::class))
+            ->setArguments([[new Reference($providerId)]])
+            ->addTag('ai.agent.input_processor', ['agent' => $primaryServiceId, 'priority' => -40])
+        );
+
+        // Create SleepTimeAgent service
+        $sleepTimeAgentId = 'ai.sleep_time_agent.'.$name;
+        $definition = (new Definition(SleepTimeAgent::class, [
+            new Reference($primaryServiceId),
+            new Reference($sleepingServiceId),
+            $memoryBlockReferences,
+            $config['frequency'],
+            $name,
+            new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+        ]))->addTag('proxy', ['interface' => AgentInterface::class]);
+
+        $definition->addTag('ai.sleep_time_agent', ['name' => $name]);
+        $definition->addTag('ai.agent', ['name' => $name]);
+
+        $container->setDefinition($sleepTimeAgentId, $definition);
+        $container->registerAliasForArgument($sleepTimeAgentId, AgentInterface::class, (new Target($name))->getParsedName());
     }
 
     /**
