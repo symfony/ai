@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Store\Document\Loader;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
 use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
@@ -25,6 +27,8 @@ final class RstToctreeLoader implements LoaderInterface
 {
     public function __construct(
         private RstLoader $rstLoader = new RstLoader(),
+        private bool $throwOnMissingEntry = false,
+        private LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -135,7 +139,17 @@ final class RstToctreeLoader implements LoaderInterface
                             }
                         } else {
                             if (!file_exists($pattern)) {
-                                throw new RuntimeException(\sprintf('Toctree entry "%s" resolved to "%s" which does not exist.', $entryPath, $pattern));
+                                if ($this->throwOnMissingEntry) {
+                                    throw new RuntimeException(\sprintf('Toctree entry "%s" resolved to "%s" which does not exist.', $entryPath, $pattern));
+                                }
+
+                                $this->logger->warning('Skipping toctree entry "{entry}" — resolved to "{path}" which does not exist.', [
+                                    'entry' => $entryPath,
+                                    'path' => $pattern,
+                                ]);
+
+                                ++$i;
+                                continue;
                             }
 
                             if (!\in_array($pattern, $entries, true)) {
