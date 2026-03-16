@@ -39,6 +39,7 @@ final class StreamListener extends AbstractStreamListener
     public function onStart(StartEvent $event): void
     {
         $this->buffer = '';
+        $this->result = null;
         $this->toolHandled = false;
     }
 

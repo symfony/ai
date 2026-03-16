@@ -415,4 +415,47 @@ class AgentProcessorTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $output->getResult());
     }
+
+    public function testSourcesAreResetAfterMaxIterationsException()
+    {
+        $failingToolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $successfulToolCall = new ToolCall('id2', 'tool2', ['arg1' => 'value2']);
+        $source = new Source('Relevant Article 1', 'http://example.com/article1', 'Content of article about the topic');
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnOnConsecutiveCalls(
+                new ToolResult($failingToolCall, 'Response 1', new SourceCollection([$source])),
+                new ToolResult($successfulToolCall, 'Response 3', new SourceCollection([$source]))
+            );
+
+        $processor = new AgentProcessor($toolbox, includeSources: true, maxToolCalls: 1);
+
+        $failingAgent = $this->createMock(AgentInterface::class);
+        $failingAgent
+            ->method('call')
+            ->willReturn(new ToolCallResult($failingToolCall));
+        $processor->setAgent($failingAgent);
+
+        try {
+            $processor->processOutput(new Output('gpt-4', new ToolCallResult($failingToolCall), new MessageBag()));
+            $this->fail('Expected MaxIterationsExceededException to be thrown.');
+        } catch (MaxIterationsExceededException) {
+        }
+
+        $successfulAgent = $this->createMock(AgentInterface::class);
+        $successfulAgent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturn(new TextResult('Final response'));
+        $processor->setAgent($successfulAgent);
+
+        $output = new Output('gpt-4', new ToolCallResult($successfulToolCall), new MessageBag());
+        $processor->processOutput($output);
+
+        $metadata = $output->getResult()->getMetadata();
+        $this->assertTrue($metadata->has('sources'));
+        $this->assertCount(1, $metadata->get('sources'));
+    }
 }

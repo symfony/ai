@@ -231,4 +231,25 @@ final class StreamListenerTest extends TestCase
         $this->assertInstanceOf(TokenUsageAggregation::class, $usage = $streamResult->getMetadata()->get('token_usage'));
         $this->assertSame(330, $usage->getTotalTokens());
     }
+
+    public function testMetadataFromPreviousRunDoesNotLeakIntoNextStreamRun()
+    {
+        $firstInnerResult = new TextResult('First response');
+        $firstInnerResult->getMetadata()->add('foo', 'bar');
+        $listener = new StreamListener(static fn () => $firstInnerResult);
+
+        $firstStreamResult = new StreamResult((static function (): \Generator {
+            yield new ToolCallComplete(new ToolCall('first-id', 'first_tool'));
+        })());
+        $firstStreamResult->addListener($listener);
+        iterator_to_array($firstStreamResult->getContent());
+
+        $secondStreamResult = new StreamResult((static function (): \Generator {
+            yield new TextDelta('No tool call');
+        })());
+        $secondStreamResult->addListener($listener);
+        iterator_to_array($secondStreamResult->getContent());
+
+        $this->assertFalse($secondStreamResult->getMetadata()->has('foo'));
+    }
 }

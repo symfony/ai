@@ -110,31 +110,38 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             $messages->add($streamedAssistantResponse);
         }
 
-        $iterations = 0;
-        do {
-            if (null !== $this->maxToolCalls && ++$iterations > $this->maxToolCalls) {
-                throw new MaxIterationsExceededException($this->maxToolCalls);
-            }
-
-            $toolCalls = $result->getContent();
-            $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
-
-            $results = [];
-            foreach ($toolCalls as $toolCall) {
-                $results[] = $toolResult = $this->toolbox->execute($toolCall);
-                $messages->add(Message::ofToolCall($toolCall, $this->resultConverter->convert($toolResult)));
-                if ($this->includeSources && null !== $toolResult->getSources()) {
-                    $this->sources = $this->sources->merge($toolResult->getSources());
+        try {
+            $iterations = 0;
+            do {
+                if (null !== $this->maxToolCalls && ++$iterations > $this->maxToolCalls) {
+                    throw new MaxIterationsExceededException($this->maxToolCalls);
                 }
+
+                $toolCalls = $result->getContent();
+                $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
+
+                $results = [];
+                foreach ($toolCalls as $toolCall) {
+                    $results[] = $toolResult = $this->toolbox->execute($toolCall);
+                    $messages->add(Message::ofToolCall($toolCall, $this->resultConverter->convert($toolResult)));
+                    if ($this->includeSources && null !== $toolResult->getSources()) {
+                        $this->sources = $this->sources->merge($toolResult->getSources());
+                    }
+                }
+
+                $event = new ToolCallsExecuted(...$results);
+                $this->eventDispatcher?->dispatch($event);
+
+                $result = $event->hasResult() ? $event->getResult() : $this->agent->call($messages, $output->getOptions());
+            } while ($result instanceof ToolCallResult);
+        } finally {
+            --$this->nestingLevel;
+
+            if ($this->includeSources && 0 === $this->nestingLevel && $result instanceof ToolCallResult) {
+                $this->sources = new SourceCollection();
             }
+        }
 
-            $event = new ToolCallsExecuted(...$results);
-            $this->eventDispatcher?->dispatch($event);
-
-            $result = $event->hasResult() ? $event->getResult() : $this->agent->call($messages, $output->getOptions());
-        } while ($result instanceof ToolCallResult);
-
-        --$this->nestingLevel;
         if ($this->includeSources && 0 === $this->nestingLevel) {
             $result->getMetadata()->add('sources', $this->sources);
             $this->sources = new SourceCollection();
