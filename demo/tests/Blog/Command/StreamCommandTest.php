@@ -17,6 +17,7 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -31,10 +32,10 @@ class StreamCommandTest extends TestCase
             ->willReturn(new class implements ResultInterface {
                 public function getContent(): iterable
                 {
-                    yield 'Hello';
-                    yield ' ';
-                    yield 'world';
-                    yield '!';
+                    yield new TextDelta('Hello');
+                    yield new TextDelta(' ');
+                    yield new TextDelta('world');
+                    yield new TextDelta('!');
                 }
 
                 public function getMetadata(): Metadata

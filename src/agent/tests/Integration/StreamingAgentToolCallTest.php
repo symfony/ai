@@ -21,10 +21,11 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\InMemoryPlatform;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
@@ -141,8 +142,8 @@ final class StreamingAgentToolCallTest extends TestCase
         // Consume the stream to trigger all tool calls
         $content = '';
         foreach ($result->getContent() as $chunk) {
-            if (\is_string($chunk)) {
-                $content .= $chunk;
+            if ($chunk instanceof TextDelta) {
+                $content .= $chunk->getText();
             }
         }
 
@@ -155,8 +156,8 @@ final class StreamingAgentToolCallTest extends TestCase
     private function createStreamResultWithToolCall(string $text, ToolCall $toolCall, TokenUsage $tokenUsage): StreamResult
     {
         $result = new StreamResult((static function () use ($text, $toolCall) {
-            yield $text;
-            yield new ToolCallResult($toolCall);
+            yield new TextDelta($text);
+            yield new ToolCallComplete($toolCall);
         })());
         $result->getMetadata()->add('token_usage', $tokenUsage);
 

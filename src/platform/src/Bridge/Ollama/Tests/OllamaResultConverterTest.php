@@ -13,15 +13,19 @@ namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
-use Symfony\AI\Platform\Bridge\Ollama\OllamaMessageChunk;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class OllamaResultConverterTest extends TestCase
@@ -172,17 +176,16 @@ final class OllamaResultConverterTest extends TestCase
 
         $this->assertInstanceOf(StreamResult::class, $result);
 
-        $chunks = $result->getContent();
-        $this->assertInstanceOf(OllamaMessageChunk::class, $chunks->current());
-        $this->assertSame('Hello', $chunks->current()->getContent());
-        $this->assertFalse($chunks->current()->isDone());
-        $this->assertSame('deepseek-r1:latest', $chunks->current()->raw['model']);
-        $this->assertArrayNotHasKey('total_duration', $chunks->current()->raw);
-        $chunks->next();
-        $this->assertInstanceOf(OllamaMessageChunk::class, $chunks->current());
-        $this->assertSame(' world!', $chunks->current()->getContent());
-        $this->assertTrue($chunks->current()->isDone());
-        $this->assertArrayHasKey('total_duration', $chunks->current()->raw);
+        $chunks = iterator_to_array($result->getContent());
+
+        $this->assertCount(3, $chunks);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello', $chunks[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $chunks[1]);
+        $this->assertSame(' world!', $chunks[1]->getText());
+        $this->assertInstanceOf(TokenUsageInterface::class, $chunks[2]);
+        $this->assertSame(42, $chunks[2]->getPromptTokens());
+        $this->assertSame(17, $chunks[2]->getCompletionTokens());
     }
 
     public function testConvertThinkingStreamingResponse()
@@ -194,27 +197,58 @@ final class OllamaResultConverterTest extends TestCase
 
         $this->assertInstanceOf(StreamResult::class, $result);
 
-        $chunks = $result->getContent();
-        $this->assertInstanceOf(OllamaMessageChunk::class, $chunks->current());
-        $this->assertSame('', $chunks->current()->getContent());
-        $this->assertSame('Thinking', $chunks->current()->getThinking());
-        $this->assertFalse($chunks->current()->isDone());
-        $this->assertSame('deepseek-r1:latest', $chunks->current()->raw['model']);
-        $this->assertArrayNotHasKey('total_duration', $chunks->current()->raw);
-        $chunks->next();
-        $this->assertSame('', $chunks->current()->getContent());
-        $this->assertSame(' hard', $chunks->current()->getThinking());
-        $this->assertFalse($chunks->current()->isDone());
-        $chunks->next();
-        $this->assertSame('Hello', $chunks->current()->getContent());
-        $this->assertNull($chunks->current()->getThinking());
-        $this->assertFalse($chunks->current()->isDone());
-        $chunks->next();
-        $this->assertInstanceOf(OllamaMessageChunk::class, $chunks->current());
-        $this->assertSame(' world!', $chunks->current()->getContent());
-        $this->assertNull($chunks->current()->getThinking());
-        $this->assertTrue($chunks->current()->isDone());
-        $this->assertArrayHasKey('total_duration', $chunks->current()->raw);
+        $chunks = iterator_to_array($result->getContent());
+
+        $this->assertCount(5, $chunks);
+        $this->assertInstanceOf(ThinkingDelta::class, $chunks[0]);
+        $this->assertSame('Thinking', $chunks[0]->getThinking());
+        $this->assertInstanceOf(ThinkingDelta::class, $chunks[1]);
+        $this->assertSame(' hard', $chunks[1]->getThinking());
+        $this->assertInstanceOf(TextDelta::class, $chunks[2]);
+        $this->assertSame('Hello', $chunks[2]->getText());
+        $this->assertInstanceOf(TextDelta::class, $chunks[3]);
+        $this->assertSame(' world!', $chunks[3]->getText());
+        $this->assertInstanceOf(TokenUsageInterface::class, $chunks[4]);
+        $this->assertSame(42, $chunks[4]->getPromptTokens());
+        $this->assertSame(17, $chunks[4]->getCompletionTokens());
+    }
+
+    public function testItPromotesTokenUsageMetadataFromStreamingResponse()
+    {
+        $deferredResult = new DeferredResult(
+            new OllamaResultConverter(),
+            new InMemoryRawResult(dataStream: $this->generateConvertStreamingStream()),
+            ['stream' => true],
+        );
+
+        iterator_to_array($deferredResult->asStream());
+
+        $this->assertInstanceOf(TokenUsageInterface::class, $tokenUsage = $deferredResult->getMetadata()->get('token_usage'));
+        $this->assertSame(42, $tokenUsage->getPromptTokens());
+        $this->assertSame(17, $tokenUsage->getCompletionTokens());
+        $this->assertNull($tokenUsage->getTotalTokens());
+    }
+
+    public function testConvertStreamingToolCallResponse()
+    {
+        $converter = new OllamaResultConverter();
+        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertToolCallStreamingStream());
+
+        $result = $converter->convert($rawResult, options: ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+
+        $chunks = iterator_to_array($result->getContent());
+
+        $this->assertCount(2, $chunks);
+        $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
+        $toolCalls = $chunks[0]->getToolCalls();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('clock', $toolCalls[0]->getName());
+        $this->assertSame(['timezone' => 'UTC'], $toolCalls[0]->getArguments());
+        $this->assertInstanceOf(TokenUsageInterface::class, $chunks[1]);
+        $this->assertSame(11, $chunks[1]->getPromptTokens());
+        $this->assertSame(4, $chunks[1]->getCompletionTokens());
     }
 
     /**
@@ -237,5 +271,15 @@ final class OllamaResultConverterTest extends TestCase
         yield ['model' => 'deepseek-r1:latest', 'created_at' => '2025-10-29T17:15:50.14497475Z', 'message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => false];
         yield ['model' => 'deepseek-r1:latest', 'created_at' => '2025-10-29T17:15:50.367912083Z', 'message' => ['role' => 'assistant', 'content' => ' world!'], 'done' => true,
             'done_reason' => 'stop', 'total_duration' => 100, 'load_duration' => 10, 'prompt_eval_count' => 42, 'prompt_eval_duration' => 30, 'eval_count' => 17, 'eval_duration' => 60];
+    }
+
+    /**
+     * @return iterable<array<string, mixed>>
+     */
+    private function generateConvertToolCallStreamingStream(): iterable
+    {
+        yield ['model' => 'llama3.2', 'created_at' => '2026-03-16T10:57:17.936041Z', 'message' => ['role' => 'assistant', 'content' => '', 'tool_calls' => [['function' => ['name' => 'clock', 'arguments' => ['timezone' => 'UTC']]]]], 'done' => false];
+        yield ['model' => 'llama3.2', 'created_at' => '2026-03-16T10:57:18.330845Z', 'message' => ['role' => 'assistant', 'content' => ''], 'done' => true,
+            'done_reason' => 'stop', 'total_duration' => 100, 'load_duration' => 10, 'prompt_eval_count' => 11, 'prompt_eval_duration' => 30, 'eval_count' => 4, 'eval_duration' => 60];
     }
 }

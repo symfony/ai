@@ -30,6 +30,7 @@ use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Vector\Vector;
@@ -67,15 +68,16 @@ class DataCollectorTest extends TestCase
         $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
         $result = new StreamResult(
             (static function () {
-                yield 'Assistant ';
-                yield 'response';
+                yield new TextDelta('Assistant ');
+                yield new TextDelta('response');
             })(),
         );
 
         $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($result), $this->createStub(RawResultInterface::class)));
 
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
-        $this->assertSame('Assistant response', implode('', iterator_to_array($result->asStream())));
+        $text = implode('', array_map(static fn ($chunk) => $chunk instanceof TextDelta ? $chunk->getText() : '', iterator_to_array($result->asStream())));
+        $this->assertSame('Assistant response', $text);
 
         $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
@@ -91,8 +93,8 @@ class DataCollectorTest extends TestCase
         $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
         $result = new StreamResult(
             (static function () {
-                yield 'Assistant ';
-                yield 'response';
+                yield new TextDelta('Assistant ');
+                yield new TextDelta('response');
             })(),
         );
 
@@ -116,8 +118,8 @@ class DataCollectorTest extends TestCase
 
         $originalStream = new StreamResult(
             (static function () {
-                yield 'foo';
-                yield 'bar';
+                yield new TextDelta('foo');
+                yield new TextDelta('bar');
             })(),
         );
         $originalStream->getMetadata()->add('request_id', 'req-123');

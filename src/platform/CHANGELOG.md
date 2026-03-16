@@ -4,6 +4,12 @@ CHANGELOG
 0.7
 ---
 
+ * Add typed streaming deltas (`TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ToolCallStart`, `ToolInputDelta`, `BinaryDelta`, `ChoiceDelta`, `ToolCallComplete`, `ThinkingComplete`) implementing `DeltaInterface`
+ * [BC BREAK] Remove `Symfony\AI\Platform\Bridge\Ollama\OllamaMessageChunk`; Ollama streams now yield semantic deltas (`TextDelta`, `ThinkingDelta`, `ToolCallComplete`, `TokenUsage`) like the other bridges
+ * Add generic `MetadataDelta` streaming support and use it for Perplexity citations/search results instead of provider-specific stream delta classes and listeners
+ * Remove `DeltaInterface` from `BinaryResult`, `ChoiceResult`, and `ToolCallResult`
+ * Remove `Usage` and `ThinkingContent` classes in favor of `TokenUsage` and `ThinkingComplete`
+ * Add `DeltaEvent` replacing `ChunkEvent` in `ListenerInterface`
  * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
  * Add `description` and `example` properties to `#[With]` attribute
 

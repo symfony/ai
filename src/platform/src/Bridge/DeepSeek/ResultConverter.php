@@ -20,9 +20,8 @@ use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
-use Symfony\AI\Platform\Result\ThinkingContent;
-use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -66,43 +65,11 @@ final class ResultConverter implements ResultConverterInterface
         return new TokenUsageExtractor();
     }
 
-    protected function convertStream(RawResultInterface $result): \Generator
+    /**
+     * @param array<string, mixed> $usage
+     */
+    protected function convertStreamUsage(array $usage): TokenUsage
     {
-        $toolCalls = [];
-        $reasoning = '';
-
-        foreach ($result->getDataStream() as $data) {
-            if ($this->streamIsToolCall($data)) {
-                $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
-            }
-
-            if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
-                yield new ToolCallResult(...array_map($this->convertToolCall(...), $toolCalls));
-            }
-
-            // Handle reasoning_content from DeepSeek R1
-            $reasoningContent = $data['choices'][0]['delta']['reasoning_content'] ?? null;
-            if (null !== $reasoningContent && '' !== $reasoningContent) {
-                $reasoning .= $reasoningContent;
-                continue;
-            }
-
-            // When we transition from reasoning to content, yield the accumulated thinking
-            if ('' !== $reasoning && isset($data['choices'][0]['delta']['content']) && '' !== $data['choices'][0]['delta']['content']) {
-                yield new ThinkingContent($reasoning);
-                $reasoning = '';
-            }
-
-            if (!isset($data['choices'][0]['delta']['content'])) {
-                continue;
-            }
-
-            yield $data['choices'][0]['delta']['content'];
-        }
-
-        // Yield any remaining reasoning if the stream ends without content
-        if ('' !== $reasoning) {
-            yield new ThinkingContent($reasoning);
-        }
+        return $this->getTokenUsageExtractor()->extractFromArray($usage);
     }
 }

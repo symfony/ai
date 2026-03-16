@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Update `StreamListener` to use `DeltaEvent` and `TextDelta` instead of `ChunkEvent` and raw strings
+ * Update `StreamListener` to react to `ToolCallComplete` instead of `ToolCallResult`
+
 0.4
 ---
 
