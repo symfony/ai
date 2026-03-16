@@ -242,11 +242,28 @@ final class RstToctreeLoaderTest extends TestCase
         file_put_contents($tempDir.'/index.rst', "Title\n=====\n\n.. toctree::\n\n   missing_page\n");
 
         try {
-            $loader = new RstToctreeLoader();
+            $loader = new RstToctreeLoader(throwOnMissingEntry: true);
 
             $this->expectException(RuntimeException::class);
             $this->expectExceptionMessage('does not exist');
             iterator_to_array($loader->load($tempDir.'/index.rst'), false);
+        } finally {
+            unlink($tempDir.'/index.rst');
+            rmdir($tempDir);
+        }
+    }
+
+    public function testLoadToctreeSkipsMissingEntryByDefault()
+    {
+        $tempDir = sys_get_temp_dir().'/rst_missing_test_'.uniqid();
+        mkdir($tempDir, 0777, true);
+        file_put_contents($tempDir.'/index.rst', "Title\n=====\n\n.. toctree::\n\n   missing_page\n");
+
+        try {
+            $loader = new RstToctreeLoader();
+            $documents = iterator_to_array($loader->load($tempDir.'/index.rst'), false);
+
+            $this->assertCount(1, $documents);
         } finally {
             unlink($tempDir.'/index.rst');
             rmdir($tempDir);
