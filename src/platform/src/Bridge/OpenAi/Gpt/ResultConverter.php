@@ -126,6 +126,7 @@ final class ResultConverter implements ResultConverterInterface
         return match ($type) {
             'message' => $this->convertOutputMessage($item),
             'reasoning' => $this->convertReasoning($item),
+            'mcp_list_tools', 'mcp_call', 'mcp_approval_request' => null,
             default => throw new RuntimeException(\sprintf('Unsupported output type "%s".', $type)),
         };
     }

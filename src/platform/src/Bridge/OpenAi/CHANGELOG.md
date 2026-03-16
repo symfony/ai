@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add support for remote MCP tools and connectors
+
 0.3
 ---
 
