@@ -14,12 +14,18 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\MockAgent;
+use Symfony\AI\Agent\Workflow\AgentWorkflow;
+use Symfony\AI\Agent\Workflow\ExecutorInterface;
+use Symfony\AI\Agent\Workflow\InMemory\WorkflowStateStore;
+use Symfony\AI\Agent\Workflow\WorkflowState;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Profiler\TraceableAgent;
+use Symfony\AI\AiBundle\Profiler\TraceableAgentWorkflow;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableStore;
+use Symfony\AI\AiBundle\Profiler\TraceableWorkflowStateStore;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -38,8 +44,10 @@ use Symfony\AI\Store\InMemory\Store;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Workflow\Marking;
+use Symfony\Component\Workflow\WorkflowInterface;
 
-class DataCollectorTest extends TestCase
+final class DataCollectorTest extends TestCase
 {
     public function testCollectsDataForNonStreamingResponse()
     {
@@ -53,7 +61,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
         $this->assertSame('Assistant response', $result->asText());
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -77,7 +85,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
         $this->assertSame('Assistant response', implode('', iterator_to_array($result->asStream())));
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -101,7 +109,7 @@ class DataCollectorTest extends TestCase
         // Invoke but do NOT consume the stream
         $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -141,7 +149,7 @@ class DataCollectorTest extends TestCase
             Message::ofUser('Hello World'),
         ));
 
-        $dataCollector = new DataCollector([], [], [$traceableMessageStore], [], [], []);
+        $dataCollector = new DataCollector([], [], [$traceableMessageStore], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getMessages();
@@ -164,7 +172,7 @@ class DataCollectorTest extends TestCase
 
         $traceableChat->submit(Message::ofUser('Hello World'));
 
-        $dataCollector = new DataCollector([], [], [], [$traceableChat], [], []);
+        $dataCollector = new DataCollector([], [], [], [$traceableChat], [], [], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getChats();
@@ -177,7 +185,7 @@ class DataCollectorTest extends TestCase
 
     public function testGetNameReturnsShortName()
     {
-        $dataCollector = new DataCollector([], [], [], [], [], []);
+        $dataCollector = new DataCollector([], [], [], [], [], [], [], []);
 
         $name = $dataCollector->getName();
 
@@ -193,7 +201,7 @@ class DataCollectorTest extends TestCase
             yield from [];
         })();
 
-        $dataCollector = new DataCollector([], $generator, [], [], [], []);
+        $dataCollector = new DataCollector([], $generator, [], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertSame([], $dataCollector->getTools());
@@ -214,7 +222,7 @@ class DataCollectorTest extends TestCase
 
         $traceableAgent->call($messageBag);
 
-        $dataCollector = new DataCollector([], [], [], [], [$traceableAgent], []);
+        $dataCollector = new DataCollector([], [], [], [], [$traceableAgent], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getAgents());
@@ -231,9 +239,55 @@ class DataCollectorTest extends TestCase
         $traceableStore = new TraceableStore(new Store());
         $traceableStore->add(new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.3])));
 
-        $dataCollector = new DataCollector([], [], [], [], [], [$traceableStore]);
+        $dataCollector = new DataCollector([], [], [], [], [], [$traceableStore], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getStores());
+    }
+
+    public function testCollectsDataForAgentWorkflow()
+    {
+        $clock = new MockClock('2020-01-01 10:00:00');
+        $state = new WorkflowState(Uuid::v7()->toRfc4122(), currentPlace: 'start');
+
+        $marking = new Marking(['start' => 1]);
+
+        $workflow = $this->createMock(WorkflowInterface::class);
+        $workflow->method('getMarking')->willReturn($marking);
+        $workflow->method('getEnabledTransitions')->willReturn([]);
+
+        $executor = $this->createMock(ExecutorInterface::class);
+        $executor->method('execute')->willReturn($state);
+
+        $traceableAgentWorkflow = new TraceableAgentWorkflow(
+            new AgentWorkflow($workflow, ['start' => $executor], new WorkflowStateStore()),
+            $clock,
+        );
+        $traceableAgentWorkflow->run($state);
+
+        $dataCollector = new DataCollector([], [], [], [], [], [], [$traceableAgentWorkflow], []);
+        $dataCollector->lateCollect();
+
+        $this->assertCount(1, $traceableAgentWorkflow->calls);
+        $this->assertIsArray($traceableAgentWorkflow->calls[0]);
+        $this->assertEquals([
+            'action' => 'run',
+            'state' => $state,
+            'called_at' => $clock->now(),
+        ], $traceableAgentWorkflow->calls[0]);
+    }
+
+    public function testCollectsDataForWorkflowStateStore()
+    {
+        $clock = new MockClock('2020-01-01 10:00:00');
+        $state = new WorkflowState(Uuid::v7()->toRfc4122());
+
+        $traceableWorkflowStateStore = new TraceableWorkflowStateStore(new WorkflowStateStore(), $clock);
+        $traceableWorkflowStateStore->save($state);
+
+        $dataCollector = new DataCollector([], [], [], [], [], [], [], [$traceableWorkflowStateStore]);
+        $dataCollector->lateCollect();
+
+        $this->assertCount(1, $dataCollector->getWorkflowStateStores());
     }
 }

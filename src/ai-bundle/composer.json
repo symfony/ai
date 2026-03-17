@@ -101,7 +101,8 @@
         "symfony/ai-weaviate-store": "^0.6",
         "symfony/expression-language": "^7.3|^8.0",
         "symfony/security-core": "^7.3|^8.0",
-        "symfony/translation": "^7.3|^8.0"
+        "symfony/translation": "^7.3|^8.0",
+        "symfony/workflow": "^7.3|^8.0"
     },
     "minimum-stability": "dev",
     "autoload": {
