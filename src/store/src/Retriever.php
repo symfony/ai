@@ -113,19 +113,19 @@ final class Retriever implements RetrieverInterface
         if (null === $this->vectorizer) {
             $this->logger->debug('No vectorizer configured, using TextQuery if supported');
 
-            return new TextQuery($query);
+            return new TextQuery(explode(' ', $query));
         }
 
         if (!$this->store->supports(VectorQuery::class)) {
             $this->logger->debug('Store does not support vector queries, falling back to TextQuery');
 
-            return new TextQuery($query);
+            return new TextQuery(explode(' ', $query));
         }
 
         if ($this->store->supports(HybridQuery::class)) {
             $this->logger->debug('Store supports hybrid queries, using HybridQuery with semantic ratio', ['semanticRatio' => $options['semanticRatio'] ?? 0.5]);
 
-            return new HybridQuery($this->vectorizer->vectorize($query), $query, $options['semanticRatio'] ?? 0.5);
+            return new HybridQuery($this->vectorizer->vectorize($query), explode(' ', $query), $options['semanticRatio'] ?? 0.5);
         }
 
         $this->logger->debug('Store supports vector queries, using VectorQuery');

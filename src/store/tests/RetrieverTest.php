@@ -124,7 +124,9 @@ final class RetrieverTest extends TestCase
         $store->expects($this->once())
             ->method('query')
             ->with(
-                $this->isInstanceOf(TextQuery::class),
+                $this->callback(static function ($query) {
+                    return $query instanceof TextQuery && ['test', 'query'] === $query->getTexts();
+                }),
                 $this->anything()
             )
             ->willReturn([$document]);
@@ -160,7 +162,9 @@ final class RetrieverTest extends TestCase
         $store->expects($this->once())
             ->method('query')
             ->with(
-                $this->isInstanceOf(TextQuery::class),
+                $this->callback(static function ($query) {
+                    return $query instanceof TextQuery && ['test', 'query'] === $query->getTexts();
+                }),
                 $this->anything()
             )
             ->willReturn([$document]);
@@ -196,7 +200,9 @@ final class RetrieverTest extends TestCase
         $store->expects($this->once())
             ->method('query')
             ->with(
-                $this->isInstanceOf(HybridQuery::class),
+                $this->callback(static function ($query) {
+                    return $query instanceof HybridQuery && ['test', 'query'] === $query->getTexts();
+                }),
                 $this->anything()
             )
             ->willReturn([$document]);
@@ -403,7 +409,7 @@ final class RetrieverTest extends TestCase
             ->method('query')
             ->with(
                 $this->callback(static function ($query) {
-                    return $query instanceof HybridQuery && 'expanded query terms' === $query->getText();
+                    return $query instanceof HybridQuery && ['expanded', 'query', 'terms'] === $query->getTexts();
                 }),
                 $this->anything()
             )
