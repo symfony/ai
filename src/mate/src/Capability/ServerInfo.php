@@ -19,30 +19,17 @@ use Mcp\Capability\Attribute\McpTool;
  */
 class ServerInfo
 {
-    #[McpTool('php-version', 'Get the version of PHP')]
-    public function phpVersion(): string
-    {
-        return \PHP_VERSION;
-    }
-
-    #[McpTool('operating-system', 'Get the current operating system')]
-    public function operatingSystem(): string
-    {
-        return \PHP_OS;
-    }
-
-    #[McpTool('operating-system-family', 'Get the current operating system family')]
-    public function operatingSystemFamily(): string
-    {
-        return \PHP_OS_FAMILY;
-    }
-
     /**
-     * @return array{extensions: string[]}
+     * @return array{php_version: string, operating_system: string, operating_system_family: string, extensions: list<string>}
      */
-    #[McpTool('php-extensions', 'Get a list of PHP extensions')]
-    public function extensions(): array
+    #[McpTool('server-info', 'Get PHP runtime environment details: version, OS, OS family, and loaded extensions')]
+    public function getInfo(): array
     {
-        return ['extensions' => get_loaded_extensions()];
+        return [
+            'php_version' => \PHP_VERSION,
+            'operating_system' => \PHP_OS,
+            'operating_system_family' => \PHP_OS_FAMILY,
+            'extensions' => get_loaded_extensions(),
+        ];
     }
 }

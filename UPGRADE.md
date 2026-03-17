@@ -1,3 +1,12 @@
+UPGRADE FROM 0.7 to 0.8
+=======================
+
+Mate
+----
+
+ * Run `vendor/bin/mate discover` to update the generated `AGENT_INSTRUCTIONS.md` file with the latest
+   tool descriptions and agent instructions.
+
 UPGRADE FROM 0.6 to 0.7
 =======================
 

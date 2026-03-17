@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Merge `symfony-profiler-search` into `symfony-profiler-list` with `from` and `to` date filter parameters
+ * Remove `symfony-profiler-latest` tool (use `symfony-profiler-list` with `limit: 1` instead)
+ * Add `query` parameter to `symfony-services` for filtering by service ID or class name
+ * Add `@param` docblocks to all tool methods for AI-readable parameter descriptions
+
 0.6
 ---
 

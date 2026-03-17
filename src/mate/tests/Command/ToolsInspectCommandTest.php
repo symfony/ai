@@ -35,11 +35,11 @@ final class ToolsInspectCommandTest extends TestCase
         $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
-        $tester->execute(['tool-name' => 'php-version']);
+        $tester->execute(['tool-name' => 'server-info']);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
-        $this->assertStringContainsString('php-version', $output);
+        $this->assertStringContainsString('server-info', $output);
         $this->assertStringContainsString('Description', $output);
         $this->assertStringContainsString('Handler', $output);
         $this->assertStringContainsString('Extension', $output);
@@ -56,7 +56,7 @@ final class ToolsInspectCommandTest extends TestCase
         $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
-        $tester->execute(['tool-name' => 'php-version', '--format' => 'json']);
+        $tester->execute(['tool-name' => 'server-info', '--format' => 'json']);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
@@ -68,7 +68,7 @@ final class ToolsInspectCommandTest extends TestCase
         $this->assertArrayHasKey('handler', $json);
         $this->assertArrayHasKey('input_schema', $json);
         $this->assertArrayHasKey('extension', $json);
-        $this->assertSame('php-version', $json['name']);
+        $this->assertSame('server-info', $json['name']);
     }
 
     public function testExecuteWithInvalidToolName()
@@ -99,11 +99,11 @@ final class ToolsInspectCommandTest extends TestCase
         $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
-        $tester->execute(['tool-name' => 'php-version', '--format' => 'text']);
+        $tester->execute(['tool-name' => 'server-info', '--format' => 'text']);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
-        $this->assertStringContainsString('php-version', $output);
+        $this->assertStringContainsString('server-info', $output);
         $this->assertStringContainsString('Description', $output);
         $this->assertStringContainsString('Handler', $output);
         $this->assertStringContainsString('Extension', $output);
@@ -121,14 +121,14 @@ final class ToolsInspectCommandTest extends TestCase
         $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
-        $tester->execute(['tool-name' => 'operating-system', '--format' => 'json']);
+        $tester->execute(['tool-name' => 'server-info', '--format' => 'json']);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
 
         $json = json_decode($output, true);
         $this->assertIsArray($json);
-        $this->assertSame('operating-system', $json['name']);
+        $this->assertSame('server-info', $json['name']);
         $this->assertIsString($json['handler']);
         $this->assertSame('_custom', $json['extension']);
     }
