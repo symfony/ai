@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\ScopingHttpClient;
@@ -26,10 +25,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class PlatformFactory
 {
     public static function create(
-        ?string $endpoint = 'http://localhost:11434',
+        ?string $endpoint = null,
         #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
-        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
@@ -47,7 +45,7 @@ final class PlatformFactory
         return new Platform(
             [new OllamaClient($httpClient)],
             [new OllamaResultConverter()],
-            $modelCatalog,
+            new ModelCatalog($httpClient),
             $contract ?? OllamaContract::create(),
             $eventDispatcher,
         );

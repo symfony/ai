@@ -93,6 +93,9 @@ final class OllamaClientTest extends TestCase
     public function testStreamingIsSupported()
     {
         $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'capabilities' => ['completion'],
+            ]),
             new MockResponse('data: '.json_encode([
                 'model' => 'llama3.2',
                 'created_at' => '2025-08-23T10:00:00Z',
@@ -124,7 +127,7 @@ final class OllamaClientTest extends TestCase
 
         $this->assertInstanceOf(StreamResult::class, $result);
         $this->assertInstanceOf(\Generator::class, $result->getContent());
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $this->assertSame(2, $httpClient->getRequestsCount());
     }
 
     public function testStreamingConverterWithDirectResponse()
