@@ -60,8 +60,6 @@ final class McpBundle extends AbstractBundle
         $builder->setParameter('mcp.icons', $config['icons']);
         $builder->setParameter('mcp.pagination_limit', $config['pagination_limit']);
         $builder->setParameter('mcp.instructions', $config['instructions']);
-        $builder->setParameter('mcp.discovery.scan_dirs', $config['discovery']['scan_dirs']);
-        $builder->setParameter('mcp.discovery.exclude_dirs', $config['discovery']['exclude_dirs']);
 
         $this->registerMcpAttributes($builder);
 
@@ -111,7 +109,17 @@ final class McpBundle extends AbstractBundle
             $builder->registerAttributeForAutoconfiguration(
                 $attributeClass,
                 static function (ChildDefinition $definition, object $attribute, \Reflector $reflector) use ($tag): void {
-                    $definition->addTag($tag);
+                    if ($reflector instanceof \ReflectionMethod) {
+                        $methodName = $reflector->getName();
+                    } elseif ($reflector instanceof \ReflectionClass) {
+                        if (!$reflector->hasMethod('__invoke')) {
+                            throw new \LogicException(\sprintf('Service "%s" is configured with "%s" as a class-level attribute, but it is not invokable. Either add an __invoke() method or move the attribute to a method.', $reflector->getName(), $attribute::class));
+                        }
+                        $methodName = '__invoke';
+                    } else {
+                        $methodName = '__invoke';
+                    }
+                    $definition->addTag($tag, ['method' => $methodName]);
                 }
             );
         }
