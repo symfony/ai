@@ -4,6 +4,7 @@ CHANGELOG
 0.7
 ---
 
+ * Add `asFile()` method to `BinaryResult` and `DeferredResult` for saving binary content to a file
  * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
  * Add `description` and `example` properties to `#[With]` attribute
  * Generate JSON schema from Symfony Validator constraints when available

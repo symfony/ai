@@ -820,7 +820,16 @@ Binary Results
     );
 
     $result = $platform->invoke('gpt-4o-mini', 'generate PDF document');
-    $binary = $result->asBinary(); // Returns Binary object with content and MIME type
+    $binary = $result->asBinary(); // Returns the binary data as string
+
+You can also save binary results directly to a file using
+:method:`Symfony\\AI\\Platform\\Result\\DeferredResult::asFile`::
+
+    $result = $platform->invoke('gemini-2.5-flash-image', $messages);
+    $result->asFile('/path/to/output.png'); // Saves the binary content to a file
+
+The method throws a :class:`Symfony\\AI\\Platform\\Exception\\RuntimeException` if the
+target directory does not exist or is not writable.
 
 Raw Results
 ~~~~~~~~~~~
