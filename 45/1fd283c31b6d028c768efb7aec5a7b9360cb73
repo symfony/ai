@@ -1,0 +1,15 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-02-27T21:02:09Z
+
+@chr-hertel i have done a bit more research but not found any good solution for that - laravel/boost just uses the "normal" way to register the MCP which means it runs for all codex sessions.
+
+So i think the wrapper is not nice but at least DX friendly.
+
+So feel free to review this now :)
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-05T17:58:17Z
+
+@OskarStark @chr-hertel @Nyholm can someone of you could take a look at this? as mate is currently not possible to run in Codex :)
