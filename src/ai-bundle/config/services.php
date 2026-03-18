@@ -36,7 +36,6 @@ use Symfony\AI\Platform\Bridge\Decart\ModelCatalog as DecartModelCatalog;
 use Symfony\AI\Platform\Bridge\DeepSeek\ModelCatalog as DeepSeekModelCatalog;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\ModelCatalog as DockerModelRunnerModelCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
-use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\Gemini\ModelCatalog as GeminiModelCatalog;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\HuggingFaceContract;
@@ -70,7 +69,6 @@ use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
@@ -113,9 +111,6 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.decart', DecartModelCatalog::class)
         ->set('ai.platform.model_catalog.deepseek', DeepSeekModelCatalog::class)
         ->set('ai.platform.model_catalog.dockermodelrunner', DockerModelRunnerModelCatalog::class)
-        ->set('ai.platform.model_catalog.elevenlabs', ElevenLabsModelCatalog::class)
-            ->lazy()
-            ->tag('proxy', ['interface' => ModelCatalogInterface::class])
         ->set('ai.platform.model_catalog.gemini', GeminiModelCatalog::class)
         ->set('ai.platform.model_catalog.huggingface', HuggingFaceModelCatalog::class)
         ->set('ai.platform.model_catalog.lmstudio', LmStudioModelCatalog::class)

@@ -23,7 +23,4 @@ return (new ArrayNodeDefinition('elevenlabs'))
             ->defaultValue('http_client')
             ->info('Service ID of the HTTP client to use')
         ->end()
-        ->booleanNode('api_catalog')
-            ->info('If set, the ElevenLabs API will be used to build the catalog and retrieve models information, using this option leads to additional HTTP calls')
-        ->end()
     ->end();
