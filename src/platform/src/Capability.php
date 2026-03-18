@@ -32,10 +32,12 @@ enum Capability: string
 
     // OUTPUT
     case OUTPUT_AUDIO = 'output-audio';
+    case OUTPUT_EMBEDDINGS = 'output-embeddings';
     case OUTPUT_IMAGE = 'output-image';
     case OUTPUT_STREAMING = 'output-streaming';
     case OUTPUT_STRUCTURED = 'output-structured';
     case OUTPUT_TEXT = 'output-text';
+    case OUTPUT_VIDEO = 'output-video';
 
     // FUNCTIONALITY
     case TOOL_CALLING = 'tool-calling';

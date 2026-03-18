@@ -41,7 +41,7 @@ final class VeniceClient implements ModelClientInterface
             $model->supports(Capability::TEXT_TO_IMAGE) => $this->doImageGeneration($model, $payload, $options),
             $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, $options),
             $model->supports(Capability::EMBEDDINGS) => $this->doGenerateEmbeddings($model, $payload),
-            default => throw new InvalidArgumentException('Unsupported model capability for Venice client'),
+            default => throw new InvalidArgumentException('Unsupported model capability for Venice client.'),
         };
     }
 

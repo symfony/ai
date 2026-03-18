@@ -30,6 +30,10 @@ final class ModelCatalog implements ModelCatalogInterface
     {
         $models = $this->getModels();
 
+        if ([] === $models) {
+            throw new InvalidArgumentException('No models available in the Venice catalog.');
+        }
+
         if (!\array_key_exists($modelName, $models)) {
             throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieved from the API.', $modelName));
         }
@@ -61,6 +65,7 @@ final class ModelCatalog implements ModelCatalogInterface
                 'capabilities' => [
                     Capability::SPEECH_RECOGNITION,
                     Capability::INPUT_TEXT,
+                    Capability::OUTPUT_TEXT,
                 ],
             ],
             'embedding' => [
@@ -68,6 +73,7 @@ final class ModelCatalog implements ModelCatalogInterface
                 'capabilities' => [
                     Capability::EMBEDDINGS,
                     Capability::INPUT_TEXT,
+                    Capability::OUTPUT_EMBEDDINGS,
                 ],
             ],
             'text' => [
@@ -75,6 +81,7 @@ final class ModelCatalog implements ModelCatalogInterface
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
                 ],
             ],
             'tts' => [
@@ -82,6 +89,7 @@ final class ModelCatalog implements ModelCatalogInterface
                 'capabilities' => [
                     Capability::TEXT_TO_SPEECH,
                     Capability::INPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
                 ],
             ],
             'video' => [
@@ -89,6 +97,7 @@ final class ModelCatalog implements ModelCatalogInterface
                 'capabilities' => [
                     Capability::IMAGE_TO_VIDEO,
                     Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_VIDEO,
                 ],
             ],
             'image' => [
@@ -96,6 +105,7 @@ final class ModelCatalog implements ModelCatalogInterface
                 'capabilities' => [
                     Capability::TEXT_TO_IMAGE,
                     Capability::INPUT_TEXT,
+                    Capability::OUTPUT_IMAGE,
                 ],
             ],
             default => [
