@@ -14,7 +14,6 @@ namespace Symfony\AI\Platform\Bridge\Venice;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\Venice\Contract\Contract as VeniceContract;
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;

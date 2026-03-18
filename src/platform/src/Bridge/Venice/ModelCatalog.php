@@ -91,6 +91,17 @@ final class ModelCatalog implements ModelCatalogInterface
                     Capability::INPUT_IMAGE,
                 ],
             ],
+            'image' => [
+                'class' => Venice::class,
+                'capabilities' => [
+                    Capability::TEXT_TO_IMAGE,
+                    Capability::INPUT_TEXT,
+                ],
+            ],
+            default => [
+                'class' => Venice::class,
+                'capabilities' => [],
+            ],
         };
 
         return array_combine(

@@ -59,19 +59,10 @@ final class ModelCatalogTest extends TestCase
                     [
                         'createdAt' => (new \DateTimeImmutable())->getTimestamp(),
                         'id' => 'foo',
-                        'model_spec' => [
-                            'capabilities' => [
-                                'optimizedForCode' => false,
-                                'quantization' => 'fp16',
-                                'supportsFunctionCalling' => false,
-                                'supportsReasoning' => false,
-                                'supportsVision' => false,
-                                'supportsWebSearch' => false,
-                            ],
-                        ],
+                        'model_spec' => [],
                         'object' => 'model',
                         'owned_by' => 'venice.ai',
-                        'type' => 'text',
+                        'type' => 'unsupported_type',
                     ],
                 ],
                 'object' => 'list',
@@ -99,7 +90,7 @@ final class ModelCatalogTest extends TestCase
                             'pricing' => [
                                 'per_audio_second' => [
                                     'usd' => 0.0001,
-                                    'diem' => 0.0001
+                                    'diem' => 0.0001,
                                 ],
                             ],
                         ],
@@ -142,11 +133,11 @@ final class ModelCatalogTest extends TestCase
                             'pricing' => [
                                 'input' => [
                                     'usd' => 0.15,
-                                    'diem' => 0.15
+                                    'diem' => 0.15,
                                 ],
                                 'output' => [
                                     'usd' => 0.6,
-                                    'diem' => 0.6
+                                    'diem' => 0.6,
                                 ],
                             ],
                         ],
@@ -179,6 +170,43 @@ final class ModelCatalogTest extends TestCase
 
     public function testModelCatalogCanReturnImageModelFromApi()
     {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'data' => [
+                    [
+                        'createdAt' => (new \DateTimeImmutable())->getTimestamp(),
+                        'id' => 'fluently-xl',
+                        'model_spec' => [
+                            'pricing' => [
+                                'per_image' => [
+                                    'usd' => 0.04,
+                                    'diem' => 0.04,
+                                ],
+                            ],
+                        ],
+                        'name' => 'Fluently XL',
+                        'offline' => false,
+                        'privacy' => 'private',
+                        'object' => 'model',
+                        'owned_by' => 'venice.ai',
+                        'type' => 'image',
+                    ],
+                ],
+                'object' => 'list',
+                'type' => 'all',
+            ]),
+        ]);
 
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $model = $modelCatalog->getModel('fluently-xl');
+
+        $this->assertSame('fluently-xl', $model->getName());
+        $this->assertSame([
+            Capability::TEXT_TO_IMAGE,
+            Capability::INPUT_TEXT,
+        ], $model->getCapabilities());
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 }

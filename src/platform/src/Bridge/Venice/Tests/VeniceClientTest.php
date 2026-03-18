@@ -30,7 +30,7 @@ final class VeniceClientTest extends TestCase
                         'index' => 0,
                         'logprobs' => null,
                         'message' => [
-                            'content' => 'foo',
+                            'content' => 'Hello! How can I help you?',
                             'reasoning_content' => null,
                             'role' => 'assistant',
                             'tool_calls' => [],
@@ -38,34 +38,105 @@ final class VeniceClientTest extends TestCase
                         'stop_reason' => null,
                     ],
                 ],
-                'model' => 'text-embedding-bge-m3',
-                'object' => 'list',
+                'model' => 'llama-3.3-70b',
+                'object' => 'chat.completion',
                 'usage' => [
-                    'prompt_tokens' => 8,
-                    'total_tokens' => 8,
+                    'prompt_tokens' => 10,
+                    'completion_tokens' => 8,
+                    'total_tokens' => 18,
                 ],
             ]),
         ], 'https://api.venice.ai/api/v1/');
 
         $client = new VeniceClient($httpClient);
 
-        $client->request(new Venice('text-embedding-bge-m3', [
-            Capability::EMBEDDINGS,
-        ]), 'foo');
+        $client->request(new Venice('llama-3.3-70b', [
+            Capability::INPUT_MESSAGES,
+        ]), ['messages' => [['role' => 'user', 'content' => 'Hello']]]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testClientCanTriggerCompletionAsStream()
     {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $body = json_decode($options['body'], true);
+
+            $this->assertSame('POST', $method);
+            $this->assertStringContainsString('chat/completions', $url);
+            $this->assertTrue($body['stream']);
+            $this->assertTrue($body['stream_options']['include_usage']);
+
+            return new JsonMockResponse([
+                'choices' => [
+                    [
+                        'delta' => ['content' => 'Hi'],
+                        'index' => 0,
+                    ],
+                ],
+            ]);
+        }, 'https://api.venice.ai/api/v1/');
+
+        $client = new VeniceClient($httpClient);
+
+        $client->request(new Venice('llama-3.3-70b', [
+            Capability::INPUT_MESSAGES,
+        ]), ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['stream' => true]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testClientCanTriggerImageGeneration()
     {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $body = json_decode($options['body'], true);
+
+            $this->assertSame('POST', $method);
+            $this->assertStringContainsString('images/generations', $url);
+            $this->assertSame('A cat on a roof', $body['prompt']);
+            $this->assertSame('fluently-xl', $body['model']);
+
+            return new JsonMockResponse([
+                'data' => [
+                    [
+                        'url' => 'https://venice.ai/images/generated/123.png',
+                    ],
+                ],
+            ]);
+        }, 'https://api.venice.ai/api/v1/');
+
+        $client = new VeniceClient($httpClient);
+
+        $client->request(new Venice('fluently-xl', [
+            Capability::TEXT_TO_IMAGE,
+            Capability::INPUT_TEXT,
+        ]), 'A cat on a roof');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testClientCanTriggerTextToSpeech()
     {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $body = json_decode($options['body'], true);
+
+            $this->assertSame('POST', $method);
+            $this->assertStringContainsString('audio/speech', $url);
+            $this->assertSame('Hello world', $body['input']);
+            $this->assertSame('mp3', $body['response_format']);
+            $this->assertSame('tts-kokoro', $body['model']);
+
+            return new JsonMockResponse([]);
+        }, 'https://api.venice.ai/api/v1/');
+
+        $client = new VeniceClient($httpClient);
+
+        $client->request(new Venice('tts-kokoro', [
+            Capability::TEXT_TO_SPEECH,
+            Capability::INPUT_TEXT,
+        ]), 'Hello world');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testClientCanTriggerEmbeddings()

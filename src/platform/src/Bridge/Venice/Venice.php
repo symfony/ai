@@ -16,6 +16,6 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-class Venice extends Model
+final class Venice extends Model
 {
 }

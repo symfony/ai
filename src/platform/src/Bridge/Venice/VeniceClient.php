@@ -38,6 +38,7 @@ final class VeniceClient implements ModelClientInterface
     {
         return match (true) {
             $model->supports(Capability::INPUT_MESSAGES) => $this->doGenerateCompletion($model, $payload, $options),
+            $model->supports(Capability::TEXT_TO_IMAGE) => $this->doImageGeneration($model, $payload, $options),
             $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, $options),
             $model->supports(Capability::EMBEDDINGS) => $this->doGenerateEmbeddings($model, $payload),
             default => throw new InvalidArgumentException('Unsupported model capability for Venice client'),
@@ -69,6 +70,17 @@ final class VeniceClient implements ModelClientInterface
             'json' => [
                 'response_format' => 'mp3',
                 'input' => \is_string($payload) ? $payload : $payload['text'],
+                'model' => $model->getName(),
+                ...$options,
+            ],
+        ]));
+    }
+
+    private function doImageGeneration(Model $model, array|string $payload, array $options): RawResultInterface
+    {
+        return new RawHttpResult($this->httpClient->request('POST', 'images/generate', [
+            'json' => [
+                'prompt' => \is_string($payload) ? $payload : $payload['prompt'],
                 'model' => $model->getName(),
                 ...$options,
             ],

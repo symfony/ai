@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
@@ -38,16 +39,22 @@ final class ResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
+        $url = new UnicodeString($result->getObject()->getInfo('url'));
+
+        if ($url->containsAny('completions') && ($options['stream'] ?? false)) {
+            return new StreamResult($this->convertCompletionToGenerator($result));
+        }
+
         $crawler = new JsonCrawler($result->getObject()->getContent());
 
         return match (true) {
-            (new UnicodeString($result->getObject()->getInfo('url')))->containsAny('completions') && [] !== $crawler->find('$.choices[0].message.content') => new TextResult($crawler->find('$.choices[0].message.content')[0]),
-            ((new UnicodeString($result->getObject()->getInfo('url')))->containsAny('completions') && $options['stream'] ?? false) && [] !== $crawler->find('$.choices') => new StreamResult($this->convertCompletionToGenerator($crawler->find('$.choices'))),
-            (new UnicodeString($result->getObject()->getInfo('url')))->containsAny('speech') => new BinaryResult($result->getObject()->getContent()),
-            (new UnicodeString($result->getObject()->getInfo('url')))->containsAny('embeddings') && [] !== $crawler->find('$.data[0].embedding') => new VectorResult(...array_map(
+            $url->containsAny('completions') && [] !== $crawler->find('$.choices[0].message.content') => new TextResult($crawler->find('$.choices[0].message.content')[0]),
+            $url->containsAny('speech') => new BinaryResult($result->getObject()->getContent()),
+            $url->containsAny('embeddings') && [] !== $crawler->find('$.data[0].embedding') => new VectorResult(...array_map(
                 static fn (array $embeddings): VectorInterface => new Vector($embeddings),
                 $crawler->find('$.data[0].embedding'),
             )),
+            $url->containsAny('generations') && [] !== $crawler->find('$.data[*].url') => new TextResult(implode("\n", $crawler->find('$.data[*].url'))),
             default => throw new RuntimeException('Unsupported model capability.'),
         };
     }
@@ -57,8 +64,22 @@ final class ResultConverter implements ResultConverterInterface
         return new TokenUsageExtractor();
     }
 
-    private function convertCompletionToGenerator(array $choices): \Generator
+    private function convertCompletionToGenerator(RawResultInterface $result): \Generator
     {
+        foreach ($result->getDataStream() as $data) {
+            $content = $data['choices'][0]['delta']['content'] ?? null;
 
+            if (null !== $content) {
+                yield $content;
+            }
+
+            if (isset($data['usage'])) {
+                yield new TokenUsage(
+                    promptTokens: $data['usage']['prompt_tokens'],
+                    completionTokens: $data['usage']['completion_tokens'] ?? 0,
+                    totalTokens: $data['usage']['total_tokens'],
+                );
+            }
+        }
     }
 }
