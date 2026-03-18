@@ -46,5 +46,9 @@ final class McpPass implements CompilerPassInterface
 
         $serviceLocatorRef = ServiceLocatorTagPass::register($container, $serviceReferences);
         $container->getDefinition('mcp.server.builder')->addMethodCall('setContainer', [$serviceLocatorRef]);
+
+        if ($container->hasDefinition('mcp.reference_handler')) {
+            $container->getDefinition('mcp.reference_handler')->setArgument(0, $serviceLocatorRef);
+        }
     }
 }
