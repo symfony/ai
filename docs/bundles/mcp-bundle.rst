@@ -160,14 +160,133 @@ The MCP Bundle supports two transport types for server communication:
 The HTTP transport uses the MCP SDK's ``StreamableHttpTransport`` which supports:
 
 - JSON-RPC 2.0 over HTTP POST requests
-- Session management with configurable storage (file/memory/cache)
+- PSR-15 middleware pipeline for request processing
+- Session management with configurable storage (file/memory/cache/framework)
 - CORS headers for cross-origin requests
 - Proper MCP initialization handshake
+
+HTTP Middleware
+...............
+
+The MCP Bundle supports a PSR-15 middleware pipeline for HTTP transport requests. Middleware
+services are automatically discovered via the ``MiddlewareInterface`` and tagged with ``mcp.middleware``.
+
+To create a custom middleware::
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\MiddlewareInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+
+    class RateLimitMiddleware implements MiddlewareInterface
+    {
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+        {
+            // Your middleware logic here
+            return $handler->handle($request);
+        }
+    }
+
+Middleware execution order is controlled via the ``priority`` tag attribute (higher = earlier)::
+
+    # config/services.yaml
+    services:
+        App\Middleware\RateLimitMiddleware:
+            tags:
+                - { name: 'mcp.middleware', priority: 100 }
+
+You can also specify middleware explicitly in configuration:
+
+.. code-block:: yaml
+
+    mcp:
+        http:
+            security_middleware: App\Middleware\MySecurityMiddleware
+
+OAuth Integration
+.................
+
+The MCP Bundle provides built-in OAuth 2.0 support with OIDC discovery for securing HTTP transport
+endpoints. When enabled, it automatically registers middleware for token validation, client registration,
+and protected resource metadata.
+
+.. code-block:: yaml
+
+    mcp:
+        client_transports:
+            http: true
+        http:
+            oauth:
+                enabled: true
+                issuer: 'https://auth.example.com'
+                base_url: 'https://mcp.example.com'
+                roles_claim: 'roles'          # JWT claim containing user roles (default: roles)
+                scopes:                        # OAuth scopes (default: openid, email, offline_access)
+                    - openid
+                    - email
+                    - offline_access
+
+When OAuth is enabled, the bundle automatically:
+
+- Registers OAuth well-known endpoints (``/.well-known/oauth-protected-resource``, ``/.well-known/oauth-authorization-server``, ``/authorize``, ``/token``, ``/register``)
+- Configures JWT token validation via OIDC discovery and JWKS
+- Bridges JWT claims to Symfony security tokens via ``SymfonySecurityMiddleware``
+- Enables ``#[IsGranted]`` attribute-based tool authorization
+
+Tool Authorization
+..................
+
+When Symfony Security is available, tools can be protected using the ``#[IsGranted]`` attribute::
+
+    use Mcp\Capability\Attribute\McpTool;
+    use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+    class AdminTools
+    {
+        #[McpTool(name: 'delete-user')]
+        #[IsGranted('ROLE_ADMIN')]
+        public function deleteUser(string $userId): string
+        {
+            // Only accessible to users with ROLE_ADMIN
+        }
+    }
+
+The ``FilteredListToolsHandler`` automatically filters the ``tools/list`` response to only show
+tools the current user is authorized to access. Unauthenticated users see an empty tool list.
+
+The ``SecurityReferenceHandler`` enforces authorization at execution time, throwing an
+``AccessDeniedException`` if a user attempts to call a tool they are not authorized to use.
+
+You can also configure a custom reference handler for tool execution authorization:
+
+.. code-block:: yaml
+
+    mcp:
+        reference_handler: 'app.custom_reference_handler'
+
+Testing with Security
+.....................
+
+For functional tests, you can use the ``TestSecurityMiddleware`` to simulate authenticated users
+by passing roles via HTTP header. This requires explicit opt-in:
+
+.. code-block:: yaml
+
+    # config/packages/test/mcp.yaml
+    mcp:
+        http:
+            security_middleware: Symfony\AI\McpBundle\Test\TestSecurityMiddleware
+
+Then in your tests, pass the ``X-Test-Roles`` header::
+
+    $client->request('POST', '/_mcp', server: [
+        'HTTP_X_TEST_ROLES' => 'ROLE_USER,ROLE_ADMIN',
+    ]);
 
 Session Storage
 ...............
 
-The MCP Bundle supports three types of session storage for the HTTP transport:
+The MCP Bundle supports four types of session storage for the HTTP transport:
 
 **File Storage** (default) - Stores sessions on the filesystem::
 
@@ -195,6 +314,19 @@ The MCP Bundle supports three types of session storage for the HTTP transport:
                 cache_pool: 'cache.mcp.sessions' # Reference to your cache pool service (PSR-16)
                 prefix: 'mcp-' # Optional prefix for cache keys
                 ttl: 3600
+
+**Framework Session Storage** - Uses Symfony's session handler with application-level TTL::
+
+    mcp:
+        http:
+            session:
+                store: framework
+                prefix: 'mcp-'
+                ttl: 3600
+
+This wraps ``SessionHandlerInterface`` and stores data in a JSON envelope with expiry timestamps.
+Expired sessions are lazily cleaned up on read. This is useful when you want MCP sessions to share
+the same backend as your HTTP sessions (e.g., Redis, database).
 
 By default, if you don't configure a custom cache pool, the bundle automatically creates ``cache.mcp.sessions`` as a PSR-16 wrapper around Symfony's default ``cache.app`` pool.
 
@@ -260,6 +392,8 @@ Configuration
         discovery:
             scan_dirs: ['src/Mcp'] # limit discovery scanning to a directory where you can group all your tools, resources, prompts, etc ...
 
+        reference_handler: ~ # Custom reference handler service ID (default: null, auto-configured with OAuth)
+
         client_transports:
             stdio: true # Enable STDIO via command
             http: true # Enable HTTP transport via controller
@@ -267,11 +401,19 @@ Configuration
         # HTTP transport configuration (optional)
         http:
             path: /_mcp # HTTP endpoint path (default: /_mcp)
+            security_middleware: ~ # Custom security middleware class (default: null)
+            routes: [] # Additional routes to register (auto-configured with OAuth)
+            oauth:
+                enabled: false # Enable OAuth 2.0 integration
+                issuer: ~ # OIDC issuer URL (required when enabled)
+                base_url: ~ # MCP server base URL (required when enabled)
+                roles_claim: 'roles' # JWT claim for user roles
+                scopes: ['openid', 'email', 'offline_access'] # OAuth scopes
             session:
-                store: file # Session store type: 'file', 'memory', or 'cache' (default: file)
+                store: file # Session store type: 'file', 'memory', 'cache', or 'framework' (default: file)
                 directory: '%kernel.cache_dir%/mcp-sessions' # Directory for file store (default: cache_dir/mcp-sessions)
                 cache_pool: 'cache.mcp.sessions' # Cache pool service for cache store (default: cache.mcp.sessions)
-                prefix: 'mcp-' # Prefix for cache keys (default: 'mcp-')
+                prefix: 'mcp-' # Prefix for cache/framework keys (default: 'mcp-')
                 ttl: 3600 # Session TTL in seconds (default: 3600)
 
         # Not supported yet
