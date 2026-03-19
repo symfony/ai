@@ -136,6 +136,21 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
+            'qwen3.5-397b-a17b' => [
+                'class' => Scaleway::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                ],
+            ],
+            'qwen3-embedding-8b' => [
+                'class' => Embeddings::class,
+                'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
+            ],
             'bge-multilingual-gemma2' => [
                 'class' => Embeddings::class,
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
