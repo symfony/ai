@@ -233,6 +233,26 @@ When OAuth is enabled, the bundle automatically:
 - Bridges JWT claims to Symfony security tokens via ``SymfonySecurityMiddleware``
 - Enables ``#[IsGranted]`` attribute-based tool authorization
 
+Since the MCP bundle handles authentication via its own PSR-15 middleware pipeline, the MCP
+endpoint and OAuth paths must bypass Symfony's firewall system. Add a dedicated ``mcp`` firewall
+**before** your main firewall, and grant public access to these paths:
+
+.. code-block:: yaml
+
+    # config/packages/security.yaml
+    security:
+        firewalls:
+            mcp:
+                pattern: ^/(mcp|\.well-known/oauth-(protected-resource|authorization-server)|authorize|token|register)$
+                stateless: true
+        access_control:
+            - { path: '^/(mcp|\.well-known/oauth-(protected-resource|authorization-server)|authorize|token|register)$', roles: PUBLIC_ACCESS }
+
+.. note::
+
+    Adjust the ``pattern`` if you changed the default ``/_mcp`` endpoint path. The firewall must
+    be listed before your main firewall to take precedence.
+
 Tool Authorization
 ..................
 
