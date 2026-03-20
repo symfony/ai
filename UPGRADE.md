@@ -104,7 +104,7 @@ AI Bundle
    +$container->get('ai.toolbox.my_agent.subagent.research_agent');
    ```
 
- * An indexer configured with a `source`, now wraps the indexer with a `Symfony\AI\Store\ConfiguredSourceIndexer` decorator. This is
+ * An indexer configured with a `source`, now wraps the indexer with a `Symfony\AI\Store\Indexer\ConfiguredSourceIndexer` decorator. This is
    transparent - the configured source is still used by default, but can be overridden by passing a source to `index()`.
 
  * The `host_url` parameter for `Ollama` platform has been renamed `endpoint`.
@@ -120,12 +120,12 @@ Store
 -----
 
  * The `Symfony\AI\Store\Indexer` class has been replaced with two specialized implementations:
-   - `Symfony\AI\Store\SourceIndexer`: For indexing from sources (file paths, URLs, etc.) using a `LoaderInterface`
-   - `Symfony\AI\Store\DocumentIndexer`: For indexing documents directly without a loader
+   - `Symfony\AI\Store\Indexer\SourceIndexer`: For indexing from sources (file paths, URLs, etc.) using a `LoaderInterface`
+   - `Symfony\AI\Store\Indexer\DocumentIndexer`: For indexing documents directly without a loader
 
    ```diff
    -use Symfony\AI\Store\Indexer;
-   +use Symfony\AI\Store\SourceIndexer;
+   +use Symfony\AI\Store\Indexer\SourceIndexer;
 
    -$indexer = new Indexer($loader, $vectorizer, $store, '/path/to/source');
    -$indexer->index();
@@ -143,11 +143,11 @@ Store
    $indexer->index([$document1, $document2]);
    ```
 
- * The `Symfony\AI\Store\ConfiguredIndexer` class has been renamed to `Symfony\AI\Store\ConfiguredSourceIndexer`:
+ * The `Symfony\AI\Store\ConfiguredIndexer` class has been renamed to `Symfony\AI\Store\Indexer\ConfiguredSourceIndexer`:
 
    ```diff
    -use Symfony\AI\Store\ConfiguredIndexer;
-   +use Symfony\AI\Store\ConfiguredSourceIndexer;
+   +use Symfony\AI\Store\Indexer\ConfiguredSourceIndexer;
 
    -$indexer = new ConfiguredIndexer($innerIndexer, 'default-source');
    +$indexer = new ConfiguredSourceIndexer($sourceIndexer, 'default-source');
@@ -260,7 +260,7 @@ Platform
      * Run `composer require symfony/ai-cache-platform`
      * Change `Symfony\AI\Platform\CachedPlatform` namespace usages to `Symfony\AI\Platform\Bridge\Cache\CachePlatform`
      * The `ttl` option can be used in the configuration
- * Adopt usage of class `Symfony\AI\Platform\Serializer\StructuredOuputSerializer` to `Symfony\AI\Platform\StructuredOutput\Serializer`
+ * Adopt usage of class `Symfony\AI\Platform\Serializer\StructuredOutputSerializer` to `Symfony\AI\Platform\StructuredOutput\Serializer`
 
 UPGRADE FROM 0.1 to 0.2
 =======================
@@ -285,7 +285,7 @@ Agent
  * Constructor of `MemoryInputProcessor` now accepts an iterable of inputs instead of variadic arguments.
 
    ```php
-   use Symfony\AI\Agent\InputProcessor\MemoryInputProcessor;
+   use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 
    // Before
    $processor = new MemoryInputProcessor($input1, $input2);

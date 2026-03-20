@@ -798,7 +798,7 @@ Use the :class:`Symfony\\AI\\Agent\\Agent` service to leverage models and tools:
                 Message::ofUser($message),
             );
 
-            return $this->agent->call($messages)->asText();
+            return $this->agent->call($messages)->getContent();
         }
     }
 
@@ -943,7 +943,7 @@ The token usage information can be accessed from the result metadata::
     use Symfony\AI\Agent\AgentInterface;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
-    use Symfony\AI\Platform\Result\Metadata\TokenUsage\TokenUsage;
+    use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
     final readonly class MyService
     {

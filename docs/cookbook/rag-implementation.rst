@@ -168,13 +168,11 @@ Vector Store Selection
 
 For production environments, use persistent vector stores like ChromaDB::
 
+    use Codewithkyrian\ChromaDB\ChromaDB;
     use Symfony\AI\Store\Bridge\ChromaDb\Store;
 
-    $store = new Store(
-        $httpClient,
-        'http://localhost:8000',
-        'my_collection'
-    );
+    $client = ChromaDB::factory()->connect();
+    $store = new Store($client, 'my_collection');
 
 ChromaDB is a great choice for production RAG systems as it provides:
 
