@@ -94,7 +94,7 @@ The SQLite store supports filtering search results based on document metadata us
     use Symfony\AI\Store\Document\VectorDocument;
 
     $results = $store->query($vectorQuery, [
-        'filter' => fn(VectorDocument $doc) => $doc->metadata['category'] === 'products',
+        'filter' => fn(VectorDocument $doc) => $doc->getMetadata()['category'] === 'products',
     ]);
 
 Query Options
@@ -109,5 +109,5 @@ Example combining both options::
 
     $results = $store->query($vectorQuery, [
         'maxItems' => 5,
-        'filter' => fn(VectorDocument $doc) => $doc->metadata['active'] === true,
+        'filter' => fn(VectorDocument $doc) => $doc->getMetadata()['active'] === true,
     ]);

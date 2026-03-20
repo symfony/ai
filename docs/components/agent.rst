@@ -16,10 +16,9 @@ Basic Usage
 -----------
 
 To instantiate an agent, you need to pass a :class:`Symfony\\AI\\Platform\\PlatformInterface` and a
-:class:`Symfony\\AI\\Platform\\Model` instance to the :class:`Symfony\\AI\\Agent\\Agent` class::
+model name to the :class:`Symfony\\AI\\Agent\\Agent` class::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 
     $platform = PlatformFactory::create($apiKey);
@@ -27,7 +26,7 @@ To instantiate an agent, you need to pass a :class:`Symfony\\AI\\Platform\\Platf
 
     $agent = new Agent($platform, $model);
 
-You can then run the agent with a :class:`Symfony\\AI\\Platform\\Message\\MessageBagInterface` instance as input and an optional
+You can then run the agent with a :class:`Symfony\\AI\\Platform\\Message\\MessageBag` instance as input and an optional
 array of options::
 
     use Symfony\AI\Agent\Agent;
@@ -780,7 +779,7 @@ Code Examples
 .. _`Anthropic Toolbox Example`: https://github.com/symfony/ai/blob/main/examples/anthropic/toolcall.php
 .. _`Brave Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/brave.php
 .. _`Clock Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/clock.php
-.. _`Crawler Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/brave.php
+.. _`Crawler Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/firecrawl-crawl.php
 .. _`Mapbox Geocode Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/mapbox-geocode.php
 .. _`Mapbox Reverse Geocode Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/mapbox-reverse-geocode.php
 .. _`SerpAPI Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/serpapi.php

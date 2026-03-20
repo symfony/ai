@@ -20,7 +20,6 @@ with a ``Symfony\AI\Agent\AgentInterface`` and a ``Symfony\AI\Chat\MessageStoreI
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Chat\Chat;
     use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
-    use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Message\Message;
 

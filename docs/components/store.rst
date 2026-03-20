@@ -22,15 +22,18 @@ for documents.
 Indexing
 --------
 
-One higher level feature is the :class:`Symfony\\AI\\Store\\Indexer`. The purpose of this service is to populate a store with documents.
+One higher level feature is the :class:`Symfony\\AI\\Store\\Indexer\\DocumentIndexer`. The purpose of this service is to populate a store with documents.
 Therefore it accepts one or multiple :class:`Symfony\\AI\\Store\\Document\\TextDocument` objects, converts them into embeddings and stores them in the
 used vector store::
 
     use Symfony\AI\Store\Document\TextDocument;
-    use Symfony\AI\Store\Indexer;
+    use Symfony\AI\Store\Document\Vectorizer;
+    use Symfony\AI\Store\Indexer\DocumentIndexer;
+    use Symfony\AI\Store\Indexer\DocumentProcessor;
 
-    $indexer = new Indexer($platform, $model, $store);
-    $document = new TextDocument('This is a sample document.');
+    $vectorizer = new Vectorizer($platform, $model);
+    $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store));
+    $document = new TextDocument('id-1', 'This is a sample document.');
     $indexer->index($document);
 
 You can find more advanced usage in combination with an Agent using the store for RAG in the examples folder.

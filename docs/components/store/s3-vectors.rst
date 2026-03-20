@@ -81,9 +81,10 @@ Query Similar Vectors
 ::
 
     use Symfony\AI\Platform\Vector\Vector;
+    use Symfony\AI\Store\Query\VectorQuery;
 
     $results = $store->query(
-        vector: new Vector([0.1, 0.2, 0.3, ...]),
+        query: new VectorQuery(new Vector([0.1, 0.2, 0.3, ...])),
         options: [
             'topK' => 5,
             'filter' => ['category' => 'documentation'],
@@ -91,7 +92,7 @@ Query Similar Vectors
     );
 
     foreach ($results as $result) {
-        echo $result->metadata['title'] . ' (score: ' . $result->score . ')' . PHP_EOL;
+        echo $result->getMetadata()['title'] . ' (score: ' . $result->getScore() . ')' . PHP_EOL;
     }
 
 Remove Documents

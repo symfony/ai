@@ -152,15 +152,17 @@ Querying Documents
 
     $queryVector = new Vector([0.1, 0.2, 0.3, /* ... 768 dimensions */]);
 
-    $results = $store->query($queryVector, [
+    use Symfony\AI\Store\Query\VectorQuery;
+
+    $results = $store->query(new VectorQuery($queryVector), [
         'max_items' => 10,
         'min_score' => 0.7
     ]);
 
     foreach ($results as $document) {
-        echo "ID: " . $document->id . "\n";
-        echo "Score: " . $document->score . "\n";
-        echo "Metadata: " . json_encode($document->metadata->getArrayCopy()) . "\n";
+        echo "ID: " . $document->getId() . "\n";
+        echo "Score: " . $document->getScore() . "\n";
+        echo "Metadata: " . json_encode($document->getMetadata()->getArrayCopy()) . "\n";
     }
 
 Customization
