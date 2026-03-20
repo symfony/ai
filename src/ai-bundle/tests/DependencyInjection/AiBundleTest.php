@@ -5475,11 +5475,24 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.vectorizer.my_vectorizer'));
 
         $vectorizerDefinition = $container->getDefinition('ai.vectorizer.my_vectorizer');
+
+        $this->assertTrue($vectorizerDefinition->isLazy());
         $this->assertSame(Vectorizer::class, $vectorizerDefinition->getClass());
         $this->assertTrue($vectorizerDefinition->hasTag('ai.vectorizer'));
 
         // Check that model is passed as a string with options as query params
         $this->assertSame('text-embedding-3-small?dimension=512', $vectorizerDefinition->getArgument(1));
+
+        $this->assertTrue($vectorizerDefinition->hasTag('ai.vectorizer'));
+        $this->assertSame([
+            ['name' => 'my_vectorizer'],
+        ], $vectorizerDefinition->getTag('ai.vectorizer'));
+        $this->assertTrue($vectorizerDefinition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => VectorizerInterface::class],
+        ], $vectorizerDefinition->getTag('proxy'));
+
+        $this->assertTrue($container->hasAlias('Symfony\AI\Store\Document\VectorizerInterface $myVectorizer'));
     }
 
     public function testVectorizerWithLoggerInjection()
