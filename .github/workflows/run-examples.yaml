@@ -1,12 +1,7 @@
 name: Run Examples
 
 on:
-    # Using pull_request_target to access repository secrets for fork PRs
-    pull_request_target:
-        types: [labeled]
-
-#permissions:
-#    pull-requests: write
+    workflow_dispatch:
 
 defaults:
     run:
@@ -14,15 +9,11 @@ defaults:
 
 jobs:
     run-examples:
-        if: github.event.label.name == 'Run examples'
         runs-on: ubuntu-latest
 
         steps:
             - name: Checkout code
               uses: actions/checkout@v6
-              with:
-                  # Checkout the PR head to test actual PR code (pull_request_target defaults to base branch)
-                  ref: ${{ github.event.pull_request.head.sha }}
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
@@ -48,15 +39,3 @@ jobs:
               run: ./runner openai
               env:
                   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-#            - name: Remove label
-#              if: always()
-#              uses: actions/github-script@v7
-#              with:
-#                  script: |
-#                      await github.rest.issues.removeLabel({
-#                        owner: context.repo.owner,
-#                        repo: context.repo.repo,
-#                        issue_number: context.issue.number,
-#                        name: 'Run examples'
-#                      });
