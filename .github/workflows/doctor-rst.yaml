@@ -1,11 +1,6 @@
 name: RST Linter
 
 on:
-    push:
-        paths:
-            - '**.rst'
-            - 'docs/**'
-            - '.github/workflows/doctor-rst.yaml'
     pull_request:
         paths:
             - '**.rst'
