@@ -45,14 +45,28 @@ final class VeniceClient implements ModelClientInterface
         };
     }
 
+    /**
+     * @param array<string|int, mixed> $payload
+     * @param array<string, mixed>     $options
+     */
     private function doGenerateCompletion(Model $model, array|string $payload, array $options): RawResultInterface
     {
-        if (\is_array($payload) && !\array_key_exists('messages', $payload)) {
+        if (\is_string($payload)) {
+            throw new InvalidArgumentException('Payload must be an array for completion.');
+        }
+
+        if (!\array_key_exists('messages', $payload)) {
             throw new InvalidArgumentException('Payload must contain "messages" key for completion.');
         }
 
-        if (($options['stream'] ?? false) && !isset($options['stream_options']['include_usage'])) {
-            $options['stream_options']['include_usage'] = true;
+        if ($options['stream'] ?? false) {
+            $streamOptions = \is_array($options['stream_options']) ? $options['stream_options'] : [];
+
+            if (!isset($streamOptions['include_usage'])) {
+                $streamOptions['include_usage'] = true;
+            }
+
+            $options['stream_options'] = $streamOptions;
         }
 
         return new RawHttpResult($this->httpClient->request('POST', 'chat/completions', [
@@ -64,6 +78,10 @@ final class VeniceClient implements ModelClientInterface
         ]));
     }
 
+    /**
+     * @param array<string|int, mixed> $payload
+     * @param array<string, mixed>     $options
+     */
     private function doTextToSpeech(Model $model, array|string $payload, array $options): RawResultInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', 'audio/speech', [
@@ -76,6 +94,10 @@ final class VeniceClient implements ModelClientInterface
         ]));
     }
 
+    /**
+     * @param array<string|int, mixed> $payload
+     * @param array<string, mixed>     $options
+     */
     private function doImageGeneration(Model $model, array|string $payload, array $options): RawResultInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', 'images/generate', [
@@ -87,6 +109,9 @@ final class VeniceClient implements ModelClientInterface
         ]));
     }
 
+    /**
+     * @param array<string|int, mixed> $payload
+     */
     private function doGenerateEmbeddings(Model $model, array|string $payload): RawResultInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', 'embeddings', [

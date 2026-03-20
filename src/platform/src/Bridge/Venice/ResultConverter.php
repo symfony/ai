@@ -26,6 +26,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\Component\JsonPath\JsonCrawler;
 use Symfony\Component\String\UnicodeString;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -39,27 +40,59 @@ final class ResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
-        $url = new UnicodeString($result->getObject()->getInfo('url'));
+        /** @var ResponseInterface $response */
+        $response = $result->getObject();
+
+        $rawUrl = $response->getInfo('url');
+
+        if (!\is_string($rawUrl)) {
+            throw new RuntimeException('Expected URL info to be a string.');
+        }
+
+        $url = new UnicodeString($rawUrl);
 
         if ($url->containsAny('completions') && ($options['stream'] ?? false)) {
             return new StreamResult($this->convertCompletionToGenerator($result));
         }
 
-        $crawler = new JsonCrawler($result->getObject()->getContent());
+        $crawler = new JsonCrawler($response->getContent());
 
-        return match (true) {
-            $url->containsAny('completions') && [] !== $crawler->find('$.choices[0].message.content') => new TextResult($crawler->find('$.choices[0].message.content')[0]),
-            $url->containsAny('speech') => new BinaryResult($result->getObject()->getContent()),
-            $url->containsAny('embeddings') && [] !== $crawler->find('$.data[0].embedding') => new VectorResult(...array_map(
-                static fn (array $embeddings): VectorInterface => new Vector($embeddings),
-                $crawler->find('$.data[0].embedding'),
-            )),
-            $url->containsAny('generations') && [] !== $crawler->find('$.data[*].url') => new TextResult(implode("\n", $crawler->find('$.data[*].url'))),
-            default => throw new RuntimeException('Unsupported model capability.'),
-        };
+        if ($url->containsAny('completions')) {
+            $completionContent = $crawler->find('$.choices[0].message.content');
+
+            if ([] !== $completionContent && \is_string($completionContent[0])) {
+                return new TextResult($completionContent[0]);
+            }
+        }
+
+        if ($url->containsAny('speech')) {
+            return new BinaryResult($response->getContent());
+        }
+
+        if ($url->containsAny('embeddings')) {
+            /** @var list<list<float>> $embeddings */
+            $embeddings = $crawler->find('$.data[0].embedding');
+
+            if ([] !== $embeddings) {
+                return new VectorResult(...array_map(
+                    static fn (array $embedding): VectorInterface => new Vector($embedding),
+                    $embeddings,
+                ));
+            }
+        }
+
+        if ($url->containsAny('generations')) {
+            $imageUrls = array_filter($crawler->find('$.data[*].url'), \is_string(...));
+
+            if ([] !== $imageUrls) {
+                return new TextResult(implode("\n", $imageUrls));
+            }
+        }
+
+        throw new RuntimeException('Unsupported model capability.');
     }
 
-    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    public function getTokenUsageExtractor(): TokenUsageExtractorInterface
     {
         return new TokenUsageExtractor();
     }
@@ -67,17 +100,21 @@ final class ResultConverter implements ResultConverterInterface
     private function convertCompletionToGenerator(RawResultInterface $result): \Generator
     {
         foreach ($result->getDataStream() as $data) {
-            $content = $data['choices'][0]['delta']['content'] ?? null;
+            $choices = $data['choices'] ?? [];
+            $delta = \is_array($choices) && \is_array($choices[0] ?? null) ? ($choices[0]['delta'] ?? []) : [];
+            $content = \is_array($delta) ? ($delta['content'] ?? null) : null;
 
             if (null !== $content) {
                 yield $content;
             }
 
-            if (isset($data['usage'])) {
+            $usage = $data['usage'] ?? null;
+
+            if (\is_array($usage)) {
                 yield new TokenUsage(
-                    promptTokens: $data['usage']['prompt_tokens'],
-                    completionTokens: $data['usage']['completion_tokens'] ?? 0,
-                    totalTokens: $data['usage']['total_tokens'],
+                    promptTokens: isset($usage['prompt_tokens']) && \is_int($usage['prompt_tokens']) ? $usage['prompt_tokens'] : null,
+                    completionTokens: isset($usage['completion_tokens']) && \is_int($usage['completion_tokens']) ? $usage['completion_tokens'] : 0,
+                    totalTokens: isset($usage['total_tokens']) && \is_int($usage['total_tokens']) ? $usage['total_tokens'] : null,
                 );
             }
         }

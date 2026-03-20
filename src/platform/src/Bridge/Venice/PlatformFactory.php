@@ -11,13 +11,13 @@
 
 namespace Symfony\AI\Platform\Bridge\Venice;
 
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\Venice\Contract\Contract as VeniceContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\ScopingHttpClient;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**

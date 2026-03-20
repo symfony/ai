@@ -35,7 +35,7 @@ final class ModelCatalog implements ModelCatalogInterface
         }
 
         if (!\array_key_exists($modelName, $models)) {
-            throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieved from the API.', $modelName));
+            throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieved from the Venice API.', $modelName));
         }
 
         if ([] === $models[$modelName]['capabilities']) {
@@ -59,16 +59,16 @@ final class ModelCatalog implements ModelCatalogInterface
             return [];
         }
 
-        $payload = static fn (array $model): array => match ($model['type']) {
-            'asr' => [
+        $payload = static fn (array $model): array => match (true) {
+            'asr' === $model['type'] => [
                 'class' => Venice::class,
                 'capabilities' => [
                     Capability::SPEECH_RECOGNITION,
-                    Capability::INPUT_TEXT,
+                    Capability::INPUT_AUDIO,
                     Capability::OUTPUT_TEXT,
                 ],
             ],
-            'embedding' => [
+            'embedding' === $model['type'] => [
                 'class' => Venice::class,
                 'capabilities' => [
                     Capability::EMBEDDINGS,
@@ -82,6 +82,8 @@ final class ModelCatalog implements ModelCatalogInterface
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
                 ],
             ],
             'tts' => [

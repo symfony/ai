@@ -16,6 +16,7 @@ use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\Component\String\UnicodeString;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -24,23 +25,33 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
 {
     public function extract(RawResultInterface $rawResult, array $options = []): ?TokenUsageInterface
     {
-        $url = $rawResult->getObject()->getInfo('url');
+        /** @var ResponseInterface $response */
+        $response = $rawResult->getObject();
 
-        if ((new UnicodeString($url))->containsAny('speech')) {
+        $rawUrl = $response->getInfo('url');
+
+        if (!\is_string($rawUrl)) {
+            return null;
+        }
+
+        $url = new UnicodeString($rawUrl);
+
+        if ($url->containsAny('speech')) {
             return null;
         }
 
         $content = $rawResult->getData();
+        $usage = \is_array($content['usage']) ? $content['usage'] : [];
 
         return match (true) {
-            (new UnicodeString($url))->containsAny('completions') => new TokenUsage(
-                promptTokens: $content['usage']['prompt_tokens'],
-                completionTokens: $content['usage']['completion_tokens'],
-                totalTokens: $content['usage']['total_tokens'],
+            $url->containsAny('completions') => new TokenUsage(
+                promptTokens: isset($usage['prompt_tokens']) && \is_int($usage['prompt_tokens']) ? $usage['prompt_tokens'] : null,
+                completionTokens: isset($usage['completion_tokens']) && \is_int($usage['completion_tokens']) ? $usage['completion_tokens'] : null,
+                totalTokens: isset($usage['total_tokens']) && \is_int($usage['total_tokens']) ? $usage['total_tokens'] : null,
             ),
-            (new UnicodeString($url))->containsAny('embeddings') => new TokenUsage(
-                promptTokens: $content['usage']['prompt_tokens'],
-                totalTokens: $content['usage']['total_tokens'],
+            $url->containsAny('embeddings') => new TokenUsage(
+                promptTokens: isset($usage['prompt_tokens']) && \is_int($usage['prompt_tokens']) ? $usage['prompt_tokens'] : null,
+                totalTokens: isset($usage['total_tokens']) && \is_int($usage['total_tokens']) ? $usage['total_tokens'] : null,
             ),
             default => null,
         };

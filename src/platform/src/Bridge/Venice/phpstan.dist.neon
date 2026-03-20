@@ -3,7 +3,7 @@ includes:
     - ../../../../../.phpstan/extension.neon
 
 parameters:
-    level: 7
+    level: 9
     paths:
         - .
         - Tests/

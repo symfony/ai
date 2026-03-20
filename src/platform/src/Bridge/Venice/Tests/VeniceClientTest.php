@@ -62,10 +62,21 @@ final class VeniceClientTest extends TestCase
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
             $body = json_decode($options['body'], true);
 
+            if (!\is_array($body)) {
+                $this->fail('Failed to decode request body.');
+            }
+
             $this->assertSame('POST', $method);
             $this->assertStringContainsString('chat/completions', $url);
             $this->assertTrue($body['stream']);
-            $this->assertTrue($body['stream_options']['include_usage']);
+
+            $streamOptions = $body['stream_options'] ?? [];
+
+            if (!\is_array($streamOptions)) {
+                $this->fail('Expected stream_options to be an array.');
+            }
+
+            $this->assertTrue($streamOptions['include_usage']);
 
             return new JsonMockResponse([
                 'choices' => [
@@ -91,8 +102,12 @@ final class VeniceClientTest extends TestCase
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
             $body = json_decode($options['body'], true);
 
+            if (!\is_array($body)) {
+                $this->fail('Failed to decode request body.');
+            }
+
             $this->assertSame('POST', $method);
-            $this->assertStringContainsString('images/generations', $url);
+            $this->assertStringContainsString('images/generate', $url);
             $this->assertSame('A cat on a roof', $body['prompt']);
             $this->assertSame('fluently-xl', $body['model']);
 
@@ -119,6 +134,10 @@ final class VeniceClientTest extends TestCase
     {
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
             $body = json_decode($options['body'], true);
+
+            if (!\is_array($body)) {
+                $this->fail('Failed to decode request body.');
+            }
 
             $this->assertSame('POST', $method);
             $this->assertStringContainsString('audio/speech', $url);

@@ -29,7 +29,7 @@ final class ModelCatalogTest extends TestCase
         $modelCatalog = new ModelCatalog($httpClient);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The model "foo" cannot be retrieved from the API.');
+        $this->expectExceptionMessage('No models available in the Venice catalog.');
         $this->expectExceptionCode(0);
         $modelCatalog->getModel('foo');
     }
@@ -116,6 +116,7 @@ final class ModelCatalogTest extends TestCase
         $this->assertSame([
             Capability::SPEECH_RECOGNITION,
             Capability::INPUT_TEXT,
+            Capability::OUTPUT_TEXT,
         ], $model->getCapabilities());
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -163,6 +164,7 @@ final class ModelCatalogTest extends TestCase
         $this->assertSame([
             Capability::EMBEDDINGS,
             Capability::INPUT_TEXT,
+            Capability::OUTPUT_EMBEDDINGS,
         ], $model->getCapabilities());
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -205,6 +207,7 @@ final class ModelCatalogTest extends TestCase
         $this->assertSame([
             Capability::TEXT_TO_IMAGE,
             Capability::INPUT_TEXT,
+            Capability::OUTPUT_IMAGE,
         ], $model->getCapabilities());
 
         $this->assertSame(1, $httpClient->getRequestsCount());
