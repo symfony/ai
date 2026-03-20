@@ -31,6 +31,9 @@
         "symfony/ai-platform": "^0.5|^0.6",
         "symfony/ai-store": "^0.5|^0.6"
     },
+    "suggest": {
+        "ext-sqlite3": "Required to load sqlite-vec extension for native vector search (VecStore)"
+    },
     "require-dev": {
         "doctrine/dbal": "^3.3|^4.0",
         "phpstan/phpstan": "^2.1",

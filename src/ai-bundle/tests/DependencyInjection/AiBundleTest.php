@@ -68,7 +68,9 @@ use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
+use Symfony\AI\Store\Bridge\Sqlite\Distance as SqliteDistance;
 use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
+use Symfony\AI\Store\Bridge\Sqlite\VecStore as SqliteVecStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
@@ -3199,6 +3201,106 @@ class AiBundleTest extends TestCase
         $arguments = $definition->getArguments();
 
         $this->assertSame('custom_vectors', $arguments[1]);
+    }
+
+    public function testSqliteVecStoreWithDsnCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'sqlite' => [
+                        'my_sqlite_vec_store' => [
+                            'dsn' => 'sqlite:/tmp/test.db',
+                            'vec' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_vec_store'));
+        $this->assertTrue($container->hasDefinition('ai.store.sqlite.pdo.my_sqlite_vec_store'));
+        $this->assertFalse($container->hasDefinition('ai.store.distance_calculator.my_sqlite_vec_store'));
+
+        $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_vec_store');
+        $this->assertSame(SqliteVecStore::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $arguments = $definition->getArguments();
+        $this->assertEquals(SqliteDistance::Cosine, $arguments[2]);
+        $this->assertSame(1536, $arguments[3]);
+    }
+
+    public function testSqliteVecStoreWithConnectionCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'sqlite' => [
+                        'my_sqlite_vec_store' => [
+                            'connection' => 'default',
+                            'vec' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_vec_store'));
+        $this->assertFalse($container->hasDefinition('ai.store.distance_calculator.my_sqlite_vec_store'));
+
+        $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_vec_store');
+        $this->assertSame(SqliteVecStore::class, $definition->getClass());
+        $this->assertSame([SqliteVecStore::class, 'fromDbal'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+        $this->assertTrue($definition->hasTag('ai.store'));
+    }
+
+    public function testSqliteVecStoreWithCustomDistanceCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'sqlite' => [
+                        'my_sqlite_vec_store' => [
+                            'dsn' => 'sqlite:/tmp/test.db',
+                            'vec' => true,
+                            'distance' => 'L2',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_vec_store'));
+
+        $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_vec_store');
+        $arguments = $definition->getArguments();
+        $this->assertEquals(SqliteDistance::L2, $arguments[2]);
+    }
+
+    public function testSqliteVecStoreWithCustomVectorDimensionCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'sqlite' => [
+                        'my_sqlite_vec_store' => [
+                            'dsn' => 'sqlite:/tmp/test.db',
+                            'vec' => true,
+                            'vector_dimension' => 768,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_vec_store'));
+
+        $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_vec_store');
+        $arguments = $definition->getArguments();
+        $this->assertSame(768, $arguments[3]);
     }
 
     public function testSupabaseStoreCanBeConfigured()
