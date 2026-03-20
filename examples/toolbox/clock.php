@@ -12,7 +12,6 @@
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -22,9 +21,8 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
-$metadataFactory = (new MemoryToolFactory())
-    ->addTool(Clock::class, 'clock', 'Get the current date and time', 'now');
-$toolbox = new Toolbox([new Clock()], $metadataFactory, logger: logger());
+$toolbox = new Toolbox(logger: logger());
+$toolbox->addTool(new Clock(), 'clock', 'Get the current date and time', 'now');
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);
 

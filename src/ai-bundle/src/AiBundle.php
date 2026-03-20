@@ -29,8 +29,6 @@ use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
-use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
-use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -352,8 +350,6 @@ final class AiBundle extends AbstractBundle
         if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.command.chat');
             $builder->removeDefinition('ai.toolbox.abstract');
-            $builder->removeDefinition('ai.tool_factory.abstract');
-            $builder->removeDefinition('ai.tool_factory');
             $builder->removeDefinition('ai.tool_result_converter');
             $builder->removeDefinition('ai.tool_call_argument_resolver');
             $builder->removeDefinition('ai.tool.agent_processor.abstract');
@@ -1076,17 +1072,7 @@ final class AiBundle extends AbstractBundle
 
         // TOOLBOX
         if ($config['tools']['enabled']) {
-            // Setup toolbox for agent
-            $memoryFactoryDefinition = new ChildDefinition('ai.tool_factory.abstract');
-            $memoryFactoryDefinition->setClass(MemoryToolFactory::class);
-            $container->setDefinition('ai.toolbox.'.$name.'.memory_factory', $memoryFactoryDefinition);
-            $chainFactoryDefinition = new Definition(ChainFactory::class, [
-                [new Reference('ai.toolbox.'.$name.'.memory_factory'), new Reference('ai.tool_factory')],
-            ]);
-            $container->setDefinition('ai.toolbox.'.$name.'.chain_factory', $chainFactoryDefinition);
-
             $toolboxDefinition = (new ChildDefinition('ai.toolbox.abstract'))
-                ->replaceArgument(1, new Reference('ai.toolbox.'.$name.'.chain_factory'))
                 ->addTag('ai.toolbox', ['name' => $name]);
             $container->setDefinition('ai.toolbox.'.$name, $toolboxDefinition);
 
@@ -1114,14 +1100,13 @@ final class AiBundle extends AbstractBundle
                         $tool['service'] = \sprintf('ai.agent.%s', $tool['agent']);
                     }
                     $reference = new Reference($tool['service']);
-                    // We use the memory factory in case method, description and name are set
                     if (isset($tool['name'], $tool['description'])) {
                         if (isset($tool['agent'])) {
                             $subagentDefinition = new Definition(Subagent::class, [$reference]);
                             $container->setDefinition('ai.toolbox.'.$name.'.subagent.'.$tool['name'], $subagentDefinition);
                             $reference = new Reference('ai.toolbox.'.$name.'.subagent.'.$tool['name']);
                         }
-                        $memoryFactoryDefinition->addMethodCall('addTool', [$reference, $tool['name'], $tool['description'], $tool['method'] ?? '__invoke']);
+                        $toolboxDefinition->addMethodCall('addTool', [$reference, $tool['name'], $tool['description'], $tool['method'] ?? '__invoke']);
                     }
                     $tools[] = $reference;
                 }
