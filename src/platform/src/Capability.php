@@ -29,6 +29,7 @@ enum Capability: string
     case INPUT_TEXT = 'input-text';
     case INPUT_VIDEO = 'input-video';
     case INPUT_MULTIMODAL = 'input-multimodal';
+    case INPUT_CODE = 'input-code';
 
     // OUTPUT
     case OUTPUT_AUDIO = 'output-audio';
