@@ -352,7 +352,6 @@ final class AiBundle extends AbstractBundle
         if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.command.chat');
             $builder->removeDefinition('ai.toolbox.abstract');
-            $builder->removeDefinition('ai.tool_factory.abstract');
             $builder->removeDefinition('ai.tool_factory');
             $builder->removeDefinition('ai.tool_result_converter');
             $builder->removeDefinition('ai.tool_call_argument_resolver');
@@ -1077,8 +1076,9 @@ final class AiBundle extends AbstractBundle
         // TOOLBOX
         if ($config['tools']['enabled']) {
             // Setup toolbox for agent
-            $memoryFactoryDefinition = new ChildDefinition('ai.tool_factory.abstract');
-            $memoryFactoryDefinition->setClass(MemoryToolFactory::class);
+            $memoryFactoryDefinition = new Definition(MemoryToolFactory::class, [
+                new Reference('ai.platform.json_schema_factory'),
+            ]);
             $container->setDefinition('ai.toolbox.'.$name.'.memory_factory', $memoryFactoryDefinition);
             $chainFactoryDefinition = new Definition(ChainFactory::class, [
                 [new Reference('ai.toolbox.'.$name.'.memory_factory'), new Reference('ai.tool_factory')],

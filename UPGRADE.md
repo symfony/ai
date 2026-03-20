@@ -1,6 +1,19 @@
 UPGRADE FROM 0.6 to 0.7
 =======================
 
+Agent
+-----
+
+ * The `Symfony\AI\Agent\Toolbox\ToolFactory\AbstractToolFactory` class has been removed. If you extended it to create
+   a custom tool factory, implement `ToolFactoryInterface` yourself and use `Symfony\AI\Platform\Contract\JsonSchema\Factory`
+   directly if needed.
+ * The `ToolFactoryInterface::getTool()` method signature has changed to accept `object|string` instead of `string`:
+
+   ```diff
+   -public function getTool(string $reference): iterable;
+   +public function getTool(object|string $reference): iterable;
+   ```
+
 AI Bundle
 ---------
 
