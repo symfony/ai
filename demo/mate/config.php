@@ -3,7 +3,6 @@
 // User's service configuration file
 // This file is loaded into the Symfony DI container
 
-use App\Mate\SymfonyAiFeaturesTool;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $container): void {
@@ -16,7 +15,6 @@ return static function (ContainerConfigurator $container): void {
     $container->services()
         ->defaults()
             ->autowire()
-            ->autoconfigure()
 
         ->set(SymfonyAiFeaturesTool::class)
             ->arg('$rootDir', '%mate.root_dir%')
