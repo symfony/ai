@@ -70,6 +70,7 @@ use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\Sqlite\Distance as SqliteDistance;
 use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
+use Symfony\AI\Store\Bridge\Sqlite\StoreFactory as SqliteStoreFactory;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore as SqliteVecStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
@@ -3132,8 +3133,9 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
-    public function testSqliteStoreWithDsnCanBeConfigured()
+    public function testSqliteStoreCanBeConfigured()
     {
+        // Store with DSN uses StoreFactory
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -3147,11 +3149,11 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_store'));
-        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_sqlite_store'));
-        $this->assertTrue($container->hasDefinition('ai.store.sqlite.pdo.my_sqlite_store'));
+        $this->assertFalse($container->hasDefinition('ai.store.distance_calculator.my_sqlite_store'));
 
         $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_store');
         $this->assertSame(SqliteStore::class, $definition->getClass());
+        $this->assertSame([SqliteStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
         $this->assertTrue($definition->hasTag('ai.store'));
 
@@ -3160,10 +3162,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $sqlite_my_sqlite_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $sqliteMySqliteStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
-    }
 
-    public function testSqliteStoreWithConnectionCanBeConfigured()
-    {
+        // Store with DBAL connection uses fromDbal factory
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -3184,10 +3184,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([SqliteStore::class, 'fromDbal'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
         $this->assertTrue($definition->hasTag('ai.store'));
-    }
 
-    public function testSqliteStoreWithCustomStrategyCanBeConfigured()
-    {
+        // Store with custom strategy via DSN
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -3201,16 +3199,11 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_store'));
-        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_sqlite_store'));
+        $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_store');
+        $arguments = $definition->getArguments();
+        $this->assertEquals(DistanceStrategy::EUCLIDEAN_DISTANCE, $arguments[2]);
 
-        $distanceCalculator = $container->getDefinition('ai.store.distance_calculator.my_sqlite_store');
-        $this->assertSame(DistanceCalculator::class, $distanceCalculator->getClass());
-        $this->assertEquals(DistanceStrategy::from('euclidean'), $distanceCalculator->getArgument(0));
-    }
-
-    public function testSqliteStoreWithCustomTableNameCanBeConfigured()
-    {
+        // Store with custom table name
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -3224,16 +3217,14 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_store'));
-
         $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_store');
         $arguments = $definition->getArguments();
-
         $this->assertSame('custom_vectors', $arguments[1]);
     }
 
-    public function testSqliteVecStoreWithDsnCanBeConfigured()
+    public function testSqliteVecStoreCanBeConfigured()
     {
+        // VecStore with DSN uses VecStoreFactory
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -3248,21 +3239,20 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_vec_store'));
-        $this->assertTrue($container->hasDefinition('ai.store.sqlite.pdo.my_sqlite_vec_store'));
         $this->assertFalse($container->hasDefinition('ai.store.distance_calculator.my_sqlite_vec_store'));
 
         $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_vec_store');
         $this->assertSame(SqliteVecStore::class, $definition->getClass());
+        $this->assertSame([SqliteStoreFactory::class, 'createVecStore'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $arguments = $definition->getArguments();
+        $this->assertSame('sqlite:/tmp/test.db', $arguments[0]);
         $this->assertEquals(SqliteDistance::Cosine, $arguments[2]);
         $this->assertSame(1536, $arguments[3]);
-    }
 
-    public function testSqliteVecStoreWithConnectionCanBeConfigured()
-    {
+        // VecStore with DBAL connection uses fromDbal factory
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -3284,10 +3274,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([SqliteVecStore::class, 'fromDbal'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
         $this->assertTrue($definition->hasTag('ai.store'));
-    }
 
-    public function testSqliteVecStoreWithCustomDistanceCanBeConfigured()
-    {
+        // VecStore with custom distance
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -3302,15 +3290,11 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_vec_store'));
-
         $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_vec_store');
         $arguments = $definition->getArguments();
         $this->assertEquals(SqliteDistance::L2, $arguments[2]);
-    }
 
-    public function testSqliteVecStoreWithCustomVectorDimensionCanBeConfigured()
-    {
+        // VecStore with custom vector dimension
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -3324,8 +3308,6 @@ class AiBundleTest extends TestCase
                 ],
             ],
         ]);
-
-        $this->assertTrue($container->hasDefinition('ai.store.sqlite.my_sqlite_vec_store'));
 
         $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_vec_store');
         $arguments = $definition->getArguments();
