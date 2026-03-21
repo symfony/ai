@@ -109,6 +109,7 @@ use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
 use Symfony\AI\Store\Bridge\Sqlite\Distance as SqliteDistance;
 use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
+use Symfony\AI\Store\Bridge\Sqlite\StoreFactory as SqliteStoreFactory;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore as SqliteVecStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
@@ -1883,30 +1884,31 @@ final class AiBundle extends AbstractBundle
                                 $vectorDimension,
                             ]);
                     } else {
-                        $pdoDefinition = new Definition(\PDO::class, [$store['dsn']]);
-                        $pdoDefinition->addMethodCall('setAttribute', [\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION]);
-                        $container->setDefinition('ai.store.sqlite.pdo.'.$name, $pdoDefinition);
-
-                        $definition->setArguments([
-                            new Reference('ai.store.sqlite.pdo.'.$name),
-                            $store['table_name'] ?? $name,
-                            $distance,
-                            $vectorDimension,
-                        ]);
+                        $definition->setFactory([SqliteStoreFactory::class, 'createVecStore'])
+                            ->setArguments([
+                                $store['dsn'],
+                                $store['table_name'] ?? $name,
+                                $distance,
+                                $vectorDimension,
+                            ]);
                     }
                 } else {
-                    $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
-                    $distanceCalculatorDefinition->setLazy(true);
-
-                    $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
-
-                    if (\array_key_exists('strategy', $store) && null !== $store['strategy']) {
-                        $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
-                    }
+                    $strategy = \array_key_exists('strategy', $store) && null !== $store['strategy']
+                        ? DistanceStrategy::from($store['strategy'])
+                        : null;
 
                     $definition = new Definition(SqliteStore::class);
 
                     if (\array_key_exists('connection', $store) && null !== $store['connection']) {
+                        $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
+                        $distanceCalculatorDefinition->setLazy(true);
+
+                        if (null !== $strategy) {
+                            $distanceCalculatorDefinition->setArgument(0, $strategy);
+                        }
+
+                        $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
+
                         $definition->setFactory([SqliteStore::class, 'fromDbal'])
                             ->setArguments([
                                 new Reference(\sprintf('doctrine.dbal.%s_connection', $store['connection'])),
@@ -1914,15 +1916,12 @@ final class AiBundle extends AbstractBundle
                                 new Reference('ai.store.distance_calculator.'.$name),
                             ]);
                     } else {
-                        $pdoDefinition = new Definition(\PDO::class, [$store['dsn']]);
-                        $pdoDefinition->addMethodCall('setAttribute', [\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION]);
-                        $container->setDefinition('ai.store.sqlite.pdo.'.$name, $pdoDefinition);
-
-                        $definition->setArguments([
-                            new Reference('ai.store.sqlite.pdo.'.$name),
-                            $store['table_name'] ?? $name,
-                            new Reference('ai.store.distance_calculator.'.$name),
-                        ]);
+                        $definition->setFactory([SqliteStoreFactory::class, 'create'])
+                            ->setArguments([
+                                $store['dsn'],
+                                $store['table_name'] ?? $name,
+                                $strategy,
+                            ]);
                     }
                 }
 
