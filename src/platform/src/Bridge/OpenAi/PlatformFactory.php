@@ -11,11 +11,14 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi;
 
+use Symfony\AI\Platform\Batch\BatchPlatform;
+use Symfony\AI\Platform\Bridge\OpenAi\Batch\ModelClient as BatchModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -55,6 +58,20 @@ final class PlatformFactory
             $modelCatalog,
             $contract ?? OpenAiContract::create(),
             $eventDispatcher,
+        );
+    }
+
+    public static function createBatch(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
+        ?Contract $contract = null,
+        ?string $region = null,
+    ): BatchPlatform {
+        return new BatchPlatform(
+            new BatchModelClient($httpClient ?? HttpClient::create(), $apiKey, $region),
+            $modelCatalog,
+            $contract ?? Contract::create(),
         );
     }
 }
