@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Tests\Command;
 
+use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -77,6 +78,30 @@ final class ToolsCallCommandTest extends TestCase
         $this->assertSame(\PHP_VERSION, $result['php_version']);
     }
 
+    public function testExecuteWithToonFormat()
+    {
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
+        ];
+
+        $command = $this->createCommand($rootDir, $extensions);
+        $tester = new CommandTester($command);
+
+        $tester->execute([
+            'tool-name' => 'server-info',
+            'json-input' => '{}',
+            '--format' => 'toon',
+        ]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+
+        $result = Toon::decode($output);
+        $this->assertIsArray($result);
+        $this->assertSame(\PHP_VERSION, $result['php_version']);
+    }
+
     public function testExecuteWithInvalidToolName()
     {
         $rootDir = __DIR__.'/../..';
@@ -130,6 +155,11 @@ final class ToolsCallCommandTest extends TestCase
         $container = new ContainerBuilder();
         $container->set(ServerInfo::class, new ServerInfo());
 
-        return new ToolsCallCommand($registryProvider, $container);
+        return new class($registryProvider, $container) extends ToolsCallCommand {
+            protected function isToonFormatAvailable(): bool
+            {
+                return true;
+            }
+        };
     }
 }

@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use HelgeSverre\Toon\Toon;
+use Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -39,6 +41,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand('mcp:tools:list', 'Display available MCP tools with metadata')]
 class ToolsListCommand extends Command
 {
+    use EnsuresToonFormatAvailabilityTrait;
+
     /**
      * @var array<string, array{dirs: string[], includes: string[]}>
      */
@@ -70,8 +74,9 @@ class ToolsListCommand extends Command
         $this
             ->addOption('filter', null, InputOption::VALUE_REQUIRED, 'Filter by tool name pattern (supports wildcards)')
             ->addOption('extension', null, InputOption::VALUE_REQUIRED, 'Filter by extension package name')
-            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (table, json)', 'table')
-            ->setHelp(<<<'HELP'
+            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (table, json, toon)', 'table')
+            ->setHelp(
+                <<<'HELP'
 The <info>%command.name%</info> command displays all available MCP tools with their metadata.
 
 <info>Usage Examples:</info>
@@ -102,6 +107,13 @@ HELP
     {
         $io = new SymfonyStyle($input, $output);
 
+        $format = $input->getOption('format');
+        \assert(\is_string($format));
+
+        if (!$this->ensureToonFormatAvailable($io, $format)) {
+            return Command::FAILURE;
+        }
+
         $allTools = [];
         foreach ($this->extensions as $extensionName => $extension) {
             $capabilities = $this->collector->collectCapabilities($extensionName, $extension);
@@ -122,11 +134,14 @@ HELP
             $allTools = $this->filterByName($allTools, $nameFilter);
         }
 
-        $format = $input->getOption('format');
-        \assert(\is_string($format));
-
         if ('json' === $format) {
-            $this->outputJson($allTools, $output);
+            $output->writeln(json_encode($this->getArrayResult($allTools), \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+
+            return Command::SUCCESS;
+        }
+
+        if ('toon' === $format) {
+            $output->writeln(Toon::encode($this->getArrayResult($allTools)));
 
             return Command::SUCCESS;
         }
@@ -214,17 +229,20 @@ HELP
 
     /**
      * @param array<string, ToolData> $tools
+     *
+     * @return array{
+     *     tools: array<string, ToolData>,
+     *     summary: array{total: int}
+     * }
      */
-    private function outputJson(array $tools, OutputInterface $output): void
+    private function getArrayResult(array $tools): array
     {
-        $result = [
+        return [
             'tools' => $tools,
             'summary' => [
                 'total' => \count($tools),
             ],
         ];
-
-        $output->writeln(json_encode($result, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
     }
 
     private function truncate(string $text, int $length): string

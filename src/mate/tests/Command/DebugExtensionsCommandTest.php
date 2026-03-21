@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Tests\Command;
 
+use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\DebugExtensionsCommand;
@@ -122,6 +123,35 @@ final class DebugExtensionsCommandTest extends TestCase
         $this->assertArrayHasKey('enabled', $json['summary']);
         $this->assertArrayHasKey('disabled', $json['summary']);
         $this->assertArrayHasKey('loaded', $json['summary']);
+    }
+
+    public function testExecuteWithToonFormat()
+    {
+        $rootDir = $this->fixturesDir.'/with-ai-mate-config';
+        $enabledExtensions = ['vendor/package-a'];
+        $loadedExtensions = [
+            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
+            '_custom' => ['dirs' => [], 'includes' => []],
+        ];
+
+        $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
+        $tester = new CommandTester($command);
+
+        $tester->execute(['--format' => 'toon']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+
+        $toon = Toon::decode($output);
+        $this->assertIsArray($toon);
+        $this->assertArrayHasKey('extensions', $toon);
+        $this->assertArrayHasKey('summary', $toon);
+        $this->assertArrayHasKey('_custom', $toon['extensions']);
+        $this->assertArrayHasKey('vendor/package-a', $toon['extensions']);
+        $this->assertArrayHasKey('total_discovered', $toon['summary']);
+        $this->assertArrayHasKey('enabled', $toon['summary']);
+        $this->assertArrayHasKey('disabled', $toon['summary']);
+        $this->assertArrayHasKey('loaded', $toon['summary']);
     }
 
     public function testExecuteShowsExtensionDetails()
@@ -236,6 +266,11 @@ final class DebugExtensionsCommandTest extends TestCase
         $logger = new NullLogger();
         $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
 
-        return new DebugExtensionsCommand($enabledExtensions, $extensions, $discoverer);
+        return new class($enabledExtensions, $extensions, $discoverer) extends DebugExtensionsCommand {
+            protected function isToonFormatAvailable(): bool
+            {
+                return true;
+            }
+        };
     }
 }

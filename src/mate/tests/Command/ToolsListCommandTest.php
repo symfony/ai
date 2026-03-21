@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Tests\Command;
 
+use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -80,6 +81,33 @@ final class ToolsListCommandTest extends TestCase
         $this->assertArrayHasKey('extension', $json['tools']['server-info']);
     }
 
+    public function testExecuteWithToonFormat()
+    {
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
+        ];
+
+        $command = $this->createCommand($rootDir, $extensions);
+        $tester = new CommandTester($command);
+
+        $tester->execute(['--format' => 'toon']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+
+        $toon = Toon::decode($output);
+        $this->assertIsArray($toon);
+        $this->assertArrayHasKey('tools', $toon);
+        $this->assertArrayHasKey('summary', $toon);
+        $this->assertArrayHasKey('total', $toon['summary']);
+        $this->assertGreaterThanOrEqual(1, $toon['summary']['total']);
+        $this->assertArrayHasKey('server-info', $toon['tools']);
+        $this->assertArrayHasKey('name', $toon['tools']['server-info']);
+        $this->assertArrayHasKey('handler', $toon['tools']['server-info']);
+        $this->assertArrayHasKey('extension', $toon['tools']['server-info']);
+    }
+
     public function testExecuteWithInvalidExtensionFilter()
     {
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
@@ -135,6 +163,34 @@ final class ToolsListCommandTest extends TestCase
         $this->assertStringContainsString('Extension', $output);
     }
 
+    public function testExecuteWithToonFormatFailsWhenToonIsNotAvailable()
+    {
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
+        ];
+
+        $logger = new NullLogger();
+        $discoverer = new Discoverer($logger);
+        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, [], $discoverer, $logger);
+        $collector = new CapabilityCollector($loader);
+
+        $command = new class($extensions, $collector) extends ToolsListCommand {
+            protected function isToonFormatAvailable(): bool
+            {
+                return false;
+            }
+        };
+        $tester = new CommandTester($command);
+
+        $tester->execute(['--format' => 'toon']);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('helgesverre/toon', $output);
+        $this->assertStringContainsString('composer require helgesverre/toon', $output);
+    }
+
     public function testExecuteWithNameFilterMatchingTools()
     {
         $rootDir = __DIR__.'/../..';
@@ -163,6 +219,11 @@ final class ToolsListCommandTest extends TestCase
         $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
         $collector = new CapabilityCollector($loader);
 
-        return new ToolsListCommand($extensions, $collector);
+        return new class($extensions, $collector) extends ToolsListCommand {
+            protected function isToonFormatAvailable(): bool
+            {
+                return true;
+            }
+        };
     }
 }
