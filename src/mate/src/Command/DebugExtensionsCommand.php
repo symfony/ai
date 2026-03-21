@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use HelgeSverre\Toon\Toon;
+use Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -24,11 +26,31 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * @phpstan-import-type ExtensionData from ComposerExtensionDiscovery
  *
+ * @phpstan-type DebugExtensionEntry array{
+ *     type: 'root_project'|'vendor_extension',
+ *     status: 'enabled'|'disabled',
+ *     loaded: bool,
+ *     scan_dirs: string[],
+ *     includes: string[],
+ *     agent_instructions?: string
+ * }
+ * @phpstan-type DebugExtensionsArrayResult array{
+ *     extensions: array<string, DebugExtensionEntry>,
+ *     summary: array{
+ *         total_discovered: int,
+ *         enabled: int,
+ *         disabled: int,
+ *         loaded: int
+ *     }
+ * }
+ *
  * @author Johannes Wachter <johannes@sulu.io>
  */
 #[AsCommand('debug:extensions', 'Display detailed information about discovered and loaded MCP extensions')]
 class DebugExtensionsCommand extends Command
 {
+    use EnsuresToonFormatAvailabilityTrait;
+
     /**
      * @var array<string, ExtensionData>
      */
@@ -79,9 +101,10 @@ class DebugExtensionsCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json)', 'text')
+            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json, toon)', 'text')
             ->addOption('show-all', null, InputOption::VALUE_NONE, 'Show all discovered extensions including disabled ones')
-            ->setHelp(<<<'HELP'
+            ->setHelp(
+                <<<'HELP'
 The <info>%command.name%</info> command displays detailed information about MCP extension
 discovery and loading.
 
@@ -121,8 +144,14 @@ HELP
         $format = $input->getOption('format');
         \assert(\is_string($format));
 
+        if (!$this->ensureToonFormatAvailable($io, $format)) {
+            return Command::FAILURE;
+        }
+
         if ('json' === $format) {
-            $this->outputJson($output);
+            $output->writeln(json_encode($this->getArrayResult(), \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+        } elseif ('toon' === $format) {
+            $output->writeln(Toon::encode($this->getArrayResult()));
         } else {
             $this->outputText($showAll, $io);
         }
@@ -224,7 +253,10 @@ HELP
         $io->newLine();
     }
 
-    private function outputJson(OutputInterface $output): void
+    /**
+     * @return DebugExtensionsArrayResult
+     */
+    private function getArrayResult(): array
     {
         $extensions = [];
 
@@ -275,6 +307,6 @@ HELP
             ],
         ];
 
-        $output->writeln(json_encode($result, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+        return $result;
     }
 }

@@ -11,11 +11,13 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Registry\ReferenceHandler;
 use Mcp\Capability\RegistryInterface;
 use Mcp\Exception\ToolNotFoundException;
 use Mcp\Schema\Request\CallToolRequest;
 use Symfony\AI\Mate\Command\Session\CliSession;
+use Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait;
 use Symfony\AI\Mate\Service\RegistryProvider;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -34,6 +36,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[AsCommand('mcp:tools:call', 'Execute MCP tools via JSON input')]
 class ToolsCallCommand extends Command
 {
+    use EnsuresToonFormatAvailabilityTrait;
+
     private RegistryInterface $registry;
     private ReferenceHandler $referenceHandler;
 
@@ -62,8 +66,9 @@ class ToolsCallCommand extends Command
         $this
             ->addArgument('tool-name', InputArgument::REQUIRED, 'Name of the tool to execute')
             ->addArgument('json-input', InputArgument::REQUIRED, 'JSON object with tool parameters')
-            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (json, pretty)', 'pretty')
-            ->setHelp(<<<'HELP'
+            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (json, pretty, toon)', 'pretty')
+            ->setHelp(
+                <<<'HELP'
 The <info>%command.name%</info> command executes MCP tools with JSON input parameters.
 
 <info>Usage Examples:</info>
@@ -110,6 +115,13 @@ HELP
             return Command::FAILURE;
         }
 
+        $format = $input->getOption('format');
+        \assert(\is_string($format));
+
+        if (!$this->ensureToonFormatAvailable($io, $format)) {
+            return Command::FAILURE;
+        }
+
         try {
             $tool = $this->registry->getTool($toolName);
         } catch (ToolNotFoundException $e) {
@@ -128,9 +140,6 @@ HELP
         $arguments = $params;
         $arguments['_session'] = $session;
         $arguments['_request'] = $request;
-
-        $format = $input->getOption('format');
-        \assert(\is_string($format));
 
         if ('pretty' === $format) {
             $io->title(\sprintf('Executing Tool: %s', $toolName));
@@ -155,6 +164,8 @@ HELP
 
         if ('json' === $format) {
             $output->writeln(json_encode($result, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+        } elseif ('toon' === $format) {
+            $output->writeln(Toon::encode($result));
         } else {
             $io->section('Result');
             $this->renderPretty($result, $io);
