@@ -32,6 +32,8 @@ use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Batch\BatchPlatform;
+use Symfony\AI\Platform\Batch\BatchPlatformInterface;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
@@ -4429,6 +4431,102 @@ class AiBundleTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    public function testOpenAiBatchPlatformIsRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.batch.openai'));
+
+        $definition = $container->getDefinition('ai.platform.batch.openai');
+        $this->assertSame(BatchPlatform::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+
+        $arguments = $definition->getArguments();
+        $this->assertCount(5, $arguments); // apiKey, httpClient, modelCatalog, contract, region
+        $this->assertSame('sk-test-key', $arguments[0]);
+        $this->assertNull($arguments[4]); // region should be null by default
+
+        $this->assertTrue($container->hasAlias(BatchPlatformInterface::class));
+        $this->assertSame('ai.platform.batch.openai', (string) $container->getAlias(BatchPlatformInterface::class));
+    }
+
+    #[TestWith(['EU'])]
+    #[TestWith(['US'])]
+    #[TestWith([null])]
+    public function testOpenAiBatchPlatformWithRegion(?string $region)
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test-key',
+                        'region' => $region,
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.batch.openai');
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(5, $arguments); // apiKey, httpClient, modelCatalog, contract, region
+        $this->assertSame($region, $arguments[4]);
+    }
+
+    public function testAnthropicBatchPlatformIsRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'anthropic' => [
+                        'api_key' => 'test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.batch.anthropic'));
+
+        $definition = $container->getDefinition('ai.platform.batch.anthropic');
+        $this->assertSame(BatchPlatform::class, $definition->getClass());
+        $this->assertTrue($definition->isLazy());
+
+        $arguments = $definition->getArguments();
+        $this->assertCount(3, $arguments); // apiKey, httpClient, modelCatalog
+        $this->assertSame('test-key', $arguments[0]);
+
+        $this->assertTrue($container->hasAlias(BatchPlatformInterface::class));
+        $this->assertSame('ai.platform.batch.anthropic', (string) $container->getAlias(BatchPlatformInterface::class));
+    }
+
+    public function testBatchPlatformInterfaceNotAliasedWhenMultipleProviders()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test-key',
+                    ],
+                    'anthropic' => [
+                        'api_key' => 'test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.batch.openai'));
+        $this->assertTrue($container->hasDefinition('ai.platform.batch.anthropic'));
+        $this->assertFalse($container->hasAlias(BatchPlatformInterface::class));
     }
 
     public function testPerplexityPlatformConfiguration()
