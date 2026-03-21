@@ -12,10 +12,18 @@
 namespace Symfony\AI\Platform\Bridge\Venice\Contract;
 
 use Symfony\AI\Platform\Contract as PlatformContract;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
 final class Contract extends PlatformContract
 {
+    public static function create(NormalizerInterface ...$normalizer): PlatformContract
+    {
+        return parent::create(
+            new AudioNormalizer(),
+            ...$normalizer,
+        );
+    }
 }

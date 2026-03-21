@@ -10,11 +10,12 @@
  */
 
 use Symfony\AI\Platform\Bridge\Venice\PlatformFactory;
+use Symfony\AI\Platform\Message\Content\Audio;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('VENICE_API_KEY'), httpClient: http_client());
 
-$result = $platform->invoke('z-image-turbo', 'A beautiful sunset over a mountain range');
+$result = $platform->invoke('nvidia/parakeet-tdt-0.6b-v3', Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'));
 
-$result->asFile(__DIR__ . '/image.png');
+echo $result->asText().\PHP_EOL;

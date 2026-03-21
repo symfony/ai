@@ -40,6 +40,7 @@ final class VeniceClient implements ModelClientInterface
             $model->supports(Capability::INPUT_MESSAGES) => $this->doGenerateCompletion($model, $payload, $options),
             $model->supports(Capability::TEXT_TO_IMAGE) => $this->doImageGeneration($model, $payload, $options),
             $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, $options),
+            $model->supports(Capability::SPEECH_RECOGNITION) => $this->doTranscription($model, $payload, $options),
             $model->supports(Capability::EMBEDDINGS) => $this->doGenerateEmbeddings($model, $payload),
             default => throw new InvalidArgumentException('Unsupported model capability for Venice client.'),
         };
@@ -60,7 +61,7 @@ final class VeniceClient implements ModelClientInterface
         }
 
         if ($options['stream'] ?? false) {
-            $streamOptions = \is_array($options['stream_options']) ? $options['stream_options'] : [];
+            $streamOptions = (\array_key_exists('stream_options', $options) && \is_array($options['stream_options'])) ? $options['stream_options'] : [];
 
             if (!isset($streamOptions['include_usage'])) {
                 $streamOptions['include_usage'] = true;
@@ -86,10 +87,30 @@ final class VeniceClient implements ModelClientInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', 'audio/speech', [
             'json' => [
+                ...$options,
                 'response_format' => 'mp3',
                 'input' => \is_string($payload) ? $payload : $payload['text'],
                 'model' => $model->getName(),
+            ],
+        ]));
+    }
+
+    /**
+     * @param array<string, mixed>|string $payload
+     * @param array<string, mixed> $options
+     */
+    private function doTranscription(Model $model, array|string $payload, array $options): RawResultInterface
+    {
+        if (!\is_array($payload)) {
+            throw new \InvalidArgumentException(\sprintf('Payload must be an array when using file-based transcription endpoint, given "%s".', gettype($payload)));
+        }
+
+        return new RawHttpResult($this->httpClient->request('POST', 'audio/transcriptions', [
+            'body' => [
                 ...$options,
+                'file' => fopen($payload['input_audio']['path'], 'r'),
+                'model' => $model->getName(),
+                'response_format' => 'json',
             ],
         ]));
     }
@@ -100,11 +121,11 @@ final class VeniceClient implements ModelClientInterface
      */
     private function doImageGeneration(Model $model, array|string $payload, array $options): RawResultInterface
     {
-        return new RawHttpResult($this->httpClient->request('POST', 'images/generate', [
+        return new RawHttpResult($this->httpClient->request('POST', 'image/generate', [
             'json' => [
+                ...$options,
                 'prompt' => \is_string($payload) ? $payload : $payload['prompt'],
                 'model' => $model->getName(),
-                ...$options,
             ],
         ]));
     }

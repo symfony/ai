@@ -25,6 +25,10 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
 {
     public function extract(RawResultInterface $rawResult, array $options = []): ?TokenUsageInterface
     {
+        if ($options['stream'] ?? false) {
+            return null;
+        }
+
         /** @var ResponseInterface $response */
         $response = $rawResult->getObject();
 
@@ -36,7 +40,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
 
         $url = new UnicodeString($rawUrl);
 
-        if ($url->containsAny('speech')) {
+        if ($url->containsAny('speech') || $url->containsAny('image/generate') || $url->containsAny('transcription')) {
             return null;
         }
 

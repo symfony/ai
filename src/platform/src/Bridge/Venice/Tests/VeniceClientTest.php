@@ -12,9 +12,11 @@
 namespace Symfony\AI\Platform\Bridge\Venice\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Venice\Contract\AudioNormalizer;
 use Symfony\AI\Platform\Bridge\Venice\Venice;
 use Symfony\AI\Platform\Bridge\Venice\VeniceClient;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -79,10 +81,14 @@ final class VeniceClientTest extends TestCase
             $this->assertTrue($streamOptions['include_usage']);
 
             return new JsonMockResponse([
+                'id' => 'chatcmpl-8bac04777b7842a988f69cfb8d952d54',
+                'object' => 'chat.completion',
+                'created' => (new \DatetimeImmutable())->getTimestamp(),
+                'model' => 'venice-uncensored',
                 'choices' => [
                     [
-                        'delta' => ['content' => 'Hi'],
                         'index' => 0,
+                        'delta' => ['content' => 'Hi'],
                     ],
                 ],
             ]);
@@ -158,6 +164,28 @@ final class VeniceClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testClientCanTriggerTextRecognition()
+    {
+        $payload = (new AudioNormalizer())->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
+
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'text' => 'Hello world',
+                'duration' => 100,
+            ]),
+        ], 'https://api.venice.ai/api/v1/');
+
+        $client = new VeniceClient($httpClient);
+
+        $client->request(new Venice('tts-kokoro', [
+            Capability::SPEECH_RECOGNITION,
+            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_TEXT,
+        ]), $payload);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testClientCanTriggerEmbeddings()
     {
         $httpClient = new MockHttpClient([
@@ -186,6 +214,8 @@ final class VeniceClientTest extends TestCase
 
         $client->request(new Venice('text-embedding-bge-m3', [
             Capability::EMBEDDINGS,
+            Capability::INPUT_TEXT,
+            Capability::OUTPUT_EMBEDDINGS,
         ]), 'foo');
 
         $this->assertSame(1, $httpClient->getRequestsCount());

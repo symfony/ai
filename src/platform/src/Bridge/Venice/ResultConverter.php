@@ -11,16 +11,17 @@
 
 namespace Symfony\AI\Platform\Bridge\Venice;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
@@ -51,42 +52,56 @@ final class ResultConverter implements ResultConverterInterface
 
         $url = new UnicodeString($rawUrl);
 
+        if ($url->containsAny('embeddings')) {
+            $crawler = new JsonCrawler($response->getContent());
+
+            if ([] === $embeddings = $crawler->find('$.data[0].embedding')) {
+                throw new InvalidArgumentException('No embeddings found in the response.');
+            }
+
+            return new VectorResult(...array_map(
+                static fn (array $embedding): VectorInterface => new Vector($embedding),
+                $embeddings,
+            ));
+        }
+
         if ($url->containsAny('completions') && ($options['stream'] ?? false)) {
             return new StreamResult($this->convertCompletionToGenerator($result));
         }
 
-        $crawler = new JsonCrawler($response->getContent());
-
         if ($url->containsAny('completions')) {
+            $crawler = new JsonCrawler($response->getContent());
+
             $completionContent = $crawler->find('$.choices[0].message.content');
 
-            if ([] !== $completionContent && \is_string($completionContent[0])) {
-                return new TextResult($completionContent[0]);
+            if ([] === $completionContent) {
+                throw new InvalidArgumentException('No completions found in the response.');
             }
+
+            return new TextResult($completionContent[0]);
         }
 
-        if ($url->containsAny('speech')) {
+        if ($url->containsAny('audio/speech')) {
             return new BinaryResult($response->getContent());
         }
 
-        if ($url->containsAny('embeddings')) {
-            /** @var list<list<float>> $embeddings */
-            $embeddings = $crawler->find('$.data[0].embedding');
+        if ($url->containsAny('image/generate')) {
+            $crawler = new JsonCrawler($response->getContent());
 
-            if ([] !== $embeddings) {
-                return new VectorResult(...array_map(
-                    static fn (array $embedding): VectorInterface => new Vector($embedding),
-                    $embeddings,
+            $images = $crawler->find('$.images');
+
+            if (1 < \count($images)) {
+                return new ChoiceResult(...array_map(
+                    static fn (string $imageAsBase64): BinaryResult => new BinaryResult(base64_decode($imageAsBase64)),
+                    $images,
                 ));
             }
+
+            return new BinaryResult(base64_decode($images[0][0]));
         }
 
-        if ($url->containsAny('generations')) {
-            $imageUrls = array_filter($crawler->find('$.data[*].url'), \is_string(...));
-
-            if ([] !== $imageUrls) {
-                return new TextResult(implode("\n", $imageUrls));
-            }
+        if ($url->containsAny('transcription')) {
+            return new TextResult($response->toArray()['text']);
         }
 
         throw new RuntimeException('Unsupported model capability.');
@@ -99,24 +114,13 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertCompletionToGenerator(RawResultInterface $result): \Generator
     {
-        foreach ($result->getDataStream() as $data) {
-            $choices = $data['choices'] ?? [];
-            $delta = \is_array($choices) && \is_array($choices[0] ?? null) ? ($choices[0]['delta'] ?? []) : [];
-            $content = \is_array($delta) ? ($delta['content'] ?? null) : null;
-
-            if (null !== $content) {
-                yield $content;
-            }
-
-            $usage = $data['usage'] ?? null;
-
-            if (\is_array($usage)) {
-                yield new TokenUsage(
-                    promptTokens: isset($usage['prompt_tokens']) && \is_int($usage['prompt_tokens']) ? $usage['prompt_tokens'] : null,
-                    completionTokens: isset($usage['completion_tokens']) && \is_int($usage['completion_tokens']) ? $usage['completion_tokens'] : 0,
-                    totalTokens: isset($usage['total_tokens']) && \is_int($usage['total_tokens']) ? $usage['total_tokens'] : null,
-                );
-            }
+        foreach ($result->getDataStream() as $chunk) {
+            yield new VeniceMessageChunk(
+                $chunk['id'],
+                $chunk['model'],
+                \DateTimeImmutable::createFromFormat('U', $chunk['created']),
+                $chunk['choices'][0]['delta']['content'] ?? '',
+            );
         }
     }
 }

@@ -76,7 +76,7 @@ final class ModelCatalog implements ModelCatalogInterface
                     Capability::OUTPUT_EMBEDDINGS,
                 ],
             ],
-            'text' => [
+            'text' === $model['type'] => [
                 'class' => Venice::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
@@ -86,7 +86,7 @@ final class ModelCatalog implements ModelCatalogInterface
                     Capability::THINKING,
                 ],
             ],
-            'tts' => [
+            'tts' === $model['type'] => [
                 'class' => Venice::class,
                 'capabilities' => [
                     Capability::TEXT_TO_SPEECH,
@@ -94,7 +94,7 @@ final class ModelCatalog implements ModelCatalogInterface
                     Capability::OUTPUT_AUDIO,
                 ],
             ],
-            'video' => [
+            'video' === $model['type'] => [
                 'class' => Venice::class,
                 'capabilities' => [
                     Capability::IMAGE_TO_VIDEO,
@@ -102,7 +102,7 @@ final class ModelCatalog implements ModelCatalogInterface
                     Capability::OUTPUT_VIDEO,
                 ],
             ],
-            'image' => [
+            'image' === $model['type'] => [
                 'class' => Venice::class,
                 'capabilities' => [
                     Capability::TEXT_TO_IMAGE,
