@@ -51,6 +51,8 @@ use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\InMemory\Store as InMemoryMessageStore;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Batch\BatchPlatform;
+use Symfony\AI\Platform\Batch\BatchPlatformInterface;
 use Symfony\AI\Platform\Bridge\Albert\PlatformFactory as AlbertPlatformFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatalog;
 use Symfony\AI\Platform\Bridge\AmazeeAi\PlatformFactory as AmazeeAiPlatformFactory;
@@ -189,6 +191,11 @@ final class AiBundle extends AbstractBundle
         $platforms = array_keys($builder->findTaggedServiceIds('ai.platform'));
         if (1 === \count($platforms)) {
             $builder->setAlias(PlatformInterface::class, reset($platforms));
+        }
+
+        $batchPlatforms = array_keys($builder->findTaggedServiceIds('ai.platform.batch'));
+        if (1 === \count($batchPlatforms)) {
+            $builder->setAlias(BatchPlatformInterface::class, reset($batchPlatforms));
         }
 
         if ([] !== ($config['agent'] ?? [])) {
@@ -475,6 +482,18 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'anthropic']);
 
             $container->setDefinition($platformId, $definition);
+
+            $container->setDefinition('ai.platform.batch.anthropic', (new Definition(BatchPlatform::class))
+                ->setFactory(AnthropicPlatformFactory::class.'::createBatch')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => BatchPlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.anthropic'),
+                ])
+                ->addTag('ai.platform.batch', ['name' => 'anthropic'])
+            );
 
             return;
         }
@@ -820,6 +839,20 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'openai']);
 
             $container->setDefinition($platformId, $definition);
+
+            $container->setDefinition('ai.platform.batch.openai', (new Definition(BatchPlatform::class))
+                ->setFactory(OpenAiPlatformFactory::class.'::createBatch')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => BatchPlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.openai'),
+                    null,
+                    $platform['region'] ?? null,
+                ])
+                ->addTag('ai.platform.batch', ['name' => 'openai'])
+            );
 
             return;
         }
