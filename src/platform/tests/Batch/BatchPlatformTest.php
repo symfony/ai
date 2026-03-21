@@ -55,7 +55,7 @@ final class BatchPlatformTest extends TestCase
         $client->method('supports')->willReturn(true);
         $client->expects($this->once())
             ->method('submitBatch')
-            ->willReturnCallback(function (Model $model, iterable $requests) use (&$capturedModel, &$capturedRequests, $expectedJob) {
+            ->willReturnCallback(static function (Model $model, iterable $requests) use (&$capturedModel, &$capturedRequests, $expectedJob) {
                 $capturedModel = $model;
                 $capturedRequests = iterator_to_array($requests);
 
