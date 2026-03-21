@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Contract\JsonSchema\Attribute;
 
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -87,17 +88,13 @@ final class ToolParameterTest extends TestCase
         new With(minLength: 10, maxLength: 5);
     }
 
-    public function testValidMinimum()
+    #[TestWith([0], 'zero')]
+    #[TestWith([1.5], 'positive')]
+    #[TestWith([-1], 'negative')]
+    public function testValidMinimum(int|float $minimum)
     {
-        $minimum = 0;
         $toolParameter = new With(minimum: $minimum);
         $this->assertSame($minimum, $toolParameter->minimum);
-    }
-
-    public function testInvalidMinimumNegative()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        new With(minimum: -1);
     }
 
     public function testValidMultipleOf()
