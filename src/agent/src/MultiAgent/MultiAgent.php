@@ -40,11 +40,11 @@ final class MultiAgent implements AgentInterface
      * @param LoggerInterface  $logger       Logger for debugging handoff decisions
      */
     public function __construct(
-        private AgentInterface $orchestrator,
-        private array $handoffs,
-        private AgentInterface $fallback,
-        private string $name = 'multi-agent',
-        private LoggerInterface $logger = new NullLogger(),
+        private readonly AgentInterface $orchestrator,
+        private readonly array $handoffs,
+        private readonly AgentInterface $fallback,
+        private readonly string $name = 'multi-agent',
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
         if ([] === $handoffs) {
             throw new InvalidArgumentException('MultiAgent requires at least 1 handoff.');
@@ -62,7 +62,7 @@ final class MultiAgent implements AgentInterface
     /**
      * @throws ExceptionInterface When the agent encounters an error during orchestration or handoffs
      */
-    public function call(MessageBag $messages, array $options = []): ResultInterface
+    public function call(MessageBag $messages, array $options = [], array $capabilities = []): ResultInterface
     {
         $userMessages = $messages->withoutSystemMessage();
 
@@ -82,12 +82,12 @@ final class MultiAgent implements AgentInterface
 
         $decision = $this->orchestrator->call(new MessageBag(Message::ofUser($agentSelectionPrompt)), array_merge($options, [
             'response_format' => Decision::class,
-        ]))->getContent();
+        ]), $capabilities)->getContent();
 
         if (!$decision instanceof Decision) {
             $this->logger->debug('MultiAgent: Failed to get decision, falling back to orchestrator');
 
-            return $this->orchestrator->call($messages, $options);
+            return $this->orchestrator->call($messages, $options, $capabilities);
         }
 
         $this->logger->debug('MultiAgent: Agent selection completed', [
@@ -98,7 +98,7 @@ final class MultiAgent implements AgentInterface
         if (!$decision->hasAgent()) {
             $this->logger->debug('MultiAgent: Using fallback agent', ['reason' => 'no_agent_selected']);
 
-            return $this->fallback->call($messages, $options);
+            return $this->fallback->call($messages, $options, $capabilities);
         }
 
         // Find the target agent by name
@@ -116,13 +116,13 @@ final class MultiAgent implements AgentInterface
                 'reason' => 'agent_not_found',
             ]);
 
-            return $this->fallback->call($messages, $options);
+            return $this->fallback->call($messages, $options, $capabilities);
         }
 
         $this->logger->debug('MultiAgent: Delegating to agent', ['agent_name' => $decision->getAgentName()]);
 
         // Call the selected agent with the original user question
-        return $targetAgent->call(new MessageBag($userMessage), $options);
+        return $targetAgent->call(new MessageBag($userMessage), $options, $capabilities);
     }
 
     private function buildAgentSelectionPrompt(string $userQuestion): string

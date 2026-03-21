@@ -40,6 +40,14 @@
                     <b class="label">Stores used</b>
                     <span class="sf-toolbar-status">{{ collector.stores|length }}</span>
                 </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Agents used</b>
+                    <span class="sf-toolbar-status">{{ collector.agents|length }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Capabilities calls</b>
+                    <span class="sf-toolbar-status">{{ collector.capabilityHandlers|length }}</span>
+                </div>
             </div>
         {% endset %}
 

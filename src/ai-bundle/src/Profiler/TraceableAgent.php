@@ -12,6 +12,8 @@
 namespace Symfony\AI\AiBundle\Profiler;
 
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Capability\InputCapabilityInterface;
+use Symfony\AI\Agent\Capability\OutputCapabilityInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\Component\Clock\ClockInterface;
@@ -24,6 +26,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * @phpstan-type AgentData array{
  *     messages: MessageBag,
  *     options: array<string, mixed>,
+ *     capabilities: InputCapabilityInterface[]|OutputCapabilityInterface[],
  *     called_at: \DateTimeImmutable,
  * }
  */
@@ -40,15 +43,16 @@ final class TraceableAgent implements AgentInterface, ResetInterface
     ) {
     }
 
-    public function call(MessageBag $messages, array $options = []): ResultInterface
+    public function call(MessageBag $messages, array $options = [], array $capabilities = []): ResultInterface
     {
         $this->calls[] = [
             'messages' => $messages,
             'options' => $options,
+            'capabilities' => $capabilities,
             'called_at' => $this->clock->now(),
         ];
 
-        return $this->agent->call($messages, $options);
+        return $this->agent->call($messages, $options, $capabilities);
     }
 
     public function getName(): string
