@@ -33,6 +33,7 @@
     },
     "require-dev": {
         "doctrine/doctrine-bundle": "^2.13|^3.0",
+        "helgesverre/toon": "^3.1",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",

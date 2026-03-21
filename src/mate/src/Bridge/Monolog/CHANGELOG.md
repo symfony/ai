@@ -7,6 +7,7 @@ CHANGELOG
  * Merge `monolog-search-regex` into `monolog-search` via a `regex` parameter
  * Remove `monolog-by-level` tool (use `monolog-search` with `level` filter instead)
  * Add `@param` docblocks to all tool methods for AI-readable parameter descriptions
+ * Add optional TOON format encoding for `LogSearchTool` methods to reduce token consumption
 
 0.3
 ---

@@ -12,14 +12,12 @@
 namespace Symfony\AI\Mate\Bridge\Monolog\Capability;
 
 use Mcp\Capability\Attribute\McpTool;
-use Symfony\AI\Mate\Bridge\Monolog\Model\LogEntry;
 use Symfony\AI\Mate\Bridge\Monolog\Model\SearchCriteria;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogReader;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 
 /**
  * MCP tools for searching and analyzing Monolog log files.
- *
- * @phpstan-import-type LogEntryArray from LogEntry
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -39,8 +37,6 @@ final class LogSearchTool
      * @param string|null $from        Start date filter, any PHP-parseable date string (e.g. 2024-01-01, -1 hour, yesterday)
      * @param string|null $to          End date filter, any PHP-parseable date string
      * @param int         $limit       Maximum number of entries to return
-     *
-     * @phpstan-return array{entries: list<LogEntryArray>}
      */
     #[McpTool('monolog-search', 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only.')]
     public function search(
@@ -52,7 +48,7 @@ final class LogSearchTool
         ?string $from = null,
         ?string $to = null,
         int $limit = 100,
-    ): array {
+    ): string {
         if ($regex) {
             $pattern = $term;
             if (!str_starts_with($pattern, '/') && !str_starts_with($pattern, '#')) {
@@ -78,7 +74,7 @@ final class LogSearchTool
             );
         }
 
-        return ['entries' => $this->collectResults($criteria, $environment)];
+        return ResponseEncoder::encode(['entries' => $this->collectResults($criteria, $environment)]);
     }
 
     /**
@@ -87,8 +83,6 @@ final class LogSearchTool
      * @param string|null $level       Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
      * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
      * @param int         $limit       Maximum number of entries to return
-     *
-     * @phpstan-return array{entries: list<LogEntryArray>}
      */
     #[McpTool('monolog-context-search', 'Search log entries by structured context data. Finds entries where a specific context key contains the given value.')]
     public function searchContext(
@@ -97,7 +91,7 @@ final class LogSearchTool
         ?string $level = null,
         ?string $environment = null,
         int $limit = 100,
-    ): array {
+    ): string {
         $criteria = new SearchCriteria(
             level: $level,
             contextKey: $key,
@@ -105,31 +99,27 @@ final class LogSearchTool
             limit: $limit,
         );
 
-        return ['entries' => $this->collectResults($criteria, $environment)];
+        return ResponseEncoder::encode(['entries' => $this->collectResults($criteria, $environment)]);
     }
 
     /**
      * @param int         $lines       Number of most recent log entries to return
      * @param string|null $level       Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
      * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
-     *
-     * @phpstan-return array{entries: list<LogEntryArray>}
      */
     #[McpTool('monolog-tail', 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level and environment.')]
-    public function tail(int $lines = 50, ?string $level = null, ?string $environment = null): array
+    public function tail(int $lines = 50, ?string $level = null, ?string $environment = null): string
     {
         $entries = $this->reader->tail($lines, $level, $environment);
 
-        return ['entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $entries))];
+        return ResponseEncoder::encode(['entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $entries))]);
     }
 
     /**
      * @param string|null $environment Filter log files by Symfony environment (e.g. dev, prod, test)
-     *
-     * @return array{files: array<int, array{name: string, path: string, size: int, modified: string}>}
      */
     #[McpTool('monolog-list-files', 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching.')]
-    public function listFiles(?string $environment = null): array
+    public function listFiles(?string $environment = null): string
     {
         $files = null !== $environment
             ? $this->reader->getLogFilesForEnvironment($environment)
@@ -145,20 +135,17 @@ final class LogSearchTool
             ];
         }
 
-        return ['files' => $result];
+        return ResponseEncoder::encode(['files' => $result]);
     }
 
-    /**
-     * @return array{channels: string[]}
-     */
     #[McpTool('monolog-list-channels', 'List all unique Monolog channel names found across log files (e.g. app, security, doctrine).')]
-    public function listChannels(): array
+    public function listChannels(): string
     {
-        return ['channels' => $this->reader->getUniqueChannels()];
+        return ResponseEncoder::encode(['channels' => $this->reader->getUniqueChannels()]);
     }
 
     /**
-     * @phpstan-return list<LogEntryArray>
+     * @return list<array<string, mixed>>
      */
     private function collectResults(SearchCriteria $criteria, ?string $environment = null): array
     {

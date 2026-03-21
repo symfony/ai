@@ -18,6 +18,7 @@ use Mcp\Exception\ToolNotFoundException;
 use Mcp\Schema\Request\CallToolRequest;
 use Symfony\AI\Mate\Command\Session\CliSession;
 use Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Service\RegistryProvider;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -160,6 +161,10 @@ HELP
             }
 
             return Command::FAILURE;
+        }
+
+        if (\is_string($result)) {
+            $result = ResponseEncoder::decode($result);
         }
 
         if ('json' === $format) {
