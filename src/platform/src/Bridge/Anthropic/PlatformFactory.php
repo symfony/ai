@@ -11,11 +11,14 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Batch\BatchPlatform;
+use Symfony\AI\Platform\Bridge\Anthropic\Batch\ModelClient as BatchModelClient;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -43,6 +46,19 @@ final class PlatformFactory
             $modelCatalog,
             $contract ?? AnthropicContract::create(),
             $eventDispatcher,
+        );
+    }
+
+    public static function createBatch(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
+        ?Contract $contract = null,
+    ): BatchPlatform {
+        return new BatchPlatform(
+            new BatchModelClient($httpClient ?? HttpClient::create(), $apiKey),
+            $modelCatalog,
+            $contract ?? AnthropicContract::create(),
         );
     }
 }

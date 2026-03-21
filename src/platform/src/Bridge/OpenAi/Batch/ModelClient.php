@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\Component\HttpClient\Response\StreamWrapper;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -96,7 +97,7 @@ final class ModelClient extends AbstractModelClient implements BatchClientInterf
     public function fetchResults(BatchJob $job): iterable
     {
         if (!$job->isComplete()) {
-            throw new RuntimeException(\sprintf('Cannot fetch results for batch "%s": job is not complete (status: %s).', $job->getId(), $job->getStatus()->value));
+            throw new RuntimeException(\sprintf('Cannot fetch results for batch "%s": job is not complete (status: "%s").', $job->getId(), $job->getStatus()->value));
         }
 
         if (null === $job->getOutputFileId()) {
@@ -121,7 +122,7 @@ final class ModelClient extends AbstractModelClient implements BatchClientInterf
             'auth_bearer' => $this->apiKey,
         ]);
 
-        $stream = $response->toStream();
+        $stream = StreamWrapper::createResource($response, $this->httpClient);
 
         while (!feof($stream)) {
             $line = fgets($stream);
