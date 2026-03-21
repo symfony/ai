@@ -61,4 +61,7 @@ enum Capability: string
 
     // Thinking
     case THINKING = 'thinking';
+
+    // BATCH
+    case BATCH = 'batch';
 }
