@@ -1,0 +1,32 @@
+<div class="row align-items-center">
+    <div class="col-xl-6 pe-5">
+        <h2 class="ff-title text-balance display-5 fw-bold mb-3">
+            Build <span class="hero-highlight">MCP</span> Servers & Clients with PHP
+        </h2>
+        <p class="text-balance fs-5 mb-4 opacity-75">
+            Expose tools to AI agents or connect to any MCP server — powered by Symfony.
+        </p>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="https://symfony.com/doc/current/ai/bundles/mcp-bundle.html" class="btn btn-light btn-lg px-3 d-flex align-items-center">
+                <span>MCP Bundle docs</span>
+                {{ ux_icon('tabler:arrow-up-right', {width: 24, height: 24, class: 'ms-2'}) }}
+            </a>
+        </div>
+    </div>
+
+    <div class="col-xl-6 mt-5 mt-xl-0">
+        <pre class="terminal"><code><span class="keyword">class</span> <span class="title class_">CurrentTimeTool</span>
+{
+    <span class="comment">/**
+     * @param string $format e.g. "Y-m-d H:i:s"
+     */</span>
+    <span class="title">#[McpTool(name: 'current-time')]</span>
+    <span class="keyword">public function</span> <span class="title function_ invoke__">getCurrentTime</span>(<span class="variable">string</span> <span class="variable">$format</span>): <span class="variable">string</span>
+    {
+        <span class="keyword">return</span> (<span class="keyword">new</span> <span class="title class_">\DateTime</span>(<span class="string">'now'</span>, <span class="keyword">new</span> <span class="title class_">\DateTimeZone</span>(<span class="string">'UTC'</span>)))
+            -&gt;<span class="title function_ invoke__">format</span>(<span class="variable">$format</span>);
+    }
+}</code></pre>
+    </div>
+</div>

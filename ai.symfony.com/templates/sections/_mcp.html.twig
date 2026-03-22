@@ -1,0 +1,39 @@
+<section id="mcp" class="py-5 py-lg-5">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5" data-aos="fade-right">
+                <h2 class="ff-title fw-bold h3 mb-3 section-heading">Model Context Protocol</h2>
+                <p class="text-muted mb-4">
+                    The official MCP PHP SDK, built in collaboration with the PHP Foundation.
+                    Create MCP servers that expose tools and resources to any AI agent, or build
+                    clients that connect to existing MCP servers.
+                </p>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="https://symfony.com/doc/current/ai/bundles/mcp-bundle.html" class="btn btn-dark px-3 d-flex align-items-center">
+                        <span>MCP Bundle docs</span>
+                        {{ ux_icon('tabler:arrow-up-right', {width: 20, height: 20, class: 'ms-2'}) }}
+                    </a>
+                    <a href="https://php.sdk.modelcontextprotocol.io" class="btn btn-outline-secondary px-3 d-flex align-items-center">
+                        <span>Official SDK docs</span>
+                        {{ ux_icon('tabler:arrow-up-right', {width: 20, height: 20, class: 'ms-2'}) }}
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-7" data-aos="fade-left">
+                <pre class="terminal"><code><span class="keyword">class</span> <span class="title class_">WeatherTool</span>
+{
+    <span class="comment">/**
+     * @param string $city Name of the city
+     */</span>
+    <span class="title">#[McpTool(name: 'weather')]</span>
+    <span class="keyword">public function</span> <span class="title function_ invoke__">getWeather</span>(<span class="variable">string</span> <span class="variable">$city</span>): <span class="variable">string</span>
+    {
+        <span class="keyword">return</span> <span class="string">'sunny, 24°C'</span>;
+    }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,42 @@
+<div class="row align-items-center">
+    <div class="col-xl-6 pe-5">
+        <h1 class="ff-title text-balance display-5 fw-bold mb-3">
+            Build <span class="hero-highlight">AI-powered</span>
+            applications with PHP
+        </h1>
+        <p class="text-balance fs-5 mb-4 opacity-75">
+            Agents, tool calling, RAG, and multi-modal support — built on Symfony components.
+        </p>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="https://symfony.com/doc/current/ai/components/agent.html" class="btn btn-light btn-lg px-3 d-flex align-items-center">
+                <span>Agent component</span>
+                {{ ux_icon('tabler:arrow-up-right', {width: 24, height: 24, class: 'ms-2'}) }}
+            </a>
+            <a href="https://symfony.com/doc/current/ai/components/platform.html" class="mt-3 mt-sm-0 ms-lg-3 btn btn-outline-light btn-lg px-3 d-flex align-items-center">
+                Platform component
+                {{ ux_icon('tabler:arrow-up-right', {width: 24, height: 24, class: 'ms-2'}) }}
+            </a>
+        </div>
+    </div>
+
+    <div class="col-xl-6 mt-5 mt-xl-0">
+        {% set model_typed = stimulus_controller('typed', {
+            loop: true,
+            cursorChar: '|',
+            strings: ['gpt-5.1', 'mistral-large-latest', 'gemini-3-pro-preview', 'claude-sonnet-4-5'],
+        }) %}
+        <pre class="terminal"><code><span class="variable">$platform</span> = <span class="title class_">PlatformFactory</span>::<span class="title function_ invoke__">create</span>(...);
+<span class="variable">$agent</span> = <span class="keyword">new</span> <span class="title class_">Agent</span>(<span class="variable">$platform</span>, <span class="string">'</span><span class="string" {{ model_typed|raw }}></span><span class="string">'</span>)
+
+<span class="variable">$messages</span> = <span class="keyword">new</span> <span class="title class_">MessageBag</span>(
+    <span class="title class_">Message</span>::<span class="title function_ invoke__">forSystem</span>(<span class="string">'You are a pirate and you write funny.'</span>),
+    <span class="title class_">Message</span>::<span class="title function_ invoke__">ofUser</span>(<span class="string">'What is the Symfony framework?'</span>),
+);
+<span class="variable">$response</span> = <span class="variable">$agent</span>-&gt;<span class="title function_ invoke__">call</span>(<span class="variable">$messages</span>, [
+    <span class="string">'temperature'</span> =&gt; 1.0, // specific options just for this call
+]);
+
+<span class="keyword">echo</span> <span class="variable">$response</span>-&gt;<span class="title function_ invoke__">getContent</span>();</code></pre>
+    </div>
+</div>

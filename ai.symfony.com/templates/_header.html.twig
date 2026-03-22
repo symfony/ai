@@ -1,8 +1,8 @@
-<header class="border-bottom border-white border-opacity-10">
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container py-3">
+<header class="border-bottom sticky-top">
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
             <a class="navbar-brand" href="{{ path('homepage') }}">
-                {{ ux_icon('logos:symfony-ai', {width: 225, height: 64}) }}
+                {{ include('_symfony-ai-logo.svg') }}
             </a>
 
             <button
@@ -20,19 +20,33 @@
             <div class="collapse navbar-collapse" id="mainNavbar">
                 <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2 mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="https://symfony.com/doc/current/ai/index.html">Documentation</a>
+                        <a class="nav-link" href="#components">Components</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://github.com/symfony/ai-demo">Demos</a>
+                        <a class="nav-link" href="#features">Features</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://symfony.com/doc/current/ai/cookbook/index.html">Cookbook</a>
+                        <a class="nav-link" href="#bridges">Bridges</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://github.com/symfony/ai/issues">Support</a>
+                        <a class="nav-link" href="#demos">Demos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#mcp">MCP</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#mate">Mate</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#support">Support</a>
                     </li>
                     <li class="nav-item ms-lg-2">
-                        <a class="nav-link" href="https://github.com/symfony/ai">
+                        <a class="nav-link" href="https://symfony.com/doc/current/ai/index.html" aria-label="Documentation" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Documentation">
+                            {{ ux_icon('tabler:book', {width: 24, height: 24}) }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/symfony/ai" aria-label="GitHub" data-bs-toggle="tooltip" data-bs-placement="bottom" title="GitHub">
                             {{ ux_icon('simple-icons:github', {width: 24, height: 24}) }}
                         </a>
                     </li>
@@ -41,7 +55,7 @@
                         <template id="icon-theme-light">{{ ux_icon('tabler:sun-filled', {width: 24, height: 24}) }}</template>
                         <template id="icon-theme-dark">{{ ux_icon('tabler:moon', {width: 24, height: 24}) }}</template>
 
-                        <button type="button" id="themeToggle" class="btn btn-link p-0 border-0" aria-label="Toggle theme">
+                        <button type="button" id="themeToggle" class="btn btn-link p-0 border-0" aria-label="Toggle theme" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle theme">
                             <span id="themeIcon">{{ ux_icon('tabler:contrast-filled', {width: 24, height: 24}) }}</span>
                         </button>
                     </li>
