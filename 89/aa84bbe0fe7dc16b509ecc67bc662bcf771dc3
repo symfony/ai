@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by DZunke at 2026-03-20T16:22:57Z
+
+Thanks for the review! I have changed the mocks to stubs and it was absolutely right, latest wioth future PHPUnit versions. Sorry for missing it! 🙇‍♂️
