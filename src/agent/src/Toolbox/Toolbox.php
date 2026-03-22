@@ -40,6 +40,13 @@ final class Toolbox implements ToolboxInterface
     private array $toolsMetadata;
 
     /**
+     * Maps tool name to the specific object instance that was registered for it.
+     *
+     * @var array<string, object>
+     */
+    private array $instanceMap = [];
+
+    /**
      * @param iterable<object> $tools
      */
     public function __construct(
@@ -59,7 +66,8 @@ final class Toolbox implements ToolboxInterface
 
         $toolsMetadata = [];
         foreach ($this->tools as $tool) {
-            foreach ($this->toolFactory->getTool($tool::class) as $metadata) {
+            foreach ($this->toolFactory->getTool($tool) as $metadata) {
+                $this->instanceMap[$metadata->getName()] = $tool;
                 $toolsMetadata[] = $metadata;
             }
         }
@@ -128,6 +136,10 @@ final class Toolbox implements ToolboxInterface
 
     private function getExecutable(Tool $metadata): object
     {
+        if (isset($this->instanceMap[$metadata->getName()])) {
+            return $this->instanceMap[$metadata->getName()];
+        }
+
         $className = $metadata->getReference()->getClass();
         foreach ($this->tools as $tool) {
             if ($tool instanceof $className) {

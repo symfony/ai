@@ -27,7 +27,7 @@ final class ChainFactory implements ToolFactoryInterface
     ) {
     }
 
-    public function getTool(string $reference): iterable
+    public function getTool(object|string $reference): iterable
     {
         $invalid = 0;
         foreach ($this->factories as $factory) {

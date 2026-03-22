@@ -14,7 +14,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Symfony\AI\Agent\Toolbox\AgentProcessor as ToolProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
-use Symfony\AI\Agent\Toolbox\ToolFactory\AbstractToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
@@ -215,13 +214,10 @@ return static function (ContainerConfigurator $container): void {
                 service('logger')->ignoreOnInvalid(),
                 service('event_dispatcher')->nullOnInvalid(),
             ])
-        ->set('ai.tool_factory.abstract', AbstractToolFactory::class)
-            ->abstract()
+        ->set('ai.tool_factory', ReflectionToolFactory::class)
             ->args([
                 service('ai.platform.json_schema_factory'),
             ])
-        ->set('ai.tool_factory', ReflectionToolFactory::class)
-            ->parent('ai.tool_factory.abstract')
         ->set('ai.tool_result_converter', ToolResultConverter::class)
             ->args([
                 service('serializer'),

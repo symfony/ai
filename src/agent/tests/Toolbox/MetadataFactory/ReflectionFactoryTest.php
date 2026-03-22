@@ -38,7 +38,7 @@ final class ReflectionFactoryTest extends TestCase
         $this->expectException(ToolException::class);
         $this->expectExceptionMessage('The reference "invalid" is not a valid tool.');
 
-        iterator_to_array($this->factory->getTool('invalid')); // @phpstan-ignore-line Yes, this class does not exist
+        iterator_to_array($this->factory->getTool('invalid'));
     }
 
     public function testWithoutAttribute()
