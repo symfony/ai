@@ -70,7 +70,13 @@ trait CompletionsConversionTrait
             }
 
             // add arguments delta to tool call
-            $toolCalls[$i]['function']['arguments'] .= $toolCall['function']['arguments'];
+            if (isset($toolCall['function']['arguments'])) {
+                if (!isset($toolCalls[$i]['function']['arguments'])) {
+                    $toolCalls[$i]['function']['arguments'] = '';
+                }
+
+                $toolCalls[$i]['function']['arguments'] .= $toolCall['function']['arguments'];
+            }
         }
 
         return $toolCalls;
@@ -131,13 +137,17 @@ trait CompletionsConversionTrait
      *     type: 'function',
      *     function: array{
      *         name: string,
-     *         arguments: string
+     *         arguments?: string
      *     }
      * } $toolCall
      */
     protected function convertToolCall(array $toolCall): ToolCall
     {
-        $arguments = json_decode($toolCall['function']['arguments'], true, flags: \JSON_THROW_ON_ERROR);
+        if (isset($toolCall['function']['arguments']) && '' !== $toolCall['function']['arguments']) {
+            $arguments = json_decode($toolCall['function']['arguments'], true, flags: \JSON_THROW_ON_ERROR);
+        } else {
+            $arguments = [];
+        }
 
         return new ToolCall($toolCall['id'], $toolCall['function']['name'], $arguments);
     }
