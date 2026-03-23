@@ -1,0 +1,98 @@
+<section id="components" class="py-5 py-lg-5 section-gradient-mesh">
+    <div class="container z-above">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5" data-aos="fade-right">
+                <h2 class="ff-title fw-bold h3 mb-3 section-heading">Component Architecture</h2>
+                <p class="text-muted mb-4">
+                    A set of decoupled PHP components for AI integrations. Each works independently
+                    without the full framework. The foundation layer abstracts away third-party specifics.
+                </p>
+
+                <div class="d-flex flex-column gap-1">
+                    <a href="https://symfony.com/doc/current/ai/components/platform.html" class="component-link">
+                        <span class="component-dot component-dot-platform"></span>
+                        <div>
+                            <strong class="ff-title">Platform</strong>
+                            <span class="text-muted small d-block">Unified interface to AI providers</span>
+                        </div>
+                    </a>
+                    <a href="https://symfony.com/doc/current/ai/components/store.html" class="component-link">
+                        <span class="component-dot component-dot-store"></span>
+                        <div>
+                            <strong class="ff-title">Store</strong>
+                            <span class="text-muted small d-block">Vector database abstraction</span>
+                        </div>
+                    </a>
+                    <a href="https://symfony.com/doc/current/ai/components/agent.html" class="component-link">
+                        <span class="component-dot component-dot-agent"></span>
+                        <div>
+                            <strong class="ff-title">Agent</strong>
+                            <span class="text-muted small d-block">Framework for AI agents with tools</span>
+                        </div>
+                    </a>
+                    <a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="component-link">
+                        <span class="component-dot component-dot-bundle"></span>
+                        <div>
+                            <strong class="ff-title">AI Bundle</strong>
+                            <span class="text-muted small d-block">Symfony framework integration</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-7" data-aos="fade-left">
+                <div class="architecture-diagram">
+                    <svg viewBox="4 4 512 372" xmlns="http://www.w3.org/2000/svg" width="100%" role="img" aria-label="Symfony AI component architecture diagram showing four layers: third-party integrations, foundation, agent, and AI bundle">
+                        <defs>
+                            <style>
+                                .arch-label { font-family: var(--font-family-title), system-ui, sans-serif; font-weight: 700; font-size: 15px; fill: var(--sf-ai-text-color); }
+                                .arch-label-white { fill: #fff; }
+                                .arch-sublabel { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 500; fill: var(--sf-ai-text-color); opacity: 0.5; letter-spacing: 0.05em; text-transform: uppercase; }
+                                .arch-item-text { font-family: var(--font-family-title), system-ui, sans-serif; font-size: 12px; font-weight: 600; fill: var(--sf-ai-text-color); }
+                            </style>
+                            <filter id="layerShadow" x="-2%" y="-2%" width="104%" height="110%">
+                                <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.08)"/>
+                            </filter>
+                        </defs>
+
+                        {# Layer 4: AI Bundle (top) #}
+                        <rect class="arch-shift-strong" x="10" y="14" width="500" height="70" rx="14" ry="14" fill="var(--sf-ai-brand-1)" filter="url(#layerShadow)"/>
+                        <text class="arch-label arch-label-white" x="260" y="45" text-anchor="middle" font-size="17">AI Bundle</text>
+                        <text x="260" y="65" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-family="system-ui, sans-serif" font-size="12" font-weight="500">Symfony Framework Integration</text>
+
+                        {# Connector: AI Bundle → Agent #}
+                        <line x1="260" y1="84" x2="260" y2="104" stroke="var(--sf-ai-text-color)" stroke-opacity="0.2" stroke-width="2"/>
+
+                        {# Layer 3: Agent #}
+                        <rect class="arch-shift-medium" x="10" y="104" width="500" height="64" rx="14" ry="14" fill="var(--sf-ai-brand-1)"/>
+                        <text class="arch-label" x="260" y="142" text-anchor="middle" fill="#fff">Agent</text>
+
+                        {# Connector: Agent → Foundation #}
+                        <line x1="260" y1="168" x2="260" y2="188" stroke="var(--sf-ai-text-color)" stroke-opacity="0.2" stroke-width="2"/>
+
+                        {# Layer 2: Foundation — 3 equal-width columns #}
+                        <rect class="arch-shift-light" x="10" y="188" width="500" height="80" rx="14" ry="14" fill="var(--sf-ai-brand-1)"/>
+                        <text class="arch-sublabel" x="260" y="210" text-anchor="middle" fill="rgba(255,255,255,0.7)">Foundation Layer</text>
+                        <line x1="172" y1="218" x2="172" y2="258" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                        <line x1="338" y1="218" x2="338" y2="258" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                        <text class="arch-item-text" x="92" y="244" text-anchor="middle" fill="#fff">Platform</text>
+                        <text class="arch-item-text" x="255" y="244" text-anchor="middle" fill="#fff">Store</text>
+                        <text class="arch-item-text" x="420" y="244" text-anchor="middle" fill="#fff">Tools</text>
+
+                        {# Connector: Foundation → 3rd Party #}
+                        <line x1="260" y1="268" x2="260" y2="288" stroke="var(--sf-ai-text-color)" stroke-opacity="0.2" stroke-width="2"/>
+
+                        {# Layer 1: 3rd Party Integrations (bottom) — 3 equal-width columns #}
+                        <rect class="arch-shift-muted" x="10" y="288" width="500" height="80" rx="14" ry="14" fill="var(--sf-ai-brand-1)"/>
+                        <text class="arch-sublabel" x="260" y="310" text-anchor="middle" fill="rgba(255,255,255,0.7)">3rd Party Integrations</text>
+                        <line x1="172" y1="318" x2="172" y2="358" stroke="rgba(255,255,255,0.6)" stroke-width="1"/>
+                        <line x1="338" y1="318" x2="338" y2="358" stroke="rgba(255,255,255,0.6)" stroke-width="1"/>
+                        <text class="arch-item-text" x="92" y="344" text-anchor="middle" fill="#fff">Platform Bridges</text>
+                        <text class="arch-item-text" x="255" y="344" text-anchor="middle" fill="#fff">Store Bridges</text>
+                        <text class="arch-item-text" x="420" y="344" text-anchor="middle" fill="#fff">Agent Tools</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
