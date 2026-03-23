@@ -724,6 +724,24 @@ The ``ai:store:setup`` command prepares the required infrastructure for a store 
     This command only works with stores that implement :class:`Symfony\\AI\\Store\\ManagedStoreInterface`.
     Not all store types support or require setup operations.
 
+.. tip::
+
+    When using a store that shares a Doctrine DBAL connection (e.g. the Postgres store with
+    ``dbal_connection``), Doctrine's schema tools (``doctrine:schema:update``,
+    ``doctrine:schema:validate``) may fail because they don't understand store-specific column
+    types like ``vector``. To prevent this, configure a ``schema_filter`` in your Doctrine DBAL
+    configuration to exclude the store tables:
+
+    .. code-block:: yaml
+
+        # config/packages/doctrine.yaml
+        doctrine:
+            dbal:
+                schema_filter: '~^(?!ai_)~'
+
+    This regex excludes all tables prefixed with ``ai_`` from Doctrine's schema management.
+    Make sure your store's ``table_name`` uses the same prefix (e.g. ``ai_documents``).
+
 ``ai:store:drop``
 ~~~~~~~~~~~~~~~~~
 
