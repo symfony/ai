@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Command;
 
+use Symfony\AI\AiBundle\Profiler\TraceableStore;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -76,6 +77,9 @@ EOF
         }
 
         $store = $this->stores->get($storeName);
+        if ($store instanceof TraceableStore && method_exists($store, 'getDecoratedStore')) {
+            $store = $store->getDecoratedStore();
+        }
         if (!$store instanceof ManagedStoreInterface) {
             throw new RuntimeException(\sprintf('The "%s" store does not support setup.', $storeName));
         }
@@ -83,8 +87,6 @@ EOF
         $io = new SymfonyStyle($input, $output);
 
         $storeName = $input->getArgument('store');
-
-        $store = $this->stores->get($storeName);
 
         try {
             $store->setup($this->setupStoresOptions[$storeName] ?? []);
