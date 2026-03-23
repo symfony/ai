@@ -60,7 +60,6 @@ return static function (DefinitionConfigurator $configurator): void {
                         ->scalarPrototype()->end()
                         ->defaultValue([])
                     ->end()
-                    ->scalarNode('security_middleware')->defaultNull()->end()
                     ->arrayNode('oauth')
                         ->canBeEnabled()
                         ->children()

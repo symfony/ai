@@ -88,17 +88,12 @@ final class McpBundle extends AbstractBundle
 
         if (isset($config['client_transports'])) {
             $httpConfig = $config['http'];
-            $securityMiddleware = $httpConfig['security_middleware'] ?? null;
 
             $this->configureTransports($config['client_transports'], $httpConfig, $builder);
-            $this->configureSecurity($securityMiddleware, $builder);
+            $this->configureSecurity($builder);
 
             if ($httpConfig['oauth']['enabled']) {
-                $this->configureOAuth($httpConfig['oauth'], $httpConfig['path'], $securityMiddleware, $builder);
-            } elseif (null !== $securityMiddleware) {
-                $builder->register($securityMiddleware)
-                    ->setArguments([new Reference('security.token_storage')])
-                    ->addTag('mcp.middleware', ['priority' => 20]);
+                $this->configureOAuth($httpConfig['oauth'], $httpConfig['path'], $builder);
             }
         }
     }
@@ -253,7 +248,7 @@ final class McpBundle extends AbstractBundle
             ->addTag('routing.loader');
     }
 
-    private function configureSecurity(?string $securityMiddleware, ContainerBuilder $container): void
+    private function configureSecurity(ContainerBuilder $container): void
     {
         if (!$container->hasDefinition('security.authorization_checker') && !$container->hasAlias('security.authorization_checker')) {
             return;
@@ -274,7 +269,7 @@ final class McpBundle extends AbstractBundle
     /**
      * @param array<string, mixed> $oauthConfig
      */
-    private function configureOAuth(array $oauthConfig, string $path, ?string $securityMiddleware, ContainerBuilder $container): void
+    private function configureOAuth(array $oauthConfig, string $path, ContainerBuilder $container): void
     {
         foreach (['issuer', 'base_url'] as $required) {
             if (null === ($oauthConfig[$required] ?? null) || '' === $oauthConfig[$required]) {
@@ -313,7 +308,7 @@ final class McpBundle extends AbstractBundle
                 $oauthConfig['scopes'],
             ]);
 
-        $this->registerOAuthMiddleware($oauthConfig, $securityMiddleware, $container);
+        $this->registerOAuthMiddleware($oauthConfig, $container);
 
         $container->register('mcp.security_reference_handler', SecurityReferenceHandler::class)
             ->setArguments([
@@ -325,7 +320,7 @@ final class McpBundle extends AbstractBundle
     /**
      * @param array<string, mixed> $oauthConfig
      */
-    private function registerOAuthMiddleware(array $oauthConfig, ?string $securityMiddleware, ContainerBuilder $container): void
+    private function registerOAuthMiddleware(array $oauthConfig, ContainerBuilder $container): void
     {
         $container->register(ProtectedResourceMetadataMiddleware::class)
             ->setArguments([new Reference('mcp.oauth.resource_metadata')])
@@ -353,8 +348,7 @@ final class McpBundle extends AbstractBundle
             ])
             ->addTag('mcp.middleware', ['priority' => 30]);
 
-        $securityMiddlewareClass = $securityMiddleware ?? SymfonySecurityMiddleware::class;
-        $container->register($securityMiddlewareClass)
+        $container->register(SymfonySecurityMiddleware::class)
             ->setArguments([
                 new Reference('security.token_storage'),
                 $oauthConfig['roles_claim'],
