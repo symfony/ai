@@ -34,6 +34,7 @@ use Mcp\Server\Transport\Http\OAuth\JwtTokenValidator;
 use Mcp\Server\Transport\Http\OAuth\OidcDiscovery;
 use Mcp\Server\Transport\Http\OAuth\ProtectedResourceMetadata;
 use Psr\Http\Server\MiddlewareInterface;
+use Psr\SimpleCache\CacheInterface;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
@@ -273,7 +274,7 @@ final class McpBundle extends AbstractBundle
             ->setArguments([
                 null,
                 new Reference('mcp.psr17_factory'),
-                new Reference('Psr\SimpleCache\CacheInterface'),
+                new Reference(CacheInterface::class),
             ]);
 
         $container->register('mcp.oauth.jwks_provider', JwksProvider::class)
@@ -281,7 +282,7 @@ final class McpBundle extends AbstractBundle
                 new Reference('mcp.oauth.discovery'),
                 null,
                 new Reference('mcp.psr17_factory'),
-                new Reference('Psr\SimpleCache\CacheInterface'),
+                new Reference(CacheInterface::class),
             ]);
 
         $container->register('mcp.oauth.token_validator', JwtTokenValidator::class)
