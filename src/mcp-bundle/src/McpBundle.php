@@ -35,6 +35,7 @@ use Mcp\Server\Transport\Http\OAuth\OidcDiscovery;
 use Mcp\Server\Transport\Http\OAuth\ProtectedResourceMetadata;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\SimpleCache\CacheInterface;
+use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
@@ -107,6 +108,9 @@ final class McpBundle extends AbstractBundle
         $container->addCompilerPass(new McpPass());
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     private function registerParameters(array $config, ContainerBuilder $builder): void
     {
         $builder->setParameter('mcp.app', $config['app']);
@@ -158,6 +162,9 @@ final class McpBundle extends AbstractBundle
             ->addTag('mcp.middleware');
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     private function configureReferenceHandler(array $config, ContainerBuilder $builder): void
     {
         $referenceHandler = $config['reference_handler'];
@@ -189,6 +196,10 @@ final class McpBundle extends AbstractBundle
         $builder->setDefinition('mcp.data_collector', $dataCollector);
     }
 
+    /**
+     * @param array<string, bool>  $transports
+     * @param array<string, mixed> $httpConfig
+     */
     private function configureTransports(array $transports, array $httpConfig, ContainerBuilder $container): void
     {
         if (!$transports['stdio'] && !$transports['http']) {
@@ -260,11 +271,14 @@ final class McpBundle extends AbstractBundle
             ->setAutoconfigured(true);
     }
 
+    /**
+     * @param array<string, mixed> $oauthConfig
+     */
     private function configureOAuth(array $oauthConfig, string $path, ?string $securityMiddleware, ContainerBuilder $container): void
     {
         foreach (['issuer', 'base_url'] as $required) {
             if (null === ($oauthConfig[$required] ?? null) || '' === $oauthConfig[$required]) {
-                throw new \LogicException(\sprintf('The "mcp.http.oauth.%s" option is required when OAuth is enabled.', $required));
+                throw new LogicException(\sprintf('The "mcp.http.oauth.%s" option is required when OAuth is enabled.', $required));
             }
         }
 
@@ -308,6 +322,9 @@ final class McpBundle extends AbstractBundle
             ]);
     }
 
+    /**
+     * @param array<string, mixed> $oauthConfig
+     */
     private function registerOAuthMiddleware(array $oauthConfig, ?string $securityMiddleware, ContainerBuilder $container): void
     {
         $container->register(ProtectedResourceMetadataMiddleware::class)
@@ -350,6 +367,9 @@ final class McpBundle extends AbstractBundle
             ->addTag('mcp.middleware', ['priority' => 10]);
     }
 
+    /**
+     * @param array<string, mixed> $sessionConfig
+     */
     private function configureSessionStore(array $sessionConfig, ContainerBuilder $container): void
     {
         if ('memory' === $sessionConfig['store']) {

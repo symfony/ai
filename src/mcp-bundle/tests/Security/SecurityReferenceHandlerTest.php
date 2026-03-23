@@ -22,45 +22,45 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 final class SecurityReferenceHandlerTest extends TestCase
 {
-    public function testDelegatesNonToolReferencesToInner(): void
+    public function testDelegatesNonToolReferencesToInner()
     {
         $reference = new ElementReference(static fn () => 'result');
         $inner = self::createMock(ReferenceHandlerInterface::class);
-        $inner->expects(self::once())
+        $inner->expects($this->once())
             ->method('handle')
             ->with($reference, [])
             ->willReturn('result');
 
-        $handler = new SecurityReferenceHandler($inner, self::createStub(IsGrantedCheckerInterface::class));
+        $handler = new SecurityReferenceHandler($inner, $this->createStub(IsGrantedCheckerInterface::class));
 
-        self::assertSame('result', $handler->handle($reference, []));
+        $this->assertSame('result', $handler->handle($reference, []));
     }
 
-    public function testAllowsToolWhenGranted(): void
+    public function testAllowsToolWhenGranted()
     {
         $tool = new Tool('my_tool', ['type' => 'object', 'properties' => [], 'required' => null], null, null);
         $reference = new ToolReference($tool, [ToolWithoutAttribute::class, 'handle']);
 
-        $checker = self::createStub(IsGrantedCheckerInterface::class);
+        $checker = $this->createStub(IsGrantedCheckerInterface::class);
         $checker->method('isGranted')->willReturn(true);
 
         $inner = self::createMock(ReferenceHandlerInterface::class);
-        $inner->expects(self::once())->method('handle')->willReturn('ok');
+        $inner->expects($this->once())->method('handle')->willReturn('ok');
 
         $handler = new SecurityReferenceHandler($inner, $checker);
 
-        self::assertSame('ok', $handler->handle($reference, []));
+        $this->assertSame('ok', $handler->handle($reference, []));
     }
 
-    public function testDeniesToolWhenNotGranted(): void
+    public function testDeniesToolWhenNotGranted()
     {
         $tool = new Tool('restricted_tool', ['type' => 'object', 'properties' => [], 'required' => null], null, null);
         $reference = new ToolReference($tool, [ToolWithoutAttribute::class, 'handle']);
 
-        $checker = self::createStub(IsGrantedCheckerInterface::class);
+        $checker = $this->createStub(IsGrantedCheckerInterface::class);
         $checker->method('isGranted')->willReturn(false);
 
-        $inner = self::createStub(ReferenceHandlerInterface::class);
+        $inner = $this->createStub(ReferenceHandlerInterface::class);
 
         $handler = new SecurityReferenceHandler($inner, $checker);
 
@@ -70,14 +70,14 @@ final class SecurityReferenceHandlerTest extends TestCase
         $handler->handle($reference, []);
     }
 
-    public function testDeniesToolWithNonArrayHandler(): void
+    public function testDeniesToolWithNonArrayHandler()
     {
         $tool = new Tool('closure_tool', ['type' => 'object', 'properties' => [], 'required' => null], null, null);
         $reference = new ToolReference($tool, static fn () => null);
 
-        $inner = self::createStub(ReferenceHandlerInterface::class);
+        $inner = $this->createStub(ReferenceHandlerInterface::class);
 
-        $handler = new SecurityReferenceHandler($inner, self::createStub(IsGrantedCheckerInterface::class));
+        $handler = new SecurityReferenceHandler($inner, $this->createStub(IsGrantedCheckerInterface::class));
 
         $this->expectException(AccessDeniedException::class);
         $this->expectExceptionMessage('unable to resolve handler');

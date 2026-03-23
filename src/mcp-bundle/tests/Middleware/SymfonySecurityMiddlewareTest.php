@@ -28,63 +28,63 @@ final class SymfonySecurityMiddlewareTest extends TestCase
         $this->factory = new Psr17Factory();
     }
 
-    public function testPassesThroughWithoutOAuthClaims(): void
+    public function testPassesThroughWithoutOAuthClaims()
     {
         $request = $this->createRequest();
         $expectedResponse = $this->factory->createResponse(200);
 
         $tokenStorage = self::createMock(TokenStorageInterface::class);
-        $tokenStorage->expects(self::never())->method('setToken');
+        $tokenStorage->expects($this->never())->method('setToken');
 
         $handler = self::createMock(RequestHandlerInterface::class);
-        $handler->expects(self::once())->method('handle')->willReturn($expectedResponse);
+        $handler->expects($this->once())->method('handle')->willReturn($expectedResponse);
 
         $middleware = new SymfonySecurityMiddleware($tokenStorage, responseFactory: $this->factory);
         $response = $middleware->process($request, $handler);
 
-        self::assertSame($expectedResponse, $response);
+        $this->assertSame($expectedResponse, $response);
     }
 
-    public function testReturns401WhenSubMissing(): void
+    public function testReturns401WhenSubMissing()
     {
         $request = $this->createRequest(['email' => 'user@test.com']);
 
         $middleware = new SymfonySecurityMiddleware(
-            self::createStub(TokenStorageInterface::class),
+            $this->createStub(TokenStorageInterface::class),
             responseFactory: $this->factory,
         );
-        $response = $middleware->process($request, self::createStub(RequestHandlerInterface::class));
+        $response = $middleware->process($request, $this->createStub(RequestHandlerInterface::class));
 
-        self::assertSame(401, $response->getStatusCode());
+        $this->assertSame(401, $response->getStatusCode());
     }
 
-    public function testReturns401WhenEmailMissing(): void
+    public function testReturns401WhenEmailMissing()
     {
         $request = $this->createRequest(['sub' => 'user-id']);
 
         $middleware = new SymfonySecurityMiddleware(
-            self::createStub(TokenStorageInterface::class),
+            $this->createStub(TokenStorageInterface::class),
             responseFactory: $this->factory,
         );
-        $response = $middleware->process($request, self::createStub(RequestHandlerInterface::class));
+        $response = $middleware->process($request, $this->createStub(RequestHandlerInterface::class));
 
-        self::assertSame(401, $response->getStatusCode());
+        $this->assertSame(401, $response->getStatusCode());
     }
 
-    public function testReturns401WhenSubIsEmpty(): void
+    public function testReturns401WhenSubIsEmpty()
     {
         $request = $this->createRequest(['sub' => '', 'email' => 'user@test.com']);
 
         $middleware = new SymfonySecurityMiddleware(
-            self::createStub(TokenStorageInterface::class),
+            $this->createStub(TokenStorageInterface::class),
             responseFactory: $this->factory,
         );
-        $response = $middleware->process($request, self::createStub(RequestHandlerInterface::class));
+        $response = $middleware->process($request, $this->createStub(RequestHandlerInterface::class));
 
-        self::assertSame(401, $response->getStatusCode());
+        $this->assertSame(401, $response->getStatusCode());
     }
 
-    public function testSetsSecurityTokenWithValidClaims(): void
+    public function testSetsSecurityTokenWithValidClaims()
     {
         $request = $this->createRequest([
             'sub' => 'user-id',
@@ -94,24 +94,24 @@ final class SymfonySecurityMiddlewareTest extends TestCase
         $expectedResponse = $this->factory->createResponse(200);
 
         $tokenStorage = self::createMock(TokenStorageInterface::class);
-        $tokenStorage->expects(self::once())
+        $tokenStorage->expects($this->once())
             ->method('setToken')
-            ->with(self::callback(static function (PostAuthenticationToken $token): bool {
+            ->with($this->callback(static function (PostAuthenticationToken $token): bool {
                 return 'user@test.com' === $token->getUserIdentifier()
                     && \in_array('ROLE_MCP_USER', $token->getRoleNames(), true)
                     && \in_array('ROLE_ADMIN', $token->getRoleNames(), true);
             }));
 
-        $handler = self::createStub(RequestHandlerInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willReturn($expectedResponse);
 
         $middleware = new SymfonySecurityMiddleware($tokenStorage, responseFactory: $this->factory);
         $response = $middleware->process($request, $handler);
 
-        self::assertSame($expectedResponse, $response);
+        $this->assertSame($expectedResponse, $response);
     }
 
-    public function testUsesCustomRolesClaim(): void
+    public function testUsesCustomRolesClaim()
     {
         $request = $this->createRequest([
             'sub' => 'user-id',
@@ -120,20 +120,20 @@ final class SymfonySecurityMiddlewareTest extends TestCase
         ]);
 
         $tokenStorage = self::createMock(TokenStorageInterface::class);
-        $tokenStorage->expects(self::once())
+        $tokenStorage->expects($this->once())
             ->method('setToken')
-            ->with(self::callback(static function (PostAuthenticationToken $token): bool {
+            ->with($this->callback(static function (PostAuthenticationToken $token): bool {
                 return \in_array('ROLE_EDITOR', $token->getRoleNames(), true);
             }));
 
-        $handler = self::createStub(RequestHandlerInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willReturn($this->factory->createResponse(200));
 
         $middleware = new SymfonySecurityMiddleware($tokenStorage, rolesClaim: 'groups', responseFactory: $this->factory);
         $middleware->process($request, $handler);
     }
 
-    public function testFiltersNonStringRoles(): void
+    public function testFiltersNonStringRoles()
     {
         $request = $this->createRequest([
             'sub' => 'user-id',
@@ -142,9 +142,9 @@ final class SymfonySecurityMiddlewareTest extends TestCase
         ]);
 
         $tokenStorage = self::createMock(TokenStorageInterface::class);
-        $tokenStorage->expects(self::once())
+        $tokenStorage->expects($this->once())
             ->method('setToken')
-            ->with(self::callback(static function (PostAuthenticationToken $token): bool {
+            ->with($this->callback(static function (PostAuthenticationToken $token): bool {
                 $roles = $token->getRoleNames();
 
                 return \in_array('ROLE_VALID', $roles, true)
@@ -152,13 +152,16 @@ final class SymfonySecurityMiddlewareTest extends TestCase
                     && 3 === \count($roles);
             }));
 
-        $handler = self::createStub(RequestHandlerInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willReturn($this->factory->createResponse(200));
 
         $middleware = new SymfonySecurityMiddleware($tokenStorage, responseFactory: $this->factory);
         $middleware->process($request, $handler);
     }
 
+    /**
+     * @param array<string, mixed>|null $claims
+     */
     private function createRequest(?array $claims = null): ServerRequestInterface
     {
         $request = $this->factory->createServerRequest('POST', '/mcp');
