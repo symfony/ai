@@ -28,15 +28,25 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 final class FailoverPlatform implements PlatformInterface
 {
     /**
+     * @var list<PlatformInterface>
+     */
+    private readonly array $platforms;
+
+    /**
+     * @var \WeakMap<PlatformInterface, non-empty-string>
+     */
+    private \WeakMap $modelOverrides;
+
+    /**
      * @var \WeakMap<PlatformInterface, int>
      */
     private readonly \WeakMap $failedPlatforms;
 
     /**
-     * @param PlatformInterface[] $platforms
+     * @param list<array{platform: PlatformInterface, model?: string|null}> $platforms
      */
     public function __construct(
-        private readonly iterable $platforms,
+        array $platforms,
         private readonly RateLimiterFactoryInterface $rateLimiterFactory,
         private readonly ClockInterface $clock = new MonotonicClock(),
         private readonly LoggerInterface $logger = new NullLogger(),
@@ -45,12 +55,33 @@ final class FailoverPlatform implements PlatformInterface
             throw new InvalidArgumentException(\sprintf('"%s" must have at least one platform configured.', self::class));
         }
 
+        $this->modelOverrides = new \WeakMap();
+        $resolvedPlatforms = [];
+
+        foreach ($platforms as $config) {
+            $platform = $config['platform'];
+            $model = $config['model'] ?? null;
+
+            if (\is_string($model) && '' !== $model) {
+                $this->modelOverrides[$platform] = $model;
+            }
+
+            $resolvedPlatforms[] = $platform;
+        }
+
+        $this->platforms = $resolvedPlatforms;
         $this->failedPlatforms = new \WeakMap();
     }
 
     public function invoke(string $model, object|array|string $input, array $options = []): DeferredResult
     {
-        return $this->do(static fn (PlatformInterface $platform): DeferredResult => $platform->invoke($model, $input, $options));
+        $modelOverrides = $this->modelOverrides;
+
+        return $this->do(static fn (PlatformInterface $platform): DeferredResult => $platform->invoke(
+            $modelOverrides[$platform] ?? $model,
+            $input,
+            $options,
+        ));
     }
 
     public function getModelCatalog(): ModelCatalogInterface
@@ -58,6 +89,13 @@ final class FailoverPlatform implements PlatformInterface
         return $this->do(static fn (PlatformInterface $platform): ModelCatalogInterface => $platform->getModelCatalog());
     }
 
+    /**
+     * @template T of DeferredResult|ModelCatalogInterface
+     *
+     * @param \Closure(PlatformInterface): T $func
+     *
+     * @return T
+     */
     private function do(\Closure $func): DeferredResult|ModelCatalogInterface
     {
         foreach ($this->platforms as $platform) {
