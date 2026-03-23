@@ -11,10 +11,9 @@ CHANGELOG
  * Add `IsGrantedChecker` for `#[IsGranted]` attribute-based tool authorization
  * Add `SecurityReferenceHandler` to enforce access control on tool execution
  * Add `FilteredListToolsHandler` to filter `tools/list` by user grants
- * Add `TestSecurityMiddleware` for testing with `X-Test-Roles` header (opt-in)
+ * Add `TestSecurityMiddleware` for testing with `X-Test-Roles` header (register via `mcp.middleware` tag)
  * Add `FrameworkSessionStore` with application-level TTL via JSON envelope
  * Add `reference_handler` configuration option
- * Add `security_middleware` configuration option
 
 0.4
 ---

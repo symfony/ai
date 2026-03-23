@@ -195,14 +195,6 @@ Middleware execution order is controlled via the ``priority`` tag attribute (hig
             tags:
                 - { name: 'mcp.middleware', priority: 100 }
 
-You can also specify middleware explicitly in configuration:
-
-.. code-block:: yaml
-
-    mcp:
-        http:
-            security_middleware: App\Middleware\MySecurityMiddleware
-
 OAuth Integration
 .................
 
@@ -288,14 +280,17 @@ Testing with Security
 .....................
 
 For functional tests, you can use the ``TestSecurityMiddleware`` to simulate authenticated users
-by passing roles via HTTP header. This requires explicit opt-in:
+by passing roles via HTTP header. Register it as a tagged service in your test environment:
 
 .. code-block:: yaml
 
-    # config/packages/test/mcp.yaml
-    mcp:
-        http:
-            security_middleware: Symfony\AI\McpBundle\Test\TestSecurityMiddleware
+    # config/packages/test/services.yaml
+    services:
+        Symfony\AI\McpBundle\Test\TestSecurityMiddleware:
+            arguments:
+                - '@security.token_storage'
+            tags:
+                - { name: 'mcp.middleware', priority: 20 }
 
 Then in your tests, pass the ``X-Test-Roles`` header::
 
@@ -421,7 +416,6 @@ Configuration
         # HTTP transport configuration (optional)
         http:
             path: /_mcp # HTTP endpoint path (default: /_mcp)
-            security_middleware: ~ # Custom security middleware class (default: null)
             routes: [] # Additional routes to register (auto-configured with OAuth)
             oauth:
                 enabled: false # Enable OAuth 2.0 integration
