@@ -27,47 +27,47 @@ use Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken;
 
 final class FilteredListToolsHandlerTest extends TestCase
 {
-    public function testSupportsListToolsRequest(): void
+    public function testSupportsListToolsRequest()
     {
         $handler = new FilteredListToolsHandler(
-            self::createStub(RegistryInterface::class),
-            self::createStub(IsGrantedCheckerInterface::class),
-            self::createStub(TokenStorageInterface::class),
+            $this->createStub(RegistryInterface::class),
+            $this->createStub(IsGrantedCheckerInterface::class),
+            $this->createStub(TokenStorageInterface::class),
         );
 
-        self::assertTrue($handler->supports((new ListToolsRequest())->withId('1')));
+        $this->assertTrue($handler->supports((new ListToolsRequest())->withId('1')));
     }
 
-    public function testReturnsEmptyListWithoutAuthentication(): void
+    public function testReturnsEmptyListWithoutAuthentication()
     {
-        $registry = self::createStub(RegistryInterface::class);
+        $registry = $this->createStub(RegistryInterface::class);
         $registry->method('getTools')->willReturn(new Page([], null));
 
-        $tokenStorage = self::createStub(TokenStorageInterface::class);
+        $tokenStorage = $this->createStub(TokenStorageInterface::class);
         $tokenStorage->method('getToken')->willReturn(null);
 
-        $handler = new FilteredListToolsHandler($registry, self::createStub(IsGrantedCheckerInterface::class), $tokenStorage);
-        $response = $handler->handle((new ListToolsRequest())->withId('1'), self::createStub(SessionInterface::class));
+        $handler = new FilteredListToolsHandler($registry, $this->createStub(IsGrantedCheckerInterface::class), $tokenStorage);
+        $response = $handler->handle((new ListToolsRequest())->withId('1'), $this->createStub(SessionInterface::class));
 
-        self::assertInstanceOf(ListToolsResult::class, $response->result);
-        self::assertCount(0, $response->result->tools);
+        $this->assertInstanceOf(ListToolsResult::class, $response->result);
+        $this->assertCount(0, $response->result->tools);
     }
 
-    public function testReturnsEmptyListWithNullToken(): void
+    public function testReturnsEmptyListWithNullToken()
     {
-        $registry = self::createStub(RegistryInterface::class);
+        $registry = $this->createStub(RegistryInterface::class);
         $registry->method('getTools')->willReturn(new Page([], null));
 
-        $tokenStorage = self::createStub(TokenStorageInterface::class);
+        $tokenStorage = $this->createStub(TokenStorageInterface::class);
         $tokenStorage->method('getToken')->willReturn(new NullToken());
 
-        $handler = new FilteredListToolsHandler($registry, self::createStub(IsGrantedCheckerInterface::class), $tokenStorage);
-        $response = $handler->handle((new ListToolsRequest())->withId('1'), self::createStub(SessionInterface::class));
+        $handler = new FilteredListToolsHandler($registry, $this->createStub(IsGrantedCheckerInterface::class), $tokenStorage);
+        $response = $handler->handle((new ListToolsRequest())->withId('1'), $this->createStub(SessionInterface::class));
 
-        self::assertCount(0, $response->result->tools);
+        $this->assertCount(0, $response->result->tools);
     }
 
-    public function testFiltersToolsByAuthorizationWhenAuthenticated(): void
+    public function testFiltersToolsByAuthorizationWhenAuthenticated()
     {
         $allowedTool = new Tool('allowed', ['type' => 'object', 'properties' => [], 'required' => null], null, null);
         $deniedTool = new Tool('denied', ['type' => 'object', 'properties' => [], 'required' => null], null, null);
@@ -75,7 +75,7 @@ final class FilteredListToolsHandlerTest extends TestCase
         $allowedRef = new ToolReference($allowedTool, [self::class, 'dummyAllowed']);
         $deniedRef = new ToolReference($deniedTool, [self::class, 'dummyDenied']);
 
-        $registry = self::createStub(RegistryInterface::class);
+        $registry = $this->createStub(RegistryInterface::class);
         $registry->method('getTools')->willReturn(new Page([$allowedTool, $deniedTool], null));
         $registry->method('getTool')->willReturnCallback(
             static fn (string $name) => match ($name) {
@@ -85,41 +85,41 @@ final class FilteredListToolsHandlerTest extends TestCase
             }
         );
 
-        $checker = self::createStub(IsGrantedCheckerInterface::class);
+        $checker = $this->createStub(IsGrantedCheckerInterface::class);
         $checker->method('isGranted')->willReturnCallback(
-            static fn (array $handler) => $handler[1] === 'dummyAllowed'
+            static fn (array $handler) => 'dummyAllowed' === $handler[1]
         );
 
-        $tokenStorage = self::createStub(TokenStorageInterface::class);
+        $tokenStorage = $this->createStub(TokenStorageInterface::class);
         $tokenStorage->method('getToken')->willReturn(
-            self::createStub(PostAuthenticationToken::class)
+            $this->createStub(PostAuthenticationToken::class)
         );
 
         $handler = new FilteredListToolsHandler($registry, $checker, $tokenStorage);
-        $response = $handler->handle((new ListToolsRequest())->withId('1'), self::createStub(SessionInterface::class));
+        $response = $handler->handle((new ListToolsRequest())->withId('1'), $this->createStub(SessionInterface::class));
 
-        self::assertCount(1, $response->result->tools);
-        self::assertSame('allowed', $response->result->tools[0]->name);
+        $this->assertCount(1, $response->result->tools);
+        $this->assertSame('allowed', $response->result->tools[0]->name);
     }
 
-    public function testDeniesToolWithNonArrayHandler(): void
+    public function testDeniesToolWithNonArrayHandler()
     {
         $tool = new Tool('closure_tool', ['type' => 'object', 'properties' => [], 'required' => null], null, null);
         $ref = new ToolReference($tool, static fn () => null);
 
-        $registry = self::createStub(RegistryInterface::class);
+        $registry = $this->createStub(RegistryInterface::class);
         $registry->method('getTools')->willReturn(new Page([$tool], null));
         $registry->method('getTool')->willReturn($ref);
 
-        $tokenStorage = self::createStub(TokenStorageInterface::class);
+        $tokenStorage = $this->createStub(TokenStorageInterface::class);
         $tokenStorage->method('getToken')->willReturn(
-            self::createStub(PostAuthenticationToken::class)
+            $this->createStub(PostAuthenticationToken::class)
         );
 
-        $handler = new FilteredListToolsHandler($registry, self::createStub(IsGrantedCheckerInterface::class), $tokenStorage);
-        $response = $handler->handle((new ListToolsRequest())->withId('1'), self::createStub(SessionInterface::class));
+        $handler = new FilteredListToolsHandler($registry, $this->createStub(IsGrantedCheckerInterface::class), $tokenStorage);
+        $response = $handler->handle((new ListToolsRequest())->withId('1'), $this->createStub(SessionInterface::class));
 
-        self::assertCount(0, $response->result->tools);
+        $this->assertCount(0, $response->result->tools);
     }
 
     public static function dummyAllowed(): void

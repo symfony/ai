@@ -13,7 +13,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Mcp\Capability\Registry;
 use Mcp\Capability\Registry\ReferenceHandler;
-use Mcp\Capability\Registry\ReferenceHandlerInterface;
 use Mcp\Capability\RegistryInterface;
 use Mcp\Server;
 use Mcp\Server\Builder;

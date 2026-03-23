@@ -18,52 +18,52 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class IsGrantedCheckerTest extends TestCase
 {
-    public function testGrantsAccessWithoutIsGrantedAttribute(): void
+    public function testGrantsAccessWithoutIsGrantedAttribute()
     {
-        $authChecker = self::createStub(AuthorizationCheckerInterface::class);
+        $authChecker = $this->createStub(AuthorizationCheckerInterface::class);
         $authChecker->method('isGranted')->willReturn(false);
 
         $checker = new IsGrantedChecker($authChecker);
 
-        self::assertTrue($checker->isGranted([ToolWithoutAttribute::class, 'handle']));
+        $this->assertTrue($checker->isGranted([ToolWithoutAttribute::class, 'handle']));
     }
 
-    public function testGrantsAccessWhenAuthorized(): void
+    public function testGrantsAccessWhenAuthorized()
     {
         $authChecker = self::createMock(AuthorizationCheckerInterface::class);
-        $authChecker->expects(self::once())
+        $authChecker->expects($this->once())
             ->method('isGranted')
             ->with('ROLE_ADMIN')
             ->willReturn(true);
 
         $checker = new IsGrantedChecker($authChecker);
 
-        self::assertTrue($checker->isGranted([ToolWithAttribute::class, 'handle']));
+        $this->assertTrue($checker->isGranted([ToolWithAttribute::class, 'handle']));
     }
 
-    public function testDeniesAccessWhenNotAuthorized(): void
+    public function testDeniesAccessWhenNotAuthorized()
     {
-        $authChecker = self::createStub(AuthorizationCheckerInterface::class);
+        $authChecker = $this->createStub(AuthorizationCheckerInterface::class);
         $authChecker->method('isGranted')->willReturn(false);
 
         $checker = new IsGrantedChecker($authChecker);
 
-        self::assertFalse($checker->isGranted([ToolWithAttribute::class, 'handle']));
+        $this->assertFalse($checker->isGranted([ToolWithAttribute::class, 'handle']));
     }
 
-    public function testDeniesAccessOnReflectionFailure(): void
+    public function testDeniesAccessOnReflectionFailure()
     {
-        $authChecker = self::createStub(AuthorizationCheckerInterface::class);
+        $authChecker = $this->createStub(AuthorizationCheckerInterface::class);
 
         $checker = new IsGrantedChecker($authChecker);
 
-        self::assertFalse($checker->isGranted(['NonExistentClass', 'nonExistentMethod']));
+        $this->assertFalse($checker->isGranted(['NonExistentClass', 'nonExistentMethod'])); // @phpstan-ignore argument.type
     }
 
-    public function testChecksAllAttributes(): void
+    public function testChecksAllAttributes()
     {
         $authChecker = self::createMock(AuthorizationCheckerInterface::class);
-        $authChecker->expects(self::exactly(2))
+        $authChecker->expects($this->exactly(2))
             ->method('isGranted')
             ->willReturnCallback(static fn (string $attr) => match ($attr) {
                 'ROLE_ADMIN' => true,
@@ -73,7 +73,7 @@ final class IsGrantedCheckerTest extends TestCase
 
         $checker = new IsGrantedChecker($authChecker);
 
-        self::assertFalse($checker->isGranted([ToolWithMultipleAttributes::class, 'handle']));
+        $this->assertFalse($checker->isGranted([ToolWithMultipleAttributes::class, 'handle']));
     }
 }
 
