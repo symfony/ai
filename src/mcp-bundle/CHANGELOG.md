@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.5
+0.7
 ---
 
  * Add PSR-15 HTTP middleware pipeline support (`mcp.middleware` tagged services)
