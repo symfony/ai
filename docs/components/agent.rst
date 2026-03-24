@@ -162,6 +162,10 @@ To leverage JSON Schema validation rules, configure the :class:`Symfony\\AI\\Pla
 
 See attribute class :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\With` for all available options.
 
+.. note::
+
+    Please be aware, that this is only converted in a JSON Schema for the LLM to respect, but not validated by Symfony AI itself.
+
 Automatic Enum Validation
 .........................
 
@@ -231,9 +235,16 @@ If you have `symfony/validator` installed, you can also use validation constrain
 
 This replaces the need to manually define the schema using ``#[With(...)]``, though it's possible to use both if needed.
 
-.. note::
+To validate tool call arguments before invoking the actual tool, add the built-in :class:`Symfony\\AI\\Agent\\Toolbox\\EventListener\\ValidateToolCallArgumentsListener`
+to the event dispatcher that is passed to :class:`Symfony\\AI\\Agent\\Toolbox\\Toolbox`::
 
-    Please be aware, that this is only converted in a JSON Schema for the LLM to respect, but not validated by Symfony AI itself.
+    use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
+    use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
+
+    $eventDispatcher->addListener(ToolCallArgumentsResolved::class, new ValidateToolCallArgumentsListener());
+
+This makes the toolbox throw :class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\InvalidToolCallArgumentsException` before the tool is invoked if any of the
+arguments did not pass validation. When using the AI Bundle, the event listener is registered automatically and validation happens out-of-the-box.
 
 Third-Party Tools
 ~~~~~~~~~~~~~~~~~
