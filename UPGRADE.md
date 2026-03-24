@@ -27,6 +27,8 @@ Platform
  * `ModelCatalog` in `Ollama` has been replaced by `OllamaApiCatalog`
  * `OllamaApiCatalog` in `Ollama` has been replaced to `ModelCatalog`
  * `Ollama` model is now `final`
+ * `ModelCatalog` in `ElevenLabs` has been replaced by `ElevenLabsApiCatalog`
+ * `ElevenLabsApiCatalog` in `ElevenLabs` has been replaced to `ModelCatalog`
 
 Store
 -----

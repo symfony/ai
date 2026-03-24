@@ -575,8 +575,6 @@ final class AiBundle extends AbstractBundle
                     $platform['endpoint'],
                     $platform['api_key'] ?? null,
                     new Reference($platform['http_client']),
-                    $platform['api_catalog'] ?? false,
-                    new Reference('ai.platform.model_catalog.'.$type),
                     new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),
                 ])
