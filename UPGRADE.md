@@ -41,6 +41,11 @@ Store
    -$retriever = new Retriever($store, $vectorizer, $logger);
    +$retriever = new Retriever($store, $vectorizer, logger: $logger);
    ```
+ * Add support for `ScopingHttpClient` in `AzureSearchStore`
+ * The `endpointUrl` parameter for `AzureSearchStore` has been removed
+ * The `apiKey` parameter for `AzureSearchStore` has been removed
+ * The `apiVersion` parameter for `AzureSearchStore` has been removed
+ * A `StoreFactory` has been introduced for `AzureSearchStore`
 
  * The `ChatInterface` now has a `stream()` method. If you implement this interface,
    you need to add this method to your implementation.
