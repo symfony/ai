@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `gpt-5.4-mini` and `gpt-5.4-nano` to `ModelCatalog`
+
 0.3
 ---
 
