@@ -240,6 +240,30 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'gpt-5.4-mini' => [
+                'class' => Gpt::class,
+                'capabilities' => [
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_PDF,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::OUTPUT_TEXT,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'gpt-5.4-nano' => [
+                'class' => Gpt::class,
+                'capabilities' => [
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_PDF,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::OUTPUT_TEXT,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
             'text-embedding-ada-002' => [
                 'class' => Embeddings::class,
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
