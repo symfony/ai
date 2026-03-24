@@ -104,4 +104,30 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'test.openai.azure.com', 'test-api-key');
         $client->request(new ResponsesModel('gpt-4o'), ['input' => [['role' => 'user', 'content' => 'Hello']]]);
     }
+
+    public function testItHandlesStructuredOutputOption()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame('POST', $method);
+            self::assertSame('https://test.openai.azure.com/openai/v1/responses', $url);
+            self::assertSame('{"temperature":0.7,"text":{"format":{"name":"foo","schema":[],"type":"json_schema"}},"model":"gpt-4o","input":[{"role":"user","content":"Hello"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $options = [
+            'temperature' => 0.7,
+            'response_format' => [
+                'type' => 'json_schema',
+                'json_schema' => [
+                    'name' => 'foo',
+                    'schema' => [],
+                ],
+            ],
+        ];
+
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new ModelClient($httpClient, 'test.openai.azure.com', 'test-api-key', 'gpt-4o');
+        $client->request(new ResponsesModel('gpt-4o'), ['input' => [['role' => 'user', 'content' => 'Hello']]], $options);
+    }
 }
