@@ -52,8 +52,8 @@ class ResultConverter implements ResultConverterInterface
         }
 
         if (429 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Bad Request';
-            throw new RateLimitExceededException($errorMessage);
+            $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
+            throw new RateLimitExceededException(null !== $retryAfter ? (int) $retryAfter : null);
         }
 
         if (!isset($data['data'][0]['embedding'])) {

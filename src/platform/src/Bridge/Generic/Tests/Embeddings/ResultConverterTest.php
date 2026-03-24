@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Generic\Tests\Embeddings;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\Embeddings\ResultConverter;
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -32,6 +33,40 @@ class ResultConverterTest extends TestCase
 
         $this->assertSame([0.3, 0.4, 0.4], $convertedContent[0]->getData());
         $this->assertSame([0.0, 0.0, 0.2], $convertedContent[1]->getData());
+    }
+
+    public function testThrowsRateLimitExceededExceptionWithRetryAfterHeader()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(429);
+        $httpResponse->method('getHeaders')->willReturn(['retry-after' => ['60']]);
+
+        $exception = null;
+        try {
+            (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+        } catch (RateLimitExceededException $e) {
+            $exception = $e;
+        }
+
+        $this->assertNotNull($exception);
+        $this->assertSame(60, $exception->getRetryAfter());
+    }
+
+    public function testThrowsRateLimitExceededExceptionWithoutRetryAfterHeader()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(429);
+        $httpResponse->method('getHeaders')->willReturn([]);
+
+        $exception = null;
+        try {
+            (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+        } catch (RateLimitExceededException $e) {
+            $exception = $e;
+        }
+
+        $this->assertNotNull($exception);
+        $this->assertNull($exception->getRetryAfter());
     }
 
     private function getEmbeddingStub(): string
