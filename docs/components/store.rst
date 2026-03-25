@@ -22,9 +22,14 @@ for documents.
 Indexing
 --------
 
-One higher level feature is the :class:`Symfony\\AI\\Store\\Indexer\\DocumentIndexer`. The purpose of this service is to populate a store with documents.
-Therefore it accepts one or multiple :class:`Symfony\\AI\\Store\\Document\\TextDocument` objects, converts them into embeddings and stores them in the
-used vector store::
+Indexing is the process of converting documents into vector embeddings and storing them in a vector store.
+All indexers implement :class:`Symfony\\AI\\Store\\IndexerInterface` and share a common ``index()`` method.
+Internally they use :class:`Symfony\\AI\\Store\\Indexer\\DocumentProcessor` to run documents through the
+pipeline: filter → transform → vectorize → store.
+
+There are three indexer implementations to choose from:
+
+**DocumentIndexer** accepts documents directly (as :class:`Symfony\\AI\\Store\\Document\\EmbeddableDocumentInterface` instances)::
 
     use Symfony\AI\Store\Document\TextDocument;
     use Symfony\AI\Store\Document\Vectorizer;
@@ -36,7 +41,31 @@ used vector store::
     $document = new TextDocument('id-1', 'This is a sample document.');
     $indexer->index($document);
 
-You can find more advanced usage in combination with an Agent using the store for RAG in the examples folder.
+**SourceIndexer** loads documents via a :class:`Symfony\\AI\\Store\\Document\\LoaderInterface` from a runtime-provided source
+(file path, URL, etc.)::
+
+    use Symfony\AI\Store\Document\Loader\TextFileLoader;
+    use Symfony\AI\Store\Document\Vectorizer;
+    use Symfony\AI\Store\Indexer\DocumentProcessor;
+    use Symfony\AI\Store\Indexer\SourceIndexer;
+
+    $vectorizer = new Vectorizer($platform, $model);
+    $loader = new TextFileLoader();
+    $indexer = new SourceIndexer($loader, new DocumentProcessor($vectorizer, $store));
+    $indexer->index('/path/to/document.txt');
+    // or index multiple sources at once:
+    $indexer->index(['/path/to/doc1.txt', '/path/to/doc2.txt']);
+
+**ConfiguredSourceIndexer** wraps a ``SourceIndexer`` with a pre-configured default source,
+which is useful when the source is defined in configuration but should still be overridable at runtime::
+
+    use Symfony\AI\Store\Indexer\ConfiguredSourceIndexer;
+
+    $inner = new SourceIndexer($loader, new DocumentProcessor($vectorizer, $store));
+    $indexer = new ConfiguredSourceIndexer($inner, '/path/to/document.txt');
+    $indexer->index(); // uses the configured source
+
+See the `RAG Implementation cookbook`_ for more advanced usage in combination with an Agent.
 
 Retrieving
 ----------
@@ -288,3 +317,4 @@ This leads to a store implementing two methods::
 .. _`Weaviate`: https://weaviate.io/
 .. _`SQLite`: https://www.sqlite.org/
 .. _`Supabase`: https://supabase.com/
+.. _`RAG Implementation cookbook`: https://symfony.com/doc/current/ai/cookbook/rag-implementation.html
