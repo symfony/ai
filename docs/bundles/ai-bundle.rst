@@ -141,15 +141,27 @@ Advanced Example with Multiple Agents
                 platform: 'ai.platform.mistral'
                 model: 'mistral-embed'
         indexer:
+            # DocumentIndexer: no loader, accepts documents directly via index($document)
             default:
-                loader: 'Symfony\AI\Store\Document\Loader\InMemoryLoader'
                 vectorizer: 'ai.vectorizer.openai_embeddings'
                 store: 'ai.store.chromadb.default'
 
+            # SourceIndexer: loader without source, call index('/path/to/file') at runtime
             research:
                 loader: 'Symfony\AI\Store\Document\Loader\TextFileLoader'
                 vectorizer: 'ai.vectorizer.mistral_embeddings'
                 store: 'ai.store.memory.research'
+
+            # ConfiguredSourceIndexer: loader + pre-configured source, call index() with no arguments
+            docs:
+                loader: 'Symfony\AI\Store\Document\Loader\RstToctreeLoader'
+                source: '/path/to/docs/index.rst'
+                vectorizer: 'ai.vectorizer.openai_embeddings'
+                store: 'ai.store.chromadb.default'
+                # optional: apply transformers (e.g. chunking) and filters
+                transformers:
+                    - 'Symfony\AI\Store\Document\Transformer\TextSplitTransformer'
+                filters: []
 
 Generic Platform
 ----------------

@@ -86,7 +86,6 @@ Step 3: Create Embeddings and Index Documents
 
 Use a vectorizer to convert documents into embeddings and store them::
 
-    use Symfony\AI\Store\Document\Loader\InMemoryLoader;
     use Symfony\AI\Store\Document\Vectorizer;
     use Symfony\AI\Store\Indexer\DocumentIndexer;
     use Symfony\AI\Store\Indexer\DocumentProcessor;
@@ -96,13 +95,23 @@ Use a vectorizer to convert documents into embeddings and store them::
     $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store));
     $indexer->index($documents);
 
-The :class:`Symfony\\AI\\Store\\Indexer\\DocumentIndexer` handles:
+The :class:`Symfony\\AI\\Store\\Indexer\\DocumentIndexer` accepts
+:class:`Symfony\\AI\\Store\\Document\\EmbeddableDocumentInterface` instances (or iterables of them) directly.
+It handles:
 
 * Transforming and/or filtering documents (optional)
 * Generating vector embeddings
 * Storing vectors in the vector store
 
-Alternatively, you can use the :class:`Symfony\\AI\\Store\\Indexer\\SourceIndexer` for loading documents with a loader.
+Alternatively, you can use the :class:`Symfony\\AI\\Store\\Indexer\\SourceIndexer` when you want to load
+documents from a source (file path, URL, etc.) via a :class:`Symfony\\AI\\Store\\Document\\LoaderInterface`::
+
+    use Symfony\AI\Store\Document\Loader\TextFileLoader;
+    use Symfony\AI\Store\Indexer\SourceIndexer;
+
+    $loader = new TextFileLoader();
+    $indexer = new SourceIndexer($loader, new DocumentProcessor($vectorizer, $store));
+    $indexer->index('/path/to/document.txt');
 
 Step 4: Configure Similarity Search Tool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
