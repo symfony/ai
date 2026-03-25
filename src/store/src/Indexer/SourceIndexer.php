@@ -29,10 +29,16 @@ final class SourceIndexer implements IndexerInterface
     }
 
     /**
-     * @param string|iterable<string> $input Source identifier (file path, URL, etc.) or iterable of sources
+     * @param string|iterable<string>|null $input Source identifier (file path, URL, etc.), iterable of sources, or null for source-independent loaders
      */
-    public function index(string|iterable|object $input, array $options = []): void
+    public function index(string|iterable|object|null $input = null, array $options = []): void
     {
+        if (null === $input) {
+            $this->processor->process($this->loader->load(), $options);
+
+            return;
+        }
+
         if (\is_object($input) && !$input instanceof \Traversable) {
             throw new InvalidArgumentException(\sprintf('SourceIndexer expects a string or iterable of strings, got "%s".', $input::class));
         }
