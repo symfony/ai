@@ -143,14 +143,21 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         $content = '';
-        $successfulCodeExecutionDetected = false;
+        $collectText = true;
         foreach ($contentParts as $contentPart) {
             if ($this->isSuccessfulCodeExecution($contentPart)) {
-                $successfulCodeExecutionDetected = true;
+                $collectText = true;
+                $content = '';
                 continue;
             }
 
-            if ($successfulCodeExecutionDetected) {
+            if (isset($contentPart['codeExecutionResult']) || isset($contentPart['executableCode'])) {
+                $collectText = false;
+                $content = '';
+                continue;
+            }
+
+            if ($collectText && isset($contentPart['text'])) {
                 $content .= $contentPart['text'];
             }
         }
@@ -159,7 +166,6 @@ final class ResultConverter implements ResultConverterInterface
             return new TextResult($content);
         }
 
-        // TODO: see https://github.com/symfony/ai/issues/1053
         throw new RuntimeException('Choice conversion failed. Potentially due to multiple content parts.');
     }
 

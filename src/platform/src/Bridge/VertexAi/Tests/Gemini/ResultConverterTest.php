@@ -96,6 +96,36 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('some_tool', $toolCall->getId());
     }
 
+    public function testItReturnsTextResultForMultipleTextContentParts()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response
+            ->method('toArray')
+            ->willReturn([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => 'Hello',
+                                ],
+                                [
+                                    'text' => ' World',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ]);
+
+        $resultConverter = new ResultConverter();
+
+        $result = $resultConverter->convert(new RawHttpResult($response));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('Hello World', $result->getContent());
+    }
+
     public function testItThrowsExceptionOnFailure()
     {
         $response = $this->createStub(ResponseInterface::class);
