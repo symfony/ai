@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\Mate\Capability;
 
-use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Attribute\McpTool;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -23,7 +23,7 @@ class ServerInfo
     #[McpTool('server-info', 'Get PHP runtime environment details: version, OS, OS family, and loaded extensions')]
     public function getInfo(): string
     {
-        return Toon::encode([
+        return ResponseEncoder::encode([
             'php_version' => \PHP_VERSION,
             'operating_system' => \PHP_OS,
             'operating_system_family' => \PHP_OS_FAMILY,

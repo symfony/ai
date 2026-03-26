@@ -11,9 +11,9 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
-use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 
 /**
  * MCP resource templates for accessing Symfony profiler data.
@@ -48,7 +48,7 @@ final class ProfilerResourceTemplate
             return [
                 'uri' => "symfony-profiler://profile/{$token}",
                 'mimeType' => 'text/plain',
-                'text' => Toon::encode(['error' => 'Profile not found']),
+                'text' => ResponseEncoder::encode(['error' => 'Profile not found']),
             ];
         }
 
@@ -81,7 +81,7 @@ final class ProfilerResourceTemplate
         return [
             'uri' => "symfony-profiler://profile/{$token}",
             'mimeType' => 'text/plain',
-            'text' => Toon::encode($data),
+            'text' => ResponseEncoder::encode($data),
         ];
     }
 
@@ -101,13 +101,13 @@ final class ProfilerResourceTemplate
             return [
                 'uri' => "symfony-profiler://profile/{$token}/{$collector}",
                 'mimeType' => 'text/plain',
-                'text' => Toon::encode($data),
+                'text' => ResponseEncoder::encode($data),
             ];
         } catch (\Throwable $e) {
             return [
                 'uri' => "symfony-profiler://profile/{$token}/{$collector}",
                 'mimeType' => 'text/plain',
-                'text' => Toon::encode(['error' => $e->getMessage()]),
+                'text' => ResponseEncoder::encode(['error' => $e->getMessage()]),
             ];
         }
     }

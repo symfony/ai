@@ -11,10 +11,10 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
-use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Attribute\McpTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileIndex;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
 
 /**
@@ -62,7 +62,7 @@ final class ProfilerTool
 
         $profiles = $this->dataProvider->searchProfiles(array_filter($criteria), $limit);
 
-        return Toon::encode([
+        return ResponseEncoder::encode([
             'profiles' => array_values(array_map(
                 static fn (ProfileIndex $profile): array => $profile->toArray(),
                 $profiles,
@@ -99,6 +99,6 @@ final class ProfilerTool
             $data['context'] = $profileData->context;
         }
 
-        return Toon::encode($data);
+        return ResponseEncoder::encode($data);
     }
 }

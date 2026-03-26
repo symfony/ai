@@ -11,10 +11,10 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
-use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Attribute\McpTool;
 use Symfony\AI\Mate\Bridge\Symfony\Model\Container;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
@@ -35,7 +35,7 @@ class ServiceTool
     {
         $container = $this->readContainer();
         if (null === $container) {
-            return Toon::encode([]);
+            return ResponseEncoder::encode([]);
         }
 
         $output = [];
@@ -50,7 +50,7 @@ class ServiceTool
             $output[$service->id] = $service->class;
         }
 
-        return Toon::encode($output);
+        return ResponseEncoder::encode($output);
     }
 
     private function readContainer(): ?Container

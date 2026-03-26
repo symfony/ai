@@ -7,11 +7,11 @@ CHANGELOG
  * Add Codex wrapper generation (`bin/codex`, `bin/codex.bat`) to `mate init`
  * Add AGENT instruction artifact materialization to `mate discover` (`mate/AGENT_INSTRUCTIONS.md` and managed `AGENTS.md` block)
  * Merge `php-version`, `operating-system`, `operating-system-family`, and `php-extensions` tools into a single `server-info` tool
+ * Add optional TOON format encoding for MCP tool responses to reduce token consumption (install `helgesverre/toon` to enable)
 
 0.3
 ---
 
- * Add TOON format encoding for `ServerInfo::extensions()` to reduce token consumption
  * Add support for `instructions` field in extension composer.json to provide AI agent guidance
  * Add support for `extension: false` flag in `extra.ai-mate` composer.json configuration to exclude packages from being discovered as extensions
  * Add `ToolsInspectCommand` to inspect a specific tool

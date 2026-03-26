@@ -28,11 +28,11 @@
     ],
     "require": {
         "php": ">=8.2",
-        "helgesverre/toon": "^3.1",
         "symfony/ai-mate": "^0.6",
         "symfony/dependency-injection": "^7.3|^8.0"
     },
     "require-dev": {
+        "helgesverre/toon": "^3.1",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",

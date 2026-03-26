@@ -11,10 +11,10 @@
 
 namespace Symfony\AI\Mate\Bridge\Monolog\Capability;
 
-use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Attribute\McpTool;
 use Symfony\AI\Mate\Bridge\Monolog\Model\SearchCriteria;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogReader;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 
 /**
  * MCP tools for searching and analyzing Monolog log files.
@@ -74,7 +74,7 @@ final class LogSearchTool
             );
         }
 
-        return Toon::encode(['entries' => $this->collectResults($criteria, $environment)]);
+        return ResponseEncoder::encode(['entries' => $this->collectResults($criteria, $environment)]);
     }
 
     /**
@@ -99,7 +99,7 @@ final class LogSearchTool
             limit: $limit,
         );
 
-        return Toon::encode(['entries' => $this->collectResults($criteria, $environment)]);
+        return ResponseEncoder::encode(['entries' => $this->collectResults($criteria, $environment)]);
     }
 
     /**
@@ -112,7 +112,7 @@ final class LogSearchTool
     {
         $entries = $this->reader->tail($lines, $level, $environment);
 
-        return Toon::encode(['entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $entries))]);
+        return ResponseEncoder::encode(['entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $entries))]);
     }
 
     /**
@@ -135,13 +135,13 @@ final class LogSearchTool
             ];
         }
 
-        return Toon::encode(['files' => $result]);
+        return ResponseEncoder::encode(['files' => $result]);
     }
 
     #[McpTool('monolog-list-channels', 'List all unique Monolog channel names found across log files (e.g. app, security, doctrine).')]
     public function listChannels(): string
     {
-        return Toon::encode(['channels' => $this->reader->getUniqueChannels()]);
+        return ResponseEncoder::encode(['channels' => $this->reader->getUniqueChannels()]);
     }
 
     /**
