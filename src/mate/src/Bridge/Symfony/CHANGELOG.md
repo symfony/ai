@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `DoctrineCollectorFormatter` to expose Doctrine DBAL query data (query count, execution times, SQL, duplicate detection) to AI via the profiler
+
 0.6
 ---
 
