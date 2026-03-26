@@ -160,7 +160,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices('nonexistent_service_xyz'));
+        $services = Toon::decode($tool->getServices('nonexistent_service_xyz'), DecodeOptions::lenient());
 
         $this->assertEmpty($services);
     }
