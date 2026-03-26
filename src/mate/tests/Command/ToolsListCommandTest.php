@@ -50,8 +50,7 @@ final class ToolsListCommandTest extends TestCase
         $this->assertStringContainsString('MCP Tools', $output);
         $this->assertStringContainsString('Total:', $output);
         $this->assertStringContainsString('tool(s)', $output);
-        $this->assertStringContainsString('php-version', $output);
-        $this->assertStringContainsString('operating-system', $output);
+        $this->assertStringContainsString('server-info', $output);
     }
 
     public function testExecuteWithJsonFormat()
@@ -74,11 +73,11 @@ final class ToolsListCommandTest extends TestCase
         $this->assertArrayHasKey('tools', $json);
         $this->assertArrayHasKey('summary', $json);
         $this->assertArrayHasKey('total', $json['summary']);
-        $this->assertGreaterThanOrEqual(4, $json['summary']['total']);
-        $this->assertArrayHasKey('php-version', $json['tools']);
-        $this->assertArrayHasKey('name', $json['tools']['php-version']);
-        $this->assertArrayHasKey('handler', $json['tools']['php-version']);
-        $this->assertArrayHasKey('extension', $json['tools']['php-version']);
+        $this->assertGreaterThanOrEqual(1, $json['summary']['total']);
+        $this->assertArrayHasKey('server-info', $json['tools']);
+        $this->assertArrayHasKey('name', $json['tools']['server-info']);
+        $this->assertArrayHasKey('handler', $json['tools']['server-info']);
+        $this->assertArrayHasKey('extension', $json['tools']['server-info']);
     }
 
     public function testExecuteWithInvalidExtensionFilter()
@@ -146,13 +145,11 @@ final class ToolsListCommandTest extends TestCase
         $command = $this->createCommand($rootDir, $extensions);
         $tester = new CommandTester($command);
 
-        $tester->execute(['--filter' => 'php-*']);
+        $tester->execute(['--filter' => 'server-*']);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
-        $this->assertStringContainsString('php-version', $output);
-        $this->assertStringContainsString('php-extensions', $output);
-        $this->assertStringNotContainsString('operating-system-family', $output);
+        $this->assertStringContainsString('server-info', $output);
     }
 
     /**

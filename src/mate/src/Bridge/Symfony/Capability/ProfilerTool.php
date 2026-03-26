@@ -31,9 +31,18 @@ final class ProfilerTool
     }
 
     /**
+     * @param int         $limit      Maximum number of profiles to return (use limit=1 to get the latest profile)
+     * @param string|null $method     Filter by HTTP method (GET, POST, PUT, DELETE, PATCH)
+     * @param string|null $url        Filter by URL path (partial match supported)
+     * @param string|null $ip         Filter by client IP address
+     * @param int|null    $statusCode Filter by HTTP response status code (e.g. 200, 404, 500)
+     * @param string|null $context    Filter by Symfony kernel context
+     * @param string|null $from       Start date filter for profile creation time
+     * @param string|null $to         End date filter for profile creation time
+     *
      * @return array{profiles: list<ProfileIndexData>}
      */
-    #[McpTool('symfony-profiler-list', 'List available profiler profiles. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
+    #[McpTool('symfony-profiler-list', 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Profiles are sorted by most recent first, so limit=1 returns the latest profile. Returns summary data with resource_uri for fetching full details via the resource template.')]
     public function listProfiles(
         int $limit = 20,
         ?string $method = null,
@@ -41,53 +50,14 @@ final class ProfilerTool
         ?string $ip = null,
         ?int $statusCode = null,
         ?string $context = null,
+        ?string $from = null,
+        ?string $to = null,
     ): array {
         $criteria = [
             'context' => $context,
             'method' => $method,
             'url' => $url,
             'ip' => $ip,
-            'statusCode' => $statusCode,
-        ];
-
-        $profiles = $this->dataProvider->searchProfiles(array_filter($criteria), $limit);
-
-        return [
-            'profiles' => array_values(array_map(
-                static fn (ProfileIndex $profile): array => $profile->toArray(),
-                $profiles,
-            )),
-        ];
-    }
-
-    /**
-     * @return ProfileIndexData|null
-     */
-    #[McpTool('symfony-profiler-latest', 'Get the latest profiler profile. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
-    public function getLatestProfile(): ?array
-    {
-        $profile = $this->dataProvider->getLatestProfile();
-
-        return $profile?->toArray();
-    }
-
-    /**
-     * @return array{profiles: list<ProfileIndexData>}
-     */
-    #[McpTool('symfony-profiler-search', 'Search profiles by criteria. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
-    public function searchProfiles(
-        ?string $route = null,
-        ?string $method = null,
-        ?int $statusCode = null,
-        ?string $from = null,
-        ?string $to = null,
-        ?string $context = null,
-        int $limit = 20,
-    ): array {
-        $criteria = [
-            'context' => $context,
-            'url' => $route,
-            'method' => $method,
             'statusCode' => $statusCode,
             'from' => $from,
             'to' => $to,
@@ -104,9 +74,11 @@ final class ProfilerTool
     }
 
     /**
+     * @param string $token The unique profiler token identifying the profile
+     *
      * @return ProfileIndexData
      */
-    #[McpTool('symfony-profiler-get', 'Get a specific profile by token. Returns summary data with resource_uri field - use the resource_uri to fetch full profile details including collectors')]
+    #[McpTool('symfony-profiler-get', 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data.')]
     public function getProfile(string $token): array
     {
         $profileData = $this->dataProvider->findProfile($token);

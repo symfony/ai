@@ -6,8 +6,6 @@
 use App\Mate\SymfonyAiFeaturesTool;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
-use function Symfony\Component\DependencyInjection\Loader\Configurator\param;
-
 return static function (ContainerConfigurator $container): void {
     $container->parameters()
         // Override default parameters here
@@ -21,7 +19,7 @@ return static function (ContainerConfigurator $container): void {
             ->autoconfigure()
 
         ->set(SymfonyAiFeaturesTool::class)
-            ->arg('$projectDir', param('mate.root_dir'))
+            ->arg('$rootDir', '%mate.root_dir%')
             ->public()
     ;
 };

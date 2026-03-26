@@ -10,11 +10,11 @@ prefer over running CLI commands directly.
 
 Use MCP tools instead of CLI for log analysis:
 
-| Instead of...                     | Use                                |
-|-----------------------------------|------------------------------------|
-| `tail -f var/log/dev.log`         | `monolog-tail`                     |
-| `grep "error" var/log/*.log`      | `monolog-search` with term "error" |
-| `grep -E "pattern" var/log/*.log` | `monolog-search-regex`             |
+| Instead of...                     | Use                                              |
+|-----------------------------------|--------------------------------------------------|
+| `tail -f var/log/dev.log`         | `monolog-tail`                                   |
+| `grep "error" var/log/*.log`      | `monolog-search` with term "error"               |
+| `grep -E "pattern" var/log/*.log` | `monolog-search` with term "pattern", regex: true |
 
 #### Benefits
 
@@ -28,23 +28,22 @@ Use MCP tools instead of CLI for log analysis:
 
 #### Container Introspection
 
-| Instead of...                  | Use                 |
-|--------------------------------|---------------------|
-| `bin/console debug:container`  | `symfony-services`  |
+| Instead of...                  | Use                |
+|--------------------------------|--------------------|
+| `bin/console debug:container`  | `symfony-services` |
 
 - Direct access to compiled container
 - Environment-aware (auto-detects dev/test/prod)
+- Supports filtering by service ID or class name via query parameter
 
 #### Profiler Access
 
 When `symfony/http-kernel` is installed, profiler tools become available:
 
-| Tool                        | Description                                |
-|-----------------------------|--------------------------------------------|
-| `symfony-profiler-list`     | List profiles with optional filtering      |
-| `symfony-profiler-latest`   | Get the most recent profile                |
-| `symfony-profiler-search`   | Search by route, method, status, date      |
-| `symfony-profiler-get`      | Get profile by token                       |
+| Tool                        | Description                                             |
+|-----------------------------|---------------------------------------------------------|
+| `symfony-profiler-list`     | List and filter profiles by method, URL, IP, status, date range |
+| `symfony-profiler-get`      | Get profile by token                                    |
 
 **Resources:**
 - `symfony-profiler://profile/{token}` - Full profile with collector list

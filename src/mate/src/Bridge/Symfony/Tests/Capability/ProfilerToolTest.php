@@ -89,69 +89,12 @@ final class ProfilerToolTest extends TestCase
         $this->assertCount(2, $result['profiles']);
     }
 
-    public function testGetLatestProfileReturnsFirstProfile()
+    public function testListProfilesFilterByRoute()
     {
-        $profile = $this->tool->getLatestProfile();
-
-        $this->assertNotNull($profile);
-        $this->assertArrayHasKey('token', $profile);
-        $this->assertArrayHasKey('time_formatted', $profile);
-        $this->assertArrayHasKey('resource_uri', $profile);
-        $this->assertSame('ghi789', $profile['token']);
-    }
-
-    public function testGetLatestProfileIncludesResourceUri()
-    {
-        $profile = $this->tool->getLatestProfile();
-
-        $this->assertNotNull($profile);
-        $this->assertArrayHasKey('resource_uri', $profile);
-        $this->assertSame(
-            'symfony-profiler://profile/'.$profile['token'],
-            $profile['resource_uri']
-        );
-    }
-
-    public function testSearchProfilesWithoutCriteria()
-    {
-        $result = $this->tool->searchProfiles();
-
-        $this->assertArrayHasKey('profiles', $result);
-        $this->assertCount(3, $result['profiles']);
-    }
-
-    public function testSearchProfilesByMethod()
-    {
-        $result = $this->tool->searchProfiles(method: 'GET');
+        $result = $this->tool->listProfiles(url: '/api/users');
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
-    }
-
-    public function testSearchProfilesByStatusCode()
-    {
-        $result = $this->tool->searchProfiles(statusCode: 200);
-
-        $this->assertArrayHasKey('profiles', $result);
-        $profiles = $result['profiles'];
-        $this->assertCount(1, $profiles);
-        $this->assertSame('abc123', $profiles[0]['token']);
-    }
-
-    public function testSearchProfilesByRoute()
-    {
-        $result = $this->tool->searchProfiles(route: '/api/users');
-
-        $this->assertArrayHasKey('profiles', $result);
-        $this->assertCount(2, $result['profiles']);
-    }
-
-    public function testSearchProfilesWithLimit()
-    {
-        $result = $this->tool->searchProfiles(limit: 1);
-
-        $this->assertArrayHasKey('profiles', $result);
-        $this->assertCount(1, $result['profiles']);
     }
 
     public function testGetProfileReturnsProfileWithResourceUri()
@@ -189,29 +132,9 @@ final class ProfilerToolTest extends TestCase
         }
     }
 
-    public function testSearchProfilesIncludesResourceUri()
-    {
-        $result = $this->tool->searchProfiles();
-
-        $this->assertArrayHasKey('profiles', $result);
-        foreach ($result['profiles'] as $profile) {
-            $this->assertArrayHasKey('resource_uri', $profile);
-            $this->assertStringStartsWith('symfony-profiler://profile/', $profile['resource_uri']);
-        }
-    }
-
     public function testListProfilesReturnsIntegerKeys()
     {
         $result = $this->tool->listProfiles();
-
-        $this->assertArrayHasKey('profiles', $result);
-        $keys = array_keys($result['profiles']);
-        $this->assertSame([0, 1, 2], $keys);
-    }
-
-    public function testSearchProfilesReturnsIntegerKeys()
-    {
-        $result = $this->tool->searchProfiles();
 
         $this->assertArrayHasKey('profiles', $result);
         $keys = array_keys($result['profiles']);

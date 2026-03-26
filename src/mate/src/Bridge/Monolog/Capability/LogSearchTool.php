@@ -31,11 +31,21 @@ final class LogSearchTool
     }
 
     /**
+     * @param string      $term        Text to search for in log messages, or a regex pattern when $regex is true
+     * @param bool        $regex       When true, treat $term as a regular expression pattern
+     * @param string|null $level       Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
+     * @param string|null $channel     Filter by Monolog channel name (e.g. app, security, doctrine)
+     * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
+     * @param string|null $from        Start date filter, any PHP-parseable date string (e.g. 2024-01-01, -1 hour, yesterday)
+     * @param string|null $to          End date filter, any PHP-parseable date string
+     * @param int         $limit       Maximum number of entries to return
+     *
      * @phpstan-return array{entries: list<LogEntryArray>}
      */
-    #[McpTool('monolog-search', 'Search log entries by text term with optional level, channel, environment, and date filters')]
+    #[McpTool('monolog-search', 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only.')]
     public function search(
         string $term,
+        bool $regex = false,
         ?string $level = null,
         ?string $channel = null,
         ?string $environment = null,
@@ -43,48 +53,44 @@ final class LogSearchTool
         ?string $to = null,
         int $limit = 100,
     ): array {
-        $criteria = new SearchCriteria(
-            term: $term,
-            level: $level,
-            channel: $channel,
-            from: $this->parseDate($from),
-            to: $this->parseDate($to),
-            limit: $limit,
-        );
+        if ($regex) {
+            $pattern = $term;
+            if (!str_starts_with($pattern, '/') && !str_starts_with($pattern, '#')) {
+                $pattern = '/'.$pattern.'/i';
+            }
 
-        return ['entries' => $this->collectResults($criteria, $environment)];
-    }
-
-    /**
-     * @phpstan-return array{entries: list<LogEntryArray>}
-     */
-    #[McpTool('monolog-search-regex', 'Search log entries using a regex pattern')]
-    public function searchRegex(
-        string $pattern,
-        ?string $level = null,
-        ?string $channel = null,
-        ?string $environment = null,
-        int $limit = 100,
-    ): array {
-        // Ensure pattern has delimiters
-        if (!str_starts_with($pattern, '/') && !str_starts_with($pattern, '#')) {
-            $pattern = '/'.$pattern.'/i';
+            $criteria = new SearchCriteria(
+                regex: $pattern,
+                level: $level,
+                channel: $channel,
+                from: $this->parseDate($from),
+                to: $this->parseDate($to),
+                limit: $limit,
+            );
+        } else {
+            $criteria = new SearchCriteria(
+                term: $term,
+                level: $level,
+                channel: $channel,
+                from: $this->parseDate($from),
+                to: $this->parseDate($to),
+                limit: $limit,
+            );
         }
 
-        $criteria = new SearchCriteria(
-            regex: $pattern,
-            level: $level,
-            channel: $channel,
-            limit: $limit,
-        );
-
         return ['entries' => $this->collectResults($criteria, $environment)];
     }
 
     /**
+     * @param string      $key         The context field name to search for (e.g. user_id, exception, order_id)
+     * @param string      $value       The value to match in the context field
+     * @param string|null $level       Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
+     * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
+     * @param int         $limit       Maximum number of entries to return
+     *
      * @phpstan-return array{entries: list<LogEntryArray>}
      */
-    #[McpTool('monolog-context-search', 'Search logs by context field value')]
+    #[McpTool('monolog-context-search', 'Search log entries by structured context data. Finds entries where a specific context key contains the given value.')]
     public function searchContext(
         string $key,
         string $value,
@@ -103,9 +109,13 @@ final class LogSearchTool
     }
 
     /**
+     * @param int         $lines       Number of most recent log entries to return
+     * @param string|null $level       Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
+     * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
+     *
      * @phpstan-return array{entries: list<LogEntryArray>}
      */
-    #[McpTool('monolog-tail', 'Get the last N log entries')]
+    #[McpTool('monolog-tail', 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level and environment.')]
     public function tail(int $lines = 50, ?string $level = null, ?string $environment = null): array
     {
         $entries = $this->reader->tail($lines, $level, $environment);
@@ -114,14 +124,11 @@ final class LogSearchTool
     }
 
     /**
-     * @return array{files: array<int, array{
-     *     name: string,
-     *     path: string,
-     *     size: int,
-     *     modified: string
-     * }>}
+     * @param string|null $environment Filter log files by Symfony environment (e.g. dev, prod, test)
+     *
+     * @return array{files: array<int, array{name: string, path: string, size: int, modified: string}>}
      */
-    #[McpTool('monolog-list-files', 'List available log files, optionally filtered by environment')]
+    #[McpTool('monolog-list-files', 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching.')]
     public function listFiles(?string $environment = null): array
     {
         $files = null !== $environment
@@ -144,26 +151,10 @@ final class LogSearchTool
     /**
      * @return array{channels: string[]}
      */
-    #[McpTool('monolog-list-channels', 'List all log channels found in log files')]
+    #[McpTool('monolog-list-channels', 'List all unique Monolog channel names found across log files (e.g. app, security, doctrine).')]
     public function listChannels(): array
     {
         return ['channels' => $this->reader->getUniqueChannels()];
-    }
-
-    /**
-     * Get log entries by level (e.g., all ERROR logs).
-     *
-     * @phpstan-return array{entries: list<LogEntryArray>}
-     */
-    #[McpTool('monolog-by-level', 'Get log entries filtered by level (DEBUG, INFO, WARNING, ERROR, etc.)')]
-    public function byLevel(string $level, ?string $environment = null, int $limit = 100): array
-    {
-        $criteria = new SearchCriteria(
-            level: $level,
-            limit: $limit,
-        );
-
-        return ['entries' => $this->collectResults($criteria, $environment)];
     }
 
     /**

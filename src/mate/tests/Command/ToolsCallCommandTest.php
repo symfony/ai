@@ -38,13 +38,13 @@ final class ToolsCallCommandTest extends TestCase
         $tester = new CommandTester($command);
 
         $tester->execute([
-            'tool-name' => 'php-version',
+            'tool-name' => 'server-info',
             'json-input' => '{}',
         ]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
-        $this->assertStringContainsString('Executing Tool: php-version', $output);
+        $this->assertStringContainsString('Executing Tool: server-info', $output);
         $this->assertStringContainsString('Result', $output);
         $this->assertStringContainsString(\PHP_VERSION, $output);
     }
@@ -60,7 +60,7 @@ final class ToolsCallCommandTest extends TestCase
         $tester = new CommandTester($command);
 
         $tester->execute([
-            'tool-name' => 'php-version',
+            'tool-name' => 'server-info',
             'json-input' => '{}',
             '--format' => 'json',
         ]);
@@ -73,8 +73,8 @@ final class ToolsCallCommandTest extends TestCase
         $this->assertStringNotContainsString('Result', $output);
 
         $result = json_decode($output, true);
-        $this->assertIsString($result);
-        $this->assertSame(\PHP_VERSION, $result);
+        $this->assertIsArray($result);
+        $this->assertSame(\PHP_VERSION, $result['php_version']);
     }
 
     public function testExecuteWithInvalidToolName()
@@ -108,7 +108,7 @@ final class ToolsCallCommandTest extends TestCase
         $tester = new CommandTester($command);
 
         $tester->execute([
-            'tool-name' => 'php-version',
+            'tool-name' => 'server-info',
             'json-input' => '{invalid json}',
         ]);
 
