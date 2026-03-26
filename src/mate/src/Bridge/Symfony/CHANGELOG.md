@@ -1,13 +1,14 @@
 CHANGELOG
 =========
 
-0.8
+0.7
 ---
 
  * Merge `symfony-profiler-search` into `symfony-profiler-list` with `from` and `to` date filter parameters
  * Remove `symfony-profiler-latest` tool (use `symfony-profiler-list` with `limit: 1` instead)
  * Add `query` parameter to `symfony-services` for filtering by service ID or class name
  * Add `@param` docblocks to all tool methods for AI-readable parameter descriptions
+ * Add optional TOON format encoding for `ServiceTool`, `ProfilerTool`, and `ProfilerResourceTemplate` to reduce token consumption
 
 0.6
 ---
@@ -18,7 +19,6 @@ CHANGELOG
 0.3
 ---
 
- * Add optional TOON format encoding for `ServiceTool`, `ProfilerTool`, and `ProfilerResourceTemplate` to reduce token consumption
  * Add profiler data access capabilities
  * Add `INSTRUCTIONS.md` with AI agent guidance for container introspection tools
 

@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.8
+0.7
 ---
 
  * Add Codex wrapper generation (`bin/codex`, `bin/codex.bat`) to `mate init`
