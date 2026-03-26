@@ -7,31 +7,6 @@ Mate
  * Run `vendor/bin/mate discover` to update the generated `AGENT_INSTRUCTIONS.md` file with the latest
    tool descriptions and agent instructions.
 
- * The `php-version`, `operating-system`, `operating-system-family`, and `php-extensions` tools have been merged
-   into a single `server-info` tool that returns all information as a structured array.
-
- * The `monolog-search-regex` tool has been removed. Use `monolog-search` with the `regex` parameter instead:
-
-   ```diff
-   -monolog-search-regex(pattern: 'Database.*failed')
-   +monolog-search(term: 'Database.*failed', regex: true)
-   ```
-
- * The `monolog-by-level` tool has been removed. Use `monolog-search` with the `level` parameter instead:
-
-   ```diff
-   -monolog-by-level(level: 'ERROR')
-   +monolog-search(term: '', level: 'ERROR')
-   ```
-
- * The `symfony-profiler-latest` tool has been removed. Use `symfony-profiler-list` with `limit: 1` instead.
-
- * The `symfony-profiler-search` tool has been merged into `symfony-profiler-list`, which now supports
-   `from` and `to` date filter parameters.
-
- * The `ServiceTool::getAllServices()` method has been renamed to `ServiceTool::getServices()` and accepts
-   an optional `query` parameter for filtering by service ID or class name.
-
 UPGRADE FROM 0.6 to 0.7
 =======================
 
