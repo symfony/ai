@@ -32,6 +32,7 @@
         "symfony/dependency-injection": "^7.3|^8.0"
     },
     "require-dev": {
+        "doctrine/doctrine-bundle": "^2.13|^3.0",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
@@ -43,6 +44,7 @@
         "symfony/web-profiler-bundle": "^7.3|^8.0"
     },
     "suggest": {
+        "doctrine/doctrine-bundle": "Required for Doctrine database profiler formatter",
         "symfony/http-kernel": "Required for profiler data access tools",
         "symfony/mailer": "Required for mailer profiler formatter",
         "symfony/translation": "Required for translation profiler collector formatter",
