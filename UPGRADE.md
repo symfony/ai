@@ -1,12 +1,6 @@
 UPGRADE FROM 0.6 to 0.7
 =======================
 
-Mate
-----
-
- * Run `vendor/bin/mate discover` to update the generated `AGENT_INSTRUCTIONS.md` file with the latest
-   tool descriptions and agent instructions.
-
 Agent
 -----
 
@@ -33,6 +27,12 @@ Agent
    ```
 
  * The `SimilaritySearch` tool now accepts an optional `$promptTemplate` parameter to customize the result header (default: `'Found documents with the following information:'`)
+
+Mate
+----
+
+ * Run `vendor/bin/mate discover` to update the generated `AGENT_INSTRUCTIONS.md` file with the latest
+   tool descriptions and agent instructions.
 
 AI Bundle
 ---------
