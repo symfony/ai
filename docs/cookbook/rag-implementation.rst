@@ -133,6 +133,10 @@ The :class:`Symfony\\AI\\Agent\\Bridge\\SimilaritySearch\\SimilaritySearch` tool
 * Uses the retriever to find similar documents in the store
 * Returns the most relevant documents
 
+You can customize the result header by passing a prompt template::
+
+    $similaritySearch = new SimilaritySearch($retriever, 'Here are the relevant results:');
+
 Step 5: Create RAG-Enabled Agent
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

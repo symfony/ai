@@ -891,6 +891,8 @@ Some tools may require additional configuration even when installed as dedicated
 
         Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:
             $retriever: '@ai.retriever.main'
+            # optionally customize the result header
+            # $promptTemplate: 'Here are the relevant results:'
 
 Creating Custom Tools
 ---------------------
