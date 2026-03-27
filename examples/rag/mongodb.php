@@ -24,6 +24,7 @@ use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
+use Symfony\AI\Store\Retriever;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -56,7 +57,8 @@ $indexer->index($documents);
 // initialize the index
 $store->setup();
 
-$similaritySearch = new SimilaritySearch($vectorizer, $store);
+$retriever = new Retriever($store, $vectorizer);
+$similaritySearch = new SimilaritySearch($retriever);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);

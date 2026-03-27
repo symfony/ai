@@ -1,12 +1,3 @@
-UPGRADE FROM 0.7 to 0.8
-=======================
-
-Mate
-----
-
- * Run `vendor/bin/mate discover` to update the generated `AGENT_INSTRUCTIONS.md` file with the latest
-   tool descriptions and agent instructions.
-
 UPGRADE FROM 0.6 to 0.7
 =======================
 
@@ -22,6 +13,26 @@ Agent
    -public function getTool(string $reference): iterable;
    +public function getTool(object|string $reference): iterable;
    ```
+
+ * The `SimilaritySearch` tool now requires a `RetrieverInterface` instead of `VectorizerInterface` and `StoreInterface`:
+
+   ```diff
+   -use Symfony\AI\Store\Document\VectorizerInterface;
+   -use Symfony\AI\Store\StoreInterface;
+   +use Symfony\AI\Store\Retriever;
+
+   -$similaritySearch = new SimilaritySearch($vectorizer, $store);
+   +$retriever = new Retriever($store, $vectorizer);
+   +$similaritySearch = new SimilaritySearch($retriever);
+   ```
+
+ * The `SimilaritySearch` tool now accepts an optional `$promptTemplate` parameter to customize the result header (default: `'Found documents with the following information:'`)
+
+Mate
+----
+
+ * Run `vendor/bin/mate discover` to update the generated `AGENT_INSTRUCTIONS.md` file with the latest
+   tool descriptions and agent instructions.
 
 AI Bundle
 ---------

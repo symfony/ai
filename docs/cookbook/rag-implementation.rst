@@ -121,16 +121,21 @@ Create a tool that performs semantic search on your vector store::
     use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
     use Symfony\AI\Agent\Toolbox\AgentProcessor;
     use Symfony\AI\Agent\Toolbox\Toolbox;
+    use Symfony\AI\Store\Retriever;
 
-    $similaritySearch = new SimilaritySearch($vectorizer, $store);
+    $retriever = new Retriever($store, $vectorizer);
+    $similaritySearch = new SimilaritySearch($retriever);
     $toolbox = new Toolbox([$similaritySearch]);
     $processor = new AgentProcessor($toolbox);
 
 The :class:`Symfony\\AI\\Agent\\Bridge\\SimilaritySearch\\SimilaritySearch` tool:
 
-* Converts the user's query into a vector
-* Searches for similar vectors in the store
+* Uses the retriever to find similar documents in the store
 * Returns the most relevant documents
+
+You can customize the result header by passing a prompt template::
+
+    $similaritySearch = new SimilaritySearch($retriever, 'Here are the relevant results:');
 
 Step 5: Create RAG-Enabled Agent
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
