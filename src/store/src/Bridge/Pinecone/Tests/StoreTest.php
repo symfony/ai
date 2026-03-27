@@ -18,6 +18,7 @@ use Probots\Pinecone\Resources\ControlResource;
 use Probots\Pinecone\Resources\Data\VectorResource;
 use Probots\Pinecone\Resources\DataResource;
 use Saloon\Http\Response;
+use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Pinecone\Store;
 use Symfony\AI\Store\Document\Metadata;
@@ -397,6 +398,42 @@ final class StoreTest extends TestCase
 
         $this->assertCount(1, $results);
         $this->assertEmpty($results[0]->getMetadata());
+    }
+
+    public function testQueryWithoutValuesReturnsNullVector()
+    {
+        $vectorResource = $this->createMock(VectorResource::class);
+        $dataResource = $this->createMock(DataResource::class);
+        $client = $this->createMock(Client::class);
+
+        $dataResource->expects($this->once())
+            ->method('vectors')
+            ->willReturn($vectorResource);
+
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($dataResource);
+
+        $response = $this->createMock(Response::class);
+        $response->method('json')->willReturn([
+            'matches' => [
+                [
+                    'id' => 'vector-id',
+                    'values' => [],
+                    'metadata' => ['title' => 'Test Document'],
+                    'score' => 0.95,
+                ],
+            ],
+        ]);
+
+        $vectorResource->expects($this->once())
+            ->method('query')
+            ->willReturn($response);
+
+        $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
+
+        $this->assertCount(1, $results);
+        $this->assertInstanceOf(NullVector::class, $results[0]->getVector());
     }
 
     public function testQueryWithEmptyResults()
