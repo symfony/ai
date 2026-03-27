@@ -471,6 +471,92 @@ to ensure those messages will be removed from your :class:`Symfony\\AI\\Platform
     $result = $agent->call($messages);
     // $messages will now exclude the tool messages
 
+Customizing Tool Execution Strategy
+-----------------------------------
+
+By default, ``AgentProcessor`` executes tool calls one after another in a sequential loop, which mirrors
+the original behavior. You can replace this with any implementation of
+:class:`Symfony\\AI\\Agent\\Toolbox\\ExecutionStrategy\\ToolExecutionStrategyInterface` by passing it
+as the ``executionStrategy`` argument::
+
+    use Symfony\AI\Agent\Toolbox\AgentProcessor;
+    use Symfony\AI\Agent\Toolbox\ExecutionStrategy\FiberToolExecutionStrategy;
+    use Symfony\AI\Agent\Toolbox\Toolbox;
+
+    $toolbox = new Toolbox([$tool]);
+    $toolProcessor = new AgentProcessor($toolbox, executionStrategy: new FiberToolExecutionStrategy());
+
+    $agent = new Agent($platform, $model, [$toolProcessor], [$toolProcessor]);
+
+Two strategies are provided out of the box:
+
+:class:`Symfony\\AI\\Agent\\Toolbox\\ExecutionStrategy\\SequentialToolExecutionStrategy`
+    Executes tool calls one after another in a simple ``foreach`` loop. This is the default.
+
+:class:`Symfony\\AI\\Agent\\Toolbox\\ExecutionStrategy\\FiberToolExecutionStrategy`
+    Starts all tool calls as PHP Fibers before collecting results. All fibers begin execution before
+    any result is awaited, enabling cooperative multitasking for I/O-bound tools that suspend
+    via ``Fiber::suspend()``. This does not provide OS-level parallelism within a single process.
+
+You can implement your own strategy by implementing
+:class:`Symfony\\AI\\Agent\\Toolbox\\ExecutionStrategy\\ToolExecutionStrategyInterface`::
+
+    use Symfony\AI\Agent\Toolbox\ExecutionStrategy\ToolExecutionStrategyInterface;
+    use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+    use Symfony\AI\Agent\Toolbox\ToolResult;
+    use Symfony\AI\Platform\Result\ToolCall;
+
+    final class MyCustomStrategy implements ToolExecutionStrategyInterface
+    {
+        /**
+         * @param ToolCall[]   $toolCalls
+         * @return ToolResult[]
+         */
+        public function execute(ToolboxInterface $toolbox, array $toolCalls): array
+        {
+            // your custom execution logic
+        }
+    }
+
+.. _agent-fiber-compatible-tools:
+
+Writing Fiber-Compatible Tools
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PHP Fibers use cooperative multitasking: a fiber only yields control when it explicitly calls
+``\Fiber::suspend()``. Standard blocking operations such as PDO queries or synchronous HTTP calls
+block the whole process regardless of any surrounding fiber context.
+
+Use the :class:`Symfony\\AI\\Agent\\Toolbox\\ExecutionStrategy\\SuspendableTrait` to add yield points
+to a tool without coupling it to the fiber mechanism. The ``$this->suspend()`` method suspends when
+running inside a fiber and does nothing when called from sequential execution or tests::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Agent\Toolbox\ExecutionStrategy\SuspendableTrait;
+    use Symfony\Contracts\HttpClient\HttpClientInterface;
+
+    #[AsTool('weather', 'Fetches current weather for a city')]
+    final class WeatherTool
+    {
+        use SuspendableTrait;
+
+        public function __construct(private readonly HttpClientInterface $httpClient)
+        {
+        }
+
+        public function __invoke(string $city): string
+        {
+            $this->suspend();
+            $response = $this->httpClient->request('GET', 'https://api.example.com/weather/'.$city);
+
+            return $response->getContent();
+        }
+    }
+
+Calling ``$this->suspend()`` before a blocking call allows other fibers to complete their setup
+before any fiber begins blocking. The blocking operation itself still occupies the process for its
+full duration.
+
 Code Examples (with built-in tools)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

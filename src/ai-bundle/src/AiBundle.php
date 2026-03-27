@@ -1100,6 +1100,11 @@ final class AiBundle extends AbstractBundle
                 ->replaceArgument(3, $config['keep_tool_messages'])
                 ->replaceArgument(4, $config['include_sources']);
 
+            if (null !== $config['tools']['execution_strategy']) {
+                $strategyServiceId = $this->resolveExecutionStrategyServiceId($config['tools']['execution_strategy']);
+                $toolProcessorDefinition->replaceArgument(6, new Reference($strategyServiceId));
+            }
+
             $container->setDefinition('ai.tool.agent_processor.'.$name, $toolProcessorDefinition)
                 ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -10])
                 ->addTag('ai.agent.output_processor', ['agent' => $agentId, 'priority' => -10]);
@@ -1207,6 +1212,15 @@ final class AiBundle extends AbstractBundle
 
         $container->setDefinition($agentId, $agentDefinition);
         $container->registerAliasForArgument($agentId, AgentInterface::class, (new Target($name))->getParsedName());
+    }
+
+    private function resolveExecutionStrategyServiceId(string $strategy): string
+    {
+        return match ($strategy) {
+            'sequential' => 'ai.tool_execution_strategy.sequential',
+            'fiber' => 'ai.tool_execution_strategy.fiber',
+            default => $strategy,
+        };
     }
 
     /**
