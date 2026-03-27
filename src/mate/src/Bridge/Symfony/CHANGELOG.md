@@ -8,6 +8,7 @@ CHANGELOG
  * Remove `symfony-profiler-latest` tool (use `symfony-profiler-list` with `limit: 1` instead)
  * Add `query` parameter to `symfony-services` for filtering by service ID or class name
  * Add `@param` docblocks to all tool methods for AI-readable parameter descriptions
+ * Add automatic detection of compiled container XML for kernels with custom class names
 
 0.6
 ---

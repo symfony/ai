@@ -58,9 +58,12 @@ class ServiceTool
     {
         $environments = ['', '/dev', '/test', '/prod'];
         foreach ($environments as $env) {
-            $file = $this->cacheDir."$env/App_KernelDevDebugContainer.xml";
-            if (file_exists($file)) {
-                return $this->provider->getContainer($file);
+            $dir = $this->cacheDir.$env;
+            $files = glob($dir.'/*DebugContainer.xml');
+            if (false !== $files && [] !== $files) {
+                sort($files);
+
+                return $this->provider->getContainer($files[0]);
             }
         }
 
