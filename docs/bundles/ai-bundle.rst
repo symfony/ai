@@ -880,7 +880,7 @@ The following tools can be installed as dedicated packages, no configuration is 
     $ composer require symfony/ai-wikipedia-tool
     $ composer require symfony/ai-youtube-tool
 
-Some tools may require additional configuration even when installed as dedicated packages. For example, the SimilaritySearch tool requires a vectorizer and store:
+Some tools may require additional configuration even when installed as dedicated packages. For example, the SimilaritySearch tool requires a retriever:
 
 .. code-block:: yaml
 
@@ -890,8 +890,7 @@ Some tools may require additional configuration even when installed as dedicated
             autoconfigure: true
 
         Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:
-            $vectorizer: '@ai.vectorizer.openai'
-            $store: '@ai.store.main'
+            $retriever: '@ai.retriever.main'
 
 Creating Custom Tools
 ---------------------
