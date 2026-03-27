@@ -499,10 +499,12 @@ more accurate and context-aware results. Therefore, the component provides a bui
     use Symfony\AI\Agent\Toolbox\Toolbox;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Store\Retriever;
 
     // Initialize Platform & Models
 
-    $similaritySearch = new SimilaritySearch($model, $store);
+    $retriever = new Retriever($store, $vectorizer);
+    $similaritySearch = new SimilaritySearch($retriever);
     $toolbox = new Toolbox([$similaritySearch]);
     $processor = new AgentProcessor($toolbox);
     $agent = new Agent($platform, $model, [$processor], [$processor]);

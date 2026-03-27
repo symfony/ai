@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * [BC BREAK] Change `SimilaritySearch` to use `RetrieverInterface` instead of `VectorizerInterface` and `StoreInterface`
+ * Add customizable `$promptTemplate` parameter to `SimilaritySearch` constructor
+
 0.7
 ---
 

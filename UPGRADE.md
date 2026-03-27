@@ -1,3 +1,23 @@
+UPGRADE FROM 0.8 to 0.9
+=======================
+
+Agent
+-----
+
+ * The `SimilaritySearch` tool now requires a `RetrieverInterface` instead of `VectorizerInterface` and `StoreInterface`:
+
+   ```diff
+   -use Symfony\AI\Store\Document\VectorizerInterface;
+   -use Symfony\AI\Store\StoreInterface;
+   +use Symfony\AI\Store\Retriever;
+
+   -$similaritySearch = new SimilaritySearch($vectorizer, $store);
+   +$retriever = new Retriever($store, $vectorizer);
+   +$similaritySearch = new SimilaritySearch($retriever);
+   ```
+
+ * The `SimilaritySearch` tool now accepts an optional `$promptTemplate` parameter to customize the result header (default: `'Found documents with following information:'`)
+
 UPGRADE FROM 0.7 to 0.8
 =======================
 
