@@ -19,8 +19,11 @@ use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -315,5 +318,52 @@ class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Error "invalid_request_error"-invalid_request (model): "The model `gpt-5` does not exist".');
 
         $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testConvertStreamYieldsTokenUsage()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $rawResult = self::createMock(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($httpResponse);
+        $rawResult->method('getDataStream')->willReturn(new \ArrayIterator([
+            [
+                'choices' => [
+                    ['delta' => ['content' => 'Hello']],
+                ],
+            ],
+            [
+                'choices' => [
+                    ['delta' => ['content' => ' world']],
+                ],
+            ],
+            [
+                'choices' => [
+                    ['delta' => [], 'finish_reason' => 'stop'],
+                ],
+                'usage' => [
+                    'prompt_tokens' => 10,
+                    'completion_tokens' => 5,
+                    'total_tokens' => 15,
+                ],
+            ],
+        ]));
+
+        $result = $converter->convert($rawResult, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+
+        $chunks = iterator_to_array($result->getContent(), false);
+
+        $this->assertSame('Hello', $chunks[0]);
+        $this->assertSame(' world', $chunks[1]);
+        $this->assertInstanceOf(TokenUsage::class, $chunks[2]);
+        $this->assertSame(10, $chunks[2]->getPromptTokens());
+        $this->assertSame(5, $chunks[2]->getCompletionTokens());
+        $this->assertSame(15, $chunks[2]->getTotalTokens());
+        $this->assertNull($chunks[2]->getCachedTokens());
     }
 }
