@@ -29,3 +29,5 @@ $result = $platform->invoke('gpt-5-codex', $messages, [
 ]);
 
 echo $result->asText().\PHP_EOL;
+
+print_token_usage($result->getMetadata()->get('token_usage'));
