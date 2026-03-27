@@ -4,6 +4,9 @@ CHANGELOG
 0.7
 ---
 
+ * Add batch processing support via `BatchPlatformInterface`, `BatchClientInterface`, `BatchJob`, `BatchResult`, and `Capability::BATCH`
+ * Add batch processing support for OpenAI (Files API + Batch API)
+ * Add batch processing support for Anthropic (Message Batches API)
  * Add `asFile()` method to `BinaryResult` and `DeferredResult` for saving binary content to a file
  * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
  * Add `description` and `example` properties to `#[With]` attribute

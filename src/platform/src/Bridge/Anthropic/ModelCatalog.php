@@ -28,6 +28,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-3-haiku-20240307' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -38,6 +39,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-3-opus-20240229' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -48,6 +50,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-3-5-haiku-latest' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -58,6 +61,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-3-5-haiku-20241022' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -68,6 +72,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-3-7-sonnet-latest' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -79,6 +84,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-3-7-sonnet-20250219' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -90,6 +96,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-sonnet-4-20250514' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -101,6 +108,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-sonnet-4-0' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -112,6 +120,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-opus-4-20250514' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -123,6 +132,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-opus-4-0' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -134,6 +144,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-opus-4-1' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -146,6 +157,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-opus-4-1-20250805' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -158,6 +170,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-sonnet-4-5-20250929' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
@@ -170,6 +183,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'claude-haiku-4-5-20251001' => [
                 'class' => Claude::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
