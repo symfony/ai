@@ -13,9 +13,7 @@ namespace Symfony\AI\Agent\Bridge\SimilaritySearch;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Document\VectorizerInterface;
-use Symfony\AI\Store\Query\VectorQuery;
-use Symfony\AI\Store\StoreInterface;
+use Symfony\AI\Store\RetrieverInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -29,8 +27,8 @@ final class SimilaritySearch
     public array $usedDocuments = [];
 
     public function __construct(
-        private readonly VectorizerInterface $vectorizer,
-        private readonly StoreInterface $store,
+        private readonly RetrieverInterface $retriever,
+        private readonly string $promptTemplate = 'Found documents with the following information:',
     ) {
     }
 
@@ -39,14 +37,13 @@ final class SimilaritySearch
      */
     public function __invoke(string $searchTerm): string
     {
-        $vector = $this->vectorizer->vectorize($searchTerm);
-        $this->usedDocuments = iterator_to_array($this->store->query(new VectorQuery($vector)));
+        $this->usedDocuments = iterator_to_array($this->retriever->retrieve($searchTerm));
 
         if ([] === $this->usedDocuments) {
             return 'No results found';
         }
 
-        $result = 'Found documents with following information:'.\PHP_EOL;
+        $result = $this->promptTemplate.\PHP_EOL;
         foreach ($this->usedDocuments as $document) {
             $result .= json_encode($document->getMetadata());
         }

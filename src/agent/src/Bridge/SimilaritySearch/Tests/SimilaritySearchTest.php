@@ -16,9 +16,7 @@ use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Document\VectorizerInterface;
-use Symfony\AI\Store\Query\VectorQuery;
-use Symfony\AI\Store\StoreInterface;
+use Symfony\AI\Store\RetrieverInterface;
 use Symfony\Component\Uid\Uuid;
 
 final class SimilaritySearchTest extends TestCase
@@ -39,44 +37,31 @@ final class SimilaritySearchTest extends TestCase
             new Metadata(['title' => 'Document 2', 'content' => 'Second document content']),
         );
 
-        $vectorizer = $this->createMock(VectorizerInterface::class);
-        $vectorizer->expects($this->once())
-            ->method('vectorize')
+        $retriever = $this->createMock(RetrieverInterface::class);
+        $retriever->expects($this->once())
+            ->method('retrieve')
             ->with($searchTerm)
-            ->willReturn($vector);
-
-        $store = $this->createMock(StoreInterface::class);
-        $store->expects($this->once())
-            ->method('query')
-            ->with($this->callback(static fn ($query) => $query instanceof VectorQuery && $query->getVector() === $vector))
             ->willReturn([$document1, $document2]);
 
-        $similaritySearch = new SimilaritySearch($vectorizer, $store);
+        $similaritySearch = new SimilaritySearch($retriever);
 
         $result = $similaritySearch($searchTerm);
 
-        $this->assertSame('Found documents with following information:'.\PHP_EOL.'{"title":"Document 1","content":"First document content"}{"title":"Document 2","content":"Second document content"}', $result);
+        $this->assertSame('Found documents with the following information:'.\PHP_EOL.'{"title":"Document 1","content":"First document content"}{"title":"Document 2","content":"Second document content"}', $result);
         $this->assertSame([$document1, $document2], $similaritySearch->usedDocuments);
     }
 
     public function testSearchWithoutResults()
     {
         $searchTerm = 'find nothing';
-        $vector = new Vector([0.1, 0.2, 0.3]);
 
-        $vectorizer = $this->createMock(VectorizerInterface::class);
-        $vectorizer->expects($this->once())
-            ->method('vectorize')
+        $retriever = $this->createMock(RetrieverInterface::class);
+        $retriever->expects($this->once())
+            ->method('retrieve')
             ->with($searchTerm)
-            ->willReturn($vector);
-
-        $store = $this->createMock(StoreInterface::class);
-        $store->expects($this->once())
-            ->method('query')
-            ->with($this->callback(static fn ($query) => $query instanceof VectorQuery && $query->getVector() === $vector))
             ->willReturn([]);
 
-        $similaritySearch = new SimilaritySearch($vectorizer, $store);
+        $similaritySearch = new SimilaritySearch($retriever);
 
         $result = $similaritySearch($searchTerm);
 
@@ -95,23 +80,41 @@ final class SimilaritySearchTest extends TestCase
             new Metadata(['title' => 'Single Document', 'description' => 'Only one match']),
         );
 
-        $vectorizer = $this->createMock(VectorizerInterface::class);
-        $vectorizer->expects($this->once())
-            ->method('vectorize')
+        $retriever = $this->createMock(RetrieverInterface::class);
+        $retriever->expects($this->once())
+            ->method('retrieve')
             ->with($searchTerm)
-            ->willReturn($vector);
-
-        $store = $this->createMock(StoreInterface::class);
-        $store->expects($this->once())
-            ->method('query')
-            ->with($this->callback(static fn ($query) => $query instanceof VectorQuery && $query->getVector() === $vector))
             ->willReturn([$document]);
 
-        $similaritySearch = new SimilaritySearch($vectorizer, $store);
+        $similaritySearch = new SimilaritySearch($retriever);
 
         $result = $similaritySearch($searchTerm);
 
-        $this->assertSame('Found documents with following information:'.\PHP_EOL.'{"title":"Single Document","description":"Only one match"}', $result);
+        $this->assertSame('Found documents with the following information:'.\PHP_EOL.'{"title":"Single Document","description":"Only one match"}', $result);
         $this->assertSame([$document], $similaritySearch->usedDocuments);
+    }
+
+    public function testSearchWithCustomPromptTemplate()
+    {
+        $searchTerm = 'custom template query';
+        $vector = new Vector([0.1, 0.2, 0.3]);
+
+        $document = new VectorDocument(
+            Uuid::v4(),
+            $vector,
+            new Metadata(['title' => 'Document 1']),
+        );
+
+        $retriever = $this->createMock(RetrieverInterface::class);
+        $retriever->expects($this->once())
+            ->method('retrieve')
+            ->with($searchTerm)
+            ->willReturn([$document]);
+
+        $similaritySearch = new SimilaritySearch($retriever, 'Here are the relevant results:');
+
+        $result = $similaritySearch($searchTerm);
+
+        $this->assertSame('Here are the relevant results:'.\PHP_EOL.'{"title":"Document 1"}', $result);
     }
 }
