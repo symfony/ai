@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -299,5 +300,15 @@ final class MessageBagTest extends TestCase
         $this->assertSame($systemMessage, $collectedMessages[0]);
         $this->assertSame($assistantMessage, $collectedMessages[1]);
         $this->assertSame($userMessage, $collectedMessages[2]);
+    }
+
+    public function testMessageBagCanReturnLatestAs()
+    {
+        $latestMessageAsUser = Message::ofUser('Hello world');
+        $latestMessageAsAssistant = Message::ofAssistant('Hello from an assistant');
+
+        $messageBag = new MessageBag($latestMessageAsUser, $latestMessageAsAssistant);
+
+        $this->assertSame($latestMessageAsUser, $messageBag->latestAs(Role::User));
     }
 }
