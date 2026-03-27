@@ -1,15 +1,11 @@
 CHANGELOG
 =========
 
-0.9
+0.7
 ---
 
  * [BC BREAK] Change `SimilaritySearch` to use `RetrieverInterface` instead of `VectorizerInterface` and `StoreInterface`
  * Add customizable `$promptTemplate` parameter to `SimilaritySearch` constructor
-
-0.7
----
-
  * [BC BREAK] Remove `AbstractToolFactory` in favor of standalone `ReflectionToolFactory` and `MemoryToolFactory`
  * [BC BREAK] Change `ToolFactoryInterface::getTool()` signature from `string $reference` to `object|string $reference`
  * Add `ToolCallRequested` event dispatched before tool execution
