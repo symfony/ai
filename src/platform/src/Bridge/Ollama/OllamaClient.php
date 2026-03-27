@@ -15,7 +15,9 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\Result\NdjsonHttpResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -50,7 +52,7 @@ final class OllamaClient implements ModelClientInterface
         return $model instanceof Ollama;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
+    public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
         return match (true) {
             $model->supports(Capability::INPUT_MESSAGES) => $this->doCompletionRequest($payload, $options),
@@ -63,7 +65,7 @@ final class OllamaClient implements ModelClientInterface
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
      */
-    private function doCompletionRequest(array|string $payload, array $options = []): RawHttpResult
+    private function doCompletionRequest(array|string $payload, array $options = []): RawResultInterface
     {
         if (\is_string($payload)) {
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
@@ -79,10 +81,12 @@ final class OllamaClient implements ModelClientInterface
 
         $options = $this->normalizeOllamaOptions($options, self::CHAT_TOP_LEVEL_KEYS);
 
-        return new RawHttpResult($this->httpClient->request('POST', '/api/chat', [
+        $response = $this->httpClient->request('POST', '/api/chat', [
             'headers' => ['Content-Type' => 'application/json'],
             'json' => array_merge($options, $payload),
-        ]));
+        ]);
+
+        return new NdjsonHttpResult($response, $this->httpClient);
     }
 
     /**

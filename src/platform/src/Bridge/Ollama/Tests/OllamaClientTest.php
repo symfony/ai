@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\NdjsonHttpResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
@@ -96,18 +97,16 @@ final class OllamaClientTest extends TestCase
             new JsonMockResponse([
                 'capabilities' => ['completion'],
             ]),
-            new MockResponse('data: '.json_encode([
-                'model' => 'llama3.2',
-                'created_at' => '2025-08-23T10:00:00Z',
-                'message' => ['role' => 'assistant', 'content' => 'Hello world'],
-                'done' => true,
-                'prompt_eval_count' => 10,
-                'eval_count' => 10,
-            ])."\n\n", [
-                'response_headers' => [
-                    'content-type' => 'text/event-stream',
-                ],
-            ]),
+            new MockResponse(
+                json_encode([
+                    'model' => 'llama3.2',
+                    'created_at' => '2025-08-23T10:00:00Z',
+                    'message' => ['role' => 'assistant', 'content' => 'Hello world'],
+                    'done' => true,
+                    'prompt_eval_count' => 10,
+                    'eval_count' => 10,
+                ])."\n",
+            ),
         ], 'http://127.0.0.1:1234');
 
         $platform = PlatformFactory::create('http://127.0.0.1:1234', httpClient: $httpClient);
@@ -132,29 +131,25 @@ final class OllamaClientTest extends TestCase
 
     public function testStreamingConverterWithDirectResponse()
     {
-        $streamingData = 'data: '.json_encode([
+        $streamingData = json_encode([
             'model' => 'llama3.2',
             'created_at' => '2025-08-23T10:00:00Z',
             'message' => ['role' => 'assistant', 'content' => 'Hello'],
             'done' => false,
-        ])."\n\n".
-        'data: '.json_encode([
+        ])."\n".
+        json_encode([
             'model' => 'llama3.2',
             'created_at' => '2025-08-23T10:00:01Z',
             'message' => ['role' => 'assistant', 'content' => ' world'],
             'done' => true,
-        ])."\n\n";
+        ])."\n";
 
         $mockHttpClient = new MockHttpClient([
-            new MockResponse($streamingData, [
-                'response_headers' => [
-                    'content-type' => 'text/event-stream',
-                ],
-            ]),
+            new MockResponse($streamingData),
         ]);
 
         $mockResponse = $mockHttpClient->request('GET', 'http://test.example');
-        $rawResult = new RawHttpResult($mockResponse);
+        $rawResult = new NdjsonHttpResult($mockResponse, $mockHttpClient);
         $converter = new OllamaResultConverter();
 
         $result = $converter->convert($rawResult, ['stream' => true]);
@@ -171,7 +166,7 @@ final class OllamaClientTest extends TestCase
         ]);
 
         $regularMockResponse = $regularMockHttpClient->request('GET', 'http://test.example');
-        $regularRawResult = new RawHttpResult($regularMockResponse);
+        $regularRawResult = new NdjsonHttpResult($regularMockResponse, $regularMockHttpClient);
         $regularResult = $converter->convert($regularRawResult, ['stream' => false]);
 
         $this->assertNotInstanceOf(StreamResult::class, $regularResult);
