@@ -17,6 +17,12 @@
     <testsuites>
         <testsuite name="default">
             <directory>tests</directory>
+            <exclude>tests/DemoScenariosTest.php</exclude>
+            <exclude>tests/ProfilerIntegrationTest.php</exclude>
+        </testsuite>
+        <testsuite name="panther">
+            <file>tests/DemoScenariosTest.php</file>
+            <file>tests/ProfilerIntegrationTest.php</file>
         </testsuite>
     </testsuites>
 
