@@ -16,7 +16,7 @@ Agent
    +$similaritySearch = new SimilaritySearch($retriever);
    ```
 
- * The `SimilaritySearch` tool now accepts an optional `$promptTemplate` parameter to customize the result header (default: `'Found documents with following information:'`)
+ * The `SimilaritySearch` tool now accepts an optional `$promptTemplate` parameter to customize the result header (default: `'Found documents with the following information:'`)
 
 UPGRADE FROM 0.7 to 0.8
 =======================

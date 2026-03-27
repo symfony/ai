@@ -28,7 +28,7 @@ final class SimilaritySearch
 
     public function __construct(
         private readonly RetrieverInterface $retriever,
-        private readonly string $promptTemplate = 'Found documents with following information:',
+        private readonly string $promptTemplate = 'Found documents with the following information:',
     ) {
     }
 

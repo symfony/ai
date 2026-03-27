@@ -47,7 +47,7 @@ final class SimilaritySearchTest extends TestCase
 
         $result = $similaritySearch($searchTerm);
 
-        $this->assertSame('Found documents with following information:'.\PHP_EOL.'{"title":"Document 1","content":"First document content"}{"title":"Document 2","content":"Second document content"}', $result);
+        $this->assertSame('Found documents with the following information:'.\PHP_EOL.'{"title":"Document 1","content":"First document content"}{"title":"Document 2","content":"Second document content"}', $result);
         $this->assertSame([$document1, $document2], $similaritySearch->usedDocuments);
     }
 
@@ -90,7 +90,7 @@ final class SimilaritySearchTest extends TestCase
 
         $result = $similaritySearch($searchTerm);
 
-        $this->assertSame('Found documents with following information:'.\PHP_EOL.'{"title":"Single Document","description":"Only one match"}', $result);
+        $this->assertSame('Found documents with the following information:'.\PHP_EOL.'{"title":"Single Document","description":"Only one match"}', $result);
         $this->assertSame([$document], $similaritySearch->usedDocuments);
     }
 
