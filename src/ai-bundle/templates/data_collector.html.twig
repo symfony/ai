@@ -60,8 +60,12 @@
     <ol>
         {% for toolCall in toolCalls %}
             <li>
+            {% if toolCall.name is defined %}
                 <strong>{{ toolCall.name }}({{ toolCall.arguments|map((value, key) => "#{key}: #{value|json_encode}")|join(', ') }})</strong>
                 <i>(ID: {{ toolCall.id }})</i>
+            {% else %}
+                {{ dump(toolCall) }}
+            {% endif %}
             </li>
         {% endfor %}
     </ol>
