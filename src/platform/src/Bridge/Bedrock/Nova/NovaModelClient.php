@@ -67,6 +67,15 @@ class NovaModelClient implements ModelClientInterface
     {
         $configuredRegion = $this->bedrockRuntimeClient->getConfiguration()->get('region');
         $regionPrefix = substr((string) $configuredRegion, 0, 2);
+        $regionPrefix = match ($regionPrefix) {
+            'ap',
+            'cn' => 'apac',
+            'ca',
+            'sa' => 'us',
+            'me',
+            'af' => 'eu',
+            default => $regionPrefix,
+        };
 
         return $regionPrefix.'.amazon.'.$model->getName().'-v1:0';
     }
