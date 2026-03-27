@@ -2402,6 +2402,22 @@ final class AiBundle extends AbstractBundle
         $serviceId = 'ai.retriever.'.$name;
         $container->setDefinition($serviceId, $definition);
         $container->registerAliasForArgument($serviceId, RetrieverInterface::class, (new Target((string) $name))->getParsedName());
+
+        if ($config['similarity_search']['enabled']) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-similarity-search-tool', SimilaritySearch::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('SimilaritySearch configuration requires "symfony/ai-similarity-search-tool" package. Try running "composer require symfony/ai-similarity-search-tool".');
+            }
+
+            $similaritySearchDefinition = new Definition(SimilaritySearch::class, [
+                new Reference($serviceId),
+                $config['similarity_search']['prompt_template'],
+            ]);
+            $similaritySearchDefinition->addTag('ai.tool');
+
+            $similaritySearchServiceId = 'ai.similarity_search.'.$name;
+            $container->setDefinition($similaritySearchServiceId, $similaritySearchDefinition);
+            $container->registerAliasForArgument($similaritySearchServiceId, SimilaritySearch::class, (new Target((string) $name))->getParsedName());
+        }
     }
 
     /**

@@ -516,6 +516,26 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->info('Service name of store')
                             ->defaultValue(StoreInterface::class)
                         ->end()
+                        ->arrayNode('similarity_search')
+                            ->info('Automatically register a SimilaritySearch tool for this retriever')
+                            ->canBeEnabled()
+                            ->beforeNormalization()
+                                ->ifArray()
+                                ->then(static function (array $v): array {
+                                    if (isset($v['prompt_template']) && !isset($v['enabled'])) {
+                                        $v['enabled'] = true;
+                                    }
+
+                                    return $v;
+                                })
+                            ->end()
+                            ->children()
+                                ->stringNode('prompt_template')
+                                    ->info('Custom prompt template for the search result header')
+                                    ->defaultValue('Found documents with the following information:')
+                                ->end()
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end()

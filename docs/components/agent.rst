@@ -505,6 +505,10 @@ more accurate and context-aware results. Therefore, the component provides a bui
 
     $retriever = new Retriever($store, $vectorizer);
     $similaritySearch = new SimilaritySearch($retriever);
+
+    // Optionally customize the result header:
+    // $similaritySearch = new SimilaritySearch($retriever, 'Here are the relevant results:');
+
     $toolbox = new Toolbox([$similaritySearch]);
     $processor = new AgentProcessor($toolbox);
     $agent = new Agent($platform, $model, [$processor], [$processor]);

@@ -880,7 +880,34 @@ The following tools can be installed as dedicated packages, no configuration is 
     $ composer require symfony/ai-wikipedia-tool
     $ composer require symfony/ai-youtube-tool
 
-Some tools may require additional configuration even when installed as dedicated packages. For example, the SimilaritySearch tool requires a retriever:
+Some tools may require additional configuration even when installed as dedicated packages. For example, the
+SimilaritySearch tool can be automatically registered by enabling it on a retriever:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        retriever:
+            main:
+                store: 'ai.store.chromadb.my_collection'
+                vectorizer: 'ai.vectorizer.openai'
+                similarity_search: true
+
+This registers a ``SimilaritySearch`` tool service (``ai.similarity_search.main``) that uses the configured
+retriever. You can also customize the prompt template used for the result header:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        retriever:
+            main:
+                store: 'ai.store.chromadb.my_collection'
+                vectorizer: 'ai.vectorizer.openai'
+                similarity_search:
+                    prompt_template: 'Here are the relevant results:'
+
+Alternatively, you can register the tool manually as a service:
 
 .. code-block:: yaml
 
@@ -1119,6 +1146,30 @@ Retrievers are defined in the ``retriever`` section of your configuration:
             research:
                 vectorizer: 'ai.vectorizer.mistral_embed'
                 store: 'ai.store.memory.research'
+
+Each retriever can optionally register a ``SimilaritySearch`` tool that agents can use to search
+for documents:
+
+.. code-block:: yaml
+
+    ai:
+        retriever:
+            default:
+                vectorizer: 'ai.vectorizer.openai_small'
+                store: 'ai.store.chromadb.default'
+                similarity_search: true
+
+To customize the prompt template used for the result header:
+
+.. code-block:: yaml
+
+    ai:
+        retriever:
+            default:
+                vectorizer: 'ai.vectorizer.openai_small'
+                store: 'ai.store.chromadb.default'
+                similarity_search:
+                    prompt_template: 'Here are the relevant results:'
 
 Using Retrievers
 ~~~~~~~~~~~~~~~~

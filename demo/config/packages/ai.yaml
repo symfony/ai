@@ -112,15 +112,12 @@ ai:
         blog:
             store: 'ai.store.chromadb.symfonycon'
             vectorizer: 'ai.vectorizer.openai'
+            similarity_search: true
 
 services:
     _defaults:
         autowire: true
         autoconfigure: true
-
-    Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:
-        $vectorizer: '@ai.vectorizer.openai'
-        $store: '@ai.store.chromadb.symfonycon'
 
     Symfony\AI\Store\Document\Loader\RssFeedLoader: ~
     Symfony\AI\Store\Document\Transformer\TextSplitTransformer: ~

@@ -22,6 +22,7 @@ use Probots\Pinecone\Client as PineconeClient;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
@@ -6221,6 +6222,87 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasDefinition('ai.retriever.default'));
         $this->assertTrue($container->hasAlias(RetrieverInterface::class));
+    }
+
+    public function testRetrieverWithSimilaritySearchEnabled()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'memory' => [
+                        'my_store' => [],
+                    ],
+                ],
+                'retriever' => [
+                    'my_retriever' => [
+                        'vectorizer' => 'my_vectorizer_service',
+                        'store' => 'ai.store.memory.my_store',
+                        'similarity_search' => true,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.similarity_search.my_retriever'));
+
+        $definition = $container->getDefinition('ai.similarity_search.my_retriever');
+        $this->assertSame(SimilaritySearch::class, $definition->getClass());
+
+        $arguments = $definition->getArguments();
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('ai.retriever.my_retriever', (string) $arguments[0]);
+        $this->assertSame('Found documents with the following information:', $arguments[1]);
+
+        $this->assertTrue($definition->hasTag('ai.tool'));
+    }
+
+    public function testRetrieverWithSimilaritySearchCustomPromptTemplate()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'memory' => [
+                        'my_store' => [],
+                    ],
+                ],
+                'retriever' => [
+                    'my_retriever' => [
+                        'vectorizer' => 'my_vectorizer_service',
+                        'store' => 'ai.store.memory.my_store',
+                        'similarity_search' => [
+                            'prompt_template' => 'Here are the relevant results:',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.similarity_search.my_retriever'));
+
+        $definition = $container->getDefinition('ai.similarity_search.my_retriever');
+        $arguments = $definition->getArguments();
+        $this->assertSame('Here are the relevant results:', $arguments[1]);
+    }
+
+    public function testRetrieverWithoutSimilaritySearch()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'memory' => [
+                        'my_store' => [],
+                    ],
+                ],
+                'retriever' => [
+                    'my_retriever' => [
+                        'vectorizer' => 'my_vectorizer_service',
+                        'store' => 'ai.store.memory.my_store',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.similarity_search.my_retriever'));
     }
 
     public function testValidMultiAgentConfiguration()
