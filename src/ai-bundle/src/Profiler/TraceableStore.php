@@ -12,6 +12,7 @@
 namespace Symfony\AI\AiBundle\Profiler;
 
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Clock\ClockInterface;
@@ -30,7 +31,7 @@ use Symfony\Contracts\Service\ResetInterface;
  *     called_at: \DateTimeImmutable,
  * }
  */
-final class TraceableStore implements StoreInterface, ResetInterface
+final class TraceableStore implements StoreInterface, ManagedStoreInterface, ResetInterface
 {
     /**
      * @var StoreData[]
@@ -41,6 +42,13 @@ final class TraceableStore implements StoreInterface, ResetInterface
         private readonly StoreInterface $store,
         private readonly ClockInterface $clock = new MonotonicClock(),
     ) {
+    }
+
+    public function setup(array $options = []): void
+    {
+        if ($this->store instanceof ManagedStoreInterface) {
+            $this->store->setup($options);
+        }
     }
 
     public function add(VectorDocument|array $documents): void
@@ -81,6 +89,13 @@ final class TraceableStore implements StoreInterface, ResetInterface
     public function supports(string $queryClass): bool
     {
         return $this->store->supports($queryClass);
+    }
+
+    public function drop(array $options = []): void
+    {
+        if ($this->store instanceof ManagedStoreInterface) {
+            $this->store->drop($options);
+        }
     }
 
     public function reset(): void
