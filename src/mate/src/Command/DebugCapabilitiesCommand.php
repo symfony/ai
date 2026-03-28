@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use HelgeSverre\Toon\Toon;
+use Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -27,12 +29,24 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * @phpstan-import-type ExtensionData from DebugExtensionsCommand
  *
  * @phpstan-type CapabilitiesByExtension array<string, Capabilities>
+ * @phpstan-type DebugCapabilitiesArrayResult array{
+ *     extensions: CapabilitiesByExtension,
+ *     summary: array{
+ *         extensions: int,
+ *         tools: int,
+ *         resources: int,
+ *         prompts: int,
+ *         resource_templates: int
+ *     }
+ * }
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
 #[AsCommand('debug:capabilities', 'Display all MCP capabilities grouped by extension')]
 class DebugCapabilitiesCommand extends Command
 {
+    use EnsuresToonFormatAvailabilityTrait;
+
     /**
      * @var array<string, ExtensionData>
      */
@@ -62,10 +76,11 @@ class DebugCapabilitiesCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json)', 'text')
+            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json, toon)', 'text')
             ->addOption('extension', null, InputOption::VALUE_REQUIRED, 'Filter by extension package name')
             ->addOption('type', null, InputOption::VALUE_REQUIRED, 'Filter by type (tool, resource, prompt, template)')
-            ->setHelp(<<<'HELP'
+            ->setHelp(
+                <<<'HELP'
 The <info>%command.name%</info> command displays all discovered MCP capabilities
 grouped by their providing extension/package.
 
@@ -96,6 +111,13 @@ HELP
     {
         $io = new SymfonyStyle($input, $output);
 
+        $format = $input->getOption('format');
+        \assert(\is_string($format));
+
+        if (!$this->ensureToonFormatAvailable($io, $format)) {
+            return Command::FAILURE;
+        }
+
         $capabilities = [];
         foreach ($this->extensions as $extensionName => $extension) {
             $capabilities[$extensionName] = $this->collector->collectCapabilities($extensionName, $extension);
@@ -114,11 +136,10 @@ HELP
             $capabilities = $this->filterByType($capabilities, $typeFilter);
         }
 
-        $format = $input->getOption('format');
-        \assert(\is_string($format));
-
         if ('json' === $format) {
-            $this->outputJson($capabilities, $output);
+            $output->writeln(json_encode($this->getArrayResult($capabilities), \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+        } elseif ('toon' === $format) {
+            $output->writeln(Toon::encode($this->getArrayResult($capabilities)));
         } else {
             $this->outputText($capabilities, $io);
         }
@@ -258,8 +279,10 @@ HELP
 
     /**
      * @param CapabilitiesByExtension $capabilitiesByExtension
+     *
+     * @return DebugCapabilitiesArrayResult
      */
-    private function outputJson(array $capabilitiesByExtension, OutputInterface $output): void
+    private function getArrayResult(array $capabilitiesByExtension): array
     {
         $totalTools = 0;
         $totalResources = 0;
@@ -284,6 +307,6 @@ HELP
             ],
         ];
 
-        $output->writeln(json_encode($result, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+        return $result;
     }
 }

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Tests\Command;
 
+use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -69,6 +70,31 @@ final class ToolsInspectCommandTest extends TestCase
         $this->assertArrayHasKey('input_schema', $json);
         $this->assertArrayHasKey('extension', $json);
         $this->assertSame('server-info', $json['name']);
+    }
+
+    public function testExecuteWithToonFormat()
+    {
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
+        ];
+
+        $command = $this->createCommand($rootDir, $extensions);
+        $tester = new CommandTester($command);
+
+        $tester->execute(['tool-name' => 'server-info', '--format' => 'toon']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+
+        $toon = Toon::decode($output);
+        $this->assertIsArray($toon);
+        $this->assertArrayHasKey('name', $toon);
+        $this->assertArrayHasKey('description', $toon);
+        $this->assertArrayHasKey('handler', $toon);
+        $this->assertArrayHasKey('input_schema', $toon);
+        $this->assertArrayHasKey('extension', $toon);
+        $this->assertSame('server-info', $toon['name']);
     }
 
     public function testExecuteWithInvalidToolName()
@@ -144,6 +170,11 @@ final class ToolsInspectCommandTest extends TestCase
         $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
         $collector = new CapabilityCollector($loader);
 
-        return new ToolsInspectCommand($extensions, $collector);
+        return new class($extensions, $collector) extends ToolsInspectCommand {
+            protected function isToonFormatAvailable(): bool
+            {
+                return true;
+            }
+        };
     }
 }
