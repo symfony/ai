@@ -18,6 +18,7 @@ use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
+use Symfony\AI\Agent\Toolbox\ExecutionStrategy\ToolExecutionStrategyInterface;
 use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
@@ -412,5 +413,98 @@ class AgentProcessorTest extends TestCase
         $processor->processOutput($output);
 
         $this->assertInstanceOf(TextResult::class, $output->getResult());
+    }
+
+    public function testCustomExecutionStrategyIsUsedForToolCallExecution()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolResult = new ToolResult($toolCall, 'Strategy response');
+
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->expects($this->never())->method('execute');
+
+        $strategy = $this->createMock(ToolExecutionStrategyInterface::class);
+        $strategy
+            ->expects($this->once())
+            ->method('execute')
+            ->with($toolbox, [$toolCall])
+            ->willReturn([$toolResult]);
+
+        $messageBag = new MessageBag();
+        $result = new ToolCallResult($toolCall);
+
+        $agent = $this->createStub(AgentInterface::class);
+
+        $processor = new AgentProcessor($toolbox, executionStrategy: $strategy);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+        $processor->processOutput($output);
+
+        $this->assertCount(2, $messageBag);
+        $this->assertInstanceOf(AssistantMessage::class, $messageBag->getMessages()[0]);
+        $this->assertInstanceOf(ToolCallMessage::class, $messageBag->getMessages()[1]);
+    }
+
+    public function testDefaultExecutionStrategyIsSequential()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolResult = new ToolResult($toolCall, 'sequential response');
+
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->with($toolCall)
+            ->willReturn($toolResult);
+
+        $agent = $this->createStub(AgentInterface::class);
+
+        $processor = new AgentProcessor($toolbox);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', new ToolCallResult($toolCall), new MessageBag());
+        $processor->processOutput($output);
+
+        $this->assertCount(2, $output->getMessageBag());
+    }
+
+    public function testFiberExecutionStrategyIntegratesWithAgentProcessor()
+    {
+        $toolCall1 = new ToolCall('id1', 'tool_a', ['x' => '1']);
+        $toolCall2 = new ToolCall('id2', 'tool_b', ['y' => '2']);
+        $result1 = new ToolResult($toolCall1, 'fiber_a');
+        $result2 = new ToolResult($toolCall2, 'fiber_b');
+
+        $callOrder = [];
+
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnCallback(static function (ToolCall $call) use (&$callOrder, $toolCall1, $result1, $result2): ToolResult {
+                $callOrder[] = $call->getName();
+
+                return $call === $toolCall1 ? $result1 : $result2;
+            });
+
+        $toolbox->method('getTools')->willReturn([]);
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturn(new TextResult('Done.'));
+
+        $strategy = new \Symfony\AI\Agent\Toolbox\ExecutionStrategy\FiberToolExecutionStrategy();
+        $processor = new AgentProcessor($toolbox, executionStrategy: $strategy);
+        $processor->setAgent($agent);
+
+        $result = new ToolCallResult($toolCall1, $toolCall2);
+        $output = new Output('gpt-4', $result, new MessageBag());
+        $processor->processOutput($output);
+
+        $this->assertInstanceOf(TextResult::class, $output->getResult());
+        $this->assertCount(2, $callOrder);
     }
 }

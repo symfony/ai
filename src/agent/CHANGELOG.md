@@ -9,6 +9,7 @@ CHANGELOG
  * [BC BREAK] Remove `AbstractToolFactory` in favor of standalone `ReflectionToolFactory` and `MemoryToolFactory`
  * [BC BREAK] Change `ToolFactoryInterface::getTool()` signature from `string $reference` to `object|string $reference`
  * Add `ToolCallRequested` event dispatched before tool execution
+ * Add `ToolExecutionStrategyInterface` to allow custom multi-tool execution strategies in `AgentProcessor`
 
 0.4
 ---

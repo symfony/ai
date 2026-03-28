@@ -101,8 +101,10 @@ Advanced Example with Multiple Agents
             research:
                 platform: 'ai.platform.anthropic'
                 model: 'claude-3-7-sonnet'
-                tools: # If undefined, all tools are injected into the agent, use "tools: false" to disable tools.
-                    - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
+                tools:
+                    execution_strategy: fiber # Optional: "sequential" (default), "fiber", or a custom service ID
+                    services: # If undefined, all tools are injected into the agent, use "tools: false" to disable tools.
+                        - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
             search_agent:
                 platform: 'ai.platform.perplexity'
@@ -952,6 +954,50 @@ make sure you have `symfony/security-core` installed in your project.
 The attribute :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` can be added on class- or method-level - even multiple
 times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
+
+Tool Execution Strategy
+-----------------------
+
+By default, tool calls are executed sequentially, one after another. The bundle provides two built-in strategies
+and supports custom implementations through the :class:`Symfony\\AI\\Agent\\Toolbox\\ExecutionStrategy\\ToolExecutionStrategyInterface`.
+
+**Sequential** (default)
+    Executes tool calls one at a time in the order they are received. Safe and predictable; no additional
+    knowledge is required from tool authors.
+
+**Fiber**
+    Runs all tool calls concurrently using PHP Fibers. All fibers are started before any result is collected,
+    and a round-robin scheduler gives each suspended fiber a turn in every pass. This allows I/O-bound tools
+    to interleave their work rather than blocking the entire process.
+
+Configure the strategy per agent under the ``tools`` option:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: 'gpt-4'
+                tools:
+                    execution_strategy: fiber # "sequential" (default), "fiber", or a custom service ID
+                    services:
+                        - 'App\Tool\WeatherTool'
+                        - 'App\Tool\CalendarTool'
+
+To use a custom strategy, implement
+:class:`Symfony\\AI\\Agent\\Toolbox\\ExecutionStrategy\\ToolExecutionStrategyInterface` and register it as a
+service, then reference its service ID:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                tools:
+                    execution_strategy: 'app.my_custom_execution_strategy'
+
+To write tools that cooperate with the Fiber strategy, see
+:ref:`Writing Fiber-Compatible Tools <agent-fiber-compatible-tools>` in the Agent component documentation.
 
 Token Usage Tracking
 --------------------
