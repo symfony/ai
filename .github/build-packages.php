@@ -41,21 +41,27 @@ foreach ($finder as $composerFile) {
     }
 
     $repositories = $packageData['repositories'] ?? [];
+    $requiresAnyAiPackage = false;
 
     foreach ($aiPackages as $packageName => $packageInfo) {
         if (isset($packageData['require'][$packageName])
             || isset($packageData['require-dev'][$packageName])
         ) {
-            $repositories[] = [
-                'type' => 'path',
-                'url' => $packageInfo['path'],
-            ];
+            $requiresAnyAiPackage = true;
             $key = isset($packageData['require'][$packageName]) ? 'require' : 'require-dev';
             $packageData[$key][$packageName] = '@dev';
         }
     }
 
-    if ($repositories) {
+    // Register all AI packages as path repositories so that transitive
+    // dependencies between AI packages can be resolved during CI.
+    if ($requiresAnyAiPackage) {
+        foreach ($aiPackages as $packageName => $packageInfo) {
+            $repositories[] = [
+                'type' => 'path',
+                'url' => $packageInfo['path'],
+            ];
+        }
         $packageData['repositories'] = $repositories;
     }
 
