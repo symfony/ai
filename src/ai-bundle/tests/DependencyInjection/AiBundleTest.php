@@ -52,6 +52,7 @@ use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickhouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
+use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
@@ -1359,12 +1360,13 @@ class AiBundleTest extends TestCase
         $this->assertSame(MariaDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(0));
         $this->assertSame('my_mariadb_store', $definition->getArgument(1));
         $this->assertSame('vector_idx', $definition->getArgument(2));
         $this->assertSame('vector', $definition->getArgument(3));
+        $this->assertSame(MariaDbDistance::Euclidean, $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -1393,6 +1395,7 @@ class AiBundleTest extends TestCase
                             'setup_options' => [
                                 'dimensions' => 1024,
                             ],
+                            'distance' => 'cosine',
                         ],
                     ],
                 ],
@@ -1405,12 +1408,13 @@ class AiBundleTest extends TestCase
         $this->assertSame(MariaDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(0));
         $this->assertSame('vector_table', $definition->getArgument(1));
         $this->assertSame('vector_idx', $definition->getArgument(2));
         $this->assertSame('vector', $definition->getArgument(3));
+        $this->assertSame(MariaDbDistance::Cosine, $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([

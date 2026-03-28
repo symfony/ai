@@ -94,6 +94,7 @@ use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
+use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
@@ -1436,11 +1437,12 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->setFactory([MariaDbStore::class, 'fromDbal'])
                     ->setArguments([
-                        new Reference(\sprintf('doctrine.dbal.%s_connection', $store['connection'])),
-                        $store['table_name'] ?? $name,
-                        $store['index_name'],
-                        $store['vector_field_name'],
-                    ])
+                            new Reference(\sprintf('doctrine.dbal.%s_connection', $store['connection'])),
+                            $store['table_name'] ?? $name,
+                            $store['index_name'],
+                            $store['vector_field_name'],
+                            MariaDbDistance::from($store['distance']),
+                        ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
