@@ -536,6 +536,8 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => 'cartesia']);
 
             $container->setDefinition('ai.platform.cartesia', $definition);
@@ -580,6 +582,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => $type]);
 
             $container->setDefinition('ai.platform.'.$type, $definition);
@@ -656,7 +659,6 @@ final class AiBundle extends AbstractBundle
                         $config['api_key'],
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                         new Reference($config['model_catalog'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        null,
                         new Reference('event_dispatcher'),
                         $config['supports_completions'],
                         $config['supports_embeddings'],
