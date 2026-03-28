@@ -773,13 +773,9 @@ making your tests more reliable and easier to maintain.
 Speech support
 ~~~~~~~~~~~~~~
 
-Using speech to send messages / receive answers as audio is a common use case when integrating agents and/or chats,
-this approach allows to either send audio and expect text output or send a text and receive an audio content.
-
-Another approach is to use stt / tts together to enable a full audio pipeline, this approach introduce some latency
-(as both input/output must be processed) but allows to create a more natural and "human-like" conversation flow.
-
-Speech support can be enabled using :class:`Symfony\\AI\\Agent\\InputProcessor\\SpeechProcessor`.
+The :class:`Symfony\\AI\\Agent\\SpeechAgent` decorator adds speech capabilities (STT/TTS) to any agent. It wraps
+an existing :class:`Symfony\\AI\\Agent\\AgentInterface` and handles audio-to-text conversion on input and
+text-to-audio conversion on output.
 
 The speech result is available through the :class:`Symfony\\AI\\Platform\\Speech\\SpeechAwareInterface` interface,
 which is implemented by :class:`Symfony\\AI\\Platform\\Result\\TextResult`, :class:`Symfony\\AI\\Platform\\Result\\BinaryResult`
@@ -788,71 +784,63 @@ and :class:`Symfony\\AI\\Platform\\Result\\StreamResult`.
 Here is a `text-to-speech` example::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Agent\InputProcessor\SpeechProcessor;
+    use Symfony\AI\Agent\SpeechAgent;
     use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
     use Symfony\AI\Platform\Speech\SpeechAwareInterface;
     use Symfony\AI\Platform\Speech\SpeechConfiguration;
-    use Symfony\Component\HttpClient\HttpClient;
 
-    require_once dirname(__DIR__).'/bootstrap.php';
+    $platform = OpenAiPlatformFactory::create('key');
+    $agent = new Agent($platform, 'gpt-4o');
 
-    $platform = OpenAiPlatformFactory::create('key', httpClient: HttpClient::create());
+    $speechAgent = new SpeechAgent($agent, ElevenLabsPlatformFactory::create(
+        apiKey: 'key',
+    ), new SpeechConfiguration([
+        'tts_model' => 'eleven_multilingual_v2',
+        'tts_options' => [
+            'voice' => 'Dslrhjl3ZpzrctukrQSN',
+        ],
+    ]));
 
-    $agent = new Agent($platform, 'gpt-4o', outputProcessors: [
-        new SpeechProcessor(ElevenLabsPlatformFactory::create(
-            apiKey: 'key',
-            httpClient: http_client()
-        ), new SpeechConfiguration([
-            'tts_model' => 'eleven_multilingual_v2',
-            'tts_options' => [
-                'voice' => 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
-            ],
-        ])),
-    ]);
-    $answer = $agent->call(new MessageBag(
+    $answer = $speechAgent->call(new MessageBag(
         Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
     ));
 
     assert($answer instanceof SpeechAwareInterface);
     echo $answer->getSpeech()->asBinary();
 
-When handling `speech-to-text`, the process is similar but requires a :class:`Symfony\\AI\\Platform\\Message\\Content\\Audio` as an input::
+When handling `speech-to-text`, the decorator transcribes the audio input before delegating to the inner agent::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Agent\InputProcessor\SpeechProcessor;
+    use Symfony\AI\Agent\SpeechAgent;
     use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
     use Symfony\AI\Platform\Message\Content\Audio;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
     use Symfony\AI\Platform\Speech\SpeechConfiguration;
-    use Symfony\Component\HttpClient\HttpClient;
 
-    require_once dirname(__DIR__).'/bootstrap.php';
+    $platform = OpenAiPlatformFactory::create('key');
+    $agent = new Agent($platform, 'gpt-4o');
 
-    $platform = OpenAiPlatformFactory::create('key', httpClient: HttpClient::create());
+    $speechAgent = new SpeechAgent($agent, ElevenLabsPlatformFactory::create(
+        apiKey: 'key',
+    ), new SpeechConfiguration([
+        'stt_model' => 'scribe_v1',
+    ]));
 
-    $agent = new Agent($platform, 'gpt-4o', [
-        new SpeechProcessor(ElevenLabsPlatformFactory::create(
-            apiKey: 'key',
-            httpClient: http_client(),
-        ), new SpeechConfiguration([
-            'stt_model' => 'scribe_v1',
-        ]))
-    ]);
-    $answer = $agent->call(new MessageBag(
-        Message::ofUser(Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'))
+    $answer = $speechAgent->call(new MessageBag(
+        Message::ofUser(Audio::fromFile('audio.mp3'))
     ));
 
-    echo $answer->getContent();
+    echo $answer->getContent(); // transcribed text was sent to the LLM
 
-A "STT / TTS sandwich" (speech-to-speech) can be created using the :class:`Symfony\\AI\\Agent\\InputProcessor\\SpeechProcessor` as both input and output processor::
+A full speech-to-speech pipeline (STT + TTS) can be created by configuring both models::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Agent\InputProcessor\SpeechProcessor;
+    use Symfony\AI\Agent\SpeechAgent;
     use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
     use Symfony\AI\Platform\Message\Content\Audio;
@@ -860,35 +848,52 @@ A "STT / TTS sandwich" (speech-to-speech) can be created using the :class:`Symfo
     use Symfony\AI\Platform\Message\MessageBag;
     use Symfony\AI\Platform\Speech\SpeechAwareInterface;
     use Symfony\AI\Platform\Speech\SpeechConfiguration;
-    use Symfony\Component\HttpClient\HttpClient;
 
-    require_once dirname(__DIR__).'/bootstrap.php';
+    $platform = OpenAiPlatformFactory::create('key');
+    $agent = new Agent($platform, 'gpt-4o');
 
-    $platform = OpenAiPlatformFactory::create('key', httpClient: HttpClient::create());
-
-    $speechProcessor = new SpeechProcessor(ElevenLabsPlatformFactory::create(
+    $speechAgent = new SpeechAgent($agent, ElevenLabsPlatformFactory::create(
         apiKey: 'key',
-        httpClient: http_client(),
     ), new SpeechConfiguration([
         'tts_model' => 'eleven_multilingual_v2',
         'tts_options' => [
-            'voice' => 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
+            'voice' => 'Dslrhjl3ZpzrctukrQSN',
         ],
         'stt_model' => 'scribe_v1',
     ]));
 
-    $agent = new Agent($platform, 'gpt-4o', [$speechProcessor], [$speechProcessor]);
-
-    $answer = $agent->call(new MessageBag(
-        Message::ofUser(Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'))
+    $answer = $speechAgent->call(new MessageBag(
+        Message::ofUser(Audio::fromFile('audio.mp3'))
     ));
 
     assert($answer instanceof SpeechAwareInterface);
     echo $answer->getSpeech()->asBinary();
 
+When using the Symfony AI Bundle, wire the ``SpeechAgent`` as a service:
+
+.. code-block:: yaml
+
+    # config/services.yaml
+    services:
+        app.speech_agent:
+            class: Symfony\AI\Agent\SpeechAgent
+            arguments:
+                - '@ai.agent.my_agent'
+                - '@ai.platform.elevenlabs'
+                - '@app.speech_agent.configuration'
+
+        app.speech_agent.configuration:
+            class: Symfony\AI\Platform\Speech\SpeechConfiguration
+            arguments:
+                - tts_model: 'eleven_multilingual_v2'
+                  tts_options: { voice: 'Dslrhjl3ZpzrctukrQSN' }
+                  stt_model: 'scribe_v1'
+
+    # ...
+
 .. note::
 
-    Handling both `text-to-speech` and `speech-to-text` introduce latency as most of the process is synchronous.
+    Handling both `text-to-speech` and `speech-to-text` introduces latency as most of the process is synchronous.
 
 Code Examples
 ~~~~~~~~~~~~~
