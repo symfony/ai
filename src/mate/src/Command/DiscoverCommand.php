@@ -161,10 +161,6 @@ class DiscoverCommand extends Command
      * @param string[] $newPackages
      * @param string[] $removedPackages
      */
-    /**
-     * @param string[] $newPackages
-     * @param string[] $removedPackages
-     */
     private function displayComposerSummary(SymfonyStyle $io, int $count, array $newPackages, array $removedPackages): void
     {
         $summary = \sprintf('%d extension%s synchronized', $count, 1 === $count ? '' : 's');
