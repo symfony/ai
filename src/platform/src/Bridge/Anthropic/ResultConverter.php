@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Result\ThinkingContent;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -93,9 +94,23 @@ class ResultConverter implements ResultConverterInterface
         $currentToolCallJson = '';
         $currentThinking = null;
         $currentThinkingSignature = null;
+        $inputUsage = null;
+        $outputUsage = null;
 
         foreach ($result->getDataStream() as $data) {
             $type = $data['type'] ?? '';
+
+            // Capture token usage from message_start
+            if ('message_start' === $type && isset($data['message']['usage'])) {
+                $inputUsage = $data['message']['usage'];
+                continue;
+            }
+
+            // Capture token usage from message_delta
+            if ('message_delta' === $type && isset($data['usage'])) {
+                $outputUsage = $data['usage'];
+                continue;
+            }
 
             // Handle text content deltas
             if ('content_block_delta' === $type && isset($data['delta']['text'])) {
@@ -177,10 +192,36 @@ class ResultConverter implements ResultConverterInterface
                 }
             }
 
-            // Handle message stop - yield tool calls if any were collected
-            if ('message_stop' === $type && [] !== $toolCalls) {
-                yield new ToolCallResult(...$toolCalls);
+            // Handle message stop - yield tool calls and token usage
+            if ('message_stop' === $type) {
+                if ([] !== $toolCalls) {
+                    yield new ToolCallResult(...$toolCalls);
+                }
+
+                if (null !== $inputUsage || null !== $outputUsage) {
+                    yield $this->buildStreamTokenUsage($inputUsage, $outputUsage);
+                }
             }
         }
+    }
+
+    /**
+     * @param ?array<string, mixed> $inputUsage
+     * @param ?array<string, mixed> $outputUsage
+     */
+    private function buildStreamTokenUsage(?array $inputUsage, ?array $outputUsage): TokenUsage
+    {
+        $cacheCreationTokens = isset($inputUsage['cache_creation_input_tokens']) ? (int) $inputUsage['cache_creation_input_tokens'] : null;
+        $cacheReadTokens = isset($inputUsage['cache_read_input_tokens']) ? (int) $inputUsage['cache_read_input_tokens'] : null;
+        $cachedTokens = (null !== $cacheCreationTokens || null !== $cacheReadTokens) ? ($cacheCreationTokens ?? 0) + ($cacheReadTokens ?? 0) : null;
+
+        return new TokenUsage(
+            promptTokens: $inputUsage['input_tokens'] ?? null,
+            completionTokens: $outputUsage['output_tokens'] ?? null,
+            toolTokens: $inputUsage['server_tool_use']['web_search_requests'] ?? null,
+            cachedTokens: $cachedTokens,
+            cacheCreationTokens: $cacheCreationTokens,
+            cacheReadTokens: $cacheReadTokens,
+        );
     }
 }
