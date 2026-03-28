@@ -1,0 +1,62 @@
+{
+    "name": "symfony/ai-mate-composer-plugin",
+    "description": "Composer plugin that automatically discovers AI Mate extensions on install/update",
+    "license": "MIT",
+    "type": "composer-plugin",
+    "keywords": [
+        "ai",
+        "mcp",
+        "mate",
+        "composer-plugin",
+        "auto-discovery"
+    ],
+    "authors": [
+        {
+            "name": "Johannes Wachter",
+            "email": "johannes@sulu.io"
+        },
+        {
+            "name": "Tobias Nyholm",
+            "email": "tobias.nyholm@gmail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "composer-plugin-api": "^2.1"
+    },
+    "require-dev": {
+        "composer/composer": "^2.1",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.53",
+        "symfony/ai-mate": "^0.6"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Mate\\ComposerPlugin\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\PHPStan\\": "../../../.phpstan/",
+            "Symfony\\AI\\Mate\\ComposerPlugin\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "class": "Symfony\\AI\\Mate\\ComposerPlugin\\MatePlugin",
+        "plugin-optional": true,
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    }
+}
