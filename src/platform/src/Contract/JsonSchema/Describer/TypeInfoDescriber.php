@@ -51,17 +51,8 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
      */
     public function describeObject(ObjectSubject $subject, ?array &$schema): iterable
     {
-        $schema['type'] ??= 'object';
-        foreach (['anyOf', 'oneOf', 'allOf', 'not'] as $subSchemaKey) {
-            if (!\array_key_exists($subSchemaKey, $schema)) {
-                continue;
-            }
-
-            foreach ($schema[$subSchemaKey] as &$subSchema) {
-                if (\array_key_exists('type', $subSchema) && $subSchema['type'] === $schema['type']) {
-                    unset($subSchema['type']);
-                }
-            }
+        if (!isset($schema['anyOf']) && !isset($schema['oneOf']) && !isset($schema['allOf'])) {
+            $schema['type'] ??= 'object';
         }
 
         return [];

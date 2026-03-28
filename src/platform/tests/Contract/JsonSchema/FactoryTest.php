@@ -231,15 +231,15 @@ final class FactoryTest extends TestCase
                 'items' => [
                     'type' => 'array',
                     'items' => [
-                        'type' => 'object',
                         'anyOf' => [
                             [
+                                'type' => 'object',
                                 'properties' => [
                                     'name' => ['type' => 'string'],
                                     'type' => [
                                         'type' => 'string',
                                         'pattern' => '^name$',
-                                        'const' => 'name',
+                                        'enum' => ['name'],
                                     ],
                                 ],
                                 'required' => [
@@ -249,12 +249,13 @@ final class FactoryTest extends TestCase
                                 'additionalProperties' => false,
                             ],
                             [
+                                'type' => 'object',
                                 'properties' => [
                                     'age' => ['type' => 'integer'],
                                     'type' => [
                                         'type' => 'string',
                                         'pattern' => '^age$',
-                                        'const' => 'age',
+                                        'enum' => ['age'],
                                     ],
                                 ],
                                 'required' => [

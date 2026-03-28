@@ -8,6 +8,8 @@ CHANGELOG
  * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
  * Add `description` and `example` properties to `#[With]` attribute
  * Generate JSON schema from Symfony Validator constraints when available
+ * Fix `SerializerDescriber` using `const` for single-value properties which is unsupported by Gemini, replaced with single-value `enum`
+ * Fix `TypeInfoDescriber` adding `type` alongside `anyOf`/`oneOf`/`allOf` which caused Gemini to ignore discriminator variants
 
 0.6
 ---
