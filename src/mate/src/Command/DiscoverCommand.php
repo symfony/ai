@@ -161,19 +161,36 @@ class DiscoverCommand extends Command
      * @param string[] $newPackages
      * @param string[] $removedPackages
      */
+    /**
+     * @param string[] $newPackages
+     * @param string[] $removedPackages
+     */
     private function displayComposerSummary(SymfonyStyle $io, int $count, array $newPackages, array $removedPackages): void
     {
-        $parts = [\sprintf('%d extension%s', $count, 1 === $count ? '' : 's')];
+        $summary = \sprintf('%d extension%s synchronized', $count, 1 === $count ? '' : 's');
 
+        $details = [];
         if (\count($newPackages) > 0) {
-            $parts[] = \sprintf('%d new', \count($newPackages));
+            $details[] = \sprintf('%d new', \count($newPackages));
         }
-
         if (\count($removedPackages) > 0) {
-            $parts[] = \sprintf('%d removed', \count($removedPackages));
+            $details[] = \sprintf('%d removed', \count($removedPackages));
+        }
+        if ([] !== $details) {
+            $summary .= ' ('.implode(', ', $details).')';
         }
 
-        $io->write(\sprintf('<info>AI Mate:</info> %s synchronized.', implode(', ', $parts)));
+        $io->write('');
+        $io->write(\sprintf('<bg=green;fg=white> AI Mate </> %s.', $summary));
+
+        foreach ($newPackages as $package) {
+            $io->write(\sprintf('  <fg=green>+</> %s', $package));
+        }
+        foreach ($removedPackages as $package) {
+            $io->write(\sprintf('  <fg=red>-</> %s', $package));
+        }
+
+        $io->write('');
     }
 
     /**
