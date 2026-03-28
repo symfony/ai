@@ -14,14 +14,13 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 use Mcp\Capability\Attribute\McpTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileIndex;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
 
 /**
  * MCP tools for accessing Symfony profiler data.
  *
  * @author Johannes Wachter <johannes@sulu.io>
- *
- * @phpstan-import-type ProfileIndexData from ProfileIndex
  */
 final class ProfilerTool
 {
@@ -39,8 +38,6 @@ final class ProfilerTool
      * @param string|null $context    Filter by Symfony kernel context
      * @param string|null $from       Start date filter for profile creation time
      * @param string|null $to         End date filter for profile creation time
-     *
-     * @return array{profiles: list<ProfileIndexData>}
      */
     #[McpTool('symfony-profiler-list', 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Profiles are sorted by most recent first, so limit=1 returns the latest profile. Returns summary data with resource_uri for fetching full details via the resource template.')]
     public function listProfiles(
@@ -52,7 +49,7 @@ final class ProfilerTool
         ?string $context = null,
         ?string $from = null,
         ?string $to = null,
-    ): array {
+    ): string {
         $criteria = [
             'context' => $context,
             'method' => $method,
@@ -65,21 +62,19 @@ final class ProfilerTool
 
         $profiles = $this->dataProvider->searchProfiles(array_filter($criteria), $limit);
 
-        return [
+        return ResponseEncoder::encode([
             'profiles' => array_values(array_map(
                 static fn (ProfileIndex $profile): array => $profile->toArray(),
                 $profiles,
             )),
-        ];
+        ]);
     }
 
     /**
      * @param string $token The unique profiler token identifying the profile
-     *
-     * @return ProfileIndexData
      */
     #[McpTool('symfony-profiler-get', 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data.')]
-    public function getProfile(string $token): array
+    public function getProfile(string $token): string
     {
         $profileData = $this->dataProvider->findProfile($token);
 
@@ -104,6 +99,6 @@ final class ProfilerTool
             $data['context'] = $profileData->context;
         }
 
-        return $data;
+        return ResponseEncoder::encode($data);
     }
 }

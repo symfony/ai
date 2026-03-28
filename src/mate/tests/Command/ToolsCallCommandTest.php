@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Tests\Command;
 
+use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -73,8 +74,11 @@ final class ToolsCallCommandTest extends TestCase
         $this->assertStringNotContainsString('Result', $output);
 
         $result = json_decode($output, true);
-        $this->assertIsArray($result);
-        $this->assertSame(\PHP_VERSION, $result['php_version']);
+        $this->assertIsString($result);
+
+        $decoded = Toon::decode($result);
+        $this->assertIsArray($decoded);
+        $this->assertSame(\PHP_VERSION, $decoded['php_version']);
     }
 
     public function testExecuteWithInvalidToolName()

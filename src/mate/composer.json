@@ -38,8 +38,12 @@
         "symfony/dependency-injection": "^5.4|^6.4|^7.3|^8.0",
         "symfony/finder": "^5.4|^6.4|^7.3|^8.0"
     },
+    "suggest": {
+        "helgesverre/toon": "Required for TOON format encoding to reduce token consumption in tool responses"
+    },
     "require-dev": {
         "ext-simplexml": "*",
+        "helgesverre/toon": "^3.1",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
