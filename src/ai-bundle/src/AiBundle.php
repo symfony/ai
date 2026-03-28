@@ -599,7 +599,10 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->setArguments([
                         array_map(
-                            static fn (string $wrappedPlatform): Reference => new Reference($wrappedPlatform),
+                            static fn (array $wrappedPlatform): array => [
+                                'platform' => new Reference($wrappedPlatform['platform']),
+                                'model' => $wrappedPlatform['model'] ?? null,
+                            ],
                             $config['platforms'],
                         ),
                         new Reference($config['rate_limiter']),

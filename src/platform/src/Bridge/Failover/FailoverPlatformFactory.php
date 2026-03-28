@@ -24,19 +24,14 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 final class FailoverPlatformFactory
 {
     /**
-     * @param PlatformInterface[] $platforms
+     * @param list<array{platform: PlatformInterface, model?: string|null}> $platforms
      */
     public static function create(
-        iterable $platforms,
+        array $platforms,
         RateLimiterFactoryInterface $rateLimiterFactory,
         ClockInterface $clock = new MonotonicClock(),
         LoggerInterface $logger = new NullLogger(),
     ): PlatformInterface {
-        return new FailoverPlatform(
-            $platforms,
-            $rateLimiterFactory,
-            $clock,
-            $logger,
-        );
+        return new FailoverPlatform($platforms, $rateLimiterFactory, $clock, $logger);
     }
 }

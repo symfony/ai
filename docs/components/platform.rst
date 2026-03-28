@@ -708,8 +708,8 @@ the :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform` can be us
 
     // # Ollama will fail as 'gpt-4o' is not available in the catalog
     $platform = new FailoverPlatform([
-        OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), HttpClient::create()),
-        OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), HttpClient::create()),
+        ['platform' => OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), HttpClient::create())],
+        ['platform' => OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), HttpClient::create())],
     ], $rateLimiter);
 
     $result = $platform->invoke('gpt-4o', new MessageBag(
@@ -746,6 +746,75 @@ This platform can also be configured when using the bundle::
 .. note::
 
     Platforms are executed in the order they're injected into :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform`.
+
+Model Overrides
+~~~~~~~~~~~~~~~
+
+By default, the model name passed to ``invoke()`` is forwarded to every platform.
+This means that all platforms must support the same model name.
+
+To enable cross-provider failover (e.g. OpenAI GPT → Anthropic Claude), you can assign
+a specific model name to each platform by using the ``model`` key::
+
+    use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
+    use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\Component\HttpClient\HttpClient;
+    use Symfony\Component\RateLimiter\RateLimiterFactory;
+    use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
+
+    $rateLimiter = new RateLimiterFactory([
+        'policy' => 'sliding_window',
+        'id' => 'failover',
+        'interval' => '3 seconds',
+        'limit' => 1,
+    ], new InMemoryStorage());
+
+    $platform = new FailoverPlatform([
+        ['platform' => OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), HttpClient::create()), 'model' => 'gpt-4o'],
+        ['platform' => AnthropicPlatformFactory::create(env('ANTHROPIC_API_KEY'), HttpClient::create()), 'model' => 'claude-sonnet-4-20250514'],
+    ], $rateLimiter);
+
+    // OpenAI receives 'gpt-4o', if it fails, Anthropic receives 'claude-sonnet-4-20250514'
+    $result = $platform->invoke('gpt-4o', new MessageBag(
+        Message::forSystem('You are a helpful assistant.'),
+        Message::ofUser('What is the capital of France?'),
+    ));
+
+When using the bundle, use the ``model`` key in the ``platforms`` configuration::
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openai:
+                # ...
+            anthropic:
+                # ...
+            failover:
+                cross_provider:
+                    platforms:
+                        - { platform: 'ai.platform.openai', model: 'gpt-4o' }
+                        - { platform: 'ai.platform.anthropic', model: 'claude-sonnet-4-20250514' }
+                    rate_limiter: 'limiter.failover_platform'
+
+When no model override is needed, platforms can be configured using the simple string format::
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            failover:
+                same_provider:
+                    platforms:
+                        - 'ai.platform.ollama'
+                        - 'ai.platform.openai'
+                    rate_limiter: 'limiter.failover_platform'
+
+.. note::
+
+    Platforms without a ``model`` key use the model name passed to ``invoke()``, which
+    allows mixing overridden and non-overridden platforms in the same configuration.
 
 Testing Tools
 -------------
