@@ -15,7 +15,10 @@ use Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\InvalidCollectorException;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\ProfileNotFoundException;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileData;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileIndex;
+use Symfony\Component\HttpKernel\DataCollector\DataCollector;
+use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Symfony\Component\HttpKernel\Profiler\FileProfilerStorage;
+use Symfony\Component\VarDumper\Cloner\Data;
 
 /**
  * Reads and parses profiler data files.
@@ -176,7 +179,7 @@ final class ProfilerDataProvider
         if (null === $formatter) {
             return [
                 'name' => $collectorName,
-                'data' => [],
+                'data' => ['raw' => $this->extractRawData($collectorData)],
                 'summary' => [],
             ];
         }
@@ -212,6 +215,50 @@ final class ProfilerDataProvider
         $profiles = $this->readIndex(1);
 
         return $profiles[0] ?? null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function extractRawData(DataCollectorInterface $collector): array
+    {
+        if (!$collector instanceof DataCollector) {
+            return [];
+        }
+
+        $class = new \ReflectionClass(DataCollector::class);
+        $property = $class->getProperty('data');
+        $data = $property->getValue($collector);
+
+        if ($data instanceof Data) {
+            $raw = $data->getValue(true);
+
+            return \is_array($raw) ? $raw : [];
+        }
+
+        if (\is_array($data)) {
+            return $this->convertDataObjects($data);
+        }
+
+        return [];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function convertDataObjects(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if ($value instanceof Data) {
+                $data[$key] = $value->getValue(true);
+            } elseif (\is_array($value)) {
+                $data[$key] = $this->convertDataObjects($value);
+            }
+        }
+
+        return $data;
     }
 
     /**

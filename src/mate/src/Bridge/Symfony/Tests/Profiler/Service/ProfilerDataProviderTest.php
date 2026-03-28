@@ -142,7 +142,7 @@ final class ProfilerDataProviderTest extends TestCase
         $this->provider->getCollectorData('abc123', 'nonexistent');
     }
 
-    public function testGetCollectorDataReturnsFormattedData()
+    public function testGetCollectorDataReturnsRawDataWithoutFormatter()
     {
         $data = $this->provider->getCollectorData('abc123', 'request');
 
@@ -151,6 +151,10 @@ final class ProfilerDataProviderTest extends TestCase
         $this->assertArrayHasKey('data', $data);
         $this->assertArrayHasKey('summary', $data);
         $this->assertSame('request', $data['name']);
+        $this->assertSame([], $data['summary']);
+        $this->assertArrayHasKey('raw', $data['data']);
+        $this->assertSame('GET', $data['data']['raw']['method']);
+        $this->assertSame('/api/users', $data['data']['raw']['path']);
     }
 
     public function testListAvailableCollectorsThrowsExceptionForNonExistentProfile()

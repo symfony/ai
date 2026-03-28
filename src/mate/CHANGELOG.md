@@ -4,6 +4,7 @@ CHANGELOG
 0.7
 ---
 
+ * Add raw data fallback for profiler collectors without a registered formatter
  * Add Codex wrapper generation (`bin/codex`, `bin/codex.bat`) to `mate init`
  * Add AGENT instruction artifact materialization to `mate discover` (`mate/AGENT_INSTRUCTIONS.md` and managed `AGENTS.md` block)
  * Merge `php-version`, `operating-system`, `operating-system-family`, and `php-extensions` tools into a single `server-info` tool
