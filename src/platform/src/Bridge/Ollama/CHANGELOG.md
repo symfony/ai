@@ -8,6 +8,7 @@ CHANGELOG
  * Replace `ModelCatalog` by `OllamaApiCatalog`
  * Rename `OllamaApiCatalog` to `ModelCatalog`
  * [BC BREAK] `Ollama` model is now `final`
+ * Add support for `/api/generate` endpoint
 
 0.4
 ---

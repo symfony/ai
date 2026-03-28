@@ -53,10 +53,38 @@ final class OllamaClient implements ModelClientInterface
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
         return match (true) {
+            $model->supports(Capability::INPUT_TEXT) && \is_string($payload) => $this->doGenerationRequest($model, $payload, $options),
             $model->supports(Capability::INPUT_MESSAGES) => $this->doCompletionRequest($payload, $options),
             $model->supports(Capability::EMBEDDINGS) => $this->doEmbeddingsRequest($model, $payload, $options),
             default => throw new InvalidArgumentException(\sprintf('Unsupported model "%s": "%s".', $model::class, $model->getName())),
         };
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function doGenerationRequest(Model $model, string $payload, array $options): RawHttpResult
+    {
+        // Revert Ollama's default streaming behavior
+        $options['stream'] ??= false;
+
+        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
+            $options['format'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'];
+            unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
+        }
+
+        $options = $this->normalizeOllamaOptions($options, self::CHAT_TOP_LEVEL_KEYS);
+
+        return new RawHttpResult($this->httpClient->request('POST', 'api/generate', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                ...$options,
+                'model' => $model->getName(),
+                'prompt' => $payload,
+            ],
+        ]));
     }
 
     /**
@@ -79,9 +107,14 @@ final class OllamaClient implements ModelClientInterface
 
         $options = $this->normalizeOllamaOptions($options, self::CHAT_TOP_LEVEL_KEYS);
 
-        return new RawHttpResult($this->httpClient->request('POST', '/api/chat', [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => array_merge($options, $payload),
+        return new RawHttpResult($this->httpClient->request('POST', 'api/chat', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                ...$options,
+                ...$payload,
+            ],
         ]));
     }
 
@@ -93,11 +126,15 @@ final class OllamaClient implements ModelClientInterface
     {
         $options = self::normalizeOllamaOptions($options, self::EMBED_TOP_LEVEL_KEYS);
 
-        return new RawHttpResult($this->httpClient->request('POST', '/api/embed', [
-            'json' => array_merge($options, [
+        return new RawHttpResult($this->httpClient->request('POST', 'api/embed', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                ...$options,
                 'model' => $model->getName(),
                 'input' => $payload,
-            ]),
+            ],
         ]));
     }
 

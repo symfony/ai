@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -23,6 +24,8 @@ use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Platform\Vector\VectorInterface;
+use Symfony\Component\String\UnicodeString;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -36,15 +39,21 @@ final class OllamaResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
-        if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result));
-        }
+        $url = new UnicodeString($result->getObject()->getInfo('url'));
 
-        $data = $result->getData();
+        $stream = $options['stream'] ?? false;
 
-        return \array_key_exists('embeddings', $data)
-            ? $this->doConvertEmbeddings($data)
-            : $this->doConvertCompletion($data);
+        return match (true) {
+            $url->containsAny('embed') && \array_key_exists('embeddings', $result->getData()) => new VectorResult(...array_map(
+                static fn (array $embedding): VectorInterface => new Vector($embedding),
+                $result->getData()['embeddings'],
+            )),
+            $url->containsAny('chat') && $stream => new StreamResult($this->convertStream($url, $result)),
+            $url->containsAny('generate') && $stream => new StreamResult($this->convertStream($url, $result)),
+            $url->containsAny('generate') => new TextResult($result->getData()['response']),
+            $url->containsAny('chat') => $this->doConvertCompletion($result->getData()),
+            default => throw new InvalidArgumentException('The requested resource cannot be processed, please check the Ollama API.'),
+        };
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractorInterface
@@ -78,39 +87,22 @@ final class OllamaResultConverter implements ResultConverterInterface
         return new TextResult($data['message']['content']);
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function doConvertEmbeddings(array $data): ResultInterface
-    {
-        if ([] === $data['embeddings']) {
-            throw new RuntimeException('Response does not contain embeddings.');
-        }
-
-        return new VectorResult(
-            ...array_map(
-                static fn (array $embedding): Vector => new Vector($embedding),
-                $data['embeddings'],
-            ),
-        );
-    }
-
-    private function convertStream(RawResultInterface $result): \Generator
+    private function convertStream(UnicodeString $url, RawResultInterface $result): \Generator
     {
         $toolCalls = [];
         foreach ($result->getDataStream() as $data) {
-            if ($this->streamIsToolCall($data)) {
+            if (isset($data['message']['tool_calls'])) {
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
 
-            if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
+            if ([] !== $toolCalls && isset($data['done']) && true === $data['done']) {
                 yield new ToolCallResult(...$toolCalls);
             }
 
             yield new OllamaMessageChunk(
                 $data['model'],
                 new \DateTimeImmutable($data['created_at']),
-                $data['message'],
+                $url->containsAny('generate') ? $data['response'] : $data['message'],
                 $data['done'],
                 $data,
             );
@@ -134,21 +126,5 @@ final class OllamaResultConverter implements ResultConverterInterface
         }
 
         return $toolCalls;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function streamIsToolCall(array $data): bool
-    {
-        return isset($data['message']['tool_calls']);
-    }
-
-    /**
-     * @param array<string, mixed> $data^
-     */
-    private function isToolCallsStreamFinished(array $data): bool
-    {
-        return isset($data['done']) && true === $data['done'];
     }
 }

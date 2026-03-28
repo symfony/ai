@@ -29,7 +29,7 @@ final class ModelCatalog implements ModelCatalogInterface
 
     public function getModel(string $modelName): Ollama
     {
-        $response = $this->httpClient->request('POST', '/api/show', [
+        $response = $this->httpClient->request('POST', 'api/show', [
             'json' => [
                 'model' => $modelName,
             ],
@@ -41,28 +41,42 @@ final class ModelCatalog implements ModelCatalogInterface
             throw new InvalidArgumentException('The model information could not be retrieved from the Ollama API. Your Ollama server might be too old. Try upgrade it.');
         }
 
-        $capabilities = array_map(
-            static fn (string $capability): Capability => match ($capability) {
-                'embedding' => Capability::EMBEDDINGS,
-                'completion' => Capability::INPUT_MESSAGES,
-                'tools' => Capability::TOOL_CALLING,
-                'thinking' => Capability::THINKING,
-                'vision' => Capability::INPUT_IMAGE,
+        $capabilities = array_merge(...array_map(
+            static fn (string $capability): array => match ($capability) {
+                'embedding' => [
+                    Capability::EMBEDDINGS,
+                    Capability::OUTPUT_EMBEDDINGS,
+                ],
+                'completion' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::OUTPUT_IMAGE, // See https://ollama.com/blog/image-generation
+                ],
+                'tools' => [
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_TEXT,
+                ],
+                'thinking' => [
+                    Capability::THINKING,
+                    Capability::OUTPUT_TEXT,
+                ],
+                'vision' => [
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                ],
                 default => throw new InvalidArgumentException(\sprintf('The "%s" capability is not supported', $capability)),
             },
             $payload['capabilities'],
-        );
-
-        if (!\in_array(Capability::EMBEDDINGS, $capabilities, true)) {
-            $capabilities[] = Capability::OUTPUT_STRUCTURED;
-        }
+        ));
 
         return new Ollama($modelName, $capabilities);
     }
 
     public function getModels(): array
     {
-        $response = $this->httpClient->request('GET', '/api/tags');
+        $response = $this->httpClient->request('GET', 'api/tags');
 
         $models = $response->toArray();
 
