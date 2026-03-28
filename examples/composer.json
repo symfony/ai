@@ -3,6 +3,9 @@
     "description": "Example scripts about using Symfony AI",
     "license": "MIT",
     "type": "project",
+    "repositories": [
+        {"type": "path", "url": "../src/platform/src/Bridge/Cohere" }
+    ],
     "require": {
         "php": ">=8.2",
         "symfony/ai-agent": "^0.6",
@@ -25,6 +28,7 @@
         "symfony/ai-clock-tool": "^0.6",
         "symfony/ai-cloudflare-message-store": "^0.6",
         "symfony/ai-cloudflare-store": "^0.6",
+        "symfony/ai-cohere-platform": "@dev",
         "symfony/ai-decart-platform": "^0.6",
         "symfony/ai-deep-seek-platform": "^0.6",
         "symfony/ai-doctrine-message-store": "^0.6",
