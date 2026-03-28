@@ -167,6 +167,28 @@ final class DeferredResultTest extends TestCase
         $this->assertSame(123456, $tokenUsage->getPromptTokens());
     }
 
+    public function testGetTokenUsageReturnsTokenUsageFromMetadata()
+    {
+        $tokenUsage = new TokenUsage(promptTokens: 10, totalTokens: 10);
+        $result = new TextResult('Hello World');
+        $result->getMetadata()->add('token_usage', $tokenUsage);
+
+        $deferredResult = new DeferredResult(new PlainConverter($result), new InMemoryRawResult());
+        $deferredResult->getResult();
+
+        $this->assertSame($tokenUsage, $deferredResult->getTokenUsage());
+    }
+
+    public function testGetTokenUsageReturnsNullWhenNoTokenUsage()
+    {
+        $result = new TextResult('Hello World');
+
+        $deferredResult = new DeferredResult(new PlainConverter($result), new InMemoryRawResult());
+        $deferredResult->getResult();
+
+        $this->assertNull($deferredResult->getTokenUsage());
+    }
+
     /**
      * Workaround for low deps because mocking the ResponseInterface leads to an exception with
      * mock creation "Type Traversable|object|array|string|null contains both object and a class type"
