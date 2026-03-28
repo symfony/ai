@@ -78,10 +78,8 @@ final class MatePlugin implements PluginInterface, EventSubscriberInterface
             return;
         }
 
-        $this->io->write('<info>AI Mate:</info> Discovering extensions...');
-
         $process = proc_open(
-            [\PHP_BINARY, $mateBin, 'discover'],
+            [\PHP_BINARY, $mateBin, 'discover', '--composer'],
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
             $rootDir,
