@@ -23,6 +23,7 @@ use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Server\MiddlewareInterface;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
@@ -228,6 +229,41 @@ class McpBundleTest extends TestCase
         $this->assertTrue($hasLoaders, 'ServerBuilder should have addLoaders with mcp.loader tag');
     }
 
+    public function testReferenceHandlerNotConfiguredByDefault()
+    {
+        $container = $this->buildContainer([]);
+
+        $builderDefinition = $container->getDefinition('mcp.server.builder');
+        $methodCalls = $builderDefinition->getMethodCalls();
+
+        foreach ($methodCalls as $call) {
+            $this->assertNotSame('setReferenceHandler', $call[0], 'setReferenceHandler should not be called when not configured');
+        }
+    }
+
+    public function testReferenceHandlerConfigured()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'reference_handler' => 'app.custom_reference_handler',
+            ],
+        ]);
+
+        $builderDefinition = $container->getDefinition('mcp.server.builder');
+        $methodCalls = $builderDefinition->getMethodCalls();
+
+        $hasReferenceHandler = false;
+        foreach ($methodCalls as $call) {
+            if ('setReferenceHandler' === $call[0]) {
+                $hasReferenceHandler = true;
+                $this->assertInstanceOf(Reference::class, $call[1][0]);
+                $this->assertSame('app.custom_reference_handler', (string) $call[1][0]);
+            }
+        }
+
+        $this->assertTrue($hasReferenceHandler, 'ServerBuilder should have setReferenceHandler method call');
+    }
+
     public function testMcpToolAttributeAutoconfiguration()
     {
         $container = $this->buildContainer([
@@ -304,6 +340,7 @@ class McpBundleTest extends TestCase
         $arguments = $routeLoaderDefinition->getArguments();
         $this->assertTrue($arguments[0]); // HTTP transport enabled
         $this->assertSame('/_mcp', $arguments[1]); // Default path
+        $this->assertSame('%mcp.http.routes%', $arguments[2]); // Routes from parameter
 
         // Test session store defaults (file store)
         $this->assertTrue($container->hasDefinition('mcp.session.store'));
@@ -312,6 +349,48 @@ class McpBundleTest extends TestCase
         $sessionArguments = $sessionStoreDefinition->getArguments();
         $this->assertSame('%kernel.cache_dir%/mcp-sessions', $sessionArguments[0]); // Default directory
         $this->assertSame(3600, $sessionArguments[1]); // Default TTL
+    }
+
+    public function testMiddlewareInjectedIntoController()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+            ],
+        ]);
+
+        $controllerDefinition = $container->getDefinition('mcp.server.controller');
+        $arguments = $controllerDefinition->getArguments();
+
+        $middlewareArgument = $arguments[5];
+        $this->assertInstanceOf(TaggedIteratorArgument::class, $middlewareArgument);
+        $this->assertSame('mcp.middleware', $middlewareArgument->getTag());
+    }
+
+    public function testAdditionalRoutesConfiguration()
+    {
+        $routes = [
+            '/.well-known/oauth-protected-resource',
+            '/.well-known/oauth-authorization-server',
+            '/authorize',
+            '/token',
+            '/register',
+        ];
+
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'routes' => $routes,
+                ],
+            ],
+        ]);
+
+        $this->assertSame($routes, $container->getParameter('mcp.http.routes'));
     }
 
     public function testHttpConfigurationCustom()
@@ -510,6 +589,15 @@ class McpBundleTest extends TestCase
         $this->assertArrayHasKey(NotificationHandlerInterface::class, $autoconfigured);
         $definition = $autoconfigured[NotificationHandlerInterface::class];
         $this->assertTrue($definition->hasTag('mcp.notification_handler'));
+    }
+
+    public function testMiddlewareInterfaceAutoconfiguration()
+    {
+        $container = $this->buildContainer([]);
+        $autoconfigured = $container->getAutoconfiguredInstanceof();
+        $this->assertArrayHasKey(MiddlewareInterface::class, $autoconfigured);
+        $definition = $autoconfigured[MiddlewareInterface::class];
+        $this->assertTrue($definition->hasTag('mcp.middleware'));
     }
 
     /**

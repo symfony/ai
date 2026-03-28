@@ -12,6 +12,8 @@
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Mcp\Capability\Registry;
+use Mcp\Capability\Registry\ReferenceHandler;
+use Mcp\Capability\RegistryInterface;
 use Mcp\Server;
 use Mcp\Server\Builder;
 
@@ -20,6 +22,12 @@ return static function (ContainerConfigurator $container): void {
         ->set('mcp.registry', Registry::class)
             ->args([service('event_dispatcher'), service('logger')])
             ->tag('monolog.logger', ['channel' => 'mcp'])
+
+        ->alias(RegistryInterface::class, 'mcp.registry')
+
+        ->set('mcp.reference_handler', ReferenceHandler::class)
+
+        ->alias(ReferenceHandler::class, 'mcp.reference_handler')
 
         ->set('mcp.server.builder', Builder::class)
             ->factory([Server::class, 'builder'])

@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add PSR-15 HTTP middleware pipeline support (`mcp.middleware` tagged services)
+ * Add configurable additional routes for OAuth well-known endpoints
+ * Add OAuth integration with OIDC discovery, JWT validation, and client registration
+ * Add `SymfonySecurityMiddleware` to bridge OAuth JWT claims to Symfony security tokens
+ * Add `IsGrantedChecker` for `#[IsGranted]` attribute-based tool authorization
+ * Add `SecurityReferenceHandler` to enforce access control on tool execution
+ * Add `FilteredListToolsHandler` to filter `tools/list` by user grants
+ * Add `TestSecurityMiddleware` for testing with `X-Test-Roles` header (register via `mcp.middleware` tag)
+ * Add `FrameworkSessionStore` with application-level TTL via JSON envelope
+ * Add `reference_handler` configuration option
+
 0.4
 ---
 
