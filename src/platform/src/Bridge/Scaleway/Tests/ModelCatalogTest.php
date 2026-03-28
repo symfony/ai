@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Scaleway\Tests;
 use Symfony\AI\Platform\Bridge\Scaleway\Embeddings;
 use Symfony\AI\Platform\Bridge\Scaleway\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Scaleway\Scaleway;
+use Symfony\AI\Platform\Bridge\Scaleway\ScalewayResponses;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Test\ModelCatalogTestCase;
@@ -34,7 +35,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'mistral-nemo-instruct-2407' => ['mistral-nemo-instruct-2407', Scaleway::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING, Capability::OUTPUT_STRUCTURED]];
         yield 'pixtral-12b-2409' => ['pixtral-12b-2409', Scaleway::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING, Capability::OUTPUT_STRUCTURED]];
         yield 'mistral-small-3.2-24b-instruct-2506' => ['mistral-small-3.2-24b-instruct-2506', Scaleway::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING, Capability::OUTPUT_STRUCTURED]];
-        yield 'gpt-oss-120b' => ['gpt-oss-120b', Scaleway::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING, Capability::OUTPUT_STRUCTURED]];
+        yield 'gpt-oss-120b' => ['gpt-oss-120b', ScalewayResponses::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING, Capability::OUTPUT_STRUCTURED]];
         yield 'qwen3-coder-30b-a3b-instruct' => ['qwen3-coder-30b-a3b-instruct', Scaleway::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING, Capability::OUTPUT_STRUCTURED]];
         yield 'qwen3-235b-a22b-instruct-2507' => ['qwen3-235b-a22b-instruct-2507', Scaleway::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING, Capability::OUTPUT_STRUCTURED]];
 

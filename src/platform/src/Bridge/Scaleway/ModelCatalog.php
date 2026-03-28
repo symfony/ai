@@ -107,7 +107,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 ],
             ],
             'gpt-oss-120b' => [
-                'class' => Scaleway::class,
+                'class' => ScalewayResponses::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,

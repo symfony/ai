@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\Scaleway;
 
+use Symfony\AI\Platform\Bridge\OpenResponses\Contract\OpenResponsesContract;
+use Symfony\AI\Platform\Bridge\OpenResponses\ModelClient as OpenResponsesModelClient;
+use Symfony\AI\Platform\Bridge\OpenResponses\ResultConverter as OpenResponsesResultConverter;
 use Symfony\AI\Platform\Bridge\Scaleway\Embeddings\ModelClient as ScalewayEmbeddingsModelClient;
 use Symfony\AI\Platform\Bridge\Scaleway\Embeddings\ResultConverter as ScalewayEmbeddingsResponseConverter;
 use Symfony\AI\Platform\Bridge\Scaleway\Llm\ModelClient as ScalewayModelClient;
@@ -27,6 +30,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class PlatformFactory
 {
+    private const BASE_URL = 'https://api.scaleway.ai';
+
     public static function create(
         #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,
@@ -38,15 +43,17 @@ final class PlatformFactory
 
         return new Platform(
             [
+                new OpenResponsesModelClient($httpClient, self::BASE_URL, $apiKey),
                 new ScalewayModelClient($httpClient, $apiKey),
                 new ScalewayEmbeddingsModelClient($httpClient, $apiKey),
             ],
             [
+                new OpenResponsesResultConverter(),
                 new ScalewayResponseConverter(),
                 new ScalewayEmbeddingsResponseConverter(),
             ],
             $modelCatalog,
-            $contract,
+            $contract ?? OpenResponsesContract::create(),
             $eventDispatcher,
         );
     }
