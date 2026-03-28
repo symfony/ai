@@ -62,7 +62,13 @@ final class MatePlugin implements PluginInterface, EventSubscriberInterface
         $extensionsFile = $rootDir.'/mate/extensions.php';
 
         if (!file_exists($extensionsFile)) {
-            $this->io->write('<info>AI Mate:</info> Run <comment>vendor/bin/mate init</comment> to set up AI Mate for this project.');
+            $this->io->write('');
+            $this->io->write('<bg=blue;fg=white>                                                        </>');
+            $this->io->write('<bg=blue;fg=white>  AI Mate installed! Run the following to get started:  </>');
+            $this->io->write('<bg=blue;fg=white>                                                        </>');
+            $this->io->write('<bg=blue;fg=white>    <fg=yellow>vendor/bin/mate init</>                              </>');
+            $this->io->write('<bg=blue;fg=white>                                                        </>');
+            $this->io->write('');
 
             return;
         }
