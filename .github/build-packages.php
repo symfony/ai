@@ -9,7 +9,7 @@ require __DIR__.'/../vendor/autoload.php';
 use Symfony\Component\Finder\Finder;
 
 $finder = (new Finder())
-    ->in([__DIR__.'/../src/*/', __DIR__.'/../src/*/src/Bridge/*/', __DIR__.'/../examples/', __DIR__.'/../demo/'])
+    ->in([__DIR__.'/../src/*/', __DIR__.'/../src/*/src/Bridge/*/', __DIR__.'/../src/mate/composer-plugin/', __DIR__.'/../examples/', __DIR__.'/../demo/'])
     ->depth(0)
     ->name('composer.json')
 ;
@@ -53,6 +53,17 @@ foreach ($finder as $composerFile) {
             $key = isset($packageData['require'][$packageName]) ? 'require' : 'require-dev';
             $packageData[$key][$packageName] = '@dev';
         }
+    }
+
+    // Add the composer-plugin path repo for packages that depend on symfony/ai-mate,
+    // since it transitively requires symfony/ai-mate-composer-plugin.
+    if (isset($aiPackages['symfony/ai-mate-composer-plugin'])
+        && (isset($packageData['require']['symfony/ai-mate']) || isset($packageData['require-dev']['symfony/ai-mate']))
+    ) {
+        $repositories[] = [
+            'type' => 'path',
+            'url' => $aiPackages['symfony/ai-mate-composer-plugin']['path'],
+        ];
     }
 
     if ($repositories) {

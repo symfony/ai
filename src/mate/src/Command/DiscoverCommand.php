@@ -17,6 +17,7 @@ use Symfony\AI\Mate\Service\ExtensionConfigSynchronizer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -51,16 +52,24 @@ class DiscoverCommand extends Command
         return 'Discover MCP bridges installed via Composer';
     }
 
+    protected function configure(): void
+    {
+        $this->addOption('composer', null, InputOption::VALUE_NONE, 'Compact output for Composer plugin integration');
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-
-        $io->title('MCP Extension Discovery');
-        $io->text('Scanning for packages with <info>extra.ai-mate</info> configuration...');
-        $io->newLine();
+        $composerMode = $input->getOption('composer');
 
         $extensions = $this->extensionDiscovery->discover();
         $rootProjectExtension = $this->extensionDiscovery->discoverRootProject();
+
+        if (!$composerMode) {
+            $io->title('MCP Extension Discovery');
+            $io->text('Scanning for packages with <info>extra.ai-mate</info> configuration...');
+            $io->newLine();
+        }
 
         $count = \count($extensions);
         if (0 === $count) {
@@ -68,12 +77,16 @@ class DiscoverCommand extends Command
                 '_custom' => $rootProjectExtension,
             ]);
 
-            $io->warning([
-                'No MCP extensions found.',
-                'Packages must have "extra.ai-mate" configuration in their composer.json.',
-            ]);
-            $this->displayInstructionsStatus($io, $materializationResult);
-            $io->note('Run "composer require vendor/package" to install MCP extensions.');
+            if ($composerMode) {
+                $io->write('<info>AI Mate:</info> No extensions found.');
+            } else {
+                $io->warning([
+                    'No MCP extensions found.',
+                    'Packages must have "extra.ai-mate" configuration in their composer.json.',
+                ]);
+                $this->displayInstructionsStatus($io, $materializationResult);
+                $io->note('Run "composer require vendor/package" to install MCP extensions.');
+            }
 
             return Command::SUCCESS;
         }
@@ -81,6 +94,30 @@ class DiscoverCommand extends Command
         $synchronizationResult = $this->extensionConfigSynchronizer->synchronize($extensions);
         $newPackages = $synchronizationResult['new_packages'];
         $removedPackages = $synchronizationResult['removed_packages'];
+
+        $enabledExtensionsForInstructions = [
+            '_custom' => $rootProjectExtension,
+        ];
+
+        foreach ($synchronizationResult['extensions'] as $packageName => $config) {
+            if (!$config['enabled']) {
+                continue;
+            }
+
+            if (!isset($extensions[$packageName])) {
+                continue;
+            }
+
+            $enabledExtensionsForInstructions[$packageName] = $extensions[$packageName];
+        }
+
+        $materializationResult = $this->instructionsMaterializer->materializeForExtensions($enabledExtensionsForInstructions);
+
+        if ($composerMode) {
+            $this->displayComposerSummary($io, $count, $newPackages, $removedPackages);
+
+            return Command::SUCCESS;
+        }
 
         $io->section(\sprintf('Discovered %d Extension%s', $count, 1 === $count ? '' : 's'));
         $rows = [];
@@ -109,23 +146,6 @@ class DiscoverCommand extends Command
             ]);
         }
 
-        $enabledExtensionsForInstructions = [
-            '_custom' => $rootProjectExtension,
-        ];
-
-        foreach ($synchronizationResult['extensions'] as $packageName => $config) {
-            if (!$config['enabled']) {
-                continue;
-            }
-
-            if (!isset($extensions[$packageName])) {
-                continue;
-            }
-
-            $enabledExtensionsForInstructions[$packageName] = $extensions[$packageName];
-        }
-
-        $materializationResult = $this->instructionsMaterializer->materializeForExtensions($enabledExtensionsForInstructions);
         $this->displayInstructionsStatus($io, $materializationResult);
 
         $io->comment([
@@ -135,6 +155,38 @@ class DiscoverCommand extends Command
         ]);
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * @param string[] $newPackages
+     * @param string[] $removedPackages
+     */
+    private function displayComposerSummary(SymfonyStyle $io, int $count, array $newPackages, array $removedPackages): void
+    {
+        $summary = \sprintf('%d extension%s synchronized', $count, 1 === $count ? '' : 's');
+
+        $details = [];
+        if (\count($newPackages) > 0) {
+            $details[] = \sprintf('%d new', \count($newPackages));
+        }
+        if (\count($removedPackages) > 0) {
+            $details[] = \sprintf('%d removed', \count($removedPackages));
+        }
+        if ([] !== $details) {
+            $summary .= ' ('.implode(', ', $details).')';
+        }
+
+        $io->write('');
+        $io->write(\sprintf('<bg=green;fg=white> AI Mate </> %s.', $summary));
+
+        foreach ($newPackages as $package) {
+            $io->write(\sprintf('  <fg=green>+</> %s', $package));
+        }
+        foreach ($removedPackages as $package) {
+            $io->write(\sprintf('  <fg=red>-</> %s', $package));
+        }
+
+        $io->write('');
     }
 
     /**
