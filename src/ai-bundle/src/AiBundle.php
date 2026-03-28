@@ -61,6 +61,7 @@ use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Bridge\Cartesia\PlatformFactory as CartesiaPlatformFactory;
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFactory;
+use Symfony\AI\Platform\Bridge\Cohere\PlatformFactory as CoherePlatformFactory;
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
 use Symfony\AI\Platform\Bridge\DeepSeek\PlatformFactory as DeepSeekPlatformFactory;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory as DockerModelRunnerPlatformFactory;
@@ -936,6 +937,30 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'cerebras']);
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('cohere' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-cohere-platform', CoherePlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Cohere platform configuration requires "symfony/ai-cohere-platform" package. Try running "composer require symfony/ai-cohere-platform".');
+            }
+
+            $platformId = 'ai.platform.cohere';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(CoherePlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.cohere'),
+                    null,
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform', ['name' => 'cohere']);
 
             $container->setDefinition($platformId, $definition);
 
