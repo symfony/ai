@@ -41,44 +41,29 @@ foreach ($finder as $composerFile) {
     }
 
     $repositories = $packageData['repositories'] ?? [];
-    $addedRepoPaths = [];
-    $currentPackageName = $packageData['name'] ?? null;
 
     foreach ($aiPackages as $packageName => $packageInfo) {
         if (isset($packageData['require'][$packageName])
             || isset($packageData['require-dev'][$packageName])
         ) {
-            if (!isset($addedRepoPaths[$packageInfo['path']])) {
-                $repositories[] = [
-                    'type' => 'path',
-                    'url' => $packageInfo['path'],
-                ];
-                $addedRepoPaths[$packageInfo['path']] = true;
-            }
+            $repositories[] = [
+                'type' => 'path',
+                'url' => $packageInfo['path'],
+            ];
             $key = isset($packageData['require'][$packageName]) ? 'require' : 'require-dev';
             $packageData[$key][$packageName] = '@dev';
-
-            // Also register path repos for transitive AI dependencies
-            // so that e.g. symfony/ai-mate -> symfony/ai-mate-composer-plugin resolves.
-            $depComposerFile = $packageInfo['path'].'/composer.json';
-            if (file_exists($depComposerFile)) {
-                $depData = json_decode(file_get_contents($depComposerFile), true);
-                if (\is_array($depData)) {
-                    foreach ($aiPackages as $transName => $transInfo) {
-                        if ($transName !== $currentPackageName
-                            && !isset($addedRepoPaths[$transInfo['path']])
-                            && (isset($depData['require'][$transName]) || isset($depData['require-dev'][$transName]))
-                        ) {
-                            $repositories[] = [
-                                'type' => 'path',
-                                'url' => $transInfo['path'],
-                            ];
-                            $addedRepoPaths[$transInfo['path']] = true;
-                        }
-                    }
-                }
-            }
         }
+    }
+
+    // Add the composer-plugin path repo for packages that depend on symfony/ai-mate,
+    // since it transitively requires symfony/ai-mate-composer-plugin.
+    if (isset($aiPackages['symfony/ai-mate-composer-plugin'])
+        && (isset($packageData['require']['symfony/ai-mate']) || isset($packageData['require-dev']['symfony/ai-mate']))
+    ) {
+        $repositories[] = [
+            'type' => 'path',
+            'url' => $aiPackages['symfony/ai-mate-composer-plugin']['path'],
+        ];
     }
 
     if ($repositories) {
