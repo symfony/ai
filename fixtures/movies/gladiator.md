@@ -30,3 +30,5 @@ Wounded and devastated, Maximus is captured by slave traders and forced to becom
 Using his newfound popularity with the people, Maximus seeks to avenge the murder of his family and fulfill his promise to Marcus Aurelius to restore Rome to a republic. The film culminates in a final confrontation between Maximus and Commodus in the arena.
 
 The film explores themes of *honor*, *revenge*, *political corruption*, and the struggle between personal desires and duty to the greater good.
+
+**Connections**: Directed by Ridley Scott.
