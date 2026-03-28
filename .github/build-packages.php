@@ -41,27 +41,47 @@ foreach ($finder as $composerFile) {
     }
 
     $repositories = $packageData['repositories'] ?? [];
-    $requiresAnyAiPackage = false;
+    $addedRepoPaths = [];
+    $currentPackageName = $packageData['name'] ?? null;
 
     foreach ($aiPackages as $packageName => $packageInfo) {
         if (isset($packageData['require'][$packageName])
             || isset($packageData['require-dev'][$packageName])
         ) {
-            $requiresAnyAiPackage = true;
+            if (!isset($addedRepoPaths[$packageInfo['path']])) {
+                $repositories[] = [
+                    'type' => 'path',
+                    'url' => $packageInfo['path'],
+                ];
+                $addedRepoPaths[$packageInfo['path']] = true;
+            }
             $key = isset($packageData['require'][$packageName]) ? 'require' : 'require-dev';
             $packageData[$key][$packageName] = '@dev';
+
+            // Also register path repos for transitive AI dependencies
+            // so that e.g. symfony/ai-mate -> symfony/ai-mate-composer-plugin resolves.
+            $depComposerFile = $packageInfo['path'].'/composer.json';
+            if (file_exists($depComposerFile)) {
+                $depData = json_decode(file_get_contents($depComposerFile), true);
+                if (\is_array($depData)) {
+                    foreach ($aiPackages as $transName => $transInfo) {
+                        if ($transName !== $currentPackageName
+                            && !isset($addedRepoPaths[$transInfo['path']])
+                            && (isset($depData['require'][$transName]) || isset($depData['require-dev'][$transName]))
+                        ) {
+                            $repositories[] = [
+                                'type' => 'path',
+                                'url' => $transInfo['path'],
+                            ];
+                            $addedRepoPaths[$transInfo['path']] = true;
+                        }
+                    }
+                }
+            }
         }
     }
 
-    // Register all AI packages as path repositories so that transitive
-    // dependencies between AI packages can be resolved during CI.
-    if ($requiresAnyAiPackage) {
-        foreach ($aiPackages as $packageName => $packageInfo) {
-            $repositories[] = [
-                'type' => 'path',
-                'url' => $packageInfo['path'],
-            ];
-        }
+    if ($repositories) {
         $packageData['repositories'] = $repositories;
     }
 
