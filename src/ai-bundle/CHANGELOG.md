@@ -14,6 +14,8 @@ CHANGELOG
  * The `api_version` option for `Azure` store is now `null` by default to allow the usage of a `ScopingHttpClient`
  * The `vector_field` option for `Azure` store is now `vector` by default
  * Add support for `ScopingHttpClient` usage in `AzureSearch` store
+ * Vectorizers are now lazy
+ * Vectorizers are now available for injection using their names as defined in the configuration
 
 0.6
 ---

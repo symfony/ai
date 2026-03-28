@@ -40,6 +40,8 @@ AI Bundle
  * The `api_catalog` option for `Ollama` has been removed as the catalog is now automatically fetched from the Ollama server
  * The `api_key` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * The `endpoint` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * Vectorizers are now lazy
+ * Vectorizers are now available for injection using their names as defined in the configuration
 
 Platform
 -----
