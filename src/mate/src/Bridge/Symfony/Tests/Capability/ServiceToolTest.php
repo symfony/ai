@@ -162,4 +162,40 @@ final class ServiceToolTest extends TestCase
 
         $this->assertEmpty($services);
     }
+
+    public function testGetServicesDetectsCustomKernelClassName()
+    {
+        $tempDir = sys_get_temp_dir().'/symfony_ai_mate_test_'.uniqid();
+        $tempFile = $tempDir.'/Custom_AppKernelDevDebugContainer.xml';
+
+        mkdir($tempDir);
+
+        try {
+            $xmlContent = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<container xmlns="http://symfony.com/schema/dic/services">
+    <services>
+        <service id="custom.service" class="Custom\ServiceClass"/>
+    </services>
+</container>
+XML;
+
+            file_put_contents($tempFile, $xmlContent);
+
+            $provider = new ContainerProvider();
+            $tool = new ServiceTool($tempDir, $provider);
+
+            $services = $tool->getServices();
+
+            $this->assertArrayHasKey('custom.service', $services);
+            $this->assertSame('Custom\ServiceClass', $services['custom.service']);
+        } finally {
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+            if (is_dir($tempDir)) {
+                rmdir($tempDir);
+            }
+        }
+    }
 }
