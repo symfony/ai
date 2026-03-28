@@ -34,4 +34,7 @@ foreach ($result->asStream() as $word) {
 }
 echo \PHP_EOL;
 
-print_token_usage($result->getMetadata()->get('token_usage'));
+$tokenUsage = $result->getMetadata()->get('token_usage');
+if (null !== $tokenUsage) {
+    print_token_usage($tokenUsage);
+}

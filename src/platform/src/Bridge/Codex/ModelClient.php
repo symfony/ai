@@ -99,7 +99,7 @@ final class ModelClient implements ModelClientInterface
      */
     public function buildCommand(string $prompt, array $options = []): array
     {
-        $command = [$this->getCliBinary(), 'exec', '--json', '--ask-for-approval', 'never'];
+        $command = [$this->getCliBinary(), '--ask-for-approval', 'never', 'exec', '--json'];
 
         foreach ($options as $key => $value) {
             $flag = self::OPTION_FLAG_MAP[$key] ?? '--'.str_replace('_', '-', $key);

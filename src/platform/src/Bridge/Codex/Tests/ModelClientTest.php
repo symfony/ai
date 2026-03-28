@@ -60,7 +60,7 @@ final class ModelClientTest extends TestCase
 
         $command = $client->buildCommand('Hello, World!');
 
-        $this->assertSame([self::$binary, 'exec', '--json', '--ask-for-approval', 'never', 'Hello, World!'], $command);
+        $this->assertSame([self::$binary, '--ask-for-approval', 'never', 'exec', '--json', 'Hello, World!'], $command);
     }
 
     public function testBuildCommandWithModel()
@@ -116,7 +116,8 @@ final class ModelClientTest extends TestCase
 
         $expected = [
             self::$binary,
-            'exec', '--json', '--ask-for-approval', 'never',
+            '--ask-for-approval', 'never',
+            'exec', '--json',
             '--model', 'gpt-5-codex',
             '--sandbox', 'workspace-write',
             '--allowedTools', 'Bash',
