@@ -4160,6 +4160,104 @@ class AiBundleTest extends TestCase
         $this->assertTrue($foundOutput, 'Default tool processor should have output tag with full agent ID');
     }
 
+    #[TestDox('Tool execution strategy defaults to the sequential strategy service')]
+    public function testToolExecutionStrategyDefaultsToSequential()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'tools' => true,
+                    ],
+                ],
+            ],
+        ]);
+
+        $processorDefinition = $container->getDefinition('ai.tool.agent_processor.my_agent');
+
+        // When no execution_strategy is configured, the child does not override arg 6.
+        // The abstract parent provides the sequential strategy as the default.
+        $this->assertArrayNotHasKey(6, $processorDefinition->getArguments());
+
+        $abstractDefinition = $container->getDefinition('ai.tool.agent_processor.abstract');
+        $defaultStrategyArg = $abstractDefinition->getArgument(6);
+        $this->assertInstanceOf(Reference::class, $defaultStrategyArg);
+        $this->assertSame('ai.tool_execution_strategy.sequential', (string) $defaultStrategyArg);
+    }
+
+    #[TestDox('Tool execution strategy can be set to the built-in fiber strategy')]
+    public function testToolExecutionStrategyCanBeSetToFiber()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'tools' => [
+                            'enabled' => true,
+                            'execution_strategy' => 'fiber',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $processorDefinition = $container->getDefinition('ai.tool.agent_processor.my_agent');
+        $strategyArg = $processorDefinition->getArgument(6);
+
+        $this->assertInstanceOf(Reference::class, $strategyArg);
+        $this->assertSame('ai.tool_execution_strategy.fiber', (string) $strategyArg);
+    }
+
+    #[TestDox('Tool execution strategy can be set to the built-in sequential strategy explicitly')]
+    public function testToolExecutionStrategyCanBeSetToSequentialExplicitly()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'tools' => [
+                            'enabled' => true,
+                            'execution_strategy' => 'sequential',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $processorDefinition = $container->getDefinition('ai.tool.agent_processor.my_agent');
+        $strategyArg = $processorDefinition->getArgument(6);
+
+        $this->assertInstanceOf(Reference::class, $strategyArg);
+        $this->assertSame('ai.tool_execution_strategy.sequential', (string) $strategyArg);
+    }
+
+    #[TestDox('Tool execution strategy accepts a custom service ID')]
+    public function testToolExecutionStrategyCanBeSetToCustomServiceId()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'tools' => [
+                            'enabled' => true,
+                            'execution_strategy' => 'app.my_custom_strategy',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $processorDefinition = $container->getDefinition('ai.tool.agent_processor.my_agent');
+        $strategyArg = $processorDefinition->getArgument(6);
+
+        $this->assertInstanceOf(Reference::class, $strategyArg);
+        $this->assertSame('app.my_custom_strategy', (string) $strategyArg);
+    }
+
     public function testElevenLabsPlatformCanBeConfigured()
     {
         $container = $this->buildContainer([

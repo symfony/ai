@@ -267,14 +267,22 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->beforeNormalization()
                                 ->ifArray()
                                 ->then(static function (array $v): array {
+                                    $knownKeys = ['enabled', 'services', 'execution_strategy'];
+                                    $hasKnownKey = [] !== array_intersect(array_keys($v), $knownKeys);
+
                                     return [
                                         'enabled' => $v['enabled'] ?? true,
-                                        'services' => $v['services'] ?? $v,
+                                        'execution_strategy' => $v['execution_strategy'] ?? null,
+                                        'services' => $v['services'] ?? ($hasKnownKey ? [] : $v),
                                     ];
                                 })
                             ->end()
                             ->children()
                                 ->booleanNode('enabled')->defaultTrue()->end()
+                                ->scalarNode('execution_strategy')
+                                    ->info('The tool execution strategy. Built-in options are "sequential" (default) and "fiber". A custom service ID can also be provided.')
+                                    ->defaultNull()
+                                ->end()
                                 ->arrayNode('services')
                                     ->arrayPrototype()
                                         ->children()

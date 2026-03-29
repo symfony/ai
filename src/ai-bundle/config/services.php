@@ -12,6 +12,8 @@
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Symfony\AI\Agent\Toolbox\AgentProcessor as ToolProcessor;
+use Symfony\AI\Agent\Toolbox\ExecutionStrategy\FiberToolExecutionStrategy;
+use Symfony\AI\Agent\Toolbox\ExecutionStrategy\SequentialToolExecutionStrategy;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
@@ -222,6 +224,8 @@ return static function (ContainerConfigurator $container): void {
                 service('serializer'),
                 service('type_info.resolver')->nullOnInvalid(),
             ])
+        ->set('ai.tool_execution_strategy.sequential', SequentialToolExecutionStrategy::class)
+        ->set('ai.tool_execution_strategy.fiber', FiberToolExecutionStrategy::class)
         ->set('ai.tool.agent_processor.abstract', ToolProcessor::class)
             ->abstract()
             ->args([
@@ -230,6 +234,8 @@ return static function (ContainerConfigurator $container): void {
                 service('event_dispatcher')->nullOnInvalid(),
                 false,
                 false,
+                null,
+                service('ai.tool_execution_strategy.sequential'),
             ])
         ->set('ai.security.is_granted_attribute_listener', IsGrantedToolAttributeListener::class)
             ->args([

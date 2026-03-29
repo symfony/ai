@@ -19,6 +19,8 @@ use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
+use Symfony\AI\Agent\Toolbox\ExecutionStrategy\SequentialToolExecutionStrategy;
+use Symfony\AI\Agent\Toolbox\ExecutionStrategy\ToolExecutionStrategyInterface;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
@@ -53,6 +55,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         private readonly bool $excludeToolMessages = false,
         private readonly bool $includeSources = false,
         private readonly ?int $maxToolCalls = null,
+        private readonly ToolExecutionStrategyInterface $executionStrategy = new SequentialToolExecutionStrategy(),
     ) {
         $this->sources = new SourceCollection();
     }
@@ -119,10 +122,9 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             $toolCalls = $result->getContent();
             $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
 
-            $results = [];
-            foreach ($toolCalls as $toolCall) {
-                $results[] = $toolResult = $this->toolbox->execute($toolCall);
-                $messages->add(Message::ofToolCall($toolCall, $this->resultConverter->convert($toolResult)));
+            $results = $this->executionStrategy->execute($this->toolbox, $toolCalls);
+            foreach ($results as $toolResult) {
+                $messages->add(Message::ofToolCall($toolResult->getToolCall(), $this->resultConverter->convert($toolResult)));
                 if ($this->includeSources && null !== $toolResult->getSources()) {
                     $this->sources = $this->sources->merge($toolResult->getSources());
                 }
