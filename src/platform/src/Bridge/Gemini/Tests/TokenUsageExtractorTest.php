@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Tests\Bridge\Gemini;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini\TokenUsageExtractor;
+use Symfony\AI\Platform\Bridge\Gemini\TokenUsageExtractor;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
