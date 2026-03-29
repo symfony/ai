@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Cache;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
@@ -66,8 +67,8 @@ final class CachePlatform implements PlatformInterface
 
         $normalizedInput = match (true) {
             \is_string($input) => md5($input),
-            \is_array($input) => json_encode($input),
-            $input instanceof MessageBag => $input->getId()->toString(),
+            \is_array($input) => md5(json_encode($input)),
+            $input instanceof MessageBag => $input->latestAs(Role::User)->getId()->toRfc4122(),
             default => throw new InvalidArgumentException(\sprintf('Unsupported input type: %s', get_debug_type($input))),
         };
 
