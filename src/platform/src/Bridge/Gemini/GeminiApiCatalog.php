@@ -58,19 +58,20 @@ final class GeminiApiCatalog implements ModelCatalogInterface
             $name = new UnicodeString($model['name']);
             $methods = $model['supportedGenerationMethods'] ?? [];
 
+            if (\in_array('embedContent', $methods, true) || \in_array('asyncBatchEmbedContent', $methods, true)) {
+                return [
+                    Capability::INPUT_TEXT,
+                    Capability::EMBEDDINGS,
+                    Capability::OUTPUT_EMBEDDINGS,
+                ];
+            }
+
             if ($name->containsAny(['TTS', 'tts', 'native-audio'])) {
                 return [
                     Capability::INPUT_TEXT,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_AUDIO,
                     Capability::TEXT_TO_SPEECH,
-                ];
-            }
-
-            if (\in_array('embedContent', $methods, true) || \in_array('asyncBatchEmbedContent', $methods, true)) {
-                return [
-                    Capability::INPUT_TEXT,
-                    Capability::EMBEDDINGS,
                 ];
             }
 
