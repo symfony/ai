@@ -23,6 +23,7 @@ use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\InMemory\Store as InMemoryStore;
+use Symfony\AI\Store\Retriever;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -41,12 +42,13 @@ foreach (Movies::all() as $i => $movie) {
 }
 
 // create embeddings for documents
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), httpClient: http_client());
+$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client());
 $vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'), logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);
 
-$similaritySearch = new SimilaritySearch($vectorizer, $store);
+$retriever = new Retriever($store, $vectorizer);
+$similaritySearch = new SimilaritySearch($retriever);
 $toolbox = new Toolbox([$similaritySearch], logger: logger());
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, env('OLLAMA_LLM'), [$processor], [$processor]);

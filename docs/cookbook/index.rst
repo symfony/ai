@@ -12,6 +12,7 @@ Getting Started Guides
 
     chatbot-with-memory
     dynamic-tools
+    human-in-the-loop
     rag-implementation
     structured-output-object-instances
 
@@ -24,6 +25,7 @@ Tools
 -----
 
 * :doc:`dynamic-tools` - Build a dynamic Toolbox for flexible tool management at runtime
+* :doc:`human-in-the-loop` - Implement human-in-the-loop confirmation for tool execution
 
 Retrieval Augmented Generation
 ------------------------------

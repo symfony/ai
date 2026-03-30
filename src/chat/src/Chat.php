@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 
 /**
@@ -51,5 +52,19 @@ final class Chat implements ChatInterface
         $this->store->save($messages);
 
         return $assistantMessage;
+    }
+
+    public function stream(UserMessage $message): \Generator
+    {
+        $messages = $this->store->load();
+        $messages->add($message);
+
+        $result = $this->agent->call($messages, ['stream' => true]);
+
+        \assert($result instanceof StreamResult);
+
+        $result->addListener(new ChatStreamListener($messages, $this->store));
+
+        yield from $result->getContent();
     }
 }

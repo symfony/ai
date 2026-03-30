@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class ElevenLabsConverterTest extends TestCase
@@ -87,7 +88,13 @@ final class ElevenLabsConverterTest extends TestCase
 
             public function getContent(): string
             {
-                return file_get_contents(\dirname(__DIR__, 6).'/fixtures/audio.mp3');
+                $content = file_get_contents(\dirname(__DIR__, 6).'/fixtures/audio.mp3');
+
+                if (!$content) {
+                    throw new RuntimeException('Failed to load audio file for text-to-speech response.');
+                }
+
+                return $content;
             }
         });
 
@@ -101,24 +108,21 @@ final class ElevenLabsConverterTest extends TestCase
     {
         $converter = new ElevenLabsResultConverter(new MockHttpClient());
         $httpClient = new MockHttpClient([
-            new MockResponse(
-                json_encode([
-                    'detail' => [
-                        'type' => 'payment_required',
-                        'code' => 'paid_plan_required',
-                        'message' => 'Free users cannot use library voices via the API. Please upgrade your subscription to use this voice.',
-                        'status' => 'payment_required',
-                        'request_id' => 'd79eff6fb3690c29ed6883da9fce3159',
-                    ],
-                ]),
-                ['http_code' => 402]
-            ),
+            new JsonMockResponse([
+                'detail' => [
+                    'type' => 'payment_required',
+                    'code' => 'paid_plan_required',
+                    'message' => 'Free users cannot use library voices via the API. Please upgrade your subscription to use this voice.',
+                    'status' => 'payment_required',
+                    'request_id' => 'd79eff6fb3690c29ed6883da9fce3159',
+                ],
+            ], ['http_code' => 402]),
         ]);
         $rawResult = new RawHttpResult($httpClient->request('POST', 'https://api.elevenlabs.io/v1/text-to-speech'));
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Free users cannot use library voices via the API. Please upgrade your subscription to use this voice.');
-
+        $this->expectExceptionCode(0);
         $converter->convert($rawResult);
     }
 
@@ -135,7 +139,7 @@ final class ElevenLabsConverterTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The ElevenLabs API returned a non-successful status code "500".');
-
+        $this->expectExceptionCode(0);
         $converter->convert($rawResult);
     }
 }

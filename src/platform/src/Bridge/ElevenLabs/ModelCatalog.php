@@ -12,117 +12,66 @@
 namespace Symfony\AI\Platform\Bridge\ElevenLabs;
 
 use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
+ * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class ModelCatalog extends AbstractModelCatalog
+final class ModelCatalog implements ModelCatalogInterface
 {
-    /**
-     * @param array<string, array{class: class-string, capabilities: list<string>}> $additionalModels
-     */
-    public function __construct(array $additionalModels = [])
-    {
-        $defaultModels = [
-            'eleven_v3' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'eleven_ttv_v3' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'eleven_multilingual_v2' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'eleven_flash_v2_5' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'eleven_flashv2' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'eleven_turbo_v2_5' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'eleven_turbo_v2' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'eleven_multilingual_sts_v2' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'eleven_multilingual_ttv_v2' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'eleven_english_sts_v2' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'scribe_v1' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_AUDIO,
-                    Capability::OUTPUT_TEXT,
-                    Capability::SPEECH_TO_TEXT,
-                ],
-            ],
-            'scribe_v1_experimental' => [
-                'class' => ElevenLabs::class,
-                'capabilities' => [
-                    Capability::INPUT_AUDIO,
-                    Capability::OUTPUT_TEXT,
-                    Capability::SPEECH_TO_TEXT,
-                ],
-            ],
-        ];
+    public function __construct(
+        private readonly HttpClientInterface $httpClient,
+    ) {
+    }
 
-        $this->models = array_merge($defaultModels, $additionalModels);
+    public function getModel(string $modelName): ElevenLabs
+    {
+        $models = $this->getModels();
+
+        if ([] === $models) {
+            throw new InvalidArgumentException('No models found, please check the ElevenLabs API.');
+        }
+
+        if (!\array_key_exists($modelName, $models)) {
+            throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieved from the API.', $modelName));
+        }
+
+        if ([] === $models[$modelName]['capabilities']) {
+            throw new InvalidArgumentException(\sprintf('The model "%s" is not supported, please check the ElevenLabs API.', $modelName));
+        }
+
+        return new ElevenLabs($modelName, $models[$modelName]['capabilities']);
+    }
+
+    public function getModels(): array
+    {
+        $response = $this->httpClient->request('GET', 'models');
+
+        $models = $response->toArray();
+
+        $capabilities = static fn (array $model): array => match (true) {
+            $model['can_do_text_to_speech'] => [
+                Capability::TEXT_TO_SPEECH,
+                Capability::INPUT_TEXT,
+                Capability::OUTPUT_AUDIO,
+            ],
+            $model['can_do_voice_conversion'] => [
+                Capability::SPEECH_TO_TEXT,
+                Capability::INPUT_AUDIO,
+                Capability::OUTPUT_TEXT,
+            ],
+            default => [],
+        };
+
+        return array_combine(
+            array_map(static fn (array $model): string => $model['model_id'], $models),
+            array_map(static fn (array $model): array => [
+                'class' => ElevenLabs::class,
+                'capabilities' => $capabilities($model),
+            ], $models),
+        );
     }
 }

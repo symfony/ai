@@ -55,6 +55,18 @@ final class ElevenLabsClient implements ModelClientInterface
      */
     private function doSpeechToTextRequest(Model $model, array|string $payload): RawHttpResult
     {
+        if (!\is_array($payload)) {
+            throw new InvalidArgumentException(\sprintf('Payload must be an array for speech-to-text request, got "%s".', \gettype($payload)));
+        }
+
+        if (!\array_key_exists('input_audio', $payload)) {
+            throw new InvalidArgumentException('Input audio is required for speech-to-text request.');
+        }
+
+        if (!\is_array($payload['input_audio'])) {
+            throw new InvalidArgumentException('Input audio must be an array with a "path" key for speech-to-text request.');
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', 'speech-to-text', [
             'body' => [
                 'file' => fopen($payload['input_audio']['path'], 'r'),
@@ -69,6 +81,10 @@ final class ElevenLabsClient implements ModelClientInterface
      */
     private function doTextToSpeechRequest(Model $model, array|string $payload, array $options): RawHttpResult
     {
+        if (!\is_array($payload)) {
+            throw new InvalidArgumentException(\sprintf('Payload must be an array for text-to-speech request, got "%s".', \gettype($payload)));
+        }
+
         if (!\array_key_exists('voice', $options)) {
             throw new InvalidArgumentException('The voice option is required.');
         }

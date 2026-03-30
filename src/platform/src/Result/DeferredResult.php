@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Result;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
+use Symfony\AI\Platform\Reranking\RerankingEntry;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\StreamListener;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
@@ -111,6 +112,18 @@ final class DeferredResult
     /**
      * @throws ExceptionInterface
      */
+    public function asFile(string $path): void
+    {
+        $result = $this->as(BinaryResult::class);
+
+        \assert($result instanceof BinaryResult);
+
+        $result->asFile($path);
+    }
+
+    /**
+     * @throws ExceptionInterface
+     */
     public function asDataUri(?string $mimeType = null): string
     {
         $result = $this->as(BinaryResult::class);
@@ -128,6 +141,16 @@ final class DeferredResult
     public function asVectors(): array
     {
         return $this->as(VectorResult::class)->getContent();
+    }
+
+    /**
+     * @return list<RerankingEntry>
+     *
+     * @throws ExceptionInterface
+     */
+    public function asReranking(): array
+    {
+        return $this->as(RerankingResult::class)->getContent();
     }
 
     /**

@@ -46,7 +46,6 @@ Configure your Google Cloud project and location:
 
 Basic usage example::
 
-    use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
     use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;

@@ -1,20 +1,6 @@
 name: Validate
 
 on:
-    push:
-        paths:
-            - 'src/*/src/Bridge/**/*'
-            - 'src/*/composer.json'
-            - 'src/ai-bundle/config/options.php'
-            - 'splitsh.json'
-            - '.github/workflows/validation.yaml'
-            - '.github/scripts/validate-bridge-naming.sh'
-            - '.github/scripts/validate-bridge-splitsh.sh'
-            - '.github/scripts/validate-bridge-files.sh'
-            - '.github/scripts/validate-bridge-type.sh'
-            - '.github/scripts/validate-bridge-deptrac.sh'
-            - '.github/scripts/validate-dependency-versions.sh'
-            - 'deptrac.yaml'
     pull_request:
         paths:
             - 'src/*/src/Bridge/**/*'

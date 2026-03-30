@@ -23,6 +23,13 @@ use Symfony\AI\Platform\Bridge\ClaudeCode\RawProcessResult;
  */
 final class ModelClientTest extends TestCase
 {
+    private static string $binary;
+
+    public static function setUpBeforeClass(): void
+    {
+        self::$binary = file_exists('/usr/bin/echo') ? '/usr/bin/echo' : '/bin/echo';
+    }
+
     public function testSupportsClaudeCode()
     {
         $client = new ModelClient();
@@ -49,16 +56,16 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandWithDefaults()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello, World!');
 
-        $this->assertSame(['/usr/bin/echo', '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '-p', 'Hello, World!'], $command);
+        $this->assertSame([self::$binary, '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '-p', 'Hello, World!'], $command);
     }
 
     public function testBuildCommandWithSystemPrompt()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['system_prompt' => 'You are a pirate']);
 
@@ -68,7 +75,7 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandWithModel()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['model' => 'sonnet']);
 
@@ -78,7 +85,7 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandWithMaxTurns()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['max_turns' => 3]);
 
@@ -88,7 +95,7 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandWithPermissionMode()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['permission_mode' => 'plan']);
 
@@ -98,7 +105,7 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandWithAllowedTools()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['allowed_tools' => ['Bash', 'Read']]);
 
@@ -109,7 +116,7 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandWithMcpConfig()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['mcp_config' => '/path/to/config.json']);
 
@@ -119,7 +126,7 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandWithAllOptions()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', [
             'system_prompt' => 'Be helpful',
@@ -131,7 +138,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $expected = [
-            '/usr/bin/echo',
+            self::$binary,
             '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
             '--system-prompt', 'Be helpful',
             '--model', 'opus',
@@ -147,7 +154,7 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandRewritesToolsToAllowedTools()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['tools' => ['Bash', 'Read']]);
 
@@ -159,7 +166,7 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandPassesUnknownOptionsAsFlags()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['custom_flag' => 'value']);
 
@@ -169,7 +176,7 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandHandlesBooleanTrueAsFlag()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['no_cache' => true]);
 
@@ -178,7 +185,7 @@ final class ModelClientTest extends TestCase
 
     public function testBuildCommandSkipsBooleanFalse()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['no_cache' => false]);
 
@@ -187,7 +194,7 @@ final class ModelClientTest extends TestCase
 
     public function testRequestReturnsRawProcessResult()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
         $model = new ClaudeCode('sonnet');
 
         $result = $client->request($model, 'Hello');
@@ -197,7 +204,7 @@ final class ModelClientTest extends TestCase
 
     public function testRequestPassesModelNameToCommand()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
         $model = new ClaudeCode('opus');
 
         $result = $client->request($model, 'Hello');
@@ -209,7 +216,7 @@ final class ModelClientTest extends TestCase
 
     public function testRequestUsesPromptFromNormalizedPayload()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
         $model = new ClaudeCode('sonnet');
 
         $payload = ['prompt' => 'What is PHP?', 'system_prompt' => 'You are helpful.'];
@@ -224,7 +231,7 @@ final class ModelClientTest extends TestCase
 
     public function testRequestUsesStringPayloadDirectly()
     {
-        $client = new ModelClient('/usr/bin/echo');
+        $client = new ModelClient(self::$binary);
         $model = new ClaudeCode('sonnet');
 
         $result = $client->request($model, 'Hello, World!');

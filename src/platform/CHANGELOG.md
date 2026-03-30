@@ -1,10 +1,18 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `asFile()` method to `BinaryResult` and `DeferredResult` for saving binary content to a file
+ * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
+ * Add `description` and `example` properties to `#[With]` attribute
+ * Generate JSON schema from Symfony Validator constraints when available
+
 0.6
 ---
 
-* [BC BREAK] Change `Symfony\AI\Platform\Contract\JsonSchema\Factory` constructor signature in order to make schema generation extensible
+ * [BC BREAK] Change `Symfony\AI\Platform\Contract\JsonSchema\Factory` constructor signature in order to make schema generation extensible
 
 0.4
 ---

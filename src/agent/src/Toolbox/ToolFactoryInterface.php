@@ -24,5 +24,5 @@ interface ToolFactoryInterface
      *
      * @throws ToolException if the metadata for the given reference is not found
      */
-    public function getTool(string $reference): iterable;
+    public function getTool(object|string $reference): iterable;
 }

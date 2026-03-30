@@ -36,7 +36,7 @@ final class AudioNormalizer implements NormalizerInterface
      *
      * @return array{type: 'input_audio', input_audio: array{
      *     data: string,
-     *     path: string,
+     *     path: string|null,
      *     format: 'mp3'|'wav'|string,
      * }}
      */

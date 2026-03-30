@@ -25,6 +25,8 @@ final class With
      */
     public function __construct(
         // can be used by many types
+        public readonly ?string $description = null,
+        public readonly mixed $example = null,
         public readonly ?array $enum = null,
         public readonly string|int|array|null $const = null,
 
@@ -33,12 +35,12 @@ final class With
         public readonly ?int $minLength = null,
         public readonly ?int $maxLength = null,
 
-        // integer
-        public readonly ?int $minimum = null,
-        public readonly ?int $maximum = null,
-        public readonly ?int $multipleOf = null,
-        public readonly ?int $exclusiveMinimum = null,
-        public readonly ?int $exclusiveMaximum = null,
+        // number
+        public readonly int|float|null $minimum = null,
+        public readonly int|float|null $maximum = null,
+        public readonly int|float|null $multipleOf = null,
+        public readonly int|float|null $exclusiveMinimum = null,
+        public readonly int|float|null $exclusiveMaximum = null,
 
         // array
         public readonly ?int $minItems = null,
@@ -56,6 +58,12 @@ final class With
             /* @phpstan-ignore-next-line function.alreadyNarrowedType */
             if (array_filter($enum, static fn (mixed $item) => null === $item || \is_int($item) || \is_float($item) || \is_string($item)) !== $enum) {
                 throw new InvalidArgumentException('All enum values must be float, integer, strings, or null.');
+            }
+        }
+
+        if (\is_string($description)) {
+            if ('' === trim($description)) {
+                throw new InvalidArgumentException('Description string must not be empty.');
             }
         }
 
@@ -89,46 +97,16 @@ final class With
             }
         }
 
-        if (\is_int($minimum)) {
-            if ($minimum < 0) {
-                throw new InvalidArgumentException('Minimum must be greater than or equal to 0.');
-            }
-
-            if (\is_int($maximum)) {
-                if ($maximum < $minimum) {
-                    throw new InvalidArgumentException('Maximum must be greater than or equal to minimum.');
-                }
-            }
+        if (null !== $minimum && null !== $maximum && $maximum < $minimum) {
+            throw new InvalidArgumentException('Maximum must be greater than or equal to minimum.');
         }
 
-        if (\is_int($maximum)) {
-            if ($maximum < 0) {
-                throw new InvalidArgumentException('Maximum must be greater than or equal to 0.');
-            }
+        if (null !== $multipleOf && $multipleOf < 0) {
+            throw new InvalidArgumentException('MultipleOf must be greater than or equal to 0.');
         }
 
-        if (\is_int($multipleOf)) {
-            if ($multipleOf < 0) {
-                throw new InvalidArgumentException('MultipleOf must be greater than or equal to 0.');
-            }
-        }
-
-        if (\is_int($exclusiveMinimum)) {
-            if ($exclusiveMinimum < 0) {
-                throw new InvalidArgumentException('ExclusiveMinimum must be greater than or equal to 0.');
-            }
-
-            if (\is_int($exclusiveMaximum)) {
-                if ($exclusiveMaximum < $exclusiveMinimum) {
-                    throw new InvalidArgumentException('ExclusiveMaximum must be greater than or equal to exclusiveMinimum.');
-                }
-            }
-        }
-
-        if (\is_int($exclusiveMaximum)) {
-            if ($exclusiveMaximum < 0) {
-                throw new InvalidArgumentException('ExclusiveMaximum must be greater than or equal to 0.');
-            }
+        if (null !== $exclusiveMinimum && null !== $exclusiveMaximum && $exclusiveMaximum < $exclusiveMinimum) {
+            throw new InvalidArgumentException('ExclusiveMaximum must be greater than or equal to exclusiveMinimum.');
         }
 
         if (\is_int($minItems)) {

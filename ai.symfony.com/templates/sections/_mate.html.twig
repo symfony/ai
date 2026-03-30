@@ -1,0 +1,34 @@
+<section id="mate" class="section-secondary py-5 py-lg-5">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-7 order-lg-1 order-2" data-aos="fade-right">
+                <pre class="terminal"><code><span class="comment"># Install Mate with extensions</span>
+$ composer require --dev symfony/ai-mate
+
+<span class="comment"># Symfony extension: profiler, services</span>
+$ composer require --dev symfony/ai-symfony-mate-extension
+
+<span class="comment"># Monolog extension: log search, filtering</span>
+$ composer require --dev symfony/ai-monolog-mate-extension
+
+<span class="comment"># Initialize and start the MCP server</span>
+$ vendor/bin/mate init
+$ vendor/bin/mate serve</code></pre>
+            </div>
+
+            <div class="col-lg-5 order-lg-2 order-1" data-aos="fade-left">
+                <h2 class="ff-title fw-bold h3 mb-3 section-heading">Symfony Mate</h2>
+                <p class="text-muted mb-4">
+                    An MCP server for AI-assisted development. Mate gives AI assistants like Claude Code, Copilot, or Codex
+                    direct access to your Symfony application — profiler data, logs, container services — so they
+                    can help you debug and understand your app in real time.
+                </p>
+
+                <a href="https://symfony.com/doc/current/ai/components/mate.html" class="btn btn-dark px-3 d-flex align-items-center d-inline-flex">
+                    <span>Mate docs</span>
+                    {{ ux_icon('tabler:arrow-up-right', {width: 20, height: 20, class: 'ms-2'}) }}
+                </a>
+            </div>
+        </div>
+    </div>
+</section>

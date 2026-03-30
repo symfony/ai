@@ -12,8 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
-use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -28,7 +28,7 @@ final class OllamaApiCatalogTest extends TestCase
             ]),
         ], 'http://127.0.0.1:11434');
 
-        $modelCatalog = new OllamaApiCatalog($httpClient);
+        $modelCatalog = new ModelCatalog($httpClient);
 
         $model = $modelCatalog->getModel('foo');
 
@@ -56,7 +56,7 @@ final class OllamaApiCatalogTest extends TestCase
             ]),
         ], 'http://127.0.0.1:11434');
 
-        $modelCatalog = new OllamaApiCatalog($httpClient);
+        $modelCatalog = new ModelCatalog($httpClient);
 
         $models = $modelCatalog->getModels();
 
@@ -88,7 +88,7 @@ final class OllamaApiCatalogTest extends TestCase
             ]),
         ], 'http://127.0.0.1:11434');
 
-        $modelCatalog = new OllamaApiCatalog($httpClient);
+        $modelCatalog = new ModelCatalog($httpClient);
 
         $models = $modelCatalog->getModels();
 

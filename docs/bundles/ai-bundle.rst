@@ -141,15 +141,27 @@ Advanced Example with Multiple Agents
                 platform: 'ai.platform.mistral'
                 model: 'mistral-embed'
         indexer:
+            # DocumentIndexer: no loader, accepts documents directly via index($document)
             default:
-                loader: 'Symfony\AI\Store\Document\Loader\InMemoryLoader'
                 vectorizer: 'ai.vectorizer.openai_embeddings'
                 store: 'ai.store.chromadb.default'
 
+            # SourceIndexer: loader without source, call index('/path/to/file') at runtime
             research:
                 loader: 'Symfony\AI\Store\Document\Loader\TextFileLoader'
                 vectorizer: 'ai.vectorizer.mistral_embeddings'
                 store: 'ai.store.memory.research'
+
+            # ConfiguredSourceIndexer: loader + pre-configured source, call index() with no arguments
+            docs:
+                loader: 'Symfony\AI\Store\Document\Loader\RstToctreeLoader'
+                source: '/path/to/docs/index.rst'
+                vectorizer: 'ai.vectorizer.openai_embeddings'
+                store: 'ai.store.chromadb.default'
+                # optional: apply transformers (e.g. chunking) and filters
+                transformers:
+                    - 'Symfony\AI\Store\Document\Transformer\TextSplitTransformer'
+                filters: []
 
 Generic Platform
 ----------------
@@ -724,6 +736,24 @@ The ``ai:store:setup`` command prepares the required infrastructure for a store 
     This command only works with stores that implement :class:`Symfony\\AI\\Store\\ManagedStoreInterface`.
     Not all store types support or require setup operations.
 
+.. tip::
+
+    When using a store that shares a Doctrine DBAL connection (e.g. the Postgres store with
+    ``dbal_connection``), Doctrine's schema tools (``doctrine:schema:update``,
+    ``doctrine:schema:validate``) may fail because they don't understand store-specific column
+    types like ``vector``. To prevent this, configure a ``schema_filter`` in your Doctrine DBAL
+    configuration to exclude the store tables:
+
+    .. code-block:: yaml
+
+        # config/packages/doctrine.yaml
+        doctrine:
+            dbal:
+                schema_filter: '~^(?!ai_)~'
+
+    This regex excludes all tables prefixed with ``ai_`` from Doctrine's schema management.
+    Make sure your store's ``table_name`` uses the same prefix (e.g. ``ai_documents``).
+
 ``ai:store:drop``
 ~~~~~~~~~~~~~~~~~
 
@@ -798,7 +828,7 @@ Use the :class:`Symfony\\AI\\Agent\\Agent` service to leverage models and tools:
                 Message::ofUser($message),
             );
 
-            return $this->agent->call($messages)->asText();
+            return $this->agent->call($messages)->getContent();
         }
     }
 
@@ -850,7 +880,7 @@ The following tools can be installed as dedicated packages, no configuration is 
     $ composer require symfony/ai-wikipedia-tool
     $ composer require symfony/ai-youtube-tool
 
-Some tools may require additional configuration even when installed as dedicated packages. For example, the SimilaritySearch tool requires a vectorizer and store:
+Some tools may require additional configuration even when installed as dedicated packages. For example, the SimilaritySearch tool requires a retriever:
 
 .. code-block:: yaml
 
@@ -860,8 +890,9 @@ Some tools may require additional configuration even when installed as dedicated
             autoconfigure: true
 
         Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:
-            $vectorizer: '@ai.vectorizer.openai'
-            $store: '@ai.store.main'
+            $retriever: '@ai.retriever.main'
+            # optionally customize the result header
+            # $promptTemplate: 'Here are the relevant results:'
 
 Creating Custom Tools
 ---------------------
@@ -943,7 +974,7 @@ The token usage information can be accessed from the result metadata::
     use Symfony\AI\Agent\AgentInterface;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
-    use Symfony\AI\Platform\Result\Metadata\TokenUsage\TokenUsage;
+    use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
     final readonly class MyService
     {

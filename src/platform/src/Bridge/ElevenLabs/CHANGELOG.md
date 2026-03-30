@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Replace `ModelCatalog` by `ElevenLabsApiCatalog`
+ * Rename `ElevenLabsApiCatalog` to `ModelCatalog`
+ * The `$apiCatalog` parameter from `PlatformFactory` has been removed
+
 0.6
 ---
 

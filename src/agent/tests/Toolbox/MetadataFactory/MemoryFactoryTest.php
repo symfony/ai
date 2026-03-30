@@ -26,7 +26,7 @@ final class MemoryFactoryTest extends TestCase
         $this->expectExceptionMessage('The reference "SomeClass" is not a valid tool.');
 
         $factory = new MemoryToolFactory();
-        iterator_to_array($factory->getTool('SomeClass')); // @phpstan-ignore-line Yes, this class does not exist
+        iterator_to_array($factory->getTool('SomeClass'));
     }
 
     public function testGetMetadataWithDistinctToolPerClass()

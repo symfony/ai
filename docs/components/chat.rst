@@ -20,7 +20,6 @@ with a ``Symfony\AI\Agent\AgentInterface`` and a ``Symfony\AI\Chat\MessageStoreI
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Chat\Chat;
     use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
-    use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Message\Message;
 
@@ -30,6 +29,46 @@ with a ``Symfony\AI\Agent\AgentInterface`` and a ``Symfony\AI\Chat\MessageStoreI
     $chat = new Chat($agent, new InMemoryStore());
 
     $chat->submit(Message::ofUser('Hello'));
+
+Streaming
+---------
+
+The Chat component supports streaming responses from the LLM in real-time
+using the :method:`Symfony\\AI\\Chat\\ChatInterface::stream` method. This returns
+a :class:`Generator` that yields text chunks as they are produced by the model::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Chat\Chat;
+    use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
+    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    $platform = PlatformFactory::create($apiKey);
+
+    $agent = new Agent($platform, 'gpt-4o-mini');
+    $chat = new Chat($agent, new InMemoryStore());
+
+    $chat->initiate(new MessageBag(
+        Message::forSystem('You are a helpful assistant.'),
+    ));
+
+    foreach ($chat->stream(Message::ofUser('Tell me a story about the sun')) as $chunk) {
+        echo $chunk;
+    }
+
+Once the stream is fully consumed, the assistant message is automatically
+persisted to the message store along with the user message. This means the
+conversation history is kept up-to-date without any additional code.
+
+.. note::
+
+    Due to implementations limitations, using streaming with :class:`Symfony\\AI\\Chat\\Bridge\\Session\\MessageStore` is *not* recommended.
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `Streaming Chat`_
 
 You can find more advanced usage in combination with an Agent using the store for long-term context:
 
@@ -132,6 +171,7 @@ store and ``bin/console ai:message-store:drop`` to clean up the message store:
     $ php bin/console ai:message-store:setup symfonycon
     $ php bin/console ai:message-store:drop symfonycon
 
+.. _`Streaming Chat`: https://github.com/symfony/ai/blob/main/examples/chat/stream-chat.php
 .. _`External services storage with Cache`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-cache.php
 .. _`Long-term context with Doctrine DBAL`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-doctrine-dbal.php
 .. _`Current session context storage with HttpFoundation session`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-session.php

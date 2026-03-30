@@ -16,7 +16,10 @@ use Symfony\AI\AiBundle\Profiler\TraceableStore;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\InMemory\Store;
+use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
+use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Uid\Uuid;
 
@@ -79,5 +82,115 @@ final class TraceableStoreTest extends TestCase
                 'called_at' => $clock->now(),
             ],
         ], $traceableStore->calls);
+    }
+
+    public function testSetupDelegatesToManagedStore()
+    {
+        $innerStore = new class implements StoreInterface, ManagedStoreInterface {
+            public bool $setupCalled = false;
+            /** @var array<mixed> */
+            public array $setupOptions = [];
+
+            public function setup(array $options = []): void
+            {
+                $this->setupCalled = true;
+                $this->setupOptions = $options;
+            }
+
+            public function drop(array $options = []): void
+            {
+            }
+
+            public function add(VectorDocument|array $documents): void
+            {
+            }
+
+            public function query(QueryInterface $query, array $options = []): iterable
+            {
+                return [];
+            }
+
+            public function remove(array|string $ids, array $options = []): void
+            {
+            }
+
+            public function supports(string $queryClass): bool
+            {
+                return false;
+            }
+        };
+
+        $traceableStore = new TraceableStore($innerStore);
+
+        $traceableStore->setup(['foo' => 'bar']);
+
+        $this->assertTrue($innerStore->setupCalled);
+        $this->assertSame(['foo' => 'bar'], $innerStore->setupOptions);
+    }
+
+    public function testSetupDoesNothingWhenInnerStoreIsNotManaged()
+    {
+        $innerStore = $this->createMock(StoreInterface::class);
+
+        $traceableStore = new TraceableStore($innerStore);
+
+        $traceableStore->setup();
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testDropDelegatesToManagedStore()
+    {
+        $innerStore = new class implements StoreInterface, ManagedStoreInterface {
+            public bool $dropCalled = false;
+            /** @var array<mixed> */
+            public array $dropOptions = [];
+
+            public function setup(array $options = []): void
+            {
+            }
+
+            public function drop(array $options = []): void
+            {
+                $this->dropCalled = true;
+                $this->dropOptions = $options;
+            }
+
+            public function add(VectorDocument|array $documents): void
+            {
+            }
+
+            public function query(QueryInterface $query, array $options = []): iterable
+            {
+                return [];
+            }
+
+            public function remove(array|string $ids, array $options = []): void
+            {
+            }
+
+            public function supports(string $queryClass): bool
+            {
+                return false;
+            }
+        };
+
+        $traceableStore = new TraceableStore($innerStore);
+
+        $traceableStore->drop(['foo' => 'bar']);
+
+        $this->assertTrue($innerStore->dropCalled);
+        $this->assertSame(['foo' => 'bar'], $innerStore->dropOptions);
+    }
+
+    public function testDropDoesNothingWhenInnerStoreIsNotManaged()
+    {
+        $innerStore = $this->createMock(StoreInterface::class);
+
+        $traceableStore = new TraceableStore($innerStore);
+
+        $traceableStore->drop();
+
+        $this->addToAssertionCount(1);
     }
 }

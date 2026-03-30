@@ -19,8 +19,12 @@ use Symfony\AI\Store\Document\VectorDocument;
  */
 final class DistanceCalculator
 {
+    /**
+     * @param positive-int $batchSize when set alongside $maxItems in {@see self::calculate()}, documents are scored in chunks of this size
+     */
     public function __construct(
         private readonly DistanceStrategy $strategy = DistanceStrategy::COSINE_DISTANCE,
+        private readonly int $batchSize = 100,
     ) {
     }
 
@@ -32,13 +36,21 @@ final class DistanceCalculator
      */
     public function calculate(array $documents, Vector $vector, ?int $maxItems = null): array
     {
-        $strategy = match ($this->strategy) {
-            DistanceStrategy::COSINE_DISTANCE => $this->cosineDistance(...),
-            DistanceStrategy::ANGULAR_DISTANCE => $this->angularDistance(...),
-            DistanceStrategy::EUCLIDEAN_DISTANCE => $this->euclideanDistance(...),
-            DistanceStrategy::MANHATTAN_DISTANCE => $this->manhattanDistance(...),
-            DistanceStrategy::CHEBYSHEV_DISTANCE => $this->chebyshevDistance(...),
-        };
+        if (null !== $maxItems && $this->batchSize <= \count($documents)) {
+            return $this->calculateBatched($documents, $vector, $maxItems);
+        }
+
+        return $this->calculateAgainstAll($documents, $vector, $maxItems);
+    }
+
+    /**
+     * @param VectorDocument[] $documents
+     *
+     * @return VectorDocument[]
+     */
+    private function calculateAgainstAll(array $documents, Vector $vector, ?int $maxItems): array
+    {
+        $strategy = $this->resolveStrategy();
 
         $currentEmbeddings = array_map(
             static fn (VectorDocument $vectorDocument): array => [
@@ -61,6 +73,65 @@ final class DistanceCalculator
             static fn (array $embedding): VectorDocument => $embedding['document']->withScore($embedding['distance']),
             $currentEmbeddings,
         );
+    }
+
+    /**
+     * Processes documents in chunks of {@see self::$batchSize}, keeping only the top $maxItems candidates after each chunk.
+     *
+     * @param VectorDocument[] $documents
+     * @param positive-int     $maxItems
+     *
+     * @return VectorDocument[]
+     */
+    private function calculateBatched(array $documents, Vector $vector, int $maxItems): array
+    {
+        $strategy = $this->resolveStrategy();
+
+        /** @var array<int, array{distance: float, document: VectorDocument}> $candidates */
+        $candidates = [];
+
+        foreach (array_chunk($documents, $this->batchSize) as $batch) {
+            $batchResults = array_map(
+                static fn (VectorDocument $vectorDocument): array => [
+                    'distance' => $strategy($vectorDocument, $vector),
+                    'document' => $vectorDocument,
+                ],
+                $batch,
+            );
+
+            $candidates = [
+                ...$candidates,
+                ...$batchResults,
+            ];
+
+            usort(
+                $candidates,
+                static fn (array $a, array $b): int => $a['distance'] <=> $b['distance'],
+            );
+
+            if (\count($candidates) > $maxItems) {
+                $candidates = \array_slice($candidates, 0, $maxItems);
+            }
+        }
+
+        return array_map(
+            static fn (array $embedding): VectorDocument => $embedding['document']->withScore($embedding['distance']),
+            $candidates,
+        );
+    }
+
+    /**
+     * @return \Closure(VectorDocument, Vector): float
+     */
+    private function resolveStrategy(): \Closure
+    {
+        return match ($this->strategy) {
+            DistanceStrategy::COSINE_DISTANCE => $this->cosineDistance(...),
+            DistanceStrategy::ANGULAR_DISTANCE => $this->angularDistance(...),
+            DistanceStrategy::EUCLIDEAN_DISTANCE => $this->euclideanDistance(...),
+            DistanceStrategy::MANHATTAN_DISTANCE => $this->manhattanDistance(...),
+            DistanceStrategy::CHEBYSHEV_DISTANCE => $this->chebyshevDistance(...),
+        };
     }
 
     private function cosineDistance(VectorDocument $embedding, Vector $against): float
@@ -125,9 +196,9 @@ final class DistanceCalculator
         );
 
         return array_reduce(
-            array: $embeddingsAsPower,
-            callback: static fn (float $value, float $current): float => max($value, $current),
-            initial: 0.0,
+            $embeddingsAsPower,
+            static fn (float $value, float $current): float => max($value, $current),
+            0.0,
         );
     }
 }

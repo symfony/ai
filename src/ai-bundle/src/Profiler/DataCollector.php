@@ -181,7 +181,20 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
      */
     private function getAllTools(): array
     {
-        return array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->getTools(), $this->toolboxes));
+        $uniqueTools = [];
+
+        foreach ($this->toolboxes as $toolbox) {
+            foreach ($toolbox->getTools() as $tool) {
+                $reference = $tool->getReference();
+                $key = $tool->getName().'::'.$reference->getClass().'::'.$reference->getMethod();
+
+                if (!isset($uniqueTools[$key])) {
+                    $uniqueTools[$key] = $tool;
+                }
+            }
+        }
+
+        return array_values($uniqueTools);
     }
 
     /**

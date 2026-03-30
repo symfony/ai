@@ -11,7 +11,7 @@ use Symfony\Component\Yaml\Yaml;
 class SymfonyAiFeaturesTool
 {
     public function __construct(
-        private string $projectDir,
+        private string $rootDir,
     ) {
     }
 
@@ -35,8 +35,8 @@ class SymfonyAiFeaturesTool
     #[McpTool('symfony-ai-features', 'Detects and lists all available Symfony AI features, platforms, agents, tools, and configurations in this project')]
     public function getFeatures(bool $includeDetails = true): array
     {
-        $configPath = $this->projectDir . '/config/packages/ai.yaml';
-        $composerPath = $this->projectDir . '/composer.json';
+        $configPath = $this->rootDir . '/config/packages/ai.yaml';
+        $composerPath = $this->rootDir . '/composer.json';
 
         if (!file_exists($configPath)) {
             return [

@@ -1,3 +1,75 @@
+UPGRADE FROM 0.6 to 0.7
+=======================
+
+Agent
+-----
+
+ * The `Symfony\AI\Agent\Toolbox\ToolFactory\AbstractToolFactory` class has been removed. If you extended it to create
+   a custom tool factory, implement `ToolFactoryInterface` yourself and use `Symfony\AI\Platform\Contract\JsonSchema\Factory`
+   directly if needed.
+ * The `ToolFactoryInterface::getTool()` method signature has changed to accept `object|string` instead of `string`:
+
+   ```diff
+   -public function getTool(string $reference): iterable;
+   +public function getTool(object|string $reference): iterable;
+   ```
+
+ * The `SimilaritySearch` tool now requires a `RetrieverInterface` instead of `VectorizerInterface` and `StoreInterface`:
+
+   ```diff
+   -use Symfony\AI\Store\Document\VectorizerInterface;
+   -use Symfony\AI\Store\StoreInterface;
+   +use Symfony\AI\Store\Retriever;
+
+   -$similaritySearch = new SimilaritySearch($vectorizer, $store);
+   +$retriever = new Retriever($store, $vectorizer);
+   +$similaritySearch = new SimilaritySearch($retriever);
+   ```
+
+ * The `SimilaritySearch` tool now accepts an optional `$promptTemplate` parameter to customize the result header (default: `'Found documents with the following information:'`)
+
+Mate
+----
+
+ * Run `vendor/bin/mate discover` to update the generated `AGENT_INSTRUCTIONS.md` file with the latest
+   tool descriptions and agent instructions.
+
+AI Bundle
+---------
+
+ * The `api_catalog` option for `Ollama` has been removed as the catalog is now automatically fetched from the Ollama server
+ * The `api_key` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * The `endpoint` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
+
+Platform
+-----
+
+ * `ModelCatalog` in `Ollama` has been replaced by `OllamaApiCatalog`
+ * `OllamaApiCatalog` in `Ollama` has been replaced to `ModelCatalog`
+ * `Ollama` model is now `final`
+ * `ModelCatalog` in `ElevenLabs` has been replaced by `ElevenLabsApiCatalog`
+ * `ElevenLabsApiCatalog` in `ElevenLabs` has been replaced to `ModelCatalog`
+
+Store
+-----
+
+ * The `Retriever` constructor has a new `?EventDispatcherInterface $eventDispatcher` parameter
+   inserted as 3rd argument before `LoggerInterface $logger`. If you pass `$logger` positionally,
+   update to use a named argument:
+
+   ```diff
+   -$retriever = new Retriever($store, $vectorizer, $logger);
+   +$retriever = new Retriever($store, $vectorizer, logger: $logger);
+   ```
+ * Add support for `ScopingHttpClient` in `AzureSearchStore`
+ * The `endpointUrl` parameter for `AzureSearchStore` has been removed
+ * The `apiKey` parameter for `AzureSearchStore` has been removed
+ * The `apiVersion` parameter for `AzureSearchStore` has been removed
+ * A `StoreFactory` has been introduced for `AzureSearchStore`
+
+ * The `ChatInterface` now has a `stream()` method. If you implement this interface,
+   you need to add this method to your implementation.
+
 UPGRADE FROM 0.5 to 0.6
 =======================
 
@@ -75,7 +147,7 @@ AI Bundle
    +$container->get('ai.toolbox.my_agent.subagent.research_agent');
    ```
 
- * An indexer configured with a `source`, now wraps the indexer with a `Symfony\AI\Store\ConfiguredSourceIndexer` decorator. This is
+ * An indexer configured with a `source`, now wraps the indexer with a `Symfony\AI\Store\Indexer\ConfiguredSourceIndexer` decorator. This is
    transparent - the configured source is still used by default, but can be overridden by passing a source to `index()`.
 
  * The `host_url` parameter for `Ollama` platform has been renamed `endpoint`.
@@ -91,12 +163,12 @@ Store
 -----
 
  * The `Symfony\AI\Store\Indexer` class has been replaced with two specialized implementations:
-   - `Symfony\AI\Store\SourceIndexer`: For indexing from sources (file paths, URLs, etc.) using a `LoaderInterface`
-   - `Symfony\AI\Store\DocumentIndexer`: For indexing documents directly without a loader
+   - `Symfony\AI\Store\Indexer\SourceIndexer`: For indexing from sources (file paths, URLs, etc.) using a `LoaderInterface`
+   - `Symfony\AI\Store\Indexer\DocumentIndexer`: For indexing documents directly without a loader
 
    ```diff
    -use Symfony\AI\Store\Indexer;
-   +use Symfony\AI\Store\SourceIndexer;
+   +use Symfony\AI\Store\Indexer\SourceIndexer;
 
    -$indexer = new Indexer($loader, $vectorizer, $store, '/path/to/source');
    -$indexer->index();
@@ -114,11 +186,11 @@ Store
    $indexer->index([$document1, $document2]);
    ```
 
- * The `Symfony\AI\Store\ConfiguredIndexer` class has been renamed to `Symfony\AI\Store\ConfiguredSourceIndexer`:
+ * The `Symfony\AI\Store\ConfiguredIndexer` class has been renamed to `Symfony\AI\Store\Indexer\ConfiguredSourceIndexer`:
 
    ```diff
    -use Symfony\AI\Store\ConfiguredIndexer;
-   +use Symfony\AI\Store\ConfiguredSourceIndexer;
+   +use Symfony\AI\Store\Indexer\ConfiguredSourceIndexer;
 
    -$indexer = new ConfiguredIndexer($innerIndexer, 'default-source');
    +$indexer = new ConfiguredSourceIndexer($sourceIndexer, 'default-source');
@@ -231,7 +303,7 @@ Platform
      * Run `composer require symfony/ai-cache-platform`
      * Change `Symfony\AI\Platform\CachedPlatform` namespace usages to `Symfony\AI\Platform\Bridge\Cache\CachePlatform`
      * The `ttl` option can be used in the configuration
- * Adopt usage of class `Symfony\AI\Platform\Serializer\StructuredOuputSerializer` to `Symfony\AI\Platform\StructuredOutput\Serializer`
+ * Adopt usage of class `Symfony\AI\Platform\Serializer\StructuredOutputSerializer` to `Symfony\AI\Platform\StructuredOutput\Serializer`
 
 UPGRADE FROM 0.1 to 0.2
 =======================
@@ -256,7 +328,7 @@ Agent
  * Constructor of `MemoryInputProcessor` now accepts an iterable of inputs instead of variadic arguments.
 
    ```php
-   use Symfony\AI\Agent\InputProcessor\MemoryInputProcessor;
+   use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 
    // Before
    $processor = new MemoryInputProcessor($input1, $input2);

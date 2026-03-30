@@ -1,0 +1,23 @@
+{
+  "skill_name": "llms-txt-update",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "update the llms.txt",
+      "expected_output": "The llms.txt file at ai.symfony.com/public/llms.txt is regenerated with all current components, bridges, docs, and cookbook entries. A summary of changes is shown.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "we just added a new platform bridge, can you refresh the llms.txt to pick it up",
+      "expected_output": "The skill scans src/platform/src/Bridge/ and updates the Supported AI Platforms section. The new bridge appears in the list. Other sections remain correct.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "sync the llms.txt file with the current state of the repo",
+      "expected_output": "Full regeneration of llms.txt. All sections reflect current codebase: components from src/, platform bridges, store bridges, docs pages, cookbook entries. Structure follows the llms.txt convention.",
+      "files": []
+    }
+  ]
+}

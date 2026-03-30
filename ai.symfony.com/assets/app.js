@@ -1,10 +1,17 @@
 import './stimulus_bootstrap.js';
-import 'bootstrap';
+import { Tooltip } from 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/app.css';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 document.addEventListener('DOMContentLoaded', function() {
     new App();
+    AOS.init({
+        duration: 700,
+        once: true,
+    });
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new Tooltip(el));
 });
 
 class App {

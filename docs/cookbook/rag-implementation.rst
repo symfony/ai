@@ -86,7 +86,6 @@ Step 3: Create Embeddings and Index Documents
 
 Use a vectorizer to convert documents into embeddings and store them::
 
-    use Symfony\AI\Store\Document\Loader\InMemoryLoader;
     use Symfony\AI\Store\Document\Vectorizer;
     use Symfony\AI\Store\Indexer\DocumentIndexer;
     use Symfony\AI\Store\Indexer\DocumentProcessor;
@@ -96,13 +95,23 @@ Use a vectorizer to convert documents into embeddings and store them::
     $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store));
     $indexer->index($documents);
 
-The :class:`Symfony\\AI\\Store\\Indexer\\DocumentIndexer` handles:
+The :class:`Symfony\\AI\\Store\\Indexer\\DocumentIndexer` accepts
+:class:`Symfony\\AI\\Store\\Document\\EmbeddableDocumentInterface` instances (or iterables of them) directly.
+It handles:
 
 * Transforming and/or filtering documents (optional)
 * Generating vector embeddings
 * Storing vectors in the vector store
 
-Alternatively, you can use the :class:`Symfony\\AI\\Store\\Indexer\\SourceIndexer` for loading documents with a loader.
+Alternatively, you can use the :class:`Symfony\\AI\\Store\\Indexer\\SourceIndexer` when you want to load
+documents from a source (file path, URL, etc.) via a :class:`Symfony\\AI\\Store\\Document\\LoaderInterface`::
+
+    use Symfony\AI\Store\Document\Loader\TextFileLoader;
+    use Symfony\AI\Store\Indexer\SourceIndexer;
+
+    $loader = new TextFileLoader();
+    $indexer = new SourceIndexer($loader, new DocumentProcessor($vectorizer, $store));
+    $indexer->index('/path/to/document.txt');
 
 Step 4: Configure Similarity Search Tool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,16 +121,21 @@ Create a tool that performs semantic search on your vector store::
     use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
     use Symfony\AI\Agent\Toolbox\AgentProcessor;
     use Symfony\AI\Agent\Toolbox\Toolbox;
+    use Symfony\AI\Store\Retriever;
 
-    $similaritySearch = new SimilaritySearch($vectorizer, $store);
+    $retriever = new Retriever($store, $vectorizer);
+    $similaritySearch = new SimilaritySearch($retriever);
     $toolbox = new Toolbox([$similaritySearch]);
     $processor = new AgentProcessor($toolbox);
 
 The :class:`Symfony\\AI\\Agent\\Bridge\\SimilaritySearch\\SimilaritySearch` tool:
 
-* Converts the user's query into a vector
-* Searches for similar vectors in the store
+* Uses the retriever to find similar documents in the store
 * Returns the most relevant documents
+
+You can customize the result header by passing a prompt template::
+
+    $similaritySearch = new SimilaritySearch($retriever, 'Here are the relevant results:');
 
 Step 5: Create RAG-Enabled Agent
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,13 +182,11 @@ Vector Store Selection
 
 For production environments, use persistent vector stores like ChromaDB::
 
+    use Codewithkyrian\ChromaDB\ChromaDB;
     use Symfony\AI\Store\Bridge\ChromaDb\Store;
 
-    $store = new Store(
-        $httpClient,
-        'http://localhost:8000',
-        'my_collection'
-    );
+    $client = ChromaDB::factory()->connect();
+    $store = new Store($client, 'my_collection');
 
 ChromaDB is a great choice for production RAG systems as it provides:
 

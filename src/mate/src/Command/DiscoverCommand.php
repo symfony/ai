@@ -11,7 +11,9 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
+use Symfony\AI\Mate\Service\ExtensionConfigSynchronizer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -23,6 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * Scans for packages with extra.ai-mate configuration
  * and generates/updates mate/extensions.php with discovered extensions.
+ * Also refreshes AGENT instruction artifacts for coding agents.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
@@ -31,8 +34,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class DiscoverCommand extends Command
 {
     public function __construct(
-        private string $rootDir,
         private ComposerExtensionDiscovery $extensionDiscovery,
+        private ExtensionConfigSynchronizer $extensionConfigSynchronizer,
+        private AgentInstructionsMaterializer $instructionsMaterializer,
     ) {
         parent::__construct(self::getDefaultName());
     }
@@ -56,40 +60,27 @@ class DiscoverCommand extends Command
         $io->newLine();
 
         $extensions = $this->extensionDiscovery->discover();
+        $rootProjectExtension = $this->extensionDiscovery->discoverRootProject();
 
         $count = \count($extensions);
         if (0 === $count) {
+            $materializationResult = $this->instructionsMaterializer->materializeForExtensions([
+                '_custom' => $rootProjectExtension,
+            ]);
+
             $io->warning([
                 'No MCP extensions found.',
                 'Packages must have "extra.ai-mate" configuration in their composer.json.',
             ]);
+            $this->displayInstructionsStatus($io, $materializationResult);
             $io->note('Run "composer require vendor/package" to install MCP extensions.');
 
             return Command::SUCCESS;
         }
 
-        $extensionsFile = $this->rootDir.'/mate/extensions.php';
-        $existingExtensions = [];
-        $newPackages = [];
-        $removedPackages = [];
-        if (file_exists($extensionsFile)) {
-            $existingExtensions = include $extensionsFile;
-            if (!\is_array($existingExtensions)) {
-                $existingExtensions = [];
-            }
-        }
-
-        foreach ($extensions as $packageName => $data) {
-            if (!isset($existingExtensions[$packageName])) {
-                $newPackages[] = $packageName;
-            }
-        }
-
-        foreach ($existingExtensions as $packageName => $data) {
-            if (!isset($extensions[$packageName])) {
-                $removedPackages[] = $packageName;
-            }
-        }
+        $synchronizationResult = $this->extensionConfigSynchronizer->synchronize($extensions);
+        $newPackages = $synchronizationResult['new_packages'];
+        $removedPackages = $synchronizationResult['removed_packages'];
 
         $io->section(\sprintf('Discovered %d Extension%s', $count, 1 === $count ? '' : 's'));
         $rows = [];
@@ -105,24 +96,7 @@ class DiscoverCommand extends Command
         }
         $io->table(['Status', 'Package', 'Scan Directories'], $rows);
 
-        $finalExtensions = [];
-        foreach ($extensions as $packageName => $data) {
-            $enabled = true;
-            if (isset($existingExtensions[$packageName]) && \is_array($existingExtensions[$packageName])) {
-                $enabled = $existingExtensions[$packageName]['enabled'] ?? true;
-                if (!\is_bool($enabled)) {
-                    $enabled = true;
-                }
-            }
-
-            $finalExtensions[$packageName] = [
-                'enabled' => $enabled,
-            ];
-        }
-
-        $this->writeExtensionsFile($extensionsFile, $finalExtensions);
-
-        $io->success(\sprintf('Configuration written to: %s', $extensionsFile));
+        $io->success(\sprintf('Configuration written to: %s', $synchronizationResult['file']));
 
         if (\count($newPackages) > 0) {
             $io->note(\sprintf('Added %d new extension%s. All extensions are enabled by default.', \count($newPackages), 1 === \count($newPackages) ? '' : 's'));
@@ -135,6 +109,25 @@ class DiscoverCommand extends Command
             ]);
         }
 
+        $enabledExtensionsForInstructions = [
+            '_custom' => $rootProjectExtension,
+        ];
+
+        foreach ($synchronizationResult['extensions'] as $packageName => $config) {
+            if (!$config['enabled']) {
+                continue;
+            }
+
+            if (!isset($extensions[$packageName])) {
+                continue;
+            }
+
+            $enabledExtensionsForInstructions[$packageName] = $extensions[$packageName];
+        }
+
+        $materializationResult = $this->instructionsMaterializer->materializeForExtensions($enabledExtensionsForInstructions);
+        $this->displayInstructionsStatus($io, $materializationResult);
+
         $io->comment([
             'Next steps:',
             '  • Edit mate/extensions.php to enable/disable specific extensions',
@@ -145,27 +138,20 @@ class DiscoverCommand extends Command
     }
 
     /**
-     * @param array<string, array{enabled: bool}> $extensions
+     * @param array{instructions_file_updated: bool, agents_file_updated: bool} $materializationResult
      */
-    private function writeExtensionsFile(string $filePath, array $extensions): void
+    private function displayInstructionsStatus(SymfonyStyle $io, array $materializationResult): void
     {
-        $dir = \dirname($filePath);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+        if ($materializationResult['instructions_file_updated']) {
+            $io->text('Updated <info>mate/AGENT_INSTRUCTIONS.md</info>.');
+        } else {
+            $io->warning('Failed to update mate/AGENT_INSTRUCTIONS.md.');
         }
 
-        $content = "<?php\n\n";
-        $content .= "// This file is managed by 'mate discover'\n";
-        $content .= "// You can manually edit to enable/disable extensions\n\n";
-        $content .= "return [\n";
-
-        foreach ($extensions as $packageName => $config) {
-            $enabled = $config['enabled'] ? 'true' : 'false';
-            $content .= "    '$packageName' => ['enabled' => $enabled],\n";
+        if ($materializationResult['agents_file_updated']) {
+            $io->text('Updated <info>AGENTS.md</info> managed instructions block.');
+        } else {
+            $io->warning('Failed to update AGENTS.md managed instructions block.');
         }
-
-        $content .= "];\n";
-
-        file_put_contents($filePath, $content);
     }
 }

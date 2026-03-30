@@ -47,6 +47,7 @@
         "symfony/http-client": "^7.3|^8.0",
         "symfony/polyfill-php83": "^1.32",
         "symfony/service-contracts": "^2.5|^3",
+        "symfony/event-dispatcher-contracts": "^3.0",
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {

@@ -13,6 +13,7 @@ use Mcp\Capability\Discovery\Discoverer;
 use Mcp\Capability\Discovery\DiscovererInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Agent\AgentInstructionsAggregator;
+use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
 use Symfony\AI\Mate\Command\ClearCacheCommand;
 use Symfony\AI\Mate\Command\DebugCapabilitiesCommand;
 use Symfony\AI\Mate\Command\DebugExtensionsCommand;
@@ -26,6 +27,7 @@ use Symfony\AI\Mate\Command\ToolsListCommand;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Service\ExtensionConfigSynchronizer;
 use Symfony\AI\Mate\Service\Logger;
 use Symfony\AI\Mate\Service\RegistryProvider;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -91,6 +93,8 @@ return static function (ContainerConfigurator $container): void {
         ->set(CapabilityCollector::class)
 
         ->set(AgentInstructionsAggregator::class)
+        ->set(AgentInstructionsMaterializer::class)
+        ->set(ExtensionConfigSynchronizer::class)
 
         // Register all commands
         ->set(InitCommand::class)

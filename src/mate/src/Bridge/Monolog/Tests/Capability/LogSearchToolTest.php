@@ -90,7 +90,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchRegex()
     {
-        $result = $this->tool->searchRegex('Database.*failed');
+        $result = $this->tool->search('Database.*failed', regex: true);
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -99,7 +99,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchRegexWithDelimiters()
     {
-        $result = $this->tool->searchRegex('/User.*logged/i');
+        $result = $this->tool->search('/User.*logged/i', regex: true);
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -107,7 +107,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchRegexByLevel()
     {
-        $result = $this->tool->searchRegex('.*', level: 'WARNING');
+        $result = $this->tool->search('.*', regex: true, level: 'WARNING');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -201,7 +201,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testByLevel()
     {
-        $result = $this->tool->byLevel('INFO');
+        $result = $this->tool->search('', level: 'INFO');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -211,15 +211,9 @@ final class LogSearchToolTest extends TestCase
         }
     }
 
-    public function testByLevelWithEnvironment()
-    {
-        // Skip this test as the bridge test fixtures don't have environment-specific files
-        $this->markTestSkipped('Environment-specific level search not supported in bridge test fixtures');
-    }
-
     public function testByLevelWithLimit()
     {
-        $result = $this->tool->byLevel('INFO', limit: 1);
+        $result = $this->tool->search('', level: 'INFO', limit: 1);
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertLessThanOrEqual(1, \count($result['entries']));

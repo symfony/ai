@@ -28,8 +28,6 @@ OpenAI, Anthropic, Google, Replicate, and others.
 
 For example, to use the OpenAI provider, you would typically do something like this::
 
-    use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
-    use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 
     $platform = PlatformFactory::create(env('OPENAI_API_KEY'));
@@ -37,7 +35,7 @@ For example, to use the OpenAI provider, you would typically do something like t
 With this :class:`Symfony\\AI\\Platform\\PlatformInterface` instance you can now interact with the LLM::
 
     // Generate a vector embedding for a text, returns a Symfony\AI\Platform\Result\VectorResult
-    $vectorResult = $platform->invoke($embeddings, 'What is the capital of France?');
+    $vectorResult = $platform->invoke('text-embedding-3-small', 'What is the capital of France?');
 
     // Generate a text completion with GPT, returns a Symfony\AI\Platform\Result\TextResult
     $result = $platform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
@@ -81,29 +79,17 @@ Custom models
 ~~~~~~~~~~~~~
 
 For providers like Ollama, you can use custom models (built on top of ``Modelfile``), as those models are not listed in
-the default catalog, you can use the built-in ``OllamaApiCatalog`` to query the model information from the API rather
-than the default catalog::
+the default catalog. The ``ModelCatalog`` automatically queries the model information from the Ollama API::
 
-    use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
     use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
-    $platform = PlatformFactory::create('http://127.0.0.1:11434', HttpClient::create(), new OllamaApiCatalog(
-        'http://127.0.0.1:11434',
-        HttpClient::create(),
-    ));
+    $platform = PlatformFactory::create('http://127.0.0.1:11434');
 
     $platform->invoke('your_custom_model_name', new MessageBag(
         Message::ofUser(...)
     ));
-
-When using the bundle, the usage of ``OllamaApiCatalog`` is available via the ``api_catalog`` option::
-
-    ai:
-        platform:
-            ollama:
-                api_catalog: true
 
 Supported Models & Platforms
 ----------------------------
@@ -131,7 +117,7 @@ Supported Models & Platforms
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
   * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
   * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
-    and also filtered, e.g. ``php examples/huggingface/_model-listing.php --provider=hf-inference --task=object-detection``
+    and also filtered, e.g. ``php examples/huggingface/_model.php --provider=hf-inference --task=object-detection``
 * **Voice Models**
   * `ElevenLabs TTS`_ with `ElevenLabs`_ as Platform
   * `ElevenLabs STT`_ with `ElevenLabs`_ as Platform
@@ -556,7 +542,7 @@ Embeddings
 
 Creating embeddings of word, sentences, or paragraphs is a typical use case around the interaction with LLMs.
 
-The standalone usage results in a :class:`Symfony\\AI\\Store\\Vector` instance::
+The standalone usage results in a :class:`Symfony\\AI\\Platform\\Vector\\Vector` instance::
 
     use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 
@@ -677,7 +663,7 @@ Cached Platform Calls
 Thanks to Symfony's Cache component, platform calls can be cached to reduce calls and resources consumption::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Platform\Bridge\Cache\CachedPlatform;
+    use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
@@ -686,13 +672,13 @@ Thanks to Symfony's Cache component, platform calls can be cached to reduce call
     use Symfony\Component\HttpClient\HttpClient;
 
     $platform = PlatformFactory::create($apiKey, HttpClient::create());
-    $cachedPlatform = new CachedPlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+    $cachePlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
 
-    $firstResult = $cachedPlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
+    $firstResult = $cachePlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
 
     echo $firstResult->getContent().\PHP_EOL;
 
-    $secondResult = $cachedPlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
+    $secondResult = $cachePlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
 
     echo $secondResult->getContent().\PHP_EOL;
 
@@ -820,7 +806,16 @@ Binary Results
     );
 
     $result = $platform->invoke('gpt-4o-mini', 'generate PDF document');
-    $binary = $result->asBinary(); // Returns Binary object with content and MIME type
+    $binary = $result->asBinary(); // Returns the binary data as string
+
+You can also save binary results directly to a file using
+:method:`Symfony\\AI\\Platform\\Result\\DeferredResult::asFile`::
+
+    $result = $platform->invoke('gemini-2.5-flash-image', $messages);
+    $result->asFile('/path/to/output.png'); // Saves the binary content to a file
+
+The method throws a :class:`Symfony\\AI\\Platform\\Exception\\RuntimeException` if the
+target directory does not exist or is not writable.
 
 Raw Results
 ~~~~~~~~~~~

@@ -14,7 +14,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Symfony\AI\Agent\Toolbox\AgentProcessor as ToolProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
-use Symfony\AI\Agent\Toolbox\ToolFactory\AbstractToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
@@ -37,7 +36,6 @@ use Symfony\AI\Platform\Bridge\Decart\ModelCatalog as DecartModelCatalog;
 use Symfony\AI\Platform\Bridge\DeepSeek\ModelCatalog as DeepSeekModelCatalog;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\ModelCatalog as DockerModelRunnerModelCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
-use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog as ElevenLabsModelCatalog;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\Gemini\ModelCatalog as GeminiModelCatalog;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\HuggingFaceContract;
@@ -46,7 +44,6 @@ use Symfony\AI\Platform\Bridge\LmStudio\ModelCatalog as LmStudioModelCatalog;
 use Symfony\AI\Platform\Bridge\Meta\ModelCatalog as MetaModelCatalog;
 use Symfony\AI\Platform\Bridge\Mistral\ModelCatalog as MistralModelCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
-use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog as OllamaModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog as OpenAiModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\ModelCatalog as OpenRouterModelCatalog;
@@ -65,13 +62,13 @@ use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyInfoDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\ValidatorConstraintsDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\WithAttributeDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
@@ -114,17 +111,11 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.decart', DecartModelCatalog::class)
         ->set('ai.platform.model_catalog.deepseek', DeepSeekModelCatalog::class)
         ->set('ai.platform.model_catalog.dockermodelrunner', DockerModelRunnerModelCatalog::class)
-        ->set('ai.platform.model_catalog.elevenlabs', ElevenLabsModelCatalog::class)
-            ->lazy()
-            ->tag('proxy', ['interface' => ModelCatalogInterface::class])
         ->set('ai.platform.model_catalog.gemini', GeminiModelCatalog::class)
         ->set('ai.platform.model_catalog.huggingface', HuggingFaceModelCatalog::class)
         ->set('ai.platform.model_catalog.lmstudio', LmStudioModelCatalog::class)
         ->set('ai.platform.model_catalog.meta', MetaModelCatalog::class)
         ->set('ai.platform.model_catalog.mistral', MistralModelCatalog::class)
-        ->set('ai.platform.model_catalog.ollama', OllamaModelCatalog::class)
-            ->lazy()
-            ->tag('proxy', ['interface' => ModelCatalogInterface::class])
         ->set('ai.platform.model_catalog.openai', OpenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.openrouter', OpenRouterModelCatalog::class)
         ->set('ai.platform.model_catalog.ovh', OvhModelCatalog::class)
@@ -184,6 +175,11 @@ return static function (ContainerConfigurator $container): void {
                 service('serializer.mapping.class_metadata_factory')->ignoreOnInvalid(),
             ])
             ->tag('ai.platform.json_schema.describer')
+        ->set('ai.platform.json_schema.describer.validator', ValidatorConstraintsDescriber::class)
+            ->args([
+                service('validator')->nullOnInvalid(),
+            ])
+            ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer.with_attribute', WithAttributeDescriber::class)
             ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer', Describer::class)
@@ -213,13 +209,10 @@ return static function (ContainerConfigurator $container): void {
                 service('logger')->ignoreOnInvalid(),
                 service('event_dispatcher')->nullOnInvalid(),
             ])
-        ->set('ai.tool_factory.abstract', AbstractToolFactory::class)
-            ->abstract()
+        ->set('ai.tool_factory', ReflectionToolFactory::class)
             ->args([
                 service('ai.platform.json_schema_factory'),
             ])
-        ->set('ai.tool_factory', ReflectionToolFactory::class)
-            ->parent('ai.tool_factory.abstract')
         ->set('ai.tool_result_converter', ToolResultConverter::class)
             ->args([
                 service('serializer'),

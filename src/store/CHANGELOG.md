@@ -4,6 +4,13 @@ CHANGELOG
 0.7
 ---
 
+ * Add `RstLoader` and `RstToctreeLoader` for loading RST files and following toctree directives
+ * Add pre-query event dispatching for query enhancement before vectorization
+ * Add platform-based `Reranker` for cross-encoder reranking via `PlatformInterface`
+ * Add `CombinedStore` combining vector and text stores with Reciprocal Rank Fusion (RRF)
+ * [BC BREAK] Add `?EventDispatcherInterface $eventDispatcher` as 3rd constructor parameter of `Retriever` (before `$logger`)
+ * Add automatic text content preservation in `Vectorizer` metadata
+ * Add batch processing in `DistanceCalculator` for local vector stores
  * Add `count` method to `StoreInterface`
 
 0.6

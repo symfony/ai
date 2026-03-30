@@ -17,8 +17,11 @@ use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\InMemory\Store;
 use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Uid\Uuid;
@@ -364,7 +367,7 @@ final class StoreTest extends TestCase
             new VectorDocument($id, new Vector([0.1, 0.1, 0.5])),
         ]);
 
-        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('No supported options.');
 
         $store->remove((string) $id, ['unsupported' => 'option']);
@@ -453,8 +456,9 @@ final class StoreTest extends TestCase
 
     public function testHybridQueryThrowsExceptionForInvalidSemanticRatio()
     {
-        $this->expectException(\Symfony\AI\Store\Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Semantic ratio must be between 0.0 and 1.0');
+        $this->expectExceptionCode(0);
 
         new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 1.5);
     }
@@ -464,11 +468,12 @@ final class StoreTest extends TestCase
         $store = new Store();
 
         // Create a mock query type that InMemory store doesn't support
-        $unsupportedQuery = new class implements \Symfony\AI\Store\Query\QueryInterface {
+        $unsupportedQuery = new class implements QueryInterface {
         };
 
-        $this->expectException(\Symfony\AI\Store\Exception\UnsupportedQueryTypeException::class);
+        $this->expectException(UnsupportedQueryTypeException::class);
         $this->expectExceptionMessageMatches('/not supported/');
+        $this->expectExceptionCode(0);
 
         $store->query($unsupportedQuery);
     }

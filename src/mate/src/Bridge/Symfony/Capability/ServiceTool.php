@@ -27,10 +27,12 @@ class ServiceTool
     }
 
     /**
+     * @param string|null $query Filter services by ID or class name (case-insensitive partial match)
+     *
      * @return array<string, class-string|null>
      */
-    #[McpTool('symfony-services', 'Get a list of all symfony services')]
-    public function getAllServices(): array
+    #[McpTool('symfony-services', 'Search Symfony dependency injection container services. Optionally filter by service ID or class name. Returns a map of service IDs to their class names.')]
+    public function getServices(?string $query = null): array
     {
         $container = $this->readContainer();
         if (null === $container) {
@@ -39,6 +41,13 @@ class ServiceTool
 
         $output = [];
         foreach ($container->services as $service) {
+            if (null !== $query && '' !== $query) {
+                $matches = str_contains(strtolower($service->id), strtolower($query))
+                    || (null !== $service->class && str_contains(strtolower($service->class), strtolower($query)));
+                if (!$matches) {
+                    continue;
+                }
+            }
             $output[$service->id] = $service->class;
         }
 
@@ -49,9 +58,12 @@ class ServiceTool
     {
         $environments = ['', '/dev', '/test', '/prod'];
         foreach ($environments as $env) {
-            $file = $this->cacheDir."$env/App_KernelDevDebugContainer.xml";
-            if (file_exists($file)) {
-                return $this->provider->getContainer($file);
+            $dir = $this->cacheDir.$env;
+            $files = glob($dir.'/*DebugContainer.xml');
+            if (false !== $files && [] !== $files) {
+                sort($files);
+
+                return $this->provider->getContainer($files[0]);
             }
         }
 

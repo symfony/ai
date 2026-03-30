@@ -14,12 +14,15 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\MockAgent;
+use Symfony\AI\Agent\Toolbox\Tool\Subagent;
+use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Profiler\TraceableAgent;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
 use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\AiBundle\Profiler\TraceableStore;
+use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -32,6 +35,8 @@ use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Tool\ExecutionReference;
+use Symfony\AI\Platform\Tool\Tool;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\InMemory\Store;
@@ -170,9 +175,9 @@ class DataCollectorTest extends TestCase
         $calls = $dataCollector->getChats();
 
         $this->assertArrayHasKey('message', $calls[0]);
-        $this->assertArrayHasKey('saved_at', $calls[0]);
+        $this->assertArrayHasKey('submitted_at', $calls[0]);
         $this->assertInstanceOf(UserMessage::class, $calls[0]['message']);
-        $this->assertInstanceOf(\DateTimeImmutable::class, $calls[0]['saved_at']);
+        $this->assertInstanceOf(\DateTimeImmutable::class, $calls[0]['submitted_at']);
     }
 
     public function testGetNameReturnsShortName()
@@ -235,5 +240,77 @@ class DataCollectorTest extends TestCase
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getStores());
+    }
+
+    public function testDeduplicatesToolsBasedOnNameAndExecutionReference()
+    {
+        $tool1 = new Tool(
+            new ExecutionReference('App\Tool\FirstTool', 'first'),
+            'first_tool',
+            'Does Something'
+        );
+
+        $tool2 = new Tool(
+            new ExecutionReference('App\Tool\FirstTool', 'first'),
+            'first_tool',
+            'Does Something'
+        );
+
+        $tool3 = new Tool(
+            new ExecutionReference('App\Tool\SecondTool', 'second'),
+            'second_tool',
+            'Does Something Else'
+        );
+
+        $toolbox1 = $this->createStub(ToolboxInterface::class);
+        $toolbox1->method('getTools')->willReturn([$tool1, $tool3]);
+
+        $toolbox2 = $this->createStub(ToolboxInterface::class);
+        $toolbox2->method('getTools')->willReturn([$tool2, $tool3]);
+
+        $traceableToolbox1 = new TraceableToolbox($toolbox1);
+        $traceableToolbox2 = new TraceableToolbox($toolbox2);
+
+        $dataCollector = new DataCollector([], [$traceableToolbox1, $traceableToolbox2], [], [], [], []);
+        $dataCollector->lateCollect();
+
+        $tools = $dataCollector->getTools();
+
+        $this->assertCount(2, $tools);
+        $this->assertSame('first_tool', $tools[0]->getName());
+        $this->assertSame('second_tool', $tools[1]->getName());
+    }
+
+    public function testDoesNotDeduplicateToolsWithSameExecutionReferenceButDifferentNames()
+    {
+        $tool1 = new Tool(
+            new ExecutionReference(Subagent::class, '__invoke'),
+            'research_agent',
+            'Research Agent'
+        );
+
+        $tool2 = new Tool(
+            new ExecutionReference(Subagent::class, '__invoke'),
+            'writer_agent',
+            'Writer Agent'
+        );
+
+        $toolbox1 = $this->createStub(ToolboxInterface::class);
+        $toolbox1->method('getTools')->willReturn([$tool1]);
+
+        $toolbox2 = $this->createStub(ToolboxInterface::class);
+        $toolbox2->method('getTools')->willReturn([$tool2]);
+
+        $traceableToolbox1 = new TraceableToolbox($toolbox1);
+        $traceableToolbox2 = new TraceableToolbox($toolbox2);
+
+        $dataCollector = new DataCollector([], [$traceableToolbox1, $traceableToolbox2], [], [], [], []);
+        $dataCollector->lateCollect();
+
+        $tools = $dataCollector->getTools();
+
+        $this->assertCount(2, $tools);
+        $this->assertSame('research_agent', $tools[0]->getName());
+        $this->assertSame('writer_agent', $tools[1]->getName());
     }
 }

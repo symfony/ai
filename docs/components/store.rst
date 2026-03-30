@@ -22,18 +22,50 @@ for documents.
 Indexing
 --------
 
-One higher level feature is the :class:`Symfony\\AI\\Store\\Indexer`. The purpose of this service is to populate a store with documents.
-Therefore it accepts one or multiple :class:`Symfony\\AI\\Store\\Document\\TextDocument` objects, converts them into embeddings and stores them in the
-used vector store::
+Indexing is the process of converting documents into vector embeddings and storing them in a vector store.
+All indexers implement :class:`Symfony\\AI\\Store\\IndexerInterface` and share a common ``index()`` method.
+Internally they use :class:`Symfony\\AI\\Store\\Indexer\\DocumentProcessor` to run documents through the
+pipeline: filter → transform → vectorize → store.
+
+There are three indexer implementations to choose from:
+
+**DocumentIndexer** accepts documents directly (as :class:`Symfony\\AI\\Store\\Document\\EmbeddableDocumentInterface` instances)::
 
     use Symfony\AI\Store\Document\TextDocument;
-    use Symfony\AI\Store\Indexer;
+    use Symfony\AI\Store\Document\Vectorizer;
+    use Symfony\AI\Store\Indexer\DocumentIndexer;
+    use Symfony\AI\Store\Indexer\DocumentProcessor;
 
-    $indexer = new Indexer($platform, $model, $store);
-    $document = new TextDocument('This is a sample document.');
+    $vectorizer = new Vectorizer($platform, $model);
+    $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store));
+    $document = new TextDocument('id-1', 'This is a sample document.');
     $indexer->index($document);
 
-You can find more advanced usage in combination with an Agent using the store for RAG in the examples folder.
+**SourceIndexer** loads documents via a :class:`Symfony\\AI\\Store\\Document\\LoaderInterface` from a runtime-provided source
+(file path, URL, etc.)::
+
+    use Symfony\AI\Store\Document\Loader\TextFileLoader;
+    use Symfony\AI\Store\Document\Vectorizer;
+    use Symfony\AI\Store\Indexer\DocumentProcessor;
+    use Symfony\AI\Store\Indexer\SourceIndexer;
+
+    $vectorizer = new Vectorizer($platform, $model);
+    $loader = new TextFileLoader();
+    $indexer = new SourceIndexer($loader, new DocumentProcessor($vectorizer, $store));
+    $indexer->index('/path/to/document.txt');
+    // or index multiple sources at once:
+    $indexer->index(['/path/to/doc1.txt', '/path/to/doc2.txt']);
+
+**ConfiguredSourceIndexer** wraps a ``SourceIndexer`` with a pre-configured default source,
+which is useful when the source is defined in configuration but should still be overridable at runtime::
+
+    use Symfony\AI\Store\Indexer\ConfiguredSourceIndexer;
+
+    $inner = new SourceIndexer($loader, new DocumentProcessor($vectorizer, $store));
+    $indexer = new ConfiguredSourceIndexer($inner, '/path/to/document.txt');
+    $indexer->index(); // uses the configured source
+
+See the `RAG Implementation cookbook`_ for more advanced usage in combination with an Agent.
 
 Retrieving
 ----------
@@ -74,6 +106,7 @@ Similarity Search Examples
 * `Similarity Search with Pinecone (RAG)`_
 * `Similarity Search with Qdrant (RAG)`_
 * `Similarity Search with SurrealDB (RAG)`_
+* `Similarity Search with SQLite (RAG)`_
 * `Similarity Search with Symfony Cache (RAG)`_
 * `Similarity Search with Typesense (RAG)`_
 * `Similarity Search with Vektor (RAG)`_
@@ -107,6 +140,7 @@ Supported Stores
 * `Qdrant`_
 * `Redis`_
 * `S3 Vectors`_
+* `SQLite`_ (requires ``ext-pdo_sqlite``)
 * `Supabase`_ (requires manual database setup)
 * `SurrealDB`_
 * `Symfony Cache`_ (requires ``symfony/cache`` as additional dependency)
@@ -122,9 +156,13 @@ Document loaders are responsible for fetching and preparing documents for indexi
 
 To help loading documents and integrate them into your RAG system, you can use the provided document loaders or create your own custom loaders to suit your specific needs:
 
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\CsvLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\InMemoryLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\JsonFileLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\MarkdownLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RssFeedLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\RstLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\RstToctreeLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\TextFileLoader`
 
 Create a Custom Loader
@@ -246,6 +284,7 @@ This leads to a store implementing two methods::
 .. _`Similarity Search with Neo4j (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/neo4j.php
 .. _`Similarity Search with OpenSearch (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/opensearch.php
 .. _`Similarity Search with Pinecone (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
+.. _`Similarity Search with SQLite (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/sqlite.php
 .. _`Similarity Search with Symfony Cache (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cache.php
 .. _`Similarity Search with Qdrant (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/qdrant.php
 .. _`Similarity Search with SurrealDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/surrealdb.php
@@ -276,4 +315,6 @@ This leads to a store implementing two methods::
 .. _`Symfony Cache`: https://symfony.com/doc/current/components/cache.html
 .. _`Vektor`: https://github.com/centamiv/vektor
 .. _`Weaviate`: https://weaviate.io/
+.. _`SQLite`: https://www.sqlite.org/
 .. _`Supabase`: https://supabase.com/
+.. _`RAG Implementation cookbook`: https://symfony.com/doc/current/ai/cookbook/rag-implementation.html

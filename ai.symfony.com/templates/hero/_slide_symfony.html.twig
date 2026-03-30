@@ -1,0 +1,32 @@
+<div class="row align-items-center">
+    <div class="col-xl-6 pe-5">
+        <h2 class="ff-title text-balance display-5 fw-bold mb-3">
+            Integrate AI with the <span class="hero-highlight">Symfony Framework</span>
+        </h2>
+        <p class="text-balance fs-5 mb-4 opacity-75">
+            Configure agents, platforms, and stores with familiar YAML configuration.
+        </p>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="btn btn-light btn-lg px-3 d-flex align-items-center">
+                <span>Read the docs</span>
+                {{ ux_icon('tabler:arrow-up-right', {width: 24, height: 24, class: 'ms-2'}) }}
+            </a>
+        </div>
+    </div>
+
+    <div class="col-xl-6 mt-5 mt-xl-0">
+        <pre class="terminal"><code><span class="comment"># config/packages/ai.yaml</span>
+<span class="keyword">ai</span>:
+    <span class="keyword">platform</span>:
+        <span class="keyword">openai</span>:
+            <span class="keyword">api_key</span>: <span class="string">'%env(OPENAI_API_KEY)%'</span>
+    <span class="keyword">agent</span>:
+        <span class="keyword">blog</span>:
+            <span class="keyword">model</span>: <span class="string">'gpt-4.1'</span>
+            <span class="keyword">prompt</span>: <span class="string">'You are a helpful assistant ...'</span>
+            <span class="keyword">tools</span>:
+                - <span class="string">'App\Tool\SearchTool'</span>
+                - <span class="title">agent</span>: <span class="string">'faq_knowledge'</span></code></pre>
+    </div>
+</div>

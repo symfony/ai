@@ -35,4 +35,11 @@ return [
     '@symfony/stimulus-bundle' => [
         'path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js',
     ],
+    'aos' => [
+        'version' => '2.3.4',
+    ],
+    'aos/dist/aos.css' => [
+        'version' => '2.3.4',
+        'type' => 'css',
+    ],
 ];

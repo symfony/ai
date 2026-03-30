@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Bridge\VertexAi;
 
 use Google\Auth\ApplicationDefaultCredentials;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\ModelClient as EmbeddingsModelClient;
 use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\ResultConverter as EmbeddingsResultConverter;
@@ -24,6 +23,7 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**

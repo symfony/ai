@@ -1,0 +1,132 @@
+<section id="demos" class="section-secondary py-5 py-lg-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <h2 class="ff-title fw-bold h3 mb-1 section-heading" data-aos="fade-up">Demos</h2>
+            </div>
+        </div>
+
+        <div class="sf-ai-card p-4 p-lg-5" data-controller="clipboard" data-aos="fade-up" data-aos-delay="100">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-5">
+                    <h3 class="ff-title fw-bold h5 mb-3">Get started in seconds</h3>
+                    <p class="text-muted small mb-0">
+                        Clone the demo, add your OpenAI API key, and start the server.
+                        The app includes a chatbot UI, RAG pipeline, and multiple demo scenarios ready to explore.
+                    </p>
+                </div>
+                <div class="col-lg-7 position-relative">
+                    <button type="button" class="copy-btn" data-action="clipboard#copy" data-clipboard-target="button" aria-label="Copy to clipboard" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">
+                        {{ ux_icon('tabler:copy', {width: 16, height: 16}) }}
+                    </button>
+                    <pre class="terminal mb-0" data-clipboard-target="source"><code>$ composer create-project symfony/ai-demo
+$ cd ai-demo
+$ echo "OPENAI_API_KEY='sk-...'" > .env.local
+$ docker compose up -d
+$ symfony serve -d</code></pre>
+                </div>
+            </div>
+
+            <hr class="my-4 opacity-10">
+
+            <div class="row g-3">
+                <div class="col-md-6 col-lg-3">
+                    <div class="d-flex gap-2 align-items-start">
+                        <div class="demo-icon-sm demo-youtube flex-shrink-0">
+                            {{ ux_icon('tabler:brand-youtube', {width: 22, height: 22}) }}
+                        </div>
+                        <div>
+                            <strong class="ff-title small d-block">YouTube Transcript Bot</strong>
+                            <span class="text-muted demo-desc">Question answering from YouTube video transcripts.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="d-flex gap-2 align-items-start">
+                        <div class="demo-icon-sm demo-recipe flex-shrink-0">
+                            {{ ux_icon('mdi:cook', {width: 22, height: 22}) }}
+                        </div>
+                        <div>
+                            <strong class="ff-title small d-block">Recipe Bot</strong>
+                            <span class="text-muted demo-desc">Cooking recipe chatbot powered by structured output.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="d-flex gap-2 align-items-start">
+                        <div class="demo-icon-sm demo-wikipedia flex-shrink-0">
+                            {{ ux_icon('simple-icons:wikipedia', {width: 22, height: 22}) }}
+                        </div>
+                        <div>
+                            <strong class="ff-title small d-block">Wikipedia Research Bot</strong>
+                            <span class="text-muted demo-desc">Search and read Wikipedia with AI-powered tools.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="d-flex gap-2 align-items-start">
+                        <div class="demo-icon-sm demo-blog flex-shrink-0">
+                            {{ ux_icon('logos:symfony-letters', {width: 18, height: 18}) }}
+                        </div>
+                        <div>
+                            <strong class="ff-title small d-block">Symfony Blog Bot</strong>
+                            <span class="text-muted demo-desc">RAG based on Symfony's blog dumped to a vector store.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="d-flex gap-2 align-items-start">
+                        <div class="demo-icon-sm demo-speech flex-shrink-0">
+                            {{ ux_icon('tabler:microphone', {width: 22, height: 22}) }}
+                        </div>
+                        <div>
+                            <strong class="ff-title small d-block">Speech Bot + Subagent</strong>
+                            <span class="text-muted demo-desc">Speech-to-text, text-to-speech, and subagent combining 4 models.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="d-flex gap-2 align-items-start">
+                        <div class="demo-icon-sm demo-video flex-shrink-0">
+                            {{ ux_icon('tabler:video', {width: 22, height: 22}) }}
+                        </div>
+                        <div>
+                            <strong class="ff-title small d-block">Video Bot</strong>
+                            <span class="text-muted demo-desc">Vision capabilities of GPT in combination with your webcam.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="d-flex gap-2 align-items-start">
+                        <div class="demo-icon-sm demo-crop flex-shrink-0">
+                            {{ ux_icon('tabler:crop', {width: 22, height: 22}) }}
+                        </div>
+                        <div>
+                            <strong class="ff-title small d-block">Smart Image Cropping</strong>
+                            <span class="text-muted demo-desc">AI-assisted cropping to focus on key elements while resizing.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="d-flex gap-2 align-items-start">
+                        <div class="demo-icon-sm demo-turbo flex-shrink-0">
+                            {{ ux_icon('logos:symfony-letters', {width: 18, height: 18}) }}
+                        </div>
+                        <div>
+                            <strong class="ff-title small d-block">Turbo Stream Bot</strong>
+                            <span class="text-muted demo-desc">Streaming text responses with markdown via Turbo and SSE.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="https://github.com/symfony/ai-demo" class="btn btn-outline-secondary px-4 d-inline-flex align-items-center">
+                    {{ ux_icon('simple-icons:github', {width: 18, height: 18, class: 'me-2'}) }}
+                    <span>Explore the Demo Repository</span>
+                    {{ ux_icon('tabler:arrow-up-right', {width: 18, height: 18, class: 'ms-2'}) }}
+                </a>
+            </div>
+        </div>
+    </div>
+</section>

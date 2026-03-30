@@ -4,6 +4,16 @@ CHANGELOG
 0.7
 ---
 
+ * The `api_catalog` option for `Ollama` has been removed as the catalog is now automatically fetched from the Ollama server
+ * The `api_key` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * The `endpoint` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * The `api_catalog` option for `ElevenLabs` has been removed as the catalog is now automatically fetched from the ElevenLabs servers
+ * The `api_key` option for `ElevenLabs` is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * The `endpoint` option for `Azure` store is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * The `api_key` option for `Azure` store is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * The `api_version` option for `Azure` store is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * The `vector_field` option for `Azure` store is now `vector` by default
+ * Add support for `ScopingHttpClient` usage in `AzureSearch` store
  * Add `count` method to `TraceableStore`
 
 0.6

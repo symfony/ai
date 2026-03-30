@@ -14,10 +14,11 @@ InMemoryStore
 Stores vectors in a PHP array. Data is not persisted and is lost when the PHP process ends::
 
     use Symfony\AI\Store\InMemory\Store;
+    use Symfony\AI\Store\Query\VectorQuery;
 
     $store = new Store();
     $store->add([$document1, $document2]);
-    $results = $store->query($vector);
+    $results = $store->query(new VectorQuery($vector));
 
 CacheStore
 ----------
@@ -30,7 +31,7 @@ Stores vectors using a PSR-6 cache implementation. Persistence depends on the ca
     $cache = new FilesystemAdapter();
     $store = new Store($cache);
     $store->add([$document1, $document2]);
-    $results = $store->query($vector);
+    $results = $store->query(new VectorQuery($vector));
 
 Distance Strategies
 -------------------
@@ -52,6 +53,34 @@ Available strategies:
 * ``ANGULAR_DISTANCE``
 * ``CHEBYSHEV_DISTANCE``
 
+Batch Processing
+----------------
+
+For large datasets, the distance calculator can process documents in batches
+instead of scoring the entire dataset at once. After each batch, only the best
+candidates are kept, reducing peak memory from O(N) to O(maxItems + batchSize)::
+
+    use Symfony\AI\Store\Distance\DistanceCalculator;
+    use Symfony\AI\Store\Distance\DistanceStrategy;
+    use Symfony\AI\Store\InMemory\Store;
+
+    $calculator = new DistanceCalculator(
+        strategy: DistanceStrategy::COSINE_DISTANCE,
+        batchSize: 500, # Default to 100
+    );
+    $store = new Store($calculator);
+
+    // Batch processing is activated when both batchSize and maxItems are set
+    $results = $store->query($vectorQuery, [
+        'maxItems' => 10,
+    ]);
+
+.. note::
+
+    Batch processing requires ``maxItems`` to be set in the query options.
+    Without it, the calculator falls back to the standard full-sort behavior
+    since all results are needed and no pruning can occur.
+
 Metadata Filtering
 ------------------
 
@@ -59,34 +88,34 @@ Both stores support filtering search results based on document metadata using a 
 
     use Symfony\AI\Store\Document\VectorDocument;
 
-    $results = $store->query($vector, [
-        'filter' => fn(VectorDocument $doc) => $doc->metadata['category'] === 'products',
+    $results = $store->query($vectorQuery, [
+        'filter' => fn(VectorDocument $doc) => $doc->getMetadata()['category'] === 'products',
     ]);
 
 You can combine multiple conditions::
 
-    $results = $store->query($vector, [
+    $results = $store->query($vectorQuery, [
         'filter' => fn(VectorDocument $doc) =>
-            $doc->metadata['price'] <= 100
-            && $doc->metadata['stock'] > 0
-            && $doc->metadata['enabled'] === true,
+            $doc->getMetadata()['price'] <= 100
+            && $doc->getMetadata()['stock'] > 0
+            && $doc->getMetadata()['enabled'] === true,
         'maxItems' => 10,
     ]);
 
 Filter nested metadata::
 
-    $results = $store->query($vector, [
+    $results = $store->query($vectorQuery, [
         'filter' => fn(VectorDocument $doc) =>
-            $doc->metadata['options']['size'] === 'S'
-            && $doc->metadata['options']['color'] === 'blue',
+            $doc->getMetadata()['options']['size'] === 'S'
+            && $doc->getMetadata()['options']['color'] === 'blue',
     ]);
 
 Use array functions for complex filtering::
 
     $allowedBrands = ['Nike', 'Adidas', 'Puma'];
-    $results = $store->query($vector, [
+    $results = $store->query($vectorQuery, [
         'filter' => fn(VectorDocument $doc) =>
-            \in_array($doc->metadata['brand'] ?? '', $allowedBrands, true),
+            \in_array($doc->getMetadata()['brand'] ?? '', $allowedBrands, true),
     ]);
 
 .. note::
@@ -103,7 +132,7 @@ Both stores support the following query options:
 
 Example combining both options::
 
-    $results = $store->query($vector, [
+    $results = $store->query($vectorQuery, [
         'maxItems' => 5,
-        'filter' => fn(VectorDocument $doc) => $doc->metadata['active'] === true,
+        'filter' => fn(VectorDocument $doc) => $doc->getMetadata()['active'] === true,
     ]);

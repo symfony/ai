@@ -16,10 +16,9 @@ Basic Usage
 -----------
 
 To instantiate an agent, you need to pass a :class:`Symfony\\AI\\Platform\\PlatformInterface` and a
-:class:`Symfony\\AI\\Platform\\Model` instance to the :class:`Symfony\\AI\\Agent\\Agent` class::
+model name to the :class:`Symfony\\AI\\Agent\\Agent` class::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 
     $platform = PlatformFactory::create($apiKey);
@@ -27,7 +26,7 @@ To instantiate an agent, you need to pass a :class:`Symfony\\AI\\Platform\\Platf
 
     $agent = new Agent($platform, $model);
 
-You can then run the agent with a :class:`Symfony\\AI\\Platform\\Message\\MessageBagInterface` instance as input and an optional
+You can then run the agent with a :class:`Symfony\\AI\\Platform\\Message\\MessageBag` instance as input and an optional
 array of options::
 
     use Symfony\AI\Agent\Agent;
@@ -203,6 +202,34 @@ For PHP backed enums, automatic validation without requiring any :class:`Symfony
     }
 
 This eliminates the need for manual ``#[With(enum: [...])]`` attributes when using PHP's native backed enum types.
+
+Using Symfony Validator
+.......................
+
+If you have `symfony/validator` installed, you can also use validation constraints for schema generation::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+    use Symfony\Component\Validator\Constraints as Assert;
+
+    class Person
+    {
+        #[Assert\Length(max: 255)]
+        public string $name;
+
+        #[Assert\Range(min: 18)]
+        public int $age;
+    }
+
+    #[AsTool('my_person_lookup_tool', 'Example tool to lookup a person.')]
+    final class MyTool
+    {
+        public function __invoke(Person $person): string
+        {
+            // do the lookup ...
+        }
+    }
+
+This replaces the need to manually define the schema using ``#[With(...)]``, though it's possible to use both if needed.
 
 .. note::
 
@@ -389,9 +416,14 @@ Tool Call Lifecycle Events
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you need to react more granularly to the lifecycle of individual tool calls, you can listen to the
+:class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallRequested`,
 :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallArgumentsResolved`,
 :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallSucceeded` and
 :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallFailed` events. These are dispatched at different stages::
+
+    $eventDispatcher->addListener(ToolCallRequested::class, function (ToolCallRequested $event): void {
+        // Intercept a tool call before execution, e.g. to deny it or set a custom result
+    });
 
     $eventDispatcher->addListener(ToolCallArgumentsResolved::class, function (ToolCallArgumentsResolved $event): void {
         // Let the client know, that the tool $event->toolCall->name was executed
@@ -404,6 +436,11 @@ If you need to react more granularly to the lifecycle of individual tool calls, 
     $eventDispatcher->addListener(ToolCallFailed::class, function (ToolCallFailed $event): void {
         // Let the client know, that the tool $event->toolCall->name failed with the exception: $event->exception
     });
+
+See the :doc:`/cookbook/human-in-the-loop` cookbook article for a complete guide on building a human-in-the-loop
+confirmation system using the ``ToolCallRequested`` event.
+
+* `Human-in-the-Loop Confirmation`_
 
 Excluding Tool Messages from MessageBag
 ---------------------------------------
@@ -462,10 +499,12 @@ more accurate and context-aware results. Therefore, the component provides a bui
     use Symfony\AI\Agent\Toolbox\Toolbox;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Store\Retriever;
 
     // Initialize Platform & Models
 
-    $similaritySearch = new SimilaritySearch($model, $store);
+    $retriever = new Retriever($store, $vectorizer);
+    $similaritySearch = new SimilaritySearch($retriever);
     $toolbox = new Toolbox([$similaritySearch]);
     $processor = new AgentProcessor($toolbox);
     $agent = new Agent($platform, $model, [$processor], [$processor]);
@@ -742,7 +781,7 @@ Code Examples
 .. _`Anthropic Toolbox Example`: https://github.com/symfony/ai/blob/main/examples/anthropic/toolcall.php
 .. _`Brave Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/brave.php
 .. _`Clock Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/clock.php
-.. _`Crawler Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/brave.php
+.. _`Crawler Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/firecrawl-crawl.php
 .. _`Mapbox Geocode Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/mapbox-geocode.php
 .. _`Mapbox Reverse Geocode Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/mapbox-reverse-geocode.php
 .. _`SerpAPI Tool`: https://github.com/symfony/ai/blob/main/examples/toolbox/serpapi.php
@@ -755,3 +794,4 @@ Code Examples
 .. _`RAG with Pinecone`: https://github.com/symfony/ai/blob/main/examples/rag/pinecone.php
 .. _`Chat with static memory`: https://github.com/symfony/ai/blob/main/examples/memory/static.php
 .. _`Chat with embedding search memory`: https://github.com/symfony/ai/blob/main/examples/memory/mariadb.php
+.. _`Human-in-the-Loop Confirmation`: https://github.com/symfony/ai/blob/main/examples/toolbox/confirmation.php

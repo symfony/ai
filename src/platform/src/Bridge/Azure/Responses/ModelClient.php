@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -54,6 +55,15 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
+            $schema = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema'];
+            $options['text']['format'] = $schema;
+            $options['text']['format']['name'] = $schema['name'];
+            $options['text']['format']['type'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['type'];
+
+            unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', $this->endpoint, [
             'headers' => [
                 'api-key' => $this->apiKey,

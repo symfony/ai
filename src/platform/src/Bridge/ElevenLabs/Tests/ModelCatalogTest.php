@@ -11,35 +11,189 @@
 
 namespace Symfony\AI\Platform\Bridge\ElevenLabs\Tests;
 
+use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabs;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog;
 use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
-use Symfony\AI\Platform\Test\ModelCatalogTestCase;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
-/**
- * @author Oskar Stark <oskarstark@googlemail.com>
- */
-final class ModelCatalogTest extends ModelCatalogTestCase
+final class ModelCatalogTest extends TestCase
 {
-    public static function modelsProvider(): iterable
+    public function testModelCatalogCannotReturnModelFromApiWhenNoModelAreReturned()
     {
-        yield 'eleven_v3' => ['eleven_v3', ElevenLabs::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
-        yield 'eleven_ttv_v3' => ['eleven_ttv_v3', ElevenLabs::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
-        yield 'eleven_multilingual_v2' => ['eleven_multilingual_v2', ElevenLabs::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
-        yield 'eleven_flash_v2_5' => ['eleven_flash_v2_5', ElevenLabs::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
-        yield 'eleven_flashv2' => ['eleven_flashv2', ElevenLabs::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
-        yield 'eleven_turbo_v2_5' => ['eleven_turbo_v2_5', ElevenLabs::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
-        yield 'eleven_turbo_v2' => ['eleven_turbo_v2', ElevenLabs::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
-        yield 'eleven_multilingual_sts_v2' => ['eleven_multilingual_sts_v2', ElevenLabs::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
-        yield 'eleven_multilingual_ttv_v2' => ['eleven_multilingual_ttv_v2', ElevenLabs::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
-        yield 'eleven_english_sts_v2' => ['eleven_english_sts_v2', ElevenLabs::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
-        yield 'scribe_v1' => ['scribe_v1', ElevenLabs::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT]];
-        yield 'scribe_v1_experimental' => ['scribe_v1_experimental', ElevenLabs::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT]];
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([]);
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No models found, please check the ElevenLabs API.');
+        $this->expectExceptionCode(0);
+        $modelCatalog->getModel('foo');
     }
 
-    protected function createModelCatalog(): ModelCatalogInterface
+    public function testModelCatalogCannotReturnModelFromApiWhenUndefined()
     {
-        return new ModelCatalog();
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([
+                [
+                    'model_id' => 'bar',
+                    'name' => 'bar',
+                    'can_do_text_to_speech' => true,
+                    'can_do_voice_conversion' => false,
+                ],
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The model "foo" cannot be retrieved from the API.');
+        $this->expectExceptionCode(0);
+        $modelCatalog->getModel('foo');
+    }
+
+    public function testModelCatalogCannotReturnUnsupportedModelFromApi()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([
+                [
+                    'model_id' => 'foo',
+                    'name' => 'foo',
+                    'can_do_text_to_speech' => false,
+                    'can_do_voice_conversion' => false,
+                ],
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The model "foo" is not supported, please check the ElevenLabs API.');
+        $this->expectExceptionCode(0);
+        $modelCatalog->getModel('foo');
+    }
+
+    public function testModelCatalogCanReturnSpecificTtsModelFromApi()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([
+                [
+                    'model_id' => 'foo',
+                    'name' => 'foo',
+                    'can_do_text_to_speech' => true,
+                    'can_do_voice_conversion' => false,
+                ],
+                [
+                    'model_id' => 'bar',
+                    'name' => 'bar',
+                    'can_do_text_to_speech' => false,
+                    'can_do_voice_conversion' => true,
+                ],
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $model = $modelCatalog->getModel('foo');
+
+        $this->assertSame('foo', $model->getName());
+        $this->assertSame([
+            Capability::TEXT_TO_SPEECH,
+            Capability::INPUT_TEXT,
+            Capability::OUTPUT_AUDIO,
+        ], $model->getCapabilities());
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testModelCatalogCanReturnSpecificSttModelFromApi()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([
+                [
+                    'model_id' => 'foo',
+                    'name' => 'foo',
+                    'can_do_text_to_speech' => false,
+                    'can_do_voice_conversion' => true,
+                ],
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $model = $modelCatalog->getModel('foo');
+
+        $this->assertSame('foo', $model->getName());
+        $this->assertSame([
+            Capability::SPEECH_TO_TEXT,
+            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_TEXT,
+        ], $model->getCapabilities());
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testModelCatalogCanReturnModelsFromApi()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/models', $url);
+
+            return new JsonMockResponse([
+                [
+                    'model_id' => 'foo',
+                    'name' => 'foo',
+                    'can_do_text_to_speech' => false,
+                    'can_do_voice_conversion' => true,
+                ],
+                [
+                    'model_id' => 'bar',
+                    'name' => 'bar',
+                    'can_do_text_to_speech' => true,
+                    'can_do_voice_conversion' => false,
+                ],
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $models = $modelCatalog->getModels();
+
+        $this->assertCount(2, $models);
+        $this->assertArrayHasKey('foo', $models);
+        $this->assertArrayHasKey('bar', $models);
+        $this->assertSame(ElevenLabs::class, $models['foo']['class']);
+        $this->assertCount(3, $models['foo']['capabilities']);
+        $this->assertSame([
+            Capability::SPEECH_TO_TEXT,
+            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_TEXT,
+        ], $models['foo']['capabilities']);
+        $this->assertSame(ElevenLabs::class, $models['bar']['class']);
+        $this->assertCount(3, $models['bar']['capabilities']);
+        $this->assertSame([
+            Capability::TEXT_TO_SPEECH,
+            Capability::INPUT_TEXT,
+            Capability::OUTPUT_AUDIO,
+        ], $models['bar']['capabilities']);
     }
 }

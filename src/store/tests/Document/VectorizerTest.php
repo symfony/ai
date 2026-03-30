@@ -125,8 +125,8 @@ final class VectorizerTest extends TestCase
         $this->assertCount(2, $vectorDocuments);
         $this->assertSame($metadata1, $vectorDocuments[0]->getMetadata());
         $this->assertSame($metadata2, $vectorDocuments[1]->getMetadata());
-        $this->assertSame(['source' => 'file1.txt', 'author' => 'Alice', 'tags' => ['important']], $vectorDocuments[0]->getMetadata()->getArrayCopy());
-        $this->assertSame(['source' => 'file2.txt', 'author' => 'Bob', 'version' => 2], $vectorDocuments[1]->getMetadata()->getArrayCopy());
+        $this->assertSame(['source' => 'file1.txt', 'author' => 'Alice', 'tags' => ['important'], '_text' => 'Content 1'], $vectorDocuments[0]->getMetadata()->getArrayCopy());
+        $this->assertSame(['source' => 'file2.txt', 'author' => 'Bob', 'version' => 2, '_text' => 'Content 2'], $vectorDocuments[1]->getMetadata()->getArrayCopy());
     }
 
     public function testVectorizeDocumentsPreservesDocumentIds()
@@ -185,7 +185,7 @@ final class VectorizerTest extends TestCase
             $this->assertSame($documents[$i]->getId(), $vectorDoc->getId());
             $this->assertEquals($vectors[$i], $vectorDoc->getVector());
             $this->assertSame($documents[$i]->getMetadata(), $vectorDoc->getMetadata());
-            $this->assertSame(['index' => $i], $vectorDoc->getMetadata()->getArrayCopy());
+            $this->assertSame(['index' => $i, '_text' => \sprintf('Document %d content', $i)], $vectorDoc->getMetadata()->getArrayCopy());
         }
     }
 

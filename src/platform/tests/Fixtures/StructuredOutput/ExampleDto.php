@@ -19,6 +19,7 @@ class ExampleDto
         public string $name,
         #[With(enum: [7, 19])] public int $taxRate,
         #[With(enum: ['Foo', 'Bar', null])] public ?string $category,
+        #[With(description: 'The quantity of the ingredient', example: '2 cups')] public ?string $quantity = null,
     ) {
     }
 }

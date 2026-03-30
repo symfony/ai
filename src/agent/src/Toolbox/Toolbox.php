@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallFailed;
+use Symfony\AI\Agent\Toolbox\Event\ToolCallRequested;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallSucceeded;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
@@ -39,6 +40,13 @@ final class Toolbox implements ToolboxInterface
     private array $toolsMetadata;
 
     /**
+     * Maps tool name to the specific object instance that was registered for it.
+     *
+     * @var array<string, object>
+     */
+    private array $instanceMap = [];
+
+    /**
      * @param iterable<object> $tools
      */
     public function __construct(
@@ -58,7 +66,8 @@ final class Toolbox implements ToolboxInterface
 
         $toolsMetadata = [];
         foreach ($this->tools as $tool) {
-            foreach ($this->toolFactory->getTool($tool::class) as $metadata) {
+            foreach ($this->toolFactory->getTool($tool) as $metadata) {
+                $this->instanceMap[$metadata->getName()] = $tool;
                 $toolsMetadata[] = $metadata;
             }
         }
@@ -69,6 +78,20 @@ final class Toolbox implements ToolboxInterface
     public function execute(ToolCall $toolCall): ToolResult
     {
         $metadata = $this->getMetadata($toolCall);
+
+        $event = new ToolCallRequested($toolCall, $metadata);
+        $this->eventDispatcher?->dispatch($event);
+
+        if ($event->isDenied()) {
+            $this->logger->debug(\sprintf('Tool "%s" denied: %s', $toolCall->getName(), $event->getDenialReason()));
+
+            return new ToolResult($toolCall, $event->getDenialReason() ?? 'Tool execution denied.');
+        }
+
+        if ($event->hasResult()) {
+            return $event->getResult();
+        }
+
         $tool = $this->getExecutable($metadata);
 
         try {
@@ -113,6 +136,10 @@ final class Toolbox implements ToolboxInterface
 
     private function getExecutable(Tool $metadata): object
     {
+        if (isset($this->instanceMap[$metadata->getName()])) {
+            return $this->instanceMap[$metadata->getName()];
+        }
+
         $className = $metadata->getReference()->getClass();
         foreach ($this->tools as $tool) {
             if ($tool instanceof $className) {

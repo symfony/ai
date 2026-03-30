@@ -68,7 +68,7 @@ use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory as HuggingFacePlatformFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory as LmStudioPlatformFactory;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory as MistralPlatformFactory;
-use Symfony\AI\Platform\Bridge\Ollama\OllamaApiCatalog;
+use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
@@ -81,12 +81,12 @@ use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory as VoyagePlatformFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\File;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureSearchStore;
+use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
@@ -107,6 +107,7 @@ use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
+use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
@@ -136,10 +137,10 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -352,7 +353,6 @@ final class AiBundle extends AbstractBundle
         if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.command.chat');
             $builder->removeDefinition('ai.toolbox.abstract');
-            $builder->removeDefinition('ai.tool_factory.abstract');
             $builder->removeDefinition('ai.tool_factory');
             $builder->removeDefinition('ai.tool_result_converter');
             $builder->removeDefinition('ai.tool_call_argument_resolver');
@@ -370,6 +370,10 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.chat.message_bag.normalizer');
             $builder->removeDefinition('ai.command.setup_message_store');
             $builder->removeDefinition('ai.command.drop_message_store');
+        }
+
+        if (!ContainerBuilder::willBeAvailable('symfony/validator', ValidatorInterface::class, ['symfony/ai-bundle'])) {
+            $builder->removeDefinition('ai.platform.json_schema.describer.validator');
         }
     }
 
@@ -572,8 +576,6 @@ final class AiBundle extends AbstractBundle
                     $platform['endpoint'],
                     $platform['api_key'] ?? null,
                     new Reference($platform['http_client']),
-                    $platform['api_catalog'] ?? false,
-                    new Reference('ai.platform.model_catalog.'.$type),
                     new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),
                 ])
@@ -848,47 +850,13 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Ollama platform configuration requires "symfony/ai-ollama-platform" package. Try running "composer require symfony/ai-ollama-platform".');
             }
 
-            $httpClientReference = new Reference($platform['http_client']);
-
-            if (null !== $platform['endpoint']) {
-                $defaultOptions = [];
-                if (null !== ($platform['api_key'] ?? null)) {
-                    $defaultOptions['auth_bearer'] = $platform['api_key'];
-                }
-
-                $scopedClientDefinition = (new Definition(ScopingHttpClient::class))
-                    ->setFactory([ScopingHttpClient::class, 'forBaseUri'])
-                    ->setArguments([
-                        $httpClientReference,
-                        $platform['endpoint'],
-                        $defaultOptions,
-                    ]);
-
-                $container->setDefinition('ai.platform.ollama.scoped_http_client', $scopedClientDefinition);
-
-                $httpClientReference = new Reference('ai.platform.ollama.scoped_http_client');
-            }
-
-            if (\array_key_exists('api_catalog', $platform)) {
-                $catalogDefinition = (new Definition(OllamaApiCatalog::class))
-                    ->setLazy(true)
-                    ->setArguments([
-                        $httpClientReference,
-                    ])
-                    ->addTag('proxy', ['interface' => ModelCatalogInterface::class])
-                ;
-
-                $container->setDefinition('ai.platform.model_catalog.ollama', $catalogDefinition);
-            }
-
             $definition = (new Definition(Platform::class))
                 ->setFactory(OllamaPlatformFactory::class.'::create')
                 ->setLazy(true)
                 ->setArguments([
-                    $platform['endpoint'],
+                    $platform['endpoint'] ?? null,
                     $platform['api_key'] ?? null,
-                    $httpClientReference,
-                    new Reference('ai.platform.model_catalog.ollama'),
+                    new Reference($platform['http_client']),
                     new Reference('ai.platform.contract.ollama'),
                     new Reference('event_dispatcher'),
                 ])
@@ -1107,8 +1075,9 @@ final class AiBundle extends AbstractBundle
         // TOOLBOX
         if ($config['tools']['enabled']) {
             // Setup toolbox for agent
-            $memoryFactoryDefinition = new ChildDefinition('ai.tool_factory.abstract');
-            $memoryFactoryDefinition->setClass(MemoryToolFactory::class);
+            $memoryFactoryDefinition = new Definition(MemoryToolFactory::class, [
+                new Reference('ai.platform.json_schema_factory'),
+            ]);
             $container->setDefinition('ai.toolbox.'.$name.'.memory_factory', $memoryFactoryDefinition);
             $chainFactoryDefinition = new Definition(ChainFactory::class, [
                 [new Reference('ai.toolbox.'.$name.'.memory_factory'), new Reference('ai.tool_factory')],
@@ -1256,22 +1225,17 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    new Reference('http_client'),
-                    $store['endpoint'],
-                    $store['api_key'],
-                    $store['index_name'],
-                    $store['api_version'],
-                ];
-
-                if (\array_key_exists('vector_field', $store)) {
-                    $arguments[5] = $store['vector_field'];
-                }
-
-                $definition = new Definition(AzureSearchStore::class);
-                $definition
+                $definition = (new Definition(AzureSearchStore::class))
+                    ->setFactory(AzureSearchStoreFactory::class.'::create')
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        $store['index_name'] ?? $name,
+                        $store['vector_field'],
+                        $store['endpoint'] ?? null,
+                        $store['api_key'] ?? null,
+                        $store['api_version'] ?? null,
+                        new Reference($store['http_client']),
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('ai.store');
 
@@ -1857,6 +1821,54 @@ final class AiBundle extends AbstractBundle
             }
         }
 
+        if ('sqlite' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-sqlite-store', SqliteStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('SQLite store configuration requires "symfony/ai-sqlite-store" package. Try running "composer require symfony/ai-sqlite-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
+                $distanceCalculatorDefinition->setLazy(true);
+
+                $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
+
+                if (\array_key_exists('strategy', $store) && null !== $store['strategy']) {
+                    $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
+                }
+
+                $definition = new Definition(SqliteStore::class);
+
+                if (\array_key_exists('connection', $store) && null !== $store['connection']) {
+                    $definition->setFactory([SqliteStore::class, 'fromDbal'])
+                        ->setArguments([
+                            new Reference(\sprintf('doctrine.dbal.%s_connection', $store['connection'])),
+                            $store['table_name'] ?? $name,
+                            new Reference('ai.store.distance_calculator.'.$name),
+                        ]);
+                } else {
+                    $pdoDefinition = new Definition(\PDO::class, [$store['dsn']]);
+                    $pdoDefinition->addMethodCall('setAttribute', [\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION]);
+                    $container->setDefinition('ai.store.sqlite.pdo.'.$name, $pdoDefinition);
+
+                    $definition->setArguments([
+                        new Reference('ai.store.sqlite.pdo.'.$name),
+                        $store['table_name'] ?? $name,
+                        new Reference('ai.store.distance_calculator.'.$name),
+                    ]);
+                }
+
+                $definition
+                    ->setLazy(true)
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
         if ('supabase' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-supabase-store', SupabaseStore::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('Supabase store configuration requires "symfony/ai-supabase-store" package. Try running "composer require symfony/ai-supabase-store".');
@@ -2382,6 +2394,7 @@ final class AiBundle extends AbstractBundle
         $definition = new Definition(Retriever::class, [
             new Reference($config['store']),
             new Reference($config['vectorizer']),
+            new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE),
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]);
         $definition->addTag('ai.retriever', ['name' => $name]);

@@ -11,13 +11,12 @@
 
 namespace Symfony\AI\Platform\Bridge\ElevenLabs;
 
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\ScopingHttpClient;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -29,8 +28,6 @@ final class PlatformFactory
         string $endpoint = 'https://api.elevenlabs.io/v1/',
         #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
-        bool $apiCatalog = false,
-        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
@@ -47,7 +44,7 @@ final class PlatformFactory
         return new Platform(
             [new ElevenLabsClient($httpClient)],
             [new ElevenLabsResultConverter($httpClient)],
-            $apiCatalog ? new ElevenLabsApiCatalog($httpClient) : $modelCatalog,
+            new ModelCatalog($httpClient),
             $contract ?? ElevenLabsContract::create(),
             $eventDispatcher,
         );

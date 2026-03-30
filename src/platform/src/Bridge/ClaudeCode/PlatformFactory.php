@@ -11,13 +11,13 @@
 
 namespace Symfony\AI\Platform\Bridge\ClaudeCode;
 
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Bridge\ClaudeCode\Contract\ClaudeCodeContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>

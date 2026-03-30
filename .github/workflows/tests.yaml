@@ -1,10 +1,6 @@
 name: Tests
 
 on:
-    push:
-        paths-ignore:
-            - 'src/*/doc/**'
-            - 'src/**/*.md'
     pull_request:
         paths-ignore:
             - 'src/*/doc/**'
