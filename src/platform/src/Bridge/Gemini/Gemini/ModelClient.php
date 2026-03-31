@@ -55,7 +55,14 @@ final class ModelClient implements ModelClientInterface
             $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent',
         );
 
-        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
+        $hasJsonResponseFormat = isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema']);
+        $hasTools = isset($options['tools']) && [] !== $options['tools'];
+
+        if ($hasJsonResponseFormat && $hasTools) {
+            throw new InvalidArgumentException('The Gemini API does not support function calling with JSON response format. Please use one or the other, but not both. See https://ai.google.dev/gemini-api/docs/structured-output for more information.');
+        }
+
+        if ($hasJsonResponseFormat) {
             $options['responseMimeType'] = 'application/json';
             $options['responseJsonSchema'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'];
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);

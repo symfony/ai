@@ -38,9 +38,9 @@ final class Message
     /**
      * @param ?ToolCall[] $toolCalls
      */
-    public static function ofAssistant(?string $content = null, ?array $toolCalls = null): AssistantMessage
+    public static function ofAssistant(?string $content = null, ?array $toolCalls = null, ?string $thinkingContent = null, ?string $thinkingSignature = null): AssistantMessage
     {
-        return new AssistantMessage($content, $toolCalls);
+        return new AssistantMessage($content, $toolCalls, $thinkingContent, $thinkingSignature);
     }
 
     public static function ofUser(\Stringable|string|ContentInterface ...$content): UserMessage

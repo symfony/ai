@@ -24,28 +24,47 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
     /**
      * @param AssistantMessage $data
      *
-     * @return array{array{text: string}}
+     * @return list<array<string, mixed>>
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        $normalized = [];
+        $parts = [];
+
+        // Add thoughtSignature as first part if present (required for Gemini 3+ thinking models)
+        if (null !== $data->getThinkingSignature()) {
+            $thinkingPart = ['thoughtSignature' => $data->getThinkingSignature()];
+            if (null !== $data->getThinkingContent()) {
+                $thinkingPart['thought'] = true;
+                $thinkingPart['text'] = $data->getThinkingContent();
+            }
+            $parts[] = $thinkingPart;
+        }
 
         if (null !== $data->getContent()) {
-            $normalized['text'] = $data->getContent();
+            $parts[] = ['text' => $data->getContent()];
         }
 
         if ($data->hasToolCalls()) {
-            $normalized['functionCall'] = [
-                'id' => $data->getToolCalls()[0]->getId(),
-                'name' => $data->getToolCalls()[0]->getName(),
-            ];
+            foreach ($data->getToolCalls() as $toolCall) {
+                $functionCall = [
+                    'id' => $toolCall->getId(),
+                    'name' => $toolCall->getName(),
+                ];
 
-            if ($data->getToolCalls()[0]->getArguments()) {
-                $normalized['functionCall']['args'] = $data->getToolCalls()[0]->getArguments();
+                if ([] !== $toolCall->getArguments()) {
+                    $functionCall['args'] = $toolCall->getArguments();
+                }
+
+                $parts[] = ['functionCall' => $functionCall];
             }
         }
 
-        return [$normalized];
+        // If no parts were added, return empty text part
+        if ([] === $parts) {
+            return [['text' => '']];
+        }
+
+        return $parts;
     }
 
     protected function supportedDataClass(): string

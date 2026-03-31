@@ -101,6 +101,8 @@ final class ResultConverter implements ResultConverterInterface
      *                 args: mixed[]
      *             },
      *             text?: string,
+     *             thought?: bool,
+     *             thoughtSignature?: string,
      *             executableCode?: array{
      *                 language?: string,
      *                 code?: string
@@ -121,10 +123,30 @@ final class ResultConverter implements ResultConverterInterface
 
         $contentParts = $choice['content']['parts'];
 
-        // If any part is a function call, return it immediately and ignore all other parts.
+        // Extract thoughtSignature if present (for Gemini 3+ thinking models)
+        $thoughtSignature = null;
+        $thinkingContent = null;
+        foreach ($contentParts as $contentPart) {
+            if (isset($contentPart['thoughtSignature'])) {
+                $thoughtSignature = $contentPart['thoughtSignature'];
+            }
+            if (isset($contentPart['thought']) && true === $contentPart['thought'] && isset($contentPart['text'])) {
+                $thinkingContent = $contentPart['text'];
+            }
+        }
+
+        // If any part is a function call, return it with thoughtSignature metadata.
         foreach ($contentParts as $contentPart) {
             if (isset($contentPart['functionCall'])) {
-                return new ToolCallResult($this->convertToolCall($contentPart['functionCall']));
+                $result = new ToolCallResult($this->convertToolCall($contentPart['functionCall']));
+                if (null !== $thoughtSignature) {
+                    $result->getMetadata()->add('thinkingSignature', $thoughtSignature);
+                }
+                if (null !== $thinkingContent) {
+                    $result->getMetadata()->add('thinkingContent', $thinkingContent);
+                }
+
+                return $result;
             }
         }
 

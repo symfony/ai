@@ -52,7 +52,7 @@ final class AssistantMessageNormalizerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{AssistantMessage, array{text?: string, functionCall?: array{id: string, name: string, args?: mixed}}[]}>
+     * @return iterable<string, array{AssistantMessage, list<array<string, mixed>>}>
      */
     public static function normalizeDataProvider(): iterable
     {
@@ -67,6 +67,41 @@ final class AssistantMessageNormalizerTest extends TestCase
         yield 'function call without parameters' => [
             new AssistantMessage(toolCalls: [new ToolCall('id1', 'name1')]),
             [['functionCall' => ['id' => 'id1', 'name' => 'name1']]],
+        ];
+        yield 'function call with thought signature' => [
+            new AssistantMessage(
+                toolCalls: [new ToolCall('id1', 'get_weather', ['city' => 'Paris'])],
+                thinkingContent: 'Let me check the weather for Paris.',
+                thinkingSignature: 'sig-abc123',
+            ),
+            [
+                ['thoughtSignature' => 'sig-abc123', 'thought' => true, 'text' => 'Let me check the weather for Paris.'],
+                ['functionCall' => ['id' => 'id1', 'name' => 'get_weather', 'args' => ['city' => 'Paris']]],
+            ],
+        ];
+        yield 'function call with thought signature only (no thinking content)' => [
+            new AssistantMessage(
+                toolCalls: [new ToolCall('id1', 'search', ['query' => 'test'])],
+                thinkingSignature: 'sig-xyz789',
+            ),
+            [
+                ['thoughtSignature' => 'sig-xyz789'],
+                ['functionCall' => ['id' => 'id1', 'name' => 'search', 'args' => ['query' => 'test']]],
+            ],
+        ];
+        yield 'multiple function calls' => [
+            new AssistantMessage(toolCalls: [
+                new ToolCall('id1', 'get_weather', ['city' => 'Paris']),
+                new ToolCall('id2', 'get_weather', ['city' => 'London']),
+            ]),
+            [
+                ['functionCall' => ['id' => 'id1', 'name' => 'get_weather', 'args' => ['city' => 'Paris']]],
+                ['functionCall' => ['id' => 'id2', 'name' => 'get_weather', 'args' => ['city' => 'London']]],
+            ],
+        ];
+        yield 'empty message' => [
+            new AssistantMessage(),
+            [['text' => '']],
         ];
     }
 }
