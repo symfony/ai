@@ -169,7 +169,9 @@ Session Storage
 
 The MCP Bundle supports three types of session storage for the HTTP transport:
 
-**File Storage** (default) - Stores sessions on the filesystem::
+**File Storage** (default) - Stores sessions on the filesystem:
+
+.. code-block:: yaml
 
     mcp:
         http:
@@ -178,7 +180,9 @@ The MCP Bundle supports three types of session storage for the HTTP transport:
                 directory: '%kernel.cache_dir%/mcp-sessions'
                 ttl: 3600
 
-**Memory Storage** - Stores sessions in memory (non-persistent)::
+**Memory Storage** - Stores sessions in memory (non-persistent):
+
+.. code-block:: yaml
 
     mcp:
         http:
@@ -186,7 +190,9 @@ The MCP Bundle supports three types of session storage for the HTTP transport:
                 store: memory
                 ttl: 3600
 
-**PSR-16 Cache Storage** - Stores sessions in any PSR-16 compliant cache (Redis, Doctrine, APCu, etc.)::
+**PSR-16 Cache Storage** - Stores sessions in any PSR-16 compliant cache (Redis, Doctrine, APCu, etc.):
+
+.. code-block:: yaml
 
     mcp:
         http:
@@ -205,7 +211,7 @@ To use a custom cache backend, you need to configure a PSR-16 cache service in y
     Symfony cache pools are PSR-6 by default. The MCP session store requires PSR-16.
     Use ``Symfony\Component\Cache\Psr16Cache`` to wrap a PSR-6 pool into PSR-16.
 
-::
+.. code-block:: yaml
 
     # config/services.yaml
     services:
