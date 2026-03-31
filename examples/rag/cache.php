@@ -17,7 +17,7 @@ use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
+use Symfony\AI\Store\Bridge\Cache\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -30,7 +30,7 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = new CacheStore(new ArrayAdapter());
+$store = StoreFactory::create(new ArrayAdapter(), 'movies');
 
 // create embeddings and documents
 $documents = [];

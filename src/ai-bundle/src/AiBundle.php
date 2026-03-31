@@ -93,6 +93,7 @@ use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
+use Symfony\AI\Store\Bridge\Cache\StoreFactory as CacheStoreFactory;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
@@ -1319,23 +1320,13 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $distanceCalculatorDefinition = new Definition(DistanceCalculator::class);
-                $distanceCalculatorDefinition->setLazy(true);
-
-                $container->setDefinition('ai.store.distance_calculator.'.$name, $distanceCalculatorDefinition);
-
-                if (\array_key_exists('strategy', $store) && null !== $store['strategy']) {
-                    $distanceCalculatorDefinition = $container->getDefinition('ai.store.distance_calculator.'.$name);
-                    $distanceCalculatorDefinition->setArgument(0, DistanceStrategy::from($store['strategy']));
-                }
-
-                $definition = new Definition(CacheStore::class);
-                $definition
+                $definition = (new Definition(CacheStore::class))
+                    ->setFactory(CacheStoreFactory::class.'::create')
                     ->setLazy(true)
                     ->setArguments([
                         new Reference($store['service']),
-                        new Reference('ai.store.distance_calculator.'.$name),
                         $store['cache_key'] ?? $name,
+                        $store['strategy'],
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])

@@ -19,7 +19,9 @@ use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\HybridQuery;
+use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -178,7 +180,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'filter' => static fn (VectorDocument $doc) => 'products' === $doc->getMetadata()['category'],
+            'filter' => static fn (VectorDocument $doc): bool => 'products' === $doc->getMetadata()['category'],
         ]));
 
         $this->assertCount(2, $result);
@@ -197,7 +199,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'filter' => static fn (VectorDocument $doc) => 'products' === $doc->getMetadata()['category'],
+            'filter' => static fn (VectorDocument $doc): bool => 'products' === $doc->getMetadata()['category'],
             'maxItems' => 2,
         ]));
 
@@ -216,7 +218,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'filter' => static fn (VectorDocument $doc) => $doc->getMetadata()['price'] <= 150 && $doc->getMetadata()['stock'] > 0,
+            'filter' => static fn (VectorDocument $doc): bool => $doc->getMetadata()['price'] <= 150 && $doc->getMetadata()['stock'] > 0,
         ]));
 
         $this->assertCount(2, $result);
@@ -232,7 +234,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'filter' => static fn (VectorDocument $doc) => 'S' === $doc->getMetadata()['options']['size'],
+            'filter' => static fn (VectorDocument $doc): bool => 'S' === $doc->getMetadata()['options']['size'],
         ]));
 
         $this->assertCount(2, $result);
@@ -251,7 +253,7 @@ final class StoreTest extends TestCase
 
         $allowedBrands = ['Nike', 'Adidas', 'Puma'];
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'filter' => static fn (VectorDocument $doc) => \in_array($doc->getMetadata()['brand'] ?? '', $allowedBrands, true),
+            'filter' => static fn (VectorDocument $doc): bool => \in_array($doc->getMetadata()['brand'] ?? '', $allowedBrands, true),
         ]));
 
         $this->assertCount(2, $result);
@@ -394,6 +396,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new TextQuery('quick brown')));
 
         $this->assertCount(1, $result);
+        $this->assertNotNull($result[0]->getMetadata()->getText());
         $this->assertStringContainsString('quick brown', $result[0]->getMetadata()->getText());
     }
 
@@ -458,7 +461,7 @@ final class StoreTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Semantic ratio must be between 0.0 and 1.0');
-
+        $this->expectExceptionCode(0);
         new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test', 1.5);
     }
 
@@ -467,12 +470,12 @@ final class StoreTest extends TestCase
         $store = new Store(new ArrayAdapter());
 
         // Create a mock query type that Cache store doesn't support
-        $unsupportedQuery = new class implements \Symfony\AI\Store\Query\QueryInterface {
+        $unsupportedQuery = new class implements QueryInterface {
         };
 
-        $this->expectException(\Symfony\AI\Store\Exception\UnsupportedQueryTypeException::class);
+        $this->expectException(UnsupportedQueryTypeException::class);
         $this->expectExceptionMessageMatches('/not supported/');
-
+        $this->expectExceptionCode(0);
         $store->query($unsupportedQuery);
     }
 

@@ -91,11 +91,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
+        if (!\is_array($existingVectors)) {
+            throw new InvalidArgumentException('Existing vectors must be an array.');
+        }
+
         if (\is_string($ids)) {
             $ids = [$ids];
         }
 
-        $filteredVectors = array_filter($existingVectors, static fn (array $document) => !\in_array($document['id'], $ids, true));
+        $filteredVectors = array_filter(
+            $existingVectors,
+            static fn (array $document): bool => !\in_array($document['id'], $ids, true),
+        );
 
         $cacheItem->set(array_values($filteredVectors));
         $this->cache->save($cacheItem);
@@ -187,7 +194,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $vectorDocuments = array_values(array_filter($vectorDocuments, $options['filter']));
         }
 
-        $filteredDocuments = array_filter($vectorDocuments, static function (VectorDocument $doc) use ($query) {
+        $filteredDocuments = array_filter($vectorDocuments, static function (VectorDocument $doc) use ($query): bool {
             $text = strtolower($doc->getMetadata()->getText() ?? '');
 
             foreach ($query->getTexts() as $searchText) {
