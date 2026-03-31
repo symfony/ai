@@ -26,12 +26,18 @@
         "symfony/routing": "^7.3|^8.0",
         "symfony/service-contracts": "^2.5|^3"
     },
+    "suggest": {
+        "symfony/security-core": "For tool authorization via #[IsGranted] attributes",
+        "symfony/security-http": "For tool authorization via #[IsGranted] attributes"
+    },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
-        "symfony/monolog-bundle": "^3.10 || ^4.0"
+        "symfony/monolog-bundle": "^3.10 || ^4.0",
+        "symfony/security-core": "^7.3 || ^8.0",
+        "symfony/security-http": "^7.3 || ^8.0"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
