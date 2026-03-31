@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use HelgeSverre\Toon\Toon;
+use Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -38,6 +40,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand('mcp:tools:inspect', 'Display detailed information about a specific MCP tool')]
 class ToolsInspectCommand extends Command
 {
+    use EnsuresToonFormatAvailabilityTrait;
+
     /**
      * @var array<string, array{dirs: string[], includes: string[]}>
      */
@@ -68,8 +72,9 @@ class ToolsInspectCommand extends Command
     {
         $this
             ->addArgument('tool-name', InputArgument::REQUIRED, 'Name of the tool to inspect')
-            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json)', 'text')
-            ->setHelp(<<<'HELP'
+            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json, toon)', 'text')
+            ->setHelp(
+                <<<'HELP'
 The <info>%command.name%</info> command displays detailed information about a specific MCP tool including its full JSON schema.
 
 <info>Usage Examples:</info>
@@ -96,6 +101,13 @@ HELP
         $toolName = $input->getArgument('tool-name');
         \assert(\is_string($toolName));
 
+        $format = $input->getOption('format');
+        \assert(\is_string($format));
+
+        if (!$this->ensureToonFormatAvailable($io, $format)) {
+            return Command::FAILURE;
+        }
+
         $allTools = [];
         foreach ($this->extensions as $extensionName => $extension) {
             $capabilities = $this->collector->collectCapabilities($extensionName, $extension);
@@ -113,11 +125,14 @@ HELP
 
         $toolData = $allTools[$toolName];
 
-        $format = $input->getOption('format');
-        \assert(\is_string($format));
-
         if ('json' === $format) {
             $this->outputJson($toolData, $output);
+
+            return Command::SUCCESS;
+        }
+
+        if ('toon' === $format) {
+            $output->writeln(Toon::encode($toolData));
 
             return Command::SUCCESS;
         }

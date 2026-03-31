@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Tests\Command;
 
+use HelgeSverre\Toon\Toon;
 use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -95,6 +96,33 @@ final class DebugCapabilitiesCommandTest extends TestCase
         $this->assertArrayHasKey('resources', $json['summary']);
         $this->assertArrayHasKey('prompts', $json['summary']);
         $this->assertArrayHasKey('resource_templates', $json['summary']);
+    }
+
+    public function testExecuteWithToonFormat()
+    {
+        $rootDir = $this->fixturesDir.'/with-ai-mate-config';
+        $extensions = [
+            'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
+            '_custom' => ['dirs' => [], 'includes' => []],
+        ];
+
+        $command = $this->createCommand($rootDir, $extensions);
+        $tester = new CommandTester($command);
+
+        $tester->execute(['--format' => 'toon']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+
+        $toon = Toon::decode($output);
+        $this->assertIsArray($toon);
+        $this->assertArrayHasKey('extensions', $toon);
+        $this->assertArrayHasKey('summary', $toon);
+        $this->assertArrayHasKey('extensions', $toon['summary']);
+        $this->assertArrayHasKey('tools', $toon['summary']);
+        $this->assertArrayHasKey('resources', $toon['summary']);
+        $this->assertArrayHasKey('prompts', $toon['summary']);
+        $this->assertArrayHasKey('resource_templates', $toon['summary']);
     }
 
     public function testExecuteWithExtensionFilter()
@@ -224,6 +252,11 @@ final class DebugCapabilitiesCommandTest extends TestCase
         $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
         $collector = new CapabilityCollector($loader);
 
-        return new DebugCapabilitiesCommand($extensions, $collector);
+        return new class($extensions, $collector) extends DebugCapabilitiesCommand {
+            protected function isToonFormatAvailable(): bool
+            {
+                return true;
+            }
+        };
     }
 }

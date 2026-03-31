@@ -4,6 +4,7 @@ CHANGELOG
 0.7
 ---
 
+ * Add TOON format (requires `helgesverre/toon`) to `mcp:tools:list`, `mcp:tools:inspect`, `mcp:tools:call`, `debug:capabilities`, `debug:extensions` to allow token efficient usage in CLI
  * Add raw data fallback for profiler collectors without a registered formatter
  * Add Codex wrapper generation (`bin/codex`, `bin/codex.bat`) to `mate init`
  * Add AGENT instruction artifact materialization to `mate discover` (`mate/AGENT_INSTRUCTIONS.md` and managed `AGENTS.md` block)
