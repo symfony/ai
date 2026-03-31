@@ -172,6 +172,7 @@ final class McpBundle extends AbstractBundle
             ->setArguments([
                 $transports['http'],
                 $httpConfig['path'],
+                $httpConfig['routes'],
             ])
             ->addTag('routing.loader');
     }

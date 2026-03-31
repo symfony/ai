@@ -304,6 +304,7 @@ class McpBundleTest extends TestCase
         $arguments = $routeLoaderDefinition->getArguments();
         $this->assertTrue($arguments[0]); // HTTP transport enabled
         $this->assertSame('/_mcp', $arguments[1]); // Default path
+        $this->assertSame([], $arguments[2]); // No additional routes by default
 
         // Test session store defaults (file store)
         $this->assertTrue($container->hasDefinition('mcp.session.store'));
@@ -312,6 +313,30 @@ class McpBundleTest extends TestCase
         $sessionArguments = $sessionStoreDefinition->getArguments();
         $this->assertSame('%kernel.cache_dir%/mcp-sessions', $sessionArguments[0]); // Default directory
         $this->assertSame(3600, $sessionArguments[1]); // Default TTL
+    }
+
+    public function testAdditionalRoutesConfiguration()
+    {
+        $routes = [
+            '/.well-known/oauth-protected-resource',
+            '/authorize',
+            '/token',
+        ];
+
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'routes' => $routes,
+                ],
+            ],
+        ]);
+
+        $routeLoaderDefinition = $container->getDefinition('mcp.server.route_loader');
+        $arguments = $routeLoaderDefinition->getArguments();
+        $this->assertSame($routes, $arguments[2]);
     }
 
     public function testHttpConfigurationCustom()
