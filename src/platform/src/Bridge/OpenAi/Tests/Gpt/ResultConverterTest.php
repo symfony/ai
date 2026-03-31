@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -278,6 +279,129 @@ class ResultConverterTest extends TestCase
         $this->assertSame(2, $chunks[2]->getThinkingTokens());
         $this->assertSame(3, $chunks[2]->getCachedTokens());
         $this->assertSame(18, $chunks[2]->getTotalTokens());
+    }
+
+    public function testStreamReasoningSummaryViaDeltaEvents()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            [
+                'type' => 'response.reasoning_summary_text.delta',
+                'delta' => 'First reasoning chunk',
+            ],
+            [
+                'type' => 'response.reasoning_summary_text.delta',
+                'delta' => ' and more reasoning',
+            ],
+            [
+                'type' => 'message.delta.output_text.delta',
+                'delta' => 'Hello',
+            ],
+            [
+                'type' => 'response.completed',
+                'response' => [
+                    'output' => [],
+                ],
+            ],
+        ];
+
+        $raw = new InMemoryRawResult([], $events, $httpResponse);
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $streamResult);
+
+        $chunks = iterator_to_array($streamResult->getContent(), false);
+
+        $this->assertInstanceOf(ThinkingDelta::class, $chunks[0]);
+        $this->assertSame('First reasoning chunk', $chunks[0]->getThinking());
+        $this->assertInstanceOf(ThinkingDelta::class, $chunks[1]);
+        $this->assertSame(' and more reasoning', $chunks[1]->getThinking());
+        $this->assertInstanceOf(TextDelta::class, $chunks[2]);
+        $this->assertSame('Hello', $chunks[2]->getText());
+    }
+
+    public function testStreamReasoningFallbackFromCompletedOutput()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            [
+                'type' => 'message.delta.output_text.delta',
+                'delta' => 'Result text',
+            ],
+            [
+                'type' => 'response.completed',
+                'response' => [
+                    'output' => [
+                        [
+                            'type' => 'reasoning',
+                            'id' => 'rs_abc123',
+                            'summary' => ['text' => 'The model thought carefully about this.'],
+                        ],
+                        [
+                            'type' => 'message',
+                            'role' => 'assistant',
+                            'content' => [['type' => 'output_text', 'text' => 'Result text']],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $raw = new InMemoryRawResult([], $events, $httpResponse);
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $streamResult);
+
+        $chunks = iterator_to_array($streamResult->getContent(), false);
+
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Result text', $chunks[0]->getText());
+        $this->assertInstanceOf(ThinkingDelta::class, $chunks[1]);
+        $this->assertSame('The model thought carefully about this.', $chunks[1]->getThinking());
+    }
+
+    public function testStreamFallbackReasoningSkippedWhenDeltasAlreadyEmitted()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            [
+                'type' => 'response.reasoning_summary_text.delta',
+                'delta' => 'Streamed reasoning',
+            ],
+            [
+                'type' => 'response.completed',
+                'response' => [
+                    'output' => [
+                        [
+                            'type' => 'reasoning',
+                            'id' => 'rs_abc123',
+                            'summary' => ['text' => 'Full reasoning summary'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $raw = new InMemoryRawResult([], $events, $httpResponse);
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $chunks = iterator_to_array($streamResult->getContent(), false);
+
+        $thinkingChunks = array_filter($chunks, static fn ($c) => $c instanceof ThinkingDelta);
+        $this->assertCount(1, $thinkingChunks);
+        $this->assertSame('Streamed reasoning', array_values($thinkingChunks)[0]->getThinking());
     }
 
     public function testStreamYieldsToolCallComplete()

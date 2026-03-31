@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -134,6 +135,8 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
+        $checkReasoningWhenComplete = true;
+
         foreach ($result->getDataStream() as $event) {
             $type = $event['type'] ?? '';
 
@@ -149,16 +152,82 @@ final class ResultConverter implements ResultConverterInterface
                 yield new TextDelta($event['delta']);
             }
 
+            $reasoningDelta = $this->extractReasoningDelta($event, $type);
+            if (null !== $reasoningDelta) {
+                // used to prevent duplicate reasoning output when the stream is complete
+                $checkReasoningWhenComplete = false;
+                yield new ThinkingDelta($reasoningDelta);
+            }
+
             if (!str_contains($type, 'completed')) {
                 continue;
             }
 
-            [$toolCallResult] = $this->extractFunctionCalls($event['response'][self::KEY_OUTPUT] ?? []);
+            $output = $event['response'][self::KEY_OUTPUT] ?? [];
+
+            if ($checkReasoningWhenComplete) {
+                foreach ($this->extractReasoningFromOutput($output) as $reasoningText) {
+                    yield new ThinkingDelta($reasoningText);
+                }
+            }
+
+            [$toolCallResult] = $this->extractFunctionCalls($output);
 
             if ($toolCallResult && 'response.completed' === $type) {
                 yield new ToolCallComplete(...$toolCallResult->getContent());
             }
         }
+    }
+
+    /**
+     * @param array<string, mixed> $event
+     */
+    private function extractReasoningDelta(array $event, string $type): ?string
+    {
+        if (!str_contains($type, 'reasoning')) {
+            return null;
+        }
+
+        if (isset($event['delta']) && \is_string($event['delta']) && '' !== trim($event['delta'])) {
+            return $event['delta'];
+        }
+
+        if (isset($event['text']) && \is_string($event['text']) && '' !== trim($event['text'])) {
+            return $event['text'];
+        }
+
+        if (isset($event['summary']['text']) && \is_string($event['summary']['text']) && '' !== trim($event['summary']['text'])) {
+            return $event['summary']['text'];
+        }
+
+        if (isset($event['item']['summary']['text']) && \is_string($event['item']['summary']['text']) && '' !== trim($event['item']['summary']['text'])) {
+            return $event['item']['summary']['text'];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $output
+     *
+     * @return list<string>
+     */
+    private function extractReasoningFromOutput(array $output): array
+    {
+        $reasoningTexts = [];
+
+        foreach ($output as $item) {
+            if ('reasoning' !== ($item['type'] ?? null)) {
+                continue;
+            }
+
+            $summary = $item['summary']['text'] ?? null;
+            if (\is_string($summary) && '' !== trim($summary)) {
+                $reasoningTexts[] = $summary;
+            }
+        }
+
+        return $reasoningTexts;
     }
 
     /**
