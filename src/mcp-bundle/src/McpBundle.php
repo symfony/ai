@@ -32,7 +32,9 @@ use Mcp\Server\Transport\Http\OAuth\ClientRegistrarInterface;
 use Mcp\Server\Transport\Http\OAuth\JwksProvider;
 use Mcp\Server\Transport\Http\OAuth\JwtTokenValidator;
 use Mcp\Server\Transport\Http\OAuth\OidcDiscovery;
+use Mcp\Server\Transport\Http\OAuth\OidcDiscoveryMetadataPolicyInterface;
 use Mcp\Server\Transport\Http\OAuth\ProtectedResourceMetadata;
+use Mcp\Server\Transport\Http\OAuth\StrictOidcDiscoveryMetadataPolicy;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\AI\McpBundle\Command\McpCommand;
@@ -279,11 +281,17 @@ final class McpBundle extends AbstractBundle
 
         $audience = rtrim($oauthConfig['base_url'], '/').$path;
 
+        if (!$container->has(OidcDiscoveryMetadataPolicyInterface::class)) {
+            $container->register(OidcDiscoveryMetadataPolicyInterface::class, StrictOidcDiscoveryMetadataPolicy::class);
+        }
+
         $container->register('mcp.oauth.discovery', OidcDiscovery::class)
             ->setArguments([
                 null,
                 new Reference('mcp.psr17_factory'),
                 new Reference(CacheInterface::class),
+                3600,
+                new Reference(OidcDiscoveryMetadataPolicyInterface::class),
             ]);
 
         $container->register('mcp.oauth.jwks_provider', JwksProvider::class)
