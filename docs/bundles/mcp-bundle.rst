@@ -218,6 +218,27 @@ To use a custom cache backend, you need to configure a PSR-16 cache service in y
 This allows you to store sessions in Redis, a SQL database via Doctrine, or any other PSR-6 cache adapter.
 See the `Symfony Cache documentation`_ for more details on configuring cache pools.
 
+Additional Routes
+.................
+
+By default, the bundle registers a single route for the MCP endpoint (e.g. ``/_mcp``).
+If you need additional paths routed through the MCP controller — for example, OAuth
+well-known endpoints — use the ``routes`` option::
+
+    mcp:
+        http:
+            path: /mcp
+            routes:
+                - /.well-known/oauth-protected-resource
+                - /.well-known/oauth-authorization-server
+                - /authorize
+                - /token
+                - /register
+
+Each path is registered as a separate route pointing to the MCP controller. Route names
+are automatically generated with a hash prefix to prevent collisions when multiple MCP
+bundles use different paths.
+
 Act as Client
 ~~~~~~~~~~~~~
 
@@ -267,6 +288,7 @@ Configuration
         # HTTP transport configuration (optional)
         http:
             path: /_mcp # HTTP endpoint path (default: /_mcp)
+            routes: [] # Additional paths routed to the MCP controller (default: [])
             session:
                 store: file # Session store type: 'file', 'memory', or 'cache' (default: file)
                 directory: '%kernel.cache_dir%/mcp-sessions' # Directory for file store (default: cache_dir/mcp-sessions)
