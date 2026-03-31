@@ -23,7 +23,9 @@ final class DropStoreCommandTest extends TestCase
 {
     public function testCommandIsConfigured()
     {
-        $command = new DropStoreCommand(new ServiceLocator([]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([]);
+        $command = new DropStoreCommand($locator);
 
         $this->assertSame('ai:message-store:drop', $command->getName());
         $this->assertSame('Drop the required infrastructure for the message store', $command->getDescription());
@@ -38,7 +40,9 @@ final class DropStoreCommandTest extends TestCase
 
     public function testCommandCannotDropUndefinedStore()
     {
-        $command = new DropStoreCommand(new ServiceLocator([]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([]);
+        $command = new DropStoreCommand($locator);
 
         $tester = new CommandTester($command);
 
@@ -54,9 +58,12 @@ final class DropStoreCommandTest extends TestCase
     {
         $store = $this->createMock(MessageStoreInterface::class);
 
-        $command = new DropStoreCommand(new ServiceLocator([
-            'foo' => static fn (): object => $store,
-        ]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([
+            'foo' => static fn (): MessageStoreInterface => $store,
+        ]);
+
+        $command = new DropStoreCommand($locator);
 
         $tester = new CommandTester($command);
 
@@ -73,9 +80,11 @@ final class DropStoreCommandTest extends TestCase
         $store = $this->createMock(ManagedStoreInterface::class);
         $store->expects($this->once())->method('drop')->willThrowException(new RuntimeException('foo'));
 
-        $command = new DropStoreCommand(new ServiceLocator([
-            'foo' => static fn (): object => $store,
-        ]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([
+            'foo' => static fn (): ManagedStoreInterface => $store,
+        ]);
+        $command = new DropStoreCommand($locator);
 
         $tester = new CommandTester($command);
 
@@ -93,9 +102,11 @@ final class DropStoreCommandTest extends TestCase
         $store = $this->createMock(ManagedStoreInterface::class);
         $store->expects($this->never())->method('drop');
 
-        $command = new DropStoreCommand(new ServiceLocator([
-            'foo' => static fn (): object => $store,
-        ]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([
+            'foo' => static fn (): ManagedStoreInterface => $store,
+        ]);
+        $command = new DropStoreCommand($locator);
 
         $tester = new CommandTester($command);
 
@@ -111,9 +122,11 @@ final class DropStoreCommandTest extends TestCase
         $store = $this->createMock(ManagedStoreInterface::class);
         $store->expects($this->once())->method('drop');
 
-        $command = new DropStoreCommand(new ServiceLocator([
-            'foo' => static fn (): object => $store,
-        ]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([
+            'foo' => static fn (): ManagedStoreInterface => $store,
+        ]);
+        $command = new DropStoreCommand($locator);
 
         $tester = new CommandTester($command);
 

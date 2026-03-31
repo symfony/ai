@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\AiBundle\Profiler;
 
+use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -29,6 +30,8 @@ use Symfony\Contracts\Service\ResetInterface;
  *      submitted_at?: \DateTimeImmutable,
  *      streamed_at?: \DateTimeImmutable,
  *      initiated_at?: \DateTimeImmutable,
+ *      name?: string,
+ *      branched_at?: \DateTimeImmutable,
  *  }
  */
 final class TraceableChat implements ChatInterface, ResetInterface
@@ -75,6 +78,17 @@ final class TraceableChat implements ChatInterface, ResetInterface
         ];
 
         return $this->chat->stream($message);
+    }
+
+    public function branch(string $name, ?AgentInterface $agent = null): ChatInterface
+    {
+        $this->calls[] = [
+            'action' => 'branch',
+            'name' => $name,
+            'branched_at' => $this->clock->now(),
+        ];
+
+        return new self($this->chat->branch($name, $agent), $this->clock);
     }
 
     public function reset(): void

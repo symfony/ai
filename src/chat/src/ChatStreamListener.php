@@ -27,6 +27,7 @@ final class ChatStreamListener extends AbstractStreamListener
     public function __construct(
         private readonly MessageBag $messages,
         private readonly MessageStoreInterface $store,
+        private readonly ?string $identifier = null,
     ) {
     }
 
@@ -46,6 +47,6 @@ final class ChatStreamListener extends AbstractStreamListener
 
         $this->messages->add($assistantMessage);
 
-        $this->store->save($this->messages);
+        $this->store->save($this->messages, $this->identifier);
     }
 }

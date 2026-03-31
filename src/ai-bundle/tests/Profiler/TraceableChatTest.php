@@ -14,6 +14,7 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\MockAgent;
+use Symfony\AI\Agent\MockResponse;
 use Symfony\AI\AiBundle\Profiler\TraceableChat;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
@@ -84,5 +85,40 @@ final class TraceableChatTest extends TestCase
 
         $traceableChat->reset();
         $this->assertCount(0, $traceableChat->calls);
+    }
+
+    public function testBranchReturnsTraceableWrapper()
+    {
+        $chat = new Chat(new MockAgent([
+            'hello' => new MockResponse('reply'),
+        ]), new InMemoryStore());
+
+        $traceableChat = new TraceableChat($chat, new MonotonicClock());
+
+        $traceableChat->submit(Message::ofUser('hello'));
+
+        $branched = $traceableChat->branch('fork');
+
+        $this->assertInstanceOf(TraceableChat::class, $branched);
+    }
+
+    public function testBranchCallIsTracked()
+    {
+        $chat = new Chat(new MockAgent([
+            'hello' => new MockResponse('reply'),
+        ]), new InMemoryStore());
+
+        $traceableChat = new TraceableChat($chat, new MonotonicClock());
+
+        $traceableChat->submit(Message::ofUser('hello'));
+        $traceableChat->branch('fork');
+
+        $this->assertCount(2, $traceableChat->calls);
+
+        $branchCall = $traceableChat->calls[1];
+        $this->assertSame('branch', $branchCall['action']);
+        $this->assertSame('fork', $branchCall['name']);
+        $this->assertArrayHasKey('branched_at', $branchCall);
+        $this->assertInstanceOf(\DateTimeImmutable::class, $branchCall['branched_at']);
     }
 }

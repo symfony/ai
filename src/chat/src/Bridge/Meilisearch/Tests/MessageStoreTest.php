@@ -13,6 +13,8 @@ namespace Symfony\AI\Chat\Bridge\Meilisearch\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore;
+use Symfony\AI\Chat\Exception\RuntimeException;
+use Symfony\AI\Chat\MessageBagNormalizer;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -45,6 +47,56 @@ final class MessageStoreTest extends TestCase
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7700/indexes".');
         $this->expectExceptionCode(400);
         $store->setup();
+    }
+
+    public function testStoreCanSetupWithIndexName()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'taskUid' => 1,
+                'indexUid' => 'foo',
+                'status' => 'enqueued',
+                'type' => 'indexCreation',
+                'enqueuedAt' => '2025-01-01T00:00:00Z',
+            ], [
+                'http_code' => 202,
+            ]),
+            new JsonMockResponse([
+                'taskUid' => 2,
+                'indexUid' => 'foo',
+                'status' => 'succeeded',
+                'type' => 'indexCreation',
+                'enqueuedAt' => '2025-01-01T00:00:00Z',
+            ], [
+                'http_code' => 202,
+            ]),
+            new JsonMockResponse([
+                'taskUid' => 3,
+                'indexUid' => 'foo',
+                'status' => 'enqueued',
+                'type' => 'indexUpdate',
+                'enqueuedAt' => '2025-01-01T01:00:00Z',
+            ], [
+                'http_code' => 202,
+            ]),
+            new JsonMockResponse([
+                'taskUid' => 4,
+                'indexUid' => 'foo',
+                'status' => 'succeeded',
+                'type' => 'indexUpdate',
+                'enqueuedAt' => '2025-01-01T00:00:00Z',
+            ], [
+                'http_code' => 202,
+            ]),
+        ], 'http://127.0.0.1:7700');
+
+        $store = new MessageStore($httpClient, 'http://127.0.0.1:7700', 'test', new MonotonicClock(), 'test');
+
+        $store->setup([
+            'indexName' => 'foo',
+        ]);
+
+        $this->assertSame(4, $httpClient->getRequestsCount());
     }
 
     public function testStoreCanSetup()
@@ -218,17 +270,51 @@ final class MessageStoreTest extends TestCase
         $store->load();
     }
 
-    public function testStoreCanLoadMessages()
+    public function testStoreCannotLoadMessagesWhenMultipleBagsAreFound()
     {
         $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
             new MessageNormalizer(),
         ], [new JsonEncoder()]);
 
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
                 'results' => [
-                    $serializer->normalize(Message::ofUser('Hello World')),
+                    $serializer->normalize(new MessageBag(
+                        Message::ofUser('Hello World'),
+                    )),
+                    $serializer->normalize(new MessageBag(
+                        Message::ofUser('Hello World'),
+                    )),
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:7700');
+
+        $store = new MessageStore($httpClient, 'http://127.0.0.1:7700', 'test', new MonotonicClock(), 'test', $serializer);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('More than one bag found for identifier "test".');
+        $this->expectExceptionCode(0);
+        $messageBag = $store->load();
+    }
+
+    public function testStoreCanLoadMessages()
+    {
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new MessageBagNormalizer(new MessageNormalizer()),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'results' => [
+                    $serializer->normalize(new MessageBag(
+                        Message::ofUser('Hello World'),
+                    )),
                 ],
             ], [
                 'http_code' => 200,

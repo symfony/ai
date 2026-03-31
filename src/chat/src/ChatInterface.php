@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Chat;
 
+use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -34,4 +35,6 @@ interface ChatInterface
      * @throws ExceptionInterface When the chat submission fails due to agent errors
      */
     public function stream(UserMessage $message): \Generator;
+
+    public function branch(string $name, ?AgentInterface $agent = null): self;
 }

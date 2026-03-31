@@ -23,7 +23,9 @@ final class SetupStoreCommandTest extends TestCase
 {
     public function testCommandIsConfigured()
     {
-        $command = new SetupStoreCommand(new ServiceLocator([]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([]);
+        $command = new SetupStoreCommand($locator);
 
         $this->assertSame('ai:message-store:setup', $command->getName());
         $this->assertSame('Prepare the required infrastructure for the message store', $command->getDescription());
@@ -38,7 +40,9 @@ final class SetupStoreCommandTest extends TestCase
 
     public function testCommandCannotSetupUndefinedStore()
     {
-        $command = new SetupStoreCommand(new ServiceLocator([]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([]);
+        $command = new SetupStoreCommand($locator);
 
         $tester = new CommandTester($command);
 
@@ -54,9 +58,12 @@ final class SetupStoreCommandTest extends TestCase
     {
         $store = $this->createMock(MessageStoreInterface::class);
 
-        $command = new SetupStoreCommand(new ServiceLocator([
-            'foo' => static fn (): object => $store,
-        ]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([
+            'foo' => static fn (): MessageStoreInterface => $store,
+        ]);
+
+        $command = new SetupStoreCommand($locator);
 
         $tester = new CommandTester($command);
 
@@ -73,9 +80,11 @@ final class SetupStoreCommandTest extends TestCase
         $store = $this->createMock(ManagedStoreInterface::class);
         $store->expects($this->once())->method('setup')->willThrowException(new RuntimeException('foo'));
 
-        $command = new SetupStoreCommand(new ServiceLocator([
-            'foo' => static fn (): object => $store,
-        ]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([
+            'foo' => static fn (): ManagedStoreInterface => $store,
+        ]);
+        $command = new SetupStoreCommand($locator);
 
         $tester = new CommandTester($command);
 
@@ -92,9 +101,11 @@ final class SetupStoreCommandTest extends TestCase
         $store = $this->createMock(ManagedStoreInterface::class);
         $store->expects($this->once())->method('setup');
 
-        $command = new SetupStoreCommand(new ServiceLocator([
-            'foo' => static fn (): object => $store,
-        ]));
+        /** @var ServiceLocator<ManagedStoreInterface> $locator */
+        $locator = new ServiceLocator([
+            'foo' => static fn (): ManagedStoreInterface => $store,
+        ]);
+        $command = new SetupStoreCommand($locator);
 
         $tester = new CommandTester($command);
 

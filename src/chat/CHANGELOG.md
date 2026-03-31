@@ -5,6 +5,8 @@ CHANGELOG
 ---
 
  * Add `ChatInterface::stream()` method for real-time streaming support
+ * Add `Chat::branch` for conversation branching with optional agent switching
+* Add support for "multi-session" conversations via scoped identifiers
 
 0.4
 ---
