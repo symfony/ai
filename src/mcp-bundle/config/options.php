@@ -58,7 +58,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->arrayNode('session')
                         ->addDefaultsIfNotSet()
                         ->children()
-                            ->enumNode('store')->values(['file', 'memory', 'cache'])->defaultValue('file')->end()
+                            ->enumNode('store')->values(['file', 'memory', 'cache', 'framework'])->defaultValue('file')->end()
                             ->scalarNode('directory')->defaultValue('%kernel.cache_dir%/mcp-sessions')->end()
                             ->scalarNode('cache_pool')->defaultValue('cache.mcp.sessions')->end()
                             ->scalarNode('prefix')->defaultValue('mcp-')->end()

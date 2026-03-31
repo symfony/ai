@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * Add `framework` session store backed by Symfony's `SessionHandlerInterface`
+
 0.4
 ---
 
