@@ -14,8 +14,11 @@ namespace Symfony\AI\Platform\Result;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
+use Symfony\AI\Platform\Metadata\StreamListener as MetaDataStreamListener;
 use Symfony\AI\Platform\Reranking\RerankingEntry;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\StreamListener as TokenUsageStreamListener;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
@@ -53,8 +56,8 @@ final class DeferredResult
 
             if ($this->convertedResult instanceof StreamResult) {
                 // Register listeners to promote stream metadata deltas to result metadata
-                $this->convertedResult->addListener(new \Symfony\AI\Platform\Metadata\StreamListener());
-                $this->convertedResult->addListener(new \Symfony\AI\Platform\TokenUsage\StreamListener());
+                $this->convertedResult->addListener(new MetaDataStreamListener());
+                $this->convertedResult->addListener(new TokenUsageStreamListener());
             }
 
             $metadata = $this->convertedResult->getMetadata();
@@ -163,6 +166,22 @@ final class DeferredResult
             yield from $result->getContent();
         } finally {
             $this->getMetadata()->set($result->getMetadata()->all());
+        }
+    }
+
+    /**
+     * @return \Generator<TextDelta>
+     *
+     * @throws ExceptionInterface
+     */
+    public function asTextStream(): \Generator
+    {
+        foreach ($this->asStream() as $delta) {
+            if (!$delta instanceof TextDelta) {
+                continue;
+            }
+
+            yield $delta;
         }
     }
 

@@ -35,7 +35,8 @@ Streaming
 
 The Chat component supports streaming responses from the LLM in real-time
 using the :method:`Symfony\\AI\\Chat\\ChatInterface::stream` method. This returns
-a :class:`Generator` that yields text chunks as they are produced by the model::
+a :class:`Generator` that yields :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\DeltaInterface`
+deltas as they are produced by the model::
 
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Chat\Chat;
@@ -43,6 +44,7 @@ a :class:`Generator` that yields text chunks as they are produced by the model::
     use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
     $platform = PlatformFactory::create($apiKey);
 
@@ -53,8 +55,10 @@ a :class:`Generator` that yields text chunks as they are produced by the model::
         Message::forSystem('You are a helpful assistant.'),
     ));
 
-    foreach ($chat->stream(Message::ofUser('Tell me a story about the sun')) as $chunk) {
-        echo $chunk;
+    foreach ($chat->stream(Message::ofUser('Tell me a story about the sun')) as $delta) {
+        if ($delta instanceof TextDelta) {
+            echo $delta;
+        }
     }
 
 Once the stream is fully consumed, the assistant message is automatically

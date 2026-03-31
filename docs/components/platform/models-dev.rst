@@ -113,8 +113,8 @@ streaming as you would with any other platform::
         'stream' => true,
     ]);
 
-    foreach ($result->getContent() as $chunk) {
-        echo $chunk;
+    foreach ($result->asTextStream() as $delta) {
+        echo $delta;
     }
 
 Tool Calling

@@ -12,7 +12,6 @@
 use Symfony\AI\Platform\Bridge\DeepSeek\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -24,9 +23,7 @@ $messages = new MessageBag(
 );
 $result = $platform->invoke('deepseek-chat', $messages, ['stream' => true]);
 
-foreach ($result->asStream() as $delta) {
-    if ($delta instanceof TextDelta) {
-        echo $delta;
-    }
+foreach ($result->asTextStream() as $delta) {
+    echo $delta;
 }
 echo \PHP_EOL;
