@@ -185,4 +185,72 @@ final class ResultConverterTest extends TestCase
         $this->assertCount(1, $items);
         $this->assertSame('Hello', $items[0]);
     }
+
+    public function testExtractsThoughtSignatureFromToolCallResponse()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'thought' => true,
+                                'text' => 'Let me search for that information.',
+                                'thoughtSignature' => 'encrypted-signature-abc123',
+                            ],
+                            [
+                                'functionCall' => [
+                                    'id' => 'call-123',
+                                    'name' => 'search',
+                                    'args' => ['query' => 'test'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(ToolCallResult::class, $result);
+        $this->assertSame('encrypted-signature-abc123', $result->getMetadata()->get('thinkingSignature'));
+        $this->assertSame('Let me search for that information.', $result->getMetadata()->get('thinkingContent'));
+    }
+
+    public function testExtractsThoughtSignatureWithoutThinkingContent()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'thoughtSignature' => 'sig-xyz',
+                            ],
+                            [
+                                'functionCall' => [
+                                    'id' => 'call-456',
+                                    'name' => 'get_data',
+                                    'args' => [],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(ToolCallResult::class, $result);
+        $this->assertSame('sig-xyz', $result->getMetadata()->get('thinkingSignature'));
+        $this->assertNull($result->getMetadata()->get('thinkingContent'));
+    }
 }

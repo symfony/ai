@@ -117,7 +117,13 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             }
 
             $toolCalls = $result->getContent();
-            $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
+            $thinkingContent = $result->getMetadata()->get('thinkingContent');
+            $thinkingSignature = $result->getMetadata()->get('thinkingSignature');
+            $messages->add(Message::ofAssistant(
+                toolCalls: $toolCalls,
+                thinkingContent: $thinkingContent,
+                thinkingSignature: $thinkingSignature,
+            ));
 
             $results = [];
             foreach ($toolCalls as $toolCall) {
