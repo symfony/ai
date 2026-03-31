@@ -22,6 +22,7 @@ use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
+use Psr\Http\Server\MiddlewareInterface;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
@@ -32,6 +33,7 @@ use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -73,6 +75,9 @@ final class McpBundle extends AbstractBundle
 
         $builder->registerForAutoconfiguration(NotificationHandlerInterface::class)
             ->addTag('mcp.notification_handler');
+
+        $builder->registerForAutoconfiguration(MiddlewareInterface::class)
+            ->addTag('mcp.middleware');
 
         if ($builder->getParameter('kernel.debug')) {
             $traceableRegistry = (new Definition('mcp.traceable_registry'))
@@ -161,6 +166,7 @@ final class McpBundle extends AbstractBundle
                     new Reference('mcp.http_foundation_factory'),
                     new Reference('mcp.psr17_factory'),
                     new Reference('mcp.psr17_factory'),
+                    new TaggedIteratorArgument('mcp.middleware'),
                     new Reference('logger'),
                 ])
                 ->setPublic(true)

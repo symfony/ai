@@ -23,6 +23,7 @@ use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Server\MiddlewareInterface;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
@@ -510,6 +511,33 @@ class McpBundleTest extends TestCase
         $this->assertArrayHasKey(NotificationHandlerInterface::class, $autoconfigured);
         $definition = $autoconfigured[NotificationHandlerInterface::class];
         $this->assertTrue($definition->hasTag('mcp.notification_handler'));
+    }
+
+    public function testMiddlewareInterfaceAutoconfiguration()
+    {
+        $container = $this->buildContainer([]);
+        $autoconfigured = $container->getAutoconfiguredInstanceof();
+        $this->assertArrayHasKey(MiddlewareInterface::class, $autoconfigured);
+        $definition = $autoconfigured[MiddlewareInterface::class];
+        $this->assertTrue($definition->hasTag('mcp.middleware'));
+    }
+
+    public function testMiddlewareInjectedIntoController()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+            ],
+        ]);
+
+        $controllerDefinition = $container->getDefinition('mcp.server.controller');
+        $arguments = $controllerDefinition->getArguments();
+
+        $middlewareArgument = $arguments[5];
+        $this->assertInstanceOf(TaggedIteratorArgument::class, $middlewareArgument);
+        $this->assertSame('mcp.middleware', $middlewareArgument->getTag());
     }
 
     /**
