@@ -20,7 +20,7 @@ abstract class AbstractStreamListener implements ListenerInterface
     {
     }
 
-    public function onChunk(ChunkEvent $event): void
+    public function onDelta(DeltaEvent $event): void
     {
     }
 

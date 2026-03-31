@@ -15,6 +15,7 @@ use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -30,7 +31,9 @@ $messages = new MessageBag(
 $chat->initiate($messages);
 $chat->submit(Message::ofUser('My name is Christopher.'));
 
-foreach ($chat->stream(Message::ofUser('Tell me a story about the sun')) as $chunk) {
-    echo $chunk;
+foreach ($chat->stream(Message::ofUser('Tell me a story about the sun')) as $delta) {
+    if ($delta instanceof TextDelta) {
+        echo $delta;
+    }
 }
 echo \PHP_EOL;

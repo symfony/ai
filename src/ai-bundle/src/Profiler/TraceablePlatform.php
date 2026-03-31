@@ -18,6 +18,7 @@ use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Contracts\Service\ResetInterface;
 
@@ -87,8 +88,8 @@ final class TraceablePlatform implements PlatformInterface, ResetInterface
             $this->resultCache[$result] = '';
             foreach ($originalStream->asStream() as $chunk) {
                 yield $chunk;
-                if (\is_string($chunk)) {
-                    $this->resultCache[$result] .= $chunk;
+                if ($chunk instanceof TextDelta) {
+                    $this->resultCache[$result] .= $chunk->getText();
                 }
             }
 

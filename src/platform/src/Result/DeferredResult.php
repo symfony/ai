@@ -16,8 +16,6 @@ use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Reranking\RerankingEntry;
 use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\AI\Platform\TokenUsage\StreamListener;
-use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\Vector\Vector;
 
 /**
@@ -54,8 +52,9 @@ final class DeferredResult
             }
 
             if ($this->convertedResult instanceof StreamResult) {
-                // Register listener to promote TokenUsage to metadata
-                $this->convertedResult->addListener(new StreamListener());
+                // Register listeners to promote stream metadata deltas to result metadata
+                $this->convertedResult->addListener(new \Symfony\AI\Platform\Metadata\StreamListener());
+                $this->convertedResult->addListener(new \Symfony\AI\Platform\TokenUsage\StreamListener());
             }
 
             $metadata = $this->convertedResult->getMetadata();
@@ -158,7 +157,13 @@ final class DeferredResult
      */
     public function asStream(): \Generator
     {
-        yield from $this->as(StreamResult::class)->getContent();
+        $result = $this->as(StreamResult::class);
+
+        try {
+            yield from $result->getContent();
+        } finally {
+            $this->getMetadata()->set($result->getMetadata()->all());
+        }
     }
 
     /**

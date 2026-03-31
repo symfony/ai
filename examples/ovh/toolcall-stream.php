@@ -16,6 +16,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\Ovh\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -29,7 +30,9 @@ $agent = new Agent($platform, 'gpt-oss-120b', [$processor], [$processor]);
 $messages = new MessageBag(Message::ofUser('Please summarize this video for me: https://www.youtube.com/watch?v=6uXW-ulpj0s'));
 $result = $agent->call($messages, ['stream' => true]);
 
-foreach ($result->getContent() as $word) {
-    echo $word;
+foreach ($result->getContent() as $delta) {
+    if ($delta instanceof TextDelta) {
+        echo $delta;
+    }
 }
 echo \PHP_EOL;

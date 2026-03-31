@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -154,8 +155,8 @@ final class DeferredResultTest extends TestCase
     public function testTokenUsageGetsPromotedFromStream()
     {
         $result = new StreamResult((static function () {
-            yield 'part 1';
-            yield 'part 2';
+            yield new TextDelta('part 1');
+            yield new TextDelta('part 2');
             yield new TokenUsage(123456);
         })());
 
@@ -164,6 +165,21 @@ final class DeferredResultTest extends TestCase
         iterator_to_array($converted->getContent());
 
         $this->assertInstanceOf(TokenUsageInterface::class, $tokenUsage = $converted->getMetadata()->get('token_usage'));
+        $this->assertSame(123456, $tokenUsage->getPromptTokens());
+    }
+
+    public function testTokenUsageGetsPromotedToDeferredResultFromStream()
+    {
+        $result = new StreamResult((static function () {
+            yield new TextDelta('part 1');
+            yield new TextDelta('part 2');
+            yield new TokenUsage(123456);
+        })());
+
+        $deferredResult = new DeferredResult(new PlainConverter($result), new InMemoryRawResult());
+        iterator_to_array($deferredResult->asStream());
+
+        $this->assertInstanceOf(TokenUsageInterface::class, $tokenUsage = $deferredResult->getMetadata()->get('token_usage'));
         $this->assertSame(123456, $tokenUsage->getPromptTokens());
     }
 

@@ -14,8 +14,9 @@ namespace Symfony\AI\Chat;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
-use Symfony\AI\Platform\Result\Stream\ChunkEvent;
 use Symfony\AI\Platform\Result\Stream\CompleteEvent;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -30,12 +31,12 @@ final class ChatStreamListener extends AbstractStreamListener
     ) {
     }
 
-    public function onChunk(ChunkEvent $event): void
+    public function onDelta(DeltaEvent $event): void
     {
-        $chunk = $event->getChunk();
+        $delta = $event->getDelta();
 
-        if (\is_string($chunk)) {
-            $this->content .= $chunk;
+        if ($delta instanceof TextDelta) {
+            $this->content .= $delta;
         }
     }
 

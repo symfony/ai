@@ -27,6 +27,12 @@ Agent
    ```
 
  * The `SimilaritySearch` tool now accepts an optional `$promptTemplate` parameter to customize the result header (default: `'Found documents with the following information:'`)
+ * `Toolbox\StreamListener::onChunk()` has been renamed to `onDelta()`.
+   The listener now checks `$delta instanceof TextDelta` instead of
+   `is_string($chunk)` to accumulate the assistant text buffer.
+ * The `StreamListener` now reacts to `ToolCallComplete` instead of
+   `ToolCallResult`. If you have a custom `StreamListener` or check for
+   `ToolCallResult` in stream consumers, update to `ToolCallComplete`.
 
 Mate
 ----
@@ -42,13 +48,76 @@ AI Bundle
  * The `endpoint` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
 
 Platform
------
+--------
 
  * `ModelCatalog` in `Ollama` has been replaced by `OllamaApiCatalog`
  * `OllamaApiCatalog` in `Ollama` has been replaced to `ModelCatalog`
  * `Ollama` model is now `final`
  * `ModelCatalog` in `ElevenLabs` has been replaced by `ElevenLabsApiCatalog`
  * `ElevenLabsApiCatalog` in `ElevenLabs` has been replaced to `ModelCatalog`
+ * `ChunkEvent` has been replaced by `DeltaEvent`. The `onChunk(ChunkEvent)` method
+   on `ListenerInterface` is now `onDelta(DeltaEvent)`. Update all implementations:
+   - `onChunk(ChunkEvent $event)` → `onDelta(DeltaEvent $event)`
+   - `$event->getChunk()` → `$event->getDelta()`
+   - `$event->setChunk(...)` → `$event->setDelta(...)`
+   - `$event->skipChunk()` → `$event->skipDelta()`
+   - `$event->isChunkSkipped()` → `$event->isDeltaSkipped()`
+ * Stream generators in bridge `ResultConverter` classes now yield typed
+   `DeltaInterface` objects instead of raw strings. Consumers iterating
+   `StreamResult::getContent()` that expect `string` chunks must check for
+   `TextDelta` instead:
+   - `is_string($chunk)` → `$chunk instanceof TextDelta`, then use `$chunk->getText()`
+ * New streaming delta types in `Symfony\AI\Platform\Result\Stream\Delta\`:
+   `TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ToolCallStart`,
+   `ToolInputDelta`, `BinaryDelta`, `ChoiceDelta`, `ToolCallComplete`,
+   `ThinkingComplete`. These are yielded by bridge converters during streaming.
+ * `Symfony\AI\Platform\Bridge\Ollama\OllamaMessageChunk` has been removed.
+   Ollama streams now yield semantic deltas like the other bridges:
+   - text content → `TextDelta`
+   - thinking content → `ThinkingDelta`
+   - completed tool calls → `ToolCallComplete`
+   - final usage → `TokenUsage`
+
+   ```diff
+   -if ($chunk instanceof OllamaMessageChunk) {
+   -    echo $chunk->getContent();
+   -}
+   +if ($chunk instanceof TextDelta) {
+   +    echo $chunk->getText();
+   +}
+   ```
+ * `Symfony\AI\Platform\Bridge\Perplexity\PerplexitySearchResults`,
+   `Symfony\AI\Platform\Bridge\Perplexity\PerplexityCitations`, and
+   `Symfony\AI\Platform\Bridge\Perplexity\StreamListener` have been
+   removed. Perplexity now emits generic `MetadataDelta` instances internally,
+   which are promoted to result metadata during stream consumption.
+
+   If you relied on those deltas directly, read metadata instead:
+
+   ```diff
+   -if ($delta instanceof PerplexitySearchResults) {
+   -    $results = $delta->getSearchResults();
+   -}
+   -if ($delta instanceof PerplexityCitations) {
+   -    $citations = $delta->getCitations();
+   -}
+   +$results = $result->getMetadata()->get('search_results');
+   +$citations = $result->getMetadata()->get('citations');
+   ```
+ * `BinaryResult`, `ChoiceResult`, `ToolCallResult`, and `ThinkingContent` no
+   longer implement `DeltaInterface`. Stream generators now yield proper delta
+   types instead of result objects:
+   - `ToolCallResult` → `ToolCallComplete`: use `$delta instanceof ToolCallComplete`
+     and `$delta->getToolCalls()`.
+   - `ThinkingContent` → `ThinkingComplete`: use `$delta instanceof ThinkingComplete`
+     and `$delta->getThinking()` / `$delta->getSignature()`.
+   - `BinaryResult` → `BinaryDelta`: use `$delta instanceof BinaryDelta`
+     and `$delta->getData()` / `$delta->getMimeType()`.
+   - `ChoiceResult` → `ChoiceDelta`: use `$delta instanceof ChoiceDelta`
+     and `$delta->getDeltas()`.
+ * `ThinkingContent` has been removed in favor of `ThinkingComplete`.
+ * The `Usage` delta class has been removed. Bridges now yield `TokenUsage`
+   objects directly in streams instead.
 
 Store
 -----

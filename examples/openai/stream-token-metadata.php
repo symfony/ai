@@ -13,6 +13,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -27,8 +28,10 @@ $result = $agent->call($messages, [
     'stream' => true,
 ]);
 
-foreach ($result->getContent() as $textChunk) {
-    echo $textChunk;
+foreach ($result->getContent() as $delta) {
+    if ($delta instanceof TextDelta) {
+        echo $delta;
+    }
 }
 
 echo \PHP_EOL;

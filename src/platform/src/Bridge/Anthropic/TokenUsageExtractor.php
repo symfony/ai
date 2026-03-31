@@ -30,8 +30,14 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
             return null;
         }
 
-        $usage = $content['usage'];
+        return $this->extractFromArray($content['usage']);
+    }
 
+    /**
+     * @param array<string, mixed> $usage
+     */
+    public function extractFromArray(array $usage): TokenUsage
+    {
         $cacheCreationTokens = isset($usage['cache_creation_input_tokens']) ? (int) $usage['cache_creation_input_tokens'] : null;
         $cacheReadTokens = isset($usage['cache_read_input_tokens']) ? (int) $usage['cache_read_input_tokens'] : null;
 
