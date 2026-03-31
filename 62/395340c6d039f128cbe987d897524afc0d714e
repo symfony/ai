@@ -1,0 +1,37 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-25T09:33:59Z
+
+@chr-hertel will you also do a review?
+
+---------------------------------------------------------------------------
+
+by ineersa at 2026-03-31T14:23:55Z
+
+@chr-hertel @wachterjohannes I think I will change it a little bit.
+
+I was thinking about it and
+```php
+/**
+ * @internal Used in tests to mock TOON availability
+ */
+protected function isToonFormatAvailable(): bool
+{
+    return ContainerBuilder::willBeAvailable('helgesverre/toon', Toon::class, ['symfony/ai-mate']);
+}
+```
+Is not correct way to identify if package is there, because Mate installed as
+```
+composer require --dev symfony/ai-mate
+```
+
+So this will force a user to install TOON in `require` section.
+
+Will just change to class available I think, unless you have better suggestion.
+
+---------------------------------------------------------------------------
+
+by ineersa at 2026-03-31T21:29:58Z
+
+@chr-hertel Rebased, added entry to CHANGELOG.
+Also swapped container check to `class_exists(Toon::class)`, which should work better in this case.
