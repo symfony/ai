@@ -118,8 +118,8 @@ final class McpBundle extends AbstractBundle
     }
 
     /**
-     * @param array{stdio: bool, http: bool}                                                                                      $transports
-     * @param array{path: string, session: array{store: string, directory: string, cache_pool: string, prefix: string, ttl: int}} $httpConfig
+     * @param array{stdio: bool, http: bool}                                                                                                            $transports
+     * @param array{path: string, routes: list<string>, session: array{store: string, directory: string, cache_pool: string, prefix: string, ttl: int}} $httpConfig
      */
     private function configureClient(array $transports, array $httpConfig, ContainerBuilder $container): void
     {
