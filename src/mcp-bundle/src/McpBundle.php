@@ -28,6 +28,7 @@ use Symfony\AI\McpBundle\DependencyInjection\McpPass;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
 use Symfony\AI\McpBundle\Profiler\TraceableRegistry;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
+use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Symfony\Component\Cache\Psr16Cache;
@@ -196,6 +197,13 @@ final class McpBundle extends AbstractBundle
             $container->register('mcp.session.store', Psr16SessionStore::class)
                 ->setArguments([
                     new Reference($sessionConfig['cache_pool']),
+                    $sessionConfig['prefix'],
+                    $sessionConfig['ttl'],
+                ]);
+        } elseif ('framework' === $sessionConfig['store']) {
+            $container->register('mcp.session.store', FrameworkSessionStore::class)
+                ->setArguments([
+                    new Reference('session.handler'),
                     $sessionConfig['prefix'],
                     $sessionConfig['ttl'],
                 ]);

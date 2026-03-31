@@ -434,6 +434,33 @@ class McpBundleTest extends TestCase
         $this->assertFalse($container->hasDefinition('cache.mcp.sessions'));
     }
 
+    public function testSessionStoreFrameworkConfiguration()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'session' => [
+                        'store' => 'framework',
+                        'prefix' => 'mcp-',
+                        'ttl' => 1800,
+                    ],
+                ],
+            ],
+        ]);
+
+        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
+        $this->assertSame(\Symfony\AI\McpBundle\Session\FrameworkSessionStore::class, $sessionStoreDefinition->getClass());
+        $arguments = $sessionStoreDefinition->getArguments();
+
+        $this->assertInstanceOf(Reference::class, $arguments[0]);
+        $this->assertSame('session.handler', (string) $arguments[0]);
+        $this->assertSame('mcp-', $arguments[1]);
+        $this->assertSame(1800, $arguments[2]);
+    }
+
     public function testDiscoveryDefaultConfiguration()
     {
         $container = $this->buildContainer([]);
