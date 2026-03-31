@@ -1,0 +1,195 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-14T00:06:25Z
+
+Yes please :)
+
+---------------------------------------------------------------------------
+
+by fabpot at 2026-03-15T20:52:12Z
+
+Green now
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-15T21:26:34Z
+
+Depending on your local setup the runner can help testing the changes, e.g. `./runner --filter stream`
+<img width="1618" height="873" alt="image" src="https://github.com/user-attachments/assets/1ebdae0e-2786-423d-b3a2-c52ebb6d69a6" />
+
+The issues are mostly similar, but some minor differences here and there. Currently falling on this branch, not falling on main:
+
+* **anthropic/stream.php**
+  ```
+  PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\Usage could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/anthropic/stream.php:27
+  Stack trace:
+  #0 {main}
+  thrown in /home/christopher/Projects/SymfonyAI/repo/examples/anthropic/stream.php on line 27
+  ```
+* **cerebras/stream.php**
+  ```
+  The top three destinations in France are:
+
+  1. The Eiffel Tower (Paris): An iconic symbol of France, offering stunning city views.
+  2. The Louvre Museum (Paris): Home to the Mona Lisa and an extensive collection of art and artifacts.
+  3. The French Riviera (Côte d'Azur): A beautiful coastline known for its beaches and picturesque villages like Saint-Tropez.
+  PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\Usage could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/cerebras/stream.php:30
+  Stack trace:
+  #0 {main}
+  thrown in /home/christopher/Projects/SymfonyAI/repo/examples/cerebras/stream.php on line 30
+  ```
+* **deepseek/stream.php**
+  ```
+  That is a profound and deceptively simple question. The answer depends entirely on the perspective from which we ask it. [...]
+
+  PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\Usage could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/deepseek/stream.php:27
+  Stack trace:
+  #0 {main}
+  thrown in /home/christopher/Projects/SymfonyAI/repo/examples/deepseek/stream.php on line 27
+  ```
+* **elevenlabs/text-to-speech-as-stream.php**
+  ```
+  PHP Fatal error:  Uncaught TypeError: Symfony\AI\Platform\Result\Stream\DeltaEvent::__construct(): Argument #2 ($delta) must be of type Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface, string given, called in /home/christopher/Projects/SymfonyAI/repo/src/platform/src/Result/StreamResult.php on line 52 and defined in /home/christopher/Projects/SymfonyAI/repo/src/platform/src/Result/Stream/DeltaEvent.php:31
+  Stack trace:
+  #0 /home/christopher/Projects/SymfonyAI/repo/src/platform/src/Result/StreamResult.php(52): Symfony\AI\Platform\Result\Stream\DeltaEvent->__construct()
+  #1 /home/christopher/Projects/SymfonyAI/repo/src/platform/src/Result/DeferredResult.php(149): Symfony\AI\Platform\Result\StreamResult->getContent()
+  #2 /home/christopher/Projects/SymfonyAI/repo/examples/elevenlabs/text-to-speech-as-stream.php(26): Symfony\AI\Platform\Result\DeferredResult->asStream()
+  #3 {main}
+  thrown in /home/christopher/Projects/SymfonyAI/repo/src/platform/src/Result/Stream/DeltaEvent.php on line 31
+  ```
+* **mistral/stream.php**
+  ```
+  The eighth prime number is \(\boxed{1PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\Usage could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/mistral/stream.php:26
+  Stack trace:
+  #0 {main}
+  thrown in /home/christopher/Projects/SymfonyAI/repo/examples/mistral/stream.php on line 26
+  ```
+* **openrouter/stream.php**
+  ```
+  Here are the first 50 prime numbers:
+
+  2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229
+  PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\Usage could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/openrouter/stream.php:26
+  Stack trace:
+  #0 {main}
+  thrown in /home/christopher/Projects/SymfonyAI/repo/examples/openrouter/stream.php on line 26
+  ```
+* **ovh/stream.php**
+  ```
+  PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/ovh/stream.php:27
+  Stack trace:
+  #0 {main}
+  thrown in /home/christopher/Projects/SymfonyAI/repo/examples/ovh/stream.php on line 27
+  ```
+* **scaleway/stream.php**
+  ```
+  PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/ovh/stream.php:27
+  Stack trace:
+  #0 {main}
+  thrown in /home/christopher/Projects/SymfonyAI/repo/examples/ovh/stream.php on line 27
+  ```
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-15T21:36:06Z
+
+looks great already, like it very much, just ping me for another round of testing
+
+---------------------------------------------------------------------------
+
+by fabpot at 2026-03-16T10:55:26Z
+
+> Depending on your local setup the runner can help testing the changes, e.g. `./runner --filter stream` <img alt="image" width="1618" height="873" src="https://private-user-images.githubusercontent.com/2852185/563805334-1ebdae0e-2786-423d-b3a2-c52ebb6d69a6.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzM2NTc1MDUsIm5iZiI6MTc3MzY1NzIwNSwicGF0aCI6Ii8yODUyMTg1LzU2MzgwNTMzNC0xZWJkYWUwZS0yNzg2LTQyM2QtYjNhMi1jNTJlYmI2ZDY5YTYucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI2MDMxNiUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNjAzMTZUMTAzMzI1WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9Njk2ODBjZDQ2MzFkZmU2MTFkNmUyNDgyMDc2Y2Y1Mzc5ZGY3Zjc3YWEyNTFlOTU1ZjA4MjFkMTYwZmIwZGE4YyZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.LZTQleQ8FnnQjhxzzXLEUR2mGQEvMny--dDJlxyv-kI">
+>
+> The issues are mostly similar, but some minor differences here and there. Currently falling on this branch, not falling on main:
+>
+>     * **anthropic/stream.php**
+>       ```
+>       PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\Usage could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/anthropic/stream.php:27
+>       Stack trace:
+>       #0 {main}
+>       thrown in /home/christopher/Projects/SymfonyAI/repo/examples/anthropic/stream.php on line 27
+>       ```
+>
+>     * **cerebras/stream.php**
+>       ```
+>       The top three destinations in France are:
+>
+>       1. The Eiffel Tower (Paris): An iconic symbol of France, offering stunning city views.
+>       2. The Louvre Museum (Paris): Home to the Mona Lisa and an extensive collection of art and artifacts.
+>       3. The French Riviera (Côte d'Azur): A beautiful coastline known for its beaches and picturesque villages like Saint-Tropez.
+>       PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\Usage could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/cerebras/stream.php:30
+>       Stack trace:
+>       #0 {main}
+>       thrown in /home/christopher/Projects/SymfonyAI/repo/examples/cerebras/stream.php on line 30
+>       ```
+>
+>     * **deepseek/stream.php**
+>       ```
+>       That is a profound and deceptively simple question. The answer depends entirely on the perspective from which we ask it. [...]
+>
+>       PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\Usage could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/deepseek/stream.php:27
+>       Stack trace:
+>       #0 {main}
+>       thrown in /home/christopher/Projects/SymfonyAI/repo/examples/deepseek/stream.php on line 27
+>       ```
+>
+>     * **elevenlabs/text-to-speech-as-stream.php**
+>       ```
+>       PHP Fatal error:  Uncaught TypeError: Symfony\AI\Platform\Result\Stream\DeltaEvent::__construct(): Argument #2 ($delta) must be of type Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface, string given, called in /home/christopher/Projects/SymfonyAI/repo/src/platform/src/Result/StreamResult.php on line 52 and defined in /home/christopher/Projects/SymfonyAI/repo/src/platform/src/Result/Stream/DeltaEvent.php:31
+>       Stack trace:
+>       #0 /home/christopher/Projects/SymfonyAI/repo/src/platform/src/Result/StreamResult.php(52): Symfony\AI\Platform\Result\Stream\DeltaEvent->__construct()
+>       #1 /home/christopher/Projects/SymfonyAI/repo/src/platform/src/Result/DeferredResult.php(149): Symfony\AI\Platform\Result\StreamResult->getContent()
+>       #2 /home/christopher/Projects/SymfonyAI/repo/examples/elevenlabs/text-to-speech-as-stream.php(26): Symfony\AI\Platform\Result\DeferredResult->asStream()
+>       #3 {main}
+>       thrown in /home/christopher/Projects/SymfonyAI/repo/src/platform/src/Result/Stream/DeltaEvent.php on line 31
+>       ```
+>
+>     * **mistral/stream.php**
+>       ```
+>       The eighth prime number is \(\boxed{1PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\Usage could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/mistral/stream.php:26
+>       Stack trace:
+>       #0 {main}
+>       thrown in /home/christopher/Projects/SymfonyAI/repo/examples/mistral/stream.php on line 26
+>       ```
+>
+>     * **openrouter/stream.php**
+>       ```
+>       Here are the first 50 prime numbers:
+>
+>       2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229
+>       PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\Usage could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/openrouter/stream.php:26
+>       Stack trace:
+>       #0 {main}
+>       thrown in /home/christopher/Projects/SymfonyAI/repo/examples/openrouter/stream.php on line 26
+>       ```
+>
+>     * **ovh/stream.php**
+>       ```
+>       PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/ovh/stream.php:27
+>       Stack trace:
+>       #0 {main}
+>       thrown in /home/christopher/Projects/SymfonyAI/repo/examples/ovh/stream.php on line 27
+>       ```
+>
+>     * **scaleway/stream.php**
+>       ```
+>       PHP Fatal error:  Uncaught Error: Object of class Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta could not be converted to string in /home/christopher/Projects/SymfonyAI/repo/examples/ovh/stream.php:27
+>       Stack trace:
+>       #0 {main}
+>       thrown in /home/christopher/Projects/SymfonyAI/repo/examples/ovh/stream.php on line 27
+>       ```
+
+I've been investigated the Ollama failures as I have it locally and it seems like it has been broken since #1267. Will try to implement the "correct" behavior.
+
+---------------------------------------------------------------------------
+
+by fabpot at 2026-03-16T12:59:40Z
+
+I wanted to do things step by step, but it's just too complicated, so I've done the next few steps directly in this PR. Hope this will fix all the things.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-31T21:04:48Z
+
+Going to merge it in and follow up here - thanks @fabpot :pray:
