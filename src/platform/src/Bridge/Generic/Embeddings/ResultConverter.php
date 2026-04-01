@@ -68,8 +68,8 @@ class ResultConverter implements ResultConverterInterface
         );
     }
 
-    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    public function getTokenUsageExtractor(): TokenUsageExtractorInterface
     {
-        return null;
+        return new TokenUsageExtractor();
     }
 }

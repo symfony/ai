@@ -22,3 +22,7 @@ $result = $platform->invoke('gemini-embedding-001', <<<TEXT
     TEXT);
 
 print_vectors($result);
+
+echo \PHP_EOL;
+
+print_token_usage($result->getMetadata()->get('token_usage'));
