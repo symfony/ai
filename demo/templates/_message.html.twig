@@ -7,7 +7,7 @@
 {% macro bot(content, loading = false, latest = false, contentId = null, messageId = null) %}
     <div class="d-flex align-items-baseline mb-4"{% if messageId %} id="{{ messageId }}"{% endif %}>
         <div class="bot avatar rounded-3 shadow-sm">
-            {{ ux_icon('fluent:bot-24-filled', { height: '45px', width: '45px' }) }}
+            {{ ux_icon('bot', { height: '45px', width: '45px' }) }}
         </div>
         <div class="ps-2">
             {% if loading %}
@@ -47,7 +47,7 @@
             {% endfor %}
         </div>
         <div class="user avatar rounded-3 shadow-sm">
-            {{ ux_icon('solar:user-bold', { width: '45px', height: '45px' }) }}
+            {{ ux_icon('user', { width: '45px', height: '45px' }) }}
         </div>
     </div>
 {% endmacro %}

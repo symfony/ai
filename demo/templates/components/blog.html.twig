@@ -2,16 +2,16 @@
 
 <div class="card mx-auto shadow-lg" {{ attributes.defaults(stimulus_controller('blog')) }}>
     <div class="card-header p-2">
-            {{ ux_icon('mdi:symfony', { height: '32px', width: '32px' }) }}
+            {{ ux_icon('symfony', { height: '32px', width: '32px' }) }}
             <strong class="ms-1 pt-1 d-inline-block">Symfony Blog Bot</strong>
-        <button {{ live_action('reset') }} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
+        <button {{ live_action('reset') }} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('cancel') }} Reset Chat</button>
     </div>
     <div id="chat-body" class="card-body p-4 overflow-auto">
         {% for message in this.messages %}
             {% include '_message.html.twig' with { message, latest: loop.last } %}
         {% else %}
             <div id="welcome" class="text-center mt-5 py-5 bg-white rounded-5 shadow-sm w-75 mx-auto">
-                {{ ux_icon('mdi:symfony', { height: '200px', width: '200px' }) }}
+                {{ ux_icon('symfony', { height: '200px', width: '200px' }) }}
                 <h4 class="mt-5">Retrieval Augmented Generation based on the Symfony blog</h4>
                 <span class="text-muted">Please use the text input at the bottom to start chatting.</span>
             </div>
@@ -27,7 +27,7 @@
                    data-model="norender|message"
                    type="text" class="form-control border-0" placeholder="Write a message ...">
             <button class="btn btn-outline-secondary border-0">
-                {{ ux_icon('mingcute:send-fill', { height: '25px', width: '25px' }) }} Submit
+                {{ ux_icon('send', { height: '25px', width: '25px' }) }} Submit
             </button>
         </form>
     </div>

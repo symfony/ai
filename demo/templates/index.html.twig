@@ -16,7 +16,7 @@
             <div class="col-md-3">
                 <div class="card youtube bg-body shadow-sm">
                     <div class="card-img-top py-2">
-                        {{ ux_icon('bi:youtube', { height: '150px', width: '150px' }) }}
+                        {{ ux_icon('youtube', { height: '150px', width: '150px' }) }}
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">YouTube Transcript Bot</h5>
@@ -26,7 +26,7 @@
                     {# Profiler route only available in dev #}
                     {% if 'dev' == app.environment %}
                         <div class="card-footer">
-                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            {{ ux_icon('code') }}
                             <a href="{{ path('_profiler_open_file', { file: 'src/YouTube/Chat.php', line: 21 }) }}">See Implementation</a>
                         </div>
                     {% endif %}
@@ -35,7 +35,7 @@
             <div class="col-md-3">
                 <div class="card recipe bg-body shadow-sm">
                     <div class="card-img-top py-2">
-                        {{ ux_icon('mdi:cook', { height: '150px', width: '150px' }) }}
+                        {{ ux_icon('recipe', { height: '150px', width: '150px' }) }}
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">Recipe Bot</h5>
@@ -45,7 +45,7 @@
                     {# Profiler route only available in dev #}
                     {% if 'dev' == app.environment %}
                         <div class="card-footer">
-                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            {{ ux_icon('code') }}
                             <a href="{{ path('_profiler_open_file', { file: 'src/Recipe/Chat.php', line: 22 }) }}">See Implementation</a>
                         </div>
                     {% endif %}
@@ -54,7 +54,7 @@
             <div class="col-md-3">
                 <div class="card wikipedia bg-body shadow-sm">
                     <div class="card-img-top py-2">
-                        {{ ux_icon('mdi:wikipedia', { height: '150px', width: '150px' }) }}
+                        {{ ux_icon('wikipedia', { height: '150px', width: '150px' }) }}
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">Wikipedia Research Bot</h5>
@@ -64,7 +64,7 @@
                     {# Profiler route only available in dev #}
                     {% if 'dev' == app.environment %}
                         <div class="card-footer">
-                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            {{ ux_icon('code') }}
                             <a href="{{ path('_profiler_open_file', { file: 'src/Wikipedia/Chat.php', line: 21 }) }}">See Implementation</a>
                         </div>
                     {% endif %}
@@ -73,7 +73,7 @@
             <div class="col-md-3">
                 <div class="card blog bg-body shadow-sm">
                     <div class="card-img-top py-2">
-                        {{ ux_icon('mdi:symfony', { height: '150px', width: '150px' }) }}
+                        {{ ux_icon('symfony', { height: '150px', width: '150px' }) }}
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">Symfony Blog Bot</h5>
@@ -83,7 +83,7 @@
                     {# Profiler route only available in dev #}
                     {% if 'dev' == app.environment %}
                         <div class="card-footer">
-                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            {{ ux_icon('code') }}
                             <a href="{{ path('_profiler_open_file', { file: 'src/Blog/Chat.php', line: 21 }) }}">See Implementation</a>
                         </div>
                     {% endif %}
@@ -94,7 +94,7 @@
             <div class="col-md-3">
                 <div class="card speech bg-body shadow-sm">
                     <div class="card-img-top py-2">
-                        {{ ux_icon('iconoir:microphone-solid', { height: '150px', width: '150px' }) }}
+f                        {{ ux_icon('microphone', { height: '150px', width: '150px' }) }}
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">Speech Bot + Subagent</h5>
@@ -104,7 +104,7 @@
                     {# Profiler route only available in dev #}
                     {% if 'dev' == app.environment %}
                         <div class="card-footer">
-                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            {{ ux_icon('code') }}
                             <a href="{{ path('_profiler_open_file', { file: 'src/Speech/Chat.php', line: 25 }) }}">See Implementation</a>
                         </div>
                     {% endif %}
@@ -113,7 +113,7 @@
             <div class="col-md-3">
                 <div class="card video bg-body shadow-sm">
                     <div class="card-img-top py-2">
-                        {{ ux_icon('tabler:video-filled', { height: '150px', width: '150px' }) }}
+                        {{ ux_icon('video', { height: '150px', width: '150px' }) }}
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">Video Bot</h5>
@@ -123,7 +123,7 @@
                     {# Profiler route only available in dev #}
                     {% if 'dev' == app.environment %}
                         <div class="card-footer">
-                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            {{ ux_icon('code') }}
                             <a href="{{ path('_profiler_open_file', { file: 'src/Video/TwigComponent.php', line: 41 }) }}">See Implementation</a>
                         </div>
                     {% endif %}
@@ -132,7 +132,7 @@
             <div class="col-md-3">
                 <div class="card crop bg-body shadow-sm">
                     <div class="card-img-top py-2">
-                        {{ ux_icon('material-symbols:crop', { height: '150px', width: '150px' }) }}
+                        {{ ux_icon('crop', { height: '150px', width: '150px' }) }}
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">Smart Image Cropping</h5>
@@ -142,7 +142,7 @@
                     {# Profiler route only available in dev #}
                     {% if 'dev' == app.environment %}
                         <div class="card-footer">
-                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            {{ ux_icon('code') }}
                             <a href="{{ path('_profiler_open_file', { file: 'src/Crop/Image/Analyzer.php', line: 21 }) }}">See Implementation</a>
                         </div>
                     {% endif %}
@@ -151,7 +151,7 @@
             <div class="col-md-3">
                 <div class="card stream bg-body shadow-sm">
                     <div class="card-img-top py-2">
-                        {{ ux_icon('mdi:car-turbocharger', { height: '150px', width: '150px' }) }}
+                        {{ ux_icon('turbo', { height: '150px', width: '150px' }) }}
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">Turbo Stream Bot</h5>
@@ -161,7 +161,7 @@
                     {# Profiler route only available in dev #}
                     {% if 'dev' == app.environment %}
                         <div class="card-footer">
-                            {{ ux_icon('solar:code-linear', { height: '20px', width: '20px' }) }}
+                            {{ ux_icon('code') }}
                             <a href="{{ path('_profiler_open_file', { file: 'src/Stream/TwigComponent.php', line: 41 }) }}">See Implementation</a>
                         </div>
                     {% endif %}

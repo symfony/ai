@@ -1,8 +1,8 @@
 <div class="card mx-auto shadow-lg" {{ attributes.defaults(stimulus_controller('recipe')) }}>
     <div class="card-header p-2">
-            {{ ux_icon('mdi:cook', { height: '32px', width: '32px' }) }}
+            {{ ux_icon('recipe', { height: '32px', width: '32px' }) }}
             <strong class="ms-1 pt-1 d-inline-block">Recipe Bot</strong>
-        <button {{ live_action('reset') }} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('material-symbols:cancel') }} Reset Chat</button>
+        <button {{ live_action('reset') }} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('cancel') }} Reset Chat</button>
     </div>
     <div id="chat-body" class="card-body p-4 overflow-auto">
         {% if this.recipe %}
@@ -14,7 +14,7 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="info-box p-2 bg-light rounded">
-                                    {{ ux_icon('mdi:clock', { height: '24px', width: '24px', class: 'text-primary' }) }}
+                                    {{ ux_icon('clock', { height: '24px', width: '24px', class: 'text-primary' }) }}
                                     <p class="mb-0 mt-2 small">
                                         <strong>{{ recipe.duration }}</strong><br>
                                         <span class="text-muted">minutes</span>
@@ -23,7 +23,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="info-box p-2 bg-light rounded">
-                                    {{ ux_icon('mdi:signal-variant', { height: '24px', width: '24px', class: 'text-warning' }) }}
+                                    {{ ux_icon('difficulty', { height: '24px', width: '24px', class: 'text-warning' }) }}
                                     <p class="mb-0 mt-2 small">
                                         <strong>{{ recipe.level }}</strong><br>
                                         <span class="text-muted">difficulty</span>
@@ -32,7 +32,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="info-box p-2 bg-light rounded">
-                                    {{ ux_icon('mdi:leaf', { height: '24px', width: '24px', class: 'text-success' }) }}
+                                    {{ ux_icon('vegetarian', { height: '24px', width: '24px', class: 'text-success' }) }}
                                     <p class="mb-0 mt-2 small">
                                         <strong>{{ recipe.diet }}</strong><br>
                                         <span class="text-muted">diet</span>
@@ -44,7 +44,7 @@
                         <!-- Ingredients Section -->
                         <div class="mb-4 text-start mt-4">
                             <h5 class="mb-3">
-                                {{ ux_icon('mdi:format-list-checkbox', { height: '20px', width: '20px', class: 'me-2' }) }}
+                                {{ ux_icon('ingredients', { class: 'me-2' }) }}
                                 Ingredients
                             </h5>
                             <div class="d-flex flex-wrap gap-2">
@@ -59,7 +59,7 @@
                     </div>
                     <div class="col-md-8 text-start">
                         <h5 class="mb-3">
-                            {{ ux_icon('mdi:clipboard-list', { height: '20px', width: '20px', class: 'me-2' }) }}
+                            {{ ux_icon('steps', { class: 'me-2' }) }}
                             Instructions
                         </h5>
                         <div class="">
@@ -75,7 +75,7 @@
                         <div class="mt-4 border-top pt-3 d-flex align-items-center justify-content-between">
                             <div class="fw-semibold text-muted">Share this recipe</div>
                             <button class="btn btn-outline-secondary" {{ live_action('openShare') }}>
-                                {{ ux_icon('mdi:email-send', { height: '20px', width: '20px', class: 'me-1' }) }}
+                                {{ ux_icon('email', { class: 'me-1' }) }}
                                 Share
                             </button>
                         </div>
@@ -84,7 +84,7 @@
             </div>
         {% else %}
             <div data-loading="hide" class="text-center mt-5 py-5 bg-white rounded-5 shadow-sm w-75 mx-auto">
-                {{ ux_icon('mdi:cook', { height: '200px', width: '200px' }) }}
+                {{ ux_icon('recipe', { height: '200px', width: '200px' }) }}
                 <h4 class="mt-5">Cooking Recipes</h4>
                 <span class="text-muted">Please provide your preferences for a recipe.</span>
             </div>
@@ -103,7 +103,7 @@
         <div class="share-panel">
             <button class="share-close" {{ live_action('closeShare') }} aria-label="Close">×</button>
             <h4 class="mb-2">
-                {{ ux_icon('mdi:email-send', { height: '22px', width: '22px', class: 'me-2' }) }}
+                {{ ux_icon('email', { height: '22px', width: '22px', class: 'me-2' }) }}
                 Share this recipe
             </h4>
             <p class="text-muted mb-3">Send the recipe to an email address.</p>
@@ -126,7 +126,7 @@
                    data-model="norender|message"
                    type="text" class="form-control border-0" placeholder="Write a message ...">
             <button class="btn btn-outline-secondary border-0">
-                {{ ux_icon('mingcute:send-fill', { height: '25px', width: '25px' }) }} Submit
+                {{ ux_icon('send', { height: '25px', width: '25px' }) }} Submit
             </button>
         </form>
     </div>
