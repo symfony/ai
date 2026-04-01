@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -135,6 +136,10 @@ final class ResultConverter implements ResultConverterInterface
 
             if (str_contains($type, 'output_text') && isset($event['delta'])) {
                 yield new TextDelta($event['delta']);
+            }
+
+            if (str_contains($type, 'reasoning_summary_text') && isset($event['delta'])) {
+                yield new ThinkingDelta($event['delta']);
             }
 
             if (!str_contains($type, 'completed')) {

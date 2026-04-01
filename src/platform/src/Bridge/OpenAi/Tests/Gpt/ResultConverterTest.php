@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -345,5 +346,50 @@ class ResultConverterTest extends TestCase
         foreach ($streamResult->getContent() as $part) {
             // Iterate to trigger the generator
         }
+    }
+
+    public function testStreamWithReasoningContent()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            [
+                'type' => 'response.reasoning_summary_text.delta',
+                'delta' => 'Let me think',
+            ],
+            [
+                'type' => 'response.reasoning_summary_text.delta',
+                'delta' => ' about this...',
+            ],
+            [
+                'type' => 'response.output_text.delta',
+                'delta' => 'The answer is 42.',
+            ],
+            [
+                'type' => 'response.completed',
+                'response' => [
+                    'output' => [],
+                ],
+            ],
+        ];
+
+        $raw = new InMemoryRawResult([], $events, $httpResponse);
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $streamResult);
+
+        $chunks = iterator_to_array($streamResult->getContent());
+
+        $this->assertCount(3, $chunks);
+        $this->assertInstanceOf(ThinkingDelta::class, $chunks[0]);
+        $this->assertSame('Let me think', $chunks[0]->getThinking());
+        $this->assertInstanceOf(ThinkingDelta::class, $chunks[1]);
+        $this->assertSame(' about this...', $chunks[1]->getThinking());
+        $this->assertInstanceOf(TextDelta::class, $chunks[2]);
+        $this->assertSame('The answer is 42.', $chunks[2]->getText());
     }
 }
