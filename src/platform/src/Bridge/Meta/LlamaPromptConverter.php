@@ -49,15 +49,17 @@ final class LlamaPromptConverter
         }
 
         if ($message instanceof AssistantMessage) {
-            if ('' === $message->getContent() || null === $message->getContent()) {
-                return '';
+            foreach ($message as $content) {
+                if ($content instanceof Text && $content->getText()) {
+                    return trim(<<<ASSISTANT
+                        <|start_header_id|>{$message->getRole()->value}<|end_header_id|>
+
+                        {$message->getContent()}<|eot_id|>
+                        ASSISTANT);
+                }
             }
 
-            return trim(<<<ASSISTANT
-                <|start_header_id|>{$message->getRole()->value}<|end_header_id|>
-
-                {$message->getContent()}<|eot_id|>
-                ASSISTANT);
+            return '';
         }
 
         // Handling of UserMessage

@@ -14,7 +14,10 @@ namespace Symfony\AI\Platform\Bridge\Anthropic\Contract;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\ThinkingContent;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 
@@ -43,39 +46,45 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        $hasBlocks = $data->hasToolCalls() || $data->hasThinkingContent();
+        $content = $data->getContent();
 
-        if (!$hasBlocks) {
-            return [
-                'role' => 'assistant',
-                'content' => $data->getContent() ?? '',
-            ];
+        if (!is_iterable($content)) {
+            if (!$data->hasToolCalls() && !$data->hasThinkingContent()) {
+                return [
+                    'role' => 'assistant',
+                    'content' => $content instanceof Text ? $content->getText() : (string) $content,
+                ];
+            }
+
+            $content = [$content];
         }
 
         $blocks = [];
 
-        if ($data->hasThinkingContent()) {
-            $thinkingBlock = [
-                'type' => 'thinking',
-                'thinking' => $data->getThinkingContent(),
-            ];
-            if (null !== $data->getThinkingSignature()) {
-                $thinkingBlock['signature'] = $data->getThinkingSignature();
+        foreach ($content as $block) {
+            if ($block instanceof ThinkingContent) {
+                $thinkingBlock = [
+                    'type' => 'thinking',
+                    'thinking' => $block->thinking,
+                ];
+                if (null !== $block->signature) {
+                    $thinkingBlock['signature'] = $block->signature;
+                }
+                $blocks[] = $thinkingBlock;
+                continue;
             }
-            $blocks[] = $thinkingBlock;
-        }
 
-        if (null !== $data->getContent()) {
-            $blocks[] = ['type' => 'text', 'text' => $data->getContent()];
-        }
+            if ($block instanceof Text) {
+                $blocks[] = ['type' => 'text', 'text' => $block->getText()];
+                continue;
+            }
 
-        if ($data->hasToolCalls()) {
-            foreach ($data->getToolCalls() as $toolCall) {
+            if ($block instanceof ToolCall) {
                 $blocks[] = [
                     'type' => 'tool_use',
-                    'id' => $toolCall->getId(),
-                    'name' => $toolCall->getName(),
-                    'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
+                    'id' => $block->getId(),
+                    'name' => $block->getName(),
+                    'input' => [] !== $block->getArguments() ? $block->getArguments() : new \stdClass(),
                 ];
             }
         }

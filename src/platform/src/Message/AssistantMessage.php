@@ -11,27 +11,35 @@
 
 namespace Symfony\AI\Platform\Message;
 
-use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
+use Symfony\AI\Platform\Message\Content\Collection;
+use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\ThinkingContent;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
+ *
+ * @extends \IteratorAggregate<int, ContentInterface>
  */
-final class AssistantMessage implements MessageInterface
+final class AssistantMessage implements MessageInterface, \IteratorAggregate
 {
     use IdentifierAwareTrait;
     use MetadataAwareTrait;
 
-    /**
-     * @param ?ToolCall[] $toolCalls
-     */
+    private readonly ?ContentInterface $content;
+
     public function __construct(
-        private readonly ?string $content = null,
-        private readonly ?array $toolCalls = null,
-        private readonly ?string $thinkingContent = null,
-        private readonly ?string $thinkingSignature = null,
+        ContentInterface ...$content,
     ) {
+        $this->content = match (true) {
+            0 === \count($content) => null,
+            1 === \count($content) => $content[0],
+            default => new Collection(...$content),
+        };
+
         $this->id = Uuid::v7();
     }
 
@@ -42,34 +50,81 @@ final class AssistantMessage implements MessageInterface
 
     public function hasToolCalls(): bool
     {
-        return null !== $this->toolCalls && [] !== $this->toolCalls;
+        foreach ($this as $content) {
+            if ($content instanceof ToolCall) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
-     * @return ?ToolCall[]
+     * @return non-empty-list<ToolCall>|null
      */
     public function getToolCalls(): ?array
     {
-        return $this->toolCalls;
+        $toolCalls = null;
+
+        foreach ($this as $content) {
+            if ($content instanceof ToolCall) {
+                $toolCalls[] = $content;
+            }
+        }
+
+        return $toolCalls;
     }
 
     public function getContent(): ?string
     {
-        return $this->content;
+        foreach ($this as $content) {
+            if ($content instanceof Text) {
+                return $content->getText();
+            }
+        }
+
+        return null;
+    }
+
+    public function getIterator(): \Traversable
+    {
+        if (is_iterable($this->content)) {
+            yield from $this->content;
+        }
+
+        yield $this->content;
     }
 
     public function hasThinkingContent(): bool
     {
-        return null !== $this->thinkingContent;
+        foreach ($this as $content) {
+            if ($content instanceof ThinkingContent) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getThinkingContent(): ?string
     {
-        return $this->thinkingContent;
+        foreach ($this as $content) {
+            if ($content instanceof ThinkingContent) {
+                return $content->getContent();
+            }
+        }
+
+        return null;
     }
 
     public function getThinkingSignature(): ?string
     {
-        return $this->thinkingSignature;
+        foreach ($this as $content) {
+            if ($content instanceof ThinkingContent) {
+                return $content->getSignature();
+            }
+        }
+
+        return null;
     }
 }

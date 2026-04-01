@@ -11,10 +11,12 @@
 
 namespace Symfony\AI\Platform\Result;
 
+use Symfony\AI\Platform\Message\Content\Content;
+
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class ToolCall
+final class ToolCall extends Content
 {
     /**
      * @param array<string, mixed> $arguments

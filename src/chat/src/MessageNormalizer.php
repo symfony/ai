@@ -54,7 +54,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
 
         $message = match ($type) {
             SystemMessage::class => new SystemMessage($content),
-            AssistantMessage::class => new AssistantMessage($content, array_map(
+            AssistantMessage::class => new AssistantMessage($content, ...array_map(
                 static fn (array $toolsCall): ToolCall => new ToolCall(
                     $toolsCall['id'],
                     $toolsCall['function']['name'],

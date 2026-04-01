@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
 
@@ -39,25 +40,23 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        if ($data->hasToolCalls()) {
-            return [
-                'role' => 'assistant',
-                'content' => array_map(static function (ToolCall $toolCall) {
-                    return [
-                        'toolUse' => [
-                            'toolUseId' => $toolCall->getId(),
-                            'name' => $toolCall->getName(),
-                            'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
-                        ],
-                    ];
-                }, $data->getToolCalls()),
-            ];
+        $message = ['role' => 'assistant'];
+
+        foreach ($data as $i => $content) {
+            if ($content instanceof ToolCall) {
+                $message['content'][$i]['toolUse'] = [
+                    'toolUseId' => $content->getId(),
+                    'name' => $content->getName(),
+                    'input' => [] !== $content->getArguments() ? $content->getArguments() : new \stdClass(),
+                ];
+            }
+
+            if ($content instanceof Text) {
+                $message['content'][$i]['text'] = $content->getText();
+            }
         }
 
-        return [
-            'role' => 'assistant',
-            'content' => [['text' => $data->getContent()]],
-        ];
+        return $message;
     }
 
     protected function supportedDataClass(): string

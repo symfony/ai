@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\Platform\Message;
 
-use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\Component\Uid\Uuid;
 
 /**

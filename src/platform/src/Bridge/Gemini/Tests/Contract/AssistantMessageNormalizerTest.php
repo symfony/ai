@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Gemini\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Result\ToolCall;
 
 final class AssistantMessageNormalizerTest extends TestCase
@@ -25,7 +26,7 @@ final class AssistantMessageNormalizerTest extends TestCase
     {
         $normalizer = new AssistantMessageNormalizer();
 
-        $this->assertTrue($normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
+        $this->assertTrue($normalizer->supportsNormalization(new AssistantMessage(new Text('Hello')), context: [
             Contract::CONTEXT_MODEL => new Gemini('gemini-2.0-flash'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not an assistant message'));

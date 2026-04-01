@@ -11,7 +11,9 @@
 
 namespace Symfony\AI\Platform\Message\Content;
 
-final class Collection implements ContentInterface
+use Symfony\AI\Platform\Exception\LogicException;
+
+final class Collection extends Content implements \IteratorAggregate, \Countable, \ArrayAccess
 {
     /**
      * @var ContentInterface[]
@@ -29,5 +31,38 @@ final class Collection implements ContentInterface
     public function getContent(): array
     {
         return $this->content;
+    }
+
+    /**
+     * @return \Traversable<ContentInterface>
+     */
+    public function getIterator(): \Traversable
+    {
+        yield from $this->content;
+    }
+
+    public function count(): int
+    {
+        return \count($this->content);
+    }
+
+    public function offsetExists(mixed $offset): bool
+    {
+        return \array_key_exists($offset, $this->content);
+    }
+
+    public function offsetGet(mixed $offset): ContentInterface
+    {
+        return $this->content[$offset];
+    }
+
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        throw new LogicException('Not allowed set values');
+    }
+
+    public function offsetUnset(mixed $offset): void
+    {
+        unset($this->content[$offset]);
     }
 }
