@@ -40,6 +40,7 @@
     },
     "require-dev": {
         "ext-simplexml": "*",
+        "composer/composer": "^2",
         "helgesverre/toon": "^3.1",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",

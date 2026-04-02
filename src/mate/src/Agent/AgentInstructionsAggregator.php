@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Mate\Agent;
 
+use Composer\Composer;
+use Composer\Factory;
+use Composer\IO\NullIO;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 
@@ -30,6 +33,8 @@ use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
  */
 final class AgentInstructionsAggregator
 {
+    private ?Composer $composer = null;
+
     /**
      * @param array<string, ExtensionData> $extensions
      */
@@ -87,6 +92,16 @@ final class AgentInstructionsAggregator
         }
 
         $fullPath = $this->rootDir.'/vendor/'.$packageName.'/'.ltrim($instructionsPath, '/');
+        $composer = $this->getComposer();
+
+        if ($composer instanceof Composer) {
+            $package = $composer->getRepositoryManager()->getLocalRepository()->findPackage($packageName, '*');
+
+            if ($package !== null) { // weird if it is not
+                $packagePath = $composer->getInstallationManager()->getInstallPath($package);
+                $fullPath = $packagePath . DIRECTORY_SEPARATOR . ltrim($instructionsPath, '/');
+            }
+        }
 
         return $this->readInstructionsFile($fullPath, $packageName);
     }
@@ -146,6 +161,22 @@ final class AgentInstructionsAggregator
         ]);
 
         return $content;
+    }
+
+    private function getComposer(): ?Composer
+    {
+        if ($this->composer !== null) {
+            return $this->composer;
+        }
+
+        if (class_exists(Factory::class)) {
+            $result = Factory::create(new NullIO(), disableScripts: true);
+            $this->composer = $result;
+
+            return $result;
+        }
+
+        return null;
     }
 
     private function getGlobalHeader(): string

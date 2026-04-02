@@ -11,6 +11,10 @@
 
 namespace Symfony\AI\Mate\Discovery;
 
+use Composer\Composer;
+use Composer\Factory;
+use Composer\IO\NullIO;
+use Composer\Util\Filesystem;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -45,6 +49,8 @@ final class ComposerExtensionDiscovery
      * }>|null
      */
     private ?array $installedPackages = null;
+
+    private ?Composer $composer = null;
 
     public function __construct(
         private string $rootDir,
@@ -161,11 +167,32 @@ final class ComposerExtensionDiscovery
             return $this->installedPackages;
         }
 
+        $composer = $this->getComposer();
+
+        if ($composer !== null) {
+            $indexed = [];
+
+            foreach ($composer->getRepositoryManager()->getLocalRepository()->getPackages() as $package) {
+                $indexed[$package->getName()] = [
+                    'name' => $package->getName(),
+                    'extra' => $package->getExtra(),
+                ];
+            }
+        } else {
+            $indexed = $this->getPackagesWithoutComposer();
+        }
+
+        return $this->installedPackages = $indexed;
+    }
+
+    private function getPackagesWithoutComposer(): array
+    {
         $installedJsonPath = $this->rootDir.'/vendor/composer/installed.json';
+
         if (!file_exists($installedJsonPath)) {
             $this->logger->warning('Composer installed.json not found', ['path' => $installedJsonPath]);
 
-            return $this->installedPackages = [];
+            return [];
         }
 
         $content = file_get_contents($installedJsonPath);
@@ -175,7 +202,7 @@ final class ComposerExtensionDiscovery
                 'error' => error_get_last()['message'] ?? 'Unknown error',
             ]);
 
-            return $this->installedPackages = [];
+            return [];
         }
 
         try {
@@ -183,20 +210,22 @@ final class ComposerExtensionDiscovery
         } catch (\JsonException $e) {
             $this->logger->error('Invalid JSON in installed.json', ['error' => $e->getMessage()]);
 
-            return $this->installedPackages = [];
+            return [];
         }
 
         if (!\is_array($data)) {
-            return $this->installedPackages = [];
+            return [];
         }
 
         // Handle both formats: {"packages": [...]} and direct array
         $packages = $data['packages'] ?? $data;
+
         if (!\is_array($packages)) {
-            return $this->installedPackages = [];
+            return [];
         }
 
         $indexed = [];
+
         foreach ($packages as $package) {
             if (!\is_array($package) || !isset($package['name']) || !\is_string($package['name'])) {
                 continue;
@@ -205,7 +234,8 @@ final class ComposerExtensionDiscovery
             /** @var array{
              *     name: string,
              *     extra: array<string, mixed>,
-             * } $validPackage */
+             * } $validPackage
+             */
             $validPackage = [
                 'name' => $package['name'],
                 'extra' => [],
@@ -220,7 +250,7 @@ final class ComposerExtensionDiscovery
             $indexed[$package['name']] = $validPackage;
         }
 
-        return $this->installedPackages = $indexed;
+        return $indexed;
     }
 
     /**
@@ -234,10 +264,25 @@ final class ComposerExtensionDiscovery
     private function extractScanDirs(array $package, string $packageName): array
     {
         $aiMateConfig = $package['extra']['ai-mate'] ?? null;
+        $composer = $this->getComposer();
+        $package = null;
+
+        if ($composer instanceof Composer) {
+            $package = $composer->getRepositoryManager()->getLocalRepository()->findPackage($packageName, '*');
+        }
+
         if (null === $aiMateConfig) {
             // Default: scan package root directory if no config provided
             $defaultDir = 'vendor/'.$packageName;
-            if (is_dir($this->rootDir.'/'.$defaultDir)) {
+            $fullPath = $this->rootDir.'/'.$defaultDir;
+
+            if ($package !== null) {
+                $packagePath = $composer->getInstallationManager()->getInstallPath($package);
+                $defaultDir = (new Filesystem())->findShortestPath($this->rootDir, $packagePath, directories: true);
+                $fullPath = $packagePath;
+            }
+
+            if (is_dir($fullPath)) {
                 return [$defaultDir];
             }
 
@@ -268,16 +313,25 @@ final class ComposerExtensionDiscovery
                 continue;
             }
 
-            $fullPath = 'vendor/'.$packageName.'/'.ltrim($dir, '/');
-            if (!is_dir($this->rootDir.'/'.$fullPath)) {
+            $packageScanDir = 'vendor/'.$packageName.'/'.ltrim($dir, '/');
+            $fullPath = $this->rootDir.'/'.$packageScanDir;
+
+            if ($package !== null) {
+                $packagePath = $composer->getInstallationManager()->getInstallPath($package);
+                $packageScanDir = $packagePath.'/'.ltrim($dir, '/');
+                $fullPath = $packageScanDir;
+                $packageScanDir = (new Filesystem())->findShortestPath($this->rootDir, $packageScanDir, directories: true);
+            }
+
+            if (!is_dir($fullPath)) {
                 $this->logger->warning('Scan directory does not exist', [
                     'package' => $packageName,
-                    'directory' => $fullPath,
+                    'directory' => $packageScanDir,
                 ]);
                 continue;
             }
 
-            $validDirs[] = $fullPath;
+            $validDirs[] = $packageScanDir;
         }
 
         return $validDirs;
@@ -316,6 +370,13 @@ final class ComposerExtensionDiscovery
             return [];
         }
 
+        $composer = $this->getComposer();
+        $package = null;
+
+        if ($composer instanceof Composer) {
+            $package = $composer->getRepositoryManager()->getLocalRepository()->findPackage($packageName, '*');
+        }
+
         $validFiles = [];
         foreach ($includes as $file) {
             if (!\is_string($file) || '' === trim($file) || str_contains($file, '..')) {
@@ -323,6 +384,12 @@ final class ComposerExtensionDiscovery
             }
 
             $fullPath = $this->rootDir.'/vendor/'.$packageName.'/'.ltrim($file, '/');
+
+            if ($package !== null) {
+                $packagePath = $composer->getInstallationManager()->getInstallPath($package);
+                $fullPath = $packagePath.'/'.ltrim($file, '/');
+            }
+
             if (!file_exists($fullPath)) {
                 $this->logger->warning('Include file does not exist', [
                     'package' => $packageName,
@@ -371,8 +438,21 @@ final class ComposerExtensionDiscovery
             return null;
         }
 
+        $composer = $this->getComposer();
+        $package = null;
+
+        if ($composer instanceof Composer) {
+            $package = $composer->getRepositoryManager()->getLocalRepository()->findPackage($packageName, '*');
+        }
+
         // Validate file exists
         $fullPath = $this->rootDir.'/vendor/'.$packageName.'/'.ltrim($agentInstructions, '/');
+
+        if ($package !== null) {
+            $packagePath = $composer->getInstallationManager()->getInstallPath($package);
+            $fullPath = $packagePath.'/'.ltrim($agentInstructions, '/');
+        }
+
         if (!file_exists($fullPath)) {
             $this->logger->warning('Agent instructions file does not exist', [
                 'package' => $packageName,
@@ -419,5 +499,21 @@ final class ComposerExtensionDiscovery
         }
 
         return $value;
+    }
+
+    private function getComposer(): ?Composer
+    {
+        if ($this->composer !== null) {
+            return $this->composer;
+        }
+
+        if (class_exists(Factory::class)) {
+            $result = Factory::create(new NullIO(), disableScripts: true);
+            $this->composer = $result;
+
+            return $result;
+        }
+
+        return null;
     }
 }
