@@ -34,18 +34,24 @@ Agent
    `ToolCallResult`. If you have a custom `StreamListener` or check for
    `ToolCallResult` in stream consumers, update to `ToolCallComplete`.
 
-Mate
-----
-
- * Run `vendor/bin/mate discover` to update the generated `AGENT_INSTRUCTIONS.md` file with the latest
-   tool descriptions and agent instructions.
-
 AI Bundle
 ---------
 
  * The `api_catalog` option for `Ollama` has been removed as the catalog is now automatically fetched from the Ollama server
  * The `api_key` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * The `endpoint` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
+
+Chat
+----
+
+ * The `ChatInterface` now has a `stream()` method. If you implement this interface,
+   you need to add this method to your implementation.
+
+Mate
+----
+
+ * Run `vendor/bin/mate discover` to update the generated `AGENT_INSTRUCTIONS.md` file with the latest
+   tool descriptions and agent instructions.
 
 Platform
 --------
@@ -135,10 +141,6 @@ Store
  * The `apiKey` parameter for `AzureSearchStore` has been removed
  * The `apiVersion` parameter for `AzureSearchStore` has been removed
  * A `StoreFactory` has been introduced for `AzureSearchStore`
-
- * The `ChatInterface` now has a `stream()` method. If you implement this interface,
-   you need to add this method to your implementation.
-
  * The `endpointUrl` parameter for Weaviate `Store` has been removed
  * The `apiKey` parameter for Weaviate `Store` has been removed
 
