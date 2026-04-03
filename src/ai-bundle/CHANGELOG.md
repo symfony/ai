@@ -14,6 +14,7 @@ CHANGELOG
  * The `api_version` option for `Azure` store is now `null` by default to allow the usage of a `ScopingHttpClient`
  * The `vector_field` option for `Azure` store is now `vector` by default
  * Add support for `ScopingHttpClient` usage in `AzureSearch` store
+ * Add `count` method to `TraceableStore`
 
 0.6
 ---

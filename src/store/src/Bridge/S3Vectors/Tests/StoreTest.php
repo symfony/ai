@@ -14,6 +14,7 @@ namespace Symfony\AI\Store\Bridge\S3Vectors\Tests;
 use AsyncAws\Core\Test\ResultMockFactory;
 use AsyncAws\S3Vectors\Enum\DataType;
 use AsyncAws\S3Vectors\Enum\DistanceMetric;
+use AsyncAws\S3Vectors\Result\GetIndexOutput;
 use AsyncAws\S3Vectors\Result\QueryVectorsOutput;
 use AsyncAws\S3Vectors\S3VectorsClient;
 use AsyncAws\S3Vectors\ValueObject\QueryOutputVector;
@@ -332,6 +333,25 @@ final class StoreTest extends TestCase
             }));
 
         self::createStore($client)->drop();
+    }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $client = $this->createMock(S3VectorsClient::class);
+
+        $result = ResultMockFactory::create(GetIndexOutput::class, [
+            'vectorCount' => 42,
+        ]);
+
+        $client->expects($this->once())
+            ->method('getIndex')
+            ->with($this->callback(static function ($input) {
+                return 'test-bucket' === $input['vectorBucketName']
+                    && 'test-index' === $input['indexName'];
+            }))
+            ->willReturn($result);
+
+        $this->assertSame(42, self::createStore($client)->count());
     }
 
     /**

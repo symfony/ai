@@ -239,6 +239,32 @@ class StoreTest extends TestCase
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 
+    public function testCountReturnsDocumentCount()
+    {
+        $httpClient = new MockHttpClient(new MockResponse('[]', [
+            'http_code' => 200,
+            'response_headers' => [
+                'content-range' => '0-0/42',
+            ],
+        ]));
+
+        $store = $this->createStore($httpClient);
+
+        $this->assertSame(42, $store->count());
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testCountReturnsZeroWhenNoContentRangeHeader()
+    {
+        $httpClient = new MockHttpClient(new MockResponse('[]', [
+            'http_code' => 200,
+        ]));
+
+        $store = $this->createStore($httpClient);
+
+        $this->assertSame(0, $store->count());
+    }
+
     private function createStore(MockHttpClient $httpClient, ?int $vectorDimension = 2): SupabaseStore
     {
         return new SupabaseStore(

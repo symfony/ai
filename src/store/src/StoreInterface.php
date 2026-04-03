@@ -18,7 +18,7 @@ use Symfony\AI\Store\Query\QueryInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-interface StoreInterface
+interface StoreInterface extends \Countable
 {
     /**
      * @param VectorDocument|VectorDocument[] $documents
@@ -44,4 +44,6 @@ interface StoreInterface
      * @param class-string<QueryInterface> $queryClass The query class to check
      */
     public function supports(string $queryClass): bool;
+
+    public function count(): int;
 }

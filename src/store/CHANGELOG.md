@@ -11,6 +11,7 @@ CHANGELOG
  * [BC BREAK] Add `?EventDispatcherInterface $eventDispatcher` as 3rd constructor parameter of `Retriever` (before `$logger`)
  * Add automatic text content preservation in `Vectorizer` metadata
  * Add batch processing in `DistanceCalculator` for local vector stores
+ * Add `count` method to `StoreInterface`
 
 0.6
 ---
