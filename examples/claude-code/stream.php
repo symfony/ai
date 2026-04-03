@@ -12,7 +12,6 @@
 use Symfony\AI\Platform\Bridge\ClaudeCode\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -31,9 +30,7 @@ $result = $platform->invoke('haiku', $messages, [
     'max_turns' => 1,
 ]);
 
-foreach ($result->asStream() as $delta) {
-    if ($delta instanceof TextDelta) {
-        echo $delta;
-    }
+foreach ($result->asTextStream() as $delta) {
+    echo $delta;
 }
 echo \PHP_EOL;

@@ -306,26 +306,57 @@ Result Streaming
 ----------------
 
 Since LLMs usually generate a result word by word, most of them also support streaming the result using Server Side
-Events. Symfony AI supports that by abstracting the conversion and returning a :class:`Generator` as content of the result::
+Events. Symfony AI supports that by abstracting the conversion and yielding semantic
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\DeltaInterface` deltas as content of the result.
 
-    use Symfony\AI\Agent\Agent;
+The simplest way to consume a stream is ``asTextStream()``, which filters for
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\TextDelta` deltas only::
+
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
     // Initialize Platform and LLM
 
-    $agent = new Agent($platform, $model);
     $messages = new MessageBag(
         Message::forSystem('You are a thoughtful philosopher.'),
         Message::ofUser('What is the purpose of an ant?'),
     );
-    $result = $agent->call($messages, [
+    $result = $platform->invoke($model, $messages, [
         'stream' => true, // enable streaming of response text
     ]);
 
-    foreach ($result->getContent() as $word) {
-        echo $word;
+    foreach ($result->asTextStream() as $delta) {
+        echo $delta;
     }
+
+If you need access to all delta types (e.g. tool calls, thinking, metadata), use
+``asStream()`` instead::
+
+    use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+    use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
+
+    foreach ($result->asStream() as $delta) {
+        if ($delta instanceof TextDelta) {
+            echo $delta;
+        }
+
+        if ($delta instanceof ToolCallComplete) {
+            // handle tool calls
+        }
+    }
+
+The following delta types are available:
+
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\TextDelta` -- a chunk of generated text
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingDelta` -- a chunk of model reasoning
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingComplete` -- signals thinking is complete, includes accumulated thinking text and optional signature
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingSignature` -- a cryptographic signature for a thinking block
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallStart` -- signals the start of a tool call
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolInputDelta` -- a chunk of tool call input data
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallComplete` -- signals all tool calls are complete and ready for execution
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\MetadataDelta` -- metadata associated with the stream
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ChoiceDelta` -- a choice delta (e.g. multiple completions)
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` -- a chunk of binary data
 
 .. note::
 
@@ -344,8 +375,9 @@ Thinking / Extended Reasoning
 
 Some models support "extended thinking" or "reasoning" where the model
 explicitly works through a problem step by step before producing its final
-answer. This is exposed through the ``Capability::THINKING`` capability and the
-:class:`Symfony\\AI\\Platform\\Result\\ThinkingContent` value object.
+answer. This is exposed through the ``Capability::THINKING`` capability and
+the streaming delta types :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingDelta`
+and :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingComplete`.
 
 Enabling Thinking
 ~~~~~~~~~~~~~~~~~
@@ -375,21 +407,29 @@ may use for reasoning)::
 Consuming Thinking in Streams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When streaming, the generator yields
-:class:`Symfony\\AI\\Platform\\Result\\ThinkingContent` objects alongside
-regular text strings and :class:`Symfony\\AI\\Platform\\Result\\ToolCallResult`
-objects::
+When streaming, the generator yields thinking-related deltas alongside
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\TextDelta` and
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallComplete`
+deltas::
 
-    use Symfony\AI\Platform\Result\ThinkingContent;
-    use Symfony\AI\Platform\Result\ToolCallResult;
+    use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+    use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
+    use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 
-    foreach ($result->getContent() as $chunk) {
-        if ($chunk instanceof ThinkingContent) {
-            // The model's reasoning (not shown to the user in most UIs)
-            echo '[thinking] ' . $chunk->thinking . "\n";
+    foreach ($result->asStream() as $delta) {
+        if ($delta instanceof ThinkingDelta) {
+            // Incremental reasoning chunk (not shown to the user in most UIs)
+            echo '[thinking] ' . $delta->getThinking();
+
+            continue;
+        }
+
+        if ($delta instanceof ThinkingComplete) {
+            // The full thinking block is complete
+            echo '[thinking done] ' . $delta->getThinking() . "\n";
 
             // Anthropic includes a cryptographic signature for verification
-            if (null !== $chunk->signature) {
+            if (null !== $delta->getSignature()) {
                 // Store signature if you need to echo the thinking block
                 // back in subsequent requests
             }
@@ -397,19 +437,15 @@ objects::
             continue;
         }
 
-        if ($chunk instanceof ToolCallResult) {
-            // Handle tool calls as usual
-            continue;
+        if ($delta instanceof TextDelta) {
+            echo $delta;
         }
-
-        // Regular text content
-        echo $chunk;
     }
 
-The ``ThinkingContent`` object has two properties:
+The ``ThinkingComplete`` delta has two methods:
 
-* ``thinking`` (string): the model's reasoning text
-* ``signature`` (?string): a cryptographic signature (Anthropic only), required
+* ``getThinking()`` (string): the model's accumulated reasoning text
+* ``getSignature()`` (?string): a cryptographic signature (Anthropic only), required
   when echoing thinking blocks back in multi-turn conversations
 
 Multi-Turn Conversations with Thinking

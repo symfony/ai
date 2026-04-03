@@ -14,6 +14,7 @@ CHANGELOG
  * Add reranking support via `RerankingResult`, `RerankingEntry`, and `Capability::RERANKING`
  * Add `description` and `example` properties to `#[With]` attribute
  * Generate JSON schema from Symfony Validator constraints when available
+ * Add `asTextStream()` method to `DeferredResult` to get a stream of `TextDelta` objects only
 
 0.6
 ---

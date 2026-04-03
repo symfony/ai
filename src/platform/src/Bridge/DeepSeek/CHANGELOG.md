@@ -9,7 +9,7 @@ CHANGELOG
 0.4
 ---
 
- * [BC BREAK]: The stream generator now yields `ThinkingDelta`, `ThinkingComplete`, `TextDelta`, and `ToolCallComplete` deltas instead of strings and `ToolCallResult`
+ * [BC BREAK]: The stream generator now yields `ThinkingContent` objects in addition to strings and `ToolCallResult`
  * Parse reasoning_content in streaming responses
  * Add Capability::THINKING to deepseek-reasoner
 
