@@ -100,4 +100,50 @@ final class AssistantMessageNormalizerTest extends TestCase
         $this->assertNull($result['content']);
         $this->assertSame($expectedToolCalls, $result['tool_calls']);
     }
+
+    public function testNormalizeWithThinkingContent()
+    {
+        $message = new AssistantMessage('The answer is 42.', null, 'Let me think about this...');
+
+        $expected = [
+            'role' => 'assistant',
+            'content' => 'The answer is 42.',
+            'reasoning_content' => 'Let me think about this...',
+        ];
+
+        $this->assertSame($expected, $this->normalizer->normalize($message));
+    }
+
+    public function testNormalizeWithoutThinkingContentDoesNotEmitReasoningContent()
+    {
+        $message = new AssistantMessage('Just a normal response');
+
+        $result = $this->normalizer->normalize($message);
+
+        $this->assertArrayNotHasKey('reasoning_content', $result);
+        $this->assertSame('Just a normal response', $result['content']);
+    }
+
+    public function testNormalizeWithThinkingContentAndToolCalls()
+    {
+        $toolCalls = [new ToolCall('id1', 'function1', ['param' => 'value'])];
+        $message = new AssistantMessage('Content', $toolCalls, 'Reasoning about tool usage');
+
+        $expectedToolCalls = [['id' => 'id1', 'function' => 'function1', 'arguments' => ['param' => 'value']]];
+
+        $innerNormalizer = $this->createMock(NormalizerInterface::class);
+        $innerNormalizer->expects($this->once())
+            ->method('normalize')
+            ->with($message->getToolCalls(), null, [])
+            ->willReturn($expectedToolCalls);
+
+        $this->normalizer->setNormalizer($innerNormalizer);
+
+        $result = $this->normalizer->normalize($message);
+
+        $this->assertSame('assistant', $result['role']);
+        $this->assertSame('Content', $result['content']);
+        $this->assertSame($expectedToolCalls, $result['tool_calls']);
+        $this->assertSame('Reasoning about tool usage', $result['reasoning_content']);
+    }
 }

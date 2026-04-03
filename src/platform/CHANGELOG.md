@@ -15,6 +15,7 @@ CHANGELOG
  * Add `description` and `example` properties to `#[With]` attribute
  * Generate JSON schema from Symfony Validator constraints when available
  * Add `asTextStream()` method to `DeferredResult` to get a stream of `TextDelta` objects only
+ * Add `reasoning_content` serialization in shared `AssistantMessageNormalizer` for OpenAI-compatible endpoints
 
 0.6
 ---

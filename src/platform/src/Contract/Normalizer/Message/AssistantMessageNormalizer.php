@@ -38,7 +38,7 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
     /**
      * @param AssistantMessage $data
      *
-     * @return array{role: 'assistant', content: string|null, tool_calls?: array<array<string, mixed>>}
+     * @return array{role: 'assistant', content: string|null, tool_calls?: array<array<string, mixed>>, reasoning_content?: string}
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
@@ -49,6 +49,10 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
 
         if ($data->hasToolCalls()) {
             $array['tool_calls'] = $this->normalizer->normalize($data->getToolCalls(), $format, $context);
+        }
+
+        if ($data->hasThinkingContent()) {
+            $array['reasoning_content'] = $data->getThinkingContent();
         }
 
         return $array;
