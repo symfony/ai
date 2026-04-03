@@ -9,6 +9,7 @@ CHANGELOG
  * Add `query` parameter to `symfony-services` for filtering by service ID or class name
  * Add `@param` docblocks to all tool methods for AI-readable parameter descriptions
  * Add automatic detection of compiled container XML for kernels with custom class names
+ * Add `DoctrineCollectorFormatter` to expose Doctrine DBAL query data (query count, execution times, SQL, duplicate detection) to AI via the profiler
 
 0.6
 ---
