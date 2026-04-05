@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Introduce `StoreFactory`
+
 0.4
 ---
 

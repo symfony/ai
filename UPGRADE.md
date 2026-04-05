@@ -63,6 +63,8 @@ AI Bundle
  * The `api_catalog` option for `Ollama` has been removed as the catalog is now automatically fetched from the Ollama server
  * The `api_key` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * The `endpoint` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * The `strategy` option for `Cache` store is now `cosine` by default
+ * The `DistanceCalculator` is no longer a service when using `Cache` store
 
 Chat
 ----
@@ -166,7 +168,7 @@ Store
  * A `StoreFactory` has been introduced for `AzureSearchStore`
  * The `endpointUrl` parameter for Weaviate `Store` has been removed
  * The `apiKey` parameter for Weaviate `Store` has been removed
-
+ * A `StoreFactory` has been introduced for `Cache`
 
 UPGRADE FROM 0.5 to 0.6
 =======================

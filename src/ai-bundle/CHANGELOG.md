@@ -23,6 +23,8 @@ CHANGELOG
  * Add support for `ScopingHttpClient` usage in `Weaviate` store
  * Validate tool call arguments using `symfony/validator` when available
  * Add `speech` configuration node for automatic `SpeechAgent` decoration with TTS/STT support
+ * The `strategy` option for `Cache` store is now `cosine` by default
+ * The `DistanceCalculator` is no longer a service when using `Cache` store
 
 0.6
 ---

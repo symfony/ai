@@ -49,6 +49,7 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
+use Symfony\AI\Store\Bridge\Cache\StoreFactory as CacheStoreFactory;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickhouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
@@ -600,16 +601,18 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.store.cache.my_cache_store'));
-        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_cache_store'));
+        $this->assertFalse($container->hasDefinition('ai.store.distance_calculator.my_cache_store'));
 
         $definition = $container->getDefinition('ai.store.cache.my_cache_store');
+        $this->assertSame([CacheStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(CacheStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(3, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('cache.system', (string) $definition->getArgument(0));
-        $this->assertSame('my_cache_store', $definition->getArgument(2));
+        $this->assertSame('my_cache_store', $definition->getArgument(1));
+        $this->assertSame('cosine', $definition->getArgument(2));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -622,10 +625,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
-    }
 
-    public function testCacheStoreWithCustomKeyCanBeConfigured()
-    {
+        // Custom cache key
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -640,18 +641,18 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.store.cache.my_cache_store_with_custom_key'));
-        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_cache_store_with_custom_key'));
+        $this->assertFalse($container->hasDefinition('ai.store.distance_calculator.my_cache_store_with_custom_key'));
 
         $definition = $container->getDefinition('ai.store.cache.my_cache_store_with_custom_key');
+        $this->assertSame([CacheStoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(CacheStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(3, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('cache.system', (string) $definition->getArgument(0));
-        $this->assertSame('random', $definition->getArgument(2));
-
-        $strategyDefinition = $container->getDefinition('ai.store.distance_calculator.my_cache_store_with_custom_key');
-        $this->assertTrue($strategyDefinition->isLazy());
+        $this->assertSame('random', $definition->getArgument(1));
+        $this->assertSame('cosine', $definition->getArgument(2));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -664,10 +665,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomKey'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomKey'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
-    }
 
-    public function testCacheStoreWithCustomStrategyCanBeConfigured()
-    {
+        // Custom strategy
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -682,22 +681,18 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.store.cache.my_cache_store_with_custom_strategy'));
-        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_cache_store_with_custom_strategy'));
+        $this->assertFalse($container->hasDefinition('ai.store.distance_calculator.my_cache_store_with_custom_strategy'));
 
         $definition = $container->getDefinition('ai.store.cache.my_cache_store_with_custom_strategy');
+        $this->assertSame([CacheStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(CacheStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(3, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('cache.system', (string) $definition->getArgument(0));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
-        $this->assertSame('ai.store.distance_calculator.my_cache_store_with_custom_strategy', (string) $definition->getArgument(1));
-        $this->assertSame('my_cache_store_with_custom_strategy', $definition->getArgument(2));
-
-        $strategyDefinition = $container->getDefinition('ai.store.distance_calculator.my_cache_store_with_custom_strategy');
-        $this->assertTrue($strategyDefinition->isLazy());
-        $this->assertSame(DistanceStrategy::CHEBYSHEV_DISTANCE, $strategyDefinition->getArgument(0));
+        $this->assertSame('my_cache_store_with_custom_strategy', $definition->getArgument(1));
+        $this->assertSame('chebyshev', $definition->getArgument(2));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -710,10 +705,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomStrategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomStrategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
-    }
 
-    public function testCacheStoreWithCustomStrategyAndKeyCanBeConfigured()
-    {
+        // Custom cache key and strategy
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -729,22 +722,18 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.store.cache.my_cache_store_with_custom_strategy_and_custom_key'));
-        $this->assertTrue($container->hasDefinition('ai.store.distance_calculator.my_cache_store_with_custom_strategy_and_custom_key'));
+        $this->assertFalse($container->hasDefinition('ai.store.distance_calculator.my_cache_store_with_custom_strategy_and_custom_key'));
 
         $definition = $container->getDefinition('ai.store.cache.my_cache_store_with_custom_strategy_and_custom_key');
+        $this->assertSame([CacheStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(CacheStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(3, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('cache.system', (string) $definition->getArgument(0));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
-        $this->assertSame('ai.store.distance_calculator.my_cache_store_with_custom_strategy_and_custom_key', (string) $definition->getArgument(1));
-        $this->assertSame('random', $definition->getArgument(2));
-
-        $strategyDefinition = $container->getDefinition('ai.store.distance_calculator.my_cache_store_with_custom_strategy_and_custom_key');
-        $this->assertTrue($strategyDefinition->isLazy());
-        $this->assertSame(DistanceStrategy::CHEBYSHEV_DISTANCE, $strategyDefinition->getArgument(0));
+        $this->assertSame('random', $definition->getArgument(1));
+        $this->assertSame('chebyshev', $definition->getArgument(2));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
