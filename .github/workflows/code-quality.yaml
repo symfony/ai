@@ -40,13 +40,13 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build root packages
               run: php .github/build-packages.php
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: demo
                   composer-options: "--no-scripts"
@@ -75,13 +75,13 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build root packages
               run: php .github/build-packages.php
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: examples
 
@@ -110,13 +110,13 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build root packages
               run: php .github/build-packages.php
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: src/${{ matrix.package.path }}
 
@@ -142,7 +142,7 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build root packages
               run: php .github/build-packages.php
@@ -155,7 +155,7 @@ jobs:
                   target: tmp
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
 
