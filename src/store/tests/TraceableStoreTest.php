@@ -9,10 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\AiBundle\Tests\Profiler;
+namespace Symfony\AI\Store\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\AiBundle\Profiler\TraceableStore;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\InMemory\Store;
@@ -20,6 +19,7 @@ use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
+use Symfony\AI\Store\TraceableStore;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Uid\Uuid;
 

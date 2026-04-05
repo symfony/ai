@@ -4,6 +4,12 @@ CHANGELOG
 0.7
 ---
 
+ * [BC BREAK] Move `TraceablePlatform` to `Symfony\AI\Platform\TraceablePlatform`
+ * [BC BREAK] Move `TraceableAgent` to `Symfony\AI\Agent\TraceableAgent`
+ * [BC BREAK] Move `TraceableToolbox` to `Symfony\AI\Agent\Toolbox\TraceableToolbox`
+ * [BC BREAK] Move `TraceableStore` to `Symfony\AI\Store\TraceableStore`
+ * [BC BREAK] Move `TraceableChat` to `Symfony\AI\Chat\TraceableChat`
+ * [BC BREAK] Move `TraceableMessageStore` to `Symfony\AI\Chat\TraceableMessageStore`
  * The `api_catalog` option for `Ollama` has been removed as the catalog is now automatically fetched from the Ollama server
  * The `api_key` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * The `endpoint` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`

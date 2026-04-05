@@ -37,6 +37,29 @@ Agent
 AI Bundle
 ---------
 
+ * The traceable profiler decorators have been moved to their respective components. Update your imports if you
+   reference them directly:
+
+   ```diff
+   -use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
+   +use Symfony\AI\Platform\TraceablePlatform;
+
+   -use Symfony\AI\AiBundle\Profiler\TraceableAgent;
+   +use Symfony\AI\Agent\TraceableAgent;
+
+   -use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
+   +use Symfony\AI\Agent\Toolbox\TraceableToolbox;
+
+   -use Symfony\AI\AiBundle\Profiler\TraceableStore;
+   +use Symfony\AI\Store\TraceableStore;
+
+   -use Symfony\AI\AiBundle\Profiler\TraceableChat;
+   +use Symfony\AI\Chat\TraceableChat;
+
+   -use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
+   +use Symfony\AI\Chat\TraceableMessageStore;
+   ```
+
  * The `api_catalog` option for `Ollama` has been removed as the catalog is now automatically fetched from the Ollama server
  * The `api_key` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * The `endpoint` option for `Ollama` is now `null` by default to allow the usage of a `ScopingHttpClient`

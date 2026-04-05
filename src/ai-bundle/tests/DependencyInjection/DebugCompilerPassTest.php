@@ -12,13 +12,13 @@
 namespace Symfony\AI\AiBundle\Tests\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Toolbox\TraceableToolbox;
+use Symfony\AI\Agent\TraceableAgent;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
-use Symfony\AI\AiBundle\Profiler\TraceableAgent;
-use Symfony\AI\AiBundle\Profiler\TraceableChat;
-use Symfony\AI\AiBundle\Profiler\TraceableMessageStore;
-use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
-use Symfony\AI\AiBundle\Profiler\TraceableStore;
-use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
+use Symfony\AI\Chat\TraceableChat;
+use Symfony\AI\Chat\TraceableMessageStore;
+use Symfony\AI\Platform\TraceablePlatform;
+use Symfony\AI\Store\TraceableStore;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;

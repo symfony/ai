@@ -9,12 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\AiBundle\Profiler;
+namespace Symfony\AI\Store;
 
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
-use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Contracts\Service\ResetInterface;

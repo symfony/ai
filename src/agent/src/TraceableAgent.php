@@ -9,9 +9,8 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\AiBundle\Profiler;
+namespace Symfony\AI\Agent;
 
-use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\Component\Clock\ClockInterface;

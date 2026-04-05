@@ -9,9 +9,8 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\AiBundle\Profiler;
+namespace Symfony\AI\Chat;
 
-use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;

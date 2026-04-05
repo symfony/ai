@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\AiBundle\Tests\Profiler;
+namespace Symfony\AI\Agent\Tests\Toolbox;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
-use Symfony\AI\AiBundle\Profiler\TraceableToolbox;
+use Symfony\AI\Agent\Toolbox\TraceableToolbox;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;

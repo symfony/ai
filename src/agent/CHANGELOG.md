@@ -4,6 +4,7 @@ CHANGELOG
 0.7
 ---
 
+ * Add `TraceableAgent` and `TraceableToolbox` profiler decorators moved from AI Bundle
  * [BC BREAK] Change `SimilaritySearch` to use `RetrieverInterface` instead of `VectorizerInterface` and `StoreInterface`
  * Add customizable `$promptTemplate` parameter to `SimilaritySearch` constructor
  * [BC BREAK] Remove `AbstractToolFactory` in favor of standalone `ReflectionToolFactory` and `MemoryToolFactory`

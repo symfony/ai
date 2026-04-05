@@ -9,10 +9,8 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\AiBundle\Profiler;
+namespace Symfony\AI\Agent\Toolbox;
 
-use Symfony\AI\Agent\Toolbox\ToolboxInterface;
-use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Contracts\Service\ResetInterface;
 

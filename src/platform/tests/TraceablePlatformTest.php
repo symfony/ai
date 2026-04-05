@@ -9,15 +9,15 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\AiBundle\Tests\Profiler;
+namespace Symfony\AI\Platform\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\AiBundle\Profiler\TraceablePlatform;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\TraceablePlatform;
 
 final class TraceablePlatformTest extends TestCase
 {
