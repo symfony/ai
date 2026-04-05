@@ -2318,15 +2318,19 @@ final class AiBundle extends AbstractBundle
      */
     private function processVectorizerConfig(string $name, array $config, ContainerBuilder $container): void
     {
-        $vectorizerDefinition = new Definition(Vectorizer::class, [
-            new Reference($config['platform']),
-            $config['model'],
-            new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
-        ]);
-        $vectorizerDefinition->addTag('ai.vectorizer', ['name' => $name]);
-        $serviceId = 'ai.vectorizer.'.$name;
-        $container->setDefinition($serviceId, $vectorizerDefinition);
-        $container->registerAliasForArgument($serviceId, VectorizerInterface::class, (new Target((string) $name))->getParsedName());
+        $definition = new Definition(Vectorizer::class);
+        $definition
+            ->setLazy(true)
+            ->setArguments([
+                new Reference($config['platform']),
+                $config['model'],
+                new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+            ])
+            ->addTag('proxy', ['interface' => VectorizerInterface::class])
+            ->addTag('ai.vectorizer', ['name' => $name]);
+
+        $container->setDefinition('ai.vectorizer.'.$name, $definition);
+        $container->registerAliasForArgument('ai.vectorizer.'.$name, VectorizerInterface::class, $name);
     }
 
     /**
