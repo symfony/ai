@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-04-05T15:13:43Z
+
+Could we add a test for this new capability in `ModelCatalogTest` for `Ollama`?
