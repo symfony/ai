@@ -8,6 +8,16 @@
         color: #ffffff;
     }
 
+    .card-header {
+        background: #efefef;
+
+        & > svg {
+            margin-top: -2px;
+            width: 32px;
+            height: 32px;
+        }
+    }
+
     & footer {
         color: #ffffff;
 

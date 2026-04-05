@@ -9,6 +9,11 @@ body {
 .index {
     .card-img-top {
         text-align: center;
+
+        svg {
+            width: 150px;
+            height: 150px;
+        }
     }
 }
 
@@ -21,8 +26,10 @@ body {
     .card-header {
         background: #efefef;
 
-        svg {
+        & > svg {
             margin-top: -2px;
+            width: 32px;
+            height: 32px;
         }
     }
 
