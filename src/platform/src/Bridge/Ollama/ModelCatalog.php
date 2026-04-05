@@ -13,8 +13,12 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -34,6 +38,22 @@ final class ModelCatalog implements ModelCatalogInterface
                 'model' => $modelName,
             ],
         ]);
+
+        try {
+            $statusCode = $response->getStatusCode();
+        } catch (TransportExceptionInterface $e) {
+            throw new RuntimeException(\sprintf('Cannot connect to the Ollama API: "%s".', $e->getMessage()), previous: $e);
+        }
+
+        if (200 !== $statusCode) {
+            $errorMessage = $this->extractErrorMessage($response);
+
+            if (404 === $statusCode) {
+                throw new ModelNotFoundException(null !== $errorMessage ? \sprintf('Model "%s" not found: "%s".', $modelName, $errorMessage) : \sprintf('Model "%s" not found.', $modelName));
+            }
+
+            throw new RuntimeException(null !== $errorMessage ? \sprintf('Cannot load model information from the Ollama API (Status code: %d): "%s".', $statusCode, $errorMessage) : \sprintf('Cannot load model information from the Ollama API (Status code: %d).', $statusCode));
+        }
 
         $payload = $response->toArray();
 
@@ -65,7 +85,23 @@ final class ModelCatalog implements ModelCatalogInterface
     {
         $response = $this->httpClient->request('GET', 'api/tags');
 
+        try {
+            $statusCode = $response->getStatusCode();
+        } catch (TransportExceptionInterface $e) {
+            throw new RuntimeException(\sprintf('Cannot connect to the Ollama API: "%s".', $e->getMessage()), previous: $e);
+        }
+
+        if (200 !== $statusCode) {
+            $errorMessage = $this->extractErrorMessage($response);
+
+            throw new RuntimeException(null !== $errorMessage ? \sprintf('Cannot retrieve models from the Ollama API (Status code: %d): "%s".', $statusCode, $errorMessage) : \sprintf('Cannot retrieve models from the Ollama API (Status code: %d).', $statusCode));
+        }
+
         $models = $response->toArray();
+
+        if ([] === $models['models']) {
+            return [];
+        }
 
         return array_merge(...array_map(
             function (array $model): array {
@@ -80,5 +116,30 @@ final class ModelCatalog implements ModelCatalogInterface
             },
             $models['models'],
         ));
+    }
+
+    private function extractErrorMessage(ResponseInterface $response): ?string
+    {
+        try {
+            $content = $response->getContent(false);
+        } catch (TransportExceptionInterface) {
+            return null;
+        }
+
+        if ('' === $content) {
+            return null;
+        }
+
+        try {
+            $decoded = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
+
+            if (\is_array($decoded) && isset($decoded['error'])) {
+                return $decoded['error'];
+            }
+        } catch (\JsonException) {
+            // not JSON, fall through to return raw content
+        }
+
+        return $content;
     }
 }
