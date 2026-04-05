@@ -84,6 +84,7 @@
         "symfony/http-foundation": "^7.4|^8.0",
         "symfony/process": "^7.4|^8.0",
         "symfony/rate-limiter": "^7.4|^8.0",
+        "symfony/validator": "^7.4|^8.0",
         "symfony/var-dumper": "^7.4|^8.0"
     },
     "require-dev": {

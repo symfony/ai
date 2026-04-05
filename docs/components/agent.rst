@@ -246,6 +246,8 @@ to the event dispatcher that is passed to :class:`Symfony\\AI\\Agent\\Toolbox\\T
 This makes the toolbox throw :class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\InvalidToolCallArgumentsException` before the tool is invoked if any of the
 arguments did not pass validation. When using the AI Bundle, the event listener is registered automatically and validation happens out-of-the-box.
 
+See `Tool Call Argument Validation`_ for a complete example.
+
 Third-Party Tools
 ~~~~~~~~~~~~~~~~~
 
@@ -492,6 +494,7 @@ Code Examples (with built-in tools)
 * `Mapbox Reverse Geocode Tool`_
 * `SerpAPI Tool`_
 * `Tavily Tool`_
+* `Tool Call Argument Validation`_
 * `Weather Tool with Event Listener`_
 * `Wikipedia Tool`_
 * `YouTube Transcriber Tool`_
@@ -806,3 +809,4 @@ Code Examples
 .. _`Chat with static memory`: https://github.com/symfony/ai/blob/main/examples/memory/static.php
 .. _`Chat with embedding search memory`: https://github.com/symfony/ai/blob/main/examples/memory/mariadb.php
 .. _`Human-in-the-Loop Confirmation`: https://github.com/symfony/ai/blob/main/examples/toolbox/confirmation.php
+.. _`Tool Call Argument Validation`: https://github.com/symfony/ai/blob/main/examples/toolbox/validation.php
