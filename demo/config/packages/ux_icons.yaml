@@ -1,0 +1,37 @@
+ux_icons:
+    # Default icon size
+    default_icon_attributes:
+        height: 20px
+        width: 20px
+
+    # Icon aliases for cleaner templates
+    aliases:
+        # Navigation icons
+        youtube: bi:youtube
+        recipe: mdi:cook
+        wikipedia: mdi:wikipedia
+        symfony: mdi:symfony
+        crop: material-symbols:crop
+        microphone: iconoir:microphone-solid
+        video: tabler:video-filled
+        turbo: mdi:car-turbocharger
+        github: mdi:github
+
+        # UI icons
+        cancel: material-symbols:cancel
+        send: mingcute:send-fill
+        bot: fluent:bot-24-filled
+        user: solar:user-bold
+        code: solar:code-linear
+
+        # Recipe specific icons
+        clock: mdi:clock
+        difficulty: mdi:signal-variant
+        vegetarian: mdi:leaf
+        ingredients: mdi:format-list-checkbox
+        steps: mdi:clipboard-list
+        email: mdi:email-send
+
+        # Speech specific icons
+        microphone-mute: iconoir:microphone-mute-solid
+        timer: iconoir:timer-solid
