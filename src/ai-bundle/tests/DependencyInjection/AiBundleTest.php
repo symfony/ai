@@ -117,12 +117,12 @@ class AiBundleTest extends TestCase
 
         foreach (array_keys($platforms) as $platformId) {
             $def = $container->getDefinition($platformId);
-            $factor = $def->getFactory();
+            $factory = $def->getFactory();
 
-            if (\is_array($factor)) {
-                $ref = new \ReflectionClass($factor[0]);
-                $numArgs = $ref->getMethod($factor[1])->getNumberOfParameters();
-                $this->assertGreaterThanOrEqual($numArgs, \count($def->getArguments()));
+            if (\is_array($factory)) {
+                $method = new \ReflectionMethod($factory[0], $factory[1]);
+                $this->assertGreaterThanOrEqual($method->getNumberOfRequiredParameters(), \count($def->getArguments()));
+                $this->assertLessThanOrEqual($method->getNumberOfParameters(), \count($def->getArguments()));
             }
 
             try {
@@ -7832,6 +7832,61 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $arguments[2]);
         $this->assertSame('ai.platform.model_catalog.ovh', (string) $arguments[2]);
         $this->assertNull($definition->getArgument(3));
+    }
+
+    public function testGenericPlatformConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'generic' => [
+                        'my_generic' => [
+                            'base_url' => 'https://api.example.com',
+                            'api_key' => 'generic-test-key',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.generic.my_generic'));
+
+        $definition = $container->getDefinition('ai.platform.generic.my_generic');
+        $arguments = $definition->getArguments();
+
+        $this->assertSame('https://api.example.com', $arguments[0]);
+        $this->assertSame('generic-test-key', $arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('http_client', (string) $arguments[2]);
+        $this->assertNull($arguments[3], 'Model catalog should be null when not configured');
+        $this->assertNull($arguments[4], 'Contract should be null');
+        $this->assertInstanceOf(Reference::class, $arguments[5]);
+        $this->assertSame('event_dispatcher', (string) $arguments[5]);
+        $this->assertTrue($arguments[6]);
+        $this->assertTrue($arguments[7]);
+        $this->assertSame('/v1/chat/completions', $arguments[8]);
+        $this->assertSame('/v1/embeddings', $arguments[9]);
+    }
+
+    public function testGenericPlatformCanBeInstantiated()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'generic' => [
+                        'my_generic' => [
+                            'base_url' => 'https://api.example.com',
+                            'api_key' => 'generic-test-key',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $container->set('event_dispatcher', $this->createMock(EventDispatcherInterface::class));
+
+        $platform = $container->get('ai.platform.generic.my_generic');
+        $this->assertInstanceOf(PlatformInterface::class, $platform);
     }
 
     public function testSpeechAgentCanBeUsed()
