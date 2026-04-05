@@ -58,7 +58,6 @@ trait CompletionsConversionTrait
             if (null !== $reasoningContent && '' !== $reasoningContent) {
                 $reasoning .= $reasoningContent;
                 yield new ThinkingDelta($reasoningContent);
-                continue;
             }
 
             if ('' !== $reasoning && isset($data['choices'][0]['delta']['content']) && '' !== $data['choices'][0]['delta']['content']) {
