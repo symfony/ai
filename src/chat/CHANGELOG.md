@@ -4,6 +4,7 @@ CHANGELOG
 0.7
 ---
 
+ * Add `TraceableChat` and `TraceableMessageStore` profiler decorators moved from AI Bundle
  * Add `ChatInterface::stream()` method for real-time streaming support
 
 0.4

@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\AiBundle\Tests\Profiler;
+namespace Symfony\AI\Agent\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\MockAgent;
-use Symfony\AI\AiBundle\Profiler\TraceableAgent;
+use Symfony\AI\Agent\TraceableAgent;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\Clock\MockClock;

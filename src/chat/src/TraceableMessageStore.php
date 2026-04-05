@@ -9,10 +9,8 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\AiBundle\Profiler;
+namespace Symfony\AI\Chat;
 
-use Symfony\AI\Chat\ManagedStoreInterface;
-use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Contracts\Service\ResetInterface;
