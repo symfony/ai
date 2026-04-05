@@ -40,7 +40,7 @@ When running the examples, you might experience that some models are not availab
 Model, provider or task not found (404).
 ```
 
-This can happen due to pre-selected models in the examples not being available anymore or not being "warmed up" on
+This can happen due to preselected models in the examples not being available anymore or not being "warmed up" on
 Hugging Face's side. You can change the model used in the examples by updating the model name in the example script.
 
 To find available models for a specific task, you can check out the [Hugging Face Model Hub](https://huggingface.co/models)
