@@ -1,2 +1,3 @@
 [codespell]
-ignore-words-list = vektor
+skip = ./fixtures/lorem.txt
+ignore-words-list = hasTable,invokable,vektor
