@@ -60,6 +60,13 @@ Static analysis with PHPStan (component-specific):
 cd src/platform && vendor/bin/phpstan analyse
 ```
 
+### Documentation Validation
+After adding or changing any RST files in `docs/`, always run the `doctor-rst` validator from the repository root:
+```bash
+./doctor-rst
+```
+This uses Docker (`oskarstark/doctor-rst`) to validate RST documentation files and catch formatting issues.
+
 ### Development Linking
 Use the `./link` script to symlink local development versions:
 ```bash
