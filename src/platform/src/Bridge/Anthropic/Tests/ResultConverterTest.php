@@ -90,7 +90,7 @@ final class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
 
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
 
         $events = [
@@ -162,7 +162,7 @@ final class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
 
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
 
         $events = [
@@ -402,7 +402,7 @@ final class ResultConverterTest extends TestCase
      */
     private function createRawResult(array $events): RawResultInterface
     {
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
 
         return new class($httpResponse, $events) implements RawResultInterface {

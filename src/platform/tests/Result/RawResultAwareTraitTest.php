@@ -24,7 +24,7 @@ final class RawResultAwareTraitTest extends TestCase
     public function testItCanBeEnrichedWithARawResponse()
     {
         $result = $this->createTestClass();
-        $rawResponse = self::createMock(SymfonyHttpResponse::class);
+        $rawResponse = $this->createMock(SymfonyHttpResponse::class);
 
         $result->setRawResult(new RawHttpResult($rawResponse));
         $this->assertSame($rawResponse, $result->getRawResult()?->getObject());
@@ -35,7 +35,7 @@ final class RawResultAwareTraitTest extends TestCase
         $this->expectException(RawResultAlreadySetException::class);
 
         $result = $this->createTestClass();
-        $rawResponse = self::createMock(SymfonyHttpResponse::class);
+        $rawResponse = $this->createMock(SymfonyHttpResponse::class);
 
         $result->setRawResult(new RawHttpResult($rawResponse));
         $result->setRawResult(new RawHttpResult($rawResponse));

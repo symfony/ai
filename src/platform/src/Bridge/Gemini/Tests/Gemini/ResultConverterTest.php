@@ -36,7 +36,7 @@ final class ResultConverterTest extends TestCase
     public function testConvertThrowsExceptionWithDetailedErrorInformation()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(400);
         $httpResponse->method('toArray')->willReturn([
             'error' => [
@@ -55,7 +55,7 @@ final class ResultConverterTest extends TestCase
     public function testReturnsToolCallEvenIfMultipleContentPartsAreGiven()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn([
             'candidates' => [
@@ -89,7 +89,7 @@ final class ResultConverterTest extends TestCase
     public function testConvertsInlineDataToBinaryResult()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
         $image = Image::fromFile(\dirname(__DIR__, 7).'/fixtures/image.jpg');
         $httpResponse->method('toArray')->willReturn([
@@ -119,7 +119,7 @@ final class ResultConverterTest extends TestCase
     public function testConvertsInlineDataWithoutMimeTypeToBinaryResult()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
         $image = Image::fromFile(\dirname(__DIR__, 7).'/fixtures/image.jpg');
         $httpResponse->method('toArray')->willReturn([
@@ -148,10 +148,10 @@ final class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
 
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
 
-        $rawResult = self::createMock(RawResultInterface::class);
+        $rawResult = $this->createMock(RawResultInterface::class);
         $rawResult->method('getObject')->willReturn($httpResponse);
         $rawResult->method('getDataStream')->willReturn(
             (static function (): \Generator {
@@ -200,10 +200,10 @@ final class ResultConverterTest extends TestCase
     public function testStreamConvertsChoicesToDeltas(array $chunk, string $expectedClass, array $expectedPayload)
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
 
-        $rawResult = self::createMock(RawResultInterface::class);
+        $rawResult = $this->createMock(RawResultInterface::class);
         $rawResult->method('getObject')->willReturn($httpResponse);
         $rawResult->method('getDataStream')->willReturn((static function () use ($chunk): \Generator {
             yield $chunk;

@@ -34,7 +34,7 @@ class ResultConverterTest extends TestCase
     public function testConvertTextResult()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'output' => [
                 [
@@ -57,7 +57,7 @@ class ResultConverterTest extends TestCase
     public function testConvertToolCallResult()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'output' => [
                 [
@@ -82,7 +82,7 @@ class ResultConverterTest extends TestCase
     public function testConvertMultipleChoices()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'output' => [
                 [
@@ -116,7 +116,7 @@ class ResultConverterTest extends TestCase
     public function testContentFilterException()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
 
         $httpResponse->expects($this->exactly(1))
             ->method('toArray')
@@ -147,7 +147,7 @@ class ResultConverterTest extends TestCase
     public function testThrowsAuthenticationExceptionOnInvalidApiKey()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(401);
         $httpResponse->method('getContent')->willReturn(json_encode([
             'error' => [
@@ -164,7 +164,7 @@ class ResultConverterTest extends TestCase
     public function testThrowsExceptionWhenNoChoices()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([]);
 
         $this->expectException(RuntimeException::class);
@@ -176,7 +176,7 @@ class ResultConverterTest extends TestCase
     public function testThrowsBadRequestExceptionOnBadRequestResponse()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(400);
         $httpResponse->method('getContent')->willReturn(json_encode([
             'error' => [
@@ -193,7 +193,7 @@ class ResultConverterTest extends TestCase
     public function testThrowsBadRequestExceptionOnBadRequestResponseWithNoResponseBody()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(400);
 
         $this->expectException(BadRequestException::class);
@@ -205,7 +205,7 @@ class ResultConverterTest extends TestCase
     public function testThrowsDetailedErrorException()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'error' => [
                 'code' => 'invalid_request_error',
@@ -225,7 +225,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
 
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
 
         $events = [
@@ -284,7 +284,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
 
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
 
         $events = [
@@ -319,7 +319,7 @@ class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
 
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
 
         $events = [
