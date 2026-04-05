@@ -12,7 +12,7 @@
         "mrmysql/youtube-transcript": "^0.0.5",
         "nyholm/psr7": "^1.8",
         "php-http/discovery": "^1.20",
-        "symfony/ai-agent": "^0.7",
+        "symfony/ai-agent": "^0.6",
         "symfony/ai-bundle": "^0.6",
         "symfony/ai-chat": "^0.6",
         "symfony/ai-chroma-db-store": "^0.6",
