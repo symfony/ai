@@ -1,0 +1,266 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-23T09:30:23Z
+
+To me we maybe should introduce capabilities also to platforms rather than having a voice component. As far as I understand I cannot use the Voice component standalone, right?
+
+I don't think a dedicated component is the way to go here
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-23T09:32:20Z
+
+We can introduce it via the Platform, could be easier, the voice can be used without agents but it will requires the `Platform` at least.
+
+Will update the PR to match this approach 👍🏻
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2025-11-23T09:33:36Z
+
+I agree, Agent scope is not needed 👍🏻
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-23T10:29:49Z
+
+Hi @Guikingone, i agree that week lack some kind of guidance on how voices work - but same goes for other binary stuff like creating images or videos.
+
+so two things i would like to understand
+* what's the high-level goal here - like what do you want to build?
+* why is it an extra component and not part of Platform?
+
+btw, "speech" is more common than "vioce" isn't it?
+btw2, have you seen the demo around audio and video?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-23T10:35:36Z
+
+> what's the high-level goal here - like what do you want to build?
+
+The main goal is to add the capacity to have an agent/platform that can "listen" and answer to inputs thanks to voice / speech (voice is used as a sugar here, could be renamed to speech), creating a workflow where you can submit voice, call the platform that transforms it to speech / text (depending on the situation you're in) and returning it to the user without frictions.
+
+> why is it an extra component and not part of Platform?
+
+It is now part of `Platform`, I just pushed an update on it following the comment from @OskarStark.
+
+> btw, "speech" is more common than "voice" isn't it?
+
+Agreed, could be renamed to `Speech`.
+
+> btw2, have you seen the demo around audio and video?
+
+Yes, the goal is to ease it with a "built-in" approach / API that stays transparent for the user.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-11-23T10:50:15Z
+
+just realized we should the "audio" demo to "speech" as well - and i'm def not really happy with that solution there.
+
+can we make it as easy as the structured output - like with an listener?
+
+i like that starting point:
+```php
+$result = $platform->invoke('eleven_multilingual_v2', new Text('Hello world'), [
+    'voice' => 'Dslrhjl3ZpzrctukrQSN', // Brad (https://elevenlabs.io/app/voice-library?voiceId=Dslrhjl3ZpzrctukrQSN)
+]);
+
+echo $result->asVoice();
+```
+
+what would be the return type here? would it be same as `asBinary()` or `asDataUri()`
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-23T14:42:20Z
+
+> can we make it as easy as the structured output - like with an listener?
+
+Could be something to explore, the API is not locked for now.
+
+> what would be the return type here? would it be same as asBinary() or asDataUri()
+
+My first approach was to do the same thing as `asBinary` to ease the usage.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-11-25T12:56:56Z
+
+Well, might seems weird but here we go, `stt`, `tts` and `sts` are working like a charm ... 👀
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-07T23:16:21Z
+
+Haven't made my mind up here yet - it's not clicking with me - currently that change spreads across the entire platform.
+
+is it an option to have it as subscriber for the platform, like STT on invoke and TTS on result? instead of extending the platform interface?
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-08T07:57:27Z
+
+> Haven't made my mind up here yet - it's not clicking with me - currently that change spreads across the entire platform.
+
+I have a solution for this point, thought about this and I have a solution, it would remove adding `SpeechConfiguration` in every platform.
+
+> is it an option to have it as subscriber for the platform, like STT on invoke and TTS on result? instead of extending the platform interface?
+
+If it's related to previous point, let me push a refactoring and we can push further on this one 🙂
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-08T18:36:40Z
+
+Ok, here's the refactoring:
+
+- A new `SpeechAwarePlatform` is introduced, the goal is to decorate the "platforms" that supports STT / TTS. In the current state, `ElevenLabs` is the only one implemented and tested, we expose a `getSpeechConfiguration` method that returns the current configuration for STT / TTS, no more methods in existing platforms, extra arguments, nothing, just a decorator.
+
+- A new `SpeechAwarePlatformInterface` is introduced to enforce the usage of the method and provide a cleaner API for "speech-supporting" platforms and non-supporting ones, if your platform is not decorated, well, you're not supporting it.
+
+- This refactoring allows to keep the current API "as it" and introduce the speech support without breaking the public API, plus, it's only enabled if one platform that supports STT / TTS is configured, no extra services if not needed.
+
+- This also improve the current API for providers / listeners plus, it reduce the current usage of providers/listeners to `Invocation` / `Result` as you mentioned @chr-hertel.
+
+PS: Not to mention that it reduce the usages of `null` in methods 😅
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2025-12-18T16:44:45Z
+
+Friendly ping for @OskarStark and @chr-hertel (when you have time, I have other PRs to finish in parallel 😅 ):
+
+I know that this PR was controversial and not optimal when started, here's the latest version (a better one IMO):
+
+- Speech options are now part of platforms (only EL for now) to ease the configuration for everyone
+- Once the speech options are defined, this trigger a decoration using a `SpeechPlatformInterface` (that requires a custom implementation, more on this choice later) of the platform (this way, we can access both indepently) that receives both the platform and the options.
+- Each platform that support speech must define an implementation of `SpeechPlatformInterface`, for EL, it's defined via this PR, once defined, the interface exposes two methods: `generate` and `listen` (same behavior than before), this part can probably be unified as a single behavior for every platform in the listener, could be something to explore.
+- Once defined, the decorated platform is injected using tags in `SpeechListener`, a subscriber that listens `Invocation` and `Result` events (again, nothing new here).
+- The previous API around speech bag and speech is kept (as we can have multiple platform for speech, multiple generation, etc).
+- The `OptionsResolver` is now a dependency of `ElevenLabs` bridge to ease the configuration validation
+
+My first idea was to work around the client but as it's not injected in the container, bad luck, the platform is easier to decorate and we can keep the public API "as it" without new methods and so on.
+
+Let me know if something is not clear or still controversial / not optimized, I'm pretty sure it can be improved / eased 🙏🏻
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-01-02T18:32:29Z
+
+Hi @OskarStark / @chr-hertel, hope you're fine (and happy new year 😄 ) 👋🏻
+
+Here's the latest version of this PR, I reworked it from the ground up and removed all the extra complexity, the main logic use a `SpeechConfiguration` class and the `SpeechListener`, that's it (can't trim it further to be fair, the best I can do to remove code is closing the PR 😅), the configuration has been updated for both `ElevenLabs` and `Cartesia`, same keys, same behavior.
+
+Events are used, no decoration on the platform, just plain platforms injected through tags, I also improved the `MessageBag` API to introduce `replace` and `latestAs` methods (more informations in the tests) used to support the feature.
+
+The documentation is updated as long as agents files and examples.
+
+The CI is failing due to twig (no changes on this part via this PR, weird), when you have time to review it / gave feedback, I can dive into more details if needed 🙂
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-01-21T08:30:41Z
+
+Hi @chr-hertel / @OskarStark 👋🏻
+
+Friendly ping on this PR, should I keep rebasing it / targeting `0.3` - `0.4` or should we rollback it to the `Draft` status?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-01-22T11:13:51Z
+
+@chr-hertel will have a look soon, not sure it will land in 0.3, lets keep it for now
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-02-17T18:35:52Z
+
+Hi @OskarStark @chr-hertel, yes, I know, again 😄
+
+I think that this time, that's the one, while thinking about #1572 and the comment from chris, I thought about this PR and the listener approach didn't looked like "THE" solution, especially while we have the processors, so, I asked Claude (yes, sometimes, asking for an external opinion might lead to a solution) for a "reworked implementation" that could ease the user experience and the maintenance of it, it submitted a solution close to the processors and I did the final tweaking.
+
+So, what changed?
+
+Now, the speech configuration is moved where it needs to be, at the `Agent` level, each agent can specify which platform to use, the options and so on, no more "in or out option", the agent handle the configuration, simple, clever, straight to the point.
+
+The `Platform` still an important aspect of the PR (as the configuration is in the `Platform` but shared with the `Agent`), I also simplified the DI experience along with the code in the `SpeechProcessor` (the main entry point for speech now).
+
+I updated the examples and reworked the documentation, much better, make more sense IMHO to be like that.
+
+I let you take a look at it and review it if you think it deserves to be reviewed, is #1572 needed anymore? Thought question, if this PR is merged, probably not, at least, I don't see use case except for the validation/evaluation part (for now) that could require it (as speech is now at the agent level), probably another topic for another day 😄
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-03-07T16:45:12Z
+
+A set of small improvements on the API, smaller scope for result support of Speech.
+
+CI is failing due to `vektor` bridge, not tied to the PR itself.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-15T20:59:08Z
+
+Can we reduce this to be just a decorator for an AgentInterface? like `SpeakingAgent` or `SpeechAgent`?
+and document how to wire it as a service instead of extending the agent config in bundle?
+would reduce the impact and effort here.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-03-16T12:05:28Z
+
+Could be a solution, the only issue it will not be "as smooth" as in the PR thanks to the configuration and the auto-injection of the processor, I'll take a look in that direction but can't promise anything this week.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-03-28T13:07:10Z
+
+Hi @chr-hertel, hope you're fine 👋🏻
+
+I pushed the commit that contains the decorator approach, you were right about this approach, make sense as it removes the unnecessary configuration in agent section, I also updated the documentation to explain how to use it (I can add a extra section for the injection using `Autowire` if needed).
+
+I let you review it when you have time 🙂
+
+PS: If the PR is good for you, I'll fully squash it before you merge it, this way we get a clean history.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-03-28T14:26:48Z
+
+I'll take a look at points you highlighted, I can get rid of the `OptionsResolver`, not a big work on this side, I agree on the method for speech, could be merged in the result too.
+
+Regarding the `MessageBag`, don't know, don't have a strong opinion on it, one solution might be to decorate it but for which use case? To do what and with which methods? 😅
+
+For the configuration, my favorite approach would be to extend the existing one rather than depending on the DIC, I think that having it through service decoration is kind of an anti-pattern and can be easily simplified by the configuration, if you have multiple "speech agents", you'd be forced to declare them one by one while in the same time, keeping track of your agents in the configuration, looks like a "wrong turn" to take 🤔
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-28T18:12:03Z
+
+Alright, let's keep MessageBag and config like you changed already 👍
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-03-29T08:53:47Z
+
+Here's the "final draft" using the decorator and the configuration, I also updated the `demo` to use the new `SpeechAgent` (it's fully transparent for the end user), the documentation contains the detailed process on how to use the speech support at both the `Agent` and `AiBundle` levels, tests also updated.
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-04-01T17:59:01Z
+
+@chr-hertel I removed `SpeechResult` and updated the doc along with the examples, ready for review when you have time 🙂
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-04-05T17:10:08Z
+
+Oops, sorry, pushed the fix for the `CHANGELOG.md` at the same time 😅
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-05T17:10:59Z
+
+@Guikingone all good :joy: the risk of me force pushing into someone else's branches :joy:
