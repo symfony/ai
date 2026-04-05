@@ -701,9 +701,10 @@ final class AiBundle extends AbstractBundle
                     ->addTag('proxy', ['interface' => PlatformInterface::class])
                     ->setArguments([
                         $config['base_url'],
-                        $config['api_key'],
+                        $config['api_key'] ?? null,
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        new Reference($config['model_catalog'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                        isset($config['model_catalog']) ? new Reference($config['model_catalog']) : null,
+                        null, // $contract
                         new Reference('event_dispatcher'),
                         $config['supports_completions'],
                         $config['supports_embeddings'],
