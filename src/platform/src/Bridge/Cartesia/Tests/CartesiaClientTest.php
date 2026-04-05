@@ -113,6 +113,36 @@ final class CartesiaClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testClientCanPerformTextToSpeechWithStringPayload()
+    {
+        $audioFixture = Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3');
+
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($audioFixture): MockResponse {
+            $this->assertSame('POST', $method);
+            $body = json_decode($options['body'], true);
+            $this->assertSame('bar', $body['transcript']);
+
+            return new MockResponse($audioFixture->asBinary());
+        });
+
+        $client = new CartesiaClient(
+            $httpClient,
+            'my-api-key',
+            'foo',
+        );
+
+        $client->request(new Cartesia('sonic-3', [Capability::TEXT_TO_SPEECH]), 'bar', [
+            'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b',
+            'output_format' => [
+                'container' => 'mp3',
+                'sample_rate' => 48000,
+                'bit_rate' => 192000,
+            ],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testClientCannotPerformSpeechToTextOnInvalidResponse()
     {
         $payload = Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3');

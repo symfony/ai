@@ -62,9 +62,9 @@ final class ElevenLabsClientTest extends TestCase
         $client = new ElevenLabsClient(new MockHttpClient());
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The payload must be an array, received "string".');
+        $this->expectExceptionMessage('Payload must be an array for speech-to-text request, got "string".');
         $this->expectExceptionCode(0);
-        $client->request(new ElevenLabs('eleven_multilingual_v2'), 'foo');
+        $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::SPEECH_TO_TEXT]), 'foo');
     }
 
     public function testClientCanPerformSpeechToTextRequest()
@@ -149,6 +149,28 @@ final class ElevenLabsClientTest extends TestCase
         ]), [
             'text' => 'foo',
         ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testClientCanPerformTextToSpeechRequestWithStringPayload()
+    {
+        $audioFixture = Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3');
+
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($audioFixture): MockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/text-to-speech/Dslrhjl3ZpzrctukrQSN', $url);
+            $body = json_decode($options['body'], true);
+            $this->assertSame('foo', $body['text']);
+
+            return new MockResponse($audioFixture->asBinary());
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $client = new ElevenLabsClient($httpClient);
+
+        $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], [
+            'voice' => 'Dslrhjl3ZpzrctukrQSN',
+        ]), 'foo');
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

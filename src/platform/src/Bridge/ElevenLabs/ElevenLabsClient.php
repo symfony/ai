@@ -36,10 +36,6 @@ final class ElevenLabsClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
-        if (!\is_array($payload)) {
-            throw new InvalidArgumentException(\sprintf('The payload must be an array, received "%s".', get_debug_type($payload)));
-        }
-
         return match (true) {
             $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToTextRequest($model, $payload),
             $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeechRequest($model, $payload, [
@@ -81,19 +77,13 @@ final class ElevenLabsClient implements ModelClientInterface
      */
     private function doTextToSpeechRequest(Model $model, array|string $payload, array $options): RawHttpResult
     {
-        if (!\is_array($payload)) {
-            throw new InvalidArgumentException(\sprintf('Payload must be an array for text-to-speech request, got "%s".', \gettype($payload)));
-        }
-
         if (!\array_key_exists('voice', $options)) {
             throw new InvalidArgumentException('The voice option is required.');
         }
 
-        if (!\array_key_exists('text', $payload)) {
-            throw new InvalidArgumentException('The payload must contain a "text" key.');
-        }
+        $text = \is_string($payload) ? $payload : ($payload['text'] ?? throw new InvalidArgumentException('The payload must contain a "text" key.'));
 
-        $voice = $options['voice'];
+        $voice = $model->getOptions()['voice'] ?? $options['voice'] ?? throw new InvalidArgumentException('The voice option is required.');
         $stream = $options['stream'] ?? false;
 
         $url = $stream
@@ -104,7 +94,7 @@ final class ElevenLabsClient implements ModelClientInterface
 
         return new RawHttpResult($this->httpClient->request('POST', $url, [
             'json' => [
-                'text' => $payload['text'],
+                'text' => $text,
                 'model_id' => $model->getName(),
                 ...$options,
             ],

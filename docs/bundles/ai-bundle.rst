@@ -1210,6 +1210,78 @@ Chats are defined in the ``chat`` section of your configuration:
                 agent: 'ai.agent.youtube'
                 message_store: 'ai.message_store.cache.youtube'
 
+Speech
+------
+
+The bundle can automatically decorate any agent with :class:`Symfony\\AI\\Agent\\SpeechAgent` to add speech
+capabilities (speech-to-text and/or text-to-speech). This enables STT, TTS, or full STS (speech-to-speech) pipelines,
+leading to a more "human-like" conversation flow.
+
+Configuring speech
+~~~~~~~~~~~~~~~~~~
+
+Add a ``speech`` key to any agent configuration to enable speech capabilities:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            elevenlabs:
+                api_key: '%env(ELEVEN_LABS_API_KEY)%'
+            openai:
+                api_key: '%env(OPENAI_API_KEY)%'
+
+        agent:
+            my_agent:
+                platform: ai.platform.openai
+                model: gpt-4o
+                speech:
+                    text_to_speech_platform: 'ai.platform.elevenlabs'
+                    tts_model: eleven_multilingual_v2
+                    tts_options:
+                        voice: Dslrhjl3ZpzrctukrQSN
+                    speech_to_text_platform: 'ai.platform.openai'
+                    stt_model: whisper
+
+The bundle automatically decorates the agent with ``SpeechAgent``. At least one of ``text_to_speech_platform`` or ``speech_to_text_platform``
+must be configured. Both can be enabled independently:
+
+- **TTS only**: configure ``text_to_speech_platform`` along with ``tts_model`` (and optionally ``tts_options``) to convert the agent's text response to audio
+- **STT only**: configure ``speech_to_text_platform`` along with ``stt_model`` (and optionally ``stt_options``) to transcribe audio input before sending it to the agent
+- **STS**: configure both for a full speech-to-speech pipeline
+
+Speech is disabled by default and can be disabled when needed with ``speech: false``:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: gpt-4o
+                speech: false
+
+Using the result
+~~~~~~~~~~~~~~~~
+
+When TTS is configured, the decorated agent returns the speech result
+(a :class:`Symfony\\AI\\Platform\\Result\\BinaryResult`) directly. The original text from the LLM is available
+via the result's metadata (under the ``text`` key)::
+
+    $result = $agent->call($messages);
+
+    $result->getMetadata()->get('text');    // text from the LLM
+    $result->getContent();                  // raw audio bytes
+    $result->asFile('/tmp/speech.mp3');     // save audio to file
+    $result->toDataUri('audio/mpeg');       // data URI for embedding in HTML
+
+When only STT is configured (no TTS), the agent returns the same result type as the inner agent
+(typically a :class:`Symfony\\AI\\Platform\\Result\\TextResult`) without the ``text`` metadata.
+
+.. note::
+
+    Handling both speech-to-text and text-to-speech introduces latency as most of the process is synchronous.
+
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
 .. _`Symfony AI Chat`: https://github.com/symfony/ai-chat
 .. _`Symfony AI Platform`: https://github.com/symfony/ai-platform

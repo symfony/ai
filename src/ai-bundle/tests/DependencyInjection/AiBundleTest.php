@@ -26,6 +26,7 @@ use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
+use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -7833,6 +7834,287 @@ class AiBundleTest extends TestCase
         $this->assertNull($definition->getArgument(3));
     }
 
+    public function testSpeechAgentCanBeUsed()
+    {
+        // Not enabled
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.speech_agent.my_agent'));
+        $this->assertFalse($container->hasDefinition('ai.agent.my_agent.speech_configuration'));
+
+        // Disabled without configuration
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o',
+                        'speech' => false,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.speech_agent.my_agent'));
+        $this->assertFalse($container->hasDefinition('ai.agent.my_agent.speech_configuration'));
+
+        // Disabled with configuration
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'test-key',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'enabled' => false,
+                            'text_to_speech_platform' => 'ai.platform.elevenlabs',
+                            'tts_model' => 'eleven_multilingual_v2',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.speech_agent.my_agent'));
+        $this->assertFalse($container->hasDefinition('ai.agent.my_agent.speech_configuration'));
+
+        // Enabled with TTS
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'test-key',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'text_to_speech_platform' => 'ai.platform.elevenlabs',
+                            'tts_model' => 'eleven_multilingual_v2',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.speech_agent.my_agent'));
+        $this->assertTrue($container->hasDefinition('ai.agent.my_agent.speech_configuration'));
+
+        $agentDefinition = $container->getDefinition('ai.speech_agent.my_agent');
+        $this->assertInstanceOf(Reference::class, $agentDefinition->getArgument(0));
+        $this->assertSame('.inner', (string) $agentDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $agentDefinition->getArgument(1));
+        $this->assertSame('ai.agent.my_agent.speech_configuration', (string) $agentDefinition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $agentDefinition->getArgument(3));
+        $this->assertSame('ai.platform.elevenlabs', (string) $agentDefinition->getArgument(3));
+        $this->assertSame(['ai.agent.my_agent', null, -1024], $agentDefinition->getDecoratedService());
+
+        $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
+        $this->assertSame('eleven_multilingual_v2', $speechConfigDefinition->getArgument('$ttsModel'));
+        $this->assertNull($speechConfigDefinition->getArgument('$sttModel'));
+
+        // Enabled with STT
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'test-key',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'speech_to_text_platform' => 'ai.platform.elevenlabs',
+                            'stt_model' => 'scribe_v1',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.speech_agent.my_agent'));
+        $this->assertTrue($container->hasDefinition('ai.agent.my_agent.speech_configuration'));
+
+        $agentDefinition = $container->getDefinition('ai.speech_agent.my_agent');
+        $this->assertInstanceOf(Reference::class, $agentDefinition->getArgument(0));
+        $this->assertSame('.inner', (string) $agentDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $agentDefinition->getArgument(1));
+        $this->assertSame('ai.agent.my_agent.speech_configuration', (string) $agentDefinition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $agentDefinition->getArgument(2));
+        $this->assertSame('ai.platform.elevenlabs', (string) $agentDefinition->getArgument(2));
+        $this->assertNull($agentDefinition->getArgument(3));
+        $this->assertSame(['ai.agent.my_agent', null, -1024], $agentDefinition->getDecoratedService());
+
+        $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
+        $this->assertNull($speechConfigDefinition->getArgument('$ttsModel'));
+        $this->assertSame('scribe_v1', $speechConfigDefinition->getArgument('$sttModel'));
+
+        // Enabled with TTS along with the model for STT but without the STT platform
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'test-key',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'text_to_speech_platform' => 'ai.platform.elevenlabs',
+                            'tts_model' => 'eleven_multilingual_v2',
+                            'stt_model' => 'scribe_v1',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.speech_agent.my_agent'));
+        $this->assertTrue($container->hasDefinition('ai.agent.my_agent.speech_configuration'));
+
+        $speechAgentDefinition = $container->getDefinition('ai.speech_agent.my_agent');
+        $this->assertInstanceOf(Reference::class, $speechAgentDefinition->getArgument(0));
+        $this->assertSame('.inner', (string) $speechAgentDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $agentDefinition->getArgument(1));
+        $this->assertSame('ai.agent.my_agent.speech_configuration', (string) $agentDefinition->getArgument(1));
+        $this->assertNull($speechAgentDefinition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $speechAgentDefinition->getArgument(3));
+        $this->assertSame('ai.platform.elevenlabs', (string) $speechAgentDefinition->getArgument(3));
+        $this->assertSame(['ai.agent.my_agent', null, -1024], $speechAgentDefinition->getDecoratedService());
+
+        $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigDefinition->getClass());
+        $this->assertSame('eleven_multilingual_v2', $speechConfigDefinition->getArgument('$ttsModel'));
+        $this->assertSame('scribe_v1', $speechConfigDefinition->getArgument('$sttModel'));
+
+        // Enabled with STT along with the model for TTS but without the TSS platform
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'test-key',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'speech_to_text_platform' => 'ai.platform.elevenlabs',
+                            'stt_model' => 'eleven_multilingual_v2',
+                            'tts_model' => 'scribe_v1',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.speech_agent.my_agent'));
+        $this->assertTrue($container->hasDefinition('ai.agent.my_agent.speech_configuration'));
+
+        $speechAgentDefinition = $container->getDefinition('ai.speech_agent.my_agent');
+        $this->assertInstanceOf(Reference::class, $speechAgentDefinition->getArgument(0));
+        $this->assertSame('.inner', (string) $speechAgentDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $agentDefinition->getArgument(1));
+        $this->assertSame('ai.agent.my_agent.speech_configuration', (string) $agentDefinition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $speechAgentDefinition->getArgument(2));
+        $this->assertSame('ai.platform.elevenlabs', (string) $speechAgentDefinition->getArgument(2));
+        $this->assertNull($speechAgentDefinition->getArgument(3));
+        $this->assertSame(['ai.agent.my_agent', null, -1024], $speechAgentDefinition->getDecoratedService());
+
+        $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigDefinition->getClass());
+        $this->assertSame('eleven_multilingual_v2', $speechConfigDefinition->getArgument('$sttModel'));
+        $this->assertSame('scribe_v1', $speechConfigDefinition->getArgument('$ttsModel'));
+
+        // Enabled with options for both TTS and STT
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'cartesia' => [
+                        'api_key' => 'test-key',
+                        'version' => '2025-04-16',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'speech_to_text_platform' => 'ai.platform.cartesia',
+                            'stt_model' => 'whisper',
+                            'stt_options' => ['language' => 'fr'],
+                            'text_to_speech_platform' => 'ai.platform.openai',
+                            'tts_model' => 'sonic',
+                            'tts_options' => ['voice_id' => 'abc123'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.speech_agent.my_agent'));
+        $this->assertTrue($container->hasDefinition('ai.agent.my_agent.speech_configuration'));
+
+        $speechAgentDefinition = $container->getDefinition('ai.speech_agent.my_agent');
+        $this->assertInstanceOf(Reference::class, $speechAgentDefinition->getArgument(0));
+        $this->assertSame('.inner', (string) $speechAgentDefinition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $agentDefinition->getArgument(1));
+        $this->assertSame('ai.agent.my_agent.speech_configuration', (string) $agentDefinition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $speechAgentDefinition->getArgument(2));
+        $this->assertSame('ai.platform.cartesia', (string) $speechAgentDefinition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $speechAgentDefinition->getArgument(3));
+        $this->assertSame('ai.platform.openai', (string) $speechAgentDefinition->getArgument(3));
+        $this->assertSame(['ai.agent.my_agent', null, -1024], $speechAgentDefinition->getDecoratedService());
+
+        $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
+        $this->assertSame(SpeechConfiguration::class, $speechConfigDefinition->getClass());
+        $this->assertSame('sonic', $speechConfigDefinition->getArgument('$ttsModel'));
+        $this->assertSame(['voice_id' => 'abc123'], $speechConfigDefinition->getArgument('$ttsOptions'));
+        $this->assertSame('whisper', $speechConfigDefinition->getArgument('$sttModel'));
+        $this->assertSame(['language' => 'fr'], $speechConfigDefinition->getArgument('$sttOptions'));
+    }
+
     /**
      * @param array<string, mixed> $configuration
      */
@@ -8002,6 +8284,15 @@ class AiBundleTest extends TestCase
                     'another_agent' => [
                         'model' => 'claude-3-opus-20240229',
                         'prompt' => 'Be concise.',
+                    ],
+                    'vocal_agent' => [
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'speech_to_text_platform' => 'ai.platform.elevenlabs',
+                            'text_to_speech_platform' => 'ai.platform.elevenlabs',
+                            'tts_model' => 'eleven_multilingual_v2',
+                            'stt_model' => 'scribe_v1',
+                        ],
                     ],
                 ],
                 'store' => [

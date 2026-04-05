@@ -61,6 +61,24 @@ final class ModelClientTest extends TestCase
         ]);
     }
 
+    public function testHappyCaseWithArrayPayload()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('POST', $method);
+            self::assertSame('https://api.openai.com/v1/audio/speech', $url);
+            $body = json_decode($options['body'], true);
+            self::assertSame('Hello World!', $body['input']);
+            self::assertSame('tts-1', $body['model']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $modelClient->request(new TextToSpeech('tts-1'), ['text' => 'Hello World!'], [
+            'voice' => 'alloy',
+        ]);
+    }
+
     public function testFailsWithoutVoiceOption()
     {
         $this->expectException(InvalidArgumentException::class);
