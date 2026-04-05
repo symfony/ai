@@ -15,6 +15,7 @@ CHANGELOG
  * The `vector_field` option for `Azure` store is now `vector` by default
  * Add support for `ScopingHttpClient` usage in `AzureSearch` store
  * Add support for `ScopingHttpClient` usage in `Weaviate` store
+ * Validate tool call arguments using `symfony/validator` when available
 
 0.6
 ---

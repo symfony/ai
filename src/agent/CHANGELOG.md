@@ -11,6 +11,7 @@ CHANGELOG
  * Add `ToolCallRequested` event dispatched before tool execution
  * Update `StreamListener` to use `DeltaEvent` and `TextDelta` instead of `ChunkEvent` and raw strings
  * Update `StreamListener` to react to `ToolCallComplete` instead of `ToolCallResult`
+ * Add `ValidateToolCallArgumentsListener` to validate tool call arguments with `symfony/validator` component
 
 0.4
 ---
