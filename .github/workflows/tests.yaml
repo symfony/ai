@@ -62,7 +62,7 @@ jobs:
               run: composer remove --dev deptrac/deptrac --no-update
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build packages
               run: php .github/build-packages.php
@@ -71,7 +71,7 @@ jobs:
               run: rm -rf vendor
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: src/${{ matrix.package.path }}
                   dependency-versions: ${{ matrix.dependency-version || 'highest' }}
@@ -105,7 +105,7 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build packages
               run: php .github/build-packages.php
@@ -118,7 +118,7 @@ jobs:
                   target: tmp
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
                   dependency-versions: ${{ matrix.dependency-version }}
@@ -147,7 +147,7 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build packages
               run: php .github/build-packages.php
@@ -160,7 +160,7 @@ jobs:
                   target: tmp
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: tmp/store/src/Bridge/${{ matrix.bridge }}
 
@@ -204,7 +204,7 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build packages
               run: php .github/build-packages.php
@@ -217,7 +217,7 @@ jobs:
                   target: tmp
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
                   dependency-versions: ${{ matrix.dependency-version }}
@@ -251,7 +251,7 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build packages
               run: php .github/build-packages.php
@@ -264,7 +264,7 @@ jobs:
                   target: tmp
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
                   dependency-versions: ${{ matrix.dependency-version }}
@@ -298,7 +298,7 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build packages
               run: php .github/build-packages.php
@@ -311,7 +311,7 @@ jobs:
                   target: tmp
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: tmp/platform/src/Bridge/${{ matrix.bridge.bridge }}
                   dependency-versions: ${{ matrix.dependency-version }}
@@ -345,7 +345,7 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build packages
               run: php .github/build-packages.php
@@ -358,7 +358,7 @@ jobs:
                   target: tmp
 
             - name: Install dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: tmp/mate/src/Bridge/${{ matrix.bridge.bridge }}
                   dependency-versions: ${{ matrix.dependency-version }}
@@ -381,13 +381,13 @@ jobs:
                   extensions: "${{ env.REQUIRED_PHP_EXTENSIONS }}"
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build root packages
               run: php .github/build-packages.php
 
             - name: Install demo dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   composer-options: "--no-scripts"
                   working-directory: demo
@@ -424,13 +424,13 @@ jobs:
                   extensions: "${{ env.REQUIRED_PHP_EXTENSIONS }}"
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build root packages
               run: php .github/build-packages.php
 
             - name: Install demo dependencies (no-dev)
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   composer-options: "--no-scripts --no-dev"
                   working-directory: demo
@@ -500,13 +500,13 @@ jobs:
               run: composer remove --dev deptrac/deptrac --no-update
 
             - name: Install root dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
 
             - name: Build root packages
               run: php .github/build-packages.php
 
             - name: Install examples dependencies
-              uses: ramsey/composer-install@v3
+              uses: ramsey/composer-install@v4
               with:
                   working-directory: examples
 
