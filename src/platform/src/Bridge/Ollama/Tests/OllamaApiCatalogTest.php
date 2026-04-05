@@ -104,4 +104,25 @@ final class OllamaApiCatalogTest extends TestCase
         ], $model['capabilities']);
         $this->assertSame(2, $httpClient->getRequestsCount());
     }
+
+    public function testModelCatalogCanReturnAudioModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'capabilities' => ['completion', 'audio'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $model = $modelCatalog->getModel('gemma4');
+
+        $this->assertSame('gemma4', $model->getName());
+        $this->assertSame([
+            Capability::INPUT_MESSAGES,
+            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_STRUCTURED,
+        ], $model->getCapabilities());
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }
