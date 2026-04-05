@@ -16,11 +16,16 @@ use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Result\Segment;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Result\Transcript;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\ResultConverter;
+use Symfony\AI\Platform\Exception\AuthenticationException;
+use Symfony\AI\Platform\Exception\BadRequestException;
+use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\ObjectResult;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class ResultConverterTest extends TestCase
 {
@@ -43,7 +48,7 @@ final class ResultConverterTest extends TestCase
 
     public function testConvertNonVerboseResult()
     {
-        $rawResult = new InMemoryRawResult([
+        $rawResult = $this->createRawResult([
             'text' => 'Hello, this is a transcription.',
         ]);
 
@@ -55,7 +60,7 @@ final class ResultConverterTest extends TestCase
 
     public function testConvertNonVerboseResultWithVerboseOptionFalse()
     {
-        $rawResult = new InMemoryRawResult([
+        $rawResult = $this->createRawResult([
             'text' => 'Hello, this is a transcription.',
         ]);
 
@@ -67,7 +72,7 @@ final class ResultConverterTest extends TestCase
 
     public function testConvertNonVerboseResultWithUsage()
     {
-        $rawResult = new InMemoryRawResult([
+        $rawResult = $this->createRawResult([
             'text' => 'Hello, this is a transcription.',
             'usage' => ['type' => 'duration', 'duration' => 3],
         ]);
@@ -80,7 +85,7 @@ final class ResultConverterTest extends TestCase
 
     public function testConvertVerboseResult()
     {
-        $rawResult = new InMemoryRawResult([
+        $rawResult = $this->createRawResult([
             'text' => 'Hello, world!',
             'language' => 'en',
             'duration' => 5.5,
@@ -116,7 +121,7 @@ final class ResultConverterTest extends TestCase
 
     public function testConvertVerboseResultWithUsage()
     {
-        $rawResult = new InMemoryRawResult([
+        $rawResult = $this->createRawResult([
             'text' => 'Hello',
             'language' => 'en',
             'duration' => 1.0,
@@ -132,7 +137,7 @@ final class ResultConverterTest extends TestCase
 
     public function testVerboseResultThrowsExceptionWhenMissingText()
     {
-        $rawResult = new InMemoryRawResult([
+        $rawResult = $this->createRawResult([
             'language' => 'en',
             'duration' => 5.5,
             'segments' => [],
@@ -146,7 +151,7 @@ final class ResultConverterTest extends TestCase
 
     public function testVerboseResultThrowsExceptionWhenMissingLanguage()
     {
-        $rawResult = new InMemoryRawResult([
+        $rawResult = $this->createRawResult([
             'text' => 'Hello',
             'duration' => 5.5,
             'segments' => [],
@@ -160,7 +165,7 @@ final class ResultConverterTest extends TestCase
 
     public function testVerboseResultThrowsExceptionWhenMissingDuration()
     {
-        $rawResult = new InMemoryRawResult([
+        $rawResult = $this->createRawResult([
             'text' => 'Hello',
             'language' => 'en',
             'segments' => [],
@@ -174,7 +179,7 @@ final class ResultConverterTest extends TestCase
 
     public function testVerboseResultThrowsExceptionWhenMissingSegments()
     {
-        $rawResult = new InMemoryRawResult([
+        $rawResult = $this->createRawResult([
             'text' => 'Hello',
             'language' => 'en',
             'duration' => 5.5,
@@ -189,5 +194,116 @@ final class ResultConverterTest extends TestCase
     public function testGetTokenUsageExtractorReturnsNull()
     {
         $this->assertNull($this->resultConverter->getTokenUsageExtractor());
+    }
+
+    public function testThrowsAuthenticationExceptionOn401()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(401);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'error' => [
+                'message' => 'Invalid API key provided: sk-invalid',
+            ],
+        ]));
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('Invalid API key provided: sk-invalid');
+
+        $this->resultConverter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsBadRequestExceptionOn400()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'error' => [
+                'message' => 'Invalid file format.',
+            ],
+        ]));
+
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('Invalid file format.');
+
+        $this->resultConverter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsBadRequestExceptionOn400WithNoMessage()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse->method('getContent')->willReturn('{}');
+
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('Bad Request');
+
+        $this->resultConverter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsRateLimitExceededExceptionOn429()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(429);
+        $httpResponse->method('toArray')->willReturn([]);
+
+        $this->expectException(RateLimitExceededException::class);
+
+        $this->resultConverter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsContentFilterException()
+    {
+        $rawResult = $this->createRawResult([
+            'error' => [
+                'code' => 'content_filter',
+                'message' => 'Content was filtered due to policy violation.',
+            ],
+        ]);
+
+        $this->expectException(ContentFilterException::class);
+        $this->expectExceptionMessage('Content was filtered due to policy violation.');
+
+        $this->resultConverter->convert($rawResult);
+    }
+
+    public function testThrowsRuntimeExceptionOnGenericError()
+    {
+        $rawResult = $this->createRawResult([
+            'error' => [
+                'code' => 'server_error',
+                'type' => 'internal',
+                'param' => null,
+                'message' => 'Something went wrong',
+            ],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Error "server_error"-internal (-): "Something went wrong".');
+
+        $this->resultConverter->convert($rawResult);
+    }
+
+    public function testThrowsRuntimeExceptionWhenTextFieldMissing()
+    {
+        $rawResult = $this->createRawResult([
+            'task' => 'transcribe',
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The response is missing the required "text" field.');
+
+        $this->resultConverter->convert($rawResult);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function createRawResult(array $data, int $statusCode = 200): RawHttpResult
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn($statusCode);
+        $httpResponse->method('toArray')->willReturn($data);
+
+        return new RawHttpResult($httpResponse);
     }
 }

@@ -14,6 +14,10 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Result\Segment;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Result\Transcript;
+use Symfony\AI\Platform\Exception\AuthenticationException;
+use Symfony\AI\Platform\Exception\BadRequestException;
+use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ObjectResult;
@@ -36,6 +40,33 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
         $data = $result->getData();
+        $response = $result->getObject();
+
+        if (401 === $response->getStatusCode()) {
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'];
+            throw new AuthenticationException($errorMessage);
+        }
+
+        if (400 === $response->getStatusCode()) {
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Bad Request';
+            throw new BadRequestException($errorMessage);
+        }
+
+        if (429 === $response->getStatusCode()) {
+            throw new RateLimitExceededException();
+        }
+
+        if (isset($data['error']['code']) && 'content_filter' === $data['error']['code']) {
+            throw new ContentFilterException($data['error']['message']);
+        }
+
+        if (isset($data['error'])) {
+            throw new RuntimeException(\sprintf('Error "%s"-%s (%s): "%s".', $data['error']['code'] ?? '-', $data['error']['type'] ?? '-', $data['error']['param'] ?? '-', $data['error']['message'] ?? '-'));
+        }
+
+        if (!($options['verbose'] ?? false) && !isset($data['text'])) {
+            throw new RuntimeException(\sprintf('The response is missing the required "text" field. Response data: "%s"', json_encode($data)));
+        }
         $result = ($options['verbose'] ?? false) ? $this->getVerboseResult($data) : new TextResult($data['text']);
 
         if (isset($data['usage'])) {
