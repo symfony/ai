@@ -1,21 +1,24 @@
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon
-    - ../../.phpstan/extension.neon
+    - ../../../.phpstan/extension.neon
 
 parameters:
     level: 6
     paths:
         - src/
-        - tests/
+        - Tests/
     excludePaths:
-        - src/Bridge/
-        - composer-plugin
+        - vendor/
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
         -
             message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
         -
             message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
+            reportUnmatched: false
+        -
+            identifier: 'symfonyAi.forbidNativeException'
+            path: Tests/*
             reportUnmatched: false
 
 services:
