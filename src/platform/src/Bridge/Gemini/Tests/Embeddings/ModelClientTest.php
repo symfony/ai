@@ -26,7 +26,7 @@ final class ModelClientTest extends TestCase
             ->method('toArray')
             ->willReturn(json_decode($this->getEmbeddingStub(), true));
 
-        $httpClient = self::createMock(HttpClientInterface::class);
+        $httpClient = $this->createMock(HttpClientInterface::class);
         $httpClient->expects($this->once())
             ->method('request')
             ->with(

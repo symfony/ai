@@ -30,7 +30,7 @@ final class ResultConverterTest extends TestCase
     public function testConvertTextResult()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -52,7 +52,7 @@ final class ResultConverterTest extends TestCase
     public function testConvertToolWithArgsCallResult()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -88,7 +88,7 @@ final class ResultConverterTest extends TestCase
     public function testConvertToolWithEmptyArgsCallResult()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -124,7 +124,7 @@ final class ResultConverterTest extends TestCase
     public function testConvertToolWithoutArgsCallResult()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -159,7 +159,7 @@ final class ResultConverterTest extends TestCase
     public function testConvertMultipleChoices()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -191,7 +191,7 @@ final class ResultConverterTest extends TestCase
     public function testContentFilterException()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
 
         $httpResponse->expects($this->exactly(1))
             ->method('toArray')
@@ -222,7 +222,7 @@ final class ResultConverterTest extends TestCase
     public function testThrowsExceptionWhenNoChoices()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([]);
 
         $this->expectException(RuntimeException::class);
@@ -234,7 +234,7 @@ final class ResultConverterTest extends TestCase
     public function testThrowsExceptionForUnsupportedFinishReason()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [

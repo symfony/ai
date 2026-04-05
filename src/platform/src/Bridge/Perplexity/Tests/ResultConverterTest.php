@@ -27,7 +27,7 @@ final class ResultConverterTest extends TestCase
     public function testConvertTextResult()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -49,7 +49,7 @@ final class ResultConverterTest extends TestCase
     public function testConvertMultipleChoices()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -81,7 +81,7 @@ final class ResultConverterTest extends TestCase
     public function testThrowsExceptionWhenNoChoices()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([]);
 
         $this->expectException(RuntimeException::class);
@@ -93,7 +93,7 @@ final class ResultConverterTest extends TestCase
     public function testThrowsExceptionForUnsupportedFinishReason()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -115,7 +115,7 @@ final class ResultConverterTest extends TestCase
     public function testAttachesSearchResultsToMetadata()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [
@@ -150,7 +150,7 @@ final class ResultConverterTest extends TestCase
     public function testAttachesCitationsToMetadata()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'choices' => [
                 [

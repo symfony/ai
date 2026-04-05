@@ -35,7 +35,7 @@ final class DeferredResultTest extends TestCase
         $rawHttpResult = new RawHttpResult($httpResponse);
         $textResult = new TextResult('test content');
 
-        $resultConverter = self::createMock(ResultConverterInterface::class);
+        $resultConverter = $this->createMock(ResultConverterInterface::class);
         $resultConverter->expects($this->once())
             ->method('convert')
             ->with($rawHttpResult, [])
@@ -52,7 +52,7 @@ final class DeferredResultTest extends TestCase
         $rawHttpResult = new RawHttpResult($httpResponse);
         $textResult = new TextResult('test content');
 
-        $resultConverter = self::createMock(ResultConverterInterface::class);
+        $resultConverter = $this->createMock(ResultConverterInterface::class);
         $resultConverter->expects($this->once())
             ->method('convert')
             ->with($rawHttpResult, [])
@@ -115,7 +115,7 @@ final class DeferredResultTest extends TestCase
         $rawHttpResponse = new RawHttpResult($httpResponse);
         $options = ['option1' => 'value1', 'option2' => 'value2'];
 
-        $resultConverter = self::createMock(ResultConverterInterface::class);
+        $resultConverter = $this->createMock(ResultConverterInterface::class);
         $resultConverter->expects($this->once())
             ->method('convert')
             ->with($rawHttpResponse, $options)
