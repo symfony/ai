@@ -1,0 +1,26 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-29T14:52:25Z
+
+Did you consider to register mate itself as a composer plugin instead of an additional package?
+was just a bit surprised to see it as a standalone package and wondering why
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-29T19:34:45Z
+
+@chr-hertel I actually thought about that too! But then we'd need to set the composer type of mate to composer-plugin, which is semantically wrong — it's not really a Composer plugin in the traditional sense. I'm also not fully sure what other implications that would have (e.g. around installation trust prompts, lifecycle hooks, etc.). What do you think?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-30T20:55:35Z
+
+Primary focus here for me would always be DX - how easy can we make it to get going with Mate, configuring Mat, extending Mate, etc. - that would be my basis for decision making over
+
+if we can skip additional `composer require` or other CLI commands, i'd compromise - not sure tho on the implication for phar - would need to test myself :thinking:
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-04-01T18:30:34Z
+
+@chr-hertel the mate composer package requires the new composer plugin - thats the same thing as phpstan has - there is phpsta/phpstan and then the extension installer. i have tested it in different scenarios like that and it works very well! But if you think we can also merge it together and see how it goes 😂
