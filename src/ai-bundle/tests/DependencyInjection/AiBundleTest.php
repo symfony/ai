@@ -8210,6 +8210,10 @@ class AiBundleTest extends TestCase
         return [
             'ai' => [
                 'platform' => [
+                    'amazeeai' => [
+                        'api_key' => 'amazeeai_key_full',
+                        'base_url' => 'https://amazeeai.example.com',
+                    ],
                     'anthropic' => [
                         'api_key' => 'anthropic_key_full',
                     ],
@@ -8278,6 +8282,9 @@ class AiBundleTest extends TestCase
                     'gemini' => [
                         'api_key' => 'gemini_key_full',
                     ],
+                    'huggingface' => [
+                        'api_key' => 'huggingface_key_full',
+                    ],
                     'openai' => [
                         'api_key' => 'sk-openai_key_full',
                     ],
@@ -8298,6 +8305,9 @@ class AiBundleTest extends TestCase
                     ],
                     'cerebras' => [
                         'api_key' => 'csk-cerebras_key_full',
+                    ],
+                    'scaleway' => [
+                        'api_key' => 'scaleway_key_full',
                     ],
                     'voyage' => [
                         'api_key' => 'voyage_key_full',
@@ -8400,6 +8410,12 @@ class AiBundleTest extends TestCase
                             'dsn' => 'http://foo:bar@1.2.3.4:9999',
                             'database' => 'my_db',
                             'table' => 'my_table',
+                        ],
+                    ],
+                    'elasticsearch' => [
+                        'my_elasticsearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'index_name' => 'my_index',
                         ],
                     ],
                     'cloudflare' => [
@@ -8608,6 +8624,11 @@ class AiBundleTest extends TestCase
                             'dimensions' => 768,
                             'distance' => 'Cosine',
                             'async' => false,
+                        ],
+                    ],
+                    's3vectors' => [
+                        'my_s3vectors_store' => [
+                            'vector_bucket_name' => 'my-bucket',
                         ],
                     ],
                     'redis' => [
