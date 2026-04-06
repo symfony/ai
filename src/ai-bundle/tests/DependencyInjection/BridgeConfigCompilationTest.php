@@ -23,6 +23,7 @@ use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpClient\NativeHttpClient;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
@@ -137,8 +138,8 @@ class BridgeConfigCompilationTest extends TestCase
      * @param array<string, mixed> $config
      */
     #[DataProvider('providePlatformConfigs')]
-    #[TestDox('Platform bridge "$type" registers service with "ai.platform" tag')]
-    public function testPlatformServiceIsTagged(string $type, array $config, string $expectedServiceId)
+    #[TestDox('Platform bridge "$type" has valid service definition')]
+    public function testPlatformServiceDefinition(string $type, array $config, string $expectedServiceId)
     {
         $container = $this->loadContainer([
             'ai' => [
@@ -148,15 +149,27 @@ class BridgeConfigCompilationTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition($expectedServiceId), \sprintf('Service "%s" should be defined.', $expectedServiceId));
-        $this->assertTrue($container->getDefinition($expectedServiceId)->hasTag('ai.platform'), \sprintf('Service "%s" should have the "ai.platform" tag.', $expectedServiceId));
+
+        $definition = $container->getDefinition($expectedServiceId);
+
+        // Verify tag exists with name attribute
+        $this->assertTrue($definition->hasTag('ai.platform'), \sprintf('Service "%s" should have the "ai.platform" tag.', $expectedServiceId));
+        $tags = $definition->getTag('ai.platform');
+        $this->assertArrayHasKey('name', $tags[0], \sprintf('Tag "ai.platform" on service "%s" should have a "name" attribute.', $expectedServiceId));
+
+        // Verify factory method exists and argument count matches
+        $this->assertFactoryArgumentCount($definition, $expectedServiceId);
+
+        // Verify all service references can be resolved
+        $this->assertReferencesResolvable($definition, $container, $expectedServiceId);
     }
 
     /**
      * @param array<string, mixed> $config
      */
     #[DataProvider('provideStoreConfigs')]
-    #[TestDox('Store bridge "$type" registers service with "ai.store" tag')]
-    public function testStoreServiceIsTagged(string $type, array $config, string $expectedServiceId)
+    #[TestDox('Store bridge "$type" has valid service definition')]
+    public function testStoreServiceDefinition(string $type, array $config, string $expectedServiceId)
     {
         $container = $this->loadContainer([
             'ai' => [
@@ -166,15 +179,20 @@ class BridgeConfigCompilationTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition($expectedServiceId), \sprintf('Service "%s" should be defined.', $expectedServiceId));
-        $this->assertTrue($container->getDefinition($expectedServiceId)->hasTag('ai.store'), \sprintf('Service "%s" should have the "ai.store" tag.', $expectedServiceId));
+
+        $definition = $container->getDefinition($expectedServiceId);
+
+        $this->assertTrue($definition->hasTag('ai.store'), \sprintf('Service "%s" should have the "ai.store" tag.', $expectedServiceId));
+        $this->assertFactoryArgumentCount($definition, $expectedServiceId);
+        $this->assertReferencesResolvable($definition, $container, $expectedServiceId);
     }
 
     /**
      * @param array<string, mixed> $config
      */
     #[DataProvider('provideMessageStoreConfigs')]
-    #[TestDox('Message store bridge "$type" registers service with "ai.message_store" tag')]
-    public function testMessageStoreServiceIsTagged(string $type, array $config, string $expectedServiceId)
+    #[TestDox('Message store bridge "$type" has valid service definition')]
+    public function testMessageStoreServiceDefinition(string $type, array $config, string $expectedServiceId)
     {
         $container = $this->loadContainer([
             'ai' => [
@@ -184,7 +202,11 @@ class BridgeConfigCompilationTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition($expectedServiceId), \sprintf('Service "%s" should be defined.', $expectedServiceId));
-        $this->assertTrue($container->getDefinition($expectedServiceId)->hasTag('ai.message_store'), \sprintf('Service "%s" should have the "ai.message_store" tag.', $expectedServiceId));
+
+        $definition = $container->getDefinition($expectedServiceId);
+
+        $this->assertTrue($definition->hasTag('ai.message_store'), \sprintf('Service "%s" should have the "ai.message_store" tag.', $expectedServiceId));
+        $this->assertReferencesResolvable($definition, $container, $expectedServiceId);
     }
 
     #[TestDox('All platform config files have corresponding test coverage')]
@@ -315,6 +337,64 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'surrealdb' => ['surrealdb', ['default' => ['endpoint' => 'http://localhost:8000', 'username' => 'u', 'password' => 'p', 'namespace' => 'ns', 'database' => 'db']], 'ai.message_store.surrealdb.default'];
     }
 
+    private function assertFactoryArgumentCount(Definition $definition, string $serviceId): void
+    {
+        $factory = $definition->getFactory();
+
+        if (!\is_array($factory) && !\is_string($factory)) {
+            return;
+        }
+
+        if (\is_string($factory) && str_contains($factory, '::')) {
+            [$class, $method] = explode('::', $factory, 2);
+        } elseif (\is_array($factory)) {
+            [$class, $method] = $factory;
+        } else {
+            return;
+        }
+
+        if (!\is_string($class) || !class_exists($class) || !method_exists($class, $method)) {
+            $this->fail(\sprintf('Factory "%s::%s" for service "%s" does not exist.', $class, $method, $serviceId));
+        }
+
+        $reflectionMethod = new \ReflectionMethod($class, $method);
+        $argumentCount = \count($definition->getArguments());
+
+        $this->assertGreaterThanOrEqual(
+            $reflectionMethod->getNumberOfRequiredParameters(),
+            $argumentCount,
+            \sprintf('Service "%s" has %d arguments but factory "%s::%s" requires at least %d.', $serviceId, $argumentCount, $class, $method, $reflectionMethod->getNumberOfRequiredParameters()),
+        );
+
+        $this->assertLessThanOrEqual(
+            $reflectionMethod->getNumberOfParameters(),
+            $argumentCount,
+            \sprintf('Service "%s" has %d arguments but factory "%s::%s" accepts at most %d.', $serviceId, $argumentCount, $class, $method, $reflectionMethod->getNumberOfParameters()),
+        );
+    }
+
+    private function assertReferencesResolvable(Definition $definition, ContainerBuilder $container, string $serviceId): void
+    {
+        foreach ($definition->getArguments() as $index => $argument) {
+            if (!$argument instanceof Reference) {
+                continue;
+            }
+
+            $refId = (string) $argument;
+            $invalidBehavior = $argument->getInvalidBehavior();
+
+            // Skip optional references (NULL_ON_INVALID_REFERENCE, IGNORE_ON_INVALID_REFERENCE)
+            if (ContainerBuilder::EXCEPTION_ON_INVALID_REFERENCE !== $invalidBehavior) {
+                continue;
+            }
+
+            $this->assertTrue(
+                $container->has($refId),
+                \sprintf('Service "%s" (argument %s) references "%s" which does not exist in the container.', $serviceId, $index, $refId),
+            );
+        }
+    }
+
     /**
      * @param array<string, mixed> $configuration
      */
@@ -346,6 +426,13 @@ class BridgeConfigCompilationTest extends TestCase
 
         // Doctrine connection (for stores/message stores that reference it)
         $container->register('doctrine.dbal.default_connection')->setSynthetic(true);
+
+        // External services provided by FrameworkBundle or third-party packages
+        $container->register('request_stack')->setSynthetic(true);
+        $container->register('filesystem')->setSynthetic(true);
+        $container->register('MongoDB\Client')->setSynthetic(true);
+        $container->register('Codewithkyrian\ChromaDB\Client')->setSynthetic(true);
+        $container->register('Probots\Pinecone\Client')->setSynthetic(true);
 
         $extension = (new AiBundle())->getContainerExtension();
         $extension->load($configuration, $container);
