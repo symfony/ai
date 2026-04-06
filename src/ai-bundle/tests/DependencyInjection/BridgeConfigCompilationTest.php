@@ -18,7 +18,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\AiBundle\AiBundle;
-use Symfony\AI\Platform\Exception\RuntimeException as PlatformRuntimeException;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
@@ -41,6 +40,9 @@ use Symfony\Component\Serializer\Serializer;
  */
 class BridgeConfigCompilationTest extends TestCase
 {
+    /**
+     * @param array<string, mixed> $config
+     */
     #[DataProvider('providePlatformConfigs')]
     #[TestDox('Platform bridge "$type" config compiles')]
     public function testPlatformConfigCompiles(string $type, array $config, string $expectedServiceId)
@@ -97,6 +99,9 @@ class BridgeConfigCompilationTest extends TestCase
         $this->assertTrue($container->has('ai.platform.failover.main'));
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     #[DataProvider('provideStoreConfigs')]
     #[TestDox('Store bridge "$type" config compiles')]
     public function testStoreConfigCompiles(string $type, array $config, string $expectedServiceId)
@@ -111,6 +116,9 @@ class BridgeConfigCompilationTest extends TestCase
         $this->assertTrue($container->has($expectedServiceId), \sprintf('Service "%s" should exist.', $expectedServiceId));
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     #[DataProvider('provideMessageStoreConfigs')]
     #[TestDox('Message store bridge "$type" config compiles')]
     public function testMessageStoreConfigCompiles(string $type, array $config, string $expectedServiceId)
@@ -125,6 +133,9 @@ class BridgeConfigCompilationTest extends TestCase
         $this->assertTrue($container->has($expectedServiceId), \sprintf('Service "%s" should exist.', $expectedServiceId));
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     #[DataProvider('providePlatformConfigs')]
     #[TestDox('Platform bridge "$type" registers service with "ai.platform" tag')]
     public function testPlatformServiceIsTagged(string $type, array $config, string $expectedServiceId)
@@ -140,6 +151,9 @@ class BridgeConfigCompilationTest extends TestCase
         $this->assertTrue($container->getDefinition($expectedServiceId)->hasTag('ai.platform'), \sprintf('Service "%s" should have the "ai.platform" tag.', $expectedServiceId));
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     #[DataProvider('provideStoreConfigs')]
     #[TestDox('Store bridge "$type" registers service with "ai.store" tag')]
     public function testStoreServiceIsTagged(string $type, array $config, string $expectedServiceId)
@@ -155,6 +169,9 @@ class BridgeConfigCompilationTest extends TestCase
         $this->assertTrue($container->getDefinition($expectedServiceId)->hasTag('ai.store'), \sprintf('Service "%s" should have the "ai.store" tag.', $expectedServiceId));
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     #[DataProvider('provideMessageStoreConfigs')]
     #[TestDox('Message store bridge "$type" registers service with "ai.message_store" tag')]
     public function testMessageStoreServiceIsTagged(string $type, array $config, string $expectedServiceId)
@@ -330,18 +347,8 @@ class BridgeConfigCompilationTest extends TestCase
         // Doctrine connection (for stores/message stores that reference it)
         $container->register('doctrine.dbal.default_connection')->setSynthetic(true);
 
-        // Load extension config — skip test if bridge package is not installed
         $extension = (new AiBundle())->getContainerExtension();
-
-        try {
-            $extension->load($configuration, $container);
-        } catch (PlatformRuntimeException $e) {
-            if (str_contains($e->getMessage(), 'package')) {
-                $this->markTestSkipped($e->getMessage());
-            }
-
-            throw $e;
-        }
+        $extension->load($configuration, $container);
 
         return $container;
     }
