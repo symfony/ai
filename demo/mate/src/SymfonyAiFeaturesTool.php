@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Mate;
 
 use Mcp\Capability\Attribute\McpTool;
@@ -35,8 +44,8 @@ class SymfonyAiFeaturesTool
     #[McpTool('symfony-ai-features', 'Detects and lists all available Symfony AI features, platforms, agents, tools, and configurations in this project')]
     public function getFeatures(bool $includeDetails = true): array
     {
-        $configPath = $this->rootDir . '/config/packages/ai.yaml';
-        $composerPath = $this->rootDir . '/composer.json';
+        $configPath = $this->rootDir.'/config/packages/ai.yaml';
+        $composerPath = $this->rootDir.'/composer.json';
 
         if (!file_exists($configPath)) {
             return [
@@ -118,7 +127,7 @@ class SymfonyAiFeaturesTool
             $agent = [
                 'name' => $name,
                 'platform' => $settings['platform'] ?? 'unknown',
-                'model' => is_array($settings['model'] ?? null)
+                'model' => \is_array($settings['model'] ?? null)
                     ? ($settings['model']['name'] ?? 'unknown')
                     : ($settings['model'] ?? 'unknown'),
             ];
@@ -127,19 +136,19 @@ class SymfonyAiFeaturesTool
                 $agent['has_custom_prompt'] = isset($settings['prompt']);
                 $agent['tools_enabled'] = ($settings['tools'] ?? null) !== false;
 
-                if ($agent['tools_enabled'] && is_array($settings['tools'] ?? null)) {
+                if ($agent['tools_enabled'] && \is_array($settings['tools'] ?? null)) {
                     $agent['tools'] = $this->parseTools($settings['tools']);
                 }
 
                 if (isset($settings['prompt'])) {
-                    if (is_array($settings['prompt'])) {
+                    if (\is_array($settings['prompt'])) {
                         $agent['prompt_type'] = isset($settings['prompt']['file']) ? 'file' : 'config';
                         if (isset($settings['prompt']['file'])) {
                             $agent['prompt_source'] = basename($settings['prompt']['file']);
                         }
                     } else {
                         $agent['prompt_type'] = 'inline';
-                        $agent['prompt_length'] = strlen($settings['prompt']);
+                        $agent['prompt_length'] = \strlen($settings['prompt']);
                     }
                 }
 
@@ -192,7 +201,7 @@ class SymfonyAiFeaturesTool
         $toolsIndex = [];
 
         foreach ($agentConfig as $agentName => $settings) {
-            if (isset($settings['tools']) && is_array($settings['tools'])) {
+            if (isset($settings['tools']) && \is_array($settings['tools'])) {
                 foreach ($settings['tools'] as $tool) {
                     $toolInfo = $this->parseTool($tool);
                     $toolKey = $toolInfo['class'] ?? $toolInfo['agent'] ?? $toolInfo['name'] ?? 'unknown';
@@ -227,7 +236,7 @@ class SymfonyAiFeaturesTool
 
             if ($includeDetails && isset($settings['handoffs'])) {
                 $setup['handoffs'] = $settings['handoffs'];
-                $setup['handoff_count'] = count($settings['handoffs']);
+                $setup['handoff_count'] = \count($settings['handoffs']);
             }
 
             $setups[] = $setup;
@@ -259,7 +268,7 @@ class SymfonyAiFeaturesTool
 
                 if (!empty($settings['transformers'])) {
                     $indexer['transformers'] = array_map(
-                        fn($t) => $this->extractClassName($t),
+                        fn ($t) => $this->extractClassName($t),
                         $settings['transformers']
                     );
                 }
@@ -342,7 +351,7 @@ class SymfonyAiFeaturesTool
      */
     private function parseTools(array $tools): array
     {
-        return array_map(fn($tool) => $this->parseTool($tool), $tools);
+        return array_map(fn ($tool) => $this->parseTool($tool), $tools);
     }
 
     /**
@@ -350,7 +359,7 @@ class SymfonyAiFeaturesTool
      */
     private function parseTool(mixed $tool): array
     {
-        if (is_string($tool)) {
+        if (\is_string($tool)) {
             return [
                 'type' => 'service',
                 'class' => $this->extractClassName($tool),
@@ -358,7 +367,7 @@ class SymfonyAiFeaturesTool
             ];
         }
 
-        if (is_array($tool)) {
+        if (\is_array($tool)) {
             if (isset($tool['agent'])) {
                 return [
                     'type' => 'sub_agent',
@@ -383,6 +392,7 @@ class SymfonyAiFeaturesTool
     private function extractClassName(string $classOrService): string
     {
         $parts = explode('\\', $classOrService);
+
         return end($parts);
     }
 
@@ -391,6 +401,7 @@ class SymfonyAiFeaturesTool
         if (preg_match('/%env\(([^)]+)\)%/', $value, $matches)) {
             return $matches[1];
         }
+
         return null;
     }
 
@@ -412,15 +423,15 @@ class SymfonyAiFeaturesTool
     private function generateSummary(array $features): array
     {
         return [
-            'total_platforms' => count($features['platforms']),
-            'total_agents' => count($features['agents']),
-            'total_stores' => count($features['stores']),
-            'total_tools' => count($features['tools']),
-            'total_multi_agent_setups' => count($features['multi_agent_setups']),
-            'total_indexers' => count($features['indexers']),
-            'total_retrievers' => count($features['retrievers']),
-            'total_vectorizers' => count($features['vectorizers']),
-            'total_packages' => count($features['installed_packages']),
+            'total_platforms' => \count($features['platforms']),
+            'total_agents' => \count($features['agents']),
+            'total_stores' => \count($features['stores']),
+            'total_tools' => \count($features['tools']),
+            'total_multi_agent_setups' => \count($features['multi_agent_setups']),
+            'total_indexers' => \count($features['indexers']),
+            'total_retrievers' => \count($features['retrievers']),
+            'total_vectorizers' => \count($features['vectorizers']),
+            'total_packages' => \count($features['installed_packages']),
         ];
     }
 }
