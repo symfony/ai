@@ -8,6 +8,7 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
+
 ###> symfony/asset-mapper ###
 /public/assets/
 /assets/vendor/
@@ -26,5 +27,4 @@ phpstan.neon
 .phpunit.cache
 ###< phpunit/phpunit ###
 
-chromadb
-coverage
+pgdata

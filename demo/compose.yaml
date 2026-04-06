@@ -1,11 +1,24 @@
 services:
-    chromadb:
-        image: chromadb/chroma:0.5.23
-        ports:
-            - '8080:8000'
-        volumes:
-            - ./chromadb:/chroma/chroma
-        environment:
-            - IS_PERSISTENT=TRUE
-            - PERSIST_DIRECTORY=/chroma/chroma # this is the default path, change it as needed
-            - ANONYMIZED_TELEMETRY=FALSE
+###> doctrine/doctrine-bundle ###
+  database:
+    image: pgvector/pgvector:pg18-trixie
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      # You should definitely change the password in production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-app}", "-U", "${POSTGRES_USER:-app}"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - database_data:/var/lib/postgresql:rw
+      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+      # - ./docker/db/data:/var/lib/postgresql/data:rw
+###< doctrine/doctrine-bundle ###
+
+volumes:
+###> doctrine/doctrine-bundle ###
+  database_data:
+###< doctrine/doctrine-bundle ###

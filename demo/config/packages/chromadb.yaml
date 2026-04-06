@@ -1,9 +1,0 @@
-services:
-    Codewithkyrian\ChromaDB\Factory:
-        calls:
-            - withHost: ['http://%env(CHROMADB_HOST)%']
-            - withPort: ['%env(CHROMADB_PORT)%']
-
-    Codewithkyrian\ChromaDB\Client:
-        factory: ['@Codewithkyrian\ChromaDB\Factory', 'connect']
-        lazy: true

@@ -8,6 +8,20 @@
             "ref": "87424683adc81d7dc305eefec1fced883084aab9"
         }
     },
+    "doctrine/doctrine-bundle": {
+        "version": "3.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "3.0",
+            "ref": "18ee08e513ba0303fd09a01fc1c934870af06ffa"
+        },
+        "files": [
+            "config/packages/doctrine.yaml",
+            "src/Entity/.gitignore",
+            "src/Repository/.gitignore"
+        ]
+    },
     "php-cs-fixer/shim": {
         "version": "3.55",
         "recipe": {
@@ -73,18 +87,6 @@
             "config/packages/ai.yaml"
         ]
     },
-    "symfony/ai-chroma-db-store": {
-        "version": "0.1",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "0.1",
-            "ref": "70b5179ede32bb6faf93f7f521570d3740f5230e"
-        },
-        "files": [
-            "config/packages/ai_chroma_db_store.yaml"
-        ]
-    },
     "symfony/ai-clock-tool": {
         "version": "0.9999999",
         "recipe": {
@@ -119,6 +121,18 @@
         },
         "files": [
             "config/packages/ai_open_ai_platform.yaml"
+        ]
+    },
+    "symfony/ai-postgres-store": {
+        "version": "0.3",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "373cb1506ee0d7082944bb2077adce7edcc23229"
+        },
+        "files": [
+            "config/packages/ai_postgres_store.yaml"
         ]
     },
     "symfony/ai-wikipedia-tool": {

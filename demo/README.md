@@ -22,15 +22,15 @@ What you need to run this demo:
 This small demo sits on top of following technologies:
 
 * [PHP >= 8.4](https://www.php.net/releases/8.4/en.php)
-* [Symfony 7.3 incl. Twig, Asset Mapper & UX](https://symfony.com/)
+* [Symfony 8.0 incl. Twig, Asset Mapper & UX](https://symfony.com/)
 * [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
 * [OpenAI's GPT & Embeddings](https://platform.openai.com/docs/overview)
-* [ChromaDB Vector Store](https://www.trychroma.com/)
+* [PostgreSQL with pgvector](https://github.com/pgvector/pgvector)
 * [FrankenPHP](https://frankenphp.dev/)
 
 ## Setup
 
-The setup is split into three parts, the Symfony application, the OpenAI configuration, and initializing the Chroma DB.
+The setup is split into three parts, the Symfony application, the OpenAI configuration, and initializing PostgreSQL.
 
 ### 1. Symfony App
 
@@ -67,13 +67,14 @@ symfony console debug:dotenv
 
 You should be able to see the `OPENAI_API_KEY` in the list of environment variables.
 
-### 3. Chroma DB Initialization
+### 3. PostgreSQL Vector Store Initialization
 
-The [Chroma DB](https://www.trychroma.com/) is a vector store that is used to store embeddings of the chatbot's context.
+[PostgreSQL with pgvector](https://github.com/pgvector/pgvector) is used to store embeddings of the chatbot's context.
 
-To initialize the Chroma DB, you need to run the following command:
+To initialize the vector store, you need to run the following command:
 
 ```shell
+symfony console ai:store:setup ai.store.postgres.symfony_blog
 symfony console ai:store:index blog -vv
 ```
 
@@ -87,7 +88,7 @@ symfony console ai:store:retrieve blog "Week of Symfony"
 
 ## Functionality
 
-* The chatbot application is a simple and small Symfony 7.3 application.
+* The chatbot application is a simple and small Symfony 8.0 application.
 * The UI is coupled to a [Twig LiveComponent](https://symfony.com/bundles/ux-live-component/current/index.html), that integrates different `Chat` implementations on top of the user's session.
 * You can reset the chat context by hitting the `Reset` button in the top right corner.
 * You find three different usage scenarios in the upper navbar.
