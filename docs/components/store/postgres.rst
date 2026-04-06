@@ -101,7 +101,7 @@ Usage
 Adding Documents
 ~~~~~~~~~~~~~~~~
 
-.. code-block:: php
+::
 
     use Symfony\AI\Store\Document\Metadata;
     use Symfony\AI\Store\Document\TextDocument;
@@ -127,17 +127,13 @@ metadata (under the ``_text`` key) for full-text indexing.
 Querying Documents
 ~~~~~~~~~~~~~~~~~~
 
-Vector-only search:
-
-.. code-block:: php
+Vector-only search::
 
     use Symfony\AI\Store\Query\VectorQuery;
 
     $results = $store->query(new VectorQuery($embedding), ['limit' => 10]);
 
-Hybrid search (vector + full-text):
-
-.. code-block:: php
+Hybrid search (vector + full-text)::
 
     use Symfony\AI\Store\Query\HybridQuery;
 
