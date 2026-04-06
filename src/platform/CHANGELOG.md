@@ -6,7 +6,7 @@ CHANGELOG
 
  * Add `TraceablePlatform` profiler decorator moved from AI Bundle
  * Add `asFile()` method to `BinaryResult` and `DeferredResult` for saving binary content to a file
- * Add typed streaming deltas (`TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ToolCallStart`, `ToolInputDelta`, `BinaryDelta`, `ChoiceDelta`, `ToolCallComplete`, `ThinkingComplete`) implementing `DeltaInterface`
+ * Add typed streaming deltas (`TextDelta`, `ThinkingDelta`, `ThinkingStart`, `ThinkingSignature`, `ToolCallStart`, `ToolInputDelta`, `BinaryDelta`, `ChoiceDelta`, `ToolCallComplete`, `ThinkingComplete`) implementing `DeltaInterface`
  * [BC BREAK] Remove `Symfony\AI\Platform\Bridge\Ollama\OllamaMessageChunk`; Ollama streams now yield semantic deltas (`TextDelta`, `ThinkingDelta`, `ToolCallComplete`, `TokenUsage`) like the other bridges
  * Add generic `MetadataDelta` streaming support and use it for Perplexity citations/search results instead of provider-specific stream delta classes and listeners
  * Remove `DeltaInterface` from `BinaryResult`, `ChoiceResult`, and `ToolCallResult`
