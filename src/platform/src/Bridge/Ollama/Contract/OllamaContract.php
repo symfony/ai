@@ -22,7 +22,7 @@ final class OllamaContract extends Contract
     public static function create(NormalizerInterface ...$normalizer): Contract
     {
         return parent::create(
-            new AssistantMessageNormalizer(),
+            new ToolCallNormalizer(),
             ...$normalizer,
         );
     }
