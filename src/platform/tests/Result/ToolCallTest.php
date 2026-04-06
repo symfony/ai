@@ -48,26 +48,4 @@ final class ToolCallTest extends TestCase
         $toolCall = new ToolCall('id', 'name');
         $this->assertSame([], $toolCall->getArguments());
     }
-
-    public function testToolCallJsonSerialize()
-    {
-        $toolCall = new ToolCall('id', 'name', ['foo' => 'bar']);
-        $this->assertSame([
-            'id' => 'id',
-            'type' => 'function',
-            'function' => [
-                'name' => 'name',
-                'arguments' => '{"foo":"bar"}',
-            ],
-        ], $toolCall->jsonSerialize());
-    }
-
-    public function testToolCallJsonSerializeWithEmptyArguments()
-    {
-        $toolCall = new ToolCall('id', 'name');
-        $serialized = $toolCall->jsonSerialize();
-
-        // Empty arguments must serialize to a JSON object "{}", not a JSON array "[]"
-        $this->assertSame('{}', $serialized['function']['arguments']);
-    }
 }

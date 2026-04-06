@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Result;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class ToolCall implements \JsonSerializable
+final class ToolCall
 {
     /**
      * @param array<string, mixed> $arguments
@@ -42,27 +42,5 @@ final class ToolCall implements \JsonSerializable
     public function getArguments(): array
     {
         return $this->arguments;
-    }
-
-    /**
-     * @return array{
-     *     id: string,
-     *     type: 'function',
-     *     function: array{
-     *         name: string,
-     *         arguments: string
-     *     }
-     * }
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id' => $this->id,
-            'type' => 'function',
-            'function' => [
-                'name' => $this->name,
-                'arguments' => json_encode($this->arguments ?: new \stdClass()),
-            ],
-        ];
     }
 }

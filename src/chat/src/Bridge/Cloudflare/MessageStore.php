@@ -14,6 +14,7 @@ namespace Symfony\AI\Chat\Bridge\Cloudflare;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -36,6 +37,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         #[\SensitiveParameter] private readonly string $apiKey,
         private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
+            new ToolCallNormalizer(),
             new MessageNormalizer(),
         ], [new JsonEncoder()]),
         private readonly string $endpointUrl = 'https://api.cloudflare.com/client/v4/accounts',

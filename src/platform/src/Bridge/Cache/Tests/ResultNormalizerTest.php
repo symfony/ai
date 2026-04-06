@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Cache\Tests;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -21,12 +22,26 @@ use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 final class ResultNormalizerTest extends TestCase
 {
+    private NormalizerInterface $normalizer;
+
+    protected function setUp(): void
+    {
+        $resultNormalizer = new ResultNormalizer(new ObjectNormalizer());
+        $toolCallNormalizer = new ToolCallNormalizer();
+
+        $this->normalizer = new Serializer([$toolCallNormalizer, $resultNormalizer]);
+    }
+
     public function testNormalizerSupport()
     {
         $result = $this->createMock(ResultInterface::class);
@@ -44,12 +59,10 @@ final class ResultNormalizerTest extends TestCase
 
     public function testNormalizerCannotNormalizeStreamResult()
     {
-        $normalizer = new ResultNormalizer(new ObjectNormalizer());
-
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(\sprintf('"%s" cannot be normalized.', StreamResult::class));
         $this->expectExceptionCode(0);
-        $normalizer->normalize(new StreamResult((static fn (): \Generator => yield from [])()));
+        $this->normalizer->normalize(new StreamResult((static fn (): \Generator => yield from [])()));
     }
 
     /**
@@ -61,9 +74,7 @@ final class ResultNormalizerTest extends TestCase
     #[DataProvider('provideResultForNormalization')]
     public function testNormalizerCanNormalize(ResultInterface $result, array $expectedOutput)
     {
-        $normalizer = new ResultNormalizer(new ObjectNormalizer());
-
-        $this->assertSame($expectedOutput, $normalizer->normalize($result));
+        $this->assertSame($expectedOutput, $this->normalizer->normalize($result));
     }
 
     /**
@@ -75,9 +86,9 @@ final class ResultNormalizerTest extends TestCase
     #[DataProvider('provideResultForNormalization')]
     public function testNormalizerCanDenormalize(ResultInterface $result, array $expectedOutput)
     {
-        $normalizer = new ResultNormalizer(new ObjectNormalizer());
+        $resultNormalizer = new ResultNormalizer(new ObjectNormalizer());
 
-        $this->assertEquals($result, $normalizer->denormalize($expectedOutput, ResultInterface::class));
+        $this->assertEquals($result, $resultNormalizer->denormalize($expectedOutput, ResultInterface::class));
     }
 
     public static function provideResultForNormalization(): \Generator
@@ -140,6 +151,24 @@ final class ResultNormalizerTest extends TestCase
             [
                 'class' => TextResult::class,
                 'payload' => 'foo',
+            ],
+        ];
+        yield ToolCallResult::class => [
+            new ToolCallResult(
+                new ToolCall('call-1', 'get_weather', ['city' => 'Paris']),
+            ),
+            [
+                'class' => ToolCallResult::class,
+                'payload' => [
+                    [
+                        'id' => 'call-1',
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'get_weather',
+                            'arguments' => '{"city":"Paris"}',
+                        ],
+                    ],
+                ],
             ],
         ];
         yield VectorResult::class => [
