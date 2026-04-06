@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -75,7 +76,7 @@ final class ElevenLabsResultConverter implements ResultConverterInterface
                 continue;
             }
 
-            yield $chunk->getContent();
+            yield new BinaryDelta($chunk->getContent());
         }
     }
 

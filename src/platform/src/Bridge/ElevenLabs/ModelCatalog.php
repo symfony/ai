@@ -31,10 +31,6 @@ final class ModelCatalog implements ModelCatalogInterface
     {
         $models = $this->getModels();
 
-        if ([] === $models) {
-            throw new InvalidArgumentException('No models found, please check the ElevenLabs API.');
-        }
-
         if (!\array_key_exists($modelName, $models)) {
             throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieved from the API.', $modelName));
         }
@@ -72,6 +68,23 @@ final class ModelCatalog implements ModelCatalogInterface
                 'class' => ElevenLabs::class,
                 'capabilities' => $capabilities($model),
             ], $models),
-        );
+        ) + [
+            'scribe_v1' => [
+                'class' => ElevenLabs::class,
+                'capabilities' => [
+                    Capability::INPUT_AUDIO,
+                    Capability::OUTPUT_TEXT,
+                    Capability::SPEECH_TO_TEXT,
+                ],
+            ],
+            'scribe_v2' => [
+                'class' => ElevenLabs::class,
+                'capabilities' => [
+                    Capability::INPUT_AUDIO,
+                    Capability::OUTPUT_TEXT,
+                    Capability::SPEECH_TO_TEXT,
+                ],
+            ],
+        ];
     }
 }
