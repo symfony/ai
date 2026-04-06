@@ -21,7 +21,7 @@ use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
 final class ModelCatalogTest extends TestCase
 {
-    public function testModelCatalogCannotReturnModelFromApiWhenNoModelAreReturned()
+    public function testModelCatalogStillReturnsTwoModelsWhenApiReturnsEmpty()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url): JsonMockResponse {
             $this->assertSame('GET', $method);
@@ -30,12 +30,11 @@ final class ModelCatalogTest extends TestCase
             return new JsonMockResponse([]);
         }, 'https://api.elevenlabs.io/v1/');
 
-        $modelCatalog = new ModelCatalog($httpClient);
+        $models = (new ModelCatalog($httpClient))->getModels();
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No models found, please check the ElevenLabs API.');
-        $this->expectExceptionCode(0);
-        $modelCatalog->getModel('foo');
+        $this->assertCount(2, $models);
+        $this->assertArrayHasKey('scribe_v1', $models);
+        $this->assertArrayHasKey('scribe_v2', $models);
     }
 
     public function testModelCatalogCannotReturnModelFromApiWhenUndefined()
@@ -178,9 +177,11 @@ final class ModelCatalogTest extends TestCase
 
         $models = $modelCatalog->getModels();
 
-        $this->assertCount(2, $models);
+        $this->assertCount(4, $models);
         $this->assertArrayHasKey('foo', $models);
         $this->assertArrayHasKey('bar', $models);
+        $this->assertArrayHasKey('scribe_v1', $models);
+        $this->assertArrayHasKey('scribe_v2', $models);
         $this->assertSame(ElevenLabs::class, $models['foo']['class']);
         $this->assertCount(3, $models['foo']['capabilities']);
         $this->assertSame([
