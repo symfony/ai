@@ -28,6 +28,8 @@ use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
@@ -36,8 +38,10 @@ use Symfony\Component\Uid\Uuid;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class MessageNormalizer implements NormalizerInterface, DenormalizerInterface
+final class MessageNormalizer implements NormalizerInterface, DenormalizerInterface, NormalizerAwareInterface
 {
+    use NormalizerAwareTrait;
+
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
         if ([] === $data) {
@@ -106,14 +110,11 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
         $toolsCalls = [];
 
         if ($data instanceof AssistantMessage && $data->hasToolCalls()) {
-            $toolsCalls = array_map(
-                static fn (ToolCall $toolCall): array => $toolCall->jsonSerialize(),
-                $data->getToolCalls(),
-            );
+            $toolsCalls = $this->normalizer->normalize($data->getToolCalls(), $format, $context);
         }
 
         if ($data instanceof ToolCallMessage) {
-            $toolsCalls = $data->getToolCall()->jsonSerialize();
+            $toolsCalls = $this->normalizer->normalize($data->getToolCall(), $format, $context);
         }
 
         return [

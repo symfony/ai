@@ -13,11 +13,18 @@ namespace Symfony\AI\Chat\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\MessageNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
+use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\Role;
+use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Uid\Uuid;
 
 final class MessageNormalizerTest extends TestCase
@@ -90,5 +97,84 @@ final class MessageNormalizerTest extends TestCase
         $denormalized = $normalizer->denormalize($payload, MessageInterface::class, context: ['identifier' => '_id']);
 
         $this->assertSame($message->getId()->toRfc4122(), $denormalized->getId()->toRfc4122());
+    }
+
+    public function testItCanNormalizeAssistantMessageWithToolCalls()
+    {
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new ToolCallNormalizer(),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $message = new AssistantMessage('', [
+            new ToolCall('call-1', 'get_weather', ['city' => 'Paris']),
+        ]);
+
+        $payload = $serializer->normalize($message);
+
+        $this->assertSame(AssistantMessage::class, $payload['type']);
+        $this->assertCount(1, $payload['toolsCalls']);
+        $this->assertSame('call-1', $payload['toolsCalls'][0]['id']);
+        $this->assertSame('function', $payload['toolsCalls'][0]['type']);
+        $this->assertSame('get_weather', $payload['toolsCalls'][0]['function']['name']);
+        $this->assertSame('{"city":"Paris"}', $payload['toolsCalls'][0]['function']['arguments']);
+    }
+
+    public function testItCanNormalizeAndDenormalizeAssistantMessageWithToolCalls()
+    {
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new ToolCallNormalizer(),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $message = new AssistantMessage('', [
+            new ToolCall('call-1', 'get_weather', ['city' => 'Paris']),
+            new ToolCall('call-2', 'get_time', []),
+        ]);
+
+        $payload = $serializer->normalize($message);
+        $denormalized = $serializer->denormalize($payload, MessageInterface::class);
+
+        $this->assertInstanceOf(AssistantMessage::class, $denormalized);
+        $this->assertTrue($denormalized->hasToolCalls());
+
+        $toolCalls = $denormalized->getToolCalls();
+        $this->assertCount(2, $toolCalls);
+        $this->assertSame('call-1', $toolCalls[0]->getId());
+        $this->assertSame('get_weather', $toolCalls[0]->getName());
+        $this->assertSame(['city' => 'Paris'], $toolCalls[0]->getArguments());
+        $this->assertSame('call-2', $toolCalls[1]->getId());
+        $this->assertSame('get_time', $toolCalls[1]->getName());
+        $this->assertSame([], $toolCalls[1]->getArguments());
+    }
+
+    public function testItCanNormalizeAndDenormalizeToolCallMessage()
+    {
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new ToolCallNormalizer(),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $message = new ToolCallMessage(
+            new ToolCall('call-1', 'get_weather', ['city' => 'Paris']),
+            'Sunny, 22°C',
+        );
+
+        $payload = $serializer->normalize($message);
+
+        $this->assertSame(ToolCallMessage::class, $payload['type']);
+        $this->assertSame('Sunny, 22°C', $payload['content']);
+        $this->assertSame('call-1', $payload['toolsCalls']['id']);
+
+        $denormalized = $serializer->denormalize($payload, MessageInterface::class);
+
+        $this->assertInstanceOf(ToolCallMessage::class, $denormalized);
+        $this->assertSame('Sunny, 22°C', $denormalized->getContent());
+        $this->assertSame('call-1', $denormalized->getToolCall()->getId());
+        $this->assertSame('get_weather', $denormalized->getToolCall()->getName());
+        $this->assertSame(['city' => 'Paris'], $denormalized->getToolCall()->getArguments());
     }
 }

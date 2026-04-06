@@ -23,14 +23,18 @@ use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class ResultNormalizer implements NormalizerInterface, DenormalizerInterface
+final class ResultNormalizer implements NormalizerInterface, DenormalizerInterface, NormalizerAwareInterface
 {
+    use NormalizerAwareTrait;
+
     public function __construct(
         private readonly ObjectNormalizer $objectNormalizer,
     ) {
@@ -62,7 +66,7 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
                 StreamResult::class => throw new InvalidArgumentException(\sprintf('"%s" cannot be normalized.', StreamResult::class)),
                 TextResult::class => $data->getContent(),
                 ToolCallResult::class => array_map(
-                    static fn (ToolCall $toolCall): array => $toolCall->jsonSerialize(),
+                    fn (ToolCall $toolCall): array => $this->normalizer->normalize($toolCall, $format, $context),
                     $data->getContent(),
                 ),
                 VectorResult::class => array_map(
