@@ -46,6 +46,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
             remainingTokensMinute: null !== $remainingTokensMinute ? (int) $remainingTokensMinute : null,
             remainingTokensMonth: null !== $remainingTokensMonth ? (int) $remainingTokensMonth : null,
             totalTokens: $content['usage']['total_tokens'] ?? null,
+            model: $content['model'] ?? null,
         );
     }
 }

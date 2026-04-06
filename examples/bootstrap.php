@@ -135,6 +135,7 @@ function print_token_usage(?TokenUsageInterface $tokenUsage): void
     $table = new Table(output());
     $table->setHeaderTitle('Token Usage');
     $table->setRows([
+        ['Model', $tokenUsage->getModel() ?? $na],
         ['Prompt tokens', $tokenUsage->getPromptTokens() ?? $na],
         ['Completion tokens', $tokenUsage->getCompletionTokens() ?? $na],
         ['Thinking tokens', $tokenUsage->getThinkingTokens() ?? $na],

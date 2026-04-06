@@ -109,6 +109,24 @@ final class TokenUsageAggregation implements TokenUsageInterface, MergeableMetad
         return $this->sum(static fn (TokenUsageInterface $usage) => $usage->getTotalTokens());
     }
 
+    /**
+     * Returns the model name if all usages have the same model,
+     * or null if there are different models or no model information.
+     */
+    public function getModel(): ?string
+    {
+        $models = array_unique(array_filter(array_map(
+            static fn (TokenUsageInterface $usage) => $usage->getModel(),
+            $this->tokenUsages
+        )));
+
+        if ([] === $models || 1 !== \count($models)) {
+            return null;
+        }
+
+        return reset($models);
+    }
+
     private function sum(\Closure $mapFunction): ?int
     {
         $array = array_filter(array_map($mapFunction, $this->tokenUsages));

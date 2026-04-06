@@ -9,6 +9,7 @@ CHANGELOG
  * Replace `ModelCatalog` by `OllamaApiCatalog`
  * Rename `OllamaApiCatalog` to `ModelCatalog`
  * [BC BREAK] `Ollama` model is now `final`
+ * Add model information to token usage extraction
 
 0.4
 ---

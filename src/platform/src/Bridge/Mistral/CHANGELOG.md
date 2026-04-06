@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add token usage extraction for embeddings
  * [BC BREAK] Streaming completion responses now yield typed deltas from the Generic completions converter (`TextDelta`, `ThinkingDelta`, `ThinkingComplete`, `ToolCallStart`, `ToolInputDelta`, `ToolCallComplete`, `TokenUsage`)
+ * Add model information to token usage extraction
 
 0.1
 ---

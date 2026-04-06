@@ -30,13 +30,13 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
             return null;
         }
 
-        return $this->extractFromArray($content['usage']);
+        return $this->extractFromArray($content['usage'], $content['model'] ?? null);
     }
 
     /**
      * @param array<string, mixed> $usage
      */
-    public function extractFromArray(array $usage): TokenUsage
+    public function extractFromArray(array $usage, ?string $model = null): TokenUsage
     {
         $cacheCreationTokens = isset($usage['cache_creation_input_tokens']) ? (int) $usage['cache_creation_input_tokens'] : null;
         $cacheReadTokens = isset($usage['cache_read_input_tokens']) ? (int) $usage['cache_read_input_tokens'] : null;
@@ -53,6 +53,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
             cachedTokens: $cachedTokens,
             cacheCreationTokens: $cacheCreationTokens,
             cacheReadTokens: $cacheReadTokens,
+            model: $model,
         );
     }
 }

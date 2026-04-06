@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Stream responses now yield `ThinkingDelta`, `ThinkingComplete`, `TextDelta`, `ToolCallStart`, `ToolInputDelta`, `ToolCallComplete`, and streamed `TokenUsage` deltas
+ * Add model information to token usage extraction
 
 0.4
 ---
