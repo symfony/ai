@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by wimwinterberg at 2026-03-27T13:38:25Z
+
+Thanks for this fix! We ran into both issues described here in production and implemented a local workaround.
+
+One additional edge case worth noting: the PR also correctly addresses a related bug where the spread order in the splitting path was wrong. In the original code:
+
+```php
+yield new TextDocument(Uuid::v4(), $chunkText, new Metadata([
+    Metadata::KEY_PARENT_ID => $document->getId(),
+    Metadata::KEY_TEXT => $chunkText,
+    ...$document->getMetadata(),  // overwrites KEY_TEXT if parent had _text set
+]));
+```
+
+If `_text` was set on the parent document before passing it to the transformer, `...$document->getMetadata()` would overwrite `KEY_TEXT => $chunkText`, leaving every chunk with the full parent text. The fix in this PR (spreading metadata first, setting `KEY_TEXT` last) resolves that too. Might be worth calling out explicitly in the PR description.
