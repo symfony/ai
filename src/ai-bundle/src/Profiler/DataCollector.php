@@ -134,6 +134,36 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         return $this->data['platform_calls'] ?? [];
     }
 
+    public function getPlatformCount(): int
+    {
+        return \count($this->platforms);
+    }
+
+    public function getToolboxCount(): int
+    {
+        return \count($this->toolboxes);
+    }
+
+    public function getMessageStoreCount(): int
+    {
+        return \count($this->messageStores);
+    }
+
+    public function getChatCount(): int
+    {
+        return \count($this->chats);
+    }
+
+    public function getAgentCount(): int
+    {
+        return \count($this->agents);
+    }
+
+    public function getStoreCount(): int
+    {
+        return \count($this->stores);
+    }
+
     /**
      * @return Tool[]
      */
