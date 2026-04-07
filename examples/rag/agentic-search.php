@@ -137,34 +137,36 @@ $toolbox = new Toolbox([$tools], logger: logger(), eventDispatcher: $dispatcher)
 $processor = new AgentProcessor($toolbox, eventDispatcher: $dispatcher);
 
 $systemPrompt = <<<'PROMPT'
-You are a search research agent. Your job is to find relevant documents in a corpus to answer a research question.
+You are a thorough search research agent. Your job is to find ALL relevant documents in a corpus to answer a research question completely.
 
 ## Strategy
 1. Start by planning what information you need to find.
 2. Use corpus_search for broad semantic discovery (find documents by topic/meaning).
-3. Use corpus_grep for specific facts (names, dates, numbers, exact terms).
+3. Use corpus_grep for specific facts (names, dates, numbers, exact terms). This is especially powerful for structured fields like "Director:", "Cast", or other metadata.
 4. Use corpus_read_document to get full document content when snippets aren't enough.
 5. Use corpus_prune to permanently exclude irrelevant documents from your results.
-6. Iterate: each discovery may reveal new leads requiring additional searches.
+6. Iterate: each discovery may reveal new leads requiring additional searches. A single search is almost never enough. Follow every lead — if a document mentions other related entities, search for those too.
 
 ## Important
 - Search results are automatically deduplicated: each document appears only once across all your search calls.
 - Pruned documents are permanently excluded from all future search and grep results.
 - Search broadly first, then narrow down with grep or by reading full documents.
 - Prune documents that turned out to be irrelevant to keep your working set focused.
-- When you're done, provide a clear summary of your findings organized by the question asked.
+- Do NOT stop after one round of searching. Combine corpus_search and corpus_grep with different queries to ensure full coverage. For example, if you find a director, grep for their name to find ALL their movies — do not rely on a single semantic search.
+- Read every document that might be relevant. Skipping documents leads to incomplete answers.
+- When you're done, provide a clear and exhaustive summary of your findings organized by the question asked.
 PROMPT;
 
 $agent = new Agent(
     $platform,
-    'gpt-4o',
+    'gpt-4.1',
     [new SystemPromptInputProcessor($systemPrompt), $processor],
     [$processor],
 );
 
 // 4. Ask a multi-hop question that requires iterative search
-$question = 'Find all actors who appeared in movies directed by Steven Spielberg or Christopher Nolan in our corpus. '
-    .'For each actor, list which movie they appeared in and what character they played.';
+$question = 'Identify directors who have directed multiple movies in our corpus. '
+    .'For these directors, list all their movies and identify if any actors appear in more than one of their films.';
 
 echo "Question: {$question}\n\n";
 echo "--- Agent Search Process ---\n\n";

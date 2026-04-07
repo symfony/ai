@@ -112,7 +112,9 @@ final class DocumentCorpus
             $matches = [];
 
             foreach ($lines as $lineNum => $line) {
-                if (false !== stripos($line, $pattern)) {
+                // Strip markdown formatting (bold, italic, links) for matching
+                $plainLine = preg_replace('/\*{1,2}([^*]+)\*{1,2}/', '$1', $line) ?? $line;
+                if (false !== stripos($plainLine, $pattern)) {
                     $matches[] = \sprintf('  L%d: %s', $lineNum + 1, trim($line));
                 }
             }
