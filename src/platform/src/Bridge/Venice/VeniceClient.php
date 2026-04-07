@@ -40,6 +40,8 @@ final class VeniceClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        $payload = new VenicePayload($payload);
+
         return match (true) {
             $model->supports(Capability::IMAGE_TO_VIDEO) || $model->supports(Capability::TEXT_TO_VIDEO) => $this->doVideoGeneration($model, $payload, $options),
             $model->supports(Capability::INPUT_MESSAGES) => $this->doGenerateCompletion($model, $payload, $options),
@@ -52,19 +54,10 @@ final class VeniceClient implements ModelClientInterface
     }
 
     /**
-     * @param array<string|int, mixed> $payload
-     * @param array<string, mixed>     $options
+     * @param array<string, mixed> $options
      */
-    private function doGenerateCompletion(Model $model, array|string $payload, array $options): RawResultInterface
+    private function doGenerateCompletion(Model $model, VenicePayload $payload, array $options): RawResultInterface
     {
-        if (\is_string($payload)) {
-            throw new InvalidArgumentException('Payload must be an array for completion.');
-        }
-
-        if (!\array_key_exists('messages', $payload)) {
-            throw new InvalidArgumentException('Payload must contain "messages" key for completion.');
-        }
-
         if ($options['stream'] ?? false) {
             $streamOptions = (\array_key_exists('stream_options', $options) && \is_array($options['stream_options'])) ? $options['stream_options'] : [];
 
@@ -78,51 +71,37 @@ final class VeniceClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', 'chat/completions', [
             'json' => [
                 ...$options,
-                'messages' => $payload['messages'],
+                'messages' => $payload->asCompletionPayload(),
                 'model' => $model->getName(),
             ],
         ]));
     }
 
     /**
-     * @param array<string|int, mixed> $payload
-     * @param array<string, mixed>     $options
+     * @param array<string, mixed> $options
      */
-    private function doTextToSpeech(Model $model, array|string $payload, array $options): RawResultInterface
+    private function doTextToSpeech(Model $model, VenicePayload $payload, array $options): RawResultInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', 'audio/speech', [
             'json' => [
                 ...$options,
                 'response_format' => 'mp3',
-                'input' => \is_string($payload) ? $payload : $payload['text'],
+                'input' => $payload->asTextToSpeechPayload(),
                 'model' => $model->getName(),
             ],
         ]));
     }
 
     /**
-     * @param array<string|int, mixed>|string $payload
-     * @param array<string, mixed>            $options
+     * @param array<string, mixed> $options
      */
-    private function doTranscription(Model $model, array|string $payload, array $options): RawResultInterface
+    private function doTranscription(Model $model, VenicePayload $payload, array $options): RawResultInterface
     {
-        if (!\is_array($payload)) {
-            throw new InvalidArgumentException(\sprintf('Payload must be an array when using file-based transcription endpoint, given "%s".', \gettype($payload)));
-        }
-
-        if (!\is_array($payload['input_audio'] ?? null)) {
-            throw new InvalidArgumentException('Payload must contain an "input_audio" array key for transcription.');
-        }
-
-        if (!\is_string($payload['input_audio']['path'] ?? null)) {
-            throw new InvalidArgumentException('Payload "input_audio" must contain a "path" string key for transcription.');
-        }
-
         return new RawHttpResult($this->httpClient->request('POST', 'audio/transcriptions', [
             'body' => [
                 ...$options,
                 'response_format' => 'json',
-                'file' => fopen($payload['input_audio']['path'], 'r'),
+                'file' => fopen($payload->asSpeechToTextPayload(), 'r'),
                 'model' => $model->getName(),
             ],
         ]));
@@ -132,55 +111,38 @@ final class VeniceClient implements ModelClientInterface
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
      */
-    private function doImageGeneration(Model $model, array|string $payload, array $options): RawResultInterface
+    private function doImageGeneration(Model $model, VenicePayload $payload, array $options): RawResultInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', 'image/generate', [
             'json' => [
                 ...$options,
-                'prompt' => \is_string($payload) ? $payload : $payload['prompt'],
+                'prompt' => $payload->asImageGeneration(),
                 'model' => $model->getName(),
             ],
         ]));
     }
 
     /**
-     * @param array<string|int, mixed> $payload
-     * @param array<string, mixed>     $options
+     * @param array<string, mixed> $options
      */
-    private function doGenerateEmbeddings(Model $model, array|string $payload, array $options): RawResultInterface
+    private function doGenerateEmbeddings(Model $model, VenicePayload $payload, array $options): RawResultInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', 'embeddings', [
             'json' => [
                 ...$options,
                 'encoding_format' => 'float',
-                'input' => \is_string($payload) ? $payload : $payload['text'],
+                'input' => $payload->asEmbeddingsPayload(),
                 'model' => $model->getName(),
             ],
         ]));
     }
 
     /**
-     * @param array<string|int, mixed> $payload
-     * @param array<string, mixed>     $options
+     * @param array<string, mixed> $options
      */
-    private function doVideoGeneration(Model $model, array|string $payload, array $options): RawResultInterface
+    private function doVideoGeneration(Model $model, VenicePayload $payload, array $options): RawResultInterface
     {
-        if (\is_string($payload)) {
-            throw new InvalidArgumentException('Payload must be an array for video generation.');
-        }
-
-        $finalPayload = match (true) {
-            $model->supports(Capability::TEXT_TO_VIDEO) => [
-                ...$options,
-                'prompt' => $payload['text'] ?? $payload['prompt'] ?? throw new InvalidArgumentException('A valid input or a prompt is required for video generation.'),
-            ],
-            $model->supports(Capability::IMAGE_TO_VIDEO) => [
-                ...$options,
-                'prompt' => $payload['text'] ?? $payload['prompt'] ?? throw new InvalidArgumentException('A valid input or a prompt is required for video generation.'),
-                'image_url' => $payload['image_url'] ?? throw new InvalidArgumentException('The image must be a valid URL or a data URL (ex: "data:").'),
-            ],
-            default => throw new InvalidArgumentException('Unsupported video generation.'),
-        };
+        $finalPayload = $payload->asVideoGenerationPayload($model, $options);
 
         $queuedVideoGenerationResponse = $this->httpClient->request('POST', 'video/queue', [
             'json' => [
