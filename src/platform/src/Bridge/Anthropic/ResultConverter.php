@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Exception\AuthenticationException;
+use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -43,6 +45,16 @@ class ResultConverter implements ResultConverterInterface
     public function convert(RawHttpResult|RawResultInterface $result, array $options = []): ResultInterface
     {
         $response = $result->getObject();
+
+        if (401 === $response->getStatusCode()) {
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Unauthorized';
+            throw new AuthenticationException($errorMessage);
+        }
+
+        if (400 === $response->getStatusCode()) {
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Bad Request';
+            throw new BadRequestException($errorMessage);
+        }
 
         if (429 === $response->getStatusCode()) {
             $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
