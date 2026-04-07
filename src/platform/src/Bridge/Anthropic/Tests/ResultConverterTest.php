@@ -13,6 +13,8 @@ namespace Symfony\AI\Platform\Bridge\Anthropic\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
+use Symfony\AI\Platform\Exception\AuthenticationException;
+use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -86,6 +88,52 @@ final class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($response));
     }
 
+    public function testThrowsAuthenticationExceptionOnInvalidApiKey()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(401);
+        $httpResponse->method('getContent')->with(false)->willReturn(json_encode([
+            'error' => [
+                'message' => 'invalid x-api-key',
+            ],
+        ]));
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('invalid x-api-key');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsBadRequestExceptionOnBadRequestResponse()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse->method('getContent')->with(false)->willReturn(json_encode([
+            'error' => [
+                'message' => 'image exceeds max size',
+            ],
+        ]));
+
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('image exceeds max size');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsBadRequestExceptionOnBadRequestResponseWithNoResponseBody()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('Bad Request');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
     public function testStreamingToolCallsYieldsToolCallResult()
     {
         $converter = new ResultConverter();
@@ -137,300 +185,4 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(StreamResult::class, $streamResult);
 
         $chunks = [];
-        foreach ($streamResult->getContent() as $part) {
-            $chunks[] = $part;
-        }
-
-        // Expect: ToolCallStart, 3x ToolInputDelta, ToolCallComplete
-        $this->assertInstanceOf(ToolCallStart::class, $chunks[0]);
-        $this->assertSame('toolu_01ABC123', $chunks[0]->getId());
-        $this->assertSame('get_weather', $chunks[0]->getName());
-        $this->assertInstanceOf(ToolInputDelta::class, $chunks[1]);
-        $this->assertInstanceOf(ToolInputDelta::class, $chunks[2]);
-        $this->assertInstanceOf(ToolInputDelta::class, $chunks[3]);
-
-        $toolCallComplete = $chunks[\count($chunks) - 1];
-        $this->assertInstanceOf(ToolCallComplete::class, $toolCallComplete);
-        $toolCalls = $toolCallComplete->getToolCalls();
-        $this->assertCount(1, $toolCalls);
-        $this->assertSame('toolu_01ABC123', $toolCalls[0]->getId());
-        $this->assertSame('get_weather', $toolCalls[0]->getName());
-        $this->assertSame(['location' => 'Berlin'], $toolCalls[0]->getArguments());
-    }
-
-    public function testStreamingTextAndToolCallsYieldsBoth()
-    {
-        $converter = new ResultConverter();
-
-        $httpResponse = $this->createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(200);
-
-        $events = [
-            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => []]],
-            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'text', 'text' => '']],
-            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'text_delta', 'text' => 'Let me check ']],
-            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'text_delta', 'text' => 'the weather.']],
-            ['type' => 'content_block_stop', 'index' => 0],
-            ['type' => 'content_block_start', 'index' => 1, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01XYZ789', 'name' => 'get_weather']],
-            ['type' => 'content_block_delta', 'index' => 1, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"city": "Munich"}']],
-            ['type' => 'content_block_stop', 'index' => 1],
-            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'tool_use']],
-            ['type' => 'message_stop'],
-        ];
-
-        $raw = new class($httpResponse, $events) implements RawResultInterface {
-            /**
-             * @param array<array<string, mixed>> $events
-             */
-            public function __construct(
-                private readonly ResponseInterface $response,
-                private readonly array $events,
-            ) {
-            }
-
-            public function getData(): array
-            {
-                return [];
-            }
-
-            public function getDataStream(): iterable
-            {
-                foreach ($this->events as $event) {
-                    yield $event;
-                }
-            }
-
-            public function getObject(): object
-            {
-                return $this->response;
-            }
-        };
-
-        $streamResult = $converter->convert($raw, ['stream' => true]);
-
-        $this->assertInstanceOf(StreamResult::class, $streamResult);
-
-        $chunks = [];
-        foreach ($streamResult->getContent() as $part) {
-            $chunks[] = $part;
-        }
-
-        // Filter to get just text deltas and the final ToolCallComplete
-        $textDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof TextDelta));
-        $this->assertSame('Let me check ', $textDeltas[0]->getText());
-        $this->assertSame('the weather.', $textDeltas[1]->getText());
-
-        $toolCallComplete = $chunks[\count($chunks) - 1];
-        $this->assertInstanceOf(ToolCallComplete::class, $toolCallComplete);
-
-        $toolCalls = $toolCallComplete->getToolCalls();
-        $this->assertCount(1, $toolCalls);
-        $this->assertSame('toolu_01XYZ789', $toolCalls[0]->getId());
-        $this->assertSame('get_weather', $toolCalls[0]->getName());
-        $this->assertSame(['city' => 'Munich'], $toolCalls[0]->getArguments());
-    }
-
-    public function testStreamingThinkingBlockYieldsThinkingComplete()
-    {
-        $converter = new ResultConverter();
-
-        $events = [
-            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'role' => 'assistant', 'content' => []]],
-            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'thinking', 'thinking' => '']],
-            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'thinking_delta', 'thinking' => 'Let me ']],
-            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'thinking_delta', 'thinking' => 'reason about this.']],
-            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'signature_delta', 'signature' => 'sig_abc']],
-            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'signature_delta', 'signature' => '123']],
-            ['type' => 'content_block_stop', 'index' => 0],
-            ['type' => 'content_block_start', 'index' => 1, 'content_block' => ['type' => 'text', 'text' => '']],
-            ['type' => 'content_block_delta', 'index' => 1, 'delta' => ['type' => 'text_delta', 'text' => 'The answer is 42.']],
-            ['type' => 'content_block_stop', 'index' => 1],
-            ['type' => 'message_stop'],
-        ];
-
-        $raw = $this->createRawResult($events);
-        $streamResult = $converter->convert($raw, ['stream' => true]);
-
-        $this->assertInstanceOf(StreamResult::class, $streamResult);
-
-        $chunks = [];
-        foreach ($streamResult->getContent() as $part) {
-            $chunks[] = $part;
-        }
-
-        // Expect: ThinkingDelta("Let me "), ThinkingDelta("reason about this."),
-        //         ThinkingSignature("sig_abc"), ThinkingSignature("123"),
-        //         ThinkingComplete (accumulated), TextDelta("The answer is 42.")
-        $thinkingDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingDelta));
-        $this->assertCount(2, $thinkingDeltas);
-        $this->assertSame('Let me ', $thinkingDeltas[0]->getThinking());
-        $this->assertSame('reason about this.', $thinkingDeltas[1]->getThinking());
-
-        $signatures = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingSignature));
-        $this->assertCount(2, $signatures);
-
-        $thinkingCompletes = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingComplete));
-        $this->assertCount(1, $thinkingCompletes);
-        $this->assertSame('Let me reason about this.', $thinkingCompletes[0]->getThinking());
-        $this->assertSame('sig_abc123', $thinkingCompletes[0]->getSignature());
-
-        $textDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof TextDelta));
-        $this->assertCount(1, $textDeltas);
-        $this->assertSame('The answer is 42.', $textDeltas[0]->getText());
-    }
-
-    public function testStreamingThinkingWithToolCallsYieldsBoth()
-    {
-        $converter = new ResultConverter();
-
-        $events = [
-            ['type' => 'message_start', 'message' => ['id' => 'msg_456', 'role' => 'assistant', 'content' => []]],
-            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'thinking', 'thinking' => '']],
-            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'thinking_delta', 'thinking' => 'I need to look this up.']],
-            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'signature_delta', 'signature' => 'sig_xyz']],
-            ['type' => 'content_block_stop', 'index' => 0],
-            ['type' => 'content_block_start', 'index' => 1, 'content_block' => ['type' => 'text', 'text' => '']],
-            ['type' => 'content_block_delta', 'index' => 1, 'delta' => ['type' => 'text_delta', 'text' => 'Let me search.']],
-            ['type' => 'content_block_stop', 'index' => 1],
-            ['type' => 'content_block_start', 'index' => 2, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01', 'name' => 'search']],
-            ['type' => 'content_block_delta', 'index' => 2, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"q":"test"}']],
-            ['type' => 'content_block_stop', 'index' => 2],
-            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'tool_use']],
-            ['type' => 'message_stop'],
-        ];
-
-        $raw = $this->createRawResult($events);
-        $streamResult = $converter->convert($raw, ['stream' => true]);
-
-        $chunks = [];
-        foreach ($streamResult->getContent() as $part) {
-            $chunks[] = $part;
-        }
-
-        $thinkingCompletes = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingComplete));
-        $this->assertCount(1, $thinkingCompletes);
-        $this->assertSame('I need to look this up.', $thinkingCompletes[0]->getThinking());
-        $this->assertSame('sig_xyz', $thinkingCompletes[0]->getSignature());
-
-        $textDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof TextDelta));
-        $this->assertCount(1, $textDeltas);
-        $this->assertSame('Let me search.', $textDeltas[0]->getText());
-
-        $toolCallComplete = $chunks[\count($chunks) - 1];
-        $this->assertInstanceOf(ToolCallComplete::class, $toolCallComplete);
-        $this->assertSame('toolu_01', $toolCallComplete->getToolCalls()[0]->getId());
-        $this->assertSame('search', $toolCallComplete->getToolCalls()[0]->getName());
-    }
-
-    public function testStreamingThinkingWithoutSignature()
-    {
-        $converter = new ResultConverter();
-
-        $events = [
-            ['type' => 'message_start', 'message' => ['id' => 'msg_789', 'role' => 'assistant', 'content' => []]],
-            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'thinking', 'thinking' => '']],
-            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'thinking_delta', 'thinking' => 'Quick thought.']],
-            ['type' => 'content_block_stop', 'index' => 0],
-            ['type' => 'content_block_start', 'index' => 1, 'content_block' => ['type' => 'text', 'text' => '']],
-            ['type' => 'content_block_delta', 'index' => 1, 'delta' => ['type' => 'text_delta', 'text' => 'Done.']],
-            ['type' => 'content_block_stop', 'index' => 1],
-            ['type' => 'message_stop'],
-        ];
-
-        $raw = $this->createRawResult($events);
-        $streamResult = $converter->convert($raw, ['stream' => true]);
-
-        $chunks = [];
-        foreach ($streamResult->getContent() as $part) {
-            $chunks[] = $part;
-        }
-
-        $thinkingCompletes = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingComplete));
-        $this->assertCount(1, $thinkingCompletes);
-        $this->assertSame('Quick thought.', $thinkingCompletes[0]->getThinking());
-        $this->assertNull($thinkingCompletes[0]->getSignature());
-    }
-
-    public function testNonStreamingResponseWithThinkingAndTextContent()
-    {
-        $httpClient = new MockHttpClient(new JsonMockResponse([
-            'content' => [
-                [
-                    'type' => 'thinking',
-                    'thinking' => 'Let me reason about this...',
-                    'signature' => 'sig_abc123',
-                ],
-                [
-                    'type' => 'text',
-                    'text' => 'The answer is 42.',
-                ],
-            ],
-        ]));
-
-        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
-        $converter = new ResultConverter();
-
-        $result = $converter->convert(new RawHttpResult($httpResponse));
-
-        $this->assertInstanceOf(TextResult::class, $result);
-        $this->assertSame('The answer is 42.', $result->getContent());
-    }
-
-    public function testNonStreamingResponseWithOnlyThinkingContent()
-    {
-        $httpClient = new MockHttpClient(new JsonMockResponse([
-            'content' => [
-                [
-                    'type' => 'thinking',
-                    'thinking' => 'Reasoning only...',
-                    'signature' => 'sig_xyz',
-                ],
-            ],
-        ]));
-
-        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
-        $converter = new ResultConverter();
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Response content does not contain any text nor tool calls.');
-
-        $converter->convert(new RawHttpResult($httpResponse));
-    }
-
-    /**
-     * @param array<array<string, mixed>> $events
-     */
-    private function createRawResult(array $events): RawResultInterface
-    {
-        $httpResponse = $this->createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(200);
-
-        return new class($httpResponse, $events) implements RawResultInterface {
-            /**
-             * @param array<array<string, mixed>> $events
-             */
-            public function __construct(
-                private readonly ResponseInterface $response,
-                private readonly array $events,
-            ) {
-            }
-
-            public function getData(): array
-            {
-                return [];
-            }
-
-            public function getDataStream(): iterable
-            {
-                foreach ($this->events as $event) {
-                    yield $event;
-                }
-            }
-
-            public function getObject(): object
-            {
-                return $this->response;
-            }
-        };
-    }
-}
+        foreach ($streamResult->getContent(

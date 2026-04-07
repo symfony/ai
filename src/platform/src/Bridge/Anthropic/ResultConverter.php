@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Exception\AuthenticationException;
+use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -43,6 +45,16 @@ class ResultConverter implements ResultConverterInterface
     public function convert(RawHttpResult|RawResultInterface $result, array $options = []): ResultInterface
     {
         $response = $result->getObject();
+
+        if (401 === $response->getStatusCode()) {
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Unauthorized';
+            throw new AuthenticationException($errorMessage);
+        }
+
+        if (400 === $response->getStatusCode()) {
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Bad Request';
+            throw new BadRequestException($errorMessage);
+        }
 
         if (429 === $response->getStatusCode()) {
             $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
@@ -179,32 +191,4 @@ class ResultConverter implements ResultConverterInterface
 
             // Handle content block stop - finalize current thinking or tool call
             if ('content_block_stop' === $type) {
-                if (null !== $currentThinking) {
-                    yield new ThinkingComplete($currentThinking, $currentThinkingSignature);
-                    $currentThinking = null;
-                    $currentThinkingSignature = null;
-                    continue;
-                }
-
-                if (null !== $currentToolCall) {
-                    $input = '' !== $currentToolCallJson
-                        ? json_decode($currentToolCallJson, true, flags: \JSON_THROW_ON_ERROR)
-                        : [];
-                    $toolCalls[] = new ToolCall(
-                        $currentToolCall['id'],
-                        $currentToolCall['name'],
-                        $input
-                    );
-                    $currentToolCall = null;
-                    $currentToolCallJson = '';
-                    continue;
-                }
-            }
-
-            // Handle message stop - yield tool calls if any were collected
-            if ('message_stop' === $type && [] !== $toolCalls) {
-                yield new ToolCallComplete(...$toolCalls);
-            }
-        }
-    }
-}
+                if (n
