@@ -191,4 +191,32 @@ class ResultConverter implements ResultConverterInterface
 
             // Handle content block stop - finalize current thinking or tool call
             if ('content_block_stop' === $type) {
-                if (n
+                if (null !== $currentThinking) {
+                    yield new ThinkingComplete($currentThinking, $currentThinkingSignature);
+                    $currentThinking = null;
+                    $currentThinkingSignature = null;
+                    continue;
+                }
+
+                if (null !== $currentToolCall) {
+                    $input = '' !== $currentToolCallJson
+                        ? json_decode($currentToolCallJson, true, flags: \JSON_THROW_ON_ERROR)
+                        : [];
+                    $toolCalls[] = new ToolCall(
+                        $currentToolCall['id'],
+                        $currentToolCall['name'],
+                        $input
+                    );
+                    $currentToolCall = null;
+                    $currentToolCallJson = '';
+                    continue;
+                }
+            }
+
+            // Handle message stop - yield tool calls if any were collected
+            if ('message_stop' === $type && [] !== $toolCalls) {
+                yield new ToolCallComplete(...$toolCalls);
+            }
+        }
+    }
+}
