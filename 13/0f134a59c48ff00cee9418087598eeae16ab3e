@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by Amoifr at 2026-04-07T06:09:30Z
+
+Thanks for the thorough review! 🙏
+
+Applied all the suggested changes:
+- ✅ Replaced `createMock()` with `createStub()` when not setting expectations
+- ✅ Switched from manual foreach loops to `iterator_to_array()`
+- ✅ Replaced anonymous classes with `InMemoryRawResult` in OpenResponses tests
+- ✅ Added the `reasoning-stream.php` example for OpenAI
+
+PS: Given the quality of the review feedback, I took the liberty of adding you as co-author on the commit. Hope that's okay! 😊
