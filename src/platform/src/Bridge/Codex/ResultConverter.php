@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -71,7 +72,7 @@ final class ResultConverter implements ResultConverterInterface
                 && 'agent_message' === ($data['item']['type'] ?? '')
                 && isset($data['item']['text'])
             ) {
-                yield $data['item']['text'];
+                yield new TextDelta($data['item']['text']);
             }
         }
     }
