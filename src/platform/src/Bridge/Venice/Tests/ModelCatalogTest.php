@@ -693,6 +693,9 @@ final class ModelCatalogTest extends TestCase
                         'createdAt' => (new \DateTimeImmutable())->getTimestamp(),
                         'id' => 'wan-2-1-fast',
                         'model_spec' => [
+                            'constraints' => [
+                                'model_type' => 'image-to-video',
+                            ],
                             'pricing' => [
                                 'per_video' => [
                                     'usd' => 0.1,
