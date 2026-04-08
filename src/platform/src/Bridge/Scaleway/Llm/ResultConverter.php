@@ -39,10 +39,15 @@ final class ResultConverter implements ResultConverterInterface
         if ($options['stream'] ?? false) {
             return new StreamResult($this->convertStream($result));
         }
+
         $data = $result->getData();
 
         if (isset($data['error']['code']) && 'content_filter' === $data['error']['code']) {
             throw new ContentFilterException($data['error']['message']);
+        }
+
+        if (isset($data['error'])) {
+            throw new RuntimeException(\sprintf('Error "%s": "%s".', $data['error']['type'] ?? $data['error']['code'] ?? 'unknown', $data['error']['message'] ?? 'Unknown error'));
         }
 
         if (!isset($data['choices'])) {

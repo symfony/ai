@@ -24,6 +24,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    private const BASE_URL = 'https://api.scaleway.ai/v1';
+
     private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
@@ -44,7 +46,7 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', 'https://api.scaleway.ai/v1/chat/completions', [
+        return new RawHttpResult($this->httpClient->request('POST', self::BASE_URL.'/chat/completions', [
             'auth_bearer' => $this->apiKey,
             'json' => array_merge($options, $payload),
         ]));
