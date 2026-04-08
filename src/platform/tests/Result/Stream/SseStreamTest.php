@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Result\Stream\SseStream;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -71,9 +72,9 @@ final class SseStreamTest extends TestCase
         $this->assertSame(['baz' => 'qux'], $results[1]);
     }
 
-    private function createResponse(string $body): \Symfony\Contracts\HttpClient\ResponseInterface
+    private function createResponse(string $body): ResponseInterface
     {
-        $mockHttpClient = new MockHttpClient([new MockResponse($body)]);
+        $mockHttpClient = new MockHttpClient([new MockResponse($body, ['response_headers' => ['content-type' => 'text/event-stream']])]);
         $eventSourceClient = new EventSourceHttpClient($mockHttpClient);
 
         return $eventSourceClient->request('GET', 'https://example.com');

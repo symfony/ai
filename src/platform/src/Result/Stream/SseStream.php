@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Result\Stream;
 
+use Symfony\Component\HttpClient\Chunk\ServerSentEvent;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -23,53 +24,31 @@ final class SseStream implements HttpStreamInterface
 {
     public function stream(ResponseInterface $response): iterable
     {
-        $buffer = '';
-
         foreach ((new EventSourceHttpClient())->stream($response) as $chunk) {
-            if ($chunk->isFirst() || $chunk->isLast()) {
+            if ($chunk->isFirst() || $chunk->isLast() || ($chunk instanceof ServerSentEvent && '[DONE]' === $chunk->getData())) {
                 continue;
             }
 
-            $buffer .= $chunk->getContent();
+            $jsonDelta = $chunk instanceof ServerSentEvent ? $chunk->getData() : $chunk->getContent();
 
-            while (false !== ($pos = strpos($buffer, "\n\n"))) {
-                $event = substr($buffer, 0, $pos);
-                $buffer = substr($buffer, $pos + 2);
+            // Remove leading/trailing brackets
+            if (str_starts_with($jsonDelta, '[') || str_starts_with($jsonDelta, ',')) {
+                $jsonDelta = substr($jsonDelta, 1);
+            }
+            if (str_ends_with($jsonDelta, ']')) {
+                $jsonDelta = substr($jsonDelta, 0, -1);
+            }
 
-                $data = null;
-                foreach (explode("\n", $event) as $line) {
-                    // Comments start with ":"
-                    if ('' === $line || str_starts_with($line, ':')) {
-                        continue;
-                    }
+            // Split in case of multiple JSON objects
+            $deltas = explode(",\r\n", $jsonDelta);
 
-                    if (str_starts_with($line, 'data: ')) {
-                        $data = substr($line, 6);
-                    }
-                }
-
-                if (null === $data || '[DONE]' === $data) {
+            foreach ($deltas as $delta) {
+                // lines starting with a colon identify as comment
+                if ('' === trim($delta) || str_starts_with($delta, ':')) {
                     continue;
                 }
 
-                // Remove leading/trailing brackets
-                if (str_starts_with($data, '[') || str_starts_with($data, ',')) {
-                    $data = substr($data, 1);
-                }
-                if (str_ends_with($data, ']')) {
-                    $data = substr($data, 0, -1);
-                }
-
-                // Split in case of multiple JSON objects
-                $deltas = explode(",\r\n", $data);
-
-                foreach ($deltas as $delta) {
-                    if ('' === trim($delta)) {
-                        continue;
-                    }
-
-                    yield json_decode($delta, true, flags: \JSON_THROW_ON_ERROR);
-                }
+                yield json_decode($delta, true, flags: \JSON_THROW_ON_ERROR);
             }
         }
     }
