@@ -21,7 +21,9 @@ use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -365,6 +367,9 @@ class ResultConverterTest extends TestCase
                 'delta' => ' about this...',
             ],
             [
+                'type' => 'response.reasoning_summary_text.done',
+            ],
+            [
                 'type' => 'response.output_text.delta',
                 'delta' => 'The answer is 42.',
             ],
@@ -384,12 +389,15 @@ class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(3, $chunks);
-        $this->assertInstanceOf(ThinkingDelta::class, $chunks[0]);
-        $this->assertSame('Let me think', $chunks[0]->getThinking());
+        $this->assertCount(5, $chunks);
+        $this->assertInstanceOf(ThinkingStart::class, $chunks[0]);
         $this->assertInstanceOf(ThinkingDelta::class, $chunks[1]);
-        $this->assertSame(' about this...', $chunks[1]->getThinking());
-        $this->assertInstanceOf(TextDelta::class, $chunks[2]);
-        $this->assertSame('The answer is 42.', $chunks[2]->getText());
+        $this->assertSame('Let me think', $chunks[1]->getThinking());
+        $this->assertInstanceOf(ThinkingDelta::class, $chunks[2]);
+        $this->assertSame(' about this...', $chunks[2]->getThinking());
+        $this->assertInstanceOf(ThinkingComplete::class, $chunks[3]);
+        $this->assertSame('Let me think about this...', $chunks[3]->getThinking());
+        $this->assertInstanceOf(TextDelta::class, $chunks[4]);
+        $this->assertSame('The answer is 42.', $chunks[4]->getText());
     }
 }

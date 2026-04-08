@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
@@ -125,6 +126,7 @@ class ResultConverter implements ResultConverterInterface
             ) {
                 $currentThinking = '';
                 $currentThinkingSignature = null;
+                yield new ThinkingStart();
                 continue;
             }
 

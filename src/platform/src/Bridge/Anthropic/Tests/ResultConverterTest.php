@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
@@ -258,9 +259,12 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        // Expect: ThinkingDelta("Let me "), ThinkingDelta("reason about this."),
+        // Expect: ThinkingStart, ThinkingDelta("Let me "), ThinkingDelta("reason about this."),
         //         ThinkingSignature("sig_abc"), ThinkingSignature("123"),
         //         ThinkingComplete (accumulated), TextDelta("The answer is 42.")
+        $thinkingStarts = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingStart));
+        $this->assertCount(1, $thinkingStarts);
+
         $thinkingDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingDelta));
         $this->assertCount(2, $thinkingDeltas);
         $this->assertSame('Let me ', $thinkingDeltas[0]->getThinking());
@@ -307,6 +311,9 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
+        $thinkingStarts = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingStart));
+        $this->assertCount(1, $thinkingStarts);
+
         $thinkingCompletes = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingComplete));
         $this->assertCount(1, $thinkingCompletes);
         $this->assertSame('I need to look this up.', $thinkingCompletes[0]->getThinking());
@@ -344,6 +351,9 @@ final class ResultConverterTest extends TestCase
         foreach ($streamResult->getContent() as $part) {
             $chunks[] = $part;
         }
+
+        $thinkingStarts = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingStart));
+        $this->assertCount(1, $thinkingStarts);
 
         $thinkingCompletes = array_values(array_filter($chunks, static fn ($c) => $c instanceof ThinkingComplete));
         $this->assertCount(1, $thinkingCompletes);

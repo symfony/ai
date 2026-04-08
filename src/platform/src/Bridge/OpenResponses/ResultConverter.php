@@ -22,7 +22,9 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -127,6 +129,8 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
+        $currentThinking = null;
+
         foreach ($result->getDataStream() as $event) {
             $type = $event['type'] ?? '';
 
@@ -138,8 +142,18 @@ final class ResultConverter implements ResultConverterInterface
                 yield new TextDelta($event['delta']);
             }
 
-            if (str_contains($type, 'reasoning_summary_text') && isset($event['delta'])) {
+            if ('response.reasoning_summary_text.delta' === $type && isset($event['delta'])) {
+                if (null === $currentThinking) {
+                    $currentThinking = '';
+                    yield new ThinkingStart();
+                }
+                $currentThinking .= $event['delta'];
                 yield new ThinkingDelta($event['delta']);
+            }
+
+            if ('response.reasoning_summary_text.done' === $type) {
+                yield new ThinkingComplete($currentThinking ?? '');
+                $currentThinking = null;
             }
 
             if (!str_contains($type, 'completed')) {

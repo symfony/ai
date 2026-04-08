@@ -13,7 +13,9 @@ use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -30,8 +32,14 @@ $result = $platform->invoke('o3-mini', $messages, [
 ]);
 
 foreach ($result->asStream() as $delta) {
+    if ($delta instanceof ThinkingStart) {
+        output()->writeln('<info><thinking></info>');
+    }
     if ($delta instanceof ThinkingDelta) {
-        echo '[Thinking] '.$delta->getThinking().\PHP_EOL;
+        output()->write('<fg=#999999>'.$delta->getThinking().'</>');
+    }
+    if ($delta instanceof ThinkingComplete) {
+        output()->writeln(\PHP_EOL.'<info></thinking></info>');
     }
     if ($delta instanceof TextDelta) {
         echo $delta;
