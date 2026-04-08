@@ -43,6 +43,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $tableName,
         private readonly string $indexName,
         private readonly string $vectorFieldName,
+        private readonly Distance $distance = Distance::Euclidean,
     ) {
     }
 
@@ -84,16 +85,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
     }
 
-    public static function fromPdo(\PDO $connection, string $tableName, string $indexName = 'embedding', string $vectorFieldName = 'embedding'): self
+    public static function fromPdo(\PDO $connection, string $tableName, string $indexName = 'embedding', string $vectorFieldName = 'embedding', Distance $distance = Distance::Euclidean): self
     {
-        return new self($connection, $tableName, $indexName, $vectorFieldName);
+        return new self($connection, $tableName, $indexName, $vectorFieldName, $distance);
     }
 
     /**
      * @throws InvalidArgumentException When DBAL connection doesn't use PDO driver
      * @throws DBALException            When DBAL operations fail (e.g., getting native connection)
      */
-    public static function fromDbal(Connection $connection, string $tableName, string $indexName = 'embedding', string $vectorFieldName = 'embedding'): self
+    public static function fromDbal(Connection $connection, string $tableName, string $indexName = 'embedding', string $vectorFieldName = 'embedding', Distance $distance = Distance::Euclidean): self
     {
         $pdo = $connection->getNativeConnection();
 
@@ -101,7 +102,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('Only DBAL connections using PDO driver are supported.');
         }
 
-        return self::fromPdo($pdo, $tableName, $indexName, $vectorFieldName);
+        return self::fromPdo($pdo, $tableName, $indexName, $vectorFieldName, $distance);
     }
 
     public function add(VectorDocument|array $documents): void
@@ -183,8 +184,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $where = null;
 
         $maxScore = $options['maxScore'] ?? null;
-        if ($maxScore) {
-            $where = \sprintf('WHERE VEC_DISTANCE_EUCLIDEAN(`%1$s`, VEC_FromText(:embedding)) <= :maxScore', $this->vectorFieldName);
+        if (null !== $maxScore) {
+            $where = \sprintf('WHERE %1$s(`%2$s`, VEC_FromText(:embedding)) <= :maxScore', $this->distance->getComparisonFunction(), $this->vectorFieldName);
         }
 
         if ($options['where'] ?? false) {
@@ -198,7 +199,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement = $this->connection->prepare(
             \sprintf(
                 <<<'SQL'
-                    SELECT id, VEC_ToText(`%1$s`) embedding, metadata, VEC_DISTANCE_EUCLIDEAN(`%1$s`, VEC_FromText(:embedding)) AS score
+                    SELECT id, VEC_ToText(`%1$s`) embedding, metadata, %5$s(`%1$s`, VEC_FromText(:embedding)) AS score
                     FROM %2$s
                     %3$s
                     ORDER BY score ASC
@@ -208,6 +209,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->tableName,
                 $where ?? '',
                 $options['limit'] ?? 5,
+                $this->distance->getComparisonFunction(),
             ),
         );
 
