@@ -52,6 +52,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/perplexity'))
                     ->append($import('platform/scaleway'))
                     ->append($import('platform/transformersphp'))
+                    ->append($import('platform/venice'))
                     ->append($import('platform/vertexai'))
                     ->append($import('platform/voyage'))
                 ->end()
