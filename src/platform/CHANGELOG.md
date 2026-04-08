@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+* Add `MultiPartResult` for exposing the parts inside a message
+* Add `ExecutableCodeResult`, `CodeExecutionResult` for exposing the executed code blocks and results
+
 0.7
 ---
 

@@ -29,6 +29,7 @@ use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -133,6 +134,60 @@ class AgentProcessorTest extends TestCase
         $processor->processOutput($output);
 
         $this->assertCount(0, $messageBag);
+    }
+
+    public function testProcessOutputWithMultiPartResultContainingToolCall()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Test response'));
+
+        $messageBag = new MessageBag();
+        $toolCallResult = new ToolCallResult($toolCall);
+        $result = new MultiPartResult([
+            new TextResult('Some text before tool call'),
+            $toolCallResult,
+        ]);
+
+        $agent = $this->createStub(AgentInterface::class);
+        $agent->method('call')->willReturn(new TextResult('Final response'));
+
+        $processor = new AgentProcessor($toolbox);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        $this->assertInstanceOf(TextResult::class, $output->getResult());
+        $this->assertSame('Final response', $output->getResult()->getContent());
+    }
+
+    public function testProcessOutputWithMultiPartResultNotContainingToolCall()
+    {
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->expects($this->never())->method('execute');
+
+        $messageBag = new MessageBag();
+        $result = new MultiPartResult([
+            new TextResult('Some text'),
+            new TextResult('More text'),
+        ]);
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent->expects($this->never())->method('call');
+
+        $processor = new AgentProcessor($toolbox);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        $this->assertSame($result, $output->getResult());
     }
 
     public function testSourcesEndUpInResultMetadataWithSettingOn()

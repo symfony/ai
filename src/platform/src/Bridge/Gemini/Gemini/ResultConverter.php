@@ -17,6 +17,9 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\ExecutableCodeResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -32,6 +35,14 @@ use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 
 /**
+ * @phpstan-type Part array{
+ *     functionCall?: array{id?: string, name: string, args: mixed[]},
+ *     text?: string,
+ *     inlineData?: array{data: string, mimeType: string},
+ *     executableCode?: array{language: string, code: string},
+ *     codeExecutionResult?: array{id?: string, outcome: self::OUTCOME_*, output: string},
+ * }
+ *
  * @author Roy Garrido
  */
 final class ResultConverter implements ResultConverterInterface
@@ -108,26 +119,11 @@ final class ResultConverter implements ResultConverterInterface
      * @param array{
      *     finishReason?: string,
      *     content?: array{
-     *         parts: array{
-     *             functionCall?: array{
-     *                 id: string,
-     *                 name: string,
-     *                 args: mixed[]
-     *             },
-     *             text?: string,
-     *             executableCode?: array{
-     *                 language?: string,
-     *                 code?: string
-     *             },
-     *             codeExecutionResult?: array{
-     *                 outcome: self::OUTCOME_*,
-     *                 output: string
-     *             }
-     *         }[]
+     *         parts: list<Part>
      *     }
      * } $choice
      */
-    private function convertChoice(array $choice): ToolCallResult|TextResult|BinaryResult|null
+    private function convertChoice(array $choice): ToolCallResult|TextResult|BinaryResult|ExecutableCodeResult|CodeExecutionResult|MultiPartResult|null
     {
         if (!isset($choice['content']['parts'])) {
             return null;
@@ -135,46 +131,33 @@ final class ResultConverter implements ResultConverterInterface
 
         $contentParts = $choice['content']['parts'];
 
-        // If any part is a function call, return it immediately and ignore all other parts.
-        foreach ($contentParts as $contentPart) {
-            if (isset($contentPart['functionCall'])) {
-                return new ToolCallResult($this->convertToolCall($contentPart['functionCall']));
-            }
-        }
+        return match (\count($contentParts)) {
+            1 => $this->convertPart($contentParts[0]),
+            default => new MultiPartResult(array_values(array_filter(array_map($this->convertPart(...), $contentParts)))),
+        };
+    }
 
-        if (1 === \count($contentParts)) {
-            $contentPart = $contentParts[0];
-
-            if (isset($contentPart['text'])) {
-                return new TextResult($contentPart['text']);
-            }
-
-            if (isset($contentPart['inlineData'])) {
-                return BinaryResult::fromBase64($contentPart['inlineData']['data'], $contentPart['inlineData']['mimeType'] ?? null);
-            }
-
-            throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finishReason']));
-        }
-
-        $content = '';
-        $successfulCodeExecutionDetected = false;
-        foreach ($contentParts as $contentPart) {
-            if ($this->isSuccessfulCodeExecution($contentPart)) {
-                $successfulCodeExecutionDetected = true;
-                continue;
-            }
-
-            if ($successfulCodeExecutionDetected) {
-                $content .= $contentPart['text'];
-            }
-        }
-
-        if ('' !== $content) {
-            return new TextResult($content);
-        }
-
-        // TODO: see https://github.com/symfony/ai/issues/1053
-        throw new RuntimeException('Choice conversion failed. Potentially due to multiple content parts.');
+    /**
+     * @param Part $contentPart
+     */
+    private function convertPart(array $contentPart): ToolCallResult|TextResult|BinaryResult|ExecutableCodeResult|CodeExecutionResult|null
+    {
+        return match (true) {
+            isset($contentPart['functionCall']) => new ToolCallResult($this->convertToolCall($contentPart['functionCall'])),
+            isset($contentPart['text']) => new TextResult($contentPart['text']),
+            isset($contentPart['inlineData']) => BinaryResult::fromBase64($contentPart['inlineData']['data'], $contentPart['inlineData']['mimeType'] ?? null),
+            isset($contentPart['executableCode']) => new ExecutableCodeResult(
+                $contentPart['executableCode']['code'],
+                $contentPart['executableCode']['language'],
+                $contentPart['executableCode']['id'] ?? null,
+            ),
+            isset($contentPart['codeExecutionResult']) => new CodeExecutionResult(
+                self::OUTCOME_OK === $contentPart['codeExecutionResult']['outcome'],
+                $contentPart['codeExecutionResult']['output'],
+                $contentPart['codeExecutionResult']['id'] ?? null,
+            ),
+            default => null,
+        };
     }
 
     /**
@@ -187,24 +170,5 @@ final class ResultConverter implements ResultConverterInterface
     private function convertToolCall(array $toolCall): ToolCall
     {
         return new ToolCall($toolCall['id'] ?? '', $toolCall['name'], $toolCall['args']);
-    }
-
-    /**
-     * @param array{
-     *     codeExecutionResult?: array{
-     *         outcome: self::OUTCOME_*,
-     *         output: string
-     *     }
-     * } $contentPart
-     */
-    private function isSuccessfulCodeExecution(array $contentPart): bool
-    {
-        if (!isset($contentPart['codeExecutionResult'])) {
-            return false;
-        }
-
-        $result = $contentPart['codeExecutionResult'];
-
-        return self::OUTCOME_OK === $result['outcome'];
     }
 }

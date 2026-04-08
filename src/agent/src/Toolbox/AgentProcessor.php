@@ -22,6 +22,7 @@ use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
@@ -84,6 +85,10 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
             );
 
             return;
+        }
+
+        if ($result instanceof MultiPartResult) {
+            $result = array_find($result->getContent(), static fn (ResultInterface $part) => $part instanceof ToolCallResult);
         }
 
         if (!$result instanceof ToolCallResult) {
