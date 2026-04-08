@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\Platform\Result;
 
-use Symfony\Component\HttpClient\Chunk\ServerSentEvent;
-use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\AI\Platform\Result\Stream\HttpStreamInterface;
+use Symfony\AI\Platform\Result\Stream\SseStream;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -22,6 +22,7 @@ final class RawHttpResult implements RawResultInterface
 {
     public function __construct(
         private readonly ResponseInterface $response,
+        private readonly HttpStreamInterface $httpStream = new SseStream(),
     ) {
     }
 
@@ -32,33 +33,7 @@ final class RawHttpResult implements RawResultInterface
 
     public function getDataStream(): iterable
     {
-        foreach ((new EventSourceHttpClient())->stream($this->response) as $chunk) {
-            if ($chunk->isFirst() || $chunk->isLast() || ($chunk instanceof ServerSentEvent && '[DONE]' === $chunk->getData())) {
-                continue;
-            }
-
-            $jsonDelta = $chunk instanceof ServerSentEvent ? $chunk->getData() : $chunk->getContent();
-
-            // Remove leading/trailing brackets
-            if (str_starts_with($jsonDelta, '[') || str_starts_with($jsonDelta, ',')) {
-                $jsonDelta = substr($jsonDelta, 1);
-            }
-            if (str_ends_with($jsonDelta, ']')) {
-                $jsonDelta = substr($jsonDelta, 0, -1);
-            }
-
-            // Split in case of multiple JSON objects
-            $deltas = explode(",\r\n", $jsonDelta);
-
-            foreach ($deltas as $delta) {
-                // lines starting with a colon identify as comment
-                if ('' === trim($delta) || str_starts_with($delta, ':')) {
-                    continue;
-                }
-
-                yield json_decode($delta, true, flags: \JSON_THROW_ON_ERROR);
-            }
-        }
+        return $this->httpStream->stream($this->response);
     }
 
     public function getObject(): ResponseInterface
