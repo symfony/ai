@@ -29,7 +29,7 @@ final class ModelCatalog implements ModelCatalogInterface
 
     public function getModel(string $modelName): Ollama
     {
-        $response = $this->httpClient->request('POST', '/api/show', [
+        $response = $this->httpClient->request('POST', 'api/show', [
             'json' => [
                 'model' => $modelName,
             ],
@@ -63,7 +63,7 @@ final class ModelCatalog implements ModelCatalogInterface
 
     public function getModels(): array
     {
-        $response = $this->httpClient->request('GET', '/api/tags');
+        $response = $this->httpClient->request('GET', 'api/tags');
 
         $models = $response->toArray();
 
