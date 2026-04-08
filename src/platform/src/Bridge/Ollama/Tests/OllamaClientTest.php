@@ -144,12 +144,10 @@ final class OllamaClientTest extends TestCase
             'done' => true,
         ])."\n";
 
-        $mockHttpClient = new MockHttpClient([
-            new MockResponse($streamingData),
-        ]);
+        $mockHttpClient = new MockHttpClient(new MockResponse($streamingData));
 
         $mockResponse = $mockHttpClient->request('GET', 'http://test.example');
-        $rawResult = new RawHttpResult($mockResponse, new NdjsonStream($mockHttpClient));
+        $rawResult = new RawHttpResult($mockResponse, new NdjsonStream());
         $converter = new OllamaResultConverter();
 
         $result = $converter->convert($rawResult, ['stream' => true]);
@@ -157,16 +155,16 @@ final class OllamaClientTest extends TestCase
         $this->assertInstanceOf(StreamResult::class, $result);
         $this->assertInstanceOf(\Generator::class, $result->getContent());
 
-        $regularMockHttpClient = new MockHttpClient([
+        $regularMockHttpClient = new MockHttpClient(
             new JsonMockResponse([
                 'model' => 'llama3.2',
                 'message' => ['role' => 'assistant', 'content' => 'Hello world'],
                 'done' => true,
             ]),
-        ]);
+        );
 
         $regularMockResponse = $regularMockHttpClient->request('GET', 'http://test.example');
-        $regularRawResult = new RawHttpResult($regularMockResponse, new NdjsonStream($regularMockHttpClient));
+        $regularRawResult = new RawHttpResult($regularMockResponse, new NdjsonStream());
         $regularResult = $converter->convert($regularRawResult, ['stream' => false]);
 
         $this->assertNotInstanceOf(StreamResult::class, $regularResult);
