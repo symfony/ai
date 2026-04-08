@@ -30,14 +30,19 @@ use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\AI\Platform\TraceablePlatform;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Platform\Vector\Vector as PlatformVector;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\InMemory\Store;
 use Symfony\AI\Store\TraceableStore;
@@ -64,6 +69,7 @@ class DataCollectorTest extends TestCase
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
         $this->assertSame('Assistant response', $dataCollector->getPlatformCalls()[0]['result']);
+        $this->assertSame('text', $dataCollector->getPlatformCalls()[0]['result_type']);
     }
 
     public function testCollectsDataForStreamingResponse()
@@ -89,6 +95,7 @@ class DataCollectorTest extends TestCase
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
         $this->assertSame('Assistant response', $dataCollector->getPlatformCalls()[0]['result']);
+        $this->assertSame('text', $dataCollector->getPlatformCalls()[0]['result_type']);
     }
 
     public function testCollectsDataForUnconsumedStreamingResponse()
@@ -113,6 +120,66 @@ class DataCollectorTest extends TestCase
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
         $this->assertNull($dataCollector->getPlatformCalls()[0]['result']);
+        $this->assertSame('text', $dataCollector->getPlatformCalls()[0]['result_type']);
+    }
+
+    public function testCollectsDataForToolCallResult()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        $messageBag = new MessageBag(Message::ofUser(new Text('Call a tool')));
+        $toolCall = new ToolCall('call_123', 'my_tool', ['arg' => 'value']);
+        $toolCallResult = new ToolCallResult($toolCall);
+
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($toolCallResult), $this->createStub(RawResultInterface::class)));
+
+        $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
+        $this->assertSame([$toolCall], $result->asToolCalls());
+
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector->lateCollect();
+
+        $this->assertCount(1, $dataCollector->getPlatformCalls());
+        $this->assertSame('tool_calls', $dataCollector->getPlatformCalls()[0]['result_type']);
+    }
+
+    public function testCollectsDataForVectorResult()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        $vector = new PlatformVector([0.1, 0.2, 0.3]);
+        $vectorResult = new VectorResult($vector);
+
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($vectorResult), $this->createStub(RawResultInterface::class)));
+
+        $result = $traceablePlatform->invoke('text-embedding-3-small', 'Hello world');
+        $this->assertSame([$vector], $result->asVectors());
+
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector->lateCollect();
+
+        $this->assertCount(1, $dataCollector->getPlatformCalls());
+        $this->assertSame('vectors', $dataCollector->getPlatformCalls()[0]['result_type']);
+    }
+
+    public function testCollectsDataForObjectResult()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        $messageBag = new MessageBag(Message::ofUser(new Text('Return structured data')));
+        $data = (object) ['key' => 'value', 'number' => 42];
+        $objectResult = new ObjectResult($data);
+
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($objectResult), $this->createStub(RawResultInterface::class)));
+
+        $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
+        $this->assertSame($data, $result->asObject());
+
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector->lateCollect();
+
+        $this->assertCount(1, $dataCollector->getPlatformCalls());
+        $this->assertSame('text', $dataCollector->getPlatformCalls()[0]['result_type']);
     }
 
     public function testPropagatesMetadataForStreamingResponse()
