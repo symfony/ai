@@ -98,9 +98,11 @@ ai:
                 technical: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
             fallback: 'fallback'
     store:
-        chromadb:
-            symfonycon:
-                collection: 'symfony_blog'
+        postgres:
+            symfony_blog:
+                dbal_connection: 'doctrine.dbal.default_connection'
+                table_name: 'symfony_blog'
+                distance: 'cosine'
     vectorizer:
         openai:
             platform: 'ai.platform.openai'
@@ -115,10 +117,10 @@ ai:
                 - 'Symfony\AI\Store\Document\Transformer\TextSplitTransformer'
                 - 'Symfony\AI\Store\Document\Transformer\TextTrimTransformer'
             vectorizer: 'ai.vectorizer.openai'
-            store: 'ai.store.chromadb.symfonycon'
+            store: 'ai.store.postgres.symfony_blog'
     retriever:
         blog:
-            store: 'ai.store.chromadb.symfonycon'
+            store: 'ai.store.postgres.symfony_blog'
             vectorizer: 'ai.vectorizer.openai'
 
 services:

@@ -12,21 +12,21 @@ This is a Symfony 7.3 demo application showcasing AI integration capabilities us
 - **Chat Systems**: Multiple specialized chat implementations in `src/` (Blog, YouTube, Wikipedia, Audio, Stream)
 - **Twig LiveComponents**: Interactive UI components using Symfony UX for real-time chat interfaces  
 - **AI Agents**: Configured agents with different models, tools, and system prompts
-- **Vector Store**: ChromaDB integration for embedding storage and similarity search
+- **Vector Store**: PostgreSQL with pgvector for embedding storage and similarity search
 - **MCP Tools**: Model Context Protocol tools for extending agent capabilities
 
 ### Key Technologies
 - Symfony 7.3 with UX components (LiveComponent, Turbo, Typed)
 - OpenAI GPT-4o-mini models and embeddings
-- ChromaDB vector database
+- PostgreSQL with pgvector extension
 - FrankenPHP runtime
-- Docker Compose for ChromaDB service
+- Docker Compose for PostgreSQL service
 
 ## Development Commands
 
 ### Environment Setup
 ```bash
-# Start ChromaDB service
+# Start PostgreSQL service
 docker compose up -d
 
 # Install dependencies
@@ -80,7 +80,7 @@ symfony console mcp:server
 ### AI Configuration (`config/packages/ai.yaml`)
 - **Agents**: Multiple pre-configured agents (blog, stream, youtube, wikipedia, audio)
 - **Platform**: OpenAI integration with API key from environment
-- **Store**: ChromaDB vector store for similarity search
+- **Store**: PostgreSQL pgvector store for similarity search
 - **Indexer**: Text embedding model configuration
 
 ### Chat Implementations
@@ -97,7 +97,7 @@ Chat history stored in Symfony sessions with component-specific keys (e.g., 'blo
 - Uses PHP 8.4+ with strict typing and modern PHP features
 - All AI agents use OpenAI GPT-4o-mini by default
 - Vector embeddings use OpenAI's text-ada-002 model
-- ChromaDB runs on port 8080 (mapped from container port 8000)
+- PostgreSQL runs on port 5432
 - Application follows Symfony best practices with dependency injection
 - LiveComponents provide real-time UI updates without custom JavaScript
 - MCP server enables tool integration for AI agents
