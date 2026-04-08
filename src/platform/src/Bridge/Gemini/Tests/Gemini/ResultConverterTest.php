@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Gemini\Gemini\ResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
@@ -52,7 +53,7 @@ final class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
-    public function testReturnsToolCallEvenIfMultipleContentPartsAreGiven()
+    public function testReturnsMultiPartIfMultipleContentPartsAreGiven()
     {
         $converter = new ResultConverter();
         $httpResponse = $this->createMock(ResponseInterface::class);
@@ -79,9 +80,10 @@ final class ResultConverterTest extends TestCase
         ]);
 
         $result = $converter->convert(new RawHttpResult($httpResponse));
-        $this->assertInstanceOf(ToolCallResult::class, $result);
-        $this->assertCount(1, $result->getContent());
-        $toolCall = $result->getContent()[0];
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $this->assertCount(2, $result->getContent());
+        $this->assertInstanceOf(ToolCallResult::class, $result->getContent()[1]);
+        $toolCall = $result->getContent()[1]->getContent()[0];
         $this->assertInstanceOf(ToolCall::class, $toolCall);
         $this->assertSame('1234', $toolCall->getId());
     }
