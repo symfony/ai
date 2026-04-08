@@ -1,0 +1,7 @@
+services:
+    mongodb:
+        image: mongodb/mongodb-atlas-local:8.0
+        environment:
+            MONGODB_INITDB_DATABASE: test_database
+        ports:
+            - '27017:27017'

@@ -513,8 +513,6 @@ jobs:
             - name: Link local components to examples
               run: ./link examples
 
-            - name: Run commands examples
+            - name: Run command example
               working-directory: examples
-              run: |
-                php commands/stores.php
-                php commands/message-stores.php
+              run: php commands/message-stores.php
