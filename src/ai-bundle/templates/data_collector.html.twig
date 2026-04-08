@@ -3,7 +3,7 @@
 {% block toolbar %}
     {% if collector.platformCalls|length > 0 %}
         {% set icon %}
-            {{ include('@Ai/icon.svg', { y: 18 }) }}
+            {{ include('@Ai/icon.svg') }}
             <span class="sf-toolbar-value">{{ collector.platformCalls|length }}</span>
             <span class="sf-toolbar-info-piece-additional-detail">
                 <span class="sf-toolbar-label">calls</span>
@@ -49,7 +49,7 @@
 
 {% block menu %}
     <span class="label">
-        <span class="icon">{{ include('@Ai/icon.svg', { y: 16 }) }}</span>
+        <span class="icon">{{ include('@Ai/icon.svg') }}</span>
         <strong>Symfony AI</strong>
         <span class="count">{{ collector.platformCalls|length }}</span>
     </span>
