@@ -14,7 +14,9 @@ namespace Symfony\AI\Mate\Discovery;
 use Mcp\Capability\Discovery\DiscovererInterface;
 use Mcp\Capability\Discovery\DiscoveryState;
 use Mcp\Capability\Registry\Loader\LoaderInterface;
+use Mcp\Capability\Registry\ToolReference;
 use Mcp\Capability\RegistryInterface;
+use Mcp\Schema\Tool;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -29,6 +31,8 @@ final class FilteredDiscoveryLoader implements LoaderInterface
      * @param array<string, array{dirs: string[],includes: string[]}> $extensions
      * @param array<string, array<string, array{enabled: bool}>>      $disabledFeatures
      */
+    private OutputSchemaGenerator $outputSchemaGenerator;
+
     public function __construct(
         private string $rootDir,
         private array $extensions,
@@ -36,6 +40,7 @@ final class FilteredDiscoveryLoader implements LoaderInterface
         private DiscovererInterface $discoverer,
         private LoggerInterface $logger,
     ) {
+        $this->outputSchemaGenerator = new OutputSchemaGenerator();
     }
 
     public function load(RegistryInterface $registry): void
@@ -122,8 +127,13 @@ final class FilteredDiscoveryLoader implements LoaderInterface
             $resourceTemplates[$uriTemplate] = $template;
         }
 
+        $enrichedTools = [];
+        foreach ($tools as $name => $toolRef) {
+            $enrichedTools[$name] = $this->enrichToolWithOutputSchema($toolRef);
+        }
+
         return new DiscoveryState(
-            $tools,
+            $enrichedTools,
             $resources,
             $prompts,
             $resourceTemplates,
@@ -135,5 +145,50 @@ final class FilteredDiscoveryLoader implements LoaderInterface
         $data = $this->disabledFeatures[$extensionName][$feature] ?? [];
 
         return $data['enabled'] ?? true;
+    }
+
+    private function enrichToolWithOutputSchema(ToolReference $toolRef): ToolReference
+    {
+        $handler = $toolRef->handler;
+
+        if (!\is_array($handler) || 2 !== \count($handler)) {
+            return $toolRef;
+        }
+
+        [$className, $methodName] = $handler;
+
+        if (\is_object($className)) {
+            $className = $className::class;
+        }
+
+        if (!\is_string($className) || !\is_string($methodName)) {
+            return $toolRef;
+        }
+
+        try {
+            $method = new \ReflectionMethod($className, $methodName);
+        } catch (\ReflectionException) {
+            return $toolRef;
+        }
+
+        $outputSchema = $this->outputSchemaGenerator->generate($method);
+
+        if (null === $outputSchema) {
+            return $toolRef;
+        }
+
+        $meta = $toolRef->tool->meta ?? [];
+        $meta['outputSchema'] = $outputSchema;
+
+        $enrichedTool = new Tool(
+            $toolRef->tool->name,
+            $toolRef->tool->inputSchema,
+            $toolRef->tool->description,
+            $toolRef->tool->annotations,
+            $toolRef->tool->icons,
+            $meta,
+        );
+
+        return new ToolReference($enrichedTool, $handler, $toolRef->isManual);
     }
 }

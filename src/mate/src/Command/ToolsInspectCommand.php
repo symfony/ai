@@ -32,6 +32,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *     description: string|null,
  *     handler: string,
  *     input_schema: array<string, mixed>|null,
+ *     output_schema: array<string, mixed>|null,
  *     extension: string
  * }
  *
@@ -158,12 +159,18 @@ HELP
         if (null !== $toolData['input_schema']) {
             $io->section('Input Schema');
             $io->text(json_encode($toolData['input_schema'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
-
-            return;
+        } else {
+            $io->section('Input Schema');
+            $io->text('<comment>No input schema defined</comment>');
         }
 
-        $io->section('Input Schema');
-        $io->text('<comment>No input schema defined</comment>');
+        if (null !== $toolData['output_schema']) {
+            $io->section('Output Schema');
+            $io->text(json_encode($toolData['output_schema'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+        } else {
+            $io->section('Output Schema');
+            $io->text('<comment>No output schema defined</comment>');
+        }
     }
 
     /**
