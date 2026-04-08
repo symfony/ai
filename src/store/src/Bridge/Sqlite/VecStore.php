@@ -33,6 +33,8 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class VecStore implements ManagedStoreInterface, StoreInterface
 {
+    private const RRF_K = 60;
+
     public function __construct(
         private readonly \PDO $connection,
         private readonly string $tableName,
@@ -216,6 +218,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     maxItems?: positive-int,
+     *     rrfCandidatePoolSize?: positive-int,
      *     filter?: callable(VectorDocument): bool,
      * } $options
      */
@@ -296,11 +299,17 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         $searchTerms = $query->getTexts();
         $ftsQuery = implode(' OR ', array_map(static fn (string $term): string => '"'.$term.'"', $searchTerms));
 
-        $statement = $this->connection->prepare(\sprintf(
+        $sql = \sprintf(
             'SELECT id, rank FROM %s_fts WHERE %s_fts MATCH :query ORDER BY rank',
             $this->tableName,
             $this->tableName,
-        ));
+        );
+
+        if (isset($options['maxItems'])) {
+            $sql .= \sprintf(' LIMIT %d', $options['maxItems']);
+        }
+
+        $statement = $this->connection->prepare($sql);
         $statement->bindValue(':query', $ftsQuery);
         $statement->execute();
 
@@ -339,8 +348,20 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
     }
 
     /**
+     * Uses Reciprocal Rank Fusion (RRF) to combine vector and text search results.
+     *
+     * RRF assigns each document a score of `ratio / (k + rank)` from each ranked list
+     * it appears in, then sums these scores. Documents appearing in both lists receive
+     * higher combined scores than those in only one, solving the null-text-score problem
+     * and the no-overlap scenario where vector and text results are entirely disjoint.
+     *
+     * Each sub-query fetches a candidate pool of `rrfCandidatePoolSize` documents (defaults
+     * to `maxItems * 10`, minimum 100, or 100 when `maxItems` is not set). RRF merges and
+     * re-ranks the pool, then `maxItems` is applied. Override via `$options['rrfCandidatePoolSize']`.
+     *
      * @param array{
      *     maxItems?: positive-int,
+     *     rrfCandidatePoolSize?: positive-int,
      *     filter?: callable(VectorDocument): bool,
      * } $options
      *
@@ -348,11 +369,17 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
      */
     private function queryHybrid(HybridQuery $query, array $options): iterable
     {
-        $maxItems = $options['maxItems'] ?? 5;
+        $maxItems = $options['maxItems'] ?? null;
 
-        // Remove maxItems from sub-queries to get full ranked lists for RRF
+        // Each sub-query fetches a candidate pool larger than maxItems so RRF has
+        // enough documents to rank before trimming. Defaults to 100 when maxItems
+        // is not set, since sqlite-vec always requires a k parameter.
+        $candidatePoolSize = $options['rrfCandidatePoolSize']
+            ?? (null !== $maxItems ? max($maxItems * 10, 100) : 100);
+
         $subOptions = $options;
-        unset($subOptions['maxItems']);
+        unset($subOptions['rrfCandidatePoolSize']);
+        $subOptions['maxItems'] = $candidatePoolSize;
 
         $vectorResults = iterator_to_array($this->queryVector(
             new VectorQuery($query->getVector()),
@@ -364,56 +391,42 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             $subOptions,
         ));
 
-        // Reciprocal Rank Fusion: score(d) = semanticRatio * 1/(k + vectorRank) + keywordRatio * 1/(k + textRank)
-        $k = 60;
-        $semanticRatio = $query->getSemanticRatio();
-        $keywordRatio = $query->getKeywordRatio();
-
-        /** @var array<string, float> $scores */
+        /** @var array<string, array{doc: VectorDocument, score: float}> $scores */
         $scores = [];
-        /** @var array<string, VectorDocument> $documents */
-        $documents = [];
 
         foreach ($vectorResults as $rank => $doc) {
             $id = (string) $doc->getId();
-            $scores[$id] = $semanticRatio * (1.0 / ($k + $rank + 1));
-            $documents[$id] = $doc;
+            $scores[$id] = [
+                'doc' => $doc,
+                'score' => $query->getSemanticRatio() * (1.0 / (self::RRF_K + $rank + 1)),
+            ];
         }
 
         foreach ($textResults as $rank => $doc) {
             $id = (string) $doc->getId();
-            $scores[$id] = ($scores[$id] ?? 0.0) + $keywordRatio * (1.0 / ($k + $rank + 1));
-            if (!isset($documents[$id])) {
-                $documents[$id] = $doc;
+            $rrfScore = $query->getKeywordRatio() * (1.0 / (self::RRF_K + $rank + 1));
+            if (isset($scores[$id])) {
+                $scores[$id]['score'] += $rrfScore;
+            } else {
+                $scores[$id] = ['doc' => $doc, 'score' => $rrfScore];
             }
         }
 
-        arsort($scores);
-
-        if (isset($options['filter'])) {
-            $filter = $options['filter'];
-        }
+        usort($scores, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);
 
         $count = 0;
 
-        foreach ($scores as $id => $score) {
-            if ($count >= $maxItems) {
+        foreach ($scores as ['doc' => $doc, 'score' => $score]) {
+            if (null !== $maxItems && $count >= $maxItems) {
                 break;
             }
 
-            $doc = $documents[$id];
-            $document = new VectorDocument(
+            yield new VectorDocument(
                 id: $doc->getId(),
                 vector: $doc->getVector(),
                 metadata: $doc->getMetadata(),
                 score: $score,
             );
-
-            if (isset($filter) && !$filter($document)) {
-                continue;
-            }
-
-            yield $document;
             ++$count;
         }
     }

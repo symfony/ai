@@ -378,6 +378,246 @@ final class VecStoreTest extends TestCase
         $this->assertSame($sortedScores, $scores, 'Results should be sorted by RRF score descending');
     }
 
+    public function testQueryHybridScoresAreNeverNull()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store->setup();
+
+        $metadata1 = new Metadata();
+        $metadata1->setText('vector match only');
+
+        $metadata2 = new Metadata();
+        $metadata2->setText('keyword match here');
+
+        $store->add([
+            new VectorDocument('doc-1', new Vector([1.0, 0.0, 0.0]), $metadata1),
+            new VectorDocument('doc-2', new Vector([0.0, 1.0, 0.0]), $metadata2),
+        ]);
+
+        $results = iterator_to_array($store->query(
+            new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
+        ));
+
+        foreach ($results as $doc) {
+            $this->assertNotNull($doc->getScore(), 'Hybrid query score must never be null');
+            $this->assertGreaterThan(0.0, $doc->getScore());
+        }
+    }
+
+    public function testQueryHybridWithNoOverlapBetweenVectorAndTextResults()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store->setup();
+
+        $metadata1 = new Metadata();
+        $metadata1->setText('unrelated content here');
+
+        $metadata2 = new Metadata();
+        $metadata2->setText('keyword appears here');
+
+        $store->add([
+            new VectorDocument('doc-vector', new Vector([1.0, 0.0, 0.0]), $metadata1),
+            new VectorDocument('doc-text', new Vector([0.0, 0.0, 1.0]), $metadata2),
+        ]);
+
+        $results = iterator_to_array($store->query(
+            new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
+        ));
+
+        $this->assertCount(2, $results);
+
+        $ids = array_map(static fn (VectorDocument $doc): string|int => $doc->getId(), $results);
+        $this->assertContains('doc-vector', $ids);
+        $this->assertContains('doc-text', $ids);
+
+        foreach ($results as $doc) {
+            $this->assertNotNull($doc->getScore());
+            $this->assertGreaterThan(0.0, $doc->getScore());
+        }
+    }
+
+    public function testQueryHybridDocumentInBothListsRanksHigher()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store->setup();
+
+        $metadata1 = new Metadata();
+        $metadata1->setText('keyword relevant');
+
+        $metadata2 = new Metadata();
+        $metadata2->setText('no match');
+
+        $metadata3 = new Metadata();
+        $metadata3->setText('keyword here');
+
+        $store->add([
+            new VectorDocument('doc-both', new Vector([1.0, 0.0, 0.0]), $metadata1),
+            new VectorDocument('doc-vector', new Vector([0.99, 0.1, 0.0]), $metadata2),
+            new VectorDocument('doc-text', new Vector([0.0, 0.0, 1.0]), $metadata3),
+        ]);
+
+        $results = iterator_to_array($store->query(
+            new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
+        ));
+
+        $this->assertCount(3, $results);
+        $this->assertSame('doc-both', $results[0]->getId());
+    }
+
+    public function testQueryHybridRespectsMaxItems()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store->setup();
+
+        for ($i = 1; $i <= 10; ++$i) {
+            $metadata = new Metadata();
+            $metadata->setText(\sprintf('document number %d keyword', $i));
+            $store->add(new VectorDocument(
+                \sprintf('doc-%d', $i),
+                new Vector([1.0, 0.0, 0.0]),
+                $metadata,
+            ));
+        }
+
+        $results = iterator_to_array($store->query(
+            new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
+            ['maxItems' => 3],
+        ));
+
+        $this->assertCount(3, $results);
+    }
+
+    public function testQueryHybridHighSemanticRatioScoresVectorDocHigher()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store->setup();
+
+        $metadata1 = new Metadata();
+        $metadata1->setText('unrelated content here');
+
+        $metadata2 = new Metadata();
+        $metadata2->setText('keyword match');
+
+        $store->add([
+            new VectorDocument('doc-vector', new Vector([1.0, 0.0, 0.0]), $metadata1),
+            new VectorDocument('doc-text', new Vector([0.0, 0.0, 1.0]), $metadata2),
+        ]);
+
+        $scoreAt09 = $this->getScoreForDoc('doc-vector', $store, new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.9));
+        $scoreAt01 = $this->getScoreForDoc('doc-vector', $store, new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.1));
+
+        $this->assertGreaterThan($scoreAt01, $scoreAt09);
+    }
+
+    public function testQueryHybridLowSemanticRatioScoresTextDocHigher()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store->setup();
+
+        $metadata1 = new Metadata();
+        $metadata1->setText('unrelated content here');
+
+        $metadata2 = new Metadata();
+        $metadata2->setText('keyword match');
+
+        $store->add([
+            new VectorDocument('doc-vector', new Vector([1.0, 0.0, 0.0]), $metadata1),
+            new VectorDocument('doc-text', new Vector([0.0, 0.0, 1.0]), $metadata2),
+        ]);
+
+        $scoreAt09 = $this->getScoreForDoc('doc-text', $store, new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.9));
+        $scoreAt01 = $this->getScoreForDoc('doc-text', $store, new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.1));
+
+        $this->assertGreaterThan($scoreAt09, $scoreAt01);
+    }
+
+    public function testQueryHybridWithRrfCandidatePoolSize()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store->setup();
+
+        for ($i = 1; $i <= 10; ++$i) {
+            $metadata = new Metadata();
+            $metadata->setText(\sprintf('document number %d keyword', $i));
+            $store->add(new VectorDocument(
+                \sprintf('doc-%d', $i),
+                new Vector([1.0, 0.0, 0.0]),
+                $metadata,
+            ));
+        }
+
+        $results = iterator_to_array($store->query(
+            new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
+            ['maxItems' => 3, 'rrfCandidatePoolSize' => 5],
+        ));
+
+        $this->assertCount(3, $results);
+
+        foreach ($results as $doc) {
+            $this->assertNotNull($doc->getScore());
+        }
+    }
+
+    public function testQueryHybridWithEmptyStore()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store->setup();
+
+        $results = iterator_to_array($store->query(
+            new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
+        ));
+
+        $this->assertCount(0, $results);
+    }
+
     public function testRemoveWithSingleId()
     {
         $pdo = $this->createPdo();
@@ -521,6 +761,20 @@ final class VecStoreTest extends TestCase
 
         $this->assertCount(3, $results);
         $this->assertSame('doc-1', $results[0]->getId());
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function getScoreForDoc(string $id, VecStore $store, HybridQuery $query, array $options = []): float
+    {
+        foreach ($store->query($query, $options) as $doc) {
+            if ($doc->getId() === $id) {
+                return $doc->getScore() ?? 0.0;
+            }
+        }
+
+        $this->fail(\sprintf('Document %s not found in query results', $id));
     }
 
     private function createPdo(): \PDO
