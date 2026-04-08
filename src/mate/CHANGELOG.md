@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * Add output schema generation for MCP tools from `@return` / `@phpstan-return` docblocks, surfaced via `Tool._meta.outputSchema`, `mcp:tools:inspect`, and JSON/TOON output of list and inspect commands
+
 0.7
 ---
 

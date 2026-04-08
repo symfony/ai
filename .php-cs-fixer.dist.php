@@ -78,6 +78,7 @@ return (new PhpCsFixer\Config())
 
                     if (
                         str_contains($relativePathname, '/Tests/') // don't touch test files, as massive change with little benefit - as outside of public contract anyway
+                        || str_contains($relativePathname, '/tests/') // same as above, for lowercase tests directories
                         || str_contains($relativePathname, '/Test/') // public namespace not following the rule, do not mistake it with `/Tests/`
                     ) {
                         return false;
