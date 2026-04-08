@@ -1,0 +1,33 @@
+services:
+    postgres:
+        image: pgvector/pgvector:0.8.0-pg17
+        environment:
+            POSTGRES_DB: test_database
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        volumes:
+            - ./Tests/Fixtures/init.sql:/docker-entrypoint-initdb.d/init.sql
+        healthcheck:
+            test: ['CMD', 'pg_isready', '-U', 'postgres']
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    postgrest:
+        image: postgrest/postgrest:v12.2.3
+        environment:
+            PGRST_DB_URI: postgres://authenticator:postgres@postgres:5432/test_database
+            PGRST_DB_ANON_ROLE: anon
+            PGRST_DB_SCHEMAS: public
+        depends_on:
+            postgres:
+                condition: service_healthy
+
+    caddy:
+        image: caddy:2-alpine
+        volumes:
+            - ./Tests/Fixtures/Caddyfile:/etc/caddy/Caddyfile
+        ports:
+            - '3000:8000'
+        depends_on:
+            - postgrest

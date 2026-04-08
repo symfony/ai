@@ -16,7 +16,6 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
-use Symfony\AI\Store\Exception\UnsupportedFeatureException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -29,9 +28,12 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * Supabase vector store implementation using REST API and pgvector.
  *
  * This store provides vector storage capabilities through Supabase's REST API
- * with pgvector extension support. Unlike direct PostgreSQL access, this implementation
- * requires manual database setup since Supabase doesn't allow arbitrary SQL execution
- * via REST API.
+ * with pgvector extension support.
+ *
+ * This store does not implement {@see ManagedStoreInterface} because Supabase
+ * manages schemas through its Dashboard or SQL migrations, not through the REST
+ * API. The required table and similarity search function must be created
+ * beforehand by the user.
  *
  * @see https://github.com/pgvector/pgvector pgvector extension documentation
  * @see https://supabase.com/docs/guides/ai/vector-columns Supabase vector guide
@@ -80,12 +82,7 @@ final class Store implements StoreInterface
                 'POST',
                 \sprintf('%s/rest/v1/%s', $this->url, $this->table),
                 [
-                    'headers' => [
-                        'apikey' => $this->apiKey,
-                        'Authorization' => 'Bearer '.$this->apiKey,
-                        'Content-Type' => 'application/json',
-                        'Prefer' => 'resolution=merge-duplicates',
-                    ],
+                    'headers' => $this->getHeaders() + ['Prefer' => 'resolution=merge-duplicates'],
                     'json' => $chunk,
                 ]
             );
@@ -98,7 +95,36 @@ final class Store implements StoreInterface
 
     public function remove(string|array $ids, array $options = []): void
     {
-        throw new UnsupportedFeatureException('Method not implemented yet.');
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if (0 === \count($ids)) {
+            return;
+        }
+
+        // Supabase REST API supports batch deletes using the 'in' filter
+        // We'll chunk the ids to avoid potential URL length limits
+        $chunkSize = 200;
+
+        foreach (array_chunk($ids, $chunkSize) as $chunk) {
+            $idsString = implode(',', array_map(static fn ($id) => '"'.str_replace('"', '""', $id).'"', $chunk));
+
+            $response = $this->httpClient->request(
+                'DELETE',
+                \sprintf('%s/rest/v1/%s', $this->url, $this->table),
+                [
+                    'headers' => $this->getHeaders(),
+                    'query' => [
+                        'id' => \sprintf('in.(%s)', $idsString),
+                    ],
+                ]
+            );
+
+            if ($response->getStatusCode() >= 400) {
+                throw new RuntimeException('Supabase delete failed: '.$response->getContent(false));
+            }
+        }
     }
 
     public function supports(string $queryClass): bool
@@ -131,11 +157,7 @@ final class Store implements StoreInterface
             'POST',
             \sprintf('%s/rest/v1/rpc/%s', $this->url, $this->functionName),
             [
-                'headers' => [
-                    'apikey' => $this->apiKey,
-                    'Authorization' => 'Bearer '.$this->apiKey,
-                    'Content-Type' => 'application/json',
-                ],
+                'headers' => $this->getHeaders(),
                 'json' => [
                     'query_embedding' => $vector->getData(),
                     'match_count' => $matchCount,
@@ -165,5 +187,17 @@ final class Store implements StoreInterface
                 score: (float) $record['score'],
             );
         }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getHeaders(): array
+    {
+        return [
+            'apikey' => $this->apiKey,
+            'Authorization' => 'Bearer '.$this->apiKey,
+            'Content-Type' => 'application/json',
+        ];
     }
 }
