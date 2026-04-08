@@ -108,8 +108,7 @@ final class VeniceClient implements ModelClientInterface
     }
 
     /**
-     * @param array<string|int, mixed> $payload
-     * @param array<string, mixed>     $options
+     * @param array<string, mixed> $options
      */
     private function doImageGeneration(Model $model, VenicePayload $payload, array $options): RawResultInterface
     {
@@ -148,7 +147,7 @@ final class VeniceClient implements ModelClientInterface
             'json' => [
                 ...$finalPayload,
                 'model' => $model->getName(),
-                'duration' => $payload['duration'] ?? '5s',
+                'duration' => $options['duration'] ?? '5s',
                 'aspect_ratio' => '16:9',
             ],
         ]);

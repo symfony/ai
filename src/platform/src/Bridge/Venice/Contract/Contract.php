@@ -11,7 +11,10 @@
 
 namespace Symfony\AI\Platform\Bridge\Venice\Contract;
 
+use Symfony\AI\Platform\Bridge\Venice\VenicePayload;
 use Symfony\AI\Platform\Contract as PlatformContract;
+use Symfony\AI\Platform\PayloadInterface;
+use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
@@ -25,5 +28,10 @@ final class Contract extends PlatformContract
             new AudioNormalizer(),
             ...$normalizer,
         );
+    }
+
+    public static function resolvePayload(array|string $payload): PayloadInterface
+    {
+        return new VenicePayload($payload);
     }
 }

@@ -81,7 +81,11 @@ final class ModelCatalog implements ModelCatalogInterface
             ],
             'text' => [
                 'class' => Venice::class,
-                'capabilities' => self::resolveTextCapabilities($model['model_spec']['capabilities'] ?? []),
+                'capabilities' => self::resolveTextCapabilities(
+                    \is_array($model['model_spec'] ?? null) && \is_array($model['model_spec']['capabilities'] ?? null)
+                        ? $model['model_spec']['capabilities']
+                        : [],
+                ),
             ],
             'tts' => [
                 'class' => Venice::class,
@@ -93,19 +97,7 @@ final class ModelCatalog implements ModelCatalogInterface
             ],
             'video' => [
                 'class' => Venice::class,
-                'capabilities' => match ($model['model_spec']['constraints']['model_type']) {
-                    'text-to-video' => [
-                        Capability::TEXT_TO_VIDEO,
-                        Capability::INPUT_TEXT,
-                        Capability::OUTPUT_VIDEO,
-                    ],
-                    'image-to-video' => [
-                        Capability::IMAGE_TO_VIDEO,
-                        Capability::INPUT_IMAGE,
-                        Capability::OUTPUT_VIDEO,
-                    ],
-                    default => throw new InvalidArgumentException(\sprintf('The model "%s" is not supported. ', $model['id'])),
-                },
+                'capabilities' => self::resolveVideoCapabilities($model),
             ],
             'image' => [
                 'class' => Venice::class,
@@ -132,6 +124,40 @@ final class ModelCatalog implements ModelCatalogInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @param array<int|string, mixed> $model
+     *
+     * @return list<Capability>
+     */
+    private static function resolveVideoCapabilities(array $model): array
+    {
+        $modelSpec = $model['model_spec'] ?? [];
+
+        if (!\is_array($modelSpec)) {
+            throw new InvalidArgumentException(\sprintf('The model "%s" is not supported.', \is_string($model['id'] ?? null) ? $model['id'] : 'unknown'));
+        }
+
+        $constraints = $modelSpec['constraints'] ?? [];
+
+        if (!\is_array($constraints) || !\is_string($constraints['model_type'] ?? null)) {
+            throw new InvalidArgumentException(\sprintf('The model "%s" is not supported.', \is_string($model['id'] ?? null) ? $model['id'] : 'unknown'));
+        }
+
+        return match ($constraints['model_type']) {
+            'text-to-video' => [
+                Capability::TEXT_TO_VIDEO,
+                Capability::INPUT_TEXT,
+                Capability::OUTPUT_VIDEO,
+            ],
+            'image-to-video' => [
+                Capability::IMAGE_TO_VIDEO,
+                Capability::INPUT_IMAGE,
+                Capability::OUTPUT_VIDEO,
+            ],
+            default => throw new InvalidArgumentException(\sprintf('The model "%s" is not supported.', \is_string($model['id'] ?? null) ? $model['id'] : 'unknown')),
+        };
     }
 
     /**

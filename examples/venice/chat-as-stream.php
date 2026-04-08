@@ -26,7 +26,7 @@ $result = $platform->invoke('venice-uncensored', $messages, [
     'stream' => true,
 ]);
 
-foreach ($result->asStream() as $word) {
+foreach ($result->asTextStream() as $word) {
     echo $word;
 }
 echo \PHP_EOL;

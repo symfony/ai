@@ -21,11 +21,19 @@ use Symfony\AI\Platform\PayloadInterface;
  */
 final class VenicePayload implements PayloadInterface
 {
+    /**
+     * @param array<int|string, mixed>|string $payload
+     */
     public function __construct(
         private readonly array|string $payload,
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
     public function asVideoGenerationPayload(Model $model, array $options): array
     {
         if (\is_string($this->payload)) {
@@ -35,17 +43,20 @@ final class VenicePayload implements PayloadInterface
         return match (true) {
             $model->supports(Capability::TEXT_TO_VIDEO) => [
                 ...$options,
-                'prompt' => $payload['text'] ?? $payload['prompt'] ?? throw new InvalidArgumentException('A valid input or a prompt is required for video generation.'),
+                'prompt' => $this->payload['text'] ?? $this->payload['prompt'] ?? throw new InvalidArgumentException('A valid input or a prompt is required for video generation.'),
             ],
             $model->supports(Capability::IMAGE_TO_VIDEO) => [
                 ...$options,
-                'prompt' => $payload['text'] ?? $payload['prompt'] ?? throw new InvalidArgumentException('A valid input or a prompt is required for video generation.'),
-                'image_url' => $payload['image_url'] ?? throw new InvalidArgumentException('The image must be a valid URL or a data URL (ex: "data:").'),
+                'prompt' => $this->payload['text'] ?? $this->payload['prompt'] ?? throw new InvalidArgumentException('A valid input or a prompt is required for video generation.'),
+                'image_url' => $this->payload['image_url'] ?? throw new InvalidArgumentException('The image must be a valid URL or a data URL (ex: "data:").'),
             ],
             default => throw new InvalidArgumentException('Unsupported video generation.'),
         };
     }
 
+    /**
+     * @return non-empty-list<mixed>
+     */
     public function asCompletionPayload(): array
     {
         if (\is_string($this->payload)) {
@@ -56,51 +67,65 @@ final class VenicePayload implements PayloadInterface
             throw new InvalidArgumentException('Payload must contain "messages" key for completion.');
         }
 
-        if ([] === $this->payload['messages']) {
-            throw new InvalidArgumentException('Messages cannot be empty.');
+        $messages = $this->payload['messages'];
+
+        if (!\is_array($messages) || [] === $messages) {
+            throw new InvalidArgumentException('Messages must be a non-empty array.');
         }
 
-        return $this->payload['messages'];
+        return array_values($messages);
     }
 
     public function asImageGeneration(): string
     {
-        if (\is_string($this->payload) && '' !== $this->payload) {
+        if (\is_string($this->payload)) {
+            if ('' === $this->payload) {
+                throw new InvalidArgumentException('The prompt cannot be empty.');
+            }
+
             return $this->payload;
         }
 
-        if (\is_array($this->payload) && !\array_key_exists('prompt', $this->payload)) {
+        if (!\array_key_exists('prompt', $this->payload)) {
             throw new InvalidArgumentException('The "prompt" key is missing.');
         }
 
-        if (\array_key_exists('prompt', $this->payload) && '' === $this->payload['prompt']) {
-            throw new InvalidArgumentException('The "prompt" key cannot be empty.');
+        $prompt = $this->payload['prompt'];
+
+        if (!\is_string($prompt) || '' === $prompt) {
+            throw new InvalidArgumentException('The "prompt" key must be a non-empty string.');
         }
 
-        return $this->payload['prompt'];
+        return $prompt;
     }
 
     public function asTextToSpeechPayload(): string
     {
-        if (\is_string($this->payload) && '' !== $this->payload) {
+        if (\is_string($this->payload)) {
+            if ('' === $this->payload) {
+                throw new InvalidArgumentException('The text cannot be empty.');
+            }
+
             return $this->payload;
         }
 
-        if (\is_array($this->payload) && !\array_key_exists('text', $this->payload)) {
-            throw new InvalidArgumentException('The "prompt" key is missing.');
+        if (!\array_key_exists('text', $this->payload)) {
+            throw new InvalidArgumentException('The "text" key is missing.');
         }
 
-        if (\array_key_exists('text', $this->payload) && '' === $this->payload['text']) {
-            throw new InvalidArgumentException('The "text" key cannot be empty.');
+        $text = $this->payload['text'];
+
+        if (!\is_string($text) || '' === $text) {
+            throw new InvalidArgumentException('The "text" key must be a non-empty string.');
         }
 
-        return $this->payload['text'];
+        return $text;
     }
 
     public function asSpeechToTextPayload(): string
     {
         if (!\is_array($this->payload)) {
-            throw new InvalidArgumentException(\sprintf('Payload must be an array when using file-based transcription endpoint, given "%s".', \gettype($payload)));
+            throw new InvalidArgumentException(\sprintf('Payload must be an array when using file-based transcription endpoint, given "%s".', \gettype($this->payload)));
         }
 
         if (!\is_array($this->payload['input_audio'] ?? null)) {
@@ -114,20 +139,26 @@ final class VenicePayload implements PayloadInterface
         return $this->payload['input_audio']['path'];
     }
 
-    public function asEmbeddingsPayload(): array
+    public function asEmbeddingsPayload(): string
     {
-        if (\is_string($this->payload) && '' !== $this->payload) {
+        if (\is_string($this->payload)) {
+            if ('' === $this->payload) {
+                throw new InvalidArgumentException('The text cannot be empty.');
+            }
+
             return $this->payload;
         }
 
-        if (\is_array($this->payload) && !\array_key_exists('text', $this->payload)) {
-            throw new InvalidArgumentException('The "prompt" key is missing.');
+        if (!\array_key_exists('text', $this->payload)) {
+            throw new InvalidArgumentException('The "text" key is missing.');
         }
 
-        if (\array_key_exists('text', $this->payload) && '' === $this->payload['text']) {
-            throw new InvalidArgumentException('The "text" key cannot be empty.');
+        $text = $this->payload['text'];
+
+        if (!\is_string($text) || '' === $text) {
+            throw new InvalidArgumentException('The "text" key must be a non-empty string.');
         }
 
-        return $this->payload['text'];
+        return $text;
     }
 }
