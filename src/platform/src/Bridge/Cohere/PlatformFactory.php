@@ -33,10 +33,10 @@ final class PlatformFactory
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Platform(
-            [new Embeddings\ModelClient($httpClient, $apiKey), new Reranker\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey)],
-            [new Embeddings\ResultConverter(), new Reranker\ResultConverter(), new Llm\ResultConverter()],
+            [new Embeddings\ModelClient($httpClient, $apiKey), new Reranker\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey), new SpeechToText\ModelClient($httpClient, $apiKey)],
+            [new Embeddings\ResultConverter(), new Reranker\ResultConverter(), new Llm\ResultConverter(), new SpeechToText\ResultConverter()],
             $modelCatalog,
-            $contract ?? Contract::create(),
+            $contract ?? Contract::create(new SpeechToText\AudioNormalizer()),
             $eventDispatcher,
         );
     }
