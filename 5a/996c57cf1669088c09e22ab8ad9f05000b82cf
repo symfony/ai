@@ -1,0 +1,26 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-25T22:01:46Z
+
+I'm not sure about the solution here - is there another way while building the ServiceLocator maybe?
+I feel like traceable implementations should be transparent to consumer code as much as possible - the deptrac violation is also correct in my opinion here.
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2026-03-27T14:09:18Z
+
+We already do that in symfony/symfony: https://github.com/symfony/symfony/blob/8.1/src/Symfony/Component/Workflow/Command/WorkflowDumpCommand.php#L82-L84
+
+So if it get accepted there, I think we could accept it here 😅
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-05T19:15:29Z
+
+good example, good to spot the difference - we've put the Traceable* implementations in the ai bundle, Symfony usually puts them in the component => addressing that with #1872
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-08T15:33:24Z
+
+Rebased after #1872
