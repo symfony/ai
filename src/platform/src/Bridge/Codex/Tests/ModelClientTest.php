@@ -12,11 +12,11 @@
 namespace Symfony\AI\Platform\Bridge\Codex\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\ClaudeCode\ClaudeCode;
 use Symfony\AI\Platform\Bridge\Codex\Codex;
 use Symfony\AI\Platform\Bridge\Codex\Exception\CliNotFoundException;
 use Symfony\AI\Platform\Bridge\Codex\ModelClient;
 use Symfony\AI\Platform\Bridge\Codex\RawProcessResult;
+use Symfony\AI\Platform\Model;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -41,7 +41,7 @@ final class ModelClientTest extends TestCase
     {
         $client = new ModelClient();
 
-        $this->assertFalse($client->supports(new ClaudeCode('sonnet')));
+        $this->assertFalse($client->supports(new Model('sonnet')));
     }
 
     public function testThrowsExceptionWhenCliNotFound()

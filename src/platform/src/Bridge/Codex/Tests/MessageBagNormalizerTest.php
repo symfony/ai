@@ -12,12 +12,12 @@
 namespace Symfony\AI\Platform\Bridge\Codex\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\ClaudeCode\ClaudeCode;
 use Symfony\AI\Platform\Bridge\Codex\Codex;
 use Symfony\AI\Platform\Bridge\Codex\Contract\MessageBagNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Model;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -40,7 +40,7 @@ final class MessageBagNormalizerTest extends TestCase
 
         $this->assertFalse($normalizer->supportsNormalization(
             new MessageBag(),
-            context: [Contract::CONTEXT_MODEL => new ClaudeCode('sonnet')],
+            context: [Contract::CONTEXT_MODEL => new Model('sonnet')],
         ));
     }
 
