@@ -1,10 +1,11 @@
 {% extends '@WebProfiler/Profiler/layout.html.twig' %}
 
 {% block toolbar %}
-    {% if collector.platformCalls|length > 0 %}
+    {% set totalCalls = collector.platformCalls|length + collector.toolCalls|length + collector.messages|length + collector.chats|length + collector.agents|length + collector.stores|length %}
+    {% if totalCalls > 0 %}
         {% set icon %}
             {{ include('@Ai/icon.svg', { y: 18 }) }}
-            <span class="sf-toolbar-value">{{ collector.platformCalls|length }}</span>
+            <span class="sf-toolbar-value">{{ totalCalls }}</span>
             <span class="sf-toolbar-info-piece-additional-detail">
                 <span class="sf-toolbar-label">calls</span>
             </span>
@@ -14,7 +15,7 @@
             <div class="sf-toolbar-info-piece">
                 <div class="sf-toolbar-info-piece">
                     <b class="label">Configured Platforms</b>
-                    <span class="sf-toolbar-status">1</span>
+                    <span class="sf-toolbar-status">{{ collector.platformCount }}</span>
                 </div>
                 <div class="sf-toolbar-info-piece">
                     <b class="label">Platform Calls</b>
@@ -25,33 +26,54 @@
                     <span class="sf-toolbar-status">{{ collector.tools|length }}</span>
                 </div>
                 <div class="sf-toolbar-info-piece">
-                    <b class="label">Messages stored</b>
-                    <span class="sf-toolbar-status">{{ collector.messages|length }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
                     <b class="label">Tool Calls</b>
                     <span class="sf-toolbar-status">{{ collector.toolCalls|length }}</span>
                 </div>
                 <div class="sf-toolbar-info-piece">
-                    <b class="label">Chats sent</b>
+                    <b class="label">Configured Message Stores</b>
+                    <span class="sf-toolbar-status">{{ collector.messageStoreCount }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Stored Messages</b>
+                    <span class="sf-toolbar-status">{{ collector.messages|length }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Configured Chats</b>
+                    <span class="sf-toolbar-status">{{ collector.chatCount }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Chat Calls</b>
                     <span class="sf-toolbar-status">{{ collector.chats|length }}</span>
                 </div>
                 <div class="sf-toolbar-info-piece">
-                    <b class="label">Stores used</b>
+                    <b class="label">Configured Agents</b>
+                    <span class="sf-toolbar-status">{{ collector.agentCount }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Agent Calls</b>
+                    <span class="sf-toolbar-status">{{ collector.agents|length }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Configured Stores</b>
+                    <span class="sf-toolbar-status">{{ collector.storeCount }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Store Calls</b>
                     <span class="sf-toolbar-status">{{ collector.stores|length }}</span>
                 </div>
             </div>
         {% endset %}
 
-        {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', { 'link': true }) }}
+        {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', { link: true }) }}
     {% endif %}
 {% endblock %}
 
 {% block menu %}
+    {% set totalCalls = collector.platformCalls|length + collector.toolCalls|length + collector.messages|length + collector.chats|length + collector.agents|length + collector.stores|length %}
     <span class="label">
         <span class="icon">{{ include('@Ai/icon.svg', { y: 16 }) }}</span>
         <strong>Symfony AI</strong>
-        <span class="count">{{ collector.platformCalls|length }}</span>
+        <span class="count">{{ totalCalls }}</span>
     </span>
 {% endblock %}
 
@@ -72,7 +94,7 @@
     <section class="metrics">
         <div class="metric-group">
             <div class="metric">
-                <span class="value">1</span>
+                <span class="value">{{ collector.platformCount }}</span>
                 <span class="label">Platforms</span>
             </div>
             <div class="metric">
@@ -89,6 +111,38 @@
             <div class="metric">
                 <span class="value">{{ collector.toolCalls|length }}</span>
                 <span class="label">Tool Calls</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.agentCount }}</span>
+                <span class="label">Configured Agents</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.chatCount }}</span>
+                <span class="label">Configured Chats</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.messageStoreCount }}</span>
+                <span class="label">Configured Message Stores</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.storeCount }}</span>
+                <span class="label">Configured Stores</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.messages|length }}</span>
+                <span class="label">Stored Message Bags</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.chats|length }}</span>
+                <span class="label">Chat Calls</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.agents|length }}</span>
+                <span class="label">Agent Calls</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.stores|length }}</span>
+                <span class="label">Store Calls</span>
             </div>
         </div>
     </section>

@@ -315,4 +315,26 @@ class DataCollectorTest extends TestCase
         $this->assertSame('research_agent', $tools[0]->getName());
         $this->assertSame('writer_agent', $tools[1]->getName());
     }
+
+    public function testExposesConfiguredComponentCounts()
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+
+        $dataCollector = new DataCollector(
+            [new TraceablePlatform($this->createStub(PlatformInterface::class))],
+            [new TraceableToolbox($toolbox)],
+            [new TraceableMessageStore(new InMemoryStore(), new MonotonicClock())],
+            [new TraceableChat(new Chat(new MockAgent([]), new InMemoryStore()), new MonotonicClock())],
+            [new TraceableAgent(new MockAgent([]), new MonotonicClock())],
+            [new TraceableStore(new Store(), new MonotonicClock())],
+        );
+
+        $this->assertSame(1, $dataCollector->getPlatformCount());
+        $this->assertSame(1, $dataCollector->getToolboxCount());
+        $this->assertSame(1, $dataCollector->getMessageStoreCount());
+        $this->assertSame(1, $dataCollector->getChatCount());
+        $this->assertSame(1, $dataCollector->getAgentCount());
+        $this->assertSame(1, $dataCollector->getStoreCount());
+    }
 }
