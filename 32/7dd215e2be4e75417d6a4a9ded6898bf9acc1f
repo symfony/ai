@@ -1,0 +1,67 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-02-18T12:16:44Z
+
+Hi @xprojects-de 👋🏻
+
+Could you rebase against `main` and add tests for this update? Thanks again for the fix 🙂
+
+---------------------------------------------------------------------------
+
+by xprojects-de at 2026-02-18T17:46:24Z
+
+@Guikingone rebased and tests added.
+Let me know if you'd like me to do more.
+
+---------------------------------------------------------------------------
+
+by xprojects-de at 2026-02-18T17:56:38Z
+
+"Fabbot" is difficult to fix :-)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-21T07:13:18Z
+
+This is a new feature, please add a line in the changelog, thanks
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-21T11:19:58Z
+
+Thanks @xprojects-de for working on a smoother integration here! Pretty much needed indeed!
+
+What's your outer context here? E.g. using the ORM in Symfony? In that caser, how does the `doctrine:schema:update` react to this? does this require to configure a schema filter? in that case we should document that as well i feel.
+
+---------------------------------------------------------------------------
+
+by xprojects-de at 2026-02-24T15:23:28Z
+
+Thanks for the feedback @chr-hertel
+
+I think we're still a long way from seamless integration of schema migration within the entire application. For example, the store would need to integrate schema listeners and respond to them.
+
+Currently, everything is done directly on the connection, which is certainly not good.
+
+As a first step, I would fix the bug so that existing databases can be used as a store, and then, as a next step, aim for complete schema integration using...
+
+e.g.
+
+```php
+#[AsDoctrineListener(event: 'postGenerateSchema')]
+class DoctrineSchemaListener
+{
+    /**
+     * @param GenerateSchemaEventArgs $event
+     * @return void
+     * @throws TypesException
+     */
+    public function __invoke(GenerateSchemaEventArgs $event): void
+    {
+        $table = $event->getSchema()->createTable(...);
+        $table->addColumn(...);
+
+    }
+
+}
+```
