@@ -49,6 +49,11 @@ final class TraceableStore implements StoreInterface, ManagedStoreInterface, Res
         }
     }
 
+    public function getDecoratedStore(): StoreInterface
+    {
+        return $this->store;
+    }
+
     public function add(VectorDocument|array $documents): void
     {
         $this->calls[] = [
