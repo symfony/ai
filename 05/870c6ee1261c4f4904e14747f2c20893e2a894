@@ -1,0 +1,73 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-30T21:26:58Z
+
+Is there a way to reproduce this? i don't have that with `php ollama/stream.php` example :thinking:
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-04-01T18:36:52Z
+
+@chr-hertel mostly it happens for cloud models (e.g. kimi-v2.5:cloud) - with this fix cloud and also local models are working
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-05T23:54:18Z
+
+Got it, was able to reproduce - thanks for that!
+
+what i like about this is to decouple the different kinds of streams more - the current `RawHttpResult` handles multiple kinds already in one implementation. where i'm uncertain is if this actually needs an entire new `RawResultInterface` implementation.
+
+what do you think about of having something like a `HttpStreamInterface` with different implementations that we use to iterate on? (we could also declutter a bit what's currently in `RawHttpResult::getDataStream()`
+
+```php
+final class RawHttpResult implements RawResultInterface
+{
+    public function __construct(
+        private readonly ResponseInterface $response,
+        private readonly HttpStreamInterface $stream = new SseStream(),
+    ) {
+    }
+
+    public function getData(): array
+    {
+        return $this->response->toArray(false);
+    }
+
+    public function getDataStream(): iterable
+    {
+        foreach ($this->stream->handle($this->response) as $chunk) {
+             // ...
+```
+and ollama could use:
+```php
+        return new RawHttpResult($response, new NdJsonStream());
+```
+
+WDYT?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-04-07T17:40:15Z
+
+@chr-hertel will do that - do you think the new "stream-adapter" should be part of platform component? I would say yes
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-07T17:43:13Z
+
+> @chr-hertel will do that - do you think the new "stream-adapter" should be part of platform component? I would say yes
+
+yes :)
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-04-07T20:22:52Z
+
+@chr-hertel done :)
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-04-08T19:48:54Z
+
+@chr-hertel fixed
