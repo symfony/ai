@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Tests\Result;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\SseStream;
+use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -84,12 +85,11 @@ final class RawHttpResultTest extends TestCase
 
     public function testGracefullyHandleEmptyColonInResponseAsCommentAndIgnore()
     {
-        $response = new MockResponse(': OPENROUTER PROCESSING, data: {"foo": "bar"}');
+        $httpClient = new MockHttpClient(new MockResponse(': OPENROUTER PROCESSING, data: {"foo": "bar"}'));
+        $eventSourceClient = new EventSourceHttpClient($httpClient);
+        $actualResponse = $eventSourceClient->request('GET', 'https://example.com');
 
-        $httpClient = new MockHttpClient($response);
-        $actualResponse = $httpClient->request('GET', 'https://example.com');
-
-        $rawResult = new RawHttpResult($actualResponse, new SseStream($httpClient));
+        $rawResult = new RawHttpResult($actualResponse, new SseStream());
 
         $results = iterator_to_array($rawResult->getDataStream());
 
