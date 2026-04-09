@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Replicate;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
@@ -29,8 +30,13 @@ final class LlamaResultConverter implements ResultConverterInterface
         return $model instanceof Llama;
     }
 
-    public function convert(RawResultInterface $result, array $options = []): ResultInterface
+    public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
+        if ($result instanceof RawHttpResult && 200 !== $result->getObject()->getStatusCode()) {
+            $data = $result->getData();
+            throw new RuntimeException(\sprintf('Replicate API error (HTTP %d): "%s".', $result->getObject()->getStatusCode(), $data['detail'] ?? $result->getObject()->getContent(false)));
+        }
+
         $data = $result->getData();
 
         if (!isset($data['output'])) {
