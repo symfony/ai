@@ -166,6 +166,29 @@ See attribute class :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribu
 
     Please be aware, that this is only converted in a JSON Schema for the LLM to respect, but not validated by Symfony AI itself.
 
+Defining Schema from File
+.........................
+
+If you already have a JSON Schema defined in a file, you can reference it using the ``ref`` argument::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+
+    #[AsTool('my_tool', 'Example tool with external schema.')]
+    final class MyTool
+    {
+        public function __invoke(
+            #[With(ref: __DIR__.'/schema.json')]
+            array $data,
+        ): string {
+            // ...
+        }
+    }
+
+.. note::
+
+    When using ``ref``, other arguments on the ``#[With]`` attribute are not allowed as the entire schema is loaded from the file.
+
 Automatic Enum Validation
 .........................
 

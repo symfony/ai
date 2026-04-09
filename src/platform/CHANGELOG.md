@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+* Add `ref` property to `#[With]` attribute to allow providing schema as file
+
 0.7
 ---
 
