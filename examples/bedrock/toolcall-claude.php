@@ -30,7 +30,7 @@ $platform = PlatformFactory::create();
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia]);
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'claude-3-7-sonnet-20250219', [$processor], [$processor]);
+$agent = new Agent($platform, 'claude-sonnet-4-5-20250929', [$processor], [$processor]);
 
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
 $result = $agent->call($messages);

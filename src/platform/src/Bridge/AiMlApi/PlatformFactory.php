@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\AiMlApi;
 
+use Symfony\AI\Platform\Bridge\AiMlApi\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
@@ -34,7 +35,7 @@ class PlatformFactory
             apiKey: $apiKey,
             httpClient: $httpClient,
             modelCatalog: new ModelCatalog(),
-            contract: $contract,
+            contract: $contract ?? Contract::create(new AssistantMessageNormalizer()),
             eventDispatcher: $eventDispatcher,
         );
     }

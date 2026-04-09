@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
-use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\NdjsonStream;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
