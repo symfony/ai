@@ -76,6 +76,7 @@
         "symfony/ai-ollama-platform": "^0.6",
         "symfony/ai-open-ai-platform": "^0.6",
         "symfony/ai-open-responses-platform": "^0.6",
+        "symfony/ai-ovh-platform": "^0.6",
         "symfony/ai-open-router-platform": "^0.6",
         "symfony/ai-open-search-store": "^0.6",
         "symfony/ai-perplexity-platform": "^0.6",
