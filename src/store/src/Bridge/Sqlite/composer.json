@@ -28,8 +28,8 @@
         "php": ">=8.2",
         "ext-pdo": "*",
         "ext-pdo_sqlite": "*",
-        "symfony/ai-platform": "^0.5|^0.6",
-        "symfony/ai-store": "^0.5|^0.6"
+        "symfony/ai-platform": "^0.7",
+        "symfony/ai-store": "^0.7"
     },
     "require-dev": {
         "doctrine/dbal": "^3.3|^4.0",
