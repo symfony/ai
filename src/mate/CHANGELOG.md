@@ -9,6 +9,7 @@ CHANGELOG
  * Add Codex wrapper generation (`bin/codex`, `bin/codex.bat`) to `mate init`
  * Add AGENT instruction artifact materialization to `mate discover` (`mate/AGENT_INSTRUCTIONS.md` and managed `AGENTS.md` block)
  * Merge `php-version`, `operating-system`, `operating-system-family`, and `php-extensions` tools into a single `server-info` tool
+ * Add optional TOON format encoding for MCP tool responses to reduce token consumption (install `helgesverre/toon` to enable)
 
 0.3
 ---

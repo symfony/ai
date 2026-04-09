@@ -52,12 +52,12 @@ bin/mate debug:extensions        # Show extension discovery and loading status
 bin/mate mcp:tools:list          # List all available MCP tools
 bin/mate mcp:tools:list --filter="search*"  # Filter tools by name pattern
 bin/mate mcp:tools:list --format=json       # Output in JSON format
-bin/mate mcp:tools:inspect php-version      # Inspect specific tool with schema
-bin/mate mcp:tools:inspect php-version --format=json  # Output in JSON format
+bin/mate mcp:tools:inspect server-info      # Inspect specific tool with schema
+bin/mate mcp:tools:inspect server-info --format=json  # Output in JSON format
 
 # Tool execution
-bin/mate mcp:tools:call php-version '{}'    # Execute tool with parameters
-bin/mate mcp:tools:call php-version '{}' --format=json    # JSON output format
+bin/mate mcp:tools:call server-info '{}'    # Execute tool with parameters
+bin/mate mcp:tools:call server-info '{}' --format=json    # JSON output format
 ```
 
 ## Architecture
@@ -78,14 +78,11 @@ bin/mate mcp:tools:call php-version '{}' --format=json    # JSON output format
 ### Bridges
 The component includes embedded bridge packages:
 
-**Symfony Bridge** (`src/Bridge/Symfony/`):
-- `ServiceTool`: Symfony container introspection
-- `ContainerProvider`: Parses compiled container XML
+**Symfony Bridge** (`src/Bridge/Symfony/`): Symfony container introspection and profiler access
+**Monolog Bridge** (`src/Bridge/Monolog/`): Log search and analysis
 
-**Monolog Bridge** (`src/Bridge/Monolog/`):
-- `LogSearchTool`: Log search and analysis
-- `LogParser`: Parses JSON and standard Monolog formats
-- `LogReader`: Reads and filters log files
+### Agent Instructions Materialization
+Running `bin/mate discover` generates `mate/AGENT_INSTRUCTIONS.md` with extension-specific instructions and maintains a managed block in `AGENTS.md` with a summary of installed extensions. AI agents should read these files to learn about available MCP tools rather than relying on hardcoded tool lists.
 
 ### Configuration
 - `mate/extensions.php`: Enable/disable extensions
