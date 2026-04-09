@@ -12,6 +12,7 @@
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Symfony\AI\Agent\Toolbox\AgentProcessor as ToolProcessor;
+use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
@@ -238,13 +239,13 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('validator'),
             ])
-            ->tag('kernel.event_listener')
+            ->tag('kernel.event_listener', ['event' => ToolCallArgumentsResolved::class])
         ->set('ai.security.is_granted_attribute_listener', IsGrantedToolAttributeListener::class)
             ->args([
                 service('security.authorization_checker'),
                 service('expression_language')->nullOnInvalid(),
             ])
-            ->tag('kernel.event_listener')
+            ->tag('kernel.event_listener', ['event' => ToolCallArgumentsResolved::class])
 
         // profiler
         ->set('ai.data_collector', DataCollector::class)
