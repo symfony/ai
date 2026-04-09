@@ -1,0 +1,25 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-23T20:15:50Z
+
+@chr-hertel what do you think about that? we should wait for the profiler to be merged so that we can do that also in the new tools
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-01-23T20:38:24Z
+
+@chr-hertel have also updated the profiler tools/resources
+
+---------------------------------------------------------------------------
+
+by ineersa at 2026-03-21T18:21:28Z
+
+https://github.com/symfony/ai/pull/1805/changes This adds up `TOON` to commands output to unlock usage of those with SKILLs.
+
+P.S. For some reason I thought TOON was already in Mate.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-03-21T19:32:21Z
+
+@ineersa i also thought that this was merged in the past 😂 have to rebase this in the next days
