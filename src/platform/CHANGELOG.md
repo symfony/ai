@@ -4,6 +4,7 @@ CHANGELOG
 0.7
 ---
 
+ * Add support for multiple system messages in `MessageBag` by concatenating them with double break line
  * Add `TraceablePlatform` profiler decorator moved from AI Bundle
  * Add `asFile()` method to `BinaryResult` and `DeferredResult` for saving binary content to a file
  * Add typed streaming deltas (`TextDelta`, `ThinkingDelta`, `ThinkingStart`, `ThinkingSignature`, `ToolCallStart`, `ToolInputDelta`, `BinaryDelta`, `ChoiceDelta`, `ToolCallComplete`, `ThinkingComplete`) implementing `DeltaInterface`
