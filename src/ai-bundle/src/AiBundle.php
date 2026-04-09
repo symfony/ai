@@ -63,6 +63,7 @@ use Symfony\AI\Platform\Bridge\Cartesia\PlatformFactory as CartesiaPlatformFacto
 use Symfony\AI\Platform\Bridge\Cerebras\PlatformFactory as CerebrasPlatformFactory;
 use Symfony\AI\Platform\Bridge\Cohere\PlatformFactory as CoherePlatformFactory;
 use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
+use Symfony\AI\Platform\Bridge\Deepgram\PlatformFactory as DeepgramPlatformFactory;
 use Symfony\AI\Platform\Bridge\DeepSeek\PlatformFactory as DeepSeekPlatformFactory;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory as DockerModelRunnerPlatformFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
@@ -963,6 +964,29 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'cohere']);
 
             $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('deepgram' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-deepgram-platform', DeepSeekPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Deepgram platform configuration requires "symfony/ai-deepgram-platform" package. Try running "composer require symfony/ai-deepgram-platform".');
+            }
+
+            $definition = (new Definition(Platform::class))
+                ->setFactory(DeepgramPlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->setArguments([
+                    $platform['endpoint'] ?? null,
+                    $platform['api_key'] ?? null,
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.contract.deepgram'),
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform', ['name' => 'deepseek']);
+
+            $container->setDefinition('ai.platform.deepgram', $definition);
 
             return;
         }
