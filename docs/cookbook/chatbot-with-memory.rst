@@ -104,8 +104,8 @@ based on semantic similarity::
 
     $embeddingsMemory = new EmbeddingProvider(
         $platform,
-        $embeddings,  // Your embeddings model
-        $store        // Your vector store
+        $model,  // Your Model instance for embeddings
+        $store   // Your vector store
     );
 
 This approach allows the agent to recall specific pieces of information from a large

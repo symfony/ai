@@ -204,7 +204,7 @@ Document Loading Strategies
 
     use Symfony\AI\Store\Document\Loader\TextFileLoader;
 
-    $loader = new TextFileLoader('/path/to/documents');
+    $loader = new TextFileLoader();
 
 **Database loading** for dynamic content::
 

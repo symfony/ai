@@ -15,7 +15,7 @@ Basic Usage
 -----------
 
 To initiate a chat, you need to instantiate the ``Symfony\AI\Chat\Chat`` along
-with a ``Symfony\AI\Agent\AgentInterface`` and a ``Symfony\AI\Chat\MessageStoreInterface``::
+with a ``Symfony\AI\Agent\AgentInterface`` and a ``Symfony\AI\Chat\MessageStoreInterface`` & ``Symfony\AI\Chat\ManagedStoreInterface``::
 
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Chat\Chat;

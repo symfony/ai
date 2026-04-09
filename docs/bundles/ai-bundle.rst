@@ -839,6 +839,8 @@ By default, all services implementing the :class:`Symfony\\AI\\Agent\\InputProce
 This behavior can be overridden/configured with the :class:`Symfony\\AI\\Agent\\Attribute\\AsInputProcessor` and
 the :class:`Symfony\\AI\\Agent\\Attribute\\AsOutputProcessor` attributes::
 
+    use Symfony\AI\Agent\Attribute\AsInputProcessor;
+    use Symfony\AI\Agent\Attribute\AsOutputProcessor;
     use Symfony\AI\Agent\Input;
     use Symfony\AI\Agent\InputProcessorInterface;
     use Symfony\AI\Agent\Output;
