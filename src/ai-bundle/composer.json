@@ -54,6 +54,7 @@
         "symfony/ai-cloudflare-store": "^0.8",
         "symfony/ai-decart-platform": "^0.8",
         "symfony/ai-deep-seek-platform": "^0.8",
+        "symfony/ai-deepgram-platform": "^0.8",
         "symfony/ai-docker-model-runner-platform": "^0.8",
         "symfony/ai-doctrine-message-store": "^0.8",
         "symfony/ai-elasticsearch-store": "^0.8",

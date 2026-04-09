@@ -36,6 +36,7 @@ use Symfony\AI\Platform\Bridge\Cartesia\ModelCatalog as CartesiaModelCatalog;
 use Symfony\AI\Platform\Bridge\Cerebras\ModelCatalog as CerebrasModelCatalog;
 use Symfony\AI\Platform\Bridge\Cohere\ModelCatalog as CohereModelCatalog;
 use Symfony\AI\Platform\Bridge\Decart\ModelCatalog as DecartModelCatalog;
+use Symfony\AI\Platform\Bridge\Deepgram\Contract\DeepgramContract;
 use Symfony\AI\Platform\Bridge\DeepSeek\ModelCatalog as DeepSeekModelCatalog;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\ModelCatalog as DockerModelRunnerModelCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
@@ -89,6 +90,8 @@ return static function (ContainerConfigurator $container): void {
             ->factory([OpenAiContract::class, 'create'])
         ->set('ai.platform.contract.anthropic', Contract::class)
             ->factory([AnthropicContract::class, 'create'])
+        ->set('ai.platform.contract.deepgram', Contract::class)
+            ->factory([DeepgramContract::class, 'create'])
         ->set('ai.platform.contract.elevenlabs', Contract::class)
             ->factory([ElevenLabsContract::class, 'create'])
         ->set('ai.platform.contract.gemini', Contract::class)
