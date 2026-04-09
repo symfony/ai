@@ -260,7 +260,7 @@ attribute to the class is not possible in those cases, but you can explicitly re
 
     $metadataFactory = (new MemoryToolFactory())
         ->addTool(Clock::class, 'clock', 'Get the current date and time', 'now');
-    $toolbox = new Toolbox($metadataFactory, [new Clock()]);
+    $toolbox = new Toolbox([new Clock()], $metadataFactory);
 
 .. note::
 
@@ -277,7 +277,7 @@ tools in the same chain - which even enables you to overwrite the pre-existing c
     $reflectionFactory = new ReflectionToolFactory(); // Register tools with #[AsTool] attribute
     $metadataFactory = (new MemoryToolFactory())      // Register or overwrite tools explicitly
         ->addTool(...);
-    $toolbox = new Toolbox(new ChainFactory($metadataFactory, $reflectionFactory), [...]);
+    $toolbox = new Toolbox([...], new ChainFactory($metadataFactory, $reflectionFactory));
 
 .. note::
 
@@ -298,7 +298,7 @@ complex logic or to reuse an agent in multiple places or hide sub-agents from th
     $subagent = new Subagent($agent);
     $metadataFactory = (new MemoryToolFactory())
         ->addTool($subagent, 'research_agent', 'Meaningful description for sub-agent');
-    $toolbox = new Toolbox($metadataFactory, [$subagent]);
+    $toolbox = new Toolbox([$subagent], $metadataFactory);
 
 Fault Tolerance
 ~~~~~~~~~~~~~~~

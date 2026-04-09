@@ -176,7 +176,7 @@ Use the MateHelper class to disable specific features::
 
     return static function (ContainerConfigurator $container): void {
         MateHelper::disableFeatures($container, [
-            'symfony/ai-mate' => ['php-version', 'operating-system'],
+            'symfony/ai-mate' => ['server-info'],
         ]);
     };
 
@@ -257,9 +257,7 @@ become available for accessing Symfony profiler data.
 
 **MCP Tools:**
 
-* ``symfony-profiler-list`` - List available profiler profiles with summary data
-* ``symfony-profiler-latest`` - Get the latest profiler profile summary
-* ``symfony-profiler-search`` - Search profiles by criteria (route, method, status code, date range)
+* ``symfony-profiler-list`` - List available profiler profiles with summary data, supports filtering by date range (``from``/``to`` parameters) and limiting results (use ``limit: 1`` for the latest profile)
 * ``symfony-profiler-get`` - Get a specific profile by token
 
 All tools return profiles with a ``resource_uri`` field that points to the full profile resource.
@@ -290,11 +288,11 @@ When using multiple directories, profiles include a ``context`` field for filter
 
 Search for errors::
 
-    // Using symfony-profiler-search tool
+    // Using symfony-profiler-list tool
     {
         "method": "tools/call",
         "params": {
-            "name": "symfony-profiler-search",
+            "name": "symfony-profiler-list",
             "arguments": {
                 "statusCode": 500,
                 "limit": 20
@@ -349,13 +347,11 @@ Monolog Bridge
 
 The Monolog bridge (``symfony/ai-monolog-mate-extension``) provides log search and analysis tools:
 
-* ``monolog-search`` - Search log entries by text term with optional filters
-* ``monolog-search-regex`` - Search log entries using regex patterns
+* ``monolog-search`` - Search log entries by text term with optional filters (supports ``regex`` parameter for regex patterns and ``level`` filter)
 * ``monolog-context-search`` - Search logs by context field value
 * ``monolog-tail`` - Get the last N log entries
 * ``monolog-list-files`` - List available log files
 * ``monolog-list-channels`` - List all log channels
-* ``monolog-by-level`` - Get log entries filtered by level
 
 Configure the log directory::
 
@@ -380,10 +376,7 @@ Built-in Tools
 
 The core package provides basic system information tools:
 
-* ``php-version`` - Get the PHP version
-* ``operating-system`` - Get the operating system
-* ``operating-system-family`` - Get the OS family
-* ``php-extensions`` - List loaded PHP extensions
+* ``server-info`` - Get PHP runtime environment details: version, OS, OS family, and loaded extensions
 
 Commands
 --------

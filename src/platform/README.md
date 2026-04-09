@@ -29,6 +29,8 @@ To use a specific AI platform, install the corresponding bridge package:
 | Cartesia            | `symfony/ai-cartesia-platform`            |
 | Cerebras            | `symfony/ai-cerebras-platform`            |
 | Claude Code         | `symfony/ai-claude-code-platform`         |
+| Codex               | `symfony/ai-codex-platform`               |
+| Cohere              | `symfony/ai-cohere-platform`              |
 | Decart              | `symfony/ai-decart-platform`              |
 | DeepSeek            | `symfony/ai-deep-seek-platform`           |
 | Docker Model Runner | `symfony/ai-docker-model-runner-platform` |
