@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `ValidatorSubscriber` to validate structured output using Symfony Validator
+ * Add support for multiple system messages in `MessageBag`
 
 0.8
 ---

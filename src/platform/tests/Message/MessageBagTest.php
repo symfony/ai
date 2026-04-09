@@ -40,6 +40,21 @@ final class MessageBagTest extends TestCase
         $this->assertSame('My amazing system prompt.', $systemMessage->getContent());
     }
 
+    public function testGetSystemMessageWithMultipleSystemMessages()
+    {
+        $messageBag = new MessageBag(
+            Message::forSystem('First system prompt.'),
+            Message::ofAssistant('It is time to sleep.'),
+            Message::forSystem('Second system prompt.'),
+            Message::ofUser('Hello, world!'),
+            Message::forSystem('Third system prompt.'),
+        );
+
+        $systemMessage = $messageBag->getSystemMessage();
+
+        $this->assertSame('First system prompt.'.\PHP_EOL.\PHP_EOL.'Second system prompt.'.\PHP_EOL.\PHP_EOL.'Third system prompt.', $systemMessage->getContent());
+    }
+
     public function testGetSystemMessageWithoutSystemMessage()
     {
         $messageBag = new MessageBag(
