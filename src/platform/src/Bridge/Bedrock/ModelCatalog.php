@@ -53,37 +53,16 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'nova-premier' => [
+            'nova-2-lite' => [
                 'class' => Nova::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STRUCTURED,
                     Capability::TOOL_CALLING,
-                    Capability::INPUT_IMAGE,
-                ],
-            ],
-            'claude-3-7-sonnet-20250219' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
                 ],
             ],
             'claude-3-haiku-20240307' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-5-haiku-latest' => [
                 'class' => Claude::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -103,17 +82,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'claude-3-5-sonnet-latest' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-7-sonnet-latest' => [
+            'claude-3-7-sonnet-20250219' => [
                 'class' => Claude::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -133,57 +102,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'claude-sonnet-4-0' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-opus-20240229' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-opus-4-20250514' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-opus-4-0' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-opus-4-1' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-opus-4-5-20251101' => [
+            'claude-haiku-4-5-20251001' => [
                 'class' => Claude::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -205,7 +124,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'claude-haiku-4-5-20251001' => [
+            'claude-opus-4-5-20251101' => [
                 'class' => Claude::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
@@ -216,46 +135,26 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'llama-3.3-70B-Instruct' => [
-                'class' => Llama::class,
+            'claude-sonnet-4-6' => [
+                'class' => Claude::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
                 ],
             ],
-            'llama-3.2-90b-vision-instruct' => [
-                'class' => Llama::class,
+            'claude-opus-4-6' => [
+                'class' => Claude::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3.2-11b-vision-instruct' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3.2-3b' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3.2-3b-instruct' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3.2-1b' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
                 ],
             ],
             'llama-3.2-1b-instruct' => [
@@ -265,56 +164,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                 ],
             ],
-            'llama-3.1-405b-instruct' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3.1-70b' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3-70b-instruct' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3.1-8b' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3.1-8b-instruct' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3-70b' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3-8b-instruct' => [
-                'class' => Llama::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
-            'llama-3-8b' => [
+            'llama-3.2-3b-instruct' => [
                 'class' => Llama::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,

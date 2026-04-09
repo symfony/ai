@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `ai:bedrock:model-list` command to list available foundation models
+
 0.6
 ---
 
