@@ -21,6 +21,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
 );
-$result = $platform->invoke('llama-3.1-405b-instruct', $messages);
+$result = $platform->invoke('llama-3-8b-instruct', $messages);
 
 echo $result->asText().\PHP_EOL;

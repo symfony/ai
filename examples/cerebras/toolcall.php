@@ -23,7 +23,7 @@ $platform = PlatformFactory::create(env('CEREBRAS_API_KEY'), http_client());
 
 $toolbox = new Toolbox([new Clock()], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gpt-oss-120b', [$processor], [$processor]);
+$agent = new Agent($platform, 'qwen-3-235b-a22b-instruct-2507', [$processor], [$processor]);
 
 $messages = new MessageBag(Message::ofUser('How many days until next Christmas?'));
 $result = $agent->call($messages);

@@ -31,6 +31,6 @@ $messages = new MessageBag(
         Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'),
     ),
 );
-$result = $platform->invoke('claude-3-7-sonnet-20250219', $messages);
+$result = $platform->invoke('claude-sonnet-4-5-20250929', $messages);
 
 echo $result->asText().\PHP_EOL;
